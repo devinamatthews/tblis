@@ -1,0 +1,11 @@
+*.o
+*.a
+bin
+lib
+.autotools
+.project
+.cproject
+.settings
+.deps
+/.ptp-sync/
+.ptp-sync-folder

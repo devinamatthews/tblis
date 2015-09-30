@@ -1,0 +1,15 @@
+#ifndef _CONFIG_H_
+#define _CONFIG_H_
+
+#define TENSOR_ERROR_CHECKING 1
+
+#define TENSOR_REQUIRE_POSITIVE_STRIDES 1
+#define TENSOR_REQUIRE_DISJOINT_STRIDES 1
+
+#define TENSOR_ALLOW_NULL_STRIDE 1
+
+#define TENSOR_CHECK_BOUNDS 1
+
+#define restrict __restrict__
+
+#endif

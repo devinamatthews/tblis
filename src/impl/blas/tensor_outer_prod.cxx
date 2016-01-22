@@ -62,7 +62,7 @@ int tensor_outer_prod_blas(T alpha, const Tensor<T>& A, const std::string& idx_A
     Matricize(ar, am, 0);
     Matricize(br, bm, 0);
     Matricize(cr, cm, ndim_AC);
-    am.setTrans(BLIS_TRANSPOSE);
+    am.transpose(true);
 
     Normalize(cr, idx_AC_BC);
 

@@ -1,8 +1,10 @@
+BLIS = /home/dmatthews/build/blis/gcc/dunnington/install
 CXX = g++
-CXXFLAGS = -g -O0 -std=c++0x -Wall -Wno-sign-compare
-LDFLAGS = -g -Llib -L/home/dmatthews/build/blis-reference-debug/install/lib
+#CXXFLAGS = -O2 -mfpmath=sse -fomit-frame-pointer -msse2 -march=native -std=c++0x -Wall -Wno-unused-variable -Wno-sign-compare -fopenmp
+CXXFLAGS = -g -O0 -std=c++0x -Wall -Wno-unused-variable -Wno-sign-compare -fopenmp -DDEBUG
+LDFLAGS = -g -Llib -L$(BLIS)/lib -fopenmp
 AR = ar -cr
-INCLUDE = -I. -I./include -I/home/dmatthews/build/blis-reference-debug/install/include/blis
+INCLUDE = -I. -I./include -I$(BLIS)/include/blis
 
 tensor_SRCS = $(shell find src -name '*.cxx')
 tensor_OBJS = $(tensor_SRCS:.cxx=.o)

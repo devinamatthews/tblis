@@ -1,7 +1,7 @@
 #ifndef _TENSOR_UTIL_ITERATOR_HPP_
 #define _TENSOR_UTIL_ITERATOR_HPP_
 
-#include "blis.hpp"
+#include "blis.h"
 
 #include <vector>
 #include <iostream>
@@ -182,14 +182,14 @@ class Iterator
     private:
         void check()
         {
-            for (gint_t j = 0;j < stride.size();j++)
+            for (auto& s : stride)
             {
-                if (stride[j].size() != len.size()) abort();
+                ASSERT(s.size() == len.size());
             }
 
-            for (gint_t i = 0;i < len.size();i++)
+            for (dim_t l : len)
             {
-                if (len[i] <= 0) abort();
+                ASSERT(l > 0);
             }
         }
 

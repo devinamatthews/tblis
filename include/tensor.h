@@ -6,7 +6,7 @@
 #include "blis.h"
 
 #define LAWRAP_COMPLEX_DEFINED
-#include "util/lawrap/blas.h"
+#include "util/blas.h"
 
 enum reduce_t
 {

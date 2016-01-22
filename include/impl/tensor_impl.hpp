@@ -4,7 +4,8 @@
 #include "config.h"
 
 #include "tensor.h"
-#include "util/blis.hpp"
+#include "blis++/matrix.hpp"
+#include "blis++/scalar.hpp"
 #include "core/tensor_class.hpp"
 
 #include "impl/tensor_impl_reference.hpp"

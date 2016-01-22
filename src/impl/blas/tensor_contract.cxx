@@ -121,7 +121,7 @@ int tensor_contract_blas(T alpha, const Tensor<T>& A, const std::string& idx_A,
     Matricize(ar, am, ndim_AB);
     Matricize(br, bm, ndim_AB);
     Matricize(cr, cm, ndim_AC);
-    am.setTrans(BLIS_TRANSPOSE);
+    am.transpose(true);
 
     Normalize(ar, idx_AB_AC);
     Normalize(br, idx_AB_BC);

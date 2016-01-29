@@ -7,13 +7,16 @@
 #include <numeric>
 #include <getopt.h>
 #include <sstream>
+#include <iomanip>
 
 #include "core/tensor_iface.hpp"
 #include "util/iterator.hpp"
-#include "util/blis.hpp"
+#include "tblis/gemm.hpp"
+#include "tblis/normfm.hpp"
 
 using namespace std;
 using namespace blis;
+using namespace tblis;
 using namespace blas;
 using namespace tensor;
 using namespace tensor::impl;
@@ -60,7 +63,7 @@ void passfail(const string& label, inc_t ia, inc_t ib, T a, U b)
         cout << a << " " << ia << endl;
         cout << b << " " << ib << endl;
         cout << c << endl;
-        //abort();
+        abort();
     }
 }
 
@@ -151,7 +154,7 @@ template <> sComplex RandomUnit<sComplex>()
 
     scomplex val;
     bli_csets(r, i, val);
-    return val;
+    return cmplx(val);
 }
 
 /*
@@ -170,7 +173,12 @@ template <> dComplex RandomUnit<dComplex>()
 
     dcomplex val;
     bli_zsets(r, i, val);
-    return val;
+    return cmplx(val);
+}
+
+bool RandomChoice()
+{
+    return RandomInteger(1);
 }
 
 /*
@@ -403,6 +411,56 @@ RandomProductConstrainedSequence(int n, T p)
 }
 
 /*
+ * Creates a matrix whose total storage size is between N/4
+ * and N entries, and with edge lengths of at least those given. The number
+ * of referencable elements between N/16 and N/4. Non-referencable elements
+ * are initialized to zero, while referencable elements are randomly
+ * initialized from the interior of the unit circle.
+ */
+template <typename T>
+void RandomMatrix(siz_t N, dim_t m_min, dim_t n_min, Matrix<T>& t)
+{
+    vector<inc_t> stride = RandomProductConstrainedSequence<inc_t>(3, N, {1, m_min, n_min});
+
+    dim_t m = (m_min > 0 ? m_min : RandomInteger(1, stride[1]));
+    dim_t n = (n_min > 0 ? n_min : RandomInteger(1, stride[2]));
+
+    dim_t rs = stride[0];
+    dim_t cs = stride[1]*rs;
+
+    /*
+    if (rs == cs)
+    {
+        ASSERT(m == 1 || n == 1);
+        (m == 1 ? rs : cs) = 1;
+    }
+    */
+
+    siz_t size = 1+(m-1)*rs+(n-1)*cs;
+
+    t.reset(m, n, rs, cs);
+
+    T* data = t;
+    fill(data, data+size, T());
+
+    Iterator it({m,n}, {rs,cs});
+    while (it.nextIteration(data)) *data = RandomUnit<T>();
+}
+
+/*
+ * Creates a matrix, whose total storage size is between N/4
+ * and N entries, and with edge lengths of at least those given. The number
+ * of referencable elements between N/16 and N/4. Non-referencable elements
+ * are initialized to zero, while referencable elements are randomly
+ * initialized from the interior of the unit circle.
+ */
+template <typename T>
+void RandomMatrix(siz_t N, Matrix<T>& t)
+{
+    RandomMatrix(N, 0, 0, t);
+}
+
+/*
  * Creates a tensor of d dimensions, whose total storage size is between N/2^d
  * and N entries, and with edge lengths of at least those given. The number
  * of referencable elements between N/4^d and N/2^d. Non-referencable elements
@@ -553,7 +611,7 @@ void RandomTensors(siz_t N,
 
     RandomTensor(N, ndim_A, A);
 
-    vector<inc_t> min_B(ndim_B, 1);
+    vector<inc_t> min_B(ndim_B);
     for (gint_t i = 0;i < ndim_B;i++)
     {
         for (gint_t j = 0;j < ndim_A;j++)
@@ -747,7 +805,7 @@ void RandomTensors(siz_t N,
 
     RandomTensor(N, ndim_A, A);
 
-    vector<inc_t> min_B(ndim_B, 1);
+    vector<inc_t> min_B(ndim_B);
     for (gint_t i = 0;i < ndim_B;i++)
     {
         for (gint_t j = 0;j < ndim_A;j++)
@@ -758,7 +816,7 @@ void RandomTensors(siz_t N,
 
     RandomTensor(N, ndim_B, min_B, B);
 
-    vector<inc_t> min_C(ndim_C, 1);
+    vector<inc_t> min_C(ndim_C);
     for (gint_t i = 0;i < ndim_C;i++)
     {
         for (gint_t j = 0;j < ndim_A;j++)
@@ -959,6 +1017,131 @@ void RandomMult(siz_t N, Tensor<T>& A, string& idx_A,
 }
 
 /*
+ * Creates a random matrix multiplication operation, where each matrix
+ * has a storage size of N or fewer elements. All possibilities are sampled
+ * uniformly.
+ */
+template <typename T>
+void RandomGEMM(siz_t N, Matrix<T>& A,
+                         Matrix<T>& B,
+                         Matrix<T>& C)
+{
+    dim_t m = RandomInteger(1, (dim_t)sqrt(N));
+    dim_t n = RandomInteger(1, (dim_t)sqrt(N));
+    dim_t k = RandomInteger(1, (dim_t)sqrt(N));
+
+    //m += (MR<T>::value-1)-(m-1)%MR<T>::value;
+    //n += (NR<T>::value-1)-(n-1)%NR<T>::value;
+    //k += (KR<T>::value-1)-(k-1)%KR<T>::value;
+
+    RandomMatrix(N, m, k, A);
+    RandomMatrix(N, k, n, B);
+    RandomMatrix(N, m, n, C);
+
+    switch (RandomInteger(5))
+    {
+        case 0: // ABC -> ABC
+            break;
+        case 1: // ABC -> ACB
+            swap(B, C);
+            A.transpose();
+            break;
+        case 2: // ABC -> BAC
+            swap(A, B);
+            A.transpose();
+            B.transpose();
+            C.transpose();
+            break;
+        case 3: // ABC -> BCA
+            swap(A, B);
+            swap(B, C);
+            B.transpose();
+            C.transpose();
+            break;
+        case 4: // ABC -> CAB
+            swap(A, B);
+            swap(A, C);
+            A.transpose();
+            C.transpose();
+            break;
+        case 5: // ABC -> CBA
+            swap(A, C);
+            B.transpose();
+            break;
+    }
+}
+
+/*
+ * Creates a random matrix times vector operation, where each matrix
+ * has a storage size of N or fewer elements. All possibilities are sampled
+ * uniformly.
+ */
+template <typename T>
+void RandomGEMV(siz_t N, Matrix<T>& A,
+                         Matrix<T>& B,
+                         Matrix<T>& C)
+{
+    dim_t m = RandomInteger(1, (dim_t)sqrt(N));
+    dim_t k = RandomInteger(1, (dim_t)sqrt(N));
+
+    RandomMatrix(N, m, k, A);
+    RandomMatrix(N, k, 1, B);
+    RandomMatrix(N, m, 1, C);
+
+    switch (RandomInteger(3))
+    {
+        case 0: // ABC -> ABC
+            break;
+        case 1: // ABC -> ACB
+            swap(B, C);
+            A.transpose();
+            break;
+        case 2: // ABC -> BAC
+            swap(A, B);
+            A.transpose();
+            B.transpose();
+            C.transpose();
+            break;
+        case 3: // ABC -> CAB
+            swap(A, B);
+            swap(A, C);
+            A.transpose();
+            C.transpose();
+            break;
+    }
+}
+
+/*
+ * Creates a random matrix outer product operation, where each matrix
+ * has a storage size of N or fewer elements. All possibilities are sampled
+ * uniformly.
+ */
+template <typename T>
+void RandomGER(siz_t N, Matrix<T>& A,
+                        Matrix<T>& B,
+                        Matrix<T>& C)
+{
+    dim_t m = RandomInteger(1, (dim_t)sqrt(N));
+    dim_t n = RandomInteger(1, (dim_t)sqrt(N));
+
+    RandomMatrix(N, m, 1, A);
+    RandomMatrix(N, 1, n, B);
+    RandomMatrix(N, m, n, C);
+
+    switch (RandomInteger(1))
+    {
+        case 0: // ABC -> ABC
+            break;
+        case 1: // ABC -> BAC
+            swap(A, B);
+            A.transpose();
+            B.transpose();
+            C.transpose();
+            break;
+    }
+}
+
+/*
  * Creates a random tensor contraction operation, where each tensor
  * has a storage size of N or fewer elements. All possibilities are sampled
  * uniformly.
@@ -1055,6 +1238,93 @@ void RandomOuterProd(siz_t N, Tensor<T>& A, string& idx_A,
                   B, idx_B,
                   C, idx_C);
 }
+
+template <typename T>
+void TestTBLIS(siz_t N)
+{
+    Matrix<T> A, B, C, D;
+    ScatterMatrix<T> sA, sB, sC;
+
+    for (int pass = 0;pass < 3;pass++)
+    {
+        switch (pass)
+        {
+            case 0: RandomGEMM(N, A, B, C); break;
+            case 1: RandomGEMV(N, A, B, C); break;
+            case 2: RandomGER (N, A, B, C); break;
+        }
+
+        T ref_val, calc_val;
+        T scale = 10.0*RandomUnit<T>();
+        Scalar<T> scale_obj(scale), res_obj;
+
+        cout << endl;
+        cout << "Testing TBLIS/" << (pass == 0 ? "GEMM" :
+                                     pass == 1 ? "GEMV" :
+                                                 "GER") << " (" << TypeName<T>() << "):" << endl;
+
+        bool transa = A.is_transposed();
+        bool transb = B.is_transposed();
+        bool transc = C.is_transposed();
+
+        cout << endl;
+        cout << "m, n, k    = " << (transa ? A.width() : A.length()) << ", "
+                                << (transb ? B.length() : B.width()) << ", "
+                                << (transa ? A.length() : A.width()) << endl;
+        cout << "rs_a, cs_a = " << A.row_stride() << ", " << A.col_stride() << endl;
+        cout << "rs_b, cs_b = " << B.row_stride() << ", " << B.col_stride() << endl;
+        cout << "rs_c, cs_c = " << C.row_stride() << ", " << C.col_stride() << endl;
+        cout << "trans_a    = " << transa << endl;
+        cout << "trans_b    = " << transb << endl;
+        cout << "trans_c    = " << transc << endl;
+        cout << endl;
+
+        D = C;
+        bli_gemm(scale_obj, A, B, scale_obj, D);
+        bli_normfm(D, res_obj);
+        ref_val = (T)res_obj;
+
+        D = C;
+        tblis_gemm(scale, A, B, scale, D);
+        tblis_normfm(D, calc_val);
+
+        passfail("BLIS", ref_val, calc_val);
+
+        D = C;
+        sA.reset(A, SCATTER_NONE);
+        sB.reset(B, SCATTER_NONE);
+        sC.reset(D, SCATTER_NONE);
+
+        tblis_gemm(scale, sA, sB, scale, sC);
+        tblis_normfm(sC, calc_val);
+
+        passfail("SCATTER_NONE", ref_val, calc_val);
+
+        D = C;
+        sA.reset(A, SCATTER_BOTH);
+        sB.reset(B, SCATTER_BOTH);
+        sC.reset(D, SCATTER_BOTH);
+
+        tblis_gemm(scale, sA, sB, scale, sC);
+        tblis_normfm(sC, calc_val);
+
+        passfail("SCATTER_BOTH", ref_val, calc_val);
+
+        D = C;
+        sA.reset(A, (scatter_t)RandomInteger(0,3));
+        sB.reset(B, (scatter_t)RandomInteger(0,3));
+        sC.reset(D, (scatter_t)RandomInteger(0,3));
+
+        tblis_gemm(scale, sA, sB, scale, sC);
+        tblis_normfm(sC, calc_val);
+
+        passfail("SCATTER_RANDOM", ref_val, calc_val);
+    }
+}
+
+template <> void TestTBLIS<sComplex>(siz_t N) {}
+
+template <> void TestTBLIS<dComplex>(siz_t N) {}
 
 template <typename T>
 void TestMult(siz_t N)
@@ -1710,7 +1980,7 @@ void TestReduce(siz_t N)
     {
         blas_val += norm2(data[i]);
     }
-    blas_val = sqrt(real_part(blas_val));
+    blas_val = sqrt(blis::real(blas_val));
     passfail("REDUCE_NORM_2", ref_val, blas_val);
 
     A = 1;
@@ -1725,6 +1995,9 @@ void Test(siz_t N_in_bytes, gint_t R)
 {
     siz_t N = N_in_bytes/sizeof(T);
 
+    for (gint_t i = 0;i < R;i++) TestTBLIS<T>(N);
+    return;
+
     for (gint_t i = 0;i < R;i++) TestReduce<T>(N);
     for (gint_t i = 0;i < R;i++) TestScale<T>(N);
     for (gint_t i = 0;i < R;i++) TestTranspose<T>(N);
@@ -1738,10 +2011,85 @@ void Test(siz_t N_in_bytes, gint_t R)
     for (gint_t i = 0;i < R;i++) TestMult<T>(N);
 }
 
+template <typename T>
+void Benchmark(gint_t R)
+{
+    dim_t lb = 10;
+    dim_t ub = 1000;
+    dim_t inc = 10;
+
+    for (int n = lb;n <= ub;n += inc)
+    {
+        Matrix<T> A(n, n);
+        Matrix<T> B(n, n);
+        Matrix<T> C(n, n);
+        ScatterMatrix<T> snA(A, SCATTER_NONE);
+        ScatterMatrix<T> snB(B, SCATTER_NONE);
+        ScatterMatrix<T> snC(C, SCATTER_NONE);
+        ScatterMatrix<T> sbA(A, SCATTER_BOTH);
+        ScatterMatrix<T> sbB(B, SCATTER_BOTH);
+        ScatterMatrix<T> sbC(C, SCATTER_BOTH);
+
+        for (siz_t i = 0;i < n*n;i++)
+        {
+            ((T*)A)[i] = RandomUnit<T>();
+            ((T*)B)[i] = RandomUnit<T>();
+            ((T*)C)[i] = RandomUnit<T>();
+        }
+
+        //T alpha = RandomUnit<T>();
+        //T beta = RandomUnit<T>();
+        T alpha = 1.0;
+        T beta = 0.0;
+        Scalar<T> alp(alpha);
+        Scalar<T> bet(beta);
+
+        double flops = 2*n*n*n;
+
+        double dt_blis = 1e9;
+        for (int r = 0;r < R;r++)
+        {
+            double t0 = bli_clock();
+            bli_gemm(alp, A, B, bet, C);
+            double t1 = bli_clock();
+            dt_blis = min(dt_blis, t1-t0);
+        }
+
+        double dt_tblis = 1e9;
+        for (int r = 0;r < R;r++)
+        {
+            double t0 = bli_clock();
+            tblis_gemm(alpha, A, B, beta, C);
+            double t1 = bli_clock();
+            dt_tblis = min(dt_tblis, t1-t0);
+        }
+
+        double dt_tblissn = 1e9;
+        for (int r = 0;r < R;r++)
+        {
+            double t0 = bli_clock();
+            tblis_gemm(alpha, sbA, sbB, beta, C);
+            double t1 = bli_clock();
+            dt_tblissn = min(dt_tblissn, t1-t0);
+        }
+
+        double dt_tblissb = 1e9;
+        for (int r = 0;r < R;r++)
+        {
+            double t0 = bli_clock();
+            tblis_gemm(alpha, sbA, sbB, beta, sbC);
+            double t1 = bli_clock();
+            dt_tblissb = min(dt_tblissb, t1-t0);
+        }
+
+        printf("%d %e %e %e %e\n", n, flops/dt_blis, flops/dt_tblis, flops/dt_tblissn, flops/dt_tblissb);
+    }
+}
+
 int main(int argc, char **argv)
 {
-    siz_t N = 100*1024*1024;
-    gint_t R = 5;
+    siz_t N = 10*1024*1024;
+    gint_t R = 10;
     time_t seed = time(NULL);
 
     bli_init();
@@ -1779,10 +2127,12 @@ int main(int argc, char **argv)
     cout << "Using mt19937 with seed " << seed << endl;
     engine.seed(seed);
 
-    Test<   float>(N, R);
-    Test<  double>(N, R);
-    Test<sComplex>(N, R);
-    Test<dComplex>(N, R);
+    //Test<   float>(N, R);
+    //Test<  double>(N, R);
+    //Test<sComplex>(N, R);
+    //Test<dComplex>(N, R);
+
+    Benchmark<double>(R);
 
     bli_finalize();
 

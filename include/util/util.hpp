@@ -5,6 +5,8 @@
 #include <string>
 #include <algorithm>
 #include <ostream>
+#include <cstdio>
+#include <cstdarg>
 
 #if __cplusplus >= 201103l
 #define MOVE(x) std::move(x)
@@ -12,6 +14,34 @@
 #else
 #define MOVE(x) (x)
 #define MOVE3(x,y,z) std::copy(x,y,z)
+#endif
+
+#ifdef DEBUG
+inline void abort_with_message(const char* cond, const char* fmt, ...)
+{
+    if (strlen(fmt) == 0)
+    {
+        fprintf(stderr, cond);
+    }
+    else
+    {
+        va_list args;
+        va_start(args, fmt);
+        vfprintf(stderr, fmt, args);
+        va_end(args);
+    }
+    fprintf(stderr, "\n");
+    abort();
+}
+
+#define ASSERT(x,...) \
+if (x) {} \
+else \
+{ \
+    abort_with_message(#x, "" __VA_ARGS__) ; \
+}
+#else
+#define ASSERT(x,...)
 #endif
 
 template<typename T> std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)

@@ -3,7 +3,8 @@
 
 #include "config.h"
 
-#include "util/blis.hpp"
+#include "blis++/matrix.hpp"
+
 #include "util/util.hpp"
 #include "util/tensor_check.hpp"
 #include "util/iterator.hpp"
@@ -74,7 +75,7 @@ class Tensor
 
         explicit Tensor(type val)
         {
-            create(blis::real_part(val), blis::imag_part(val));
+            create(real(val), imag(val));
         }
 
         template <typename len_type>
@@ -154,7 +155,7 @@ class Tensor
         void reset(type val)
         {
             free();
-            create(blis::real_part(val), blis::imag_part(val));
+            create(real(val), imag(val));
         }
 
         template <typename len_type>

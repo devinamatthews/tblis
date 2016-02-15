@@ -7,12 +7,25 @@
 namespace tblis
 {
 
+namespace detail
+{
+    constexpr inline dim_t remainder(dim_t N, dim_t B)
+    {
+        return (B-1)-(N+B-1)%B;
+    }
+
+    constexpr inline dim_t round_up(dim_t N, dim_t B)
+    {
+        return (N+B-1)-(N+B-1)%B;
+    }
+}
+
 template <typename T, dim_t MR, dim_t KR>
 void PackMicroPanel(dim_t m, dim_t k,
                     T* restrict & p_a, inc_t rs_a, inc_t cs_a,
                     T* restrict & p_ap)
 {
-    dim_t k_rem = (KR-1)-(k+KR-1)%KR;
+    dim_t k_rem = detail::remainder(k, KR);
 
     if (m == MR)
     {
@@ -64,7 +77,7 @@ void PackMicroPanel(dim_t m, dim_t k,
                     T* restrict & p_a, inc_t* restrict & rs_a, inc_t cs_a,
                     T* restrict & p_ap)
 {
-    dim_t k_rem = (KR-1)-(k+KR-1)%KR;
+    dim_t k_rem = detail::remainder(k, KR);
 
     if (m == MR)
     {
@@ -117,7 +130,7 @@ void PackMicroPanel(dim_t m, dim_t k,
                     T* restrict & p_a, inc_t rs_a, inc_t* restrict cs_a,
                     T* restrict & p_ap)
 {
-    dim_t k_rem = (KR-1)-(k+KR-1)%KR;
+    dim_t k_rem = detail::remainder(k, KR);
 
     if (m == MR)
     {
@@ -167,7 +180,7 @@ void PackMicroPanel(dim_t m, dim_t k,
                     T* restrict & p_a, inc_t* restrict & rs_a, inc_t* restrict cs_a,
                     T* restrict & p_ap)
 {
-    dim_t k_rem = (KR-1)-(k+KR-1)%KR;
+    dim_t k_rem = detail::remainder(k, KR);
 
     if (m == MR)
     {
@@ -322,8 +335,8 @@ struct Pack
 
             dim_t m_p = (Mat == MAT_A ? A.length() : B.width ());
             dim_t k_p = (Mat == MAT_A ? A.width () : B.length());
-            m_p = bli_align_dim_to_mult(m_p, MR);
-            k_p = bli_align_dim_to_mult(k_p, KR);
+            m_p = detail::round_up(m_p, MR);
+            k_p = detail::round_up(k_p, KR);
             PooledMemory<T> buf(m_p*k_p, PackBuf);
 
             Matrix<T> P((Mat == MAT_A ? m_p : k_p),

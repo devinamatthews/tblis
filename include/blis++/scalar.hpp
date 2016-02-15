@@ -19,8 +19,8 @@ class Scalar : public Matrix<T>
         explicit Scalar(real_type r = real_type(), real_type i = real_type())
         : Matrix<type>(r, i) {}
 
-        template <typename type_>
-        explicit Scalar(const type_& val, typename detail::if_same_and_complex<type,type_>::type* = 0)
+        template <typename type_=type, typename=detail::if_complex<type_>>
+        explicit Scalar(const type& val)
         : Matrix<type>(val) {}
 
         explicit Scalar(type* p)

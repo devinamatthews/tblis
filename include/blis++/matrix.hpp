@@ -34,11 +34,8 @@ namespace transpose
 
 namespace detail
 {
-    template <typename T> struct if_complex {};
-    template <typename T> struct if_complex<std::complex<T> > { typedef void type; };
-
-    template <typename T, typename U, typename=void> struct if_same_and_complex {};
-    template <typename T> struct if_same_and_complex<T,T,typename if_complex<T>::type> { typedef void type; };
+    template <typename T> using if_complex =
+        typename std::enable_if<is_complex<T>::value>::type;
 }
 
 template <typename T>
@@ -115,8 +112,8 @@ class Matrix : private obj_t
             create(r, i);
         }
 
-        template <typename type_>
-        explicit Matrix(const type_& val, typename detail::if_same_and_complex<type,type_>::type* = 0)
+        template <typename type_=type, typename=detail::if_complex<type_>>
+        explicit Matrix(const type& val)
         {
             create(real(val), imag(val));
         }

@@ -116,6 +116,18 @@ struct MicroKernel
     template <typename T>
     struct run
     {
+        typedef basic_type_t<T> Tb;
+
+        static Tb* fwd(const T* value)
+        {
+            return const_cast<Tb*>(reinterpret_cast<const Tb*>(value));
+        }
+
+        static Tb* fwd(const T& value)
+        {
+            return fwd(&value);
+        }
+
         void operator()(T alpha, Matrix<T>& A, Matrix<T>& B, T beta, Matrix<T>& C) const
         {
             constexpr dim_t MR = MT<T>::value;
@@ -137,8 +149,8 @@ struct MicroKernel
             if (m == MR && n == NR)
             {
                 gemm_ukr_t<T>::value(k,
-                                     &alpha, p_a, p_b,
-                                     &beta, p_c, rs_c, cs_c,
+                                     fwd(alpha), fwd(p_a), fwd(p_b),
+                                     fwd(beta), fwd(p_c), rs_c, cs_c,
                                      &data);
             }
             else
@@ -147,8 +159,8 @@ struct MicroKernel
                 static constexpr T zero = 0.0;
 
                 gemm_ukr_t<T>::value(k,
-                                     &alpha, p_a, p_b,
-                                     (T*)&zero, p_ab, 1, MR,
+                                     fwd(alpha), fwd(p_a), fwd(p_b),
+                                     fwd(zero), fwd(p_ab), rs_c, cs_c,
                                      &data);
 
                 AccumulateMicroTile<T,MR,NR>(m, n, p_ab,
@@ -179,8 +191,8 @@ struct MicroKernel
             if (m == MR && n == NR && rs_c != 0 && cs_c != 0)
             {
                 gemm_ukr_t<T>::value(k,
-                                     &alpha, p_a, p_b,
-                                     &beta, p_c, rs_c, cs_c,
+                                     fwd(alpha), fwd(p_a), fwd(p_b),
+                                     fwd(beta), fwd(p_c), rs_c, cs_c,
                                      &data);
             }
             else
@@ -189,8 +201,8 @@ struct MicroKernel
                 static constexpr T zero = 0.0;
 
                 gemm_ukr_t<T>::value(k,
-                                     &alpha, p_a, p_b,
-                                     (T*)&zero, p_ab, 1, MR,
+                                     fwd(alpha), fwd(p_a), fwd(p_b),
+                                     fwd(zero), fwd(p_ab), rs_c, cs_c,
                                      &data);
 
                 if (rs_c == 0 && cs_c == 0)

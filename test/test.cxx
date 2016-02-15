@@ -1467,12 +1467,19 @@ void TestContract(siz_t N)
     T ref_val, calc_val, scale;
     scale = 10.0*RandomUnit<T>();
 
-    impl_type = BLAS_BASED;
+    impl_type = REFERENCE;
     D = C;
     tensor_contract(scale, A, idx_A, B, idx_B, scale, D, idx_C);
     tensor_reduce(REDUCE_NORM_2, D, idx_C, ref_val);
 
-    impl_type = REFERENCE;
+    impl_type = BLAS_BASED;
+    D = C;
+    tensor_contract(scale, A, idx_A, B, idx_B, scale, D, idx_C);
+    tensor_reduce(REDUCE_NORM_2, D, idx_C, calc_val);
+
+    passfail("BLAS", ref_val, calc_val);
+
+    impl_type = BLIS_BASED;
     D = C;
     tensor_contract(scale, A, idx_A, B, idx_B, scale, D, idx_C);
     tensor_reduce(REDUCE_NORM_2, D, idx_C, calc_val);
@@ -1996,19 +2003,19 @@ void Test(siz_t N_in_bytes, gint_t R)
     siz_t N = N_in_bytes/sizeof(T);
 
     for (gint_t i = 0;i < R;i++) TestTBLIS<T>(N);
-    return;
+    //return;
 
-    for (gint_t i = 0;i < R;i++) TestReduce<T>(N);
-    for (gint_t i = 0;i < R;i++) TestScale<T>(N);
-    for (gint_t i = 0;i < R;i++) TestTranspose<T>(N);
-    for (gint_t i = 0;i < R;i++) TestDot<T>(N);
-    for (gint_t i = 0;i < R;i++) TestReplicate<T>(N);
-    for (gint_t i = 0;i < R;i++) TestTrace<T>(N);
-    for (gint_t i = 0;i < R;i++) TestSum<T>(N);
-    for (gint_t i = 0;i < R;i++) TestOuterProd<T>(N);
-    for (gint_t i = 0;i < R;i++) TestWeight<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestReduce<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestScale<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestTranspose<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestDot<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestReplicate<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestTrace<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestSum<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestOuterProd<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestWeight<T>(N);
     for (gint_t i = 0;i < R;i++) TestContract<T>(N);
-    for (gint_t i = 0;i < R;i++) TestMult<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestMult<T>(N);
 }
 
 template <typename T>
@@ -2128,11 +2135,11 @@ int main(int argc, char **argv)
     engine.seed(seed);
 
     //Test<   float>(N, R);
-    //Test<  double>(N, R);
+    Test<  double>(N, R);
     //Test<sComplex>(N, R);
     //Test<dComplex>(N, R);
 
-    Benchmark<double>(R);
+    //Benchmark<double>(R);
 
     bli_finalize();
 

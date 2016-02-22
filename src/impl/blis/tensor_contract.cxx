@@ -106,7 +106,7 @@ int tensor_contract_blis(T alpha, const Tensor<T>& A, const std::string& idx_A,
     inc_t idx_N_B = 0;
     for (dim_t i = 0;it_N_B.nextIteration(idx_N_B);i++) scat_N_B[i] = idx_N_B;
 
-    Iterator it_N_C(len_N, stride_M_A);
+    Iterator it_N_C(len_N, stride_N_C);
     inc_t idx_N_C = 0;
     for (dim_t i = 0;it_N_C.nextIteration(idx_N_C);i++) scat_N_C[i] = idx_N_C;
 

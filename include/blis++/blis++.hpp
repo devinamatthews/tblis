@@ -38,9 +38,9 @@ namespace detail
 typedef std::complex< float> sComplex;
 typedef std::complex<double> dComplex;
 
-sComplex cmplx(const scomplex& x) { return sComplex(bli_creal(x), bli_cimag(x)); }
+inline sComplex cmplx(const scomplex& x) { return sComplex(bli_creal(x), bli_cimag(x)); }
 
-dComplex cmplx(const dcomplex& x) { return dComplex(bli_creal(x), bli_cimag(x)); }
+inline dComplex cmplx(const dcomplex& x) { return dComplex(bli_creal(x), bli_cimag(x)); }
 
 template <typename T, typename U>
 detail::complex_op<T,U> operator+(const T& a, const U& b)

@@ -1,7 +1,7 @@
-BLIS = /Users/dmatthews/build/blis/install
+BLIS = /Users/dmatthews/build/blis/sandybridge/install
 CXX = g++
-#CXXFLAGS = -O2 -mfpmath=sse -fomit-frame-pointer -msse2 -march=native -std=c++0x -Wall -Wno-unused-variable -Wno-sign-compare -fopenmp
-CXXFLAGS = -g -O0 -std=c++0x -Wall -Wno-unused-variable -Wno-sign-compare -fopenmp -DDEBUG
+CXXFLAGS = -g -O3 -DNDEBUG -funroll-loops -fno-omit-frame-pointer -mfpmath=sse -mavx -march=native -std=c++0x -Wall -Wno-unused-variable -Wno-sign-compare -fopenmp
+#CXXFLAGS = -g -O0 -std=c++0x -Wall -Wno-unused-variable -Wno-sign-compare -fopenmp -DDEBUG
 LDFLAGS = -g -Llib -L$(BLIS)/lib -fopenmp
 AR = ar -cr
 INCLUDE = -I. -I./include -I$(BLIS)/include/blis

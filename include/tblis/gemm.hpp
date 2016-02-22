@@ -33,10 +33,6 @@ typedef GEMM<PartitionN<NC>,
 template <typename T, typename MatrixA, typename MatrixB, typename MatrixC>
 void tblis_gemm(T alpha, const MatrixA& A, const MatrixB& B, T beta, MatrixC&& C)
 {
-    ASSERT(A.length() == C.length(), "m dimension does not match");
-    ASSERT(A.width() == B.length(), "k dimension does not match");
-    ASSERT(B.width() == C.width(), "n dimension does not match");
-
     MatrixA Av;
     MatrixB Bv;
     typename std::decay<MatrixC>::type Cv;
@@ -44,6 +40,10 @@ void tblis_gemm(T alpha, const MatrixA& A, const MatrixB& B, T beta, MatrixC&& C
     ViewNoTranspose(const_cast<MatrixA&>(A), Av);
     ViewNoTranspose(const_cast<MatrixB&>(B), Bv);
     ViewNoTranspose(                     C , Cv);
+
+    ASSERT(Av.length() == Cv.length(), "m dimension does not match");
+    ASSERT(Av.width() == Bv.length(), "k dimension does not match");
+    ASSERT(Bv.width() == Cv.width(), "n dimension does not match");
 
     DefaultGEMM::run(alpha, Av, Bv, beta, Cv);
 }

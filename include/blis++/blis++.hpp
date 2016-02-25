@@ -1,6 +1,7 @@
 #ifndef _TENSOR_BLIS___HPP_
 #define _TENSOR_BLIS___HPP_
 
+#define BLIS_DISABLE_BLAS2BLIS
 #include "blis.h"
 #include "bli_obj_macro_defs.h"
 #include "bli_scalar_macro_defs.h"

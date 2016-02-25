@@ -6,8 +6,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <blis.h>
-
 typedef integer logical;
 
 /*

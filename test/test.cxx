@@ -1980,7 +1980,7 @@ void TestReduce(siz_t N)
     {
         blas_val += norm2(data[i]);
     }
-    blas_val = sqrt(blis::real(blas_val));
+    blas_val = sqrt(real(blas_val));
     passfail("REDUCE_NORM_2", ref_val, blas_val);
 
     A = 1;

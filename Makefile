@@ -1,4 +1,4 @@
-BLIS = /home/dmatthews/build/blis/gcc/dunnington/install
+BLIS = /Users/dmatthews/build/blis/gcc/reference/install
 CXX = g++
 #CXXFLAGS = -O2 -mfpmath=sse -fomit-frame-pointer -msse2 -march=native -std=c++0x -Wall -Wno-unused-variable -Wno-sign-compare -fopenmp
 CXXFLAGS = -g -O0 -std=c++0x -Wall -Wno-unused-variable -Wno-sign-compare -fopenmp -DDEBUG

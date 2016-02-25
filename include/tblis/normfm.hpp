@@ -71,7 +71,7 @@ void tblis_normfm_int(ScatterMatrix<T>& A, T& norm)
         }
     }
 
-    norm = sqrt(blis::real(norm));
+    norm = sqrt(real(norm));
 }
 
 template <typename T, typename MatrixA>

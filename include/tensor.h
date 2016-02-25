@@ -3,6 +3,7 @@
 
 #include "config.h"
 
+#define BLIS_DISABLE_BLAS2BLIS
 #include "blis.h"
 
 #define LAWRAP_COMPLEX_DEFINED

@@ -1,7 +1,7 @@
 #ifndef _TENSOR_UTIL_ITERATOR_HPP_
 #define _TENSOR_UTIL_ITERATOR_HPP_
 
-#include "blis.h"
+#include "blis++/blis++.hpp"
 
 #include <vector>
 #include <iostream>

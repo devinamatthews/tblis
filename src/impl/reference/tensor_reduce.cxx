@@ -103,7 +103,7 @@ int tensor_reduce_reference(reduce_t op, const Tensor<T>& A, const std::string& 
                 assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
                 val += norm2(*A_);
             }
-            val = sqrt(blis::real(val));
+            val = sqrt(real(val));
             break;
     }
 

@@ -68,7 +68,9 @@ int tensor_contract_impl(T alpha, const Tensor<T>& A, const std::string& idx_A,
                                          beta, C, idx_C);
             break;
         case BLIS_BASED:
-            abort();
+            return tensor_contract_blis(alpha, A, idx_A,
+                                               B, idx_B,
+                                         beta, C, idx_C);
             break;
     }
     return 0;

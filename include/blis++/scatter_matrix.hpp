@@ -2,6 +2,7 @@
 #define _TENSOR_BLIS___SCATTER_MATRIX_HPP_
 
 #include "blis++.hpp"
+#include "memory.hpp"
 
 namespace blis
 {

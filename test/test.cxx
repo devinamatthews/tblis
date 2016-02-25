@@ -470,8 +470,11 @@ void RandomMatrix(siz_t N, Matrix<T>& t)
 template <typename T>
 void RandomTensor(siz_t N, gint_t d, vector<dim_t> len_min, Tensor<T>& t)
 {
+    //len_min.insert(len_min.begin(), 1);
+    //vector<inc_t> stride = RandomProductConstrainedSequence<inc_t>(d+1, N, len_min);
+    vector<inc_t> stride = RandomProductConstrainedSequence<inc_t>(d, N, len_min);
     len_min.insert(len_min.begin(), 1);
-    vector<inc_t> stride = RandomProductConstrainedSequence<inc_t>(d+1, N, len_min);
+    stride.insert(stride.begin(), 1);
 
     vector<dim_t> len(d);
     for (gint_t i = 0;i < d;i++)
@@ -482,7 +485,8 @@ void RandomTensor(siz_t N, gint_t d, vector<dim_t> len_min, Tensor<T>& t)
         }
         else
         {
-            len[i] = RandomInteger(1, stride[i+1]);
+            //len[i] = RandomInteger(1, stride[i+1]);
+            len[i] = stride[i+1];
         }
     }
 
@@ -788,14 +792,14 @@ void RandomTensors(siz_t N,
         case BCA:
             swap(ndim_A, ndim_B);
             swap(idx_A, idx_B);
-            swap(ndim_A, ndim_C);
-            swap(idx_A, idx_C);
+            swap(ndim_B, ndim_C);
+            swap(idx_B, idx_C);
             break;
         case CAB:
             swap(ndim_A, ndim_C);
             swap(idx_A, idx_C);
-            swap(ndim_A, ndim_B);
-            swap(idx_A, idx_B);
+            swap(ndim_B, ndim_C);
+            swap(idx_B, idx_C);
             break;
         case CBA:
             swap(ndim_A, ndim_C);
@@ -803,33 +807,48 @@ void RandomTensors(siz_t N,
             break;
     }
 
-    RandomTensor(N, ndim_A, A);
-
-    vector<inc_t> min_B(ndim_B);
-    for (gint_t i = 0;i < ndim_B;i++)
+    while (true)
     {
-        for (gint_t j = 0;j < ndim_A;j++)
+        RandomTensor(N, ndim_A, A);
+
+        vector<inc_t> min_B(ndim_B);
+        for (gint_t i = 0;i < ndim_B;i++)
         {
-            if (idx_B[i] == idx_A[j]) min_B[i] = A.getLength(j);
+            for (gint_t j = 0;j < ndim_A;j++)
+            {
+                if (idx_B[i] == idx_A[j]) min_B[i] = A.getLength(j);
+            }
         }
+
+        RandomTensor(N, ndim_B, min_B, B);
+
+        inc_t siz = 1;
+        vector<inc_t> min_C(ndim_C);
+        for (gint_t i = 0;i < ndim_C;i++)
+        {
+            for (gint_t j = 0;j < ndim_A;j++)
+            {
+                if (idx_C[i] == idx_A[j])
+                {
+                    min_C[i] = A.getLength(j);
+                    siz *= min_C[i];
+                }
+            }
+            for (gint_t j = 0;j < ndim_B;j++)
+            {
+                if (idx_C[i] == idx_B[j])
+                {
+                    min_C[i] = B.getLength(j);
+                    siz *= min_C[i];
+                }
+            }
+        }
+        if (siz > N) continue;
+
+        RandomTensor(N, ndim_C, min_C, C);
+
+        break;
     }
-
-    RandomTensor(N, ndim_B, min_B, B);
-
-    vector<inc_t> min_C(ndim_C);
-    for (gint_t i = 0;i < ndim_C;i++)
-    {
-        for (gint_t j = 0;j < ndim_A;j++)
-        {
-            if (idx_C[i] == idx_A[j]) min_C[i] = A.getLength(j);
-        }
-        for (gint_t j = 0;j < ndim_B;j++)
-        {
-            if (idx_C[i] == idx_B[j]) min_C[i] = B.getLength(j);
-        }
-    }
-
-    RandomTensor(N, ndim_C, min_C, C);
 
     switch (order)
     {
@@ -1167,6 +1186,8 @@ void RandomContract(siz_t N, Tensor<T>& A, string& idx_A,
            ndim_BC < 0 ||
            (ndim_A+ndim_B+ndim_C)%2 != 0);
 
+    ndim_AB = ndim_AC = ndim_BC = 3;
+
     RandomTensors(N,
                   0, 0, 0,
                   ndim_AB, ndim_AC, ndim_BC,
@@ -1467,17 +1488,64 @@ void TestContract(siz_t N)
     T ref_val, calc_val, scale;
     scale = 10.0*RandomUnit<T>();
 
-    impl_type = BLAS_BASED;
-    D = C;
-    tensor_contract(scale, A, idx_A, B, idx_B, scale, D, idx_C);
-    tensor_reduce(REDUCE_NORM_2, D, idx_C, ref_val);
+    dim_t m = 1;
+    for (int i = 0;i < A.getDimension();i++)
+    {
+        if (find(idx_B.begin(), idx_B.end(), idx_A[i]) == idx_B.end())
+            m *= A.getLength(i);
+    }
+
+    dim_t k = 1;
+    for (int i = 0;i < B.getDimension();i++)
+    {
+        if (find(idx_C.begin(), idx_C.end(), idx_B[i]) == idx_C.end())
+            k *= B.getLength(i);
+    }
+
+    dim_t n = 1;
+    for (int i = 0;i < C.getDimension();i++)
+    {
+        if (find(idx_A.begin(), idx_A.end(), idx_C[i]) == idx_A.end())
+            n *= C.getLength(i);
+    }
+
+    dim_t flops = m*n*k;
+
+    cout << "Flops: " << flops << endl;
+    cout << "Shape: [" << m << "," << n << "," << k << "] " << log10(double(m)/double(n)) << endl;
+    cout << endl;
+
+    double t0, t1;
 
     impl_type = REFERENCE;
     D = C;
+    t0 = bli_clock();
     tensor_contract(scale, A, idx_A, B, idx_B, scale, D, idx_C);
+    t1 = bli_clock();
+    tensor_reduce(REDUCE_NORM_2, D, idx_C, ref_val);
+    cout << "REF GFLOP/s: " << 1e-9*flops/(t1-t0) << endl;
+
+    impl_type = BLAS_BASED;
+    D = C;
+    t0 = bli_clock();
+    tensor_contract(scale, A, idx_A, B, idx_B, scale, D, idx_C);
+    t1 = bli_clock();
+    impl_type = REFERENCE;
     tensor_reduce(REDUCE_NORM_2, D, idx_C, calc_val);
+    cout << "BLAS GFLOP/s: " << 1e-9*flops/(t1-t0) << endl;
 
     passfail("BLAS", ref_val, calc_val);
+
+    impl_type = BLIS_BASED;
+    D = C;
+    t0 = bli_clock();
+    tensor_contract(scale, A, idx_A, B, idx_B, scale, D, idx_C);
+    t1 = bli_clock();
+    impl_type = REFERENCE;
+    tensor_reduce(REDUCE_NORM_2, D, idx_C, calc_val);
+    cout << "BLIS GFLOP/s: " << 1e-9*flops/(t1-t0) << endl;
+
+    passfail("BLIS", ref_val, calc_val);
 }
 
 template <typename T>
@@ -1995,20 +2063,20 @@ void Test(siz_t N_in_bytes, gint_t R)
 {
     siz_t N = N_in_bytes/sizeof(T);
 
-    for (gint_t i = 0;i < R;i++) TestTBLIS<T>(N);
-    return;
+    //for (gint_t i = 0;i < R;i++) TestTBLIS<T>(N);
+    //return;
 
-    for (gint_t i = 0;i < R;i++) TestReduce<T>(N);
-    for (gint_t i = 0;i < R;i++) TestScale<T>(N);
-    for (gint_t i = 0;i < R;i++) TestTranspose<T>(N);
-    for (gint_t i = 0;i < R;i++) TestDot<T>(N);
-    for (gint_t i = 0;i < R;i++) TestReplicate<T>(N);
-    for (gint_t i = 0;i < R;i++) TestTrace<T>(N);
-    for (gint_t i = 0;i < R;i++) TestSum<T>(N);
-    for (gint_t i = 0;i < R;i++) TestOuterProd<T>(N);
-    for (gint_t i = 0;i < R;i++) TestWeight<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestReduce<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestScale<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestTranspose<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestDot<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestReplicate<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestTrace<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestSum<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestOuterProd<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestWeight<T>(N);
     for (gint_t i = 0;i < R;i++) TestContract<T>(N);
-    for (gint_t i = 0;i < R;i++) TestMult<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestMult<T>(N);
 }
 
 template <typename T>
@@ -2088,8 +2156,8 @@ void Benchmark(gint_t R)
 
 int main(int argc, char **argv)
 {
-    siz_t N = 10*1024*1024;
-    gint_t R = 10;
+    siz_t N = 100*1024*1024;
+    gint_t R = 1000;
     time_t seed = time(NULL);
 
     bli_init();
@@ -2124,15 +2192,52 @@ int main(int argc, char **argv)
         }
     }
 
-    cout << "Using mt19937 with seed " << seed << endl;
-    engine.seed(seed);
+    //cout << "Using mt19937 with seed " << seed << endl;
+    //engine.seed(seed);
 
     //Test<   float>(N, R);
     //Test<  double>(N, R);
     //Test<sComplex>(N, R);
     //Test<dComplex>(N, R);
 
-    Benchmark<double>(R);
+    //Benchmark<double>(R);
+
+    dim_t n = 10;
+
+#if 0
+
+    Matrix<double> A(n*n, n*n);
+    Matrix<double> B(n*n, n*n);
+    Matrix<double> C(n*n, n*n);
+
+    fill_n((double*)A, n*n*n*n, 0.0);
+    fill_n((double*)B, n*n*n*n, 0.0);
+    fill_n((double*)C, n*n*n*n, 0.0);
+
+    double t0 = bli_clock();
+    for (int i = 0;i < R;i++)
+        tblis_gemm(1.0, A, B, 0.0, C);
+    double t1 = bli_clock();
+
+#else
+
+    Tensor<double> A(4, vector<dim_t>{n,n,n,n});
+    Tensor<double> B(4, vector<dim_t>{n,n,n,n});
+    Tensor<double> C(4, vector<dim_t>{n,n,n,n});
+
+    fill_n((double*)A, n*n*n*n, 0.0);
+    fill_n((double*)B, n*n*n*n, 0.0);
+    fill_n((double*)C, n*n*n*n, 0.0);
+
+    impl_type = BLIS_BASED;
+    double t0 = bli_clock();
+    for (int i = 0;i < R;i++)
+        tensor_contract(1.0, A, "cfae", B, "fbed", 0.0, C, "abcd");
+    double t1 = bli_clock();
+
+#endif
+
+    cout << 2*R*(n*n*n*n*n*n)/(1e9*(t1-t0)) << endl;
 
     bli_finalize();
 

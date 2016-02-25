@@ -7,88 +7,69 @@
 #include "bli_scalar_macro_defs.h"
 
 #include <complex>
+#include <type_traits>
 
 namespace blis
 {
 
-typedef std::complex< float> sComplex;
-typedef std::complex<double> dComplex;
+template <typename T> struct real_type                  { typedef T type; };
+template <typename T> struct real_type<std::complex<T>> { typedef T type; };
+template <typename T> using real_type_t = typename real_type<T>::type;
 
-sComplex cmplx(const scomplex& x) { return sComplex(bli_creal(x), bli_cimag(x)); }
+template <typename T> struct complex_type                  { typedef std::complex<T> type; };
+template <typename T> struct complex_type<std::complex<T>> { typedef std::complex<T> type; };
+template <typename T> using complex_type_t = typename complex_type<T>::type;
 
-dComplex cmplx(const dcomplex& x) { return dComplex(bli_creal(x), bli_cimag(x)); }
+template <typename T> struct is_real                  { static const bool value =  true; };
+template <typename T> struct is_real<std::complex<T>> { static const bool value = false; };
+
+template <typename T> struct is_complex                  { static const bool value = false; };
+template <typename T> struct is_complex<std::complex<T>> { static const bool value =  true; };
 
 namespace detail
 {
-    template <typename I> struct if_integral {};
-
-    template <> struct if_integral<          char> { typedef void type; };
-    template <> struct if_integral<  signed  char> { typedef void type; };
-    template <> struct if_integral<unsigned  char> { typedef void type; };
-    template <> struct if_integral<         short> { typedef void type; };
-    template <> struct if_integral<unsigned short> { typedef void type; };
-    template <> struct if_integral<           int> { typedef void type; };
-    template <> struct if_integral<unsigned   int> { typedef void type; };
-    template <> struct if_integral<          long> { typedef void type; };
-    template <> struct if_integral<unsigned  long> { typedef void type; };
-
-    template <typename V, typename W> struct if_void         { typedef V type; };
-    template <            typename W> struct if_void<void,W> { typedef W type; };
-
-    template <typename T, typename U, typename V=void, bool diff=true, typename=void> struct result_type {};
-
-    template <typename I, typename V, bool diff> struct result_type<       I,sComplex,V,diff,typename if_integral<I>::type> { typedef typename if_void<V,sComplex>::type type; };
-    template <typename I, typename V, bool diff> struct result_type<       I,dComplex,V,diff,typename if_integral<I>::type> { typedef typename if_void<V,dComplex>::type type; };
-    template <typename I, typename V, bool diff> struct result_type<sComplex,       I,V,diff,typename if_integral<I>::type> { typedef typename if_void<V,sComplex>::type type; };
-    template <typename I, typename V, bool diff> struct result_type<dComplex,       I,V,diff,typename if_integral<I>::type> { typedef typename if_void<V,dComplex>::type type; };
-
-    template <typename V, bool diff> struct result_type<  float ,sComplex,V, diff> { typedef typename if_void<V,sComplex>::type type; };
-    template <typename V, bool diff> struct result_type<  float ,dComplex,V, diff> { typedef typename if_void<V,dComplex>::type type; };
-    template <typename V, bool diff> struct result_type< double ,sComplex,V, diff> { typedef typename if_void<V,dComplex>::type type; };
-    template <typename V, bool diff> struct result_type< double ,dComplex,V, diff> { typedef typename if_void<V,dComplex>::type type; };
-    template <typename V, bool diff> struct result_type<sComplex,  float ,V, diff> { typedef typename if_void<V,sComplex>::type type; };
-    template <typename V, bool diff> struct result_type<sComplex, double ,V, diff> { typedef typename if_void<V,dComplex>::type type; };
-    template <typename V, bool diff> struct result_type<dComplex,  float ,V, diff> { typedef typename if_void<V,dComplex>::type type; };
-    template <typename V, bool diff> struct result_type<dComplex, double ,V, diff> { typedef typename if_void<V,dComplex>::type type; };
-    template <typename V           > struct result_type<sComplex,sComplex,V,false> { typedef typename if_void<V,dComplex>::type type; };
-    template <typename V, bool diff> struct result_type<sComplex,dComplex,V, diff> { typedef typename if_void<V,dComplex>::type type; };
-    template <typename V, bool diff> struct result_type<dComplex,sComplex,V, diff> { typedef typename if_void<V,dComplex>::type type; };
-    template <typename V           > struct result_type<dComplex,dComplex,V,false> { typedef typename if_void<V,dComplex>::type type; };
+    template <typename T, typename U,
+              typename V = std::complex<typename std::common_type<real_type_t<T>,
+                                                                  real_type_t<U>>::type>>
+    using complex_op =
+        typename std::enable_if<is_complex<T>::value ||
+                                is_complex<U>::value,V>::type;
 }
 
+typedef std::complex< float> sComplex;
+typedef std::complex<double> dComplex;
+
+inline sComplex cmplx(const scomplex& x) { return sComplex(bli_creal(x), bli_cimag(x)); }
+
+inline dComplex cmplx(const dcomplex& x) { return dComplex(bli_creal(x), bli_cimag(x)); }
+
 template <typename T, typename U>
-typename detail::result_type<T,U>::type operator+(const T& a, const U& b)
+detail::complex_op<T,U> operator+(const T& a, const U& b)
 {
-    typedef typename detail::result_type<T,U>::type V;
+    typedef detail::complex_op<T,U> V;
     return V(a) + V(b);
 }
 
 template <typename T, typename U>
-typename detail::result_type<T,U>::type operator-(const T& a, const U& b)
+detail::complex_op<T,U> operator-(const T& a, const U& b)
 {
-    typedef typename detail::result_type<T,U>::type V;
+    typedef detail::complex_op<T,U> V;
     return V(a) - V(b);
 }
 
 template <typename T, typename U>
-typename detail::result_type<T,U>::type operator*(const T& a, const U& b)
+detail::complex_op<T,U> operator*(const T& a, const U& b)
 {
-    typedef typename detail::result_type<T,U>::type V;
+    typedef detail::complex_op<T,U> V;
     return V(a) * V(b);
 }
 
 template <typename T, typename U>
-typename detail::result_type<T,U>::type operator/(const T& a, const U& b)
+detail::complex_op<T,U> operator/(const T& a, const U& b)
 {
-    typedef typename detail::result_type<T,U>::type V;
+    typedef detail::complex_op<T,U> V;
     return V(a) / V(b);
 }
-
-template <typename T> struct real_type                  { typedef T type; };
-template <typename T> struct real_type<std::complex<T>> { typedef T type; };
-
-template <typename T> struct complex_type                  { typedef std::complex<T> type; };
-template <typename T> struct complex_type<std::complex<T>> { typedef std::complex<T> type; };
 
 template <typename T> struct datatype;
 template <> struct datatype<   float> { static const num_t value =    BLIS_FLOAT; };
@@ -98,29 +79,14 @@ template <> struct datatype<dcomplex> { static const num_t value = BLIS_DCOMPLEX
 template <> struct datatype<sComplex> { static const num_t value = BLIS_SCOMPLEX; };
 template <> struct datatype<dComplex> { static const num_t value = BLIS_DCOMPLEX; };
 
-template <typename T> struct is_real                  { static const bool value =  true; };
-template <typename T> struct is_real<std::complex<T>> { static const bool value = false; };
-
-template <typename T> struct is_complex                  { static const bool value = false; };
-template <typename T> struct is_complex<std::complex<T>> { static const bool value =  true; };
-
-#if __cplusplus < 201103l
-
 template <typename T>
 typename std::enable_if<!is_complex<T>::value,T>::type
 conj(T val) { return val; }
 
 template <typename T>
-typename std::enable_if<!is_complex<T>::value,T>::type
-real(T val) { return val; }
+typename std::enable_if<is_complex<T>::value,T>::type
+conj(T val) { return std::conj(val); }
 
-template <typename T>
-typename std::enable_if<!is_complex<T>::value,T>::type
-imag(T val) { return T(); }
-
-#endif
-
-using std::conj;
 using std::real;
 using std::imag;
 
@@ -133,37 +99,37 @@ typename std::enable_if<is_complex<T>::value,T>::type
 norm2(T val) { return real(val)*real(val) + imag(val)*imag(val); }
 
 template <typename T, typename U>
-typename detail::result_type<T,U,bool>::type operator==(const T& a, const U& b)
+detail::complex_op<T,U,bool> operator==(const T& a, const U& b)
 {
     return real(a) == real(b) && imag(a) == imag(b);
 }
 
 template <typename T, typename U>
-typename detail::result_type<T,U,bool>::type operator!=(const T& a, const U& b)
+detail::complex_op<T,U,bool> operator!=(const T& a, const U& b)
 {
     return !(a == b);
 }
 
 template <typename T, typename U>
-typename detail::result_type<T,U,bool,false>::type operator<(const T& a, const U& b)
+detail::complex_op<T,U,bool> operator<(const T& a, const U& b)
 {
     return real(a)+imag(a) < real(b)+imag(b);
 }
 
 template <typename T, typename U>
-typename detail::result_type<T,U,bool,false>::type operator>(const T& a, const U& b)
+detail::complex_op<T,U,bool> operator>(const T& a, const U& b)
 {
     return b < a;
 }
 
 template <typename T, typename U>
-typename detail::result_type<T,U,bool,false>::type operator<=(const T& a, const U& b)
+detail::complex_op<T,U,bool> operator<=(const T& a, const U& b)
 {
     return !(b < a);
 }
 
 template <typename T, typename U>
-typename detail::result_type<T,U,bool,false>::type operator>=(const T& a, const U& b)
+detail::complex_op<T,U,bool> operator>=(const T& a, const U& b)
 {
     return !(a < b);
 }
@@ -209,6 +175,11 @@ template <> struct gemm_ukr_t<   float> { static constexpr sgemm_ukr_t value = B
 template <> struct gemm_ukr_t<  double> { static constexpr dgemm_ukr_t value = BLIS_DGEMM_UKERNEL; };
 template <> struct gemm_ukr_t<sComplex> { static constexpr cgemm_ukr_t value = BLIS_CGEMM_UKERNEL; };
 template <> struct gemm_ukr_t<dComplex> { static constexpr zgemm_ukr_t value = BLIS_ZGEMM_UKERNEL; };
+
+template <typename T> struct basic_type { typedef T type; };
+template <> struct basic_type<sComplex> { typedef scomplex type; };
+template <> struct basic_type<dComplex> { typedef dcomplex type; };
+template <typename T> using basic_type_t = typename basic_type<T>::type;
 
 }
 

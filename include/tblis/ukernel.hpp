@@ -7,6 +7,51 @@ namespace tblis
 {
 
 template <typename T, dim_t MR, dim_t NR>
+void GenericMicroKernel(dim_t k,
+                        const T* alpha, const T* p_a, const T* p_b,
+                        const T* beta, T* p_c, inc_t rs_c, inc_t cs_c,
+                        auxinfo_t* data)
+{
+    T p_ab[MR*NR] __attribute__((aligned(BLIS_STACK_BUF_ALIGN_SIZE))) = {};
+
+    while (k --> 0)
+    {
+        for (int i = 0;i < MR;i++)
+        {
+            for (int j = 0;j < NR;j++)
+            {
+                *(p_ab+i+MR*j) += (*(p_a+i)) * (*(p_b+j));
+            }
+        }
+
+        p_a += MR;
+        p_b += NR;
+    }
+
+    if (*beta == 0.0)
+    {
+        for (int i = 0;i < MR;i++)
+        {
+            for (int j = 0;j < NR;j++)
+            {
+                *(p_c+rs_c*i+cs_c*j) = (*alpha) * (*(p_ab+i+MR*j));
+            }
+        }
+    }
+    else
+    {
+        for (int i = 0;i < MR;i++)
+        {
+            for (int j = 0;j < NR;j++)
+            {
+                *(p_c+rs_c*i+cs_c*j) = (*alpha) * (*(p_ab+i+MR*j)) +
+                                       (*beta) * (*(p_c+rs_c*i+cs_c*j));
+            }
+        }
+    }
+}
+
+template <typename T, dim_t MR, dim_t NR>
 void AccumulateMicroTile(dim_t m, dim_t n, T* restrict p_ab,
                          T beta, T* restrict p_c, inc_t rs_c, inc_t cs_c)
 {
@@ -116,6 +161,19 @@ struct MicroKernel
     template <typename T>
     struct run
     {
+        //typedef T Tb;
+        typedef basic_type_t<T> Tb;
+
+        static Tb* fwd(const T* value)
+        {
+            return const_cast<Tb*>(reinterpret_cast<const Tb*>(value));
+        }
+
+        static Tb* fwd(const T& value)
+        {
+            return fwd(&value);
+        }
+
         void operator()(T alpha, Matrix<T>& A, Matrix<T>& B, T beta, Matrix<T>& C) const
         {
             constexpr dim_t MR = MT<T>::value;
@@ -136,9 +194,10 @@ struct MicroKernel
 
             if (m == MR && n == NR)
             {
+                //GenericMicroKernel<T,MR,NR>(k,
                 gemm_ukr_t<T>::value(k,
-                                     &alpha, p_a, p_b,
-                                     &beta, p_c, rs_c, cs_c,
+                                     fwd(alpha), fwd(p_a), fwd(p_b),
+                                     fwd(beta), fwd(p_c), rs_c, cs_c,
                                      &data);
             }
             else
@@ -146,9 +205,10 @@ struct MicroKernel
                 T p_ab[MR*NR] __attribute__((aligned(BLIS_STACK_BUF_ALIGN_SIZE)));
                 static constexpr T zero = 0.0;
 
+                //GenericMicroKernel<T,MR,NR>(k,
                 gemm_ukr_t<T>::value(k,
-                                     &alpha, p_a, p_b,
-                                     (T*)&zero, p_ab, 1, MR,
+                                     fwd(alpha), fwd(p_a), fwd(p_b),
+                                     fwd(zero), fwd(p_ab), 1, MR,
                                      &data);
 
                 AccumulateMicroTile<T,MR,NR>(m, n, p_ab,
@@ -178,9 +238,10 @@ struct MicroKernel
 
             if (m == MR && n == NR && rs_c != 0 && cs_c != 0)
             {
+                //GenericMicroKernel<T,MR,NR>(k,
                 gemm_ukr_t<T>::value(k,
-                                     &alpha, p_a, p_b,
-                                     &beta, p_c, rs_c, cs_c,
+                                     fwd(alpha), fwd(p_a), fwd(p_b),
+                                     fwd(beta), fwd(p_c), rs_c, cs_c,
                                      &data);
             }
             else
@@ -188,9 +249,10 @@ struct MicroKernel
                 T p_ab[MR*NR] __attribute__((aligned(BLIS_STACK_BUF_ALIGN_SIZE)));
                 static constexpr T zero = 0.0;
 
+                //GenericMicroKernel<T,MR,NR>(k,
                 gemm_ukr_t<T>::value(k,
-                                     &alpha, p_a, p_b,
-                                     (T*)&zero, p_ab, 1, MR,
+                                     fwd(alpha), fwd(p_a), fwd(p_b),
+                                     fwd(zero), fwd(p_ab), 1, MR,
                                      &data);
 
                 if (rs_c == 0 && cs_c == 0)

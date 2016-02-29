@@ -6,6 +6,9 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "blis++/blis++.hpp"
+
+typedef f77_int integer;
 typedef integer logical;
 
 /*

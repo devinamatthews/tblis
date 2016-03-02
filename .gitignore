@@ -9,3 +9,4 @@ lib
 .deps
 /.ptp-sync/
 .ptp-sync-folder
+autom4te.cache

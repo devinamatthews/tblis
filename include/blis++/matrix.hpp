@@ -177,6 +177,13 @@ class Matrix : private obj_t
             return *this;
         }
 
+        Matrix& operator=(const type& val)
+        {
+            Matrix<T> s(val);
+            bli_setm(s, this);
+            return *this;
+        }
+
         void reset()
         {
             free();

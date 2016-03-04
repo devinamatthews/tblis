@@ -32,6 +32,12 @@ class Scalar : public Matrix<T>
             return *this;
         }
 
+        Scalar& operator=(const type& val)
+        {
+            *this = val;
+            return *this;
+        }
+
         explicit operator type&()
         {
             return *(type*)(*this);

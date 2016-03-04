@@ -11,6 +11,7 @@
 
 #include "core/tensor_iface.hpp"
 #include "util/iterator.hpp"
+#include "util/util.hpp"
 #include "tblis/gemm.hpp"
 #include "tblis/normfm.hpp"
 
@@ -22,7 +23,13 @@ using namespace tensor;
 using namespace tensor::impl;
 using namespace tensor::util;
 
-static mt19937 engine;
+namespace tensor
+{
+namespace util
+{
+mt19937 engine;
+}
+}
 
 string permutation(string from, string to)
 {
@@ -49,7 +56,7 @@ template <typename T, typename U>
 void passfail(const string& label, inc_t ia, inc_t ib, T a, U b)
 {
     auto c = std::abs(a-b)/(std::abs((a+b)/U(2.0)+U(1e-15)));
-    bool pass = (sizeof(c) == 4 ? c < 1e-4 : c < 1e-12) && ia == ib;
+    bool pass = (sizeof(c) == 4 ? c < 1e-3 : c < 1e-12) && ia == ib;
 
     cout << label << ": ";
     if (pass)
@@ -97,317 +104,6 @@ template <> const string& TypeName<dComplex>()
 {
     static string name = "dComplex";
     return name;
-}
-
-/*
- * Returns a random integer uniformly distributed in the range [mn,mx]
- */
-int64_t RandomInteger(int64_t mn, int64_t mx)
-{
-    uniform_int_distribution<int64_t> d(mn, mx);
-    return d(engine);
-}
-
-/*
- * Returns a random integer uniformly distributed in the range [0,mx]
- */
-int64_t RandomInteger(int64_t mx)
-{
-    return RandomInteger(0, mx);
-}
-
-/*
- * Returns a pseudo-random number uniformly distributed in the range [0,1).
- */
-template <typename T> T RandomNumber()
-{
-    uniform_real_distribution<T> d;
-    return d(engine);
-}
-
-/*
- * Returns a pseudo-random number uniformly distributed in the range (-1,1).
- */
-template <typename T> T RandomUnit()
-{
-    double val;
-    do
-    {
-        val = 2*RandomNumber<T>()-1;
-    } while (val == -1.0);
-    return val;
-}
-
-/*
- * Returns a psuedo-random complex number unformly distirbuted in the
- * interior of the unit circle.
- */
-template <> sComplex RandomUnit<sComplex>()
-{
-    float r, i;
-    do
-    {
-        r = RandomUnit<float>();
-        i = RandomUnit<float>();
-    }
-    while (r*r+i*i >= 1);
-
-    scomplex val;
-    bli_csets(r, i, val);
-    return cmplx(val);
-}
-
-/*
- * Returns a psuedo-random complex number unformly distirbuted in the
- * interior of the unit circle.
- */
-template <> dComplex RandomUnit<dComplex>()
-{
-    double r, i;
-    do
-    {
-        r = RandomUnit<double>();
-        i = RandomUnit<double>();
-    }
-    while (r*r+i*i >= 1);
-
-    dcomplex val;
-    bli_zsets(r, i, val);
-    return cmplx(val);
-}
-
-bool RandomChoice()
-{
-    return RandomInteger(1);
-}
-
-/*
- * Returns a random choice from a set of objects with non-negative weights w,
- * which do not need to sum to unity.
- */
-int RandomWeightedChoice(const vector<double>& w)
-{
-    int n = w.size();
-    assert(n > 0);
-
-    double s = 0;
-    for (int i = 0;i < n;i++)
-    {
-        assert(w[i] >= 0);
-        s += w[i];
-    }
-
-    double c = s*RandomNumber<double>();
-    for (int i = 0;i < n;i++)
-    {
-        if (c < w[i]) return i;
-        c -= w[i];
-    }
-
-    assert(0);
-    return -1;
-}
-
-/*
- * Returns a random choice from a set of objects with non-negative weights w,
- * which do not need to sum to unity.
- */
-template <typename T>
-typename enable_if<is_integral<T>::value,int>::type
-RandomWeightedChoice(const vector<T>& w)
-{
-    int n = w.size();
-    assert(n > 0);
-
-    T s = 0;
-    for (int i = 0;i < n;i++)
-    {
-        assert(w[i] >= 0);
-        s += w[i];
-    }
-
-    T c = RandomInteger(s-1);
-    for (int i = 0;i < n;i++)
-    {
-        if (c < w[i]) return i;
-        c -= w[i];
-    }
-
-    assert(0);
-    return -1;
-}
-
-/*
- * Returns a sequence of n non-negative numbers such that sum_i n_i = s and
- * and n_i >= mn_i, with uniform distribution.
- */
-vector<double> RandomSumConstrainedSequence(int n, double s,
-                                            const vector<double>& mn)
-{
-    assert(n > 0);
-    assert(s >= 0);
-    assert(mn.size() == n);
-    assert(mn[0] >= 0);
-
-    s -= mn[0];
-    assert(s >= 0);
-
-    vector<double> p(n+1);
-
-    p[0] = 0;
-    p[n] = 1;
-    for (int i = 1;i < n;i++)
-    {
-        assert(mn[i] >= 0);
-        s -= mn[i];
-        assert(s >= 0);
-        p[i] = RandomNumber<double>();
-    }
-    sort(p.begin(), p.end());
-
-    for (int i = 0;i < n;i++)
-    {
-        p[i] = s*(p[i+1]-p[i])+mn[i];
-    }
-    p.resize(n);
-    //cout << s << p << accumulate(p.begin(), p.end(), 0.0) << endl;
-
-    return p;
-}
-
-/*
- * Returns a sequence of n non-negative numbers such that sum_i n_i = s,
- * with uniform distribution.
- */
-vector<double> RandomSumConstrainedSequence(int n, double s)
-{
-    assert(n > 0);
-    return RandomSumConstrainedSequence(n, s, vector<double>(n));
-}
-
-/*
- * Returns a sequence of n non-negative integers such that sum_i n_i = s and
- * and n_i >= mn_i, with uniform distribution.
- */
-template <typename T>
-typename enable_if<is_integral<T>::value,vector<T>>::type
-RandomSumConstrainedSequence(int n, T s, const vector<T>& mn)
-{
-    assert(n >  0);
-    assert(s >= 0);
-    assert(mn.size() == n);
-
-    for (int i = 0;i < n;i++)
-    {
-        assert(mn[i] >= 0);
-        s -= mn[i];
-        assert(s >= 0);
-    }
-
-    vector<T> p(n+1);
-
-    p[0] = 0;
-    p[n] = 1;
-    for (int i = 1;i < n;i++)
-    {
-        p[i] = RandomInteger(s);
-    }
-    sort(p.begin(), p.end());
-
-    for (int i = 0;i < n;i++)
-    {
-        p[i] = s*(p[i+1]-p[i])+mn[i];
-    }
-    p.resize(n);
-    //cout << s << p << accumulate(p.begin(), p.end(), T(0)) << endl;
-
-    return p;
-}
-
-/*
- * Returns a sequence of n non-negative integers such that sum_i n_i = s,
- * with uniform distribution.
- */
-template <typename T>
-typename enable_if<is_integral<T>::value,vector<T>>::type
-RandomSumConstrainedSequence(int n, T s)
-{
-    assert(n > 0);
-    return RandomSumConstrainedSequence(n, s, vector<T>(n));
-}
-
-/*
- * Returns a sequence of n numbers such than prod_i n_i = p and n_i >= mn_i,
- * where n_i and p are >= 1 and with uniform distribution.
- */
-vector<double> RandomProductConstrainedSequence(int n, double p,
-                                                const vector<double>& mn)
-{
-    assert(n >  0);
-    assert(p >= 1);
-    assert(mn.size() == n);
-
-    vector<double> log_mn(n);
-    for (int i = 0;i < n;i++)
-    {
-        log_mn[i] = (mn[i] <= 0.0 ? 1.0 : log(mn[i]));
-    }
-
-    vector<double> s = RandomSumConstrainedSequence(n, log(p), log_mn);
-    for (int i = 0;i < n;i++) s[i] = exp(s[i]);
-    //cout << p << s << accumulate(s.begin(), s.end(), 1.0, multiplies<double>()) << endl;
-    return s;
-}
-
-/*
- * Returns a sequence of n numbers such than prod_i n_i = p, where n_i and
- * p are >= 1 and with uniform distribution.
- */
-vector<double> RandomProductConstrainedSequence(int n, double p)
-{
-    assert(n > 0);
-    return RandomProductConstrainedSequence(n, p, vector<double>(n, 1.0));
-}
-
-/*
- * Returns a sequence of n numbers such that p/2^d <= prod_i n_i <= p and
- * n_i >= mn_i, where n_i and p are >= 1 and with uniform distribution.
- */
-template <typename T>
-typename enable_if<is_integral<T>::value,vector<T>>::type
-RandomProductConstrainedSequence(int n, T p, const vector<T>& mn)
-{
-    assert(n >  0);
-    assert(p >= 1);
-    assert(mn.size() == n);
-
-    vector<double> mnd(n);
-    for (int i = 0;i < n;i++)
-    {
-        mnd[i] = max(T(1), mn[i]);
-    }
-
-    vector<double> sd = RandomProductConstrainedSequence(n, (double)p, mnd);
-    vector<T> si(n);
-    for (int i = 0;i < n;i++)
-    {
-        si[i] = floor(sd[i]);
-    }
-    //cout << p << si << accumulate(si.begin(), si.end(), T(1), multiplies<T>()) << endl;
-
-    return si;
-}
-
-/*
- * Returns a sequence of n numbers such that p/2^d <= prod_i n_i <= p, where
- * n_i and p are >= 1 and with uniform distribution.
- */
-template <typename T>
-typename enable_if<is_integral<T>::value,vector<T>>::type
-RandomProductConstrainedSequence(int n, T p)
-{
-    assert(n > 0);
-    return RandomProductConstrainedSequence(n, p, vector<T>(n, T(1)));
 }
 
 /*
@@ -470,11 +166,8 @@ void RandomMatrix(siz_t N, Matrix<T>& t)
 template <typename T>
 void RandomTensor(siz_t N, gint_t d, vector<dim_t> len_min, Tensor<T>& t)
 {
-    //len_min.insert(len_min.begin(), 1);
-    //vector<inc_t> stride = RandomProductConstrainedSequence<inc_t>(d+1, N, len_min);
-    vector<inc_t> stride = RandomProductConstrainedSequence<inc_t>(d, N, len_min);
     len_min.insert(len_min.begin(), 1);
-    stride.insert(stride.begin(), 1);
+    vector<inc_t> stride = RandomProductConstrainedSequence<inc_t>(d+1, N, len_min);
 
     vector<dim_t> len(d);
     for (gint_t i = 0;i < d;i++)
@@ -485,8 +178,7 @@ void RandomTensor(siz_t N, gint_t d, vector<dim_t> len_min, Tensor<T>& t)
         }
         else
         {
-            //len[i] = RandomInteger(1, stride[i+1]);
-            len[i] = stride[i+1];
+            len[i] = RandomInteger(1, stride[i+1]);
         }
     }
 
@@ -867,17 +559,17 @@ void RandomTensors(siz_t N,
             swap(ndim_A, ndim_C);
             swap(idx_A, idx_C);
             swap(A, C);
-            swap(ndim_A, ndim_B);
-            swap(idx_A, idx_B);
-            swap(A, B);
+            swap(ndim_B, ndim_C);
+            swap(idx_B, idx_C);
+            swap(B, C);
             break;
         case CAB:
             swap(ndim_A, ndim_B);
             swap(idx_A, idx_B);
             swap(A, B);
-            swap(ndim_A, ndim_C);
-            swap(idx_A, idx_C);
-            swap(A, C);
+            swap(ndim_B, ndim_C);
+            swap(idx_B, idx_C);
+            swap(B, C);
             break;
         case CBA:
             swap(ndim_A, ndim_C);
@@ -1186,8 +878,6 @@ void RandomContract(siz_t N, Tensor<T>& A, string& idx_A,
            ndim_BC < 0 ||
            (ndim_A+ndim_B+ndim_C)%2 != 0);
 
-    ndim_AB = ndim_AC = ndim_BC = 3;
-
     RandomTensors(N,
                   0, 0, 0,
                   ndim_AB, ndim_AC, ndim_BC,
@@ -1488,62 +1178,24 @@ void TestContract(siz_t N)
     T ref_val, calc_val, scale;
     scale = 10.0*RandomUnit<T>();
 
-    dim_t m = 1;
-    for (int i = 0;i < A.getDimension();i++)
-    {
-        if (find(idx_B.begin(), idx_B.end(), idx_A[i]) == idx_B.end())
-            m *= A.getLength(i);
-    }
-
-    dim_t k = 1;
-    for (int i = 0;i < B.getDimension();i++)
-    {
-        if (find(idx_C.begin(), idx_C.end(), idx_B[i]) == idx_C.end())
-            k *= B.getLength(i);
-    }
-
-    dim_t n = 1;
-    for (int i = 0;i < C.getDimension();i++)
-    {
-        if (find(idx_A.begin(), idx_A.end(), idx_C[i]) == idx_A.end())
-            n *= C.getLength(i);
-    }
-
-    dim_t flops = m*n*k;
-
-    cout << "Flops: " << flops << endl;
-    cout << "Shape: [" << m << "," << n << "," << k << "] " << log10(double(m)/double(n)) << endl;
-    cout << endl;
-
-    double t0, t1;
-
     impl_type = REFERENCE;
     D = C;
-    t0 = bli_clock();
     tensor_contract(scale, A, idx_A, B, idx_B, scale, D, idx_C);
-    t1 = bli_clock();
     tensor_reduce(REDUCE_NORM_2, D, idx_C, ref_val);
-    cout << "REF GFLOP/s: " << 1e-9*flops/(t1-t0) << endl;
 
     impl_type = BLAS_BASED;
     D = C;
-    t0 = bli_clock();
     tensor_contract(scale, A, idx_A, B, idx_B, scale, D, idx_C);
-    t1 = bli_clock();
     impl_type = REFERENCE;
     tensor_reduce(REDUCE_NORM_2, D, idx_C, calc_val);
-    cout << "BLAS GFLOP/s: " << 1e-9*flops/(t1-t0) << endl;
 
     passfail("BLAS", ref_val, calc_val);
 
     impl_type = BLIS_BASED;
     D = C;
-    t0 = bli_clock();
     tensor_contract(scale, A, idx_A, B, idx_B, scale, D, idx_C);
-    t1 = bli_clock();
     impl_type = REFERENCE;
     tensor_reduce(REDUCE_NORM_2, D, idx_C, calc_val);
-    cout << "BLIS GFLOP/s: " << 1e-9*flops/(t1-t0) << endl;
 
     passfail("BLIS", ref_val, calc_val);
 }
@@ -2002,7 +1654,7 @@ void TestReduce(siz_t N)
     passfail("REDUCE_MAX", ref_idx, blas_idx, ref_val, blas_val);
 
     tensor_reduce(REDUCE_MAX_ABS, A, idx_A, ref_val, ref_idx);
-    blas_val = data[0];
+    blas_val = std::abs(data[0]);
     blas_idx = 0;
     for (siz_t i = 0;i < NA;i++)
     {
@@ -2012,7 +1664,7 @@ void TestReduce(siz_t N)
             blas_idx = i;
         }
     }
-    passfail("REDUCE_MAX_ABS", ref_idx, blas_idx, ref_val, std::abs(blas_val));
+    passfail("REDUCE_MAX_ABS", ref_idx, blas_idx, ref_val, blas_val);
 
     /*
     tensor_reduce(REDUCE_MIN, A, idx_A, ref_val, ref_idx);
@@ -2063,101 +1715,25 @@ void Test(siz_t N_in_bytes, gint_t R)
 {
     siz_t N = N_in_bytes/sizeof(T);
 
-    //for (gint_t i = 0;i < R;i++) TestTBLIS<T>(N);
-    //return;
+    for (gint_t i = 0;i < R;i++) TestTBLIS<T>(N);
 
-    //for (gint_t i = 0;i < R;i++) TestReduce<T>(N);
-    //for (gint_t i = 0;i < R;i++) TestScale<T>(N);
-    //for (gint_t i = 0;i < R;i++) TestTranspose<T>(N);
-    //for (gint_t i = 0;i < R;i++) TestDot<T>(N);
-    //for (gint_t i = 0;i < R;i++) TestReplicate<T>(N);
-    //for (gint_t i = 0;i < R;i++) TestTrace<T>(N);
-    //for (gint_t i = 0;i < R;i++) TestSum<T>(N);
-    //for (gint_t i = 0;i < R;i++) TestOuterProd<T>(N);
-    //for (gint_t i = 0;i < R;i++) TestWeight<T>(N);
+    for (gint_t i = 0;i < R;i++) TestReduce<T>(N);
+    for (gint_t i = 0;i < R;i++) TestScale<T>(N);
+    for (gint_t i = 0;i < R;i++) TestTranspose<T>(N);
+    for (gint_t i = 0;i < R;i++) TestDot<T>(N);
+    for (gint_t i = 0;i < R;i++) TestReplicate<T>(N);
+    for (gint_t i = 0;i < R;i++) TestTrace<T>(N);
+    for (gint_t i = 0;i < R;i++) TestSum<T>(N);
+    for (gint_t i = 0;i < R;i++) TestOuterProd<T>(N);
+    for (gint_t i = 0;i < R;i++) TestWeight<T>(N);
     for (gint_t i = 0;i < R;i++) TestContract<T>(N);
-    //for (gint_t i = 0;i < R;i++) TestMult<T>(N);
-}
-
-template <typename T>
-void Benchmark(gint_t R)
-{
-    dim_t lb = 10;
-    dim_t ub = 1000;
-    dim_t inc = 10;
-
-    for (int n = lb;n <= ub;n += inc)
-    {
-        Matrix<T> A(n, n);
-        Matrix<T> B(n, n);
-        Matrix<T> C(n, n);
-        ScatterMatrix<T> snA(A, SCATTER_NONE);
-        ScatterMatrix<T> snB(B, SCATTER_NONE);
-        ScatterMatrix<T> snC(C, SCATTER_NONE);
-        ScatterMatrix<T> sbA(A, SCATTER_BOTH);
-        ScatterMatrix<T> sbB(B, SCATTER_BOTH);
-        ScatterMatrix<T> sbC(C, SCATTER_BOTH);
-
-        for (siz_t i = 0;i < n*n;i++)
-        {
-            ((T*)A)[i] = RandomUnit<T>();
-            ((T*)B)[i] = RandomUnit<T>();
-            ((T*)C)[i] = RandomUnit<T>();
-        }
-
-        //T alpha = RandomUnit<T>();
-        //T beta = RandomUnit<T>();
-        T alpha = 1.0;
-        T beta = 0.0;
-        Scalar<T> alp(alpha);
-        Scalar<T> bet(beta);
-
-        double flops = 2*n*n*n;
-
-        double dt_blis = 1e9;
-        for (int r = 0;r < R;r++)
-        {
-            double t0 = bli_clock();
-            bli_gemm(alp, A, B, bet, C);
-            double t1 = bli_clock();
-            dt_blis = min(dt_blis, t1-t0);
-        }
-
-        double dt_tblis = 1e9;
-        for (int r = 0;r < R;r++)
-        {
-            double t0 = bli_clock();
-            tblis_gemm(alpha, A, B, beta, C);
-            double t1 = bli_clock();
-            dt_tblis = min(dt_tblis, t1-t0);
-        }
-
-        double dt_tblissn = 1e9;
-        for (int r = 0;r < R;r++)
-        {
-            double t0 = bli_clock();
-            tblis_gemm(alpha, sbA, sbB, beta, C);
-            double t1 = bli_clock();
-            dt_tblissn = min(dt_tblissn, t1-t0);
-        }
-
-        double dt_tblissb = 1e9;
-        for (int r = 0;r < R;r++)
-        {
-            double t0 = bli_clock();
-            tblis_gemm(alpha, sbA, sbB, beta, sbC);
-            double t1 = bli_clock();
-            dt_tblissb = min(dt_tblissb, t1-t0);
-        }
-
-        printf("%d %e %e %e %e\n", n, flops/dt_blis, flops/dt_tblis, flops/dt_tblissn, flops/dt_tblissb);
-    }
+    for (gint_t i = 0;i < R;i++) TestMult<T>(N);
 }
 
 int main(int argc, char **argv)
 {
-    siz_t N = 100*1024*1024;
-    gint_t R = 1000;
+    siz_t N = 1024*1024;
+    gint_t R = 10;
     time_t seed = time(NULL);
 
     bli_init();
@@ -2192,52 +1768,13 @@ int main(int argc, char **argv)
         }
     }
 
-    //cout << "Using mt19937 with seed " << seed << endl;
-    //engine.seed(seed);
+    cout << "Using mt19937 with seed " << seed << endl;
+    engine.seed(seed);
 
-    //Test<   float>(N, R);
-    //Test<  double>(N, R);
-    //Test<sComplex>(N, R);
-    //Test<dComplex>(N, R);
-
-    //Benchmark<double>(R);
-
-    dim_t n = 10;
-
-#if 0
-
-    Matrix<double> A(n*n, n*n);
-    Matrix<double> B(n*n, n*n);
-    Matrix<double> C(n*n, n*n);
-
-    fill_n((double*)A, n*n*n*n, 0.0);
-    fill_n((double*)B, n*n*n*n, 0.0);
-    fill_n((double*)C, n*n*n*n, 0.0);
-
-    double t0 = bli_clock();
-    for (int i = 0;i < R;i++)
-        tblis_gemm(1.0, A, B, 0.0, C);
-    double t1 = bli_clock();
-
-#else
-
-    Tensor<double> A(4, vector<dim_t>{n,n,n,n});
-    Tensor<double> B(4, vector<dim_t>{n,n,n,n});
-    Tensor<double> C(4, vector<dim_t>{n,n,n,n});
-
-    fill_n((double*)A, n*n*n*n, 0.0);
-    fill_n((double*)B, n*n*n*n, 0.0);
-    fill_n((double*)C, n*n*n*n, 0.0);
-
-    impl_type = BLIS_BASED;
-    double t0 = bli_clock();
-    for (int i = 0;i < R;i++)
-        tensor_contract(1.0, A, "cfae", B, "fbed", 0.0, C, "abcd");
-    double t1 = bli_clock();
-
-#endif
-
-    cout << 2*R*(n*n*n*n*n*n)/(1e9*(t1-t0)) << endl;
+    Test<   float>(N, R);
+    Test<  double>(N, R);
+    Test<sComplex>(N, R);
+    Test<dComplex>(N, R);
 
     bli_finalize();
 

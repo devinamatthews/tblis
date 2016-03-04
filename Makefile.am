@@ -24,6 +24,6 @@ __top_builddir__bin_bench_SOURCES = $(tensor_SOURCES) src/bench.cxx
 	
 VPATH += $(srcdir)
 
-AM_CPPFLAGS = -I$(srcdir)/src @blis_INCLUDES@
+AM_CPPFLAGS = -I$(srcdir)/include @blis_INCLUDES@
 __top_builddir__bin_test_LDADD = @blis_LIBS@
 __top_builddir__bin_bench_LDADD = @blis_LIBS@

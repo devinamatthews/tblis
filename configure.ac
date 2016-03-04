@@ -18,7 +18,7 @@ AH_BOTTOM([
 #endif
 ])
 
-AX_PROG_CXX([g++ clang++ icpc])
+AC_PROG_CXX([g++ clang++ icpc])
 AX_CXX_COMPILE_STDCXX_11([noext])
 AC_LANG([C++])
 AC_C_RESTRICT
@@ -34,7 +34,7 @@ AC_DEFINE_UNQUOTED([TOPDIR], [$topdir], [The top source directory.])
 # Check for BLIS
 #
 AQ_WITH_PACKAGE([blis], [https://github.com/flame/blis],
-                [blis.h], [],
+                [blis.h], [include/blis],
                 [bli_init], [-lblis])
                 
 mkdir -p bin

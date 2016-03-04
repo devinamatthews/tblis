@@ -1,5 +1,17 @@
-#include "tensor.h"
+#include "tensor.hpp"
+#include "blis++/blis++.hpp"
 #include "core/tensor_templates.hpp"
+
+using namespace blis;
+
+static const sComplex* conv(const scomplex* x) { return reinterpret_cast<const sComplex*>(x); }
+static       sComplex* conv(      scomplex* x) { return reinterpret_cast<      sComplex*>(x); }
+static const sComplex& conv(const scomplex& x) { return reinterpret_cast<const sComplex&>(x); }
+static       sComplex& conv(      scomplex& x) { return reinterpret_cast<      sComplex&>(x); }
+static const dComplex* conv(const dcomplex* x) { return reinterpret_cast<const dComplex*>(x); }
+static       dComplex* conv(      dcomplex* x) { return reinterpret_cast<      dComplex*>(x); }
+static const dComplex& conv(const dcomplex& x) { return reinterpret_cast<const dComplex&>(x); }
+static       dComplex& conv(      dcomplex& x) { return reinterpret_cast<      dComplex&>(x); }
 
 extern "C"
 {
@@ -26,18 +38,18 @@ int tensor_cmult(scomplex alpha, const scomplex* A, gint_t ndim_A, const dim_t* 
                                  const scomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
                  scomplex  beta,       scomplex* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C)
 {
-    return tensor::tensor_mult(alpha, A, ndim_A, len_A, stride_A, idx_A,
-                                      B, ndim_B, len_B, stride_B, idx_B,
-                                beta, C, ndim_C, len_C, stride_C, idx_C);
+    return tensor::tensor_mult(conv(alpha), conv(A), ndim_A, len_A, stride_A, idx_A,
+                                            conv(B), ndim_B, len_B, stride_B, idx_B,
+                               conv( beta), conv(C), ndim_C, len_C, stride_C, idx_C);
 }
 
 int tensor_zmult(dcomplex alpha, const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
                                  const dcomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
                  dcomplex  beta,       dcomplex* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C)
 {
-    return tensor::tensor_mult(alpha, A, ndim_A, len_A, stride_A, idx_A,
-                                      B, ndim_B, len_B, stride_B, idx_B,
-                                beta, C, ndim_C, len_C, stride_C, idx_C);
+    return tensor::tensor_mult(conv(alpha), conv(A), ndim_A, len_A, stride_A, idx_A,
+                                            conv(B), ndim_B, len_B, stride_B, idx_B,
+                               conv( beta), conv(C), ndim_C, len_C, stride_C, idx_C);
 }
 
 int tensor_scontract(   float alpha, const    float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
@@ -62,18 +74,18 @@ int tensor_ccontract(scomplex alpha, const scomplex* A, gint_t ndim_A, const dim
                                      const scomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
                      scomplex  beta,       scomplex* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C)
 {
-    return tensor::tensor_contract(alpha, A, ndim_A, len_A, stride_A, idx_A,
-                                          B, ndim_B, len_B, stride_B, idx_B,
-                                    beta, C, ndim_C, len_C, stride_C, idx_C);
+    return tensor::tensor_contract(conv(alpha), conv(A), ndim_A, len_A, stride_A, idx_A,
+                                                conv(B), ndim_B, len_B, stride_B, idx_B,
+                                   conv( beta), conv(C), ndim_C, len_C, stride_C, idx_C);
 }
 
 int tensor_zcontract(dcomplex alpha, const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
                                      const dcomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
                      dcomplex  beta,       dcomplex* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C)
 {
-    return tensor::tensor_contract(alpha, A, ndim_A, len_A, stride_A, idx_A,
-                                          B, ndim_B, len_B, stride_B, idx_B,
-                                    beta, C, ndim_C, len_C, stride_C, idx_C);
+    return tensor::tensor_contract(conv(alpha), conv(A), ndim_A, len_A, stride_A, idx_A,
+                                                conv(B), ndim_B, len_B, stride_B, idx_B,
+                                   conv( beta), conv(C), ndim_C, len_C, stride_C, idx_C);
 }
 
 int tensor_sweight(   float alpha, const    float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
@@ -98,18 +110,18 @@ int tensor_cweight(scomplex alpha, const scomplex* A, gint_t ndim_A, const dim_t
                                    const scomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
                    scomplex  beta,       scomplex* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C)
 {
-    return tensor::tensor_weight(alpha, A, ndim_A, len_A, stride_A, idx_A,
-                                        B, ndim_B, len_B, stride_B, idx_B,
-                                  beta, C, ndim_C, len_C, stride_C, idx_C);
+    return tensor::tensor_weight(conv(alpha), conv(A), ndim_A, len_A, stride_A, idx_A,
+                                              conv(B), ndim_B, len_B, stride_B, idx_B,
+                                 conv( beta), conv(C), ndim_C, len_C, stride_C, idx_C);
 }
 
 int tensor_zweight(dcomplex alpha, const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
                                    const dcomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
                    dcomplex  beta,       dcomplex* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C)
 {
-    return tensor::tensor_weight(alpha, A, ndim_A, len_A, stride_A, idx_A,
-                                        B, ndim_B, len_B, stride_B, idx_B,
-                                  beta, C, ndim_C, len_C, stride_C, idx_C);
+    return tensor::tensor_weight(conv(alpha), conv(A), ndim_A, len_A, stride_A, idx_A,
+                                              conv(B), ndim_B, len_B, stride_B, idx_B,
+                                 conv( beta), conv(C), ndim_C, len_C, stride_C, idx_C);
 }
 
 int tensor_souter_prod(   float alpha, const    float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
@@ -134,18 +146,18 @@ int tensor_couter_prod(scomplex alpha, const scomplex* A, gint_t ndim_A, const d
                                        const scomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
                        scomplex  beta,       scomplex* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C)
 {
-    return tensor::tensor_outer_prod(alpha, A, ndim_A, len_A, stride_A, idx_A,
-                                            B, ndim_B, len_B, stride_B, idx_B,
-                                      beta, C, ndim_C, len_C, stride_C, idx_C);
+    return tensor::tensor_outer_prod(conv(alpha), conv(A), ndim_A, len_A, stride_A, idx_A,
+                                                  conv(B), ndim_B, len_B, stride_B, idx_B,
+                                     conv( beta), conv(C), ndim_C, len_C, stride_C, idx_C);
 }
 
 int tensor_zouter_prod(dcomplex alpha, const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
                                        const dcomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
                        dcomplex  beta,       dcomplex* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C)
 {
-    return tensor::tensor_outer_prod(alpha, A, ndim_A, len_A, stride_A, idx_A,
-                                            B, ndim_B, len_B, stride_B, idx_B,
-                                      beta, C, ndim_C, len_C, stride_C, idx_C);
+    return tensor::tensor_outer_prod(conv(alpha), conv(A), ndim_A, len_A, stride_A, idx_A,
+                                                  conv(B), ndim_B, len_B, stride_B, idx_B,
+                                     conv( beta), conv(C), ndim_C, len_C, stride_C, idx_C);
 }
 
 int tensor_ssum(   float alpha, const    float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
@@ -165,15 +177,15 @@ int tensor_dsum(  double alpha, const   double* A, gint_t ndim_A, const dim_t* l
 int tensor_csum(scomplex alpha, const scomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
                 scomplex  beta,       scomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B)
 {
-    return tensor::tensor_sum(alpha, A, ndim_A, len_A, stride_A, idx_A,
-                               beta, B, ndim_B, len_B, stride_B, idx_B);
+    return tensor::tensor_sum(conv(alpha), conv(A), ndim_A, len_A, stride_A, idx_A,
+                              conv( beta), conv(B), ndim_B, len_B, stride_B, idx_B);
 }
 
 int tensor_zsum(dcomplex alpha, const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
                 dcomplex  beta,       dcomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B)
 {
-    return tensor::tensor_sum(alpha, A, ndim_A, len_A, stride_A, idx_A,
-                               beta, B, ndim_B, len_B, stride_B, idx_B);
+    return tensor::tensor_sum(conv(alpha), conv(A), ndim_A, len_A, stride_A, idx_A,
+                              conv( beta), conv(B), ndim_B, len_B, stride_B, idx_B);
 }
 
 int tensor_strace(   float alpha, const    float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
@@ -193,15 +205,15 @@ int tensor_dtrace(  double alpha, const   double* A, gint_t ndim_A, const dim_t*
 int tensor_ctrace(scomplex alpha, const scomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
                   scomplex  beta,       scomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B)
 {
-    return tensor::tensor_trace(alpha, A, ndim_A, len_A, stride_A, idx_A,
-                                 beta, B, ndim_B, len_B, stride_B, idx_B);
+    return tensor::tensor_trace(conv(alpha), conv(A), ndim_A, len_A, stride_A, idx_A,
+                                conv( beta), conv(B), ndim_B, len_B, stride_B, idx_B);
 }
 
 int tensor_ztrace(dcomplex alpha, const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
                   dcomplex  beta,       dcomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B)
 {
-    return tensor::tensor_trace(alpha, A, ndim_A, len_A, stride_A, idx_A,
-                                 beta, B, ndim_B, len_B, stride_B, idx_B);
+    return tensor::tensor_trace(conv(alpha), conv(A), ndim_A, len_A, stride_A, idx_A,
+                                conv( beta), conv(B), ndim_B, len_B, stride_B, idx_B);
 }
 
 int tensor_sreplicate(   float alpha, const    float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
@@ -221,15 +233,15 @@ int tensor_dreplicate(  double alpha, const   double* A, gint_t ndim_A, const di
 int tensor_creplicate(scomplex alpha, const scomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
                       scomplex  beta,       scomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B)
 {
-    return tensor::tensor_replicate(alpha, A, ndim_A, len_A, stride_A, idx_A,
-                                     beta, B, ndim_B, len_B, stride_B, idx_B);
+    return tensor::tensor_replicate(conv(alpha), conv(A), ndim_A, len_A, stride_A, idx_A,
+                                    conv( beta), conv(B), ndim_B, len_B, stride_B, idx_B);
 }
 
 int tensor_zreplicate(dcomplex alpha, const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
                       dcomplex  beta,       dcomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B)
 {
-    return tensor::tensor_replicate(alpha, A, ndim_A, len_A, stride_A, idx_A,
-                                     beta, B, ndim_B, len_B, stride_B, idx_B);
+    return tensor::tensor_replicate(conv(alpha), conv(A), ndim_A, len_A, stride_A, idx_A,
+                                    conv( beta), conv(B), ndim_B, len_B, stride_B, idx_B);
 }
 
 int tensor_stranspose(   float alpha, const    float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
@@ -249,15 +261,15 @@ int tensor_dtranspose(  double alpha, const   double* A, gint_t ndim_A, const di
 int tensor_ctranspose(scomplex alpha, const scomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
                       scomplex  beta,       scomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B)
 {
-    return tensor::tensor_transpose(alpha, A, ndim_A, len_A, stride_A, idx_A,
-                                     beta, B, ndim_B, len_B, stride_B, idx_B);
+    return tensor::tensor_transpose(conv(alpha), conv(A), ndim_A, len_A, stride_A, idx_A,
+                                    conv( beta), conv(B), ndim_B, len_B, stride_B, idx_B);
 }
 
 int tensor_ztranspose(dcomplex alpha, const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
                       dcomplex  beta,       dcomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B)
 {
-    return tensor::tensor_transpose(alpha, A, ndim_A, len_A, stride_A, idx_A,
-                                     beta, B, ndim_B, len_B, stride_B, idx_B);
+    return tensor::tensor_transpose(conv(alpha), conv(A), ndim_A, len_A, stride_A, idx_A,
+                                    conv( beta), conv(B), ndim_B, len_B, stride_B, idx_B);
 }
 
 int tensor_sdot(const    float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
@@ -277,15 +289,15 @@ int tensor_ddot(const   double* A, gint_t ndim_A, const dim_t* len_A, const inc_
 int tensor_cdot(const scomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
                 const scomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B, scomplex* val)
 {
-    return tensor::tensor_dot(A, ndim_A, len_A, stride_A, idx_A,
-                              B, ndim_B, len_B, stride_B, idx_B, *val);
+    return tensor::tensor_dot(conv(A), ndim_A, len_A, stride_A, idx_A,
+                              conv(B), ndim_B, len_B, stride_B, idx_B, conv(*val));
 }
 
 int tensor_zdot(const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
                 const dcomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B, dcomplex* val)
 {
-    return tensor::tensor_dot(A, ndim_A, len_A, stride_A, idx_A,
-                              B, ndim_B, len_B, stride_B, idx_B, *val);
+    return tensor::tensor_dot(conv(A), ndim_A, len_A, stride_A, idx_A,
+                              conv(B), ndim_B, len_B, stride_B, idx_B, conv(*val));
 }
 
 int tensor_sscale(   float alpha,    float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A)
@@ -300,12 +312,12 @@ int tensor_dscale(  double alpha,   double* A, gint_t ndim_A, const dim_t* len_A
 
 int tensor_cscale(scomplex alpha, scomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A)
 {
-    return tensor::tensor_scale(alpha, A, ndim_A, len_A, stride_A, idx_A);
+    return tensor::tensor_scale(conv(alpha), conv(A), ndim_A, len_A, stride_A, idx_A);
 }
 
 int tensor_zscale(dcomplex alpha, dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A)
 {
-    return tensor::tensor_scale(alpha, A, ndim_A, len_A, stride_A, idx_A);
+    return tensor::tensor_scale(conv(alpha), conv(A), ndim_A, len_A, stride_A, idx_A);
 }
 
 int tensor_sreduce(reduce_t op, const    float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,    float* val, inc_t* idx)
@@ -320,12 +332,12 @@ int tensor_dreduce(reduce_t op, const   double* A, gint_t ndim_A, const dim_t* l
 
 int tensor_creduce(reduce_t op, const scomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A, scomplex* val, inc_t* idx)
 {
-    return tensor::tensor_reduce(op, A, ndim_A, len_A, stride_A, idx_A, *val, *idx);
+    return tensor::tensor_reduce(op, conv(A), ndim_A, len_A, stride_A, idx_A, conv(*val), *idx);
 }
 
 int tensor_zreduce(reduce_t op, const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A, dcomplex* val, inc_t* idx)
 {
-    return tensor::tensor_reduce(op, A, ndim_A, len_A, stride_A, idx_A, *val, *idx);
+    return tensor::tensor_reduce(op, conv(A), ndim_A, len_A, stride_A, idx_A, conv(*val), *idx);
 }
 
 siz_t tensor_size(gint_t ndim, const dim_t* len, const inc_t* stride)

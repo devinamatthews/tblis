@@ -44,6 +44,13 @@ class RowVector : public Matrix<T>
             Matrix<type>::operator=(std::move(other));
             return *this;
         }
+
+        RowVector& operator=(const type& val)
+        {
+            Matrix<T> s(val);
+            bli_setv(s, this);
+            return *this;
+        }
 };
 
 template <typename T>
@@ -82,6 +89,13 @@ class ColVector : public Matrix<T>
         ColVector& operator=(ColVector&& other)
         {
             Matrix<type>::operator=(std::move(other));
+            return *this;
+        }
+
+        ColVector& operator=(const type& val)
+        {
+            Matrix<T> s(val);
+            bli_setv(s, this);
             return *this;
         }
 };

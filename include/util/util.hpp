@@ -7,14 +7,9 @@
 #include <ostream>
 #include <cstdio>
 #include <cstdarg>
+#include <random>
 
-#if __cplusplus >= 201103l
-#define MOVE(x) std::move(x)
-#define MOVE3(x,y,z) std::move(x,y,z)
-#else
-#define MOVE(x) (x)
-#define MOVE3(x,y,z) std::copy(x,y,z)
-#endif
+#include "blis++/blis++.hpp"
 
 #ifdef DEBUG
 inline void abort_with_message(const char* cond, const char* fmt, ...)
@@ -198,7 +193,7 @@ II1 set_intersection(II1 a0, II1 a1, II2 b0, II2 b1)
         }
         else
         {
-            *a2 = MOVE(*a0);
+            *a2 = std::move(*a0);
             ++a0;
             ++b0;
             ++a2;
@@ -283,7 +278,7 @@ II1 set_difference(II1 a0, II1 a1, II2 b0, II2 b1)
     {
         if (*a0 < *b0)
         {
-            *a2 = MOVE(*a0);
+            *a2 = std::move(*a0);
             ++a0;
             ++a2;
         }
@@ -298,7 +293,7 @@ II1 set_difference(II1 a0, II1 a1, II2 b0, II2 b1)
         }
     }
 
-    return MOVE3(a0, a1, a2);
+    return std::move(a0, a1, a2);
 }
 
 template <typename Container>
@@ -363,6 +358,343 @@ template <> inline std::string range<char>(char from, char to)
     }
 
     return r;
+}
+
+extern std::mt19937 engine;
+
+/*
+ * Returns a random integer uniformly distributed in the range [mn,mx]
+ */
+inline
+int64_t RandomInteger(int64_t mn, int64_t mx)
+{
+    std::uniform_int_distribution<int64_t> d(mn, mx);
+    return d(engine);
+}
+
+/*
+ * Returns a random integer uniformly distributed in the range [0,mx]
+ */
+inline
+int64_t RandomInteger(int64_t mx)
+{
+    return RandomInteger(0, mx);
+}
+
+/*
+ * Returns a pseudo-random number uniformly distributed in the range [0,1).
+ */
+template <typename T> T RandomNumber()
+{
+    std::uniform_real_distribution<T> d;
+    return d(engine);
+}
+
+/*
+ * Returns a pseudo-random number uniformly distributed in the range (-1,1).
+ */
+template <typename T> T RandomUnit()
+{
+    double val;
+    do
+    {
+        val = 2*RandomNumber<T>()-1;
+    } while (val == -1.0);
+    return val;
+}
+
+/*
+ * Returns a psuedo-random complex number unformly distirbuted in the
+ * interior of the unit circle.
+ */
+template <> inline blis::sComplex RandomUnit<blis::sComplex>()
+{
+    float r, i;
+    do
+    {
+        r = RandomUnit<float>();
+        i = RandomUnit<float>();
+    }
+    while (r*r+i*i >= 1);
+
+    scomplex val;
+    bli_csets(r, i, val);
+    return blis::cmplx(val);
+}
+
+/*
+ * Returns a psuedo-random complex number unformly distirbuted in the
+ * interior of the unit circle.
+ */
+template <> inline blis::dComplex RandomUnit<blis::dComplex>()
+{
+    double r, i;
+    do
+    {
+        r = RandomUnit<double>();
+        i = RandomUnit<double>();
+    }
+    while (r*r+i*i >= 1);
+
+    dcomplex val;
+    bli_zsets(r, i, val);
+    return blis::cmplx(val);
+}
+
+inline
+bool RandomChoice()
+{
+    return RandomInteger(1);
+}
+
+/*
+ * Returns a random choice from a set of objects with non-negative weights w,
+ * which do not need to sum to unity.
+ */
+inline
+int RandomWeightedChoice(const std::vector<double>& w)
+{
+    int n = w.size();
+    ASSERT(n > 0);
+
+    double s = 0;
+    for (int i = 0;i < n;i++)
+    {
+        ASSERT(w[i] >= 0);
+        s += w[i];
+    }
+
+    double c = s*RandomNumber<double>();
+    for (int i = 0;i < n;i++)
+    {
+        if (c < w[i]) return i;
+        c -= w[i];
+    }
+
+    ASSERT(0);
+    return -1;
+}
+
+/*
+ * Returns a random choice from a set of objects with non-negative weights w,
+ * which do not need to sum to unity.
+ */
+template <typename T>
+typename std::enable_if<std::is_integral<T>::value,int>::type
+RandomWeightedChoice(const std::vector<T>& w)
+{
+    int n = w.size();
+    ASSERT(n > 0);
+
+    T s = 0;
+    for (int i = 0;i < n;i++)
+    {
+        ASSERT(w[i] >= 0);
+        s += w[i];
+    }
+
+    T c = RandomInteger(s-1);
+    for (int i = 0;i < n;i++)
+    {
+        if (c < w[i]) return i;
+        c -= w[i];
+    }
+
+    ASSERT(0);
+    return -1;
+}
+
+/*
+ * Returns a sequence of n non-negative numbers such that sum_i n_i = s and
+ * and n_i >= mn_i, with uniform distribution.
+ */
+inline
+std::vector<double> RandomSumConstrainedSequence(int n, double s,
+                                                 const std::vector<double>& mn)
+{
+    ASSERT(n > 0);
+    ASSERT(s >= 0);
+    ASSERT(mn.size() == n);
+    ASSERT(mn[0] >= 0);
+
+    s -= mn[0];
+    ASSERT(s >= 0);
+
+    std::vector<double> p(n+1);
+
+    p[0] = 0;
+    p[n] = 1;
+    for (int i = 1;i < n;i++)
+    {
+        ASSERT(mn[i] >= 0);
+        s -= mn[i];
+        ASSERT(s >= 0);
+        p[i] = RandomNumber<double>();
+    }
+    std::sort(p.begin(), p.end());
+
+    for (int i = 0;i < n;i++)
+    {
+        p[i] = s*(p[i+1]-p[i])+mn[i];
+    }
+    p.resize(n);
+    //cout << s << p << accumulate(p.begin(), p.end(), 0.0) << endl;
+
+    return p;
+}
+
+/*
+ * Returns a sequence of n non-negative numbers such that sum_i n_i = s,
+ * with uniform distribution.
+ */
+inline
+std::vector<double> RandomSumConstrainedSequence(int n, double s)
+{
+    ASSERT(n > 0);
+    return RandomSumConstrainedSequence(n, s, std::vector<double>(n));
+}
+
+/*
+ * Returns a sequence of n non-negative integers such that sum_i n_i = s and
+ * and n_i >= mn_i, with uniform distribution.
+ */
+template <typename T>
+typename std::enable_if<std::is_integral<T>::value,std::vector<T>>::type
+RandomSumConstrainedSequence(int n, T s, const std::vector<T>& mn)
+{
+    ASSERT(n >  0);
+    ASSERT(s >= 0);
+    ASSERT(mn.size() == n);
+
+    for (int i = 0;i < n;i++)
+    {
+        ASSERT(mn[i] >= 0);
+        s -= mn[i];
+        ASSERT(s >= 0);
+    }
+
+    std::vector<T> p(n+1);
+
+    p[0] = 0;
+    p[n] = 1;
+    for (int i = 1;i < n;i++)
+    {
+        p[i] = RandomInteger(s);
+    }
+    std::sort(p.begin(), p.end());
+
+    for (int i = 0;i < n;i++)
+    {
+        p[i] = s*(p[i+1]-p[i])+mn[i];
+    }
+    p.resize(n);
+    //cout << s << p << accumulate(p.begin(), p.end(), T(0)) << endl;
+
+    return p;
+}
+
+/*
+ * Returns a sequence of n non-negative integers such that sum_i n_i = s,
+ * with uniform distribution.
+ */
+template <typename T>
+typename std::enable_if<std::is_integral<T>::value,std::vector<T>>::type
+RandomSumConstrainedSequence(int n, T s)
+{
+    ASSERT(n > 0);
+    return RandomSumConstrainedSequence(n, s, std::vector<T>(n));
+}
+
+/*
+ * Returns a sequence of n numbers such than prod_i n_i = p and n_i >= mn_i,
+ * where n_i and p are >= 1 and with uniform distribution.
+ */
+inline
+std::vector<double> RandomProductConstrainedSequence(int n, double p,
+                                                     const std::vector<double>& mn)
+{
+    ASSERT(n >  0);
+    ASSERT(p >= 1);
+    ASSERT(mn.size() == n);
+
+    std::vector<double> log_mn(n);
+    for (int i = 0;i < n;i++)
+    {
+        log_mn[i] = (mn[i] <= 0.0 ? 1.0 : log(mn[i]));
+    }
+
+    std::vector<double> s = RandomSumConstrainedSequence(n, log(p), log_mn);
+    for (int i = 0;i < n;i++) s[i] = exp(s[i]);
+    //cout << p << s << accumulate(s.begin(), s.end(), 1.0, multiplies<double>()) << endl;
+    return s;
+}
+
+/*
+ * Returns a sequence of n numbers such than prod_i n_i = p, where n_i and
+ * p are >= 1 and with uniform distribution.
+ */
+inline
+std::vector<double> RandomProductConstrainedSequence(int n, double p)
+{
+    ASSERT(n > 0);
+    return RandomProductConstrainedSequence(n, p, std::vector<double>(n, 1.0));
+}
+
+enum rounding_mode {ROUND_UP, ROUND_DOWN, ROUND_NEAREST};
+
+/*
+ * Returns a sequence of n numbers such that p/2^d <= prod_i n_i <= p and
+ * n_i >= mn_i, where n_i and p are >= 1 and with uniform distribution.
+ */
+template <typename T, rounding_mode mode=ROUND_DOWN>
+typename std::enable_if<std::is_integral<T>::value,std::vector<T>>::type
+RandomProductConstrainedSequence(int n, T p, const std::vector<T>& mn)
+{
+    ASSERT(n >  0);
+    ASSERT(p >= 1);
+    ASSERT(mn.size() == n);
+
+    std::vector<double> mnd(n);
+    for (int i = 0;i < n;i++)
+    {
+        mnd[i] = std::max(T(1), mn[i]);
+    }
+
+    std::vector<double> sd = RandomProductConstrainedSequence(n, (double)p, mnd);
+    std::vector<T> si(n);
+    for (int i = 0;i < n;i++)
+    {
+        switch (mode)
+        {
+            case      ROUND_UP: si[i] =  ceil(sd[i]); break;
+            case    ROUND_DOWN: si[i] = floor(sd[i]); break;
+            case ROUND_NEAREST: si[i] = round(sd[i]); break;
+        }
+    }
+    //cout << p << si << accumulate(si.begin(), si.end(), T(1), multiplies<T>()) << endl;
+
+    return si;
+}
+
+/*
+ * Returns a sequence of n numbers such that p/2^d <= prod_i n_i <= p, where
+ * n_i and p are >= 1 and with uniform distribution.
+ */
+template <typename T, rounding_mode mode=ROUND_DOWN>
+typename std::enable_if<std::is_integral<T>::value,std::vector<T>>::type
+RandomProductConstrainedSequence(int n, T p)
+{
+    ASSERT(n > 0);
+    return RandomProductConstrainedSequence<T,mode>(n, p, std::vector<T>(n, T(1)));
+}
+
+template <typename T, typename U>
+T permute(const T& a, const U& p)
+{
+    ASSERT(a.size() == p.size());
+    T ap(a);
+    for (size_t i = 0;i < a.size();i++) ap[p[i]] = a[i];
+    return ap;
 }
 
 }

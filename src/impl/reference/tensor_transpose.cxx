@@ -1,11 +1,9 @@
+#include "tblis.hpp"
 #include "impl/tensor_impl.hpp"
-#include "util/iterator.hpp"
 
 using namespace std;
-using namespace blis;
-using namespace tensor::util;
 
-namespace tensor
+namespace tblis
 {
 namespace impl
 {

@@ -125,14 +125,14 @@ am__objects_1 = src/core/tensor_c99.$(OBJEXT) \
 	src/impl/reference/tensor_trace.$(OBJEXT) \
 	src/impl/reference/tensor_transpose.$(OBJEXT) \
 	src/impl/reference/tensor_weight.$(OBJEXT) \
-	src/impl/tensor_impl.$(OBJEXT)
+	src/impl/tensor_impl.$(OBJEXT) src/tblis.$(OBJEXT)
 am___top_builddir__bin_bench_OBJECTS = $(am__objects_1) \
-	src/bench.$(OBJEXT)
+	test/bench.$(OBJEXT)
 __top_builddir__bin_bench_OBJECTS =  \
 	$(am___top_builddir__bin_bench_OBJECTS)
 __top_builddir__bin_bench_DEPENDENCIES =
 am___top_builddir__bin_test_OBJECTS = $(am__objects_1) \
-	src/test.$(OBJEXT)
+	test/test.$(OBJEXT)
 __top_builddir__bin_test_OBJECTS =  \
 	$(am___top_builddir__bin_test_OBJECTS)
 __top_builddir__bin_test_DEPENDENCIES =
@@ -277,6 +277,8 @@ am__untar = @am__untar@
 bindir = @bindir@
 blis_INCLUDES = @blis_INCLUDES@
 blis_LIBS = @blis_LIBS@
+blis___INCLUDES = @blis___INCLUDES@
+blis___LIBS = @blis___LIBS@
 build_alias = @build_alias@
 builddir = @builddir@
 datadir = @datadir@
@@ -327,11 +329,12 @@ tensor_SOURCES = \
 	src/impl/reference/tensor_trace.cxx \
 	src/impl/reference/tensor_transpose.cxx \
 	src/impl/reference/tensor_weight.cxx \
-	src/impl/tensor_impl.cxx
+	src/impl/tensor_impl.cxx \
+	src/tblis.cxx
 
-__top_builddir__bin_test_SOURCES = $(tensor_SOURCES) src/test.cxx
-__top_builddir__bin_bench_SOURCES = $(tensor_SOURCES) src/bench.cxx
-AM_CPPFLAGS = -I$(srcdir)/include @blis_INCLUDES@
+__top_builddir__bin_test_SOURCES = $(tensor_SOURCES) test/test.cxx
+__top_builddir__bin_bench_SOURCES = $(tensor_SOURCES) test/bench.cxx
+AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src @blis_INCLUDES@ @blis___INCLUDES@
 __top_builddir__bin_test_LDADD = @blis_LIBS@
 __top_builddir__bin_bench_LDADD = @blis_LIBS@
 all: config.h
@@ -517,7 +520,15 @@ src/$(am__dirstamp):
 src/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/$(DEPDIR)
 	@: > src/$(DEPDIR)/$(am__dirstamp)
-src/bench.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/tblis.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+test/$(am__dirstamp):
+	@$(MKDIR_P) test
+	@: > test/$(am__dirstamp)
+test/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) test/$(DEPDIR)
+	@: > test/$(DEPDIR)/$(am__dirstamp)
+test/bench.$(OBJEXT): test/$(am__dirstamp) \
+	test/$(DEPDIR)/$(am__dirstamp)
 $(top_builddir)/bin/$(am__dirstamp):
 	@$(MKDIR_P) $(top_builddir)/bin
 	@: > $(top_builddir)/bin/$(am__dirstamp)
@@ -525,7 +536,8 @@ $(top_builddir)/bin/$(am__dirstamp):
 $(top_builddir)/bin/bench$(EXEEXT): $(__top_builddir__bin_bench_OBJECTS) $(__top_builddir__bin_bench_DEPENDENCIES) $(EXTRA___top_builddir__bin_bench_DEPENDENCIES) $(top_builddir)/bin/$(am__dirstamp)
 	@rm -f $(top_builddir)/bin/bench$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(__top_builddir__bin_bench_OBJECTS) $(__top_builddir__bin_bench_LDADD) $(LIBS)
-src/test.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+test/test.$(OBJEXT): test/$(am__dirstamp) \
+	test/$(DEPDIR)/$(am__dirstamp)
 
 $(top_builddir)/bin/test$(EXEEXT): $(__top_builddir__bin_test_OBJECTS) $(__top_builddir__bin_test_DEPENDENCIES) $(EXTRA___top_builddir__bin_test_DEPENDENCIES) $(top_builddir)/bin/$(am__dirstamp)
 	@rm -f $(top_builddir)/bin/test$(EXEEXT)
@@ -539,12 +551,12 @@ mostlyclean-compile:
 	-rm -f src/impl/blas/*.$(OBJEXT)
 	-rm -f src/impl/blis/*.$(OBJEXT)
 	-rm -f src/impl/reference/*.$(OBJEXT)
+	-rm -f test/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bench.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/tblis.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/core/$(DEPDIR)/tensor_c99.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/impl/$(DEPDIR)/tensor_impl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/impl/blas/$(DEPDIR)/tensor_contract.Po@am__quote@
@@ -564,6 +576,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/impl/reference/$(DEPDIR)/tensor_trace.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/impl/reference/$(DEPDIR)/tensor_transpose.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/impl/reference/$(DEPDIR)/tensor_weight.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/bench.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/test.Po@am__quote@
 
 .cxx.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -848,6 +862,8 @@ distclean-generic:
 	-rm -f src/impl/blis/$(am__dirstamp)
 	-rm -f src/impl/reference/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/impl/reference/$(am__dirstamp)
+	-rm -f test/$(DEPDIR)/$(am__dirstamp)
+	-rm -f test/$(am__dirstamp)
 	-test -z "$(top_builddir)/bin/$(am__dirstamp)" || rm -f $(top_builddir)/bin/$(am__dirstamp)
 
 maintainer-clean-generic:
@@ -859,7 +875,7 @@ clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf src/$(DEPDIR) src/core/$(DEPDIR) src/impl/$(DEPDIR) src/impl/blas/$(DEPDIR) src/impl/blis/$(DEPDIR) src/impl/reference/$(DEPDIR)
+	-rm -rf src/$(DEPDIR) src/core/$(DEPDIR) src/impl/$(DEPDIR) src/impl/blas/$(DEPDIR) src/impl/blis/$(DEPDIR) src/impl/reference/$(DEPDIR) test/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-tags
@@ -907,7 +923,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf src/$(DEPDIR) src/core/$(DEPDIR) src/impl/$(DEPDIR) src/impl/blas/$(DEPDIR) src/impl/blis/$(DEPDIR) src/impl/reference/$(DEPDIR)
+	-rm -rf src/$(DEPDIR) src/core/$(DEPDIR) src/impl/$(DEPDIR) src/impl/blas/$(DEPDIR) src/impl/blis/$(DEPDIR) src/impl/reference/$(DEPDIR) test/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

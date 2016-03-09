@@ -8,6 +8,9 @@
 /* Define if blis is to be used. */
 #undef HAVE_BLIS
 
+/* Define if blis++ is to be used. */
+#undef HAVE_BLIS__
+
 /* define if the compiler supports basic C++11 syntax */
 #undef HAVE_CXX11
 

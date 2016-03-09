@@ -1,11 +1,9 @@
+#include "tblis.hpp"
 #include "impl/tensor_impl.hpp"
-#include "util/iterator.hpp"
 
 using namespace std;
-using namespace blis;
-using namespace tensor::util;
 
-namespace tensor
+namespace tblis
 {
 namespace impl
 {
@@ -17,9 +15,9 @@ int tensor_contract_reference(T alpha, const Tensor<T>& A, const std::string& id
 {
     string idx_AB, idx_AC, idx_BC;
 
-    gint_t ndim_AB  = set_intersection(idx_A, idx_B, idx_AB).size();
-    gint_t ndim_AC  = set_intersection(idx_A, idx_C, idx_AC).size();
-    gint_t ndim_BC  = set_intersection(idx_B, idx_C, idx_BC).size();
+    gint_t ndim_AB  = util::set_intersection(idx_A, idx_B, idx_AB).size();
+    gint_t ndim_AC  = util::set_intersection(idx_A, idx_C, idx_AC).size();
+    gint_t ndim_BC  = util::set_intersection(idx_B, idx_C, idx_BC).size();
 
     vector<inc_t> len_AB(ndim_AB);
     vector<inc_t> len_AC(ndim_AC);

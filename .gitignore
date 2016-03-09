@@ -10,3 +10,4 @@ lib
 /.ptp-sync/
 .ptp-sync-folder
 autom4te.cache
+/config.h

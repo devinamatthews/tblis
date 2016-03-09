@@ -1,14 +1,12 @@
+#include "tblis.hpp"
 #include "impl/tensor_impl.hpp"
-#include "core/tensor_slicer.hpp"
-#include "blis++/scatter_matrix.hpp"
-#include "tblis/gemm.hpp"
+#include "util/util.hpp"
 
 using namespace std;
-using namespace blis;
-using namespace tblis;
-using namespace tensor::util;
+using namespace tblis::util;
+using namespace tblis::blis_like;
 
-namespace tensor
+namespace tblis
 {
 namespace impl
 {

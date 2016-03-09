@@ -1,6 +1,7 @@
-#include "impl/tensor_impl.hpp"
+#include "tblis.hpp"
+#include "tensor_impl.hpp"
 
-namespace tensor
+namespace tblis
 {
 namespace impl
 {

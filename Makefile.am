@@ -18,12 +18,13 @@ tensor_SOURCES = \
 	src/impl/reference/tensor_trace.cxx \
 	src/impl/reference/tensor_transpose.cxx \
 	src/impl/reference/tensor_weight.cxx \
-	src/impl/tensor_impl.cxx
-__top_builddir__bin_test_SOURCES = $(tensor_SOURCES) src/test.cxx
-__top_builddir__bin_bench_SOURCES = $(tensor_SOURCES) src/bench.cxx
+	src/impl/tensor_impl.cxx \
+	src/tblis.cxx
+__top_builddir__bin_test_SOURCES = $(tensor_SOURCES) test/test.cxx
+__top_builddir__bin_bench_SOURCES = $(tensor_SOURCES) test/bench.cxx
 	
 VPATH += $(srcdir)
 
-AM_CPPFLAGS = -I$(srcdir)/include @blis_INCLUDES@
+AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src @blis_INCLUDES@ @blis___INCLUDES@
 __top_builddir__bin_test_LDADD = @blis_LIBS@
 __top_builddir__bin_bench_LDADD = @blis_LIBS@

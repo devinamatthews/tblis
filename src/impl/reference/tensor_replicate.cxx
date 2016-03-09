@@ -1,11 +1,9 @@
+#include "tblis.hpp"
 #include "impl/tensor_impl.hpp"
-#include "util/iterator.hpp"
 
 using namespace std;
-using namespace blis;
-using namespace tensor::util;
 
-namespace tensor
+namespace tblis
 {
 namespace impl
 {
@@ -18,7 +16,7 @@ int tensor_replicate_reference(T alpha, const Tensor<T>& A, const std::string& i
     string idx_B_only;
 
     gint_t ndim_AB = idx_AB.size();
-    gint_t ndim_B  = set_difference(idx_B, idx_AB, idx_B_only).size();
+    gint_t ndim_B  = util::set_difference(idx_B, idx_AB, idx_B_only).size();
 
     vector<inc_t> len_B(ndim_B);
     const vector<inc_t>& len_AB = A.getLengths();

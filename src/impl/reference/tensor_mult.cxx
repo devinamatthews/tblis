@@ -1,11 +1,9 @@
+#include "tblis.hpp"
 #include "impl/tensor_impl.hpp"
-#include "util/iterator.hpp"
 
 using namespace std;
-using namespace blis;
-using namespace tensor::util;
 
-namespace tensor
+namespace tblis
 {
 namespace impl
 {
@@ -19,22 +17,22 @@ int tensor_mult_reference(T alpha, const Tensor<T>& A, const std::string& idx_A,
     string idx_AB, idx_AC, idx_BC;
     string idx_ABC;
 
-    set_intersection(idx_A, idx_B, idx_AB);
-    set_intersection(idx_A, idx_C, idx_AC);
-    set_intersection(idx_B, idx_C, idx_BC);
+    util::set_intersection(idx_A, idx_B, idx_AB);
+    util::set_intersection(idx_A, idx_C, idx_AC);
+    util::set_intersection(idx_B, idx_C, idx_BC);
 
-    gint_t ndim_ABC = set_intersection(idx_AB, idx_BC, idx_ABC).size();
+    gint_t ndim_ABC = util::set_intersection(idx_AB, idx_BC, idx_ABC).size();
 
-    gint_t ndim_A   = set_difference(
-                      set_difference(idx_A, idx_AB, idx_A_only), idx_AC).size();
-    gint_t ndim_B   = set_difference(
-                      set_difference(idx_B, idx_AB, idx_B_only), idx_BC).size();
-    gint_t ndim_C   = set_difference(
-                      set_difference(idx_C, idx_AC, idx_C_only), idx_BC).size();
+    gint_t ndim_A = util::set_difference(
+                    util::set_difference(idx_A, idx_AB, idx_A_only), idx_AC).size();
+    gint_t ndim_B = util::set_difference(
+                    util::set_difference(idx_B, idx_AB, idx_B_only), idx_BC).size();
+    gint_t ndim_C = util::set_difference(
+                    util::set_difference(idx_C, idx_AC, idx_C_only), idx_BC).size();
 
-    gint_t ndim_AB  = set_difference(idx_AB, idx_ABC).size();
-    gint_t ndim_AC  = set_difference(idx_AC, idx_ABC).size();
-    gint_t ndim_BC  = set_difference(idx_BC, idx_ABC).size();
+    gint_t ndim_AB = util::set_difference(idx_AB, idx_ABC).size();
+    gint_t ndim_AC = util::set_difference(idx_AC, idx_ABC).size();
+    gint_t ndim_BC = util::set_difference(idx_BC, idx_ABC).size();
 
     vector<inc_t> len_A(ndim_A);
     vector<inc_t> len_B(ndim_B);

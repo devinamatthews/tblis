@@ -1,4 +1,4 @@
-AC_INIT(tensor, 1.0, dmatthews@utexas.edu, tensor, http://www.github.com/devinamatthews/tensor)
+AC_INIT(tblis, 1.0, dmatthews@utexas.edu, tensor, http://www.github.com/devinamatthews/tblis)
 AM_INIT_AUTOMAKE([foreign silent-rules subdir-objects])
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE([disable])
@@ -34,8 +34,15 @@ AC_DEFINE_UNQUOTED([TOPDIR], [$topdir], [The top source directory.])
 # Check for BLIS
 #
 AQ_WITH_PACKAGE([blis], [https://github.com/flame/blis],
-                [blis.h], [include/blis],
+                [blis/blis.h], [],
                 [bli_init], [-lblis])
+
+#
+# Check for BLIS++
+#
+AQ_WITH_PACKAGE([blis++], [https://github.com/devinamatthews/blisplusplus],
+                [blis++/blis++.hpp], [],
+                [], [], [], [$blis_INCLUDES])
                 
 mkdir -p bin
 

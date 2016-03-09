@@ -1,11 +1,9 @@
+#include "tblis.hpp"
 #include "impl/tensor_impl.hpp"
-#include "core/tensor_slicer.hpp"
 
 using namespace std;
-using namespace blis;
-using namespace tensor::util;
 
-namespace tensor
+namespace tblis
 {
 namespace impl
 {
@@ -32,8 +30,8 @@ int tensor_mult_blas(T alpha, const Tensor<T>& A, const std::string& idx_A,
                          idx_B.begin(), idx_B.end(),
                          idx_ABC.begin()) - idx_ABC.begin();
     ndim_ABC =
-        set_intersection(idx_ABC.begin(), idx_ABC.begin()+ndim_ABC,
-                         idx_C.begin(), idx_C.end()) - idx_ABC.begin();
+        util::set_intersection(idx_ABC.begin(), idx_ABC.begin()+ndim_ABC,
+                               idx_C.begin(), idx_C.end()) - idx_ABC.begin();
 
     idx_ABC.resize(ndim_ABC);
 

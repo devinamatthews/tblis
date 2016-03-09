@@ -3,7 +3,8 @@
 #
 #   AQ_WITH_PACKAGE(PACKAGE, [GIT-REPO],
 #         [HEADERS], [INCLUDE-DIRS = "include"],
-#         [SYMBOLS], [LIBS], [LIB-DIRS = "lib lib64"])
+#         [SYMBOLS], [LIBS], [LIB-DIRS = "lib lib64"],
+#         [EXTRA-FLAGS])
 #
 # LICENSE
 #
@@ -33,10 +34,10 @@ AC_DEFUN([AQ_WITH_PACKAGE],
                     [],
                     [libraries="$6"])
         if test x"$libraries" == x; then
-            AS_VAR_COPY([libraries], [with_]m4_tolower(AS_TR_SH([$1]))[_libs])
+            AS_VAR_COPY([libraries], [with_]m4_tolower(m4_translit([$1], [-+.], [___]))[_libs])
         fi
     ])
-    AS_VAR_COPY([pkg_dir], [with_]m4_tolower(AS_TR_SH([$1])))
+    AS_VAR_COPY([pkg_dir], [with_]m4_tolower(m4_translit([$1], [-+.], [___])))
     if test x"$pkg_dir" = xno; then
         m4_ifval([$2], [AC_MSG_ERROR([$1 is a required package.])])
         include_package=no
@@ -44,7 +45,7 @@ AC_DEFUN([AQ_WITH_PACKAGE],
         include_package=no
     else
         if test x"$download" = xyes && test x"$2" != x; then
-            AS_VAR_SET([pkg_dir], [src/external/]m4_tolower(AS_TR_SH([$1])))
+            AS_VAR_SET([pkg_dir], [src/external/]m4_tolower([$1]))
             if ! test -d $pkg_dir; then
                 AC_MSG_NOTICE([downloading $1 from external Git repository...])
                 if ! git clone -q $2 $pkg_dir; then
@@ -68,11 +69,11 @@ AC_DEFUN([AQ_WITH_PACKAGE],
                 AQ_CHECK_HEADER_WITH_PATH([$header],
                                           [],
                                           [AC_MSG_FAILURE([Could not find $header.])],
-                                          [$include_flags],
+                                          [$include_flags $8],
                                           [AC_INCLUDES_DEFAULT()])
             done
-            m4_tolower(AS_TR_SH([$1]))_INCLUDES=$include_flags
-            AC_SUBST(m4_tolower(AS_TR_SH([$1]))_INCLUDES)
+            m4_tolower(m4_translit([$1], [-+.], [___]))_INCLUDES=$include_flags
+            AC_SUBST(m4_tolower(m4_translit([$1], [-+.], [___]))_INCLUDES)
         ])
         if test x"$5" != x; then
             lib_flags=
@@ -85,11 +86,11 @@ AC_DEFUN([AQ_WITH_PACKAGE],
                     AQ_CHECK_FUNC_WITH_PATH([$symbol],
                                             [],
                                             [AC_MSG_FAILURE([Could not find $symbol in $libraries.])],
-                                            [$lib_flags $LAPACK_LIBS $BLAS_LIBS])
+                                            [$lib_flags $8 $LAPACK_LIBS $BLAS_LIBS])
                 done
             fi
-            m4_tolower(AS_TR_SH([$1]))_LIBS=$lib_flags
-            AC_SUBST(m4_tolower(AS_TR_SH([$1]))_LIBS)
+            m4_tolower(m4_translit([$1], [-+.], [___]))_LIBS=$lib_flags
+            AC_SUBST(m4_tolower(m4_translit([$1], [-+.], [___]))_LIBS)
         fi
         include_package=yes
     fi

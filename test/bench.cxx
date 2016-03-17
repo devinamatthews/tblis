@@ -100,15 +100,15 @@ void Benchmark(gint_t R)
                 Matrix<T> A2(m, k);
                 Matrix<T> B2(k, n);
                 Matrix<T> C2(m, n);
-                bli_dcopyv(BLIS_NO_CONJUGATE, m*k, (T*)A, 1, (T*)A2, 1);
-                bli_dcopyv(BLIS_NO_CONJUGATE, k*n, (T*)B, 1, (T*)B2, 1);
+                tblis_copyv(false, m*k, A.data(), 1, A2.data(), 1);
+                tblis_copyv(false, k*n, B.data(), 1, B2.data(), 1);
                 bli_gemm(alp, A2, B2, bet, C2);
-                bli_daxpyv(BLIS_NO_CONJUGATE, m*n, &alpha, (T*)C2, 1, (T*)C, 1);
+                tblis_xpbyv(false, m*n, C2.data(), 1, beta, C.data(), 1);
             });
             fprintf(mout, "%e %e %e\n", eff_dim(gflops,m,n,k), gflops/dt_1, gflops/dt_2);
         }
 
-        for (int i = 0;i < 5;i++)
+        for (int i = 0;i < 3;i++)
         {
             vector<dim_t> len_m = RandomProductConstrainedSequence<dim_t, ROUND_NEAREST>(RandomInteger(1, 3), m);
             vector<dim_t> len_n = RandomProductConstrainedSequence<dim_t, ROUND_NEAREST>(RandomInteger(1, 3), n);
@@ -170,89 +170,107 @@ void Benchmark(gint_t R)
             Tensor<T> B(len_B.size(), len_B);
             Tensor<T> C(len_C.size(), len_C);
 
+            len_A.resize(6);
+            len_B.resize(6);
+            len_C.resize(6);
+
             double gflops = 2*tm*tn*tk*1e-9;
             impl_type = BLAS_BASED;
             double dt_blas = RunKernel(R, [&]{ tensor_contract(alpha, A, idx_A, B, idx_B, beta, C, idx_C); });
             impl_type = BLIS_BASED;
             double dt_blis = RunKernel(R, [&]{ tensor_contract(alpha, A, idx_A, B, idx_B, beta, C, idx_C); });
-            fprintf(tout, "%e %e %e\n", eff_dim(gflops,m,n,k), gflops/dt_blas, gflops/dt_blis);
+            fprintf(tout, "%e %e %e - %s %ld %ld %ld %ld %ld %ld - %s %ld %ld %ld %ld %ld %ld - %s %ld %ld %ld %ld %ld %ld\n",
+                    eff_dim(gflops,m,n,k), gflops/dt_blas, gflops/dt_blis,
+                    idx_A.c_str(), len_A[0], len_A[1], len_A[2], len_A[3], len_A[4], len_A[5],
+                    idx_B.c_str(), len_B[0], len_B[1], len_B[2], len_B[3], len_B[4], len_B[5],
+                    idx_C.c_str(), len_C[0], len_C[1], len_C[2], len_C[3], len_C[4], len_C[5]);
         }
     };
 
-    auto square_exp = bind(experiment, _1, _2, _3,
+    if (0)
+    {
+        mout = fopen("out.mat.square", "w");
+        tout = fopen("out.tensor.square", "w");
+
+        auto square_exp = bind(experiment, _1, _2, _3,
+                               [](double gflops, dim_t m, dim_t n, dim_t k)
+                               { return pow(gflops/2e-9, 1.0/3.0); });
+        RunExperiment(10, 500, 10,
+                      10, 500, 10,
+                      10, 500, 10,
+                      square_exp);
+
+        fclose(mout);
+        fclose(tout);
+    }
+
+    if (0)
+    {
+        mout = fopen("out.mat.rankk", "w");
+        tout = fopen("out.tensor.rankk", "w");
+
+        auto rankk_exp = bind(experiment, _1, _2, _3,
+                              [](double gflops, dim_t m, dim_t n, dim_t k)
+                              { return gflops/2e-9/m/n; });
+        RunExperiment(500, 500, 0,
+                      500, 500, 0,
+                      10, 500, 10,
+                      rankk_exp);
+
+        fclose(mout);
+        fclose(tout);
+    }
+
+    if (0)
+    {
+        mout = fopen("out.mat.pp", "w");
+        tout = fopen("out.tensor.pp", "w");
+
+        auto pp_exp = bind(experiment, _1, _2, _3,
                            [](double gflops, dim_t m, dim_t n, dim_t k)
-                           { return pow(gflops/2e-9, 1.0/3.0); });
+                           { return sqrt(gflops/2e-9/k); });
+        RunExperiment(10, 500, 10,
+                      10, 500, 10,
+                      256, 256, 0,
+                      pp_exp);
 
-    auto rankk_exp = bind(experiment, _1, _2, _3,
-                          [](double gflops, dim_t m, dim_t n, dim_t k)
-                          { return gflops/2e-9/m/n; });
+        fclose(mout);
+        fclose(tout);
+    }
 
-    auto pp_exp = bind(experiment, _1, _2, _3,
-                       [](double gflops, dim_t m, dim_t n, dim_t k)
-                       { return sqrt(gflops/2e-9/k); });
+    if (1)
+    {
+        mout = fopen("out.mat.bp", "w");
+        tout = fopen("out.tensor.bp", "w");
 
-    auto pb_exp = bind(experiment, _1, _2, _3,
-                       [](double gflops, dim_t m, dim_t n, dim_t k)
-                       { return gflops/2e-9/n/k; });
+        auto bp_exp = bind(experiment, _1, _2, _3,
+                           [](double gflops, dim_t m, dim_t n, dim_t k)
+                           { return gflops/2e-9/m/k; });
+        RunExperiment(96, 96, 0,
+                      10, 1000, 10,
+                      256, 256, 0,
+                      bp_exp);
 
-    mout = fopen("out.mat.square", "w");
-    tout = fopen("out.tensor.square", "w");
-
-    RunExperiment(10, 500, 10,
-                  10, 500, 10,
-                  10, 500, 10,
-                  square_exp);
-
-    fclose(mout);
-    fclose(tout);
-
-    mout = fopen("out.mat.rankk", "w");
-    tout = fopen("out.tensor.rankk", "w");
-
-    RunExperiment(500, 500, 0,
-                  500, 500, 0,
-                  10, 500, 10,
-                  rankk_exp);
-
-    fclose(mout);
-    fclose(tout);
-
-    mout = fopen("out.mat.pp", "w");
-    tout = fopen("out.tensor.pp", "w");
-
-    RunExperiment(10, 500, 10,
-                  10, 500, 10,
-                  256, 256, 0,
-                  pp_exp);
-
-    fclose(mout);
-    fclose(tout);
-
-    mout = fopen("out.mat.pb", "w");
-    tout = fopen("out.tensor.pb", "w");
-
-    RunExperiment(10, 1000, 10,
-                  96, 96, 0,
-                  256, 256, 0,
-                  pb_exp);
-
-    fclose(mout);
-    fclose(tout);
+        fclose(mout);
+        fclose(tout);
+    }
 }
 
 int main(int argc, char **argv)
 {
-    gint_t R = 30;
+    gint_t R = 20;
+    time_t seed = time(NULL);
 
     tblis_init();
 
     struct option opts[] = {{"rep", required_argument, NULL, 'r'},
+                            {"seed", required_argument, NULL, 's'},
                             {0, 0, 0, 0}};
 
     int arg;
     int index;
     istringstream iss;
-    while ((arg = getopt_long(argc, argv, "r:", opts, &index)) != -1)
+    while ((arg = getopt_long(argc, argv, "r:s:", opts, &index)) != -1)
     {
         switch (arg)
         {
@@ -260,11 +278,18 @@ int main(int argc, char **argv)
                 iss.str(optarg);
                 iss >> R;
                 break;
+            case 's':
+                iss.str(optarg);
+                iss >> seed;
+                break;
             case '?':
                 abort();
                 break;
         }
     }
+
+    cout << "Using mt19937 with seed " << seed << endl;
+    engine.seed(seed);
 
     Benchmark<double>(R);
 

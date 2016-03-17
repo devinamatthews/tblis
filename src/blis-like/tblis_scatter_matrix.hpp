@@ -73,7 +73,7 @@ class ScatterMatrix
         void create(Matrix<type>& other, scatter_t scatter)
         {
             _conjtrans = other.conjtrans();
-            _ptr.reset((type*)other);
+            _ptr.reset(other.data());
             _m = other.length();
             _n = other.width();
 
@@ -486,12 +486,12 @@ class ScatterMatrix
             shift_left(width());
         }
 
-        operator type*()
+        type* data()
         {
             return _ptr;
         }
 
-        operator const type*() const
+        const type* data() const
         {
             return _ptr;
         }
@@ -516,13 +516,13 @@ void ViewNoTranspose(ScatterMatrix<T>& A, ScatterMatrix<T>& V)
 
     if (A.is_transposed())
     {
-        V.reset(A.width(), A.length(), A,
+        V.reset(A.width(), A.length(), A.data(),
                 A.col_stride(), A.row_stride(),
                 A.col_scatter(), A.row_scatter());
     }
     else
     {
-        V.reset(A.length(), A.width(), A,
+        V.reset(A.length(), A.width(), A.data(),
                 A.row_stride(), A.col_stride(),
                 A.row_scatter(), A.col_scatter());
     }

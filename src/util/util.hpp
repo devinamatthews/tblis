@@ -39,6 +39,12 @@ else \
 #define ASSERT(x,...)
 #endif
 
+#define DEFINE_INSTANTIATIONS() \
+INSTANTIATION(   float,MR,NR,KR,MR<   float>::def,NR<   float>::def,KR<   float>::def) \
+INSTANTIATION(  double,MR,NR,KR,MR<  double>::def,NR<  double>::def,KR<  double>::def) \
+INSTANTIATION(sComplex,MR,NR,KR,MR<sComplex>::def,NR<sComplex>::def,KR<sComplex>::def) \
+INSTANTIATION(dComplex,MR,NR,KR,MR<dComplex>::def,NR<dComplex>::def,KR<dComplex>::def)
+
 template<typename T> std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
 {
     os << "[";
@@ -670,6 +676,7 @@ RandomProductConstrainedSequence(int n, T p, const std::vector<T>& mn)
             case    ROUND_DOWN: si[i] = floor(sd[i]); break;
             case ROUND_NEAREST: si[i] = round(sd[i]); break;
         }
+        si[i] = std::max(si[i], mn[i]);
     }
     //cout << p << si << accumulate(si.begin(), si.end(), T(1), multiplies<T>()) << endl;
 

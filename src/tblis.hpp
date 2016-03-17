@@ -21,7 +21,21 @@ void tblis_finalize();
 
 #include "blis-like/tblis_constants.hpp"
 #include "blis-like/tblis_scatter_matrix.hpp"
-#include "blis-like/tblis_scatter_vector.hpp"
+#include "blis-like/tblis_block_scatter_matrix.hpp"
+
+#include "blis-like/1v/tblis_addv.hpp"
+#include "blis-like/1v/tblis_asumv.hpp"
+#include "blis-like/1v/tblis_axpbyv.hpp"
+#include "blis-like/1v/tblis_axpyv.hpp"
+#include "blis-like/1v/tblis_copyv.hpp"
+#include "blis-like/1v/tblis_dotv.hpp"
+#include "blis-like/1v/tblis_normfv.hpp"
+#include "blis-like/1v/tblis_scal2v.hpp"
+#include "blis-like/1v/tblis_scalv.hpp"
+#include "blis-like/1v/tblis_setv.hpp"
+#include "blis-like/1v/tblis_sumv.hpp"
+#include "blis-like/1v/tblis_xpbyv.hpp"
+#include "blis-like/1v/tblis_zerov.hpp"
 
 #include "blis-like/1m/tblis_normfm.hpp"
 

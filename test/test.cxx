@@ -27,6 +27,76 @@ mt19937 engine;
 }
 }
 
+template <typename T>
+void gemm_ref(T alpha, obj_t* A, obj_t* B, T beta, obj_t* C)
+{
+    T* ptr_A = (T*)bli_obj_buffer(*A);
+    T* ptr_B = (T*)bli_obj_buffer(*B);
+    T* ptr_C = (T*)bli_obj_buffer(*C);
+
+    dim_t m_A = bli_obj_length(*A);
+    dim_t m_C = bli_obj_length(*C);
+    dim_t n_B = bli_obj_width(*B);
+    dim_t n_C = bli_obj_width(*C);
+    dim_t k_A = bli_obj_width(*A);
+    dim_t k_B = bli_obj_length(*B);
+
+    inc_t rs_A = bli_obj_row_stride(*A);
+    inc_t cs_A = bli_obj_col_stride(*A);
+    inc_t rs_B = bli_obj_row_stride(*B);
+    inc_t cs_B = bli_obj_col_stride(*B);
+    inc_t rs_C = bli_obj_row_stride(*C);
+    inc_t cs_C = bli_obj_col_stride(*C);
+
+    if (bli_obj_has_trans(*A))
+    {
+        swap(m_A, k_A);
+        swap(rs_A, cs_A);
+    }
+
+    if (bli_obj_has_trans(*B))
+    {
+        swap(k_B, n_B);
+        swap(rs_B, cs_B);
+    }
+
+    if (bli_obj_has_trans(*C))
+    {
+        swap(m_C, n_C);
+        swap(rs_C, cs_C);
+    }
+
+    ASSERT(m_A == m_C);
+    ASSERT(n_B == n_C);
+    ASSERT(k_A == k_B);
+
+    dim_t m = m_A;
+    dim_t n = n_B;
+    dim_t k = k_A;
+
+    for (dim_t im = 0;im < m;im++)
+    {
+        for (dim_t in = 0;in < n;in++)
+        {
+            T tmp = T();
+
+            for (dim_t ik = 0;ik < k;ik++)
+            {
+                tmp += ptr_A[im*rs_A + ik*cs_A]*ptr_B[ik*rs_B + in*cs_B];
+            }
+
+            if (beta == 0.0)
+            {
+                ptr_C[im*rs_C + in*cs_C] = alpha*tmp;
+            }
+            else
+            {
+                ptr_C[im*rs_C + in*cs_C] = alpha*tmp + beta*ptr_C[im*rs_C + in*cs_C];
+            }
+        }
+    }
+}
+
 string permutation(string from, string to)
 {
     assert(from.size() == to.size());
@@ -132,7 +202,7 @@ void RandomMatrix(siz_t N, dim_t m_min, dim_t n_min, Matrix<T>& t)
 
     t.reset(m, n, rs, cs);
 
-    T* data = t;
+    T* data = t.data();
     fill(data, data+size, T());
 
     Iterator it({m,n}, {rs,cs});
@@ -987,13 +1057,25 @@ void TestTBLIS(siz_t N)
         cout << endl;
 
         D = C;
-        bli_gemm(scale_obj, A, B, scale_obj, D);
+        gemm_ref(scale, A, B, scale, D);
         bli_normfm(D, res_obj);
         ref_val = (T)res_obj;
+
+        //D = C;
+        //bli_gemm(scale_obj, A, B, scale_obj, D);
+        //bli_normfm(D, res_obj);
+        //ref_val = (T)res_obj;
 
         D = C;
         tblis_gemm(scale, A, B, scale, D);
         tblis_normfm(D, calc_val);
+
+        passfail("REF", ref_val, calc_val);
+
+        D = C;
+        bli_gemm(scale_obj, A, B, scale_obj, D);
+        bli_normfm(D, res_obj);
+        ref_val = (T)res_obj;
 
         passfail("BLIS", ref_val, calc_val);
 

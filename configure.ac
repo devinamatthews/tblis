@@ -1,5 +1,6 @@
 AC_INIT(tblis, 1.0, dmatthews@utexas.edu, tensor, http://www.github.com/devinamatthews/tblis)
 AM_INIT_AUTOMAKE([foreign silent-rules subdir-objects])
+LT_INIT
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE([disable])
 

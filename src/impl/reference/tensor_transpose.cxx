@@ -2,6 +2,7 @@
 #include "impl/tensor_impl.hpp"
 
 using namespace std;
+using namespace tblis::blis_like;
 
 namespace tblis
 {
@@ -12,7 +13,44 @@ template <typename T>
 int tensor_transpose_reference(T alpha, const Tensor<T>& A, const std::string& idx_A,
                                T  beta,       Tensor<T>& B, const std::string& idx_B)
 {
-    Iterator iter_AB(A.getLengths(), A.getStrides(), B.getStrides());
+    gint_t ndim = A.getDimension();
+
+    if (ndim == 0)
+    {
+        B.getData()[0] = alpha*A.getData()[0] + beta*B.getData()[0];
+        return 0;
+    }
+
+    const vector<inc_t>& strides_A = A.getStrides();
+    const vector<inc_t>& strides_B = B.getStrides();
+    const vector<dim_t>& len_A = A.getLengths();
+
+    string idx;
+    for (gint_t i = 0;i < ndim;i++) idx.push_back(i);
+
+    sort(idx.begin(), idx.end(),
+    [&](char a, char b)
+    {
+        return min(strides_A[a], strides_B[a]) <
+               min(strides_A[b], strides_B[b]);
+    });
+
+    vector<inc_t> strides_Ar(ndim-1);
+    vector<inc_t> strides_Br(ndim-1);
+    vector<dim_t> len(ndim-1);
+
+    for (gint_t i = 0;i < ndim-1;i++)
+    {
+        strides_Ar[i] = strides_A[idx[i+1]];
+        strides_Br[i] = strides_B[idx[i+1]];
+        len[i] = len_A[idx[i+1]];
+    }
+
+    inc_t stride_A0 = strides_A[idx[0]];
+    inc_t stride_B0 = strides_B[idx[0]];
+    dim_t len0 = len_A[idx[0]];
+
+    Iterator iter_AB(len, strides_Ar, strides_Br);
 
     const T* restrict A_ = A.getData();
           T* restrict B_ = B.getData();
@@ -24,7 +62,7 @@ int tensor_transpose_reference(T alpha, const Tensor<T>& A, const std::string& i
             while (iter_AB.nextIteration(A_, B_))
             {
                 assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
-                *B_ = 0.0;
+                tblis_zerov(len0, B_, stride_B0);
             }
         }
         else if (beta == 1.0)
@@ -36,7 +74,7 @@ int tensor_transpose_reference(T alpha, const Tensor<T>& A, const std::string& i
             while (iter_AB.nextIteration(A_, B_))
             {
                 assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
-                *B_ *= beta;
+                tblis_scalv(len0, beta, B_, stride_B0);
             }
         }
     }
@@ -48,7 +86,7 @@ int tensor_transpose_reference(T alpha, const Tensor<T>& A, const std::string& i
             {
                 assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
                 assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
-                *B_ = *A_;
+                tblis_copyv(false, len0, A_, stride_A0, B_, stride_B0);
             }
         }
         else if (beta == 1.0)
@@ -57,7 +95,7 @@ int tensor_transpose_reference(T alpha, const Tensor<T>& A, const std::string& i
             {
                 assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
                 assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
-                *B_ += *A_;
+                tblis_addv(false, len0, A_, stride_A0, B_, stride_B0);
             }
         }
         else
@@ -66,7 +104,7 @@ int tensor_transpose_reference(T alpha, const Tensor<T>& A, const std::string& i
             {
                 assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
                 assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
-                *B_ = *A_ + beta*(*B_);
+                tblis_xpbyv(false, len0, A_, stride_A0, beta, B_, stride_B0);
             }
         }
     }
@@ -78,7 +116,7 @@ int tensor_transpose_reference(T alpha, const Tensor<T>& A, const std::string& i
             {
                 assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
                 assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
-                *B_ = alpha*(*A_);
+                tblis_scal2v(false, len0, alpha, A_, stride_A0, B_, stride_B0);
             }
         }
         else if (beta == 1.0)
@@ -87,7 +125,7 @@ int tensor_transpose_reference(T alpha, const Tensor<T>& A, const std::string& i
             {
                 assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
                 assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
-                *B_ += alpha*(*A_);
+                tblis_axpyv(false, len0, alpha, A_, stride_A0, B_, stride_B0);
             }
         }
         else
@@ -96,7 +134,7 @@ int tensor_transpose_reference(T alpha, const Tensor<T>& A, const std::string& i
             {
                 assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
                 assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
-                *B_ = alpha*(*A_) + beta*(*B_);
+                tblis_axpbyv(false, len0, alpha, A_, stride_A0, beta, B_, stride_B0);
             }
         }
     }

@@ -12,9 +12,9 @@ template <typename T>
 int tensor_sum_blas(T alpha, const Tensor<T>& A, const std::string& idx_A,
                     T  beta,       Tensor<T>& B, const std::string& idx_B)
 {
-    string idx_A_not_AB(A.getDimension(), 0);
-    string idx_B_not_AB(B.getDimension(), 0);
-    string idx_AB(A.getDimension(), 0);
+    string idx_A_not_AB(A.dimension(), 0);
+    string idx_B_not_AB(B.dimension(), 0);
+    string idx_AB(A.dimension(), 0);
 
     gint_t ndim_AB =
         set_intersection(idx_A.begin(), idx_A.end(),
@@ -25,13 +25,13 @@ int tensor_sum_blas(T alpha, const Tensor<T>& A, const std::string& idx_A,
     vector<dim_t> len_AB(ndim_AB);
 
     gint_t j = 0;
-    for (gint_t i = 0;i < A.getDimension();i++)
+    for (gint_t i = 0;i < A.dimension();i++)
     {
         if (ndim_AB > j && idx_A[i] == idx_AB[j])
         {
-            len_AB[j++] = A.getLength(i);
+            len_AB[j++] = A.length(i);
         }
-        if (i == A.getDimension()-1)
+        if (i == A.dimension()-1)
         {
             assert(j == ndim_AB);
         }

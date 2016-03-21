@@ -19,9 +19,17 @@ void tblis_finalize();
 
 }
 
+#include "core/tensor_iterator.hpp"
+#include "core/tensor_class.hpp"
+#include "core/tensor_iface.hpp"
+#include "core/tensor_templates.hpp"
+#include "core/tensor_slicer.hpp"
+#include "core/tensor_partitioner.hpp"
+
 #include "blis-like/tblis_constants.hpp"
 #include "blis-like/tblis_scatter_matrix.hpp"
 #include "blis-like/tblis_block_scatter_matrix.hpp"
+#include "blis-like/tblis_tensor_matrix.hpp"
 
 #include "blis-like/1v/tblis_addv.hpp"
 #include "blis-like/1v/tblis_asumv.hpp"
@@ -43,12 +51,5 @@ void tblis_finalize();
 #include "blis-like/3/tblis_packm.hpp"
 #include "blis-like/3/tblis_gemm_ukr.hpp"
 #include "blis-like/3/tblis_gemm.hpp"
-
-#include "core/tensor_iterator.hpp"
-#include "core/tensor_class.hpp"
-#include "core/tensor_iface.hpp"
-#include "core/tensor_templates.hpp"
-#include "core/tensor_slicer.hpp"
-#include "core/tensor_partitioner.hpp"
 
 #endif

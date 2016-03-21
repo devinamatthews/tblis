@@ -30,65 +30,65 @@ int tensor_contract_reference(T alpha, const Tensor<T>& A, const std::string& id
     vector<inc_t> stride_B_BC(ndim_BC);
     vector<inc_t> stride_C_BC(ndim_BC);
 
-    for (gint_t i = 0, k = 0, l = 0;i < A.getDimension();i++)
+    for (gint_t i = 0, k = 0, l = 0;i < A.dimension();i++)
     {
         if (k < ndim_AB && idx_A[i] == idx_AB[k])
         {
-            len_AB[k] = A.getLength(i);
-            stride_A_AB[k++] = A.getStride(i);
+            len_AB[k] = A.length(i);
+            stride_A_AB[k++] = A.stride(i);
         }
         else if (l < ndim_AC && idx_A[i] == idx_AC[l])
         {
-            len_AC[l] = A.getLength(i);
-            stride_A_AC[l++] = A.getStride(i);
+            len_AC[l] = A.length(i);
+            stride_A_AC[l++] = A.stride(i);
         }
     }
 
-    for (gint_t i = 0, k = 0, l = 0;i < B.getDimension();i++)
+    for (gint_t i = 0, k = 0, l = 0;i < B.dimension();i++)
     {
         if (k < ndim_AB && idx_B[i] == idx_AB[k])
         {
-            stride_B_AB[k++] = B.getStride(i);
+            stride_B_AB[k++] = B.stride(i);
         }
         else if (l < ndim_BC && idx_B[i] == idx_BC[l])
         {
-            len_BC[l] = B.getLength(i);
-            stride_B_BC[l++] = B.getStride(i);
+            len_BC[l] = B.length(i);
+            stride_B_BC[l++] = B.stride(i);
         }
     }
 
-    for (gint_t i = 0, k = 0, l = 0;i < C.getDimension();i++)
+    for (gint_t i = 0, k = 0, l = 0;i < C.dimension();i++)
     {
         if (k < ndim_AC && idx_C[i] == idx_AC[k])
         {
-            stride_C_AC[k++] = C.getStride(i);
+            stride_C_AC[k++] = C.stride(i);
         }
         else if (l < ndim_BC && idx_C[i] == idx_BC[l])
         {
-            stride_C_BC[l++] = C.getStride(i);
+            stride_C_BC[l++] = C.stride(i);
         }
     }
 
-    Iterator iter_AB(len_AB, stride_A_AB, stride_B_AB);
-    Iterator iter_AC(len_AC, stride_A_AC, stride_C_AC);
-    Iterator iter_BC(len_BC, stride_B_BC, stride_C_BC);
+    Iterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
+    Iterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
+    Iterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
 
-    const T* restrict A_ = A.getData();
-    const T* restrict B_ = B.getData();
-          T* restrict C_ = C.getData();
+    const T* restrict A_ = A.data();
+    const T* restrict B_ = B.data();
+          T* restrict C_ = C.data();
 
-    while (iter_AC.nextIteration(A_, C_))
+    while (iter_AC.next(A_, C_))
     {
-        while (iter_BC.nextIteration(B_, C_))
+        while (iter_BC.next(B_, C_))
         {
             T temp = T();
 
             if (alpha != 0.0)
             {
-                while (iter_AB.nextIteration(A_, B_))
+                while (iter_AB.next(A_, B_))
                 {
-                    assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
-                    assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
+                    assert (A_-A.data() >= 0 && A_-A.data() < A.size());
+                    assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                     temp += (*A_)*(*B_);
                 }
                 temp *= alpha;
@@ -96,17 +96,17 @@ int tensor_contract_reference(T alpha, const Tensor<T>& A, const std::string& id
 
             if (beta == 0.0)
             {
-                assert (C_-C.getData() >= 0 && C_-C.getData() < C.getDataSize());
+                assert (C_-C.data() >= 0 && C_-C.data() < C.size());
                 *C_ = temp;
             }
             else if (beta == 1.0)
             {
-                assert (C_-C.getData() >= 0 && C_-C.getData() < C.getDataSize());
+                assert (C_-C.data() >= 0 && C_-C.data() < C.size());
                 *C_ += temp;
             }
             else
             {
-                assert (C_-C.getData() >= 0 && C_-C.getData() < C.getDataSize());
+                assert (C_-C.data() >= 0 && C_-C.data() < C.size());
                 *C_ = temp + beta*(*C_);
             }
         }

@@ -101,6 +101,20 @@ T* ptr(T* x)
 }
 
 template <typename Container>
+typename Container::value_type sum(Container& c)
+{
+    typedef typename Container::value_type T;
+    return std::accumulate(c.begin(), c.end(), T(0), std::plus<T>());
+}
+
+template <typename Container>
+typename Container::value_type prod(Container& c)
+{
+    typedef typename Container::value_type T;
+    return std::accumulate(c.begin(), c.end(), T(1), std::multiplies<T>());
+}
+
+template <typename Container>
 Container& sort(Container& c)
 {
     std::sort(c.begin(), c.end());

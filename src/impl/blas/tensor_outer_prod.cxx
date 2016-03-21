@@ -13,7 +13,7 @@ int tensor_outer_prod_blas(T alpha, const Tensor<T>& A, const std::string& idx_A
                                     const Tensor<T>& B, const std::string& idx_B,
                            T  beta,       Tensor<T>& C, const std::string& idx_C)
 {
-    string idx_AC_BC(C.getDimension(), 0);
+    string idx_AC_BC(C.dimension(), 0);
 
     gint_t ndim_AC =
         set_intersection(idx_A.begin(), idx_A.end(),
@@ -25,32 +25,32 @@ int tensor_outer_prod_blas(T alpha, const Tensor<T>& A, const std::string& idx_A
                          idx_C.begin(), idx_C.end(),
                          idx_AC_BC.begin()+ndim_AC) - (idx_AC_BC.begin()+ndim_AC);
 
-    assert(ndim_AC+ndim_BC == C.getDimension());
+    assert(ndim_AC+ndim_BC == C.dimension());
 
     vector<dim_t> len_AC_BC(ndim_AC+ndim_BC);
 
     gint_t j = 0;
-    for (gint_t i = 0;i < C.getDimension();i++)
+    for (gint_t i = 0;i < C.dimension();i++)
     {
         if (ndim_AC+ndim_BC > j && idx_C[i] == idx_AC_BC[j])
         {
-            len_AC_BC[j++] = C.getLength(i);
+            len_AC_BC[j++] = C.length(i);
         }
     }
-    for (gint_t i = 0;i < C.getDimension();i++)
+    for (gint_t i = 0;i < C.dimension();i++)
     {
         if (ndim_AC+ndim_BC > j && idx_C[i] == idx_AC_BC[j])
         {
-            len_AC_BC[j++] = C.getLength(i);
+            len_AC_BC[j++] = C.length(i);
         }
-        if (i == C.getDimension()-1)
+        if (i == C.dimension()-1)
         {
             assert(j == ndim_AC+ndim_BC);
         }
     }
 
-    Tensor<T> ar(A.getDimension(), A.getLengths());
-    Tensor<T> br(B.getDimension(), B.getLengths());
+    Tensor<T> ar(A.dimension(), A.lengths());
+    Tensor<T> br(B.dimension(), B.lengths());
     Tensor<T> cr(ndim_AC+ndim_BC, len_AC_BC);
 
     Matrix<T> am, bm, cm;

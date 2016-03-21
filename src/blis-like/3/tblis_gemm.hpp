@@ -12,15 +12,6 @@ namespace tblis
 namespace blis_like
 {
 
-template <template <typename> class MT, template <typename> class NT>
-struct MacroKernel
-{
-    template <typename T> using run =
-        typename PartitionN<NT>::template run<T,
-                 PartitionM<MT>,
-                 MicroKernel<MT,NT>>;
-};
-
 template <typename Child, typename... Children>
 struct GEMM
 {
@@ -28,21 +19,17 @@ struct GEMM
         typename Child::template run<T, Children...>;
 };
 
-//typedef GEMM<PartitionN<NC>,
-//             PartitionK<KC>,
-//             PackB<NR,KR>,
-//             PartitionM<MC>,
-//             PackA<MR,KR>,
-//             MacroKernel<MR,NR>> DefaultGEMM;
+template <template <typename> class MT, template <typename> class NT>
+using MacroKernel = GEMM<PartitionN<NT>,
+                         PartitionM<MT>,
+                         MicroKernel<MT,NT>>;
 
-typedef GEMM<PartitionN<NC>,
-             PartitionK<KC>,
-             PackB<NR,KR>,
-             PartitionM<MC>,
-             PackA<MR,KR>,
-             PartitionN<NR>,
-             PartitionM<MR>,
-             MicroKernel<MR,NR>> DefaultGEMM;
+using DefaultGEMM = GEMM<PartitionN<NC>,
+                         PartitionK<KC>,
+                         PackB<NR,KR>,
+                         PartitionM<MC>,
+                         PackA<MR,KR>,
+                         MacroKernel<MR,NR>>;
 
 template <typename T, typename MatrixA, typename MatrixB, typename MatrixC>
 void tblis_gemm(T alpha, const MatrixA& A, const MatrixB& B, T beta, MatrixC&& C)

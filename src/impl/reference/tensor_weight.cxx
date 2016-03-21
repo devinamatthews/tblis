@@ -32,88 +32,88 @@ int tensor_weight_reference(T alpha, const Tensor<T>& A, const std::string& idx_
     vector<inc_t> stride_B_ABC(ndim_ABC);
     vector<inc_t> stride_C_ABC(ndim_ABC);
 
-    for (gint_t i = 0, l = 0, m = 0;i < A.getDimension();i++)
+    for (gint_t i = 0, l = 0, m = 0;i < A.dimension();i++)
     {
         if (l < ndim_AC && idx_A[i] == idx_AC[l])
         {
-            len_AC[l] = A.getLength(i);
-            stride_A_AC[l++] = A.getStride(i);
+            len_AC[l] = A.length(i);
+            stride_A_AC[l++] = A.stride(i);
         }
         else if (m < ndim_ABC && idx_A[i] == idx_ABC[m])
         {
-            len_ABC[m] = A.getLength(i);
-            stride_A_ABC[m++] = A.getStride(i);
+            len_ABC[m] = A.length(i);
+            stride_A_ABC[m++] = A.stride(i);
         }
     }
 
-    for (gint_t i = 0, l = 0, m = 0;i < B.getDimension();i++)
+    for (gint_t i = 0, l = 0, m = 0;i < B.dimension();i++)
     {
         if (l < ndim_BC && idx_B[i] == idx_BC[l])
         {
-            len_BC[l] = B.getLength(i);
-            stride_B_BC[l++] = B.getStride(i);
+            len_BC[l] = B.length(i);
+            stride_B_BC[l++] = B.stride(i);
         }
         else if (m < ndim_ABC && idx_B[i] == idx_ABC[m])
         {
-            stride_B_ABC[m++] = B.getStride(i);
+            stride_B_ABC[m++] = B.stride(i);
         }
     }
 
-    for (gint_t i = 0, k = 0, l = 0, m = 0;i < C.getDimension();i++)
+    for (gint_t i = 0, k = 0, l = 0, m = 0;i < C.dimension();i++)
     {
         if (k < ndim_AC && idx_C[i] == idx_AC[k])
         {
-            stride_C_AC[k++] = C.getStride(i);
+            stride_C_AC[k++] = C.stride(i);
         }
         else if (l < ndim_BC && idx_C[i] == idx_BC[l])
         {
-            stride_C_BC[l++] = C.getStride(i);
+            stride_C_BC[l++] = C.stride(i);
         }
         else if (m < ndim_ABC && idx_C[i] == idx_ABC[m])
         {
-            stride_C_ABC[m++] = C.getStride(i);
+            stride_C_ABC[m++] = C.stride(i);
         }
     }
 
-    Iterator iter_AC(len_AC, stride_A_AC, stride_C_AC);
-    Iterator iter_BC(len_BC, stride_B_BC, stride_C_BC);
-    Iterator iter_ABC(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
+    Iterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
+    Iterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
+    Iterator<3> iter_ABC(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
 
-    const T* restrict A_ = A.getData();
-    const T* restrict B_ = B.getData();
-          T* restrict C_ = C.getData();
+    const T* restrict A_ = A.data();
+    const T* restrict B_ = B.data();
+          T* restrict C_ = C.data();
 
-    while (iter_ABC.nextIteration(A_, B_, C_))
+    while (iter_ABC.next(A_, B_, C_))
     {
-        while (iter_AC.nextIteration(A_, C_))
+        while (iter_AC.next(A_, C_))
         {
-            assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
+            assert (A_-A.data() >= 0 && A_-A.data() < A.size());
             T temp = alpha*(*A_);
 
             if (beta == 0.0)
             {
-                while (iter_BC.nextIteration(B_, C_))
+                while (iter_BC.next(B_, C_))
                 {
-                    assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
-                    assert (C_-C.getData() >= 0 && C_-C.getData() < C.getDataSize());
+                    assert (B_-B.data() >= 0 && B_-B.data() < B.size());
+                    assert (C_-C.data() >= 0 && C_-C.data() < C.size());
                     *C_ = temp*(*B_);
                 }
             }
             else if (beta == 1.0)
             {
-                while (iter_BC.nextIteration(B_, C_))
+                while (iter_BC.next(B_, C_))
                 {
-                    assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
-                    assert (C_-C.getData() >= 0 && C_-C.getData() < C.getDataSize());
+                    assert (B_-B.data() >= 0 && B_-B.data() < B.size());
+                    assert (C_-C.data() >= 0 && C_-C.data() < C.size());
                     *C_ += temp*(*B_);
                 }
             }
             else
             {
-                while (iter_BC.nextIteration(B_, C_))
+                while (iter_BC.next(B_, C_))
                 {
-                    assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
-                    assert (C_-C.getData() >= 0 && C_-C.getData() < C.getDataSize());
+                    assert (B_-B.data() >= 0 && B_-B.data() < B.size());
+                    assert (C_-C.data() >= 0 && C_-C.data() < C.size());
                     *C_ = temp*(*B_) + beta*(*C_);
                 }
             }

@@ -33,7 +33,7 @@ void PackMicroPanel(dim_t m, dim_t k,
             {
                 for (dim_t i = 0;i < k;i++)
                 {
-                    p_ap[MR*k+mr] = p_a[k+rs_a*mr];
+                    p_ap[MR*i+mr] = p_a[i+rs_a*mr];
                 }
             }
 

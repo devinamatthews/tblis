@@ -13,17 +13,17 @@ template <typename T>
 int tensor_transpose_reference(T alpha, const Tensor<T>& A, const std::string& idx_A,
                                T  beta,       Tensor<T>& B, const std::string& idx_B)
 {
-    gint_t ndim = A.getDimension();
+    gint_t ndim = A.dimension();
 
     if (ndim == 0)
     {
-        B.getData()[0] = alpha*A.getData()[0] + beta*B.getData()[0];
+        B.data()[0] = alpha*A.data()[0] + beta*B.data()[0];
         return 0;
     }
 
-    const vector<inc_t>& strides_A = A.getStrides();
-    const vector<inc_t>& strides_B = B.getStrides();
-    const vector<dim_t>& len_A = A.getLengths();
+    const vector<inc_t>& strides_A = A.strides();
+    const vector<inc_t>& strides_B = B.strides();
+    const vector<dim_t>& len_A = A.lengths();
 
     string idx;
     for (gint_t i = 0;i < ndim;i++) idx.push_back(i);
@@ -50,18 +50,18 @@ int tensor_transpose_reference(T alpha, const Tensor<T>& A, const std::string& i
     inc_t stride_B0 = strides_B[idx[0]];
     dim_t len0 = len_A[idx[0]];
 
-    Iterator iter_AB(len, strides_Ar, strides_Br);
+    Iterator<2> iter_AB(len, strides_Ar, strides_Br);
 
-    const T* restrict A_ = A.getData();
-          T* restrict B_ = B.getData();
+    const T* restrict A_ = A.data();
+          T* restrict B_ = B.data();
 
     if (alpha == 0.0)
     {
         if (beta == 0.0)
         {
-            while (iter_AB.nextIteration(A_, B_))
+            while (iter_AB.next(A_, B_))
             {
-                assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
+                assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                 tblis_zerov(len0, B_, stride_B0);
             }
         }
@@ -71,9 +71,9 @@ int tensor_transpose_reference(T alpha, const Tensor<T>& A, const std::string& i
         }
         else
         {
-            while (iter_AB.nextIteration(A_, B_))
+            while (iter_AB.next(A_, B_))
             {
-                assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
+                assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                 tblis_scalv(len0, beta, B_, stride_B0);
             }
         }
@@ -82,28 +82,28 @@ int tensor_transpose_reference(T alpha, const Tensor<T>& A, const std::string& i
     {
         if (beta == 0.0)
         {
-            while (iter_AB.nextIteration(A_, B_))
+            while (iter_AB.next(A_, B_))
             {
-                assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
-                assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
+                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
+                assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                 tblis_copyv(false, len0, A_, stride_A0, B_, stride_B0);
             }
         }
         else if (beta == 1.0)
         {
-            while (iter_AB.nextIteration(A_, B_))
+            while (iter_AB.next(A_, B_))
             {
-                assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
-                assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
+                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
+                assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                 tblis_addv(false, len0, A_, stride_A0, B_, stride_B0);
             }
         }
         else
         {
-            while (iter_AB.nextIteration(A_, B_))
+            while (iter_AB.next(A_, B_))
             {
-                assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
-                assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
+                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
+                assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                 tblis_xpbyv(false, len0, A_, stride_A0, beta, B_, stride_B0);
             }
         }
@@ -112,28 +112,28 @@ int tensor_transpose_reference(T alpha, const Tensor<T>& A, const std::string& i
     {
         if (beta == 0.0)
         {
-            while (iter_AB.nextIteration(A_, B_))
+            while (iter_AB.next(A_, B_))
             {
-                assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
-                assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
+                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
+                assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                 tblis_scal2v(false, len0, alpha, A_, stride_A0, B_, stride_B0);
             }
         }
         else if (beta == 1.0)
         {
-            while (iter_AB.nextIteration(A_, B_))
+            while (iter_AB.next(A_, B_))
             {
-                assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
-                assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
+                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
+                assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                 tblis_axpyv(false, len0, alpha, A_, stride_A0, B_, stride_B0);
             }
         }
         else
         {
-            while (iter_AB.nextIteration(A_, B_))
+            while (iter_AB.next(A_, B_))
             {
-                assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
-                assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
+                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
+                assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                 tblis_axpbyv(false, len0, alpha, A_, stride_A0, beta, B_, stride_B0);
             }
         }

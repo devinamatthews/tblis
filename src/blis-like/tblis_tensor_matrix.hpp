@@ -20,8 +20,14 @@ class TensorMatrix
         type* _ptr;
         dim_t _m;
         dim_t _n;
-        Iterator _ri;
-        Iterator _ci;
+        dim_t _off_m;
+        dim_t _off_n;
+        dim_t _m0;
+        dim_t _n0;
+        inc_t _rs0;
+        inc_t _cs0;
+        Iterator<> _ri;
+        Iterator<> _ci;
 
     protected:
         void create()
@@ -30,6 +36,14 @@ class TensorMatrix
             _ptr = NULL;
             _m = 0;
             _n = 0;
+            _off_m = 0;
+            _off_n = 0;
+            _m0 = 0;
+            _n0 = 0;
+            _rs0 = 0;
+            _cs0 = 0;
+            _ri.reset();
+            _ci.reset();
         }
 
         void create(const TensorMatrix& other)
@@ -38,6 +52,14 @@ class TensorMatrix
             _ptr = other._ptr;
             _m = other._m;
             _n = other._n;
+            _off_m = other._off_m;
+            _off_n = other._off_n;
+            _m0 = other._m0;
+            _n0 = other._n0;
+            _rs0 = other._rs0;
+            _cs0 = other._cs0;
+            _ri = other._ri;
+            _ci = other._ci;
         }
 
         void create(TensorMatrix&& other)
@@ -46,79 +68,125 @@ class TensorMatrix
             _ptr = other._ptr;
             _m = other._m;
             _n = other._n;
+            _off_m = other._off_m;
+            _off_n = other._off_n;
+            _m0 = other._m0;
+            _n0 = other._n0;
+            _rs0 = other._rs0;
+            _cs0 = other._cs0;
+            _ri = std::move(other._ri);
+            _ci = std::move(other._ci);
         }
 
-        //TODO: create from tensor and reshape
-        void create(dim_t m, dim_t n, type* p, inc_t rs, inc_t cs)
+        void create(const Tensor<T>& other,
+                    const std::vector<gint_t>& row_inds,
+                    const std::vector<gint_t>& col_inds)
         {
             _conjtrans = BLIS_NO_TRANSPOSE;
-            _ptr.reset(p);
-            _m = m;
-            _n = n;
-            _rs = rs;
-            _cs = cs;
-            _rscat.reset();
-            _cscat.reset();
+            _ptr = other.data();
+            _m0 = (row_inds.empty() ? 1 : other.length(row_inds[0]));
+            _n0 = (col_inds.empty() ? 1 : other.length(col_inds[0]));
+            _rs0 = (row_inds.empty() ? 1 : other.stride(row_inds[0]));
+            _cs0 = (col_inds.empty() ? 1 : other.stride(col_inds[0]));
+            _m = _m0;
+            _n = _n0;
+            _off_m = 0;
+            _off_n = 0;
+
+            std::vector<dim_t> len_m; len_m.reserve(row_inds.size()-1);
+            std::vector<dim_t> len_n; len_n.reserve(col_inds.size()-1);
+            std::vector<inc_t> stride_m; stride_m.reserve(row_inds.size()-1);
+            std::vector<inc_t> stride_n; stride_n.reserve(col_inds.size()-1);
+
+            for (size_t i = 1;i < row_inds.size();i++)
+            {
+                _m *= other.length(row_inds[i]);
+                len_m.push_back(other.length(row_inds[i]));
+                stride_m.push_back(other.stride(row_inds[i]));
+            }
+
+            for (size_t i = 1;i < col_inds.size();i++)
+            {
+                _n *= other.length(col_inds[i]);
+                len_n.push_back(other.length(col_inds[i]));
+                stride_n.push_back(other.stride(col_inds[i]));
+            }
+
+            _ri.reset(len_m, stride_m);
+            _ci.reset(len_n, stride_n);
+        }
+
+        void create(std::vector<dim_t> len_m,
+                    std::vector<dim_t> len_n,
+                    T* ptr,
+                    std::vector<inc_t> stride_m,
+                    std::vector<inc_t> stride_n)
+        {
+            ASSERT(len_m.size() == stride_m.size());
+            ASSERT(len_n.size() == stride_n.size());
+
+            _conjtrans = BLIS_NO_TRANSPOSE;
+            _ptr = ptr;
+            _m0 = (len_m.empty() ? 1 : len_m[0]);
+            _n0 = (len_n.empty() ? 1 : len_n[0]);
+            _rs0 = (stride_m.empty() ? 1 : stride_m[0]);
+            _cs0 = (stride_n.empty() ? 1 : stride_n[0]);
+            _m = _m0;
+            _n = _n0;
+            _off_m = 0;
+            _off_n = 0;
+
+            if (!len_m.empty()) len_m.erase(len_m.begin());
+            if (!len_n.empty()) len_n.erase(len_n.begin());
+            if (!stride_m.empty()) stride_m.erase(stride_m.begin());
+            if (!stride_n.empty()) stride_n.erase(stride_n.begin());
+
+            for (dim_t len : len_m) _m *= len;
+            for (dim_t len : len_n) _n *= len;
+
+            _ri.reset(len_m, stride_m);
+            _ci.reset(len_n, stride_n);
         }
 
     public:
-        ScatterMatrix()
+        TensorMatrix()
         {
             create();
         }
 
-        ScatterMatrix(const ScatterMatrix& other)
+        TensorMatrix(const TensorMatrix& other)
         {
             create(other);
         }
 
-        ScatterMatrix(ScatterMatrix&& other)
+        TensorMatrix(TensorMatrix&& other)
         {
             create(std::move(other));
         }
 
-        explicit ScatterMatrix(Matrix<type>& other, scatter_t scatter = SCATTER_NONE)
+        TensorMatrix(const Tensor<T>& other,
+                     const std::vector<gint_t>& row_inds,
+                     const std::vector<gint_t>& col_inds)
         {
-            create(other, scatter);
+            create(other, row_inds, col_inds);
         }
 
-        explicit ScatterMatrix(type* p)
+        TensorMatrix(const std::vector<dim_t>& len_m,
+                     const std::vector<dim_t>& len_n,
+                     T* ptr,
+                     const std::vector<inc_t>& stride_m,
+                     const std::vector<inc_t>& stride_n)
         {
-            create(1, 1, p, 1, 1);
+            create(len_m, len_n, ptr, stride_m, stride_n);
         }
 
-        ScatterMatrix(dim_t m, dim_t n, type* p)
-        {
-            create(m, n, p, 1, m);
-        }
-
-        ScatterMatrix(dim_t m, dim_t n, type* p, inc_t rs, inc_t cs)
-        {
-            create(m, n, p, rs, cs);
-        }
-
-        ScatterMatrix(dim_t m, dim_t n, type* p, inc_t rs, inc_t* cscat)
-        {
-            create(m, n, p, rs, cscat);
-        }
-
-        ScatterMatrix(dim_t m, dim_t n, type* p, inc_t* rscat, inc_t cs)
-        {
-            create(m, n, p, rscat, cs);
-        }
-
-        ScatterMatrix(dim_t m, dim_t n, type* p, inc_t* rscat, inc_t* cscat)
-        {
-            create(m, n, p, rscat, cscat);
-        }
-
-        ScatterMatrix& operator=(const ScatterMatrix& other)
+        TensorMatrix& operator=(const TensorMatrix& other)
         {
             reset(other);
             return *this;
         }
 
-        ScatterMatrix& operator=(ScatterMatrix&& other)
+        TensorMatrix& operator=(TensorMatrix&& other)
         {
             reset(std::move(other));
             return *this;
@@ -129,63 +197,32 @@ class TensorMatrix
             create();
         }
 
-        void reset(const ScatterMatrix& other)
+        void reset(const TensorMatrix& other)
         {
             if (&other == this) return;
             create(other);
         }
 
-        void reset(ScatterMatrix&& other)
+        void reset(TensorMatrix&& other)
         {
             if (&other == this) return;
             create(std::move(other));
         }
 
-        void reset(Matrix<type>& other, scatter_t scatter = SCATTER_NONE)
+        void reset(const Tensor<T>& other,
+                   const std::vector<gint_t>& row_inds,
+                   const std::vector<gint_t>& col_inds)
         {
-            create(other, scatter);
+            create(other, row_inds, col_inds);
         }
 
-        void reset(type* p)
+        void reset(const std::vector<dim_t>& len_m,
+                   const std::vector<dim_t>& len_n,
+                   T* ptr,
+                   const std::vector<inc_t>& stride_m,
+                   const std::vector<inc_t>& stride_n)
         {
-            create(1, 1, p, 1, 1);
-        }
-
-        void reset(dim_t m, dim_t n, type* p)
-        {
-            create(m, n, p, 1, m);
-        }
-
-        void reset(dim_t m, dim_t n, type* p, inc_t rs, inc_t cs)
-        {
-            create(m, n, p, rs, cs);
-        }
-
-        void reset(dim_t m, dim_t n, type* p, inc_t rs, inc_t* cscat)
-        {
-            create(m, n, p, rs, cscat);
-        }
-
-        void reset(dim_t m, dim_t n, type* p, inc_t* rscat, inc_t cs)
-        {
-            create(m, n, p, rscat, cs);
-        }
-
-        void reset(dim_t m, dim_t n, type* p, inc_t* rscat, inc_t* cscat)
-        {
-            create(m, n, p, rscat, cscat);
-        }
-
-        void reset(dim_t m, dim_t n, type* p, inc_t rs, inc_t cs, inc_t* rscat, inc_t* cscat)
-        {
-            if (rs == 0 && cs == 0)
-                create(m, n, p, rscat, cscat);
-            else if (rs == 0)
-                create(m, n, p, rscat, cs);
-            else if (cs == 0)
-                create(m, n, p, rs, cscat);
-            else
-                create(m, n, p, rs, cs);
+            create(len_m, len_n, ptr, stride_m, stride_n);
         }
 
         bool is_view() const
@@ -264,9 +301,8 @@ class TensorMatrix
 
         dim_t length(dim_t m)
         {
-            dim_t old = _m;
-            _m = m;
-            return old;
+            std::swap(m, _m);
+            return m;
         }
 
         dim_t width() const
@@ -276,79 +312,13 @@ class TensorMatrix
 
         dim_t width(dim_t n)
         {
-            dim_t old = _n;
-            _n = n;
-            return old;
-        }
-
-        inc_t row_stride() const
-        {
-            return _rs;
-        }
-
-        inc_t row_stride(inc_t rs)
-        {
-            inc_t old = _rs;
-            _rs = rs;
-            if (_rs) _rscat = NULL;
-            return old;
-        }
-
-        inc_t col_stride() const
-        {
-            return _cs;
-        }
-
-        inc_t col_stride(inc_t cs)
-        {
-            inc_t old = _cs;
-            _cs = cs;
-            if (_cs) _cscat = NULL;
-            return old;
-        }
-
-        inc_t* row_scatter()
-        {
-            return _rscat;
-        }
-
-        const inc_t* row_scatter() const
-        {
-            return _rscat;
-        }
-
-        void row_scatter(inc_t* rscat)
-        {
-            _rscat = rscat;
-            if (!_rscat) _rs = 0;
-        }
-
-        inc_t* col_scatter()
-        {
-            return _cscat;
-        }
-
-        const inc_t* col_scatter() const
-        {
-            return _cscat;
-        }
-
-        void col_scatter(inc_t* cscat)
-        {
-            _cscat = cscat;
-            if (!_cscat) _cs = 0;
+            std::swap(n, _n);
+            return n;
         }
 
         void shift_down(dim_t m)
         {
-            if (_rs == 0)
-            {
-                _rscat += m;
-            }
-            else
-            {
-                _ptr += m*_rs;
-            }
+            _off_m += m;
         }
 
         void shift_up(dim_t m)
@@ -358,14 +328,7 @@ class TensorMatrix
 
         void shift_right(dim_t n)
         {
-            if (_cs == 0)
-            {
-                _cscat += n;
-            }
-            else
-            {
-                _ptr += n*_cs;
-            }
+            _off_n += n;
         }
 
         void shift_left(dim_t n)
@@ -393,24 +356,123 @@ class TensorMatrix
             shift_left(width());
         }
 
-        operator type*()
+        type* data()
         {
             return _ptr;
         }
 
-        operator const type*() const
+        const type* data() const
         {
             return _ptr;
         }
 
-        ScatterMatrix operator^(trans_op_t trans)
+        void row_scatter(inc_t* rscat)
         {
-            ScatterMatrix view(*this);
+            inc_t off = (_off_m%_m0)*_rs0;
+            _ri.position(_off_m/_m0, off);
+
+            for (dim_t rscat_idx = 0;_ri.next(off);)
+            {
+                for (dim_t i0 = 0;i0 < _m0;i0++)
+                {
+                    if (rscat_idx == _m) return;
+                    rscat[rscat_idx++] = off + i0*_rs0;
+                }
+            }
+        }
+
+        void col_scatter(inc_t* cscat)
+        {
+            inc_t off = (_off_n%_n0)*_cs0;
+            _ri.position(_off_n/_n0, off);
+
+            for (dim_t cscat_idx = 0;_ci.next(off);)
+            {
+                for (dim_t j0 = 0;j0 < _n0;j0++)
+                {
+                    if (cscat_idx == _n) return;
+                    cscat[cscat_idx++] = off + j0*_cs0;
+                }
+            }
+        }
+
+        template <dim_t MR>
+        void row_block_scatter(inc_t* rs, inc_t* rscat)
+        {
+            inc_t off = (_off_m%_m0)*_rs0;
+            _ri.position(_off_m/_m0, off);
+
+            dim_t nleft = 0;
+            for (dim_t rs_idx = 0, rscat_idx = 0;_ri.next(off);)
+            {
+                for (dim_t i0 = 0;i0 < _m0;i0++)
+                {
+                    if (rscat_idx == _m) return;
+
+                    if (nleft == 0)
+                    {
+                        rs[rs_idx++] = (_m0-i0 >= MR ? _rs0 : 0);
+                        nleft = MR;
+                    }
+
+                    rscat[rscat_idx++] = off + i0*_rs0;
+                    nleft--;
+                }
+            }
+        }
+
+        template <dim_t NR>
+        void col_block_scatter(inc_t* cs, inc_t* cscat)
+        {
+            inc_t off = (_off_n%_n0)*_cs0;
+            _ci.position(_off_n/_n0, off);
+
+            dim_t nleft = 0;
+            for (dim_t cs_idx = 0, cscat_idx = 0;_ci.next(off);)
+            {
+                for (dim_t j0 = 0;j0 < _n0;j0++)
+                {
+                    if (cscat_idx == _n) return;
+
+                    if (nleft == 0)
+                    {
+                        cs[cs_idx++] = (_n0-j0 >= NR ? _cs0 : 0);
+                        nleft = NR;
+                    }
+
+                    cscat[cscat_idx++] = off + j0*_cs0;
+                    nleft--;
+                }
+            }
+        }
+
+        TensorMatrix operator^(trans_op_t trans)
+        {
+            TensorMatrix view(*this);
 
             if (trans.transpose()) view.transpose();
             if (trans.conjugate()) view.conjugate();
 
             return view;
+        }
+
+        friend void ViewNoTranspose(TensorMatrix& A, TensorMatrix& V)
+        {
+            using std::swap;
+
+            blis::detail::AssertNotSelfView(A, V);
+
+            V = A;
+
+            if (V.is_transposed())
+            {
+                V.transpose(false);
+                swap(V._m, V._n);
+                swap(V._m0, V._n0);
+                swap(V._off_m, V._off_n);
+                swap(V._rs0, V._cs0);
+                swap(V._ri, V._ci);
+            }
         }
 };
 

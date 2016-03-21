@@ -23,7 +23,7 @@ class Slicer
 
             for (gint_t i = 0;i < this->dims.size();i++)
             {
-                if (this->dims[i] < 0 || this->dims[i] >= A.getDimension()) abort();
+                if (this->dims[i] < 0 || this->dims[i] >= A.dimension()) abort();
                 if (i > 0 && this->dims[i] == this->dims[i-1]) abort();
             }
 
@@ -47,7 +47,7 @@ class Slicer
 
             for (gint_t i = 0;i < this->dims.size();i++)
             {
-                if (this->dims[i] < 0 || this->dims[i] >= A.getDimension()) abort();
+                if (this->dims[i] < 0 || this->dims[i] >= A.dimension()) abort();
                 if (i > 0 && this->dims[i] == this->dims[i-1]) abort();
             }
 
@@ -79,7 +79,7 @@ class Slicer
     private:
         bool nextSlice(gint_t i)
         {
-            if (A2[i].getLength(dims[i]) == 0)
+            if (A2[i].length(dims[i]) == 0)
             {
                 if (i == 0 || !nextSlice(i-1))
                 {

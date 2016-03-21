@@ -11,9 +11,9 @@ namespace impl
 template <typename T>
 int tensor_reduce_reference(reduce_t op, const Tensor<T>& A, const std::string& idx_A, T& val, inc_t& idx)
 {
-    Iterator iter_A(A.getLengths(), A.getStrides());
+    Iterator<> iter_A(A.lengths(), A.strides());
 
-    const T* restrict A_  = A.getData();
+    const T* restrict A_  = A.data();
     const T* const    A0_ = A_;
 
     switch (op)
@@ -38,23 +38,23 @@ int tensor_reduce_reference(reduce_t op, const Tensor<T>& A, const std::string& 
     switch (op)
     {
         case REDUCE_SUM:
-            for (;iter_A.nextIteration(A_);)
+            for (;iter_A.next(A_);)
             {
-                assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
+                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
                 val += *A_;
             }
             break;
         case REDUCE_SUM_ABS:
-            for (;iter_A.nextIteration(A_);)
+            for (;iter_A.next(A_);)
             {
-                assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
+                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
                 val += std::abs(*A_);
             }
             break;
         case REDUCE_MAX:
-            for (;iter_A.nextIteration(A_);)
+            for (;iter_A.next(A_);)
             {
-                assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
+                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
                 if (*A_ > val)
                 {
                     val = *A_;
@@ -63,9 +63,9 @@ int tensor_reduce_reference(reduce_t op, const Tensor<T>& A, const std::string& 
             }
             break;
         case REDUCE_MAX_ABS:
-            for (;iter_A.nextIteration(A_);)
+            for (;iter_A.next(A_);)
             {
-                assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
+                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
                 if (std::abs(*A_) > val)
                 {
                     val = std::abs(*A_);
@@ -74,9 +74,9 @@ int tensor_reduce_reference(reduce_t op, const Tensor<T>& A, const std::string& 
             }
             break;
         case REDUCE_MIN:
-            for (;iter_A.nextIteration(A_);)
+            for (;iter_A.next(A_);)
             {
-                assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
+                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
                 if (*A_ < val)
                 {
                     val = *A_;
@@ -85,9 +85,9 @@ int tensor_reduce_reference(reduce_t op, const Tensor<T>& A, const std::string& 
             }
             break;
         case REDUCE_MIN_ABS:
-            for (;iter_A.nextIteration(A_);)
+            for (;iter_A.next(A_);)
             {
-                assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
+                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
                 if (std::abs(*A_) < val)
                 {
                     val = std::abs(*A_);
@@ -96,9 +96,9 @@ int tensor_reduce_reference(reduce_t op, const Tensor<T>& A, const std::string& 
             }
             break;
         case REDUCE_NORM_2:
-            for (;iter_A.nextIteration(A_);)
+            for (;iter_A.next(A_);)
             {
-                assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
+                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
                 val += norm2(*A_);
             }
             val = sqrt(real(val));

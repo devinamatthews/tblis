@@ -136,7 +136,7 @@ void passfail(const string& label, inc_t ia, inc_t ib, T a, U b)
         cout << a << " " << ia << endl;
         cout << b << " " << ib << endl;
         cout << c << endl;
-        abort();
+        ::abort();
     }
 }
 
@@ -205,8 +205,8 @@ void RandomMatrix(siz_t N, dim_t m_min, dim_t n_min, Matrix<T>& t)
     T* data = t.data();
     fill(data, data+size, T());
 
-    Iterator it({m,n}, {rs,cs});
-    while (it.nextIteration(data)) *data = RandomUnit<T>();
+    Iterator<> it({m,n}, vector<inc_t>{rs,cs});
+    while (it.next(data)) *data = RandomUnit<T>();
 }
 
 /*
@@ -258,13 +258,13 @@ void RandomTensor(siz_t N, gint_t d, vector<dim_t> len_min, Tensor<T>& t)
     }
 
     t.reset(d, len, stride);
-    assert(size == t.getDataSize());
+    assert(size == t.size());
 
-    T* data = t;
-    fill(data, data+size, T());
+    T* data = t.data();
+    fill_n(data, size, T());
 
-    Iterator it(len, stride);
-    while (it.nextIteration(data)) *data = RandomUnit<T>();
+    Iterator<> it(len, stride);
+    while (it.next(data)) *data = RandomUnit<T>();
 }
 
 /*
@@ -378,7 +378,7 @@ void RandomTensors(siz_t N,
     {
         for (gint_t j = 0;j < ndim_A;j++)
         {
-            if (idx_B[i] == idx_A[j]) min_B[i] = A.getLength(j);
+            if (idx_B[i] == idx_A[j]) min_B[i] = A.length(j);
         }
     }
 
@@ -574,7 +574,7 @@ void RandomTensors(siz_t N,
         {
             for (gint_t j = 0;j < ndim_A;j++)
             {
-                if (idx_B[i] == idx_A[j]) min_B[i] = A.getLength(j);
+                if (idx_B[i] == idx_A[j]) min_B[i] = A.length(j);
             }
         }
 
@@ -588,7 +588,7 @@ void RandomTensors(siz_t N,
             {
                 if (idx_C[i] == idx_A[j])
                 {
-                    min_C[i] = A.getLength(j);
+                    min_C[i] = A.length(j);
                     siz *= min_C[i];
                 }
             }
@@ -596,7 +596,7 @@ void RandomTensors(siz_t N,
             {
                 if (idx_C[i] == idx_B[j])
                 {
-                    min_C[i] = B.getLength(j);
+                    min_C[i] = B.length(j);
                     siz *= min_C[i];
                 }
             }
@@ -1061,11 +1061,6 @@ void TestTBLIS(siz_t N)
         bli_normfm(D, res_obj);
         ref_val = (T)res_obj;
 
-        //D = C;
-        //bli_gemm(scale_obj, A, B, scale_obj, D);
-        //bli_normfm(D, res_obj);
-        //ref_val = (T)res_obj;
-
         D = C;
         tblis_gemm(scale, A, B, scale, D);
         tblis_normfm(D, calc_val);
@@ -1130,14 +1125,14 @@ void TestMult(siz_t N)
     RandomContract(N, A, idx_A, B, idx_B, C, idx_C);
 
     cout << endl;
-    cout << "len_A    = " << A.getLengths() << endl;
-    cout << "stride_A = " << A.getStrides() << endl;
+    cout << "len_A    = " << A.lengths() << endl;
+    cout << "stride_A = " << A.strides() << endl;
     cout << "idx_A    = " << idx_A << endl;
-    cout << "len_B    = " << B.getLengths() << endl;
-    cout << "stride_B = " << B.getStrides() << endl;
+    cout << "len_B    = " << B.lengths() << endl;
+    cout << "stride_B = " << B.strides() << endl;
     cout << "idx_B    = " << idx_B << endl;
-    cout << "len_C    = " << C.getLengths() << endl;
-    cout << "stride_C = " << C.getStrides() << endl;
+    cout << "len_C    = " << C.lengths() << endl;
+    cout << "stride_C = " << C.strides() << endl;
     cout << "idx_C    = " << idx_C << endl;
     cout << endl;
 
@@ -1156,14 +1151,14 @@ void TestMult(siz_t N)
     RandomWeight(N, A, idx_A, B, idx_B, C, idx_C);
 
     cout << endl;
-    cout << "len_A    = " << A.getLengths() << endl;
-    cout << "stride_A = " << A.getStrides() << endl;
+    cout << "len_A    = " << A.lengths() << endl;
+    cout << "stride_A = " << A.strides() << endl;
     cout << "idx_A    = " << idx_A << endl;
-    cout << "len_B    = " << B.getLengths() << endl;
-    cout << "stride_B = " << B.getStrides() << endl;
+    cout << "len_B    = " << B.lengths() << endl;
+    cout << "stride_B = " << B.strides() << endl;
     cout << "idx_B    = " << idx_B << endl;
-    cout << "len_C    = " << C.getLengths() << endl;
-    cout << "stride_C = " << C.getStrides() << endl;
+    cout << "len_C    = " << C.lengths() << endl;
+    cout << "stride_C = " << C.strides() << endl;
     cout << "idx_C    = " << idx_C << endl;
     cout << endl;
 
@@ -1182,14 +1177,14 @@ void TestMult(siz_t N)
     RandomOuterProd(N, A, idx_A, B, idx_B, C, idx_C);
 
     cout << endl;
-    cout << "len_A    = " << A.getLengths() << endl;
-    cout << "stride_A = " << A.getStrides() << endl;
+    cout << "len_A    = " << A.lengths() << endl;
+    cout << "stride_A = " << A.strides() << endl;
     cout << "idx_A    = " << idx_A << endl;
-    cout << "len_B    = " << B.getLengths() << endl;
-    cout << "stride_B = " << B.getStrides() << endl;
+    cout << "len_B    = " << B.lengths() << endl;
+    cout << "stride_B = " << B.strides() << endl;
     cout << "idx_B    = " << idx_B << endl;
-    cout << "len_C    = " << C.getLengths() << endl;
-    cout << "stride_C = " << C.getStrides() << endl;
+    cout << "len_C    = " << C.lengths() << endl;
+    cout << "stride_C = " << C.strides() << endl;
     cout << "idx_C    = " << idx_C << endl;
     cout << endl;
 
@@ -1208,14 +1203,14 @@ void TestMult(siz_t N)
     RandomMult(N, A, idx_A, B, idx_B, C, idx_C);
 
     cout << endl;
-    cout << "len_A    = " << A.getLengths() << endl;
-    cout << "stride_A = " << A.getStrides() << endl;
+    cout << "len_A    = " << A.lengths() << endl;
+    cout << "stride_A = " << A.strides() << endl;
     cout << "idx_A    = " << idx_A << endl;
-    cout << "len_B    = " << B.getLengths() << endl;
-    cout << "stride_B = " << B.getStrides() << endl;
+    cout << "len_B    = " << B.lengths() << endl;
+    cout << "stride_B = " << B.strides() << endl;
     cout << "idx_B    = " << idx_B << endl;
-    cout << "len_C    = " << C.getLengths() << endl;
-    cout << "stride_C = " << C.getStrides() << endl;
+    cout << "len_C    = " << C.lengths() << endl;
+    cout << "stride_C = " << C.strides() << endl;
     cout << "idx_C    = " << idx_C << endl;
     cout << endl;
 
@@ -1242,14 +1237,14 @@ void TestContract(siz_t N)
 
     cout << endl;
     cout << "Testing contract (" << TypeName<T>() << "):" << endl;
-    cout << "len_A    = " << A.getLengths() << endl;
-    cout << "stride_A = " << A.getStrides() << endl;
+    cout << "len_A    = " << A.lengths() << endl;
+    cout << "stride_A = " << A.strides() << endl;
     cout << "idx_A    = " << idx_A << endl;
-    cout << "len_B    = " << B.getLengths() << endl;
-    cout << "stride_B = " << B.getStrides() << endl;
+    cout << "len_B    = " << B.lengths() << endl;
+    cout << "stride_B = " << B.strides() << endl;
     cout << "idx_B    = " << idx_B << endl;
-    cout << "len_C    = " << C.getLengths() << endl;
-    cout << "stride_C = " << C.getStrides() << endl;
+    cout << "len_C    = " << C.lengths() << endl;
+    cout << "stride_C = " << C.strides() << endl;
     cout << "idx_C    = " << idx_C << endl;
     cout << endl;
 
@@ -1288,14 +1283,14 @@ void TestWeight(siz_t N)
 
     cout << endl;
     cout << "Testing weight (" << TypeName<T>() << "):" << endl;
-    cout << "len_A    = " << A.getLengths() << endl;
-    cout << "stride_A = " << A.getStrides() << endl;
+    cout << "len_A    = " << A.lengths() << endl;
+    cout << "stride_A = " << A.strides() << endl;
     cout << "idx_A    = " << idx_A << endl;
-    cout << "len_B    = " << B.getLengths() << endl;
-    cout << "stride_B = " << B.getStrides() << endl;
+    cout << "len_B    = " << B.lengths() << endl;
+    cout << "stride_B = " << B.strides() << endl;
     cout << "idx_B    = " << idx_B << endl;
-    cout << "len_C    = " << C.getLengths() << endl;
-    cout << "stride_C = " << C.getStrides() << endl;
+    cout << "len_C    = " << C.lengths() << endl;
+    cout << "stride_C = " << C.strides() << endl;
     cout << "idx_C    = " << idx_C << endl;
     cout << endl;
 
@@ -1325,14 +1320,14 @@ void TestOuterProd(siz_t N)
 
     cout << endl;
     cout << "Testing outer prod (" << TypeName<T>() << "):" << endl;
-    cout << "len_A    = " << A.getLengths() << endl;
-    cout << "stride_A = " << A.getStrides() << endl;
+    cout << "len_A    = " << A.lengths() << endl;
+    cout << "stride_A = " << A.strides() << endl;
     cout << "idx_A    = " << idx_A << endl;
-    cout << "len_B    = " << B.getLengths() << endl;
-    cout << "stride_B = " << B.getStrides() << endl;
+    cout << "len_B    = " << B.lengths() << endl;
+    cout << "stride_B = " << B.strides() << endl;
     cout << "idx_B    = " << idx_B << endl;
-    cout << "len_C    = " << C.getLengths() << endl;
-    cout << "stride_C = " << C.getStrides() << endl;
+    cout << "len_C    = " << C.lengths() << endl;
+    cout << "stride_C = " << C.strides() << endl;
     cout << "idx_C    = " << idx_C << endl;
     cout << endl;
 
@@ -1367,11 +1362,11 @@ void TestSum(siz_t N)
     RandomTranspose(N, A, idx_A, B, idx_B);
 
     cout << endl;
-    cout << "len_A    = " << A.getLengths() << endl;
-    cout << "stride_A = " << A.getStrides() << endl;
+    cout << "len_A    = " << A.lengths() << endl;
+    cout << "stride_A = " << A.strides() << endl;
     cout << "idx_A    = " << idx_A << endl;
-    cout << "len_B    = " << B.getLengths() << endl;
-    cout << "stride_B = " << B.getStrides() << endl;
+    cout << "len_B    = " << B.lengths() << endl;
+    cout << "stride_B = " << B.strides() << endl;
     cout << "idx_B    = " << idx_B << endl;
     cout << endl;
 
@@ -1390,11 +1385,11 @@ void TestSum(siz_t N)
     RandomTrace(N, A, idx_A, B, idx_B);
 
     cout << endl;
-    cout << "len_A    = " << A.getLengths() << endl;
-    cout << "stride_A = " << A.getStrides() << endl;
+    cout << "len_A    = " << A.lengths() << endl;
+    cout << "stride_A = " << A.strides() << endl;
     cout << "idx_A    = " << idx_A << endl;
-    cout << "len_B    = " << B.getLengths() << endl;
-    cout << "stride_B = " << B.getStrides() << endl;
+    cout << "len_B    = " << B.lengths() << endl;
+    cout << "stride_B = " << B.strides() << endl;
     cout << "idx_B    = " << idx_B << endl;
     cout << endl;
 
@@ -1413,11 +1408,11 @@ void TestSum(siz_t N)
     RandomReplicate(N, A, idx_A, B, idx_B);
 
     cout << endl;
-    cout << "len_A    = " << A.getLengths() << endl;
-    cout << "stride_A = " << A.getStrides() << endl;
+    cout << "len_A    = " << A.lengths() << endl;
+    cout << "stride_A = " << A.strides() << endl;
     cout << "idx_A    = " << idx_A << endl;
-    cout << "len_B    = " << B.getLengths() << endl;
-    cout << "stride_B = " << B.getStrides() << endl;
+    cout << "len_B    = " << B.lengths() << endl;
+    cout << "stride_B = " << B.strides() << endl;
     cout << "idx_B    = " << idx_B << endl;
     cout << endl;
 
@@ -1436,19 +1431,19 @@ void TestSum(siz_t N)
     RandomSum(N, A, idx_A, B, idx_B);
 
     cout << endl;
-    cout << "len_A    = " << A.getLengths() << endl;
-    cout << "stride_A = " << A.getStrides() << endl;
+    cout << "len_A    = " << A.lengths() << endl;
+    cout << "stride_A = " << A.strides() << endl;
     cout << "idx_A    = " << idx_A << endl;
-    cout << "len_B    = " << B.getLengths() << endl;
-    cout << "stride_B = " << B.getStrides() << endl;
+    cout << "len_B    = " << B.lengths() << endl;
+    cout << "stride_B = " << B.strides() << endl;
     cout << "idx_B    = " << idx_B << endl;
     cout << endl;
 
     inc_t sz = 1;
-    for (gint_t i = 0;i < B.getDimension();i++)
+    for (gint_t i = 0;i < B.dimension();i++)
     {
         bool found = false;
-        for (gint_t j = 0;j < A.getDimension();j++)
+        for (gint_t j = 0;j < A.dimension();j++)
         {
             if (idx_A[j] == idx_B[i])
             {
@@ -1456,7 +1451,7 @@ void TestSum(siz_t N)
                 break;
             }
         }
-        if (!found) sz *= B.getLength(i);
+        if (!found) sz *= B.length(i);
     }
 
     impl_type = REFERENCE;
@@ -1489,11 +1484,11 @@ void TestTrace(siz_t N)
 
     cout << endl;
     cout << "Testing trace (" << TypeName<T>() << "):" << endl;
-    cout << "len_A    = " << A.getLengths() << endl;
-    cout << "stride_A = " << A.getStrides() << endl;
+    cout << "len_A    = " << A.lengths() << endl;
+    cout << "stride_A = " << A.strides() << endl;
     cout << "idx_A    = " << idx_A << endl;
-    cout << "len_B    = " << B.getLengths() << endl;
-    cout << "stride_B = " << B.getStrides() << endl;
+    cout << "len_B    = " << B.lengths() << endl;
+    cout << "stride_B = " << B.strides() << endl;
     cout << "idx_B    = " << idx_B << endl;
     cout << endl;
 
@@ -1518,11 +1513,11 @@ void TestReplicate(siz_t N)
 
     cout << endl;
     cout << "Testing replicate (" << TypeName<T>() << "):" << endl;
-    cout << "len_A    = " << A.getLengths() << endl;
-    cout << "stride_A = " << A.getStrides() << endl;
+    cout << "len_A    = " << A.lengths() << endl;
+    cout << "stride_A = " << A.strides() << endl;
     cout << "idx_A    = " << idx_A << endl;
-    cout << "len_B    = " << B.getLengths() << endl;
-    cout << "stride_B = " << B.getStrides() << endl;
+    cout << "len_B    = " << B.lengths() << endl;
+    cout << "stride_B = " << B.strides() << endl;
     cout << "idx_B    = " << idx_B << endl;
     cout << endl;
 
@@ -1531,10 +1526,10 @@ void TestReplicate(siz_t N)
     scale = 10.0*RandomUnit<T>();
 
     inc_t sz = 1;
-    for (gint_t i = 0;i < B.getDimension();i++)
+    for (gint_t i = 0;i < B.dimension();i++)
     {
         bool found = false;
-        for (gint_t j = 0;j < A.getDimension();j++)
+        for (gint_t j = 0;j < A.dimension();j++)
         {
             if (idx_A[j] == idx_B[i])
             {
@@ -1542,7 +1537,7 @@ void TestReplicate(siz_t N)
                 break;
             }
         }
-        if (!found) sz *= B.getLength(i);
+        if (!found) sz *= B.length(i);
     }
 
     tensor_reduce(REDUCE_SUM, A, idx_A, ref_val);
@@ -1567,15 +1562,17 @@ void TestDot(siz_t N)
 
     cout << endl;
     cout << "Testing dot (" << TypeName<T>() << "):" << endl;
-    cout << "len    = " << A.getLengths() << endl;
-    cout << "stride = " << A.getStrides() << endl;
+    cout << "len    = " << A.lengths() << endl;
+    cout << "stride = " << A.strides() << endl;
     cout << endl;
 
     impl_type = REFERENCE;
     T ref_val, calc_val;
 
     tensor_transpose(T(1.0), A, idx_A, T(0.0), B, idx_B);
-    B.conjugate();
+    T* data = B.data();
+    Iterator<> it(B.lengths(), B.strides());
+    while (it.next(data)) *data = blis::conj(*data);
     Normalize(A, idx_A);
     tensor_reduce(REDUCE_NORM_2, A, idx_A, ref_val);
     tensor_dot(A, idx_A, B, idx_B, calc_val);
@@ -1599,13 +1596,13 @@ void TestTranspose(siz_t N)
 
     RandomTranspose(N, A, idx_A, B, idx_B);
 
-    gint_t ndim = A.getDimension();
+    gint_t ndim = A.dimension();
     string perm = permutation(idx_A, idx_B);
 
     cout << endl;
     cout << "Testing transpose (" << TypeName<T>() << "):" << endl;
-    cout << "len    = " << A.getLengths() << endl;
-    cout << "stride = " << A.getStrides() << endl;
+    cout << "len    = " << A.lengths() << endl;
+    cout << "stride = " << A.strides() << endl;
     cout << "perm   = " << perm << endl;
     cout << endl;
 
@@ -1632,8 +1629,8 @@ void TestTranspose(siz_t N)
         {
             gint_t j; for (j = 0;j < ndim && idx_A[j] != perm[i];j++);
             idx_C[i] = idx_B[j];
-            len_C[i] = B.getLength(j);
-            stride_C[i] = B.getStride(j);
+            len_C[i] = B.length(j);
+            stride_C[i] = B.stride(j);
         }
         C.reset(ndim, len_C, stride_C);
         tensor_transpose(T(1.0), B, idx_B, T(0.0), C, idx_C);
@@ -1653,12 +1650,12 @@ void TestScale(siz_t N)
     string idx_A = "abcdefgh";
 
     RandomTensor(N, A);
-    idx_A.resize(A.getDimension());
+    idx_A.resize(A.dimension());
 
     cout << endl;
     cout << "Testing scale (" << TypeName<T>() << "):" << endl;
-    cout << "len    = " << A.getLengths() << endl;
-    cout << "stride = " << A.getStrides() << endl;
+    cout << "len    = " << A.lengths() << endl;
+    cout << "stride = " << A.strides() << endl;
     cout << endl;
 
     impl_type = REFERENCE;
@@ -1687,20 +1684,20 @@ void TestReduce(siz_t N)
     string idx_A = "abcdefgh";
 
     RandomTensor(N, A);
-    idx_A.resize(A.getDimension());
-    siz_t NA = A.getDataSize();
+    idx_A.resize(A.dimension());
+    siz_t NA = A.size();
 
     cout << endl;
     cout << "Testing reduction (" << TypeName<T>() << "):" << endl;
-    cout << "len    = " << A.getLengths() << endl;
-    cout << "stride = " << A.getStrides() << endl;
+    cout << "len    = " << A.lengths() << endl;
+    cout << "stride = " << A.strides() << endl;
     cout << endl;
 
     impl_type = REFERENCE;
     T ref_val, blas_val;
     inc_t ref_idx, blas_idx;
 
-    T* data = A.getData();
+    T* data = A.data();
 
     tensor_reduce(REDUCE_SUM, A, idx_A, ref_val, ref_idx);
     blas_val = 0;
@@ -1784,7 +1781,7 @@ void TestReduce(siz_t N)
     A = 1;
     tensor_reduce(REDUCE_SUM, A, idx_A, ref_val, ref_idx);
     blas_val = 1;
-    for (int i = 0;i < A.getDimension();i++) blas_val *= A.getLength(i);
+    for (int i = 0;i < A.dimension();i++) blas_val *= A.length(i);
     passfail("COUNT", ref_val, blas_val);
 }
 
@@ -1793,19 +1790,19 @@ void Test(siz_t N_in_bytes, gint_t R)
 {
     siz_t N = N_in_bytes/sizeof(T);
 
-    for (gint_t i = 0;i < R;i++) TestTBLIS<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestTBLIS<T>(N);
 
-    for (gint_t i = 0;i < R;i++) TestReduce<T>(N);
-    for (gint_t i = 0;i < R;i++) TestScale<T>(N);
-    for (gint_t i = 0;i < R;i++) TestTranspose<T>(N);
-    for (gint_t i = 0;i < R;i++) TestDot<T>(N);
-    for (gint_t i = 0;i < R;i++) TestReplicate<T>(N);
-    for (gint_t i = 0;i < R;i++) TestTrace<T>(N);
-    for (gint_t i = 0;i < R;i++) TestSum<T>(N);
-    for (gint_t i = 0;i < R;i++) TestOuterProd<T>(N);
-    for (gint_t i = 0;i < R;i++) TestWeight<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestReduce<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestScale<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestTranspose<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestDot<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestReplicate<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestTrace<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestSum<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestOuterProd<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestWeight<T>(N);
     for (gint_t i = 0;i < R;i++) TestContract<T>(N);
-    for (gint_t i = 0;i < R;i++) TestMult<T>(N);
+    //for (gint_t i = 0;i < R;i++) TestMult<T>(N);
 }
 
 int main(int argc, char **argv)
@@ -1841,7 +1838,7 @@ int main(int argc, char **argv)
                 iss >> seed;
                 break;
             case '?':
-                abort();
+                ::abort();
                 break;
         }
     }

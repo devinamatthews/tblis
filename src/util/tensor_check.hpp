@@ -93,16 +93,16 @@ template <typename T>
 int check_tensor_indices(const Tensor<T>& A, const std::string& idx_A)
 {
     std::vector<std::pair<char,dim_t> > idx_len;
-    idx_len.reserve(A.getDimension());
+    idx_len.reserve(A.dimension());
 
-    if (idx_A.size() != A.getDimension())
+    if (idx_A.size() != A.dimension())
     {
         abort();
     }
 
-    for (gint_t i = 0;i < A.getDimension();i++)
+    for (gint_t i = 0;i < A.dimension();i++)
     {
-        idx_len.push_back(std::make_pair(idx_A[i], A.getLength(i)));
+        idx_len.push_back(std::make_pair(idx_A[i], A.length(i)));
     }
 
     sort(idx_len);
@@ -125,23 +125,23 @@ int check_tensor_indices(const Tensor<T>& A, std::string idx_A,
                          bool has_A_only, bool has_B_only, bool has_AB)
 {
     std::vector<std::pair<char,dim_t> > idx_len;
-    idx_len.reserve(A.getDimension()+
-                    B.getDimension());
+    idx_len.reserve(A.dimension()+
+                    B.dimension());
 
-    if (idx_A.size() != A.getDimension() ||
-        idx_B.size() != B.getDimension())
+    if (idx_A.size() != A.dimension() ||
+        idx_B.size() != B.dimension())
     {
         abort();
     }
 
-    for (gint_t i = 0;i < A.getDimension();i++)
+    for (gint_t i = 0;i < A.dimension();i++)
     {
-        idx_len.push_back(std::make_pair(idx_A[i], A.getLength(i)));
+        idx_len.push_back(std::make_pair(idx_A[i], A.length(i)));
     }
 
-    for (gint_t i = 0;i < B.getDimension();i++)
+    for (gint_t i = 0;i < B.dimension();i++)
     {
-        idx_len.push_back(std::make_pair(idx_B[i], B.getLength(i)));
+        idx_len.push_back(std::make_pair(idx_B[i], B.length(i)));
     }
 
     sort(idx_len);
@@ -182,30 +182,30 @@ int check_tensor_indices(const Tensor<T>& A, std::string idx_A,
                          bool has_ABC)
 {
     std::vector<std::pair<char,dim_t> > idx_len;
-    idx_len.reserve(A.getDimension()+
-                    B.getDimension()+
-                    C.getDimension());
+    idx_len.reserve(A.dimension()+
+                    B.dimension()+
+                    C.dimension());
 
-    if (idx_A.size() != A.getDimension() ||
-        idx_B.size() != B.getDimension() ||
-        idx_C.size() != C.getDimension())
+    if (idx_A.size() != A.dimension() ||
+        idx_B.size() != B.dimension() ||
+        idx_C.size() != C.dimension())
     {
         abort();
     }
 
-    for (gint_t i = 0;i < A.getDimension();i++)
+    for (gint_t i = 0;i < A.dimension();i++)
     {
-        idx_len.push_back(std::make_pair(idx_A[i], A.getLength(i)));
+        idx_len.push_back(std::make_pair(idx_A[i], A.length(i)));
     }
 
-    for (gint_t i = 0;i < B.getDimension();i++)
+    for (gint_t i = 0;i < B.dimension();i++)
     {
-        idx_len.push_back(std::make_pair(idx_B[i], B.getLength(i)));
+        idx_len.push_back(std::make_pair(idx_B[i], B.length(i)));
     }
 
-    for (gint_t i = 0;i < C.getDimension();i++)
+    for (gint_t i = 0;i < C.dimension();i++)
     {
-        idx_len.push_back(std::make_pair(idx_C[i], C.getLength(i)));
+        idx_len.push_back(std::make_pair(idx_C[i], C.length(i)));
     }
 
     sort(idx_len);

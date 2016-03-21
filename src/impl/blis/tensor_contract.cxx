@@ -2,6 +2,13 @@
 #include "impl/tensor_impl.hpp"
 #include "util/util.hpp"
 
+#define SCATTER_MATRIX 0
+#define TENSOR_SCATTER 1
+#define TENSOR_BLOCK_SCATTER 2
+#define TENSOR 3
+
+#define IMPL_TYPE TENSOR_BLOCK_SCATTER
+
 using namespace std;
 using namespace tblis::util;
 using namespace tblis::blis_like;
@@ -11,14 +18,169 @@ namespace tblis
 namespace impl
 {
 
+#if IMPL_TYPE == SCATTER_MATRIX
+
+template <typename T>
+int tensor_contract_blis_int(const std::vector<dim_t>& len_M,
+                             const std::vector<dim_t>& len_N,
+                             const std::vector<dim_t>& len_K,
+                             T alpha, const T* A, const std::vector<inc_t>& stride_M_A,
+                                                  const std::vector<inc_t>& stride_K_A,
+                                      const T* B, const std::vector<inc_t>& stride_K_B,
+                                                  const std::vector<inc_t>& stride_N_B,
+                             T  beta,       T* C, const std::vector<inc_t>& stride_M_C,
+                                                  const std::vector<inc_t>& stride_N_C)
+{
+    dim_t m = prod(len_M);
+    dim_t n = prod(len_N);
+    dim_t k = prod(len_K);
+
+    vector<inc_t> scat_M_A(m);
+    vector<inc_t> scat_M_C(m);
+    vector<inc_t> scat_N_B(n);
+    vector<inc_t> scat_N_C(n);
+    vector<inc_t> scat_K_A(k);
+    vector<inc_t> scat_K_B(k);
+
+    Iterator<> it_M_A(len_M, stride_M_A);
+    inc_t idx_M_A = 0;
+    for (dim_t i = 0;it_M_A.next(idx_M_A);i++) scat_M_A[i] = idx_M_A;
+
+    Iterator<> it_M_C(len_M, stride_M_C);
+    inc_t idx_M_C = 0;
+    for (dim_t i = 0;it_M_C.next(idx_M_C);i++) scat_M_C[i] = idx_M_C;
+
+    Iterator<> it_N_B(len_N, stride_N_B);
+    inc_t idx_N_B = 0;
+    for (dim_t i = 0;it_N_B.next(idx_N_B);i++) scat_N_B[i] = idx_N_B;
+
+    Iterator<> it_N_C(len_N, stride_N_C);
+    inc_t idx_N_C = 0;
+    for (dim_t i = 0;it_N_C.next(idx_N_C);i++) scat_N_C[i] = idx_N_C;
+
+    Iterator<> it_K_A(len_K, stride_K_A);
+    inc_t idx_K_A = 0;
+    for (dim_t i = 0;it_K_A.next(idx_K_A);i++) scat_K_A[i] = idx_K_A;
+
+    Iterator<> it_K_B(len_K, stride_K_B);
+    inc_t idx_K_B = 0;
+    for (dim_t i = 0;it_K_B.next(idx_K_B);i++) scat_K_B[i] = idx_K_B;
+
+    ScatterMatrix<T> as(m, k, const_cast<T*>(A), scat_M_A.data(), scat_K_A.data());
+    ScatterMatrix<T> bs(k, n, const_cast<T*>(B), scat_K_B.data(), scat_N_B.data());
+    ScatterMatrix<T> cs(m, n,                C , scat_M_C.data(), scat_N_C.data());
+
+    tblis_gemm(alpha, as, bs, beta, cs);
+
+    return 0;
+}
+
+#elif IMPL_TYPE == TENSOR_SCATTER
+
+template <typename T>
+int tensor_contract_blis_int(const std::vector<dim_t>& len_M,
+                             const std::vector<dim_t>& len_N,
+                             const std::vector<dim_t>& len_K,
+                             T alpha, const T* A, const std::vector<inc_t>& stride_M_A,
+                                                  const std::vector<inc_t>& stride_K_A,
+                                      const T* B, const std::vector<inc_t>& stride_K_B,
+                                                  const std::vector<inc_t>& stride_N_B,
+                             T  beta,       T* C, const std::vector<inc_t>& stride_M_C,
+                                                  const std::vector<inc_t>& stride_N_C)
+{
+    dim_t m = prod(len_M);
+    dim_t n = prod(len_N);
+    dim_t k = prod(len_K);
+
+    vector<inc_t> scat_M_A(m);
+    vector<inc_t> scat_M_C(m);
+    vector<inc_t> scat_N_B(n);
+    vector<inc_t> scat_N_C(n);
+    vector<inc_t> scat_K_A(k);
+    vector<inc_t> scat_K_B(k);
+
+    TensorMatrix<T> at(len_M, len_K, const_cast<T*>(A), stride_M_A, stride_K_A);
+    TensorMatrix<T> bt(len_K, len_N, const_cast<T*>(B), stride_K_B, stride_N_B);
+    TensorMatrix<T> ct(len_M, len_N,                C , stride_M_C, stride_N_C);
+
+    at.row_scatter(scat_M_A.data());
+    at.col_scatter(scat_K_A.data());
+    bt.row_scatter(scat_K_B.data());
+    bt.col_scatter(scat_N_B.data());
+    ct.row_scatter(scat_M_C.data());
+    ct.col_scatter(scat_N_C.data());
+
+    ScatterMatrix<T> as(m, k, const_cast<T*>(A), scat_M_A.data(), scat_K_A.data());
+    ScatterMatrix<T> bs(k, n, const_cast<T*>(B), scat_K_B.data(), scat_N_B.data());
+    ScatterMatrix<T> cs(m, n,                C , scat_M_C.data(), scat_N_C.data());
+
+    tblis_gemm(alpha, as, bs, beta, cs);
+
+    return 0;
+}
+
+#elif IMPL_TYPE == TENSOR_BLOCK_SCATTER
+
+template <typename T>
+int tensor_contract_blis_int(const std::vector<dim_t>& len_M,
+                             const std::vector<dim_t>& len_N,
+                             const std::vector<dim_t>& len_K,
+                             T alpha, const T* A, const std::vector<inc_t>& stride_M_A,
+                                                  const std::vector<inc_t>& stride_K_A,
+                                      const T* B, const std::vector<inc_t>& stride_K_B,
+                                                  const std::vector<inc_t>& stride_N_B,
+                             T  beta,       T* C, const std::vector<inc_t>& stride_M_C,
+                                                  const std::vector<inc_t>& stride_N_C)
+{
+    constexpr dim_t M = MR<T>::def;
+    constexpr dim_t N = NR<T>::def;
+
+    dim_t m = prod(len_M);
+    dim_t n = prod(len_N);
+    dim_t k = prod(len_K);
+
+    vector<inc_t> scat_M_A(m);
+    vector<inc_t> scat_M_C(m);
+    vector<inc_t> scat_N_B(n);
+    vector<inc_t> scat_N_C(n);
+    vector<inc_t> scat_K_A(k);
+    vector<inc_t> scat_K_B(k);
+
+    vector<inc_t> s_M_A(m);
+    vector<inc_t> s_M_C(m);
+    vector<inc_t> s_N_B(n);
+    vector<inc_t> s_N_C(n);
+
+    TensorMatrix<T> at(len_M, len_K, const_cast<T*>(A), stride_M_A, stride_K_A);
+    TensorMatrix<T> bt(len_K, len_N, const_cast<T*>(B), stride_K_B, stride_N_B);
+    TensorMatrix<T> ct(len_M, len_N,                C , stride_M_C, stride_N_C);
+
+    at.template row_block_scatter<M>(s_M_A.data(), scat_M_A.data());
+    bt.template col_block_scatter<N>(s_N_B.data(), scat_N_B.data());
+    ct.template row_block_scatter<M>(s_M_C.data(), scat_M_C.data());
+    ct.template col_block_scatter<N>(s_N_C.data(), scat_N_C.data());
+
+    BlockScatterMatrix<T,M,0> abs(m, k, const_cast<T*>(A), s_M_A.data(),         NULL, scat_M_A.data(), scat_K_A.data());
+    BlockScatterMatrix<T,0,N> bbs(k, n, const_cast<T*>(B),         NULL, s_N_B.data(), scat_K_B.data(), scat_N_B.data());
+    BlockScatterMatrix<T,M,N> cbs(m, n,                C , s_M_C.data(), s_N_C.data(), scat_M_C.data(), scat_N_C.data());
+
+    tblis_gemm(alpha, abs, bbs, beta, cbs);
+
+    return 0;
+}
+
+#elif IMPL_TYPE == TENSOR
+
+#endif
+
 template <typename T>
 int tensor_contract_blis(T alpha, const Tensor<T>& A, const std::string& idx_A,
                                   const Tensor<T>& B, const std::string& idx_B,
                          T  beta,       Tensor<T>& C, const std::string& idx_C)
 {
-    gint_t dim_A = A.getDimension();
-    gint_t dim_B = B.getDimension();
-    gint_t dim_C = C.getDimension();
+    gint_t dim_A = A.dimension();
+    gint_t dim_B = B.dimension();
+    gint_t dim_C = C.dimension();
 
     gint_t dim_M = (dim_A+dim_C-dim_B)/2;
     gint_t dim_N = (dim_B+dim_C-dim_A)/2;
@@ -35,10 +197,6 @@ int tensor_contract_blis(T alpha, const Tensor<T>& A, const std::string& idx_A,
     vector<inc_t> stride_K_A(dim_K);
     vector<inc_t> stride_K_B(dim_K);
 
-    dim_t m = 1;
-    dim_t n = 1;
-    dim_t k = 1;
-
     gint_t i_M = 0;
     gint_t i_N = 0;
     gint_t i_K = 0;
@@ -49,12 +207,12 @@ int tensor_contract_blis(T alpha, const Tensor<T>& A, const std::string& idx_A,
         {
             if (idx_A[i] == idx_B[j])
             {
-                dim_t len = A.getLength(i);
+                dim_t len = A.length(i);
                 if (len > 1)
                 {
-                    stride_K_A[i_K] = A.getStride(i);
-                    stride_K_B[i_K] = B.getStride(j);
-                    k *= (len_K[i_K] = len);
+                    stride_K_A[i_K] = A.stride(i);
+                    stride_K_B[i_K] = B.stride(j);
+                    len_K[i_K] = len;
                     i_K++;
                 }
             }
@@ -71,12 +229,12 @@ int tensor_contract_blis(T alpha, const Tensor<T>& A, const std::string& idx_A,
         {
             if (idx_A[i] == idx_C[j])
             {
-                dim_t len = A.getLength(i);
+                dim_t len = A.length(i);
                 if (len > 1)
                 {
-                    stride_M_A[i_M] = A.getStride(i);
-                    stride_M_C[i_M] = C.getStride(j);
-                    m *= (len_M[i_M] = len);
+                    stride_M_A[i_M] = A.stride(i);
+                    stride_M_C[i_M] = C.stride(j);
+                    len_M[i_M] = len;
                     i_M++;
                 }
             }
@@ -93,12 +251,12 @@ int tensor_contract_blis(T alpha, const Tensor<T>& A, const std::string& idx_A,
         {
             if (idx_B[i] == idx_C[j])
             {
-                dim_t len = B.getLength(i);
+                dim_t len = B.length(i);
                 if (len > 1)
                 {
-                    stride_N_B[i_N] = B.getStride(i);
-                    stride_N_C[i_N] = C.getStride(j);
-                    n *= (len_N[i_N] = len);
+                    stride_N_B[i_N] = B.stride(i);
+                    stride_N_C[i_N] = C.stride(j);
+                    len_N[i_N] = len;
                     i_N++;
                 }
             }
@@ -169,42 +327,20 @@ int tensor_contract_blis(T alpha, const Tensor<T>& A, const std::string& idx_A,
         len_Kr[i] = len_K[idx_K[i]];
     }
 
-    vector<inc_t> scat_M_A(m);
-    vector<inc_t> scat_M_C(m);
-    vector<inc_t> scat_N_B(n);
-    vector<inc_t> scat_N_C(n);
-    vector<inc_t> scat_K_A(k);
-    vector<inc_t> scat_K_B(k);
-
-    Iterator it_M_A(len_Mr, stride_M_Ar);
-    inc_t idx_M_A = 0;
-    for (dim_t i = 0;it_M_A.nextIteration(idx_M_A);i++) scat_M_A[i] = idx_M_A;
-
-    Iterator it_M_C(len_Mr, stride_M_Cr);
-    inc_t idx_M_C = 0;
-    for (dim_t i = 0;it_M_C.nextIteration(idx_M_C);i++) scat_M_C[i] = idx_M_C;
-
-    Iterator it_N_B(len_Nr, stride_N_Br);
-    inc_t idx_N_B = 0;
-    for (dim_t i = 0;it_N_B.nextIteration(idx_N_B);i++) scat_N_B[i] = idx_N_B;
-
-    Iterator it_N_C(len_Nr, stride_N_Cr);
-    inc_t idx_N_C = 0;
-    for (dim_t i = 0;it_N_C.nextIteration(idx_N_C);i++) scat_N_C[i] = idx_N_C;
-
-    Iterator it_K_A(len_Kr, stride_K_Ar);
-    inc_t idx_K_A = 0;
-    for (dim_t i = 0;it_K_A.nextIteration(idx_K_A);i++) scat_K_A[i] = idx_K_A;
-
-    Iterator it_K_B(len_Kr, stride_K_Br);
-    inc_t idx_K_B = 0;
-    for (dim_t i = 0;it_K_B.nextIteration(idx_K_B);i++) scat_K_B[i] = idx_K_B;
-
-    ScatterMatrix<T> as(m, k, const_cast<T*>(A.getData()), scat_M_A.data(), scat_K_A.data());
-    ScatterMatrix<T> bs(k, n, const_cast<T*>(B.getData()), scat_K_B.data(), scat_N_B.data());
-    ScatterMatrix<T> cs(m, n,                C.getData() , scat_M_C.data(), scat_N_C.data());
-
-    tblis_gemm(alpha, as, bs, beta, cs);
+    if (dim_N > 0 && stride_N_Cr[0] == 1)
+    {
+        tensor_contract_blis_int(len_Nr, len_Mr, len_Kr,
+                                 alpha, B.data(), stride_N_Br, stride_K_Br,
+                                        A.data(), stride_K_Ar, stride_M_Ar,
+                                  beta, C.data(), stride_N_Cr, stride_M_Cr);
+    }
+    else
+    {
+        tensor_contract_blis_int(len_Mr, len_Nr, len_Kr,
+                                 alpha, A.data(), stride_M_Ar, stride_K_Ar,
+                                        B.data(), stride_K_Br, stride_N_Br,
+                                  beta, C.data(), stride_M_Cr, stride_N_Cr);
+    }
 
     return 0;
 }

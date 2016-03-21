@@ -11,15 +11,15 @@ namespace impl
 template <typename T>
 int tensor_scale_reference(T alpha, Tensor<T>& A, const std::string& idx_A)
 {
-    Iterator iter_A(A.getLengths(), A.getStrides());
+    Iterator<> iter_A(A.lengths(), A.strides());
 
-    T* restrict A_ = A.getData();
+    T* restrict A_ = A.data();
 
     if (alpha == 0.0)
     {
-        while (iter_A.nextIteration(A_))
+        while (iter_A.next(A_))
         {
-            assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
+            assert (A_-A.data() >= 0 && A_-A.data() < A.size());
             *A_ = 0.0;
         }
     }
@@ -29,9 +29,9 @@ int tensor_scale_reference(T alpha, Tensor<T>& A, const std::string& idx_A)
     }
     else
     {
-        while (iter_A.nextIteration(A_))
+        while (iter_A.next(A_))
         {
-            assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
+            assert (A_-A.data() >= 0 && A_-A.data() < A.size());
             *A_ *= alpha;
         }
     }

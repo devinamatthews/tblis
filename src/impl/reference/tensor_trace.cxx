@@ -19,40 +19,40 @@ int tensor_trace_reference(T alpha, const Tensor<T>& A, const std::string& idx_A
     gint_t ndim_A  = util::set_difference(idx_A, idx_AB, idx_A_only).size();
 
     vector<inc_t> len_A(ndim_A);
-    const vector<inc_t>& len_AB = B.getLengths();
+    const vector<inc_t>& len_AB = B.lengths();
 
     vector<inc_t> stride_A_A(ndim_A);
     vector<inc_t> stride_A_AB(ndim_AB);
-    const vector<inc_t>& stride_B_AB = B.getStrides();
+    const vector<inc_t>& stride_B_AB = B.strides();
 
-    for (gint_t i = 0, j = 0, k = 0;i < A.getDimension();i++)
+    for (gint_t i = 0, j = 0, k = 0;i < A.dimension();i++)
     {
         if (j < ndim_A && idx_A[i] == idx_A_only[j])
         {
-            len_A[j] = A.getLength(i);
-            stride_A_A[j++] = A.getStride(i);
+            len_A[j] = A.length(i);
+            stride_A_A[j++] = A.stride(i);
         }
         else if (k < ndim_AB && idx_A[i] == idx_AB[k])
         {
-            stride_A_AB[k++] = A.getStride(i);
+            stride_A_AB[k++] = A.stride(i);
         }
     }
 
-    Iterator iter_A(len_A, stride_A_A);
-    Iterator iter_AB(len_AB, stride_A_AB, stride_B_AB);
+    Iterator<1> iter_A(len_A, stride_A_A);
+    Iterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
 
-    const T* restrict A_ = A.getData();
-          T* restrict B_ = B.getData();
+    const T* restrict A_ = A.data();
+          T* restrict B_ = B.data();
 
-    while (iter_AB.nextIteration(A_, B_))
+    while (iter_AB.next(A_, B_))
     {
         T temp = T();
 
         if (alpha != 0.0)
         {
-            while (iter_A.nextIteration(A_))
+            while (iter_A.next(A_))
             {
-                assert (A_-A.getData() >= 0 && A_-A.getData() < A.getDataSize());
+                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
                 temp += *A_;
             }
             temp *= alpha;
@@ -60,17 +60,17 @@ int tensor_trace_reference(T alpha, const Tensor<T>& A, const std::string& idx_A
 
         if (beta == 0.0)
         {
-            assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
+            assert (B_-B.data() >= 0 && B_-B.data() < B.size());
             *B_ = temp;
         }
         else if (beta == 1.0)
         {
-            assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
+            assert (B_-B.data() >= 0 && B_-B.data() < B.size());
             *B_ += temp;
         }
         else
         {
-            assert (B_-B.getData() >= 0 && B_-B.getData() < B.getDataSize());
+            assert (B_-B.data() >= 0 && B_-B.data() < B.size());
             *B_ = temp + beta*(*B_);
         }
     }

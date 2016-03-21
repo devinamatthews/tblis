@@ -24,7 +24,7 @@ void tblis_init()
         bli_init();
 
         dim_t block_size[3][BLIS_DT_HI+1];
-        dim_t block_inc[3] = {2, 2, 1};
+        dim_t block_inc[3] = {4, 4, 2};
         blksz_t* block_sizes[3] = {gemm_mc, gemm_nc, gemm_kc};
 
         for (int dt = BLIS_DT_LO;dt <= BLIS_DT_HI;++dt)

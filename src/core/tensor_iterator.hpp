@@ -7,77 +7,192 @@
 
 #include <vector>
 #include <iostream>
+#include <type_traits>
+#include <array>
 
 namespace tblis
 {
 
+namespace detail
+{
+    template <typename... Ts>
+    struct are_inc_t_vectors_helper;
+
+    template <>
+    struct are_inc_t_vectors_helper<> : std::true_type {};
+
+    template <typename T, typename... Ts>
+    struct are_inc_t_vectors_helper<T, Ts...>
+    : std::integral_constant<bool,std::is_same<T,std::vector<inc_t>>::value &&
+                                  are_inc_t_vectors_helper<Ts...>::value> {};
+
+    template <gint_t N, typename... Ts>
+    struct are_inc_t_vectors
+    : std::integral_constant<bool,(N == sizeof...(Ts)) &&
+                                  are_inc_t_vectors_helper<Ts...>::value> {};
+
+    template <size_t N, size_t I, typename Offset, typename... Offsets>
+    struct inc_offsets_helper;
+
+    template <size_t N, typename Offset>
+    struct inc_offsets_helper<N, N, Offset>
+    {
+        inc_offsets_helper(int i, Offset& off0, const std::array<std::vector<inc_t>,N>& strides)
+        {
+            off0 += strides[N-1][i];
+        }
+    };
+
+    template <size_t N, size_t I, typename Offset, typename... Offsets>
+    struct inc_offsets_helper
+    {
+        inc_offsets_helper(gint_t i, Offset& off0, Offsets&... off, const std::array<std::vector<inc_t>,N>& strides)
+        {
+            off0 += strides[I-1][i];
+            inc_offsets_helper<N,I+1,Offsets...>(i, off..., strides);
+        }
+    };
+
+    template <size_t N, typename... Offsets>
+    void inc_offsets(gint_t i, const std::array<std::vector<inc_t>,N>& strides, Offsets&... off)
+    {
+        inc_offsets_helper<N,1,Offsets...>(i, off..., strides);
+    }
+
+    template <size_t N, size_t I, typename Offset, typename... Offsets>
+    struct dec_offsets_helper;
+
+    template <size_t N, typename Offset>
+    struct dec_offsets_helper<N, N, Offset>
+    {
+        dec_offsets_helper(gint_t i, Offset& off0, const std::vector<inc_t>& pos, const std::array<std::vector<inc_t>,N>& strides)
+        {
+            off0 -= pos[i]*strides[N-1][i];
+        }
+    };
+
+    template <size_t N, size_t I, typename Offset, typename... Offsets>
+    struct dec_offsets_helper
+    {
+        dec_offsets_helper(gint_t i, Offset& off0, Offsets&... off, const std::vector<inc_t>& pos, const std::array<std::vector<inc_t>,N>& strides)
+        {
+            off0 -= pos[i]*strides[I-1][i];
+            dec_offsets_helper<N,I+1,Offsets...>(i, off..., pos, strides);
+        }
+    };
+
+    template <size_t N, typename... Offsets>
+    void dec_offsets(gint_t i, const std::vector<inc_t>& pos, const std::array<std::vector<inc_t>,N>& strides, Offsets&... off)
+    {
+        dec_offsets_helper<N,1,Offsets...>(i, off..., pos, strides);
+    }
+
+    template <size_t N, size_t I, typename Offset, typename... Offsets>
+    struct set_offsets_helper;
+
+    template <size_t N, typename Offset>
+    struct set_offsets_helper<N, N, Offset>
+    {
+        set_offsets_helper(Offset& off0, const std::vector<inc_t>& pos, const std::array<std::vector<inc_t>,N>& strides)
+        {
+            off0 = 0;
+            for (size_t i = 0;i < pos.size();i++) off0 += pos[i]*strides[N-1][i];
+        }
+    };
+
+    template <size_t N, size_t I, typename Offset, typename... Offsets>
+    struct set_offsets_helper
+    {
+        set_offsets_helper(Offset& off0, Offsets&... off, const std::vector<inc_t>& pos, const std::array<std::vector<inc_t>,N>& strides)
+        {
+            off0 = 0;
+            for (size_t i = 0;i < pos.size();i++) off0 += pos[i]*strides[I-1][i];
+            set_offsets_helper<N,I+1,Offsets...>(off..., pos, strides);
+        }
+    };
+
+    template <size_t N, typename... Offsets>
+    void set_offsets(const std::vector<inc_t>& pos, const std::array<std::vector<inc_t>,N>& strides, Offsets&... off)
+    {
+        set_offsets_helper<N,1,Offsets...>(off..., pos, strides);
+    }
+}
+
+template <int N=1>
 class Iterator
 {
     public:
-        Iterator(const std::vector<dim_t>& len,
-                 const std::vector<inc_t>& stride_0)
-        : first(true), pos(len.size()), len(len), stride(1)
+        Iterator() : _first(true) {}
+
+        Iterator(const Iterator&) = default;
+
+        Iterator(Iterator&&) = default;
+
+        template <typename... Strides,
+                  typename=typename std::enable_if<sizeof...(Strides) == N>::type>
+        Iterator(const std::vector<dim_t>& len, const Strides&... strides)
+        : _pos(len.size()), _len(len), _strides{strides...}, _first(true)
         {
-            stride[0] = stride_0;
             check();
         }
 
-        Iterator(const std::vector<dim_t>& len,
-                 const std::vector<inc_t>& stride_0,
-                 const std::vector<inc_t>& stride_1)
-        : first(true), pos(len.size()), len(len), stride(2)
+        Iterator& operator=(const Iterator&) = default;
+
+        Iterator& operator=(Iterator&&) = default;
+
+        void reset()
         {
-            stride[0] = stride_0;
-            stride[1] = stride_1;
+            _pos.clear();
+            _len.clear();
+            for (int i = 0;i < N;i++) _strides[i].clear();
+            _first = true;
+        }
+
+        template <typename... Strides,
+                  typename=typename std::enable_if<sizeof...(Strides) == N>::type>
+        void reset(const std::vector<dim_t>& len, const Strides&... strides)
+        {
+            _pos.assign(len.size(), 0);
+            _len = len;
+            _strides = {strides...};
+            _first = true;
+
             check();
         }
 
-        Iterator(const std::vector<dim_t>& len,
-                 const std::vector<inc_t>& stride_0,
-                 const std::vector<inc_t>& stride_1,
-                 const std::vector<inc_t>& stride_2)
-        : first(true), pos(len.size()), len(len), stride(3)
+        template <typename... Offsets,
+                  typename=typename std::enable_if<sizeof...(Offsets) == N>::type>
+        bool next(Offsets&... off)
         {
-            stride[0] = stride_0;
-            stride[1] = stride_1;
-            stride[2] = stride_2;
-            check();
-        }
-
-        template <typename cv_ptr_0>
-        bool nextIteration(cv_ptr_0& ptr_0)
-        {
-            if (stride.size() != 1) abort();
-
-            if (first)
+            if (_first)
             {
-                first = false;
+                _first = false;
             }
             else
             {
-                if (len.size() == 0)
+                if (_len.size() == 0)
                 {
-                    first = true;
+                    _first = true;
                     return false;
                 }
 
-                for (gint_t i = 0;i < len.size();i++)
+                for (gint_t i = 0;i < _len.size();i++)
                 {
-                    if (pos[i] == len[i]-1)
+                    if (_pos[i] == _len[i]-1)
                     {
-                        ptr_0 -= pos[i]*stride[0][i];
-                        pos[i] = 0;
+                        detail::dec_offsets(i, _pos, _strides, off...);
+                        _pos[i] = 0;
 
-                        if (i == len.size()-1)
+                        if (i == _len.size()-1)
                         {
-                            first = true;
+                            _first = true;
                             return false;
                         }
                     }
                     else
                     {
-                        ptr_0 += stride[0][i];
-                        pos[i]++;
+                        detail::inc_offsets(i, _strides, off...);
+                        _pos[i]++;
 
                         return true;
                     }
@@ -87,116 +202,100 @@ class Iterator
             return true;
         }
 
-        template <typename cv_ptr_0, typename cv_ptr_1>
-        bool nextIteration(cv_ptr_0& ptr_0, cv_ptr_1& ptr_1)
+        template <typename... Offsets,
+                  typename=typename std::enable_if<sizeof...(Offsets) == N>::type>
+        void position(dim_t pos, Offsets&... off)
         {
-            if (stride.size() != 2) abort();
-
-            if (first)
+            for (size_t i = 0;i < _len.size();i++)
             {
-                first = false;
+                _pos[i] = pos%_len[i];
+                pos = pos/_len[i];
             }
-            else
-            {
-                if (len.size() == 0)
-                {
-                    first = true;
-                    return false;
-                }
+            ASSERT(pos == 0);
 
-                for (gint_t i = 0;i < len.size();i++)
-                {
-                    if (pos[i] == len[i]-1)
-                    {
-                        ptr_0 -= pos[i]*stride[0][i];
-                        ptr_1 -= pos[i]*stride[1][i];
-                        pos[i] = 0;
-
-                        if (i == len.size()-1)
-                        {
-                            first = true;
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        ptr_0 += stride[0][i];
-                        ptr_1 += stride[1][i];
-                        pos[i]++;
-
-                        return true;
-                    }
-                }
-            }
-
-            return true;
+            position(_pos, off...);
         }
 
-        template <typename cv_ptr_0, typename cv_ptr_1, typename cv_ptr_2>
-        bool nextIteration(cv_ptr_0& ptr_0, cv_ptr_1& ptr_1, cv_ptr_2& ptr_2)
+        template <typename... Offsets,
+                  typename=typename std::enable_if<sizeof...(Offsets) == N>::type>
+        void position(const std::vector<dim_t>& pos, Offsets&... off)
         {
-            if (stride.size() != 3) abort();
+            ASSERT(pos.size() == _pos.size());
 
-            if (first)
+            _pos = pos;
+
+            for (size_t i = 0;i < _pos.size();i++)
             {
-                first = false;
-            }
-            else
-            {
-                if (len.size() == 0)
-                {
-                    first = true;
-                    return false;
-                }
-
-                for (gint_t i = 0;i < len.size();i++)
-                {
-                    if (pos[i] == len[i]-1)
-                    {
-                        ptr_0 -= pos[i]*stride[0][i];
-                        ptr_1 -= pos[i]*stride[1][i];
-                        ptr_2 -= pos[i]*stride[2][i];
-                        pos[i] = 0;
-
-                        if (i == len.size()-1)
-                        {
-                            first = true;
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        ptr_0 += stride[0][i];
-                        ptr_1 += stride[1][i];
-                        ptr_2 += stride[2][i];
-                        pos[i]++;
-
-                        return true;
-                    }
-                }
+                ASSERT(_pos[i] >= 0 && _pos[i] < _len[i]);
             }
 
-            return true;
+            detail::set_offsets(_pos, _strides, off...);
+        }
+
+        gint_t dimension() const
+        {
+            return _len.size();
+        }
+
+        dim_t position(gint_t i) const
+        {
+            return _pos[i];
+        }
+
+        const std::vector<dim_t>& position() const
+        {
+            return _pos;
+        }
+
+        dim_t length(gint_t i) const
+        {
+            return _len[i];
+        }
+
+        const std::vector<dim_t>& lengths() const
+        {
+            return _len;
+        }
+
+        template <int I=0>
+        dim_t stride(gint_t i) const
+        {
+            return _strides[I][i];
+        }
+
+        template <int I=0>
+        const std::vector<dim_t>& strides() const
+        {
+            return _strides[I];
+        }
+
+        friend void swap(Iterator& i1, Iterator& i2)
+        {
+            using std::swap;
+            swap(i1._pos, i2._pos);
+            swap(i1._len, i2._len);
+            swap(i1._strides, i2._strides);
+            swap(i1._first, i2._first);
         }
 
     private:
         void check()
         {
-            for (auto& s : stride)
+            for (auto& s : _strides)
             {
-                ASSERT(s.size() == len.size());
+                ASSERT(s.size() == _len.size());
             }
 
-            for (dim_t l : len)
+            for (dim_t l : _len)
             {
                 ASSERT(l > 0);
             }
         }
 
-        bool first;
-        std::vector<dim_t> pos;
-        std::vector<dim_t> len;
-        std::vector<std::vector<inc_t> > stride;
+        std::vector<dim_t> _pos;
+        std::vector<dim_t> _len;
+        std::array<std::vector<inc_t>,N> _strides;
+        bool _first;
 };
 
 }

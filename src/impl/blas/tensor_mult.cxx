@@ -13,16 +13,16 @@ int tensor_mult_blas(T alpha, const Tensor<T>& A, const std::string& idx_A,
                               const Tensor<T>& B, const std::string& idx_B,
                      T  beta,       Tensor<T>& C, const std::string& idx_C)
 {
-    gint_t ndim_max = max(A.getDimension(),
-                      max(B.getDimension(),
-                          C.getDimension()));
+    gint_t ndim_max = max(A.dimension(),
+                      max(B.dimension(),
+                          C.dimension()));
 
-    string idx_A_not_ABC(A.getDimension(), 0);
-    string idx_B_not_ABC(B.getDimension(), 0);
-    string idx_C_not_ABC(C.getDimension(), 0);
-    string idx_AB_AC(A.getDimension(), 0);
-    string idx_AB_BC(B.getDimension(), 0);
-    string idx_AC_BC(C.getDimension(), 0);
+    string idx_A_not_ABC(A.dimension(), 0);
+    string idx_B_not_ABC(B.dimension(), 0);
+    string idx_C_not_ABC(C.dimension(), 0);
+    string idx_AB_AC(A.dimension(), 0);
+    string idx_AB_BC(B.dimension(), 0);
+    string idx_AC_BC(C.dimension(), 0);
     string idx_ABC(ndim_max, 0);
 
     gint_t ndim_ABC =
@@ -86,24 +86,24 @@ int tensor_mult_blas(T alpha, const Tensor<T>& A, const std::string& idx_A,
     vector<gint_t> dims_C_ABC(ndim_ABC);
 
     gint_t j = 0;
-    for (gint_t i = 0;i < A.getDimension();i++)
+    for (gint_t i = 0;i < A.dimension();i++)
     {
         if (ndim_AB+ndim_AC > j && idx_A[i] == idx_AB_AC[j])
         {
-            len_AB_AC[j++] = A.getLength(i);
+            len_AB_AC[j++] = A.length(i);
         }
     }
-    for (gint_t i = 0, k = 0;i < A.getDimension();i++)
+    for (gint_t i = 0, k = 0;i < A.dimension();i++)
     {
         if (ndim_AB+ndim_AC > j && idx_A[i] == idx_AB_AC[j])
         {
-            len_AB_AC[j++] = A.getLength(i);
+            len_AB_AC[j++] = A.length(i);
         }
         else if (ndim_ABC > k && idx_A[i] == idx_ABC[k])
         {
             dims_A_ABC[k++] = i;
         }
-        if (i == A.getDimension()-1)
+        if (i == A.dimension()-1)
         {
             assert(j == ndim_AB+ndim_AC);
             assert(k == ndim_ABC);
@@ -111,24 +111,24 @@ int tensor_mult_blas(T alpha, const Tensor<T>& A, const std::string& idx_A,
     }
 
     j = 0;
-    for (gint_t i = 0;i < B.getDimension();i++)
+    for (gint_t i = 0;i < B.dimension();i++)
     {
         if (ndim_AB+ndim_BC > j && idx_B[i] == idx_AB_BC[j])
         {
-            len_AB_BC[j++] = B.getLength(i);
+            len_AB_BC[j++] = B.length(i);
         }
     }
-    for (gint_t i = 0, k = 0;i < B.getDimension();i++)
+    for (gint_t i = 0, k = 0;i < B.dimension();i++)
     {
         if (ndim_AB+ndim_BC > j && idx_B[i] == idx_AB_BC[j])
         {
-            len_AB_BC[j++] = B.getLength(i);
+            len_AB_BC[j++] = B.length(i);
         }
         else if (ndim_ABC > k && idx_B[i] == idx_ABC[k])
         {
             dims_B_ABC[k++] = i;
         }
-        if (i == B.getDimension()-1)
+        if (i == B.dimension()-1)
         {
             assert(j == ndim_AB+ndim_BC);
             assert(k == ndim_ABC);
@@ -136,24 +136,24 @@ int tensor_mult_blas(T alpha, const Tensor<T>& A, const std::string& idx_A,
     }
 
     j = 0;
-    for (gint_t i = 0;i < C.getDimension();i++)
+    for (gint_t i = 0;i < C.dimension();i++)
     {
         if (ndim_AC+ndim_BC > j && idx_C[i] == idx_AC_BC[j])
         {
-            len_AC_BC[j++] = C.getLength(i);
+            len_AC_BC[j++] = C.length(i);
         }
     }
-    for (gint_t i = 0, k = 0;i < C.getDimension();i++)
+    for (gint_t i = 0, k = 0;i < C.dimension();i++)
     {
         if (ndim_AC+ndim_BC > j && idx_C[i] == idx_AC_BC[j])
         {
-            len_AC_BC[j++] = C.getLength(i);
+            len_AC_BC[j++] = C.length(i);
         }
         else if (ndim_ABC > k && idx_C[i] == idx_ABC[k])
         {
             dims_C_ABC[k++] = i;
         }
-        if (i == C.getDimension()-1)
+        if (i == C.dimension()-1)
         {
             assert(j == ndim_AC+ndim_BC);
             assert(k == ndim_ABC);

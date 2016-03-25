@@ -144,7 +144,7 @@ void GenericMicroKernel(dim_t k,
 
 template <template <typename> class MT, template <typename> class NT>
 template <typename T>
-void MicroKernel<MT,NT>::run<T>::operator()(T alpha, Matrix<T>& A, Matrix<T>& B,
+void MicroKernel<MT,NT>::run<T>::operator()(ThreadCommunicator& comm, T alpha, Matrix<T>& A, Matrix<T>& B,
                                              T beta, Matrix<T>& C) const
 {
     const T* p_a = A.data();
@@ -184,7 +184,7 @@ void MicroKernel<MT,NT>::run<T>::operator()(T alpha, Matrix<T>& A, Matrix<T>& B,
 
 template <template <typename> class MT, template <typename> class NT>
 template <typename T>
-void MicroKernel<MT,NT>::run<T>::operator()(T alpha, Matrix<T>& A, Matrix<T>& B,
+void MicroKernel<MT,NT>::run<T>::operator()(ThreadCommunicator& comm, T alpha, Matrix<T>& A, Matrix<T>& B,
                                              T beta, ScatterMatrix<T>& C) const
 {
     const T* p_a = A.data();
@@ -244,7 +244,7 @@ void MicroKernel<MT,NT>::run<T>::operator()(T alpha, Matrix<T>& A, Matrix<T>& B,
 
 template <template <typename> class MT, template <typename> class NT>
 template <typename T>
-void MicroKernel<MT,NT>::run<T>::operator()(T alpha, Matrix<T>& A, Matrix<T>& B,
+void MicroKernel<MT,NT>::run<T>::operator()(ThreadCommunicator& comm, T alpha, Matrix<T>& A, Matrix<T>& B,
                                              T beta, BlockScatterMatrix<T,MR,NR>& C) const
 {
     const T* p_a = A.data();

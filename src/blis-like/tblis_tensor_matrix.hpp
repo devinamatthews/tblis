@@ -411,7 +411,8 @@ class TensorMatrix
 
                     if (nleft == 0)
                     {
-                        rs[rs_idx++] = (_m0-i0 >= MR ? _rs0 : 0);
+                        rs[rs_idx++] = (_m0-i0 >= MR || _m0-i0+rscat_idx >= _m ? _rs0 : 0);
+                        //rs[rs_idx++] = 0;
                         nleft = MR;
                     }
 
@@ -436,7 +437,8 @@ class TensorMatrix
 
                     if (nleft == 0)
                     {
-                        cs[cs_idx++] = (_n0-j0 >= NR ? _cs0 : 0);
+                        cs[cs_idx++] = (_n0-j0 >= NR || _n0-j0+cscat_idx >= _n ? _cs0 : 0);
+                        //cs[cs_idx++] = 0;
                         nleft = NR;
                     }
 

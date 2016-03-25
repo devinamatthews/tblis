@@ -20,6 +20,7 @@ lib_libtblis_la_SOURCES = \
     src/blis-like/3/tblis_gemm.cxx \
     src/blis-like/3/tblis_packm.cxx \
     \
+	src/core/tblis_mutex.cxx \
 	src/core/tensor_c99.cxx \
 	\
 	src/impl/blas/tensor_contract.cxx \
@@ -53,5 +54,6 @@ VPATH += $(srcdir)
 
 ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src @blis_INCLUDES@ @blis___INCLUDES@
+AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la @blis_LIBS@
 bin_bench_LDADD = lib/libtblis.la @blis_LIBS@

@@ -151,8 +151,8 @@ am_lib_libtblis_la_OBJECTS = src/blis-like/1m/tblis_normfm.lo \
 	src/blis-like/1v/tblis_zerov.lo \
 	src/blis-like/3/tblis_gemm_ukr.lo \
 	src/blis-like/3/tblis_gemm.lo src/blis-like/3/tblis_packm.lo \
-	src/core/tensor_c99.lo src/impl/blas/tensor_contract.lo \
-	src/impl/blas/tensor_mult.lo \
+	src/core/tblis_mutex.lo src/core/tensor_c99.lo \
+	src/impl/blas/tensor_contract.lo src/impl/blas/tensor_mult.lo \
 	src/impl/blas/tensor_outer_prod.lo src/impl/blas/tensor_sum.lo \
 	src/impl/blas/tensor_weight.lo \
 	src/impl/blis/tensor_contract.lo \
@@ -415,6 +415,7 @@ lib_libtblis_la_SOURCES = \
     src/blis-like/3/tblis_gemm.cxx \
     src/blis-like/3/tblis_packm.cxx \
     \
+	src/core/tblis_mutex.cxx \
 	src/core/tensor_c99.cxx \
 	\
 	src/impl/blas/tensor_contract.cxx \
@@ -444,6 +445,7 @@ bin_test_SOURCES = test/test.cxx
 bin_bench_SOURCES = test/bench.cxx
 ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src @blis_INCLUDES@ @blis___INCLUDES@
+AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la @blis_LIBS@
 bin_bench_LDADD = lib/libtblis.la @blis_LIBS@
 all: config.h
@@ -592,6 +594,8 @@ src/core/$(am__dirstamp):
 src/core/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/core/$(DEPDIR)
 	@: > src/core/$(DEPDIR)/$(am__dirstamp)
+src/core/tblis_mutex.lo: src/core/$(am__dirstamp) \
+	src/core/$(DEPDIR)/$(am__dirstamp)
 src/core/tensor_c99.lo: src/core/$(am__dirstamp) \
 	src/core/$(DEPDIR)/$(am__dirstamp)
 src/impl/blas/$(am__dirstamp):
@@ -789,6 +793,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/blis-like/3/$(DEPDIR)/tblis_gemm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/blis-like/3/$(DEPDIR)/tblis_gemm_ukr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/blis-like/3/$(DEPDIR)/tblis_packm.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/core/$(DEPDIR)/tblis_mutex.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/core/$(DEPDIR)/tensor_c99.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/impl/$(DEPDIR)/tensor_impl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/impl/blas/$(DEPDIR)/tensor_contract.Plo@am__quote@

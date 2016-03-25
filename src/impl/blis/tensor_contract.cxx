@@ -70,7 +70,7 @@ int tensor_contract_blis_int(const std::vector<dim_t>& len_M,
     ScatterMatrix<T> bs(k, n, const_cast<T*>(B), scat_K_B.data(), scat_N_B.data());
     ScatterMatrix<T> cs(m, n,                C , scat_M_C.data(), scat_N_C.data());
 
-    tblis_gemm(alpha, as, bs, beta, cs);
+    tblis_gemm_int(alpha, as, bs, beta, cs);
 
     return 0;
 }
@@ -114,7 +114,7 @@ int tensor_contract_blis_int(const std::vector<dim_t>& len_M,
     ScatterMatrix<T> bs(k, n, const_cast<T*>(B), scat_K_B.data(), scat_N_B.data());
     ScatterMatrix<T> cs(m, n,                C , scat_M_C.data(), scat_N_C.data());
 
-    tblis_gemm(alpha, as, bs, beta, cs);
+    tblis_gemm_int(alpha, as, bs, beta, cs);
 
     return 0;
 }
@@ -159,12 +159,37 @@ int tensor_contract_blis_int(const std::vector<dim_t>& len_M,
     bt.template col_block_scatter<N>(s_N_B.data(), scat_N_B.data());
     ct.template row_block_scatter<M>(s_M_C.data(), scat_M_C.data());
     ct.template col_block_scatter<N>(s_N_C.data(), scat_N_C.data());
+    at.col_scatter(scat_K_A.data());
+    bt.row_scatter(scat_K_B.data());
+
+    /*
+    printf("\n");
+    for (int i = 0;i < m;i++) printf("%6ld ", scat_M_A[i]); printf("\n");
+    for (int i = 0;i < m-1;i++) printf("%6ld ", scat_M_A[i+1]-scat_M_A[i]); printf("     0\n");
+    for (int i = 0;i < (m+M-1)/M;i++) printf("%*ld ", 7*M-1, s_M_A[i]); printf("\n");
+    printf("\n");
+    for (int i = 0;i < n;i++) printf("%6ld ", scat_N_B[i]); printf("\n");
+    for (int i = 0;i < n-1;i++) printf("%6ld ", scat_N_B[i+1]-scat_N_B[i]); printf("     0\n");
+    for (int i = 0;i < (n+N-1)/N;i++) printf("%*ld ", 7*N-1, s_N_B[i]); printf("\n");
+    printf("\n");
+    for (int i = 0;i < m;i++) printf("%6ld ", scat_M_C[i]); printf("\n");
+    for (int i = 0;i < m-1;i++) printf("%6ld ", scat_M_C[i+1]-scat_M_C[i]); printf("     0\n");
+    for (int i = 0;i < (m+M-1)/M;i++) printf("%*ld ", 7*M-1, s_M_C[i]); printf("\n");
+    printf("\n");
+    for (int i = 0;i < n;i++) printf("%6ld ", scat_N_C[i]); printf("\n");
+    for (int i = 0;i < n-1;i++) printf("%6ld ", scat_N_C[i+1]-scat_N_C[i]); printf("     0\n");
+    for (int i = 0;i < (n+N-1)/N;i++) printf("%*ld ", 7*N-1, s_N_C[i]); printf("\n");
+    printf("\n");
+    for (int i = 0;i < k;i++) printf("%6ld ", scat_K_A[i]); printf("\n");
+    for (int i = 0;i < k;i++) printf("%6ld ", scat_K_B[i]); printf("\n");
+    printf("\n");
+    */
 
     BlockScatterMatrix<T,M,0> abs(m, k, const_cast<T*>(A), s_M_A.data(),         NULL, scat_M_A.data(), scat_K_A.data());
     BlockScatterMatrix<T,0,N> bbs(k, n, const_cast<T*>(B),         NULL, s_N_B.data(), scat_K_B.data(), scat_N_B.data());
     BlockScatterMatrix<T,M,N> cbs(m, n,                C , s_M_C.data(), s_N_C.data(), scat_M_C.data(), scat_N_C.data());
 
-    tblis_gemm(alpha, abs, bbs, beta, cbs);
+    tblis_gemm_int(alpha, abs, bbs, beta, cbs);
 
     return 0;
 }

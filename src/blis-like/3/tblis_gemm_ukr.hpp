@@ -50,13 +50,13 @@ struct MicroKernel
             return fwd(&value);
         }
 
-        void operator()(T alpha, Matrix<T>& A, Matrix<T>& B,
+        void operator()(ThreadCommunicator& comm, T alpha, Matrix<T>& A, Matrix<T>& B,
                          T beta, Matrix<T>& C) const;
 
-        void operator()(T alpha, Matrix<T>& A, Matrix<T>& B,
+        void operator()(ThreadCommunicator& comm, T alpha, Matrix<T>& A, Matrix<T>& B,
                          T beta, ScatterMatrix<T>& C) const;
 
-        void operator()(T alpha, Matrix<T>& A, Matrix<T>& B,
+        void operator()(ThreadCommunicator& comm, T alpha, Matrix<T>& A, Matrix<T>& B,
                          T beta, BlockScatterMatrix<T,MR,NR>& C) const;
     };
 };
@@ -66,10 +66,10 @@ struct Noop
     template <typename T>
     struct run
     {
-        void operator()(T alpha, Matrix<T>& A, Matrix<T>& B, T beta, Matrix<T>& C) const
+        void operator()(ThreadCommunicator& comm, T alpha, Matrix<T>& A, Matrix<T>& B, T beta, Matrix<T>& C) const
         {}
 
-        void operator()(T alpha, Matrix<T>& A, Matrix<T>& B, T beta, ScatterMatrix<T>& C) const
+        void operator()(ThreadCommunicator& comm, T alpha, Matrix<T>& A, Matrix<T>& B, T beta, ScatterMatrix<T>& C) const
         {}
     };
 };

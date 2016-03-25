@@ -10,6 +10,9 @@ namespace blis_like
 
 namespace detail
 {
+    extern MemoryPool BuffersForA;
+    extern MemoryPool BuffersForB;
+
     constexpr inline dim_t remainder(dim_t N, dim_t B)
     {
         return (B-1)-(N+B-1)%B;
@@ -44,34 +47,30 @@ void PackMicroPanel(dim_t m, dim_t k,
 template <typename T, dim_t MR, dim_t KR, bool Trans>
 struct PackRowPanel
 {
-    void operator()(const Matrix<T>& A, Matrix<T>& Ap) const;
+    void operator()(ThreadCommunicator& comm, const Matrix<T>& A, Matrix<T>& Ap) const;
 
-    void operator()(const ScatterMatrix<T>& A, Matrix<T>& Ap) const;
+    void operator()(ThreadCommunicator& comm, const ScatterMatrix<T>& A, Matrix<T>& Ap) const;
 
-    template <bool _Trans=Trans>
-    typename std::enable_if<_Trans == false>::type
-    operator()(const BlockScatterMatrix<T,MR,0>& A, Matrix<T>& Ap) const;
+    void operator()(ThreadCommunicator& comm, const BlockScatterMatrix<T,(Trans ? 0 : MR),(Trans ? MR : 0)>& A, Matrix<T>& Ap) const;
 
-    template <bool _Trans=Trans>
-    typename std::enable_if<_Trans == true>::type
-    operator()(const BlockScatterMatrix<T,0,MR>& A, Matrix<T>& Ap) const;
+    void operator()(ThreadCommunicator& comm, const TensorMatrix<T>& A, Matrix<T>& Ap) const;
 };
 
 template <typename T>
 struct PackNoop
 {
-    void operator()(Matrix<T>& A, Matrix<T>& Ap) const
+    void operator()(ThreadCommunicator& comm, Matrix<T>& A, Matrix<T>& Ap) const
     {
         memset((T*)Ap, 0, Ap.width()*Ap.length()*sizeof(T));
     }
 
-    void operator()(ScatterMatrix<T>& A, Matrix<T>& Ap) const
+    void operator()(ThreadCommunicator& comm, ScatterMatrix<T>& A, Matrix<T>& Ap) const
     {
         memset((T*)Ap, 0, Ap.width()*Ap.length()*sizeof(T));
     }
 
     template <dim_t UB, dim_t VB>
-    void operator()(BlockScatterMatrix<T,UB,VB>& A, Matrix<T>& Ap) const
+    void operator()(ThreadCommunicator& comm, BlockScatterMatrix<T,UB,VB>& A, Matrix<T>& Ap) const
     {
         memset((T*)Ap, 0, Ap.width()*Ap.length()*sizeof(T));
     }
@@ -81,10 +80,11 @@ template <typename Pack, typename Run, int Mat>
 struct PackAndRun
 {
     template <typename T, typename MatrixA, typename MatrixB, typename MatrixC, typename MatrixP>
-    PackAndRun(T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C, MatrixP& P)
+    PackAndRun(Run& run, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C, MatrixP& P)
     {
-        Pack()(A, P);
-        Run()(alpha, P, B, beta, C);
+        Pack()(comm, A, P);
+        comm.barrier();
+        run(comm, alpha, P, B, beta, C);
     }
 };
 
@@ -92,29 +92,35 @@ template <typename Pack, typename Run>
 struct PackAndRun<Pack, Run, matrix_constants::MAT_B>
 {
     template <typename T, typename MatrixA, typename MatrixB, typename MatrixC, typename MatrixP>
-    PackAndRun(T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C, MatrixP& P)
+    PackAndRun(Run& run, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C, MatrixP& P)
     {
-        Pack()(B, P);
-        Run()(alpha, A, P, beta, C);
+        Pack()(comm, B, P);
+        comm.barrier();
+        run(comm, alpha, A, P, beta, C);
+        comm.barrier();
     }
 };
 
-template <template <typename> class MT, template <typename> class KT, int Mat>
+template <template <typename> class MT, template <typename> class KT, int Mat, size_t ExtraSpace=0>
 struct Pack
 {
     template <typename T, typename Child, typename... Children>
     struct run
     {
+        typename Child::template run<T, Children...> child;
+
+        dim_t extra_space = 0;
+
         template <typename MatrixA, typename MatrixB, typename MatrixC>
-        void operator()(T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C) const
+        void operator()(ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
         {
             using namespace matrix_constants;
 
             constexpr dim_t MR = MT<T>::def;
             constexpr dim_t KR = KT<T>::def;
 
-            constexpr packbuf_t PackBuf = (Mat == MAT_A ? BLIS_BUFFER_FOR_A_BLOCK
-                                                        : BLIS_BUFFER_FOR_B_PANEL);
+            MemoryPool& PackBuf = (Mat == MAT_A ? detail::BuffersForA
+                                                : detail::BuffersForB);
             constexpr bool Trans = (Mat == MAT_B);
 
             typedef PackRowPanel<T,MR,KR,Trans> Pack;
@@ -124,15 +130,24 @@ struct Pack
             dim_t k_p = (Mat == MAT_A ? A.width () : B.length());
             m_p = detail::round_up(m_p, MR);
             k_p = detail::round_up(k_p, KR);
-            PooledMemory<T> buf(m_p*k_p, PackBuf);
+            MemoryPool::Block<T> buf;
+            T* ptr;
+
+            if (comm.thread_num() == 0)
+            {
+                buf = PackBuf.allocate<T>(m_p*k_p + extra_space);
+                ptr = buf;
+            }
+
+            comm.broadcast(ptr);
 
             Matrix<T> P((Mat == MAT_A ? m_p : k_p),
                         (Mat == MAT_A ? k_p : m_p),
-                        buf,
+                        ptr,
                         (Mat == MAT_A ? k_p :   1),
                         (Mat == MAT_A ?   1 : k_p));
 
-            PackAndRun<Pack,Run,Mat>(alpha, A, B, beta, C, P);
+            PackAndRun<Pack,Run,Mat>(child, comm, alpha, A, B, beta, C, P);
         }
     };
 };

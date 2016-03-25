@@ -25,6 +25,9 @@ void tblis_finalize();
 #include "core/tensor_templates.hpp"
 #include "core/tensor_slicer.hpp"
 #include "core/tensor_partitioner.hpp"
+#include "core/tblis_memory_pool.hpp"
+#include "core/tblis_mutex.hpp"
+#include "core/tblis_thread.hpp"
 
 #include "blis-like/tblis_constants.hpp"
 #include "blis-like/tblis_scatter_matrix.hpp"

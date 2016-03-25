@@ -5,6 +5,12 @@ namespace tblis
 namespace blis_like
 {
 
+namespace detail
+{
+    MemoryPool BuffersForA(BLIS_POOL_ADDR_ALIGN_SIZE);
+    MemoryPool BuffersForB(BLIS_POOL_ADDR_ALIGN_SIZE);
+}
+
 template <typename T, dim_t MR, dim_t KR>
 void PackMicroPanel(dim_t m, dim_t k,
                     const T* restrict & p_a, inc_t rs_a, inc_t cs_a,
@@ -240,7 +246,7 @@ void PackMicroPanel(dim_t m, dim_t k,
 }
 
 template <typename T, dim_t MR, dim_t KR, bool Trans>
-void PackRowPanel<T,MR,KR,Trans>::operator()(const Matrix<T>& A, Matrix<T>& Ap) const
+void PackRowPanel<T,MR,KR,Trans>::operator()(ThreadCommunicator& comm, const Matrix<T>& A, Matrix<T>& Ap) const
 {
     dim_t m_a = (Trans ? A.width () : A.length());
     dim_t k_a = (Trans ? A.length() : A.width ());
@@ -249,15 +255,32 @@ void PackRowPanel<T,MR,KR,Trans>::operator()(const Matrix<T>& A, Matrix<T>& Ap) 
     const T* p_a = A.data();
     T* p_ap = Ap.data();
 
-    for (dim_t off_m = 0;off_m < m_a;off_m += MR)
+    dim_t off_first, off_last;
+    std::tie(off_first, off_last) = comm.distribute_over_threads(m_a, MR);
+
+    //printf_locked("%s: %d %ld %ld %ld\n", (Trans ? "B" : "A"), comm.thread_num(), m_a, off_first, off_last);
+
+    p_a += off_first*rs_a;
+    p_ap += off_first*detail::round_up(k_a, KR);
+
+    for (dim_t off_m = off_first;off_m < off_last;off_m += MR)
     {
-        PackMicroPanel<T,MR,KR>(std::min(MR, m_a-off_m), k_a,
+        PackMicroPanel<T,MR,KR>(std::min(MR, off_last-off_m), k_a,
                                 p_a, rs_a, cs_a, p_ap);
     }
+
+    /*
+    comm.barrier();
+
+    if (comm.thread_num() == 0)
+    {
+        printf("%s: %.15f\n", (Trans ? "B" : "A"), tblis_normfv(Ap.length()*Ap.width(), Ap.data(), 1));
+    }
+    */
 }
 
 template <typename T, dim_t MR, dim_t KR, bool Trans>
-void PackRowPanel<T,MR,KR,Trans>::operator()(const ScatterMatrix<T>& A, Matrix<T>& Ap) const
+void PackRowPanel<T,MR,KR,Trans>::operator()(ThreadCommunicator& comm, const ScatterMatrix<T>& A, Matrix<T>& Ap) const
 {
     dim_t m_a = (Trans ? A.width () : A.length());
     dim_t k_a = (Trans ? A.length() : A.width ());
@@ -268,59 +291,72 @@ void PackRowPanel<T,MR,KR,Trans>::operator()(const ScatterMatrix<T>& A, Matrix<T
     const T* p_a = A.data();
     T* p_ap = Ap.data();
 
-    if (rs_a == 0 && cs_a == 0)
+    dim_t off_first, off_last;
+    std::tie(off_first, off_last) = comm.distribute_over_threads(m_a, MR);
+
+    //printf_locked("%s: %d %ld %ld %ld\n", (Trans ? "B" : "A"), comm.thread_num(), m_a, off_first, off_last);
+
+    p_a += off_first*rs_a;
+    rscat_a += off_first;
+    p_ap += off_first*detail::round_up(k_a, KR);
+
+    for (dim_t off_m = off_first;off_m < off_last;off_m += MR)
     {
-        for (dim_t off_m = 0;off_m < m_a;off_m += MR)
+        if (rs_a == 0 && cs_a == 0)
         {
             PackMicroPanel<T,MR,KR>(std::min(MR, m_a-off_m), k_a,
                                     p_a, rscat_a, cscat_a, p_ap);
         }
-    }
-    else if (rs_a == 0)
-    {
-        for (dim_t off_m = 0;off_m < m_a;off_m += MR)
+        else if (rs_a == 0)
         {
             PackMicroPanel<T,MR,KR>(std::min(MR, m_a-off_m), k_a,
                                     p_a, rscat_a, cs_a, p_ap);
         }
-    }
-    else if (cs_a == 0)
-    {
-        for (dim_t off_m = 0;off_m < m_a;off_m += MR)
+        else if (cs_a == 0)
         {
             PackMicroPanel<T,MR,KR>(std::min(MR, m_a-off_m), k_a,
                                     p_a, rs_a, cscat_a, p_ap);
         }
-    }
-    else
-    {
-        for (dim_t off_m = 0;off_m < m_a;off_m += MR)
+        else
         {
             PackMicroPanel<T,MR,KR>(std::min(MR, m_a-off_m), k_a,
                                     p_a, rs_a, cs_a, p_ap);
         }
     }
+
+    /*
+    comm.barrier();
+
+    if (comm.thread_num() == 0)
+    {
+        printf("%s: %.15f\n", (Trans ? "B" : "A"), tblis_normfv(Ap.length()*Ap.width(), Ap.data(), 1));
+    }
+    */
 }
 
 template <typename T, dim_t MR, dim_t KR, bool Trans>
-template <bool _Trans>
-typename std::enable_if<_Trans == false>::type
-PackRowPanel<T,MR,KR,Trans>::operator()(const BlockScatterMatrix<T,MR,0>& A_, Matrix<T>& Ap) const
+void PackRowPanel<T,MR,KR,Trans>::operator()(ThreadCommunicator& comm, const BlockScatterMatrix<T,(Trans ? 0 : MR),(Trans ? MR : 0)>& A_, Matrix<T>& Ap) const
 {
-    BlockScatterMatrix<T,MR,0> A(A_);
+    BlockScatterMatrix<T,(Trans ? 0 : MR),(Trans ? MR : 0)> A(A_);
 
-    dim_t m_a = A.length();
-    dim_t k_a = A.width();
+    dim_t m_a = (Trans ? A.width () : A.length());
+    dim_t k_a = (Trans ? A.length() : A.width ());
     T* p_ap = Ap.data();
 
-    A.length(MR);
+    dim_t off_first, off_last;
+    std::tie(off_first, off_last) = comm.distribute_over_threads(m_a, MR);
 
-    for (dim_t off_m = 0;off_m < m_a;off_m += MR)
+    p_ap += off_first*detail::round_up(k_a, KR);
+
+    (Trans ? A.width(MR) : A.length(MR));
+    (Trans ? A.shift_right(off_first) : A.shift_down(off_first));
+
+    for (dim_t off_m = off_first;off_m < off_last;off_m += MR)
     {
-        inc_t rs_a = A.row_stride();
-        inc_t cs_a = A.col_stride();
-        const inc_t* rscat_a = A.row_scatter();
-        const inc_t* cscat_a = A.col_scatter();
+        inc_t rs_a = (Trans ? A.col_stride() : A.row_stride());
+        inc_t cs_a = (Trans ? A.row_stride() : A.col_stride());
+        const inc_t* rscat_a = (Trans ? A.col_scatter() : A.row_scatter());
+        const inc_t* cscat_a = (Trans ? A.row_scatter() : A.col_scatter());
         const T* p_a = A.data();
 
         if (rs_a == 0 && cs_a == 0)
@@ -344,60 +380,17 @@ PackRowPanel<T,MR,KR,Trans>::operator()(const BlockScatterMatrix<T,MR,0>& A_, Ma
                                     p_a, rs_a, cs_a, p_ap);
         }
 
-        A.shift_down();
+        (Trans ? A.shift_right() : A.shift_down());
     }
 
-    A.length(m_a);
-    A.shift_up();
+    (Trans ? A.shift_left(off_last) : A.shift_up(off_last));
+    (Trans ? A.width(m_a) : A.length(m_a));
 }
 
 template <typename T, dim_t MR, dim_t KR, bool Trans>
-template <bool _Trans>
-typename std::enable_if<_Trans == true>::type
-PackRowPanel<T,MR,KR,Trans>::operator()(const BlockScatterMatrix<T,0,MR>& A_, Matrix<T>& Ap) const
+void PackRowPanel<T,MR,KR,Trans>::operator()(ThreadCommunicator& comm, const TensorMatrix<T>& A, Matrix<T>& Ap) const
 {
-    BlockScatterMatrix<T,0,MR> A(A_);
 
-    dim_t m_a = A.width();
-    dim_t k_a = A.length();
-    T* p_ap = Ap.data();
-
-    A.width(MR);
-
-    for (dim_t off_m = 0;off_m < m_a;off_m += MR)
-    {
-        inc_t rs_a = A.col_stride();
-        inc_t cs_a = A.row_stride();
-        const inc_t* rscat_a = A.col_scatter();
-        const inc_t* cscat_a = A.row_scatter();
-        const T* p_a = A.data();
-
-        if (rs_a == 0 && cs_a == 0)
-        {
-            PackMicroPanel<T,MR,KR>(std::min(MR, m_a-off_m), k_a,
-                                    p_a, rscat_a, cscat_a, p_ap);
-        }
-        else if (rs_a == 0)
-        {
-            PackMicroPanel<T,MR,KR>(std::min(MR, m_a-off_m), k_a,
-                                    p_a, rscat_a, cs_a, p_ap);
-        }
-        else if (cs_a == 0)
-        {
-            PackMicroPanel<T,MR,KR>(std::min(MR, m_a-off_m), k_a,
-                                    p_a, rs_a, cscat_a, p_ap);
-        }
-        else
-        {
-            PackMicroPanel<T,MR,KR>(std::min(MR, m_a-off_m), k_a,
-                                    p_a, rs_a, cs_a, p_ap);
-        }
-
-        A.shift_right();
-    }
-
-    A.width(m_a);
-    A.shift_left();
 }
 
 #define INSTANTIATION(T,MT,NT,KT,MR,NR,KR) \
@@ -426,9 +419,7 @@ DEFINE_INSTANTIATIONS()
 
 #define INSTANTIATION(T,MT,NT,KT,MR,NR,KR) \
 template struct PackRowPanel<T,MR,KR,false>; \
-template struct PackRowPanel<T,NR,KR, true>; \
-template std::enable_if<true>::type PackRowPanel<T,MR,KR,false>::operator()<false>(const BlockScatterMatrix<T,MR,0>& A, Matrix<T>& Ap) const; \
-template std::enable_if<true>::type PackRowPanel<T,NR,KR, true>::operator()< true>(const BlockScatterMatrix<T,0,NR>& A, Matrix<T>& Ap) const;
+template struct PackRowPanel<T,NR,KR, true>;
 DEFINE_INSTANTIATIONS()
 #undef INSTANTIATION
 

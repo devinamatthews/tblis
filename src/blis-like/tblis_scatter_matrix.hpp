@@ -505,28 +505,32 @@ class ScatterMatrix
 
             return view;
         }
+
+        friend void ViewNoTranspose(ScatterMatrix& A, ScatterMatrix& V)
+        {
+            blis::detail::AssertNotSelfView(A, V);
+
+            if (A.is_conjugated()) V.conjugate();
+
+            if (A.is_transposed())
+            {
+                V.reset(A.width(), A.length(), A.data(),
+                        A.col_stride(), A.row_stride(),
+                        A.col_scatter(), A.row_scatter());
+            }
+            else
+            {
+                V.reset(A.length(), A.width(), A.data(),
+                        A.row_stride(), A.col_stride(),
+                        A.row_scatter(), A.col_scatter());
+            }
+        }
+
+        friend void ViewNoTranspose(ScatterMatrix&& A, ScatterMatrix& V)
+        {
+            ViewNoTranspose(A, V);
+        }
 };
-
-template <typename T>
-void ViewNoTranspose(ScatterMatrix<T>& A, ScatterMatrix<T>& V)
-{
-    blis::detail::AssertNotSelfView(A, V);
-
-    if (A.is_conjugated()) V.conjugate();
-
-    if (A.is_transposed())
-    {
-        V.reset(A.width(), A.length(), A.data(),
-                A.col_stride(), A.row_stride(),
-                A.col_scatter(), A.row_scatter());
-    }
-    else
-    {
-        V.reset(A.length(), A.width(), A.data(),
-                A.row_stride(), A.col_stride(),
-                A.row_scatter(), A.col_scatter());
-    }
-}
 
 }
 }

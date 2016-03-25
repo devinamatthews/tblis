@@ -72,8 +72,8 @@ class BlockScatterMatrix
             _cs = cs;
             _rscat = rscat;
             _cscat = cscat;
-            _m_sub = 0;
-            _n_sub = 0;
+            _m_sub = m;
+            _n_sub = n;
             _m_off = 0;
             _n_off = 0;
         }
@@ -315,8 +315,13 @@ class BlockScatterMatrix
             }
             else
             {
-                V.reset(A._m, A._m, A._ptr, A._rs, A._cs, A._rscat, A._cscat);
+                V.reset(A._m, A._n, A._ptr, A._rs, A._cs, A._rscat, A._cscat);
             }
+        }
+
+        friend void ViewNoTranspose(BlockScatterMatrix&& A, BlockScatterMatrix& V)
+        {
+            ViewNoTranspose(A, V);
         }
 };
 

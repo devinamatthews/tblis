@@ -387,12 +387,6 @@ void PackRowPanel<T,MR,KR,Trans>::operator()(ThreadCommunicator& comm, const Blo
     (Trans ? A.width(m_a) : A.length(m_a));
 }
 
-template <typename T, dim_t MR, dim_t KR, bool Trans>
-void PackRowPanel<T,MR,KR,Trans>::operator()(ThreadCommunicator& comm, const TensorMatrix<T>& A, Matrix<T>& Ap) const
-{
-
-}
-
 #define INSTANTIATION(T,MT,NT,KT,MR,NR,KR) \
 template void PackMicroPanel<T,          MR, KR>(dim_t m, dim_t k, const T*& p_a, inc_t rs_a, inc_t cs_a, T*& p_ap); \
 template void PackMicroPanel<T,(MR==NR?0:NR),KR>(dim_t m, dim_t k, const T*& p_a, inc_t rs_a, inc_t cs_a, T*& p_ap);

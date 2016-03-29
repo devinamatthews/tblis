@@ -80,8 +80,8 @@ using DefaultGEMM = GEMM<PartitionN<NC>,
                          PackA<MR,KR>,
                          MacroKernel<MR,NR>>::run<T>;
 
-template <typename U, typename MatrixA, typename MatrixB, typename MatrixC>
-void tblis_gemm_int(U alpha, MatrixA&& A, MatrixB&& B, U beta, MatrixC&& C)
+template <typename T, typename MatrixA, typename MatrixB, typename MatrixC>
+void tblis_gemm_int(T alpha, MatrixA&& A, MatrixB&& B, T beta, MatrixC&& C)
 {
     ASSERT(A.length() == C.length(), "m dimension does not match");
     ASSERT(A.width() == B.length(), "k dimension does not match");
@@ -95,7 +95,7 @@ void tblis_gemm_int(U alpha, MatrixA&& A, MatrixB&& B, U beta, MatrixC&& C)
 
     printf_locked("%d %d %d %d\n", jc_way, ic_way, jr_way, ir_way);
 
-    DefaultGEMM<U> gemm;
+    DefaultGEMM<T> gemm;
     gemm.template step<0>().distribute = jc_way;
     gemm.template step<3>().distribute = ic_way;
     gemm.template step<5>().distribute = jr_way;

@@ -52,8 +52,6 @@ struct PackRowPanel
     void operator()(ThreadCommunicator& comm, const ScatterMatrix<T>& A, Matrix<T>& Ap) const;
 
     void operator()(ThreadCommunicator& comm, const BlockScatterMatrix<T,(Trans ? 0 : MR),(Trans ? MR : 0)>& A, Matrix<T>& Ap) const;
-
-    void operator()(ThreadCommunicator& comm, const TensorMatrix<T>& A, Matrix<T>& Ap) const;
 };
 
 template <typename T>
@@ -85,6 +83,7 @@ struct PackAndRun
         Pack()(comm, A, P);
         comm.barrier();
         run(comm, alpha, P, B, beta, C);
+        comm.barrier();
     }
 };
 
@@ -101,7 +100,7 @@ struct PackAndRun<Pack, Run, matrix_constants::MAT_B>
     }
 };
 
-template <template <typename> class MT, template <typename> class KT, int Mat, size_t ExtraSpace=0>
+template <template <typename> class MT, template <typename> class KT, int Mat>
 struct Pack
 {
     template <typename T, typename Child, typename... Children>
@@ -109,7 +108,7 @@ struct Pack
     {
         typename Child::template run<T, Children...> child;
 
-        dim_t extra_space = 0;
+        T* pack_buffer = NULL;
 
         template <typename MatrixA, typename MatrixB, typename MatrixC>
         void operator()(ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
@@ -143,7 +142,7 @@ struct Pack
 
             Matrix<T> P((Mat == MAT_A ? m_p : k_p),
                         (Mat == MAT_A ? k_p : m_p),
-                        ptr,
+                        pack_buffer,
                         (Mat == MAT_A ? k_p :   1),
                         (Mat == MAT_A ?   1 : k_p));
 

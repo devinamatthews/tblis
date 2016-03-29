@@ -7,7 +7,7 @@
 #define TENSOR_BLOCK_SCATTER 2
 #define TENSOR 3
 
-#define IMPL_TYPE TENSOR_BLOCK_SCATTER
+#define IMPL_TYPE TENSOR
 
 using namespace std;
 using namespace tblis::util;
@@ -17,6 +17,11 @@ namespace tblis
 {
 namespace impl
 {
+
+namespace detail
+{
+    MemoryPool BuffersForScatter(BLIS_HEAP_ADDR_ALIGN_SIZE);
+}
 
 #if IMPL_TYPE == SCATTER_MATRIX
 
@@ -195,6 +200,169 @@ int tensor_contract_blis_int(const std::vector<dim_t>& len_M,
 }
 
 #elif IMPL_TYPE == TENSOR
+
+template <dim_t MR, dim_t NR, int Mat>
+struct MatrifyAndRun
+{
+    template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
+    MatrifyAndRun(Parent& parent, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
+    {
+        inc_t* rscat = parent.rscat;
+        inc_t* cscat = parent.cscat;
+        A.row_scatter(rscat);
+        A.col_scatter(cscat);
+
+        ScatterMatrix<T> M(A.length(), A.width(), A.data(), rscat, cscat);
+
+        parent.child(comm, alpha, M, B, beta, C);
+    }
+};
+
+template <dim_t MR, dim_t NR>
+struct MatrifyAndRun<MR, NR, matrix_constants::MAT_B>
+{
+    template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
+    MatrifyAndRun(Parent& parent, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
+    {
+        inc_t* rscat = parent.rscat;
+        inc_t* cscat = parent.cscat;
+        B.row_scatter(rscat);
+        B.col_scatter(cscat);
+
+        ScatterMatrix<T> M(B.length(), B.width(), B.data(), rscat, cscat);
+
+        parent.child(comm, alpha, A, M, beta, C);
+    }
+};
+
+template <dim_t MR, dim_t NR>
+struct MatrifyAndRun<MR, NR, matrix_constants::MAT_C>
+{
+    template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
+    MatrifyAndRun(Parent& parent, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
+    {
+        inc_t* rscat = parent.rscat;
+        inc_t* cscat = parent.cscat;
+        C.row_scatter(rscat);
+        C.col_scatter(cscat);
+
+        ScatterMatrix<T> M(C.length(), C.width(), C.data(), rscat, cscat);
+
+        parent.child(comm, alpha, A, B, beta, M);
+    }
+};
+
+template <template <typename> class MT, template <typename> class NT, int Mat>
+struct Matrify
+{
+    template <typename T, typename Child, typename... Children>
+    struct run
+    {
+        typename Child::template run<T, Children...> child;
+
+        inc_t* rscat = NULL;
+        inc_t* cscat = NULL;
+        inc_t* rs = NULL;
+        inc_t* cs = NULL;
+
+        template <typename MatrixA, typename MatrixB, typename MatrixC>
+        void operator()(ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
+        {
+            constexpr dim_t MR = MT<T>::def;
+            constexpr dim_t NR = NT<T>::def;
+
+            MatrifyAndRun<MR,NR,Mat>(*this, comm, alpha, A, B, beta, C);
+        }
+    };
+};
+
+template <template <typename> class MR, template <typename> class KR>
+using MatrifyA = Matrify<MR,KR,matrix_constants::MAT_A>;
+
+template <template <typename> class KR, template <typename> class NR>
+using MatrifyB = Matrify<KR,NR,matrix_constants::MAT_B>;
+
+template <template <typename> class MR, template <typename> class NR>
+using MatrifyC = Matrify<MR,NR,matrix_constants::MAT_C>;
+
+template <typename T>
+int tensor_contract_blis_int(const std::vector<dim_t>& len_M,
+                             const std::vector<dim_t>& len_N,
+                             const std::vector<dim_t>& len_K,
+                             T alpha, const T* A, const std::vector<inc_t>& stride_M_A,
+                                                  const std::vector<inc_t>& stride_K_A,
+                                      const T* B, const std::vector<inc_t>& stride_K_B,
+                                                  const std::vector<inc_t>& stride_N_B,
+                             T  beta,       T* C, const std::vector<inc_t>& stride_M_C,
+                                                  const std::vector<inc_t>& stride_N_C)
+{
+    TensorMatrix<T> at(len_M, len_K, const_cast<T*>(A), stride_M_A, stride_K_A);
+    TensorMatrix<T> bt(len_K, len_N, const_cast<T*>(B), stride_K_B, stride_N_B);
+    TensorMatrix<T> ct(len_M, len_N,                C , stride_M_C, stride_N_C);
+
+    dim_t jc_way = bli_read_nway_from_env( "BLIS_JC_NT" );
+    dim_t ic_way = bli_read_nway_from_env( "BLIS_IC_NT" );
+    dim_t jr_way = bli_read_nway_from_env( "BLIS_JR_NT" );
+    dim_t ir_way = bli_read_nway_from_env( "BLIS_IR_NT" );
+    dim_t nthread = jc_way*ic_way*jr_way*ir_way;
+
+    printf_locked("%d %d %d %d\n", jc_way, ic_way, jr_way, ir_way);
+
+    GEMM<PartitionN<NC>,
+         PartitionK<KC>,
+         MatrifyB<NR,KR>,
+         PackB<NR,KR>,
+         PartitionM<MC>,
+         MatrifyA<MR,KR>,
+         PackA<MR,KR>,
+         MatrifyC<MR,NR>,
+         MacroKernel<MR,NR>>::run<T> gemm;
+
+    auto a_buffer = blis_like::detail::BuffersForA.allocate<T>(MC<T>::max * KC<T>::max);
+    auto b_buffer = blis_like::detail::BuffersForB.allocate<T>(NC<T>::max * KC<T>::max);
+    auto scat_buffer = detail::BuffersForScatter.allocate<inc_t>(4*MC<T>::max + 4*NC<T>::max + 4*KC<T>::max);
+
+    inc_t* rscat_a = scat_buffer;
+    inc_t* cscat_a = rscat_a + MC<T>::max;
+    inc_t*    rs_a = cscat_a + KC<T>::max;
+    inc_t*    cs_a =    rs_a + MC<T>::max;
+    inc_t* rscat_b =    cs_a + KC<T>::max;
+    inc_t* cscat_b = rscat_b + KC<T>::max;
+    inc_t*    rs_b = cscat_b + NC<T>::max;
+    inc_t*    cs_b =    rs_b + KC<T>::max;
+    inc_t* rscat_c =    cs_b + NC<T>::max;
+    inc_t* cscat_c = rscat_c + MC<T>::max;
+    inc_t*    rs_c = cscat_c + NC<T>::max;
+    inc_t*    cs_c =    rs_c + MC<T>::max;
+
+    gemm.template step<0>().distribute = jc_way;
+    gemm.template step<1>().distribute = 1; //kc_way
+    gemm.template step<2>().rscat = rscat_b;
+    gemm.template step<2>().cscat = cscat_b;
+    gemm.template step<2>().rs = rs_b;
+    gemm.template step<2>().cs = cs_b;
+    gemm.template step<3>().pack_buffer = b_buffer;
+    gemm.template step<4>().distribute = ic_way;
+    gemm.template step<5>().rscat = rscat_a;
+    gemm.template step<5>().cscat = cscat_a;
+    gemm.template step<5>().rs = rs_a;
+    gemm.template step<5>().cs = cs_a;
+    gemm.template step<6>().pack_buffer = a_buffer;
+    gemm.template step<7>().rscat = rscat_c;
+    gemm.template step<7>().cscat = cscat_c;
+    gemm.template step<7>().rs = rs_c;
+    gemm.template step<7>().cs = cs_c;
+    gemm.template step<8>().distribute = jr_way;
+    gemm.template step<9>().distribute = ir_way;
+
+    parallelize(nthread,
+    [=](ThreadCommunicator& comm) mutable
+    {
+        gemm(comm, alpha, at, bt, beta, ct);
+    });
+
+    return 0;
+}
 
 #endif
 

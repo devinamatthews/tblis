@@ -7,6 +7,17 @@
 #include <atomic>
 #include <mutex>
 
+#if defined(__MIC__)
+#define TBLIS_ARCH_MIC 1
+#elif defined(__INTEL_COMPILER) || defined(__i386__) || defined(__x86_64__) || \
+      defined(_X86_) || defined(_M_IX86) || defined(_M_X64)
+#define TBLIS_ARCH_INTEL 1
+#elif defined(__arm__) || defined(_M_ARM) || defined(__aarch64__)
+#define TBLIS_ARCH_ARM 1
+#elif defined(_ARCH_PPC) || defined(_ARCH_PPC64)
+#define TBLIS_ARCH_PPC 1
+#endif
+
 #if USE_OSSPINLOCK && BLIS_OS_OSX
 #include <libkern/OSAtomic.h>
 #endif
@@ -15,14 +26,39 @@
 #include <pthread.h>
 #include <cerrno>
 #include <system_error>
+#elif USE_OPENMP
+#include <omp.h>
+#else
+#include <thread>
 #endif
 
-#if USE_OPENMP
-#include <omp.h>
+#if TBLIS_ARCH_INTEL
+#include <xmmintrin.h>
 #endif
 
 namespace tblis
 {
+
+#if TBLIS_ARCH_MIC
+
+inline void yield()
+{
+    _mm_delay(32);
+}
+
+#elif TBLIS_ARCH_INTEL
+
+inline void yield()
+{
+    //_mm_pause();
+    __asm__ __volatile__ ("pause");
+}
+
+#else
+
+inline void yield() {}
+
+#endif
 
 #if USE_SPINLOCK
 
@@ -112,7 +148,7 @@ class Mutex
 
         void lock()
         {
-            while (_flag.test_and_set(std::memory_order_acquire)) {}
+            while (_flag.test_and_set(std::memory_order_acquire)) yield();
         }
 
         bool try_lock()

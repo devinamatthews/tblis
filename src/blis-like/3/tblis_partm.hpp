@@ -36,42 +36,30 @@ struct Partition
             dim_t m_u = (Dim == DIM_M ? A.length() : Dim == DIM_N ? B.width() : A.width());
             dim_t m_v = (Dim == DIM_M ? C.length() : Dim == DIM_N ? C.width() : B.length());
 
-            /*
-             * If we are asked to distribute work, but there are more threads
-             * than work units, then we need to gang the threads.
-             */
-            bool gang = (distribute > 1 && distribute < comm.num_threads());
-
-            if (gang && !ganged)
-            {
-                subcomm = comm.gang_evenly(distribute);
-                ganged = true;
-            }
-
-            ThreadCommunicator& child_comm = (gang ? subcomm : comm);
+            ASSERT(distribute <= comm.num_threads());
 
             dim_t m_first = 0;
             dim_t m_last = std::max(m_u, m_v);
 
-            if (gang)
+            if (distribute > 1)
             {
+                if (!ganged)
+                {
+                    subcomm = comm.gang_evenly(distribute);
+                    ganged = true;
+                }
+
                 std::tie(m_first, m_last) =
-                    child_comm.distribute_over_gangs(distribute,
-                                                     std::max(m_u, m_v),
-                                                     M_iota);
+                    subcomm.distribute_over_gangs(distribute,
+                                                  std::max(m_u, m_v),
+                                                  M_iota);
+
                 //printf_locked("%d: gang (%d,%d) %ld %ld %ld %ld\n",
-                //              Dim, child_comm.gang_num(), child_comm.thread_num(),
+                //              Dim, subcomm.gang_num(), subcomm.thread_num(),
                 //              m_u, m_v, m_first, m_last);
             }
-            else if (distribute > 1)
-            {
-                std::tie(m_first, m_last) =
-                    child_comm.distribute_over_threads(std::max(m_u, m_v),
-                                                       M_iota);
-                //printf_locked("%d: dist (%d,%d) %ld %ld %ld %ld\n",
-                //              Dim, child_comm.gang_num(), child_comm.thread_num(),
-                //              m_u, m_v, m_first, m_last);
-            }
+
+            ThreadCommunicator& child_comm = (distribute > 1 ? subcomm : comm);
 
             dim_t m_last_u = std::min(m_last, m_u);
             dim_t m_last_v = std::min(m_last, m_v);

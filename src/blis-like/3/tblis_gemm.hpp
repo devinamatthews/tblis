@@ -75,7 +75,7 @@ struct MacroKernel
 template <typename T>
 using DefaultGEMM = GEMM<PartitionN<NC>,
                          PartitionK<KC>,
-                         PackB<NR,KR>,
+                         PackB<KR,NR>,
                          PartitionM<MC>,
                          PackA<MR,KR>,
                          MacroKernel<MR,NR>>::run<T>;
@@ -97,6 +97,7 @@ void tblis_gemm_int(T alpha, MatrixA&& A, MatrixB&& B, T beta, MatrixC&& C)
 
     DefaultGEMM<T> gemm;
     gemm.template step<0>().distribute = jc_way;
+    gemm.template step<1>().distribute = 1; //kc_way
     gemm.template step<3>().distribute = ic_way;
     gemm.template step<5>().distribute = jr_way;
     gemm.template step<6>().distribute = ir_way;

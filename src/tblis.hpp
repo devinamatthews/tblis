@@ -19,6 +19,8 @@ void tblis_finalize();
 
 }
 
+#include "util/util.hpp"
+
 #include "core/tensor_iterator.hpp"
 #include "core/tensor_class.hpp"
 #include "core/tensor_iface.hpp"

@@ -232,8 +232,12 @@ void RandomMatrix(siz_t N, Matrix<T>& t)
 template <typename T>
 void RandomTensor(siz_t N, gint_t d, vector<dim_t> len_min, Tensor<T>& t)
 {
+    //len_min.insert(len_min.begin(), 1);
+    //vector<inc_t> stride = RandomProductConstrainedSequence<inc_t>(d+1, N, len_min);
+
+    vector<inc_t> stride = RandomProductConstrainedSequence<inc_t>(d, N, len_min);
     len_min.insert(len_min.begin(), 1);
-    vector<inc_t> stride = RandomProductConstrainedSequence<inc_t>(d+1, N, len_min);
+    stride.insert(stride.begin(), 1);
 
     vector<dim_t> len(d);
     for (gint_t i = 0;i < d;i++)
@@ -244,7 +248,8 @@ void RandomTensor(siz_t N, gint_t d, vector<dim_t> len_min, Tensor<T>& t)
         }
         else
         {
-            len[i] = RandomInteger(1, stride[i+1]);
+            //len[i] = RandomInteger(1, stride[i+1]);
+            len[i] = stride[i+1];
         }
     }
 
@@ -1235,6 +1240,11 @@ void TestContract(siz_t N)
 
     RandomContract(N, A, idx_A, B, idx_B, C, idx_C);
 
+    T ref_val, calc_val, scale;
+    scale = 10.0*RandomUnit<T>();
+
+    //if (idx_C != "ghdfeba") return;
+
     cout << endl;
     cout << "Testing contract (" << TypeName<T>() << "):" << endl;
     cout << "len_A    = " << A.lengths() << endl;
@@ -1247,9 +1257,6 @@ void TestContract(siz_t N)
     cout << "stride_C = " << C.strides() << endl;
     cout << "idx_C    = " << idx_C << endl;
     cout << endl;
-
-    T ref_val, calc_val, scale;
-    scale = 10.0*RandomUnit<T>();
 
     impl_type = REFERENCE;
     D = C;
@@ -1271,6 +1278,8 @@ void TestContract(siz_t N)
     tensor_reduce(REDUCE_NORM_2, D, idx_C, calc_val);
 
     passfail("BLIS", ref_val, calc_val);
+
+    if (idx_C == "ghdfeba") exit(0);
 }
 
 template <typename T>
@@ -1790,7 +1799,7 @@ void Test(siz_t N_in_bytes, gint_t R)
 {
     siz_t N = N_in_bytes/sizeof(T);
 
-    //for (gint_t i = 0;i < R;i++) TestTBLIS<T>(N);
+    for (gint_t i = 0;i < R;i++) TestTBLIS<T>(N);
 
     //for (gint_t i = 0;i < R;i++) TestReduce<T>(N);
     //for (gint_t i = 0;i < R;i++) TestScale<T>(N);

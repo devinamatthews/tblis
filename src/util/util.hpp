@@ -71,6 +71,29 @@ namespace tblis
 namespace util
 {
 
+constexpr inline dim_t remainder(dim_t N, dim_t B)
+{
+    return (B-1)-(N+B-1)%B;
+}
+
+constexpr inline dim_t round_up(dim_t N, dim_t B)
+{
+    return N + remainder(N, B);
+}
+
+template <typename T, typename U>
+U* convert_and_align(T* x)
+{
+    intptr_t off = ((intptr_t)x)%alignof(U);
+    return (U*)((char*)x + (off == 0 ? 0 : alignof(U)-off));
+}
+
+template <typename T, typename U>
+constexpr dim_t size_as_type(dim_t n)
+{
+    return (n*sizeof(T) + alignof(T)-1 + sizeof(U)-1)/sizeof(U);
+}
+
 inline const char* ptr(const std::string& x)
 {
     return x.c_str();

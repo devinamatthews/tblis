@@ -230,6 +230,8 @@ class Iterator
             }
 
             detail::set_offsets(_pos, _strides, off...);
+
+            _first = true;
         }
 
         gint_t dimension() const

@@ -115,6 +115,13 @@ int tensor_contract_blis_int(const std::vector<dim_t>& len_M,
     ct.row_scatter(scat_M_C.data());
     ct.col_scatter(scat_N_C.data());
 
+    //printf("M_A: "); for (int i = 0;i < m;i++) printf("%6ld ", scat_M_A[i]); printf("\n");
+    //printf("M_C: "); for (int i = 0;i < m;i++) printf("%6ld ", scat_M_C[i]); printf("\n");
+    //printf("N_B: "); for (int i = 0;i < n;i++) printf("%6ld ", scat_N_B[i]); printf("\n");
+    //printf("N_C: "); for (int i = 0;i < n;i++) printf("%6ld ", scat_N_C[i]); printf("\n");
+    //printf("K_A: "); for (int i = 0;i < k;i++) printf("%6ld ", scat_K_A[i]); printf("\n");
+    //printf("K_B: "); for (int i = 0;i < k;i++) printf("%6ld ", scat_K_B[i]); printf("\n");
+
     ScatterMatrix<T> as(m, k, const_cast<T*>(A), scat_M_A.data(), scat_K_A.data());
     ScatterMatrix<T> bs(k, n, const_cast<T*>(B), scat_K_B.data(), scat_N_B.data());
     ScatterMatrix<T> cs(m, n,                C , scat_M_C.data(), scat_N_C.data());
@@ -201,53 +208,47 @@ int tensor_contract_blis_int(const std::vector<dim_t>& len_M,
 
 #elif IMPL_TYPE == TENSOR
 
-template <dim_t MR, dim_t NR, int Mat>
-struct MatrifyAndRun
+template <dim_t MR, dim_t NR, int Mat> struct MatrifyAndRun;
+
+template <dim_t MR, dim_t NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT_A>
 {
     template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
     MatrifyAndRun(Parent& parent, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
-        inc_t* rscat = parent.rscat;
-        inc_t* cscat = parent.cscat;
-        A.row_scatter(rscat);
-        A.col_scatter(cscat);
-
-        ScatterMatrix<T> M(A.length(), A.width(), A.data(), rscat, cscat);
-
+        A.template row_block_scatter<MR>(parent.rs, parent.rscat);
+        A.template col_block_scatter<NR>(parent.cs, parent.cscat);
+        //printf("M_A: "); for (int i = 0;i < A.length();i++) printf("%6ld ", parent.rscat[i]); printf("\n");
+        //printf("K_A: "); for (int i = 0;i < A.width();i++) printf("%6ld ", parent.cscat[i]); printf("\n");
+        BlockScatterMatrix<T,MR,NR> M(A.length(), A.width(), A.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
         parent.child(comm, alpha, M, B, beta, C);
     }
 };
 
-template <dim_t MR, dim_t NR>
-struct MatrifyAndRun<MR, NR, matrix_constants::MAT_B>
+template <dim_t MR, dim_t NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT_B>
 {
     template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
     MatrifyAndRun(Parent& parent, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
-        inc_t* rscat = parent.rscat;
-        inc_t* cscat = parent.cscat;
-        B.row_scatter(rscat);
-        B.col_scatter(cscat);
-
-        ScatterMatrix<T> M(B.length(), B.width(), B.data(), rscat, cscat);
-
+        B.template row_block_scatter<MR>(parent.rs, parent.rscat);
+        B.template col_block_scatter<NR>(parent.cs, parent.cscat);
+        //printf("K_B: "); for (int i = 0;i < B.length();i++) printf("%6ld ", parent.rscat[i]); printf("\n");
+        //printf("N_B: "); for (int i = 0;i < B.width();i++) printf("%6ld ", parent.cscat[i]); printf("\n");
+        BlockScatterMatrix<T,MR,NR> M(B.length(), B.width(), B.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
         parent.child(comm, alpha, A, M, beta, C);
     }
 };
 
-template <dim_t MR, dim_t NR>
-struct MatrifyAndRun<MR, NR, matrix_constants::MAT_C>
+
+template <dim_t MR, dim_t NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT_C>
 {
     template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
     MatrifyAndRun(Parent& parent, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
-        inc_t* rscat = parent.rscat;
-        inc_t* cscat = parent.cscat;
-        C.row_scatter(rscat);
-        C.col_scatter(cscat);
-
-        ScatterMatrix<T> M(C.length(), C.width(), C.data(), rscat, cscat);
-
+        C.template row_block_scatter<MR>(parent.rs, parent.rscat);
+        C.template col_block_scatter<NR>(parent.cs, parent.cscat);
+        //printf("M_C: "); for (int i = 0;i < C.length();i++) printf("%6ld ", parent.rscat[i]); printf("\n");
+        //printf("N_C: "); for (int i = 0;i < C.width();i++) printf("%6ld ", parent.cscat[i]); printf("\n");
+        BlockScatterMatrix<T,MR,NR> M(C.length(), C.width(), C.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
         parent.child(comm, alpha, A, B, beta, M);
     }
 };
@@ -260,6 +261,13 @@ struct Matrify
     {
         typename Child::template run<T, Children...> child;
 
+        run() {}
+
+        run(const run& other)
+        : child(other.child), rscat(other.rscat), cscat(other.cscat),
+          rs(other.rs), cs(other.cs) {}
+
+        MemoryPool::Block<inc_t> scat_buffer;
         inc_t* rscat = NULL;
         inc_t* cscat = NULL;
         inc_t* rs = NULL;
@@ -268,8 +276,28 @@ struct Matrify
         template <typename MatrixA, typename MatrixB, typename MatrixC>
         void operator()(ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
         {
+            using namespace matrix_constants;
+
             constexpr dim_t MR = MT<T>::def;
             constexpr dim_t NR = NT<T>::def;
+
+            dim_t m = (Mat == MAT_A ? A.length() : Mat == MAT_B ? B.length() : C.length());
+            dim_t n = (Mat == MAT_A ? A.width()  : Mat == MAT_B ? B.width()  : C.width());
+
+            if (rscat == NULL)
+            {
+                if (comm.master())
+                {
+                    scat_buffer = detail::BuffersForScatter.allocate<inc_t>(2*m + 2*n);
+                    rscat = scat_buffer;
+                }
+
+                comm.broadcast(rscat);
+
+                cscat = rscat+m;
+                rs = cscat+n;
+                cs = rs+m;
+            }
 
             MatrifyAndRun<MR,NR,Mat>(*this, comm, alpha, A, B, beta, C);
         }
@@ -284,6 +312,66 @@ using MatrifyB = Matrify<KR,NR,matrix_constants::MAT_B>;
 
 template <template <typename> class MR, template <typename> class NR>
 using MatrifyC = Matrify<MR,NR,matrix_constants::MAT_C>;
+
+template <template <typename> class MT, template <typename> class NT, int Mat>
+struct MatrifyAndPack
+{
+    template <typename T, typename... Children>
+    struct run : Matrify<MT, NT, Mat>::template run<T, Pack<MT, NT, Mat>, Children...>
+    {
+        typedef typename Matrify<MT, NT, Mat>::template run<T, Pack<MT, NT, Mat>, Children...> Sib;
+
+        using Sib::rscat;
+        using Sib::cscat;
+        using Sib::rs;
+        using Sib::cs;
+
+        template <typename MatrixA, typename MatrixB, typename MatrixC>
+        void operator()(ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
+        {
+            using namespace matrix_constants;
+
+            constexpr dim_t MR = MT<T>::def;
+            constexpr dim_t NR = NT<T>::def;
+
+            dim_t m = (Mat == MAT_A ? A.length() : Mat == MAT_B ? B.length() : C.length());
+            dim_t n = (Mat == MAT_A ? A.width()  : Mat == MAT_B ? B.width()  : C.width());
+            m = util::round_up(m, MR);
+            n = util::round_up(n, NR);
+
+            MemoryPool& PackBuf = (Mat == MAT_A ? blis_like::detail::BuffersForA
+                                                : blis_like::detail::BuffersForB);
+
+            auto& pack_buffer = this->child.pack_buffer;
+            T* pack_ptr = this->child.pack_ptr;
+
+            if (pack_ptr == NULL)
+            {
+                if (comm.master())
+                {
+                    dim_t scatter_size = util::size_as_type<inc_t,T>(2*m + 2*n);
+                    pack_buffer = PackBuf.allocate<T>(m*n + scatter_size);
+                    pack_ptr = pack_buffer;
+                }
+
+                comm.broadcast(pack_ptr);
+
+                rscat = util::convert_and_align<T,inc_t>(pack_ptr + m*n);
+                cscat = rscat+m;
+                rs = cscat+n;
+                cs = rs+m;
+            }
+
+            Sib::operator()(comm, alpha, A, B, beta, C);
+        }
+    };
+};
+
+template <template <typename> class MR, template <typename> class KR>
+using MatrifyAndPackA = MatrifyAndPack<MR,KR,matrix_constants::MAT_A>;
+
+template <template <typename> class KR, template <typename> class NR>
+using MatrifyAndPackB = MatrifyAndPack<KR,NR,matrix_constants::MAT_B>;
 
 template <typename T>
 int tensor_contract_blis_int(const std::vector<dim_t>& len_M,
@@ -310,48 +398,15 @@ int tensor_contract_blis_int(const std::vector<dim_t>& len_M,
 
     GEMM<PartitionN<NC>,
          PartitionK<KC>,
-         MatrifyB<NR,KR>,
-         PackB<NR,KR>,
+         MatrifyAndPackB<KR,NR>,
          PartitionM<MC>,
-         MatrifyA<MR,KR>,
-         PackA<MR,KR>,
+         MatrifyAndPackA<MR,KR>,
          MatrifyC<MR,NR>,
          MacroKernel<MR,NR>>::run<T> gemm;
 
-    auto a_buffer = blis_like::detail::BuffersForA.allocate<T>(MC<T>::max * KC<T>::max);
-    auto b_buffer = blis_like::detail::BuffersForB.allocate<T>(NC<T>::max * KC<T>::max);
-    auto scat_buffer = detail::BuffersForScatter.allocate<inc_t>(4*MC<T>::max + 4*NC<T>::max + 4*KC<T>::max);
-
-    inc_t* rscat_a = scat_buffer;
-    inc_t* cscat_a = rscat_a + MC<T>::max;
-    inc_t*    rs_a = cscat_a + KC<T>::max;
-    inc_t*    cs_a =    rs_a + MC<T>::max;
-    inc_t* rscat_b =    cs_a + KC<T>::max;
-    inc_t* cscat_b = rscat_b + KC<T>::max;
-    inc_t*    rs_b = cscat_b + NC<T>::max;
-    inc_t*    cs_b =    rs_b + KC<T>::max;
-    inc_t* rscat_c =    cs_b + NC<T>::max;
-    inc_t* cscat_c = rscat_c + MC<T>::max;
-    inc_t*    rs_c = cscat_c + NC<T>::max;
-    inc_t*    cs_c =    rs_c + MC<T>::max;
-
     gemm.template step<0>().distribute = jc_way;
     gemm.template step<1>().distribute = 1; //kc_way
-    gemm.template step<2>().rscat = rscat_b;
-    gemm.template step<2>().cscat = cscat_b;
-    gemm.template step<2>().rs = rs_b;
-    gemm.template step<2>().cs = cs_b;
-    gemm.template step<3>().pack_buffer = b_buffer;
     gemm.template step<4>().distribute = ic_way;
-    gemm.template step<5>().rscat = rscat_a;
-    gemm.template step<5>().cscat = cscat_a;
-    gemm.template step<5>().rs = rs_a;
-    gemm.template step<5>().cs = cs_a;
-    gemm.template step<6>().pack_buffer = a_buffer;
-    gemm.template step<7>().rscat = rscat_c;
-    gemm.template step<7>().cscat = cscat_c;
-    gemm.template step<7>().rs = rs_c;
-    gemm.template step<7>().cs = cs_c;
     gemm.template step<8>().distribute = jr_way;
     gemm.template step<9>().distribute = ir_way;
 

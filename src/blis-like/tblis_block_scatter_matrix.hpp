@@ -10,9 +10,12 @@ namespace tblis
 namespace blis_like
 {
 
-template <typename T, dim_t MB_, dim_t NB_>
+template <typename T, dim_t MB, dim_t NB>
 class BlockScatterMatrix
 {
+    static_assert(MB > 0, "MB must be positive");
+    static_assert(NB > 0, "NB must be positive");
+
     public:
         typedef T type;
         typedef typename real_type<T>::type real_type;
@@ -34,10 +37,8 @@ class BlockScatterMatrix
         inc_t _n_off;
         inc_t _ptr_off;
 
-        constexpr static bool M_BLOCKED = (MB_ != 0);
-        constexpr static bool N_BLOCKED = (NB_ != 0);
-        constexpr static dim_t MB = (MB_ == 0 ? 1 : MB_);
-        constexpr static dim_t NB = (NB_ == 0 ? 1 : NB_);
+        constexpr static bool M_BLOCKED = (MB > 1);
+        constexpr static bool N_BLOCKED = (NB > 1);
 
     protected:
         void create()

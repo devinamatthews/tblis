@@ -368,44 +368,49 @@ class TensorMatrix
 
         void row_scatter(inc_t* rscat)
         {
-            inc_t off = (_off_m%_m0)*_rs0;
+            dim_t p0 = _off_m%_m0;
+            inc_t off = p0*_rs0;
             _ri.position(_off_m/_m0, off);
 
             for (dim_t rscat_idx = 0;_ri.next(off);)
             {
-                for (dim_t i0 = 0;i0 < _m0;i0++)
+                for (dim_t i0 = p0;i0 < _m0;i0++)
                 {
                     if (rscat_idx == _m) return;
                     rscat[rscat_idx++] = off + i0*_rs0;
                 }
+                p0 = 0;
             }
         }
 
         void col_scatter(inc_t* cscat)
         {
-            inc_t off = (_off_n%_n0)*_cs0;
-            _ri.position(_off_n/_n0, off);
+            dim_t p0 = _off_n%_n0;
+            inc_t off = p0*_cs0;
+            _ci.position(_off_n/_n0, off);
 
             for (dim_t cscat_idx = 0;_ci.next(off);)
             {
-                for (dim_t j0 = 0;j0 < _n0;j0++)
+                for (dim_t j0 = p0;j0 < _n0;j0++)
                 {
                     if (cscat_idx == _n) return;
                     cscat[cscat_idx++] = off + j0*_cs0;
                 }
+                p0 = 0;
             }
         }
 
         template <dim_t MR>
         void row_block_scatter(inc_t* rs, inc_t* rscat)
         {
-            inc_t off = (_off_m%_m0)*_rs0;
+            dim_t p0 = _off_m%_m0;
+            inc_t off = p0*_rs0;
             _ri.position(_off_m/_m0, off);
 
             dim_t nleft = 0;
             for (dim_t rs_idx = 0, rscat_idx = 0;_ri.next(off);)
             {
-                for (dim_t i0 = 0;i0 < _m0;i0++)
+                for (dim_t i0 = p0;i0 < _m0;i0++)
                 {
                     if (rscat_idx == _m) return;
 
@@ -419,19 +424,21 @@ class TensorMatrix
                     rscat[rscat_idx++] = off + i0*_rs0;
                     nleft--;
                 }
+                p0 = 0;
             }
         }
 
         template <dim_t NR>
         void col_block_scatter(inc_t* cs, inc_t* cscat)
         {
-            inc_t off = (_off_n%_n0)*_cs0;
+            dim_t p0 = _off_n%_n0;
+            inc_t off = p0*_cs0;
             _ci.position(_off_n/_n0, off);
 
             dim_t nleft = 0;
             for (dim_t cs_idx = 0, cscat_idx = 0;_ci.next(off);)
             {
-                for (dim_t j0 = 0;j0 < _n0;j0++)
+                for (dim_t j0 = p0;j0 < _n0;j0++)
                 {
                     if (cscat_idx == _n) return;
 
@@ -445,6 +452,7 @@ class TensorMatrix
                     cscat[cscat_idx++] = off + j0*_cs0;
                     nleft--;
                 }
+                p0 = 0;
             }
         }
 

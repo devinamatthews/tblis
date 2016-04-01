@@ -13,14 +13,6 @@
 #define BLIS_TREE_BARRIER_ARITY 0
 #endif
 
-#if USE_OPENMP
-#include <omp.h>
-#elif USE_PTHREADS
-#include <pthread.h>
-#else
-#include <thread>
-#endif
-
 namespace tblis
 {
 
@@ -88,7 +80,7 @@ namespace detail
             }
             else
             {
-                while (step.load(std::memory_order_acquire) == old_step) {}
+                while (step.load(std::memory_order_acquire) == old_step) yield();
             }
         }
     };
@@ -216,7 +208,7 @@ namespace detail
 class ThreadContext
 {
     friend class ThreadCommunicator;
-    template <typename Body> friend void parallelize(int nthread, Body&& body);
+    template <typename Body> friend void parallelize(int nthread, const Body& body);
 
     public:
         void barrier(int tid)
@@ -253,19 +245,15 @@ class ThreadContext
         int _nthread;
 };
 
-#if USE_PTHREADS
 namespace detail
 {
     template <typename Body> void* run_thread(void* raw_data);
 }
-#endif
 
 class ThreadCommunicator
 {
-    template <typename Body> friend void parallelize(int nthread, Body&& body);
-#if USE_PTHREADS
+    template <typename Body> friend void parallelize(int nthread, const Body& body);
     template <typename Body> friend void* detail::run_thread(void* raw_data);
-#endif
 
     public:
         ThreadCommunicator()
@@ -278,6 +266,11 @@ class ThreadCommunicator
         ThreadCommunicator& operator=(const ThreadCommunicator&) = delete;
 
         ThreadCommunicator& operator=(ThreadCommunicator&&) = default;
+
+        bool master() const
+        {
+            return thread_num() == 0;
+        }
 
         void barrier()
         {
@@ -317,6 +310,8 @@ class ThreadCommunicator
 
         ThreadCommunicator gang_evenly(int n)
         {
+            if (n >= _nthread) return ThreadCommunicator(_tid);
+
             int block = (n*_tid)/_nthread;
             int block_first = (block*_nthread)/n;
             int block_last = ((block+1)*_nthread)/n;
@@ -328,6 +323,8 @@ class ThreadCommunicator
 
         ThreadCommunicator gang_block_cyclic(int n, int bs)
         {
+            if (n >= _nthread) return ThreadCommunicator(_tid);
+
             int block = (_tid/bs)%n;
             int nsubblock_tot = _nthread/bs;
             int nsubblock = nsubblock_tot/n;
@@ -339,6 +336,8 @@ class ThreadCommunicator
 
         ThreadCommunicator gang_blocked(int n)
         {
+            if (n >= _nthread) return ThreadCommunicator(_tid);
+
             int bs = (_nthread+n-1)/n;
             int block = _tid/bs;
             int new_tid = _tid-block*bs;
@@ -349,6 +348,8 @@ class ThreadCommunicator
 
         ThreadCommunicator gang_cyclic(int n)
         {
+            if (n >= _nthread) return ThreadCommunicator(_tid);
+
             int block = _tid%n;
             int new_tid = _tid/n;
             int new_nthread = (_nthread-block+n-1)/n;
@@ -367,12 +368,15 @@ class ThreadCommunicator
         }
 
     protected:
+        ThreadCommunicator(int gid)
+        : _nthread(1), _tid(0), _gid(gid) {}
+
         ThreadCommunicator(const std::shared_ptr<ThreadContext>& context, int tid, int gid)
         : _context(context), _nthread(context->num_threads()), _tid(tid), _gid(gid) {}
 
         ThreadCommunicator gang(int n, int block, int new_tid, int new_nthread)
         {
-            if (new_nthread == 1) return ThreadCommunicator();
+            ThreadCommunicator new_comm;
 
             std::shared_ptr<ThreadContext>* contexts;
             std::vector<std::shared_ptr<ThreadContext>> contexts_root;
@@ -383,13 +387,16 @@ class ThreadCommunicator
             }
             broadcast(contexts);
 
-            if (new_tid == 0)
+            if (new_tid == 0 && new_nthread > 1)
             {
                 contexts[block].reset(new ThreadContext(new_nthread));
             }
+
             barrier();
 
-            ThreadCommunicator new_comm(contexts[block], new_tid, block);
+            if (new_nthread > 1)
+                new_comm = ThreadCommunicator(contexts[block], new_tid, block);
+
             barrier();
 
             return new_comm;
@@ -411,7 +418,7 @@ class ThreadCommunicator
 #if USE_OPENMP
 
 template <typename Body>
-void parallelize(int nthread, Body&& body)
+void parallelize(int nthread, const Body& body)
 {
     if (nthread > 1)
     {
@@ -427,7 +434,8 @@ void parallelize(int nthread, Body&& body)
     else
     {
         ThreadCommunicator comm;
-        body(comm);
+        Body body_copy(body);
+        body_copy(comm);
     }
 }
 
@@ -460,7 +468,7 @@ namespace detail
 }
 
 template <typename Body>
-void parallelize(int nthread, Body&& body)
+void parallelize(int nthread, const Body& body)
 {
     std::vector<pthread_t> threads; threads.reserve(nthread);
     std::vector<detail::thread_data<Body>> data; data.reserve(nthread);
@@ -483,7 +491,8 @@ void parallelize(int nthread, Body&& body)
 
     }
 
-    body(comm);
+    Body body_copy(body);
+    body_copy(comm);
 
     for (auto& t : threads)
     {
@@ -495,7 +504,7 @@ void parallelize(int nthread, Body&& body)
 #else
 
 template <typename Body>
-void parallelize(int nthread, Body&& body)
+void parallelize(int nthread, const Body& body)
 {
     std::vector<std::thread> threads; threads.reserve(nthread);
 
@@ -517,7 +526,8 @@ void parallelize(int nthread, Body&& body)
         });
     }
 
-    body(comm);
+    Body body_copy(body);
+    body_copy(comm);
 
     for (auto& t : threads)
     {

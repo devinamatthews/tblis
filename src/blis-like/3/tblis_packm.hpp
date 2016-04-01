@@ -12,16 +12,6 @@ namespace detail
 {
     extern MemoryPool BuffersForA;
     extern MemoryPool BuffersForB;
-
-    constexpr inline dim_t remainder(dim_t N, dim_t B)
-    {
-        return (B-1)-(N+B-1)%B;
-    }
-
-    constexpr inline dim_t round_up(dim_t N, dim_t B)
-    {
-        return N + remainder(N, B);
-    }
 }
 
 template <typename T, dim_t MR, dim_t KR>
@@ -51,7 +41,7 @@ struct PackRowPanel
 
     void operator()(ThreadCommunicator& comm, const ScatterMatrix<T>& A, Matrix<T>& Ap) const;
 
-    void operator()(ThreadCommunicator& comm, const BlockScatterMatrix<T,(Trans ? 0 : MR),(Trans ? MR : 0)>& A, Matrix<T>& Ap) const;
+    void operator()(ThreadCommunicator& comm, const BlockScatterMatrix<T,(Trans ? KR : MR),(Trans ? MR : KR)>& A, Matrix<T>& Ap) const;
 };
 
 template <typename T>
@@ -74,10 +64,12 @@ struct PackNoop
     }
 };
 
-template <typename Pack, typename Run, int Mat>
-struct PackAndRun
+template <typename Pack, int Mat> struct PackAndRun;
+
+template <typename Pack>
+struct PackAndRun<Pack, matrix_constants::MAT_A>
 {
-    template <typename T, typename MatrixA, typename MatrixB, typename MatrixC, typename MatrixP>
+    template <typename Run, typename T, typename MatrixA, typename MatrixB, typename MatrixC, typename MatrixP>
     PackAndRun(Run& run, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C, MatrixP& P)
     {
         Pack()(comm, A, P);
@@ -87,10 +79,10 @@ struct PackAndRun
     }
 };
 
-template <typename Pack, typename Run>
-struct PackAndRun<Pack, Run, matrix_constants::MAT_B>
+template <typename Pack>
+struct PackAndRun<Pack, matrix_constants::MAT_B>
 {
-    template <typename T, typename MatrixA, typename MatrixB, typename MatrixC, typename MatrixP>
+    template <typename Run, typename T, typename MatrixA, typename MatrixB, typename MatrixC, typename MatrixP>
     PackAndRun(Run& run, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C, MatrixP& P)
     {
         Pack()(comm, B, P);
@@ -100,7 +92,7 @@ struct PackAndRun<Pack, Run, matrix_constants::MAT_B>
     }
 };
 
-template <template <typename> class MT, template <typename> class KT, int Mat>
+template <template <typename> class MT, template <typename> class NT, int Mat>
 struct Pack
 {
     template <typename T, typename Child, typename... Children>
@@ -108,45 +100,50 @@ struct Pack
     {
         typename Child::template run<T, Children...> child;
 
-        T* pack_buffer = NULL;
+        run() {}
+
+        run(const run& other)
+        : child(other.child), pack_ptr(other.pack_ptr) {}
+
+        MemoryPool::Block<T> pack_buffer;
+        T* pack_ptr = NULL;
 
         template <typename MatrixA, typename MatrixB, typename MatrixC>
         void operator()(ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
         {
             using namespace matrix_constants;
 
-            constexpr dim_t MR = MT<T>::def;
-            constexpr dim_t KR = KT<T>::def;
-
             MemoryPool& PackBuf = (Mat == MAT_A ? detail::BuffersForA
                                                 : detail::BuffersForB);
             constexpr bool Trans = (Mat == MAT_B);
 
-            typedef PackRowPanel<T,MR,KR,Trans> Pack;
-            typedef typename Child::template run<T, Children...> Run;
+            constexpr dim_t MR = (Trans ? NT<T>::def : MT<T>::def);
+            constexpr dim_t NR = (Trans ? MT<T>::def : NT<T>::def);
 
             dim_t m_p = (Mat == MAT_A ? A.length() : B.width ());
-            dim_t k_p = (Mat == MAT_A ? A.width () : B.length());
-            m_p = detail::round_up(m_p, MR);
-            k_p = detail::round_up(k_p, KR);
-            MemoryPool::Block<T> buf;
-            T* ptr;
+            dim_t n_p = (Mat == MAT_A ? A.width () : B.length());
+            m_p = util::round_up(m_p, MR);
+            n_p = util::round_up(n_p, NR);
 
-            if (comm.thread_num() == 0)
+            if (pack_ptr == NULL)
             {
-                buf = PackBuf.allocate<T>(m_p*k_p + extra_space);
-                ptr = buf;
+                if (comm.master())
+                {
+                    pack_buffer = PackBuf.allocate<T>(m_p*n_p);
+                    pack_ptr = pack_buffer;
+                }
+
+                comm.broadcast(pack_ptr);
             }
 
-            comm.broadcast(ptr);
+            Matrix<T> P((Mat == MAT_A ? m_p : n_p),
+                        (Mat == MAT_A ? n_p : m_p),
+                        pack_ptr,
+                        (Mat == MAT_A ? n_p :   1),
+                        (Mat == MAT_A ?   1 : n_p));
 
-            Matrix<T> P((Mat == MAT_A ? m_p : k_p),
-                        (Mat == MAT_A ? k_p : m_p),
-                        pack_buffer,
-                        (Mat == MAT_A ? k_p :   1),
-                        (Mat == MAT_A ?   1 : k_p));
-
-            PackAndRun<Pack,Run,Mat>(child, comm, alpha, A, B, beta, C, P);
+            typedef PackRowPanel<T,MR,NR,Trans> Pack;
+            PackAndRun<Pack,Mat>(child, comm, alpha, A, B, beta, C, P);
         }
     };
 };
@@ -154,8 +151,8 @@ struct Pack
 template <template <typename> class MT, template <typename> class KT>
 using PackA = Pack<MT,KT,matrix_constants::MAT_A>;
 
-template <template <typename> class NT, template <typename> class KT>
-using PackB = Pack<NT,KT,matrix_constants::MAT_B>;
+template <template <typename> class KT, template <typename> class NT>
+using PackB = Pack<KT,NT,matrix_constants::MAT_B>;
 
 }
 }

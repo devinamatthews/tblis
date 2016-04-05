@@ -406,26 +406,26 @@ void PackRowPanel<T,MR,KR,Trans>::operator()(ThreadCommunicator& comm, const Blo
 }
 
 #define INSTANTIATION(T,MT,NT,KT,MR,NR,KR) \
-template void PackMicroPanel<T,          MR, KR>(dim_t m, dim_t k, const T*& p_a, inc_t rs_a, inc_t cs_a, T*& p_ap); \
-template void PackMicroPanel<T,(MR==NR?0:NR),KR>(dim_t m, dim_t k, const T*& p_a, inc_t rs_a, inc_t cs_a, T*& p_ap);
+template void PackMicroPanel<T,          MR, KR>(dim_t m, dim_t k, const T* restrict & p_a, inc_t rs_a, inc_t cs_a, T* restrict & p_ap); \
+template void PackMicroPanel<T,(MR==NR?0:NR),KR>(dim_t m, dim_t k, const T* restrict & p_a, inc_t rs_a, inc_t cs_a, T* restrict & p_ap);
 DEFINE_INSTANTIATIONS()
 #undef INSTANTIATION
 
 #define INSTANTIATION(T,MT,NT,KT,MR,NR,KR) \
-template void PackMicroPanel<T,          MR, KR>(dim_t m, dim_t k, const T*& p_a, const inc_t*& rs_a, inc_t cs_a, T*& p_ap); \
-template void PackMicroPanel<T,(MR==NR?0:NR),KR>(dim_t m, dim_t k, const T*& p_a, const inc_t*& rs_a, inc_t cs_a, T*& p_ap);
+template void PackMicroPanel<T,          MR, KR>(dim_t m, dim_t k, const T* restrict & p_a, const inc_t* restrict & rs_a, inc_t cs_a, T* restrict & p_ap); \
+template void PackMicroPanel<T,(MR==NR?0:NR),KR>(dim_t m, dim_t k, const T* restrict & p_a, const inc_t* restrict & rs_a, inc_t cs_a, T* restrict & p_ap);
 DEFINE_INSTANTIATIONS()
 #undef INSTANTIATION
 
 #define INSTANTIATION(T,MT,NT,KT,MR,NR,KR) \
-template void PackMicroPanel<T,          MR, KR>(dim_t m, dim_t k, const T*& p_a, inc_t rs_a, const inc_t* cs_a, T*& p_ap); \
-template void PackMicroPanel<T,(MR==NR?0:NR),KR>(dim_t m, dim_t k, const T*& p_a, inc_t rs_a, const inc_t* cs_a, T*& p_ap);
+template void PackMicroPanel<T,          MR, KR>(dim_t m, dim_t k, const T* restrict & p_a, inc_t rs_a, const inc_t* restrict  cs_a, T* restrict & p_ap); \
+template void PackMicroPanel<T,(MR==NR?0:NR),KR>(dim_t m, dim_t k, const T* restrict & p_a, inc_t rs_a, const inc_t* restrict  cs_a, T* restrict & p_ap);
 DEFINE_INSTANTIATIONS()
 #undef INSTANTIATION
 
 #define INSTANTIATION(T,MT,NT,KT,MR,NR,KR) \
-template void PackMicroPanel<T,          MR, KR>(dim_t m, dim_t k, const T*& p_a, const inc_t*& rs_a, const inc_t* cs_a, T*& p_ap); \
-template void PackMicroPanel<T,(MR==NR?0:NR),KR>(dim_t m, dim_t k, const T*& p_a, const inc_t*& rs_a, const inc_t* cs_a, T*& p_ap);
+template void PackMicroPanel<T,          MR, KR>(dim_t m, dim_t k, const T* restrict & p_a, const inc_t* restrict & rs_a, const inc_t* restrict cs_a, T* restrict & p_ap); \
+template void PackMicroPanel<T,(MR==NR?0:NR),KR>(dim_t m, dim_t k, const T* restrict & p_a, const inc_t* restrict & rs_a, const inc_t* restrict cs_a, T* restrict & p_ap);
 DEFINE_INSTANTIATIONS()
 #undef INSTANTIATION
 

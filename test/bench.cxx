@@ -97,9 +97,10 @@ void Benchmark(gint_t R)
             double dt_2 = RunKernel(R,
             [&]
             {
-                Matrix<T> A2(m, k);
+                Matrix<T> A2(k, m);
                 Matrix<T> B2(k, n);
                 Matrix<T> C2(m, n);
+                A2.transpose();
                 tblis_copyv(false, m*k, A.data(), 1, A2.data(), 1);
                 tblis_copyv(false, k*n, B.data(), 1, B2.data(), 1);
                 bli_gemm(alp, A2, B2, bet, C2);

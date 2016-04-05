@@ -18,23 +18,23 @@ namespace detail
 
 template <typename T, dim_t MR, dim_t KR>
 void PackMicroPanel(dim_t m, dim_t k,
-                    const T*& p_a, inc_t rs_a, inc_t cs_a,
-                    T*& p_ap);
+                    const T* restrict & p_a, inc_t rs_a, inc_t cs_a,
+                    T* restrict & p_ap);
 
 template <typename T, dim_t MR, dim_t KR>
 void PackMicroPanel(dim_t m, dim_t k,
-                    const T*& p_a, const inc_t*& rs_a, inc_t cs_a,
-                    T*& p_ap);
+                    const T* restrict & p_a, const inc_t* restrict & rs_a, inc_t cs_a,
+                    T* restrict & p_ap);
 
 template <typename T, dim_t MR, dim_t KR>
 void PackMicroPanel(dim_t m, dim_t k,
-                    const T*& p_a, inc_t rs_a, const inc_t* cs_a,
-                    T*& p_ap);
+                    const T* restrict & p_a, inc_t rs_a, const inc_t* restrict  cs_a,
+                    T* restrict & p_ap);
 
 template <typename T, dim_t MR, dim_t KR>
 void PackMicroPanel(dim_t m, dim_t k,
-                    const T*& p_a, const inc_t*& rs_a, const inc_t* cs_a,
-                    T*& p_ap);
+                    const T* restrict & p_a, const inc_t* restrict & rs_a, const inc_t* restrict  cs_a,
+                    T* restrict & p_ap);
 
 template <typename T, dim_t MR, dim_t KR, bool Trans>
 struct PackRowPanel

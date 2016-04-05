@@ -187,7 +187,7 @@ void Benchmark(gint_t R)
         }
     };
 
-    if (0)
+    if (1)
     {
         mout = fopen("out.mat.square", "w");
         tout = fopen("out.tensor.square", "w");
@@ -204,7 +204,7 @@ void Benchmark(gint_t R)
         fclose(tout);
     }
 
-    if (0)
+    if (1)
     {
         mout = fopen("out.mat.rankk", "w");
         tout = fopen("out.tensor.rankk", "w");
@@ -221,7 +221,7 @@ void Benchmark(gint_t R)
         fclose(tout);
     }
 
-    if (0)
+    if (1)
     {
         mout = fopen("out.mat.pp", "w");
         tout = fopen("out.tensor.pp", "w");

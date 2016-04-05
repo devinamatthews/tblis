@@ -1279,7 +1279,7 @@ void TestContract(siz_t N)
 
     passfail("BLIS", ref_val, calc_val);
 
-    if (idx_C == "ghdfeba") exit(0);
+    //if (idx_C == "ghdfeba") exit(0);
 }
 
 template <typename T>

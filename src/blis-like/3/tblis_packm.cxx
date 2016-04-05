@@ -294,7 +294,7 @@ void PackRowPanel<T,MR,KR,Trans>::operator()(ThreadCommunicator& comm, const Sca
     dim_t off_first, off_last;
     std::tie(off_first, off_last) = comm.distribute_over_threads(m_a, MR);
 
-    printf_locked("%s: %d %ld %ld %ld\n", (Trans ? "B" : "A"), comm.thread_num(), m_a, off_first, off_last);
+    //printf_locked("%s: %d %ld %ld %ld\n", (Trans ? "B" : "A"), comm.thread_num(), m_a, off_first, off_last);
 
     p_a += off_first*rs_a;
     rscat_a += off_first;
@@ -324,12 +324,12 @@ void PackRowPanel<T,MR,KR,Trans>::operator()(ThreadCommunicator& comm, const Sca
         }
     }
 
-    comm.barrier();
+    //comm.barrier();
 
-    if (comm.thread_num() == 0)
-    {
-        printf_locked("%s: %.15f\n", (Trans ? "B" : "A"), tblis_normfv(Ap.length()*Ap.width(), Ap.data(), 1));
-    }
+    //if (comm.thread_num() == 0)
+    //{
+    //    printf_locked("%s: %.15f\n", (Trans ? "B" : "A"), tblis_normfv(Ap.length()*Ap.width(), Ap.data(), 1));
+    //}
 }
 
 static Mutex pack_lock;
@@ -343,7 +343,7 @@ void PackRowPanel<T,MR,KR,Trans>::operator()(ThreadCommunicator& comm, const Blo
     dim_t k_a = (Trans ? A.length() : A.width ());
     T* p_ap = Ap.data();
 
-    {
+    //{
     //std::lock_guard<Mutex> guard(pack_lock);
 
     dim_t off_first, off_last;
@@ -356,7 +356,7 @@ void PackRowPanel<T,MR,KR,Trans>::operator()(ThreadCommunicator& comm, const Blo
     (Trans ? A.width(MR) : A.length(MR));
     (Trans ? A.shift_right(off_first) : A.shift_down(off_first));
 
-    printf_locked("%s: (%d,%d) %p %p\n", (Trans ? "B" : "A"), comm.gang_num(), comm.thread_num(), A.data(), p_ap);
+    //printf_locked("%s: (%d,%d) %p %p\n", (Trans ? "B" : "A"), comm.gang_num(), comm.thread_num(), A.data(), p_ap);
 
     for (dim_t off_m = off_first;off_m < off_last;off_m += MR)
     {
@@ -395,14 +395,14 @@ void PackRowPanel<T,MR,KR,Trans>::operator()(ThreadCommunicator& comm, const Blo
     (Trans ? A.shift_left(off_last) : A.shift_up(off_last));
     (Trans ? A.width(m_a) : A.length(m_a));
 
-    }
+    //}
 
-    comm.barrier();
+    //comm.barrier();
 
     //if (comm.thread_num() == 0)
-    {
-        printf_locked("%s: (%d,%d) %.15f\n", (Trans ? "B" : "A"), comm.gang_num(), comm.thread_num(), tblis_normfv(Ap.length()*Ap.width(), Ap.data(), 1));
-    }
+    //{
+    //    printf_locked("%s: (%d,%d) %.15f\n", (Trans ? "B" : "A"), comm.gang_num(), comm.thread_num(), tblis_normfv(Ap.length()*Ap.width(), Ap.data(), 1));
+    //}
 }
 
 #define INSTANTIATION(T,MT,NT,KT,MR,NR,KR) \

@@ -93,7 +93,7 @@ void tblis_gemm_int(T alpha, MatrixA&& A, MatrixB&& B, T beta, MatrixC&& C)
     dim_t ir_way = bli_read_nway_from_env( "BLIS_IR_NT" );
     dim_t nthread = jc_way*ic_way*jr_way*ir_way;
 
-    printf_locked("%d %d %d %d\n", jc_way, ic_way, jr_way, ir_way);
+    //printf_locked("%d %d %d %d\n", jc_way, ic_way, jr_way, ir_way);
 
     DefaultGEMM<T> gemm;
     gemm.template step<0>().distribute = jc_way;
@@ -116,7 +116,7 @@ void tblis_gemm(U alpha, const MatrixA& A, const MatrixB& B, U beta, MatrixC&& C
     MatrixB Bv;
     typename std::decay<MatrixC>::type Cv;
 
-    printf("%d %ld %ld\n", (int)C.is_transposed(), C.row_stride(), C.col_stride());
+    //printf("%d %ld %ld\n", (int)C.is_transposed(), C.row_stride(), C.col_stride());
 
     if ((C.is_transposed() ? C.row_stride() : C.col_stride()) == 1)
     {

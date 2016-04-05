@@ -3,6 +3,8 @@
 
 #include "tblis.hpp"
 
+#define TBLIS_MAX_UNROLL 8
+
 namespace tblis
 {
 namespace blis_like
@@ -129,7 +131,7 @@ struct Pack
             {
                 if (comm.master())
                 {
-                    pack_buffer = PackBuf.allocate<T>(m_p*n_p);
+                    pack_buffer = PackBuf.allocate<T>(m_p*(n_p+TBLIS_MAX_UNROLL));
                     pack_ptr = pack_buffer;
                 }
 

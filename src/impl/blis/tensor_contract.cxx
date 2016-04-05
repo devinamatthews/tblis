@@ -220,6 +220,7 @@ template <dim_t MR, dim_t NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT
         //printf("M_A: "); for (int i = 0;i < A.length();i++) printf("%6ld ", parent.rscat[i]); printf("\n");
         //printf("K_A: "); for (int i = 0;i < A.width();i++) printf("%6ld ", parent.cscat[i]); printf("\n");
         BlockScatterMatrix<T,MR,NR> M(A.length(), A.width(), A.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
+        //ScatterMatrix<T> M(A.length(), A.width(), A.data(), parent.rscat, parent.cscat);
         parent.child(comm, alpha, M, B, beta, C);
     }
 };
@@ -234,6 +235,7 @@ template <dim_t MR, dim_t NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT
         //printf("K_B: "); for (int i = 0;i < B.length();i++) printf("%6ld ", parent.rscat[i]); printf("\n");
         //printf("N_B: "); for (int i = 0;i < B.width();i++) printf("%6ld ", parent.cscat[i]); printf("\n");
         BlockScatterMatrix<T,MR,NR> M(B.length(), B.width(), B.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
+        //ScatterMatrix<T> M(B.length(), B.width(), B.data(), parent.rscat, parent.cscat);
         parent.child(comm, alpha, A, M, beta, C);
     }
 };
@@ -249,6 +251,7 @@ template <dim_t MR, dim_t NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT
         //printf("M_C: "); for (int i = 0;i < C.length();i++) printf("%6ld ", parent.rscat[i]); printf("\n");
         //printf("N_C: "); for (int i = 0;i < C.width();i++) printf("%6ld ", parent.cscat[i]); printf("\n");
         BlockScatterMatrix<T,MR,NR> M(C.length(), C.width(), C.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
+        //ScatterMatrix<T> M(C.length(), C.width(), C.data(), parent.rscat, parent.cscat);
         parent.child(comm, alpha, A, B, beta, M);
     }
 };
@@ -350,7 +353,7 @@ struct MatrifyAndPack
                 if (comm.master())
                 {
                     dim_t scatter_size = util::size_as_type<inc_t,T>(2*m + 2*n);
-                    pack_buffer = PackBuf.allocate<T>(m*n + scatter_size);
+                    pack_buffer = PackBuf.allocate<T>(m*(n+TBLIS_MAX_UNROLL) + scatter_size);
                     pack_ptr = pack_buffer;
                 }
 
@@ -394,7 +397,7 @@ int tensor_contract_blis_int(const std::vector<dim_t>& len_M,
     dim_t ir_way = bli_read_nway_from_env( "BLIS_IR_NT" );
     dim_t nthread = jc_way*ic_way*jr_way*ir_way;
 
-    printf_locked("%d %d %d %d\n", jc_way, ic_way, jr_way, ir_way);
+    //printf_locked("%d %d %d %d\n", jc_way, ic_way, jr_way, ir_way);
 
     GEMM<PartitionN<NC>,
          PartitionK<KC>,

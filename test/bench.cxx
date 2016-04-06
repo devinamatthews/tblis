@@ -73,7 +73,125 @@ void Benchmark(gint_t R)
 
     FILE *mout, *tout;
 
-    auto experiment =
+    auto reg_experiment =
+    [&](dim_t m, dim_t n, dim_t k, const std::function<double(double,dim_t,dim_t,dim_t)>& eff_dim)
+    {
+        printf("%ld %ld %ld\n", m, n, k);
+
+        T alpha = 1.0;
+        T beta = 0.0;
+
+        {
+            Matrix<T> A(m, k);
+            Matrix<T> B(k, n);
+            Matrix<T> C(m, n);
+            A = 0.0;
+            B = 0.0;
+            C = 0.0;
+
+            Scalar<T> alp(alpha);
+            Scalar<T> bet(beta);
+
+            double gflops = 2*m*n*k*1e-9;
+            double dt_1 = RunKernel(R, [&]{ bli_gemm(alp, A, B, bet, C); });
+            double dt_2 = RunKernel(R,
+            [&]
+            {
+                Matrix<T> A2(k, m);
+                Matrix<T> B2(k, n);
+                Matrix<T> C2(m, n);
+                A2.transpose();
+                tblis_copyv(false, m*k, A.data(), 1, A2.data(), 1);
+                tblis_copyv(false, k*n, B.data(), 1, B2.data(), 1);
+                bli_gemm(alp, A2, B2, bet, C2);
+                tblis_xpbyv(false, m*n, C2.data(), 1, beta, C.data(), 1);
+            });
+            fprintf(mout, "%e %e %e\n", eff_dim(gflops,m,n,k), gflops/dt_1, gflops/dt_2);
+        }
+
+        {
+            Tensor<T> A(4, vector<dim_t>{m/10, k/10, 10, 10});
+            Tensor<T> B(4, vector<dim_t>{k/10, n/10, 10, 10});
+            Tensor<T> C(4, vector<dim_t>{m/10, n/10, 10, 10});
+
+            double gflops = 2*m*n*k*1e-9;
+            impl_type = BLAS_BASED;
+            double dt_blas = RunKernel(R, [&]{ tensor_contract(alpha, A, "aebf", B, "ecfd", beta, C, "acbd"); });
+            impl_type = BLIS_BASED;
+            double dt_blis = RunKernel(R, [&]{ tensor_contract(alpha, A, "aebf", B, "ecfd", beta, C, "acbd"); });
+            fprintf(tout, "%e %e %e\n", eff_dim(gflops,m,n,k), gflops/dt_blas, gflops/dt_blis);
+        }
+    };
+
+    if (1)
+    {
+        mout = fopen("out.mat.reg.square", "w");
+        tout = fopen("out.tensor.reg.square", "w");
+
+        auto square_exp = bind(reg_experiment, _1, _2, _3,
+                               [](double gflops, dim_t m, dim_t n, dim_t k)
+                               { return pow(gflops/2e-9, 1.0/3.0); });
+        RunExperiment(20, 1000, 20,
+                      20, 1000, 20,
+                      20, 1000, 20,
+                      square_exp);
+
+        fclose(mout);
+        fclose(tout);
+    }
+
+    if (1)
+    {
+        mout = fopen("out.mat.reg.rankk", "w");
+        tout = fopen("out.tensor.reg.rankk", "w");
+
+        auto rankk_exp = bind(reg_experiment, _1, _2, _3,
+                              [](double gflops, dim_t m, dim_t n, dim_t k)
+                              { return gflops/2e-9/m/n; });
+        RunExperiment(1000, 1000,  0,
+                      1000, 1000,  0,
+                        20, 1000, 20,
+                      rankk_exp);
+
+        fclose(mout);
+        fclose(tout);
+    }
+
+    if (1)
+    {
+        mout = fopen("out.mat.reg.pp", "w");
+        tout = fopen("out.tensor.reg.pp", "w");
+
+        auto pp_exp = bind(reg_experiment, _1, _2, _3,
+                           [](double gflops, dim_t m, dim_t n, dim_t k)
+                           { return sqrt(gflops/2e-9/k); });
+        RunExperiment( 20, 1000, 20,
+                       20, 1000, 20,
+                      250,  250,  0,
+                      pp_exp);
+
+        fclose(mout);
+        fclose(tout);
+    }
+
+    if (1)
+    {
+        mout = fopen("out.mat.reg.bp", "w");
+        tout = fopen("out.tensor.reg.bp", "w");
+
+        auto bp_exp = bind(reg_experiment, _1, _2, _3,
+                           [](double gflops, dim_t m, dim_t n, dim_t k)
+                           { return gflops/2e-9/m/k; });
+        RunExperiment( 90,   90,  0,
+                       20, 2000, 20,
+                      250,  250,  0,
+                      bp_exp);
+
+        fclose(mout);
+        fclose(tout);
+    }
+
+    auto rand_experiment =
     [&](dim_t m, dim_t n, dim_t k, const std::function<double(double,dim_t,dim_t,dim_t)>& eff_dim)
     {
         printf("%ld %ld %ld\n", m, n, k);
@@ -190,15 +308,15 @@ void Benchmark(gint_t R)
 
     if (1)
     {
-        mout = fopen("out.mat.square", "w");
-        tout = fopen("out.tensor.square", "w");
+        mout = fopen("out.mat.rand.square", "w");
+        tout = fopen("out.tensor.rand.square", "w");
 
-        auto square_exp = bind(experiment, _1, _2, _3,
+        auto square_exp = bind(rand_experiment, _1, _2, _3,
                                [](double gflops, dim_t m, dim_t n, dim_t k)
                                { return pow(gflops/2e-9, 1.0/3.0); });
-        RunExperiment(10, 500, 10,
-                      10, 500, 10,
-                      10, 500, 10,
+        RunExperiment(20, 1000, 20,
+                      20, 1000, 20,
+                      20, 1000, 20,
                       square_exp);
 
         fclose(mout);
@@ -207,15 +325,15 @@ void Benchmark(gint_t R)
 
     if (1)
     {
-        mout = fopen("out.mat.rankk", "w");
-        tout = fopen("out.tensor.rankk", "w");
+        mout = fopen("out.mat.rand.rankk", "w");
+        tout = fopen("out.tensor.rand.rankk", "w");
 
-        auto rankk_exp = bind(experiment, _1, _2, _3,
+        auto rankk_exp = bind(rand_experiment, _1, _2, _3,
                               [](double gflops, dim_t m, dim_t n, dim_t k)
                               { return gflops/2e-9/m/n; });
-        RunExperiment(500, 500, 0,
-                      500, 500, 0,
-                      10, 500, 10,
+        RunExperiment(1000, 1000,  0,
+                      1000, 1000,  0,
+                        20, 1000, 20,
                       rankk_exp);
 
         fclose(mout);
@@ -224,15 +342,15 @@ void Benchmark(gint_t R)
 
     if (1)
     {
-        mout = fopen("out.mat.pp", "w");
-        tout = fopen("out.tensor.pp", "w");
+        mout = fopen("out.mat.rand.pp", "w");
+        tout = fopen("out.tensor.rand.pp", "w");
 
-        auto pp_exp = bind(experiment, _1, _2, _3,
+        auto pp_exp = bind(rand_experiment, _1, _2, _3,
                            [](double gflops, dim_t m, dim_t n, dim_t k)
                            { return sqrt(gflops/2e-9/k); });
-        RunExperiment(10, 500, 10,
-                      10, 500, 10,
-                      256, 256, 0,
+        RunExperiment( 20, 1000, 20,
+                       20, 1000, 20,
+                      256,  256,  0,
                       pp_exp);
 
         fclose(mout);
@@ -241,15 +359,15 @@ void Benchmark(gint_t R)
 
     if (1)
     {
-        mout = fopen("out.mat.bp", "w");
-        tout = fopen("out.tensor.bp", "w");
+        mout = fopen("out.mat.rand.bp", "w");
+        tout = fopen("out.tensor.rand.bp", "w");
 
-        auto bp_exp = bind(experiment, _1, _2, _3,
+        auto bp_exp = bind(rand_experiment, _1, _2, _3,
                            [](double gflops, dim_t m, dim_t n, dim_t k)
                            { return gflops/2e-9/m/k; });
-        RunExperiment(96, 96, 0,
-                      10, 1000, 10,
-                      256, 256, 0,
+        RunExperiment( 96,   96,  0,
+                       20, 2000, 20,
+                      256,  256,  0,
                       bp_exp);
 
         fclose(mout);

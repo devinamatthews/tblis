@@ -208,6 +208,32 @@ int tensor_contract_blis_int(const std::vector<dim_t>& len_M,
 
 #elif IMPL_TYPE == TENSOR
 
+template <typename T, dim_t MR, dim_t NR>
+void BlockScatter(ThreadCommunicator& comm, TensorMatrix<T>& A, inc_t* rs, inc_t* cs, inc_t* rscat, inc_t* cscat)
+{
+    dim_t m = A.length();
+    dim_t n = A.width();
+
+    dim_t first, last;
+    std::tie(first, last) = comm.distribute_over_threads(m, MR);
+
+    A.length(last-first);
+    A.shift_down(first);
+    A.template row_block_scatter<MR>(rs+first/MR, rscat+first);
+    A.shift_up(first);
+    A.length(m);
+
+    std::tie(first, last) = comm.distribute_over_threads(n, NR);
+
+    A.width(last-first);
+    A.shift_right(first);
+    A.template col_block_scatter<NR>(cs+first/NR, cscat+first);
+    A.shift_left(first);
+    A.width(n);
+
+    comm.barrier();
+}
+
 template <dim_t MR, dim_t NR, int Mat> struct MatrifyAndRun;
 
 template <dim_t MR, dim_t NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT_A>
@@ -215,10 +241,7 @@ template <dim_t MR, dim_t NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT
     template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
     MatrifyAndRun(Parent& parent, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
-        A.template row_block_scatter<MR>(parent.rs, parent.rscat);
-        A.template col_block_scatter<NR>(parent.cs, parent.cscat);
-        //printf("M_A: "); for (int i = 0;i < A.length();i++) printf("%6ld ", parent.rscat[i]); printf("\n");
-        //printf("K_A: "); for (int i = 0;i < A.width();i++) printf("%6ld ", parent.cscat[i]); printf("\n");
+        BlockScatter<T,MR,NR>(comm, A, parent.rs, parent.cs, parent.rscat, parent.cscat);
         BlockScatterMatrix<T,MR,NR> M(A.length(), A.width(), A.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
         //ScatterMatrix<T> M(A.length(), A.width(), A.data(), parent.rscat, parent.cscat);
         parent.child(comm, alpha, M, B, beta, C);
@@ -230,26 +253,19 @@ template <dim_t MR, dim_t NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT
     template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
     MatrifyAndRun(Parent& parent, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
-        B.template row_block_scatter<MR>(parent.rs, parent.rscat);
-        B.template col_block_scatter<NR>(parent.cs, parent.cscat);
-        //printf("K_B: "); for (int i = 0;i < B.length();i++) printf("%6ld ", parent.rscat[i]); printf("\n");
-        //printf("N_B: "); for (int i = 0;i < B.width();i++) printf("%6ld ", parent.cscat[i]); printf("\n");
+        BlockScatter<T,MR,NR>(comm, B, parent.rs, parent.cs, parent.rscat, parent.cscat);
         BlockScatterMatrix<T,MR,NR> M(B.length(), B.width(), B.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
         //ScatterMatrix<T> M(B.length(), B.width(), B.data(), parent.rscat, parent.cscat);
         parent.child(comm, alpha, A, M, beta, C);
     }
 };
 
-
 template <dim_t MR, dim_t NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT_C>
 {
     template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
     MatrifyAndRun(Parent& parent, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
-        C.template row_block_scatter<MR>(parent.rs, parent.rscat);
-        C.template col_block_scatter<NR>(parent.cs, parent.cscat);
-        //printf("M_C: "); for (int i = 0;i < C.length();i++) printf("%6ld ", parent.rscat[i]); printf("\n");
-        //printf("N_C: "); for (int i = 0;i < C.width();i++) printf("%6ld ", parent.cscat[i]); printf("\n");
+        BlockScatter<T,MR,NR>(comm, C, parent.rs, parent.cs, parent.rscat, parent.cscat);
         BlockScatterMatrix<T,MR,NR> M(C.length(), C.width(), C.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
         //ScatterMatrix<T> M(C.length(), C.width(), C.data(), parent.rscat, parent.cscat);
         parent.child(comm, alpha, A, B, beta, M);

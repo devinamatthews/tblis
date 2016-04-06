@@ -404,7 +404,7 @@ class TensorMatrix
         void row_block_scatter(inc_t* rs, inc_t* rscat)
         {
             dim_t p0 = _off_m%_m0;
-            inc_t off = p0*_rs0;
+            inc_t off = 0;
             _ri.position(_off_m/_m0, off);
 
             dim_t nleft = 0;
@@ -432,7 +432,7 @@ class TensorMatrix
         void col_block_scatter(inc_t* cs, inc_t* cscat)
         {
             dim_t p0 = _off_n%_n0;
-            inc_t off = p0*_cs0;
+            inc_t off = 0;
             _ci.position(_off_n/_n0, off);
 
             dim_t nleft = 0;

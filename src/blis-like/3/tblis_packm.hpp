@@ -74,10 +74,10 @@ struct PackAndRun<Pack, matrix_constants::MAT_A>
     template <typename Run, typename T, typename MatrixA, typename MatrixB, typename MatrixC, typename MatrixP>
     PackAndRun(Run& run, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C, MatrixP& P)
     {
+        comm.barrier();
         Pack()(comm, A, P);
         comm.barrier();
         run(comm, alpha, P, B, beta, C);
-        comm.barrier();
     }
 };
 
@@ -87,10 +87,10 @@ struct PackAndRun<Pack, matrix_constants::MAT_B>
     template <typename Run, typename T, typename MatrixA, typename MatrixB, typename MatrixC, typename MatrixP>
     PackAndRun(Run& run, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C, MatrixP& P)
     {
+        comm.barrier();
         Pack()(comm, B, P);
         comm.barrier();
         run(comm, alpha, A, P, beta, C);
-        comm.barrier();
     }
 };
 

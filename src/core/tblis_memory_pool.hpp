@@ -99,13 +99,27 @@ class MemoryPool
             if (!_free_list.empty())
             {
                 auto entry = _free_list.front();
-                _free_list.pop_front();
-                if (entry.second >= size) ptr = entry.first;
+                if (entry.second >= size)
+                {
+                    ASSERT(entry.first);
+                    ptr = entry.first;
+                    _free_list.pop_front();
+                }
             }
 
             if (ptr == NULL)
             {
-                if (posix_memalign(&ptr, alignment, size) != 0) abort();
+                printf("calling posix_memalign\n");
+                int ret = posix_memalign(&ptr, alignment, size);
+                if (ret != 0)
+                {
+                    perror("posix_memalign");
+                    printf("ret = %d\n", ret);
+                    for (auto& entry : _free_list)
+                    {
+                        printf("%p %ld\n", entry.first, entry.second);
+                    }
+                }
             }
 
             return ptr;
@@ -115,6 +129,7 @@ class MemoryPool
         {
             std::lock_guard<Mutex> guard(_lock);
 
+            ASSERT(ptr);
             _free_list.emplace_front(ptr, size);
         }
 

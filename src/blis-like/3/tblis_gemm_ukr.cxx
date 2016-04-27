@@ -200,7 +200,7 @@ void MicroKernel<MT,NT>::run<T>::operator()(ThreadCommunicator& comm, T alpha, M
     const inc_t* cscat_c = C.col_scatter();
 
     auxinfo_t data;
-    bli_auxinfo_set_next_ab(p_a, p_b, data);
+    //bli_auxinfo_set_next_ab(p_a, p_b, data);
 
     if (m == MR && n == NR && rs_c != 0 && cs_c != 0)
     {
@@ -260,7 +260,7 @@ void MicroKernel<MT,NT>::run<T>::operator()(ThreadCommunicator& comm, T alpha, M
     const inc_t* cscat_c = C.col_scatter();
 
     auxinfo_t data;
-    bli_auxinfo_set_next_ab(p_a, p_b, data);
+    //bli_auxinfo_set_next_ab(p_a, p_b, data);
 
     if (m == MR && n == NR && rs_c != 0 && cs_c != 0)
     {

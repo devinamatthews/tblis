@@ -158,14 +158,20 @@ void MicroKernel<MT,NT>::run<T>::operator()(ThreadCommunicator& comm, T alpha, M
     inc_t cs_c = C.col_stride();
 
     auxinfo_t data;
-    bli_auxinfo_set_next_ab(p_a, p_b, data);
+    //bli_auxinfo_set_next_ab(p_a, p_b, data);
+
+    cntx_t context;
+    context.blkszs[BLIS_MR].v[blis_type<T>::value] = MR;
+    context.blkszs[BLIS_MR].e[blis_type<T>::value] = MR;
+    context.blkszs[BLIS_NR].v[blis_type<T>::value] = NR;
+    context.blkszs[BLIS_NR].e[blis_type<T>::value] = NR;
 
     if (m == MR && n == NR)
     {
         gemm_ukr_t<T>::value(k,
                              fwd(alpha), fwd(p_a), fwd(p_b),
                              fwd(beta), fwd(p_c), rs_c, cs_c,
-                             &data);
+                             &data, &context);
     }
     else
     {
@@ -175,7 +181,7 @@ void MicroKernel<MT,NT>::run<T>::operator()(ThreadCommunicator& comm, T alpha, M
         gemm_ukr_t<T>::value(k,
                              fwd(alpha), fwd(p_a), fwd(p_b),
                              fwd(zero), fwd(p_ab), 1, MR,
-                             &data);
+                             &data, &context);
 
         AccumulateMicroTile<T,MR,NR>(m, n, p_ab,
                                      beta, p_c, rs_c, cs_c);
@@ -202,12 +208,18 @@ void MicroKernel<MT,NT>::run<T>::operator()(ThreadCommunicator& comm, T alpha, M
     auxinfo_t data;
     //bli_auxinfo_set_next_ab(p_a, p_b, data);
 
+    cntx_t context;
+    context.blkszs[BLIS_MR].v[blis_type<T>::value] = MR;
+    context.blkszs[BLIS_MR].e[blis_type<T>::value] = MR;
+    context.blkszs[BLIS_NR].v[blis_type<T>::value] = NR;
+    context.blkszs[BLIS_NR].e[blis_type<T>::value] = NR;
+
     if (m == MR && n == NR && rs_c != 0 && cs_c != 0)
     {
         gemm_ukr_t<T>::value(k,
                              fwd(alpha), fwd(p_a), fwd(p_b),
                              fwd(beta), fwd(p_c), rs_c, cs_c,
-                             &data);
+                             &data, &context);
     }
     else
     {
@@ -217,7 +229,7 @@ void MicroKernel<MT,NT>::run<T>::operator()(ThreadCommunicator& comm, T alpha, M
         gemm_ukr_t<T>::value(k,
                              fwd(alpha), fwd(p_a), fwd(p_b),
                              fwd(zero), fwd(p_ab), 1, MR,
-                             &data);
+                             &data, &context);
 
         if (rs_c == 0 && cs_c == 0)
         {
@@ -262,12 +274,18 @@ void MicroKernel<MT,NT>::run<T>::operator()(ThreadCommunicator& comm, T alpha, M
     auxinfo_t data;
     //bli_auxinfo_set_next_ab(p_a, p_b, data);
 
+    cntx_t context;
+    context.blkszs[BLIS_MR].v[blis_type<T>::value] = MR;
+    context.blkszs[BLIS_MR].e[blis_type<T>::value] = MR;
+    context.blkszs[BLIS_NR].v[blis_type<T>::value] = NR;
+    context.blkszs[BLIS_NR].e[blis_type<T>::value] = NR;
+
     if (m == MR && n == NR && rs_c != 0 && cs_c != 0)
     {
         gemm_ukr_t<T>::value(k,
                              fwd(alpha), fwd(p_a), fwd(p_b),
                              fwd(beta), fwd(p_c), rs_c, cs_c,
-                             &data);
+                             &data, &context);
     }
     else
     {
@@ -277,7 +295,7 @@ void MicroKernel<MT,NT>::run<T>::operator()(ThreadCommunicator& comm, T alpha, M
         gemm_ukr_t<T>::value(k,
                              fwd(alpha), fwd(p_a), fwd(p_b),
                              fwd(zero), fwd(p_ab), 1, MR,
-                             &data);
+                             &data, &context);
 
         if (rs_c == 0 && cs_c == 0)
         {

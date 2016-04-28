@@ -45,15 +45,21 @@ template <> struct KR<sComplex> { static constexpr dim_t def = BLIS_DEFAULT_KR_C
 template <> struct KR<dComplex> { static constexpr dim_t def = BLIS_DEFAULT_KR_Z, max = BLIS_DEFAULT_KR_Z, iota = BLIS_DEFAULT_KR_Z; };
 
 template <typename T> struct gemm_ukr_t {};
-template <> struct gemm_ukr_t<   float> { static constexpr sgemm_ukr_t value = BLIS_SGEMM_UKERNEL; };
-template <> struct gemm_ukr_t<  double> { static constexpr dgemm_ukr_t value = BLIS_DGEMM_UKERNEL; };
-template <> struct gemm_ukr_t<sComplex> { static constexpr cgemm_ukr_t value = BLIS_CGEMM_UKERNEL; };
-template <> struct gemm_ukr_t<dComplex> { static constexpr zgemm_ukr_t value = BLIS_ZGEMM_UKERNEL; };
+template <> struct gemm_ukr_t<   float> { static constexpr sgemm_ukr_ft value = BLIS_SGEMM_UKERNEL; };
+template <> struct gemm_ukr_t<  double> { static constexpr dgemm_ukr_ft value = BLIS_DGEMM_UKERNEL; };
+template <> struct gemm_ukr_t<sComplex> { static constexpr cgemm_ukr_ft value = BLIS_CGEMM_UKERNEL; };
+template <> struct gemm_ukr_t<dComplex> { static constexpr zgemm_ukr_ft value = BLIS_ZGEMM_UKERNEL; };
 
 template <typename T> struct basic_type { typedef T type; };
 template <> struct basic_type<sComplex> { typedef scomplex type; };
 template <> struct basic_type<dComplex> { typedef dcomplex type; };
 template <typename T> using basic_type_t = typename basic_type<T>::type;
+
+template <typename T> struct blis_type {};
+template <> struct blis_type<   float> { static constexpr num_t value = BLIS_FLOAT; };
+template <> struct blis_type<  double> { static constexpr num_t value = BLIS_DOUBLE; };
+template <> struct blis_type<sComplex> { static constexpr num_t value = BLIS_SCOMPLEX; };
+template <> struct blis_type<dComplex> { static constexpr num_t value = BLIS_DCOMPLEX; };
 
 namespace matrix_constants
 {

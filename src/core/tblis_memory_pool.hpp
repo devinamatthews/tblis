@@ -23,14 +23,14 @@ class MemoryPool
                 Block(const Block&) = delete;
 
                 Block(Block&& other)
-                : _pool(other._pool), _num(other._num), _ptr(other._ptr)
+                : _pool(other._pool), _size(other._size), _ptr(other._ptr)
                 {
                     other._ptr = NULL;
                 }
 
                 ~Block()
                 {
-                    if (_ptr) _pool->release(_ptr, _num*sizeof(T));
+                    if (_ptr) _pool->release(_ptr, _size);
                 }
 
                 Block& operator=(Block other)
@@ -47,19 +47,20 @@ class MemoryPool
                 {
                     using std::swap;
                     swap(a._pool, b._pool);
-                    swap(a._num, b._num);
+                    swap(a._size, b._size);
                     swap(a._ptr, b._ptr);
                 }
 
             protected:
                 Block(MemoryPool* pool, size_t num, size_t alignment)
-                : _pool(pool), _num(num),
-                  _ptr((T*)pool->acquire(num*sizeof(T),
-                                         std::max(alignment,
-                                                  std::alignment_of<T>::value))) {}
+                : _pool(pool), _size(num*sizeof(T))
+                {
+                    alignment = std::max(alignment, std::alignment_of<T>::value);
+                    _ptr = (T*)_pool->acquire(_size, alignment);
+                }
 
                 MemoryPool* _pool = NULL;
-                size_t _num = 0;
+                size_t _size = 0;
                 T* _ptr = NULL;
         };
 
@@ -89,7 +90,7 @@ class MemoryPool
         }
 
     protected:
-        void* acquire(size_t size, size_t alignment)
+        void* acquire(size_t& size, size_t alignment)
         {
             std::lock_guard<Mutex> guard(_lock);
 
@@ -99,26 +100,32 @@ class MemoryPool
             if (!_free_list.empty())
             {
                 auto entry = _free_list.front();
-                if (entry.second >= size)
+                _free_list.pop_front();
+
+                /*
+                 * If the region is big enough and properly aligned, use it.
+                 * Otherwise, free it and allocate a new one.
+                 */
+                if (entry.second >= size &&
+                    (uintptr_t)entry.first % alignment == 0)
                 {
                     ASSERT(entry.first);
                     ptr = entry.first;
-                    _free_list.pop_front();
+                    size = entry.second;
+                }
+                else
+                {
+                    free(entry.first);
                 }
             }
 
             if (ptr == NULL)
             {
-                printf("calling posix_memalign\n");
                 int ret = posix_memalign(&ptr, alignment, size);
                 if (ret != 0)
                 {
                     perror("posix_memalign");
-                    printf("ret = %d\n", ret);
-                    for (auto& entry : _free_list)
-                    {
-                        printf("%p %ld\n", entry.first, entry.second);
-                    }
+                    abort();
                 }
             }
 

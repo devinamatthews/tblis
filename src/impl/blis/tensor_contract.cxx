@@ -362,7 +362,7 @@ struct MatrifyAndPack
                                                 : blis_like::detail::BuffersForB);
 
             auto& pack_buffer = this->child.pack_buffer;
-            T* pack_ptr = this->child.pack_ptr;
+            T*& pack_ptr = this->child.pack_ptr;
 
             if (pack_ptr == NULL)
             {

@@ -4,7 +4,7 @@
 #include "config.h"
 
 #define BLIS_DISABLE_BLAS2BLIS
-#include "blis++/blis++.hpp"
+#include "blis++.hpp"
 
 #include "tensor.h"
 

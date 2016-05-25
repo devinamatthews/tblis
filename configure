@@ -16332,7 +16332,7 @@ $as_echo "$as_me: done configuring blis++" >&6;}
             for dir_path in include; do
                 as_fn_append include_flags " -I$pkg_dir/$dir_path"
             done
-            for header in blis++/blis++.hpp; do
+            for header in blis++.hpp; do
                   ac_save_CPPFLAGS="$CPPFLAGS"
   CPPFLAGS="$CPPFLAGS $include_flags $blis_INCLUDES"
   as_ac_Header=`$as_echo "ac_cv_header_$header" | $as_tr_sh`

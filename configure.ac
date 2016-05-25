@@ -42,7 +42,7 @@ AQ_WITH_PACKAGE([blis], [https://github.com/flame/blis],
 # Check for BLIS++
 #
 AQ_WITH_PACKAGE([blis++], [https://github.com/devinamatthews/blisplusplus],
-                [blis++/blis++.hpp], [],
+                [blis++.hpp], [],
                 [], [], [], [$blis_INCLUDES])
                 
 mkdir -p bin

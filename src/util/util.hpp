@@ -9,8 +9,6 @@
 #include <cstdarg>
 #include <random>
 
-#include "blis++/blis++.hpp"
-
 #ifdef DEBUG
 inline void abort_with_message(const char* cond, const char* fmt, ...)
 {

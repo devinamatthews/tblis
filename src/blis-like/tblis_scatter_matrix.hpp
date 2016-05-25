@@ -25,133 +25,85 @@ class ScatterMatrix
 
     private:
         trans_op_t _conjtrans;
-        Memory<type> _ptr;
+        type* _ptr;
         dim_t _m;
         dim_t _n;
         inc_t _rs;
         inc_t _cs;
-        Memory<inc_t> _rscat;
-        Memory<inc_t> _cscat;
+        inc_t* _rscat;
+        inc_t* _cscat;
 
     protected:
         void create()
         {
             _conjtrans = BLIS_NO_TRANSPOSE;
-            _ptr.reset();
+            _ptr = NULL;
             _m = 0;
             _n = 0;
             _rs = 0;
             _cs = 0;
-            _rscat.reset();
-            _cscat.reset();
+            _rscat = NULL;
+            _cscat = NULL;
         }
 
         void create(const ScatterMatrix& other)
         {
             _conjtrans = other._conjtrans;
-            _ptr.reset(const_cast<Memory<type>&>(other._ptr));
+            _ptr = other._ptr;
             _m = other._m;
             _n = other._n;
             _rs = other._rs;
             _cs = other._cs;
-            _rscat.reset(const_cast<Memory<inc_t>&>(other._rscat));
-            _cscat.reset(const_cast<Memory<inc_t>&>(other._cscat));
-        }
-
-        void create(ScatterMatrix&& other)
-        {
-            _conjtrans = other._conjtrans;
-            _ptr = std::move(other._ptr);
-            _m = other._m;
-            _n = other._n;
-            _rs = other._rs;
-            _cs = other._cs;
-            _rscat = std::move(other._rscat);
-            _cscat = std::move(other._cscat);
-        }
-
-        void create(Matrix<type>& other, scatter_t scatter)
-        {
-            _conjtrans = other.conjtrans();
-            _ptr.reset(other.data());
-            _m = other.length();
-            _n = other.width();
-
-            if (scatter & SCATTER_ROWS)
-            {
-                _rs = 0;
-                _rscat.reset(_m+1);
-
-                inc_t rs = other.row_stride();
-                for (int i = 0;i <= _m;i++) ((inc_t*)_rscat)[i] = rs*i;
-            }
-            else
-            {
-                _rs = other.row_stride();
-                _rscat.reset();
-            }
-
-            if (scatter & SCATTER_COLS)
-            {
-                _cs = 0;
-                _cscat.reset(_n+1);
-
-                inc_t cs = other.col_stride();
-                for (int i = 0;i <= _n;i++) ((inc_t*)_cscat)[i] = cs*i;
-            }
-            else
-            {
-                _cs = other.col_stride();
-                _cscat.reset();
-            }
+            _rscat = other._rscat;
+            _cscat = other._cscat;
         }
 
         void create(dim_t m, dim_t n, type* p, inc_t rs, inc_t cs)
         {
             _conjtrans = BLIS_NO_TRANSPOSE;
-            _ptr.reset(p);
+            _ptr = p;
             _m = m;
             _n = n;
             _rs = rs;
             _cs = cs;
-            _rscat.reset();
-            _cscat.reset();
+            _rscat = NULL;
+            _cscat = NULL;
         }
 
         void create(dim_t m, dim_t n, type* p, inc_t rs, inc_t* cscat)
         {
             _conjtrans = BLIS_NO_TRANSPOSE;
-            _ptr.reset(p);
+            _ptr = p;
             _m = m;
             _n = n;
             _rs = rs;
             _cs = 0;
-            _rscat.reset();
-            _cscat.reset(cscat);
+            _rscat = NULL;
+            _cscat = cscat;
         }
 
         void create(dim_t m, dim_t n, type* p, inc_t* rscat, inc_t cs)
         {
             _conjtrans = BLIS_NO_TRANSPOSE;
-            _ptr.reset(p);
+            _ptr = p;
             _m = m;
             _n = n;
             _rs = 0;
             _cs = cs;
-            _rscat.reset(rscat);
-            _cscat.reset();
+            _rscat = rscat;
+            _cscat = NULL;
         }
 
         void create(dim_t m, dim_t n, type* p, inc_t* rscat, inc_t* cscat)
         {
             _conjtrans = BLIS_NO_TRANSPOSE;
-            _ptr.reset(p);
+            _ptr = p;
             _m = m;
             _n = n;
             _rs = 0;
             _cs = 0;
-            _rscat.reset(rscat);
-            _cscat.reset(cscat);
+            _rscat = rscat;
+            _cscat = cscat;
         }
 
     public:
@@ -163,16 +115,6 @@ class ScatterMatrix
         ScatterMatrix(const ScatterMatrix& other)
         {
             create(other);
-        }
-
-        ScatterMatrix(ScatterMatrix&& other)
-        {
-            create(std::move(other));
-        }
-
-        explicit ScatterMatrix(Matrix<type>& other, scatter_t scatter = SCATTER_NONE)
-        {
-            create(other, scatter);
         }
 
         explicit ScatterMatrix(type* p)
@@ -211,12 +153,6 @@ class ScatterMatrix
             return *this;
         }
 
-        ScatterMatrix& operator=(ScatterMatrix&& other)
-        {
-            reset(std::move(other));
-            return *this;
-        }
-
         void reset()
         {
             create();
@@ -226,17 +162,6 @@ class ScatterMatrix
         {
             if (&other == this) return;
             create(other);
-        }
-
-        void reset(ScatterMatrix&& other)
-        {
-            if (&other == this) return;
-            create(std::move(other));
-        }
-
-        void reset(Matrix<type>& other, scatter_t scatter = SCATTER_NONE)
-        {
-            create(other, scatter);
         }
 
         void reset(type* p)

@@ -1078,36 +1078,6 @@ void TestTBLIS(siz_t N)
         ref_val = (T)res_obj;
 
         passfail("BLIS", ref_val, calc_val);
-
-        D = C;
-        sA.reset(A, SCATTER_NONE);
-        sB.reset(B, SCATTER_NONE);
-        sC.reset(D, SCATTER_NONE);
-
-        tblis_gemm(scale, sA, sB, scale, sC);
-        tblis_normfm(sC, calc_val);
-
-        passfail("SCATTER_NONE", ref_val, calc_val);
-
-        D = C;
-        sA.reset(A, SCATTER_BOTH);
-        sB.reset(B, SCATTER_BOTH);
-        sC.reset(D, SCATTER_BOTH);
-
-        tblis_gemm(scale, sA, sB, scale, sC);
-        tblis_normfm(sC, calc_val);
-
-        passfail("SCATTER_BOTH", ref_val, calc_val);
-
-        D = C;
-        sA.reset(A, (scatter_t)RandomInteger(0,3));
-        sB.reset(B, (scatter_t)RandomInteger(0,3));
-        sC.reset(D, (scatter_t)RandomInteger(0,3));
-
-        tblis_gemm(scale, sA, sB, scale, sC);
-        tblis_normfm(sC, calc_val);
-
-        passfail("SCATTER_RANDOM", ref_val, calc_val);
     }
 }
 

@@ -36,12 +36,12 @@ int tensor_dot_reference<  double>(const Tensor<  double>& A, const std::string&
                                    const Tensor<  double>& B, const std::string& idx_B,   double& val);
 
 template
-int tensor_dot_reference<sComplex>(const Tensor<sComplex>& A, const std::string& idx_A,
-                                   const Tensor<sComplex>& B, const std::string& idx_B, sComplex& val);
+int tensor_dot_reference<scomplex>(const Tensor<scomplex>& A, const std::string& idx_A,
+                                   const Tensor<scomplex>& B, const std::string& idx_B, scomplex& val);
 
 template
-int tensor_dot_reference<dComplex>(const Tensor<dComplex>& A, const std::string& idx_A,
-                                   const Tensor<dComplex>& B, const std::string& idx_B, dComplex& val);
+int tensor_dot_reference<dcomplex>(const Tensor<dcomplex>& A, const std::string& idx_A,
+                                   const Tensor<dcomplex>& B, const std::string& idx_B, dcomplex& val);
 
 }
 }

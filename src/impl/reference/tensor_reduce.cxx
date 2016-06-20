@@ -115,10 +115,10 @@ template
 int tensor_reduce_reference<  double>(reduce_t op, const Tensor<  double>& A, const std::string& idx_A,   double& val, inc_t& idx);
 
 template
-int tensor_reduce_reference<sComplex>(reduce_t op, const Tensor<sComplex>& A, const std::string& idx_A, sComplex& val, inc_t& idx);
+int tensor_reduce_reference<scomplex>(reduce_t op, const Tensor<scomplex>& A, const std::string& idx_A, scomplex& val, inc_t& idx);
 
 template
-int tensor_reduce_reference<dComplex>(reduce_t op, const Tensor<dComplex>& A, const std::string& idx_A, dComplex& val, inc_t& idx);
+int tensor_reduce_reference<dcomplex>(reduce_t op, const Tensor<dcomplex>& A, const std::string& idx_A, dcomplex& val, inc_t& idx);
 
 }
 }

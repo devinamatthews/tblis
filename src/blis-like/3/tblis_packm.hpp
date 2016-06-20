@@ -23,17 +23,20 @@ void PackMicroPanel(dim_t m, dim_t k,
 
 template <typename T, dim_t MR, dim_t KR>
 void PackMicroPanel(dim_t m, dim_t k,
-                    const T* restrict & p_a, const inc_t* restrict & rs_a, inc_t cs_a,
+                    const T* restrict & p_a,
+                    const inc_t* restrict & rs_a, inc_t cs_a,
                     T* restrict & p_ap);
 
 template <typename T, dim_t MR, dim_t KR>
 void PackMicroPanel(dim_t m, dim_t k,
-                    const T* restrict & p_a, inc_t rs_a, const inc_t* restrict  cs_a,
+                    const T* restrict & p_a,
+                    inc_t rs_a, const inc_t* restrict cs_a,
                     T* restrict & p_ap);
 
 template <typename T, dim_t MR, dim_t KR>
 void PackMicroPanel(dim_t m, dim_t k,
-                    const T* restrict & p_a, const inc_t* restrict & rs_a, const inc_t* restrict  cs_a,
+                    const T* restrict & p_a,
+                    const inc_t* restrict & rs_a, const inc_t* restrict cs_a,
                     T* restrict & p_ap);
 
 template <typename T, dim_t MR, dim_t KR, bool Trans>
@@ -51,18 +54,18 @@ struct PackNoop
 {
     void operator()(ThreadCommunicator& comm, Matrix<T>& A, Matrix<T>& Ap) const
     {
-        memset((T*)Ap, 0, Ap.width()*Ap.length()*sizeof(T));
+        memset(Ap.data(), 0, Ap.width()*Ap.length()*sizeof(T));
     }
 
     void operator()(ThreadCommunicator& comm, ScatterMatrix<T>& A, Matrix<T>& Ap) const
     {
-        memset((T*)Ap, 0, Ap.width()*Ap.length()*sizeof(T));
+        memset(Ap.data(), 0, Ap.width()*Ap.length()*sizeof(T));
     }
 
     template <dim_t UB, dim_t VB>
     void operator()(ThreadCommunicator& comm, BlockScatterMatrix<T,UB,VB>& A, Matrix<T>& Ap) const
     {
-        memset((T*)Ap, 0, Ap.width()*Ap.length()*sizeof(T));
+        memset(Ap.data(), 0, Ap.width()*Ap.length()*sizeof(T));
     }
 };
 

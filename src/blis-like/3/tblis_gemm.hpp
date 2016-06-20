@@ -51,34 +51,45 @@ struct GEMM
     {
         typename Child::template run<T, Children...> child;
 
-        template <typename MatrixA, typename MatrixB, typename MatrixC>
-        void operator()(ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
-        {
-            child(comm, alpha, A, B, beta, C);
-        }
-
         template <int I>
         auto step() -> decltype(detail::get_child<I, 0>()(child))
         {
             return detail::get_child<I, 0>()(child);
         }
+
+        template <typename MatrixA, typename MatrixB, typename MatrixC>
+        void operator()(T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
+        {
+            dim_t jc_way = bli_read_nway_from_env( "BLIS_JC_NT" );
+            dim_t ic_way = bli_read_nway_from_env( "BLIS_IC_NT" );
+            dim_t jr_way = bli_read_nway_from_env( "BLIS_JR_NT" );
+            dim_t ir_way = bli_read_nway_from_env( "BLIS_IR_NT" );
+            dim_t nthread = jc_way*ic_way*jr_way*ir_way;
+
+            step<0>().distribute = jc_way;
+            step<1>().distribute = 1; //kc_way
+            step<3>().distribute = ic_way;
+            step<5>().distribute = jr_way;
+            step<6>().distribute = ir_way;
+
+            parallelize(nthread,
+            [=](ThreadCommunicator& comm) mutable
+            {
+                child(comm, alpha, A, B, beta, C);
+            });
+        }
     };
 };
 
-template <template <typename> class MT, template <typename> class NT>
-struct MacroKernel
-{
-    template <typename T>
-    using run = typename PartitionN<NT>::template run<T, PartitionM<MT>, MicroKernel<MT,NT>>;
-};
-
-template <typename T>
-using DefaultGEMM = GEMM<PartitionN<NC>,
-                         PartitionK<KC>,
-                         PackB<KR,NR>,
-                         PartitionM<MC>,
-                         PackA<MR,KR>,
-                         MacroKernel<MR,NR>>::run<T>;
+template <typename T, typename Config>
+using GotoGEMM = GEMM<PartitionN<Config::NC, matrix_constants::NT_JC>,
+                      PartitionK<Config::KC, matrix_constants::NT_KC>,
+                      PackB<Config::KR,Config::NR>,
+                      PartitionM<Config::MC, matrix_constants::NT_IC>,
+                      PackA<Config::MR,Config::KR>,
+                      PartitionN<Config::NR, matrix_constants::NT_JR>,
+                      PartitionM<Config::MR, matrix_constants::NT_JR>,
+                      MicroKernel<Config>>::run<T>;
 
 template <typename T, typename MatrixA, typename MatrixB, typename MatrixC>
 void tblis_gemm_int(T alpha, MatrixA&& A, MatrixB&& B, T beta, MatrixC&& C)
@@ -87,26 +98,7 @@ void tblis_gemm_int(T alpha, MatrixA&& A, MatrixB&& B, T beta, MatrixC&& C)
     ASSERT(A.width() == B.length(), "k dimension does not match");
     ASSERT(B.width() == C.width(), "n dimension does not match");
 
-    dim_t jc_way = bli_read_nway_from_env( "BLIS_JC_NT" );
-    dim_t ic_way = bli_read_nway_from_env( "BLIS_IC_NT" );
-    dim_t jr_way = bli_read_nway_from_env( "BLIS_JR_NT" );
-    dim_t ir_way = bli_read_nway_from_env( "BLIS_IR_NT" );
-    dim_t nthread = jc_way*ic_way*jr_way*ir_way;
-
-    //printf_locked("%d %d %d %d\n", jc_way, ic_way, jr_way, ir_way);
-
-    DefaultGEMM<T> gemm;
-    gemm.template step<0>().distribute = jc_way;
-    gemm.template step<1>().distribute = 1; //kc_way
-    gemm.template step<3>().distribute = ic_way;
-    gemm.template step<5>().distribute = jr_way;
-    gemm.template step<6>().distribute = ir_way;
-
-    parallelize(nthread,
-    [=](ThreadCommunicator& comm) mutable
-    {
-        gemm(comm, alpha, A, B, beta, C);
-    });
+    GotoGEMM<T>()(alpha, A, B, beta, C);
 }
 
 template <typename U, typename MatrixA, typename MatrixB, typename MatrixC>

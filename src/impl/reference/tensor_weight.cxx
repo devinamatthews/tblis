@@ -134,14 +134,14 @@ int tensor_weight_reference<  double>(  double alpha, const Tensor<  double>& A,
                                         double  beta,       Tensor<  double>& C, const std::string& idx_C);
 
 template
-int tensor_weight_reference<sComplex>(sComplex alpha, const Tensor<sComplex>& A, const std::string& idx_A,
-                                                      const Tensor<sComplex>& B, const std::string& idx_B,
-                                      sComplex  beta,       Tensor<sComplex>& C, const std::string& idx_C);
+int tensor_weight_reference<scomplex>(scomplex alpha, const Tensor<scomplex>& A, const std::string& idx_A,
+                                                      const Tensor<scomplex>& B, const std::string& idx_B,
+                                      scomplex  beta,       Tensor<scomplex>& C, const std::string& idx_C);
 
 template
-int tensor_weight_reference<dComplex>(dComplex alpha, const Tensor<dComplex>& A, const std::string& idx_A,
-                                                      const Tensor<dComplex>& B, const std::string& idx_B,
-                                      dComplex  beta,       Tensor<dComplex>& C, const std::string& idx_C);
+int tensor_weight_reference<dcomplex>(dcomplex alpha, const Tensor<dcomplex>& A, const std::string& idx_A,
+                                                      const Tensor<dcomplex>& B, const std::string& idx_B,
+                                      dcomplex  beta,       Tensor<dcomplex>& C, const std::string& idx_C);
 
 }
 }

@@ -3,15 +3,8 @@
 
 #include "config.h"
 
-#define BLIS_DISABLE_BLAS2BLIS
-#include "blis++.hpp"
-
-#include "tensor.h"
-
 namespace tblis
 {
-
-using namespace blis;
 
 void tblis_init();
 
@@ -21,8 +14,19 @@ void tblis_finalize();
 
 #include "util/util.hpp"
 
+#define _DEFINED_SCOMPLEX
+#define _DEFINED_DCOMPLEX
+extern "C"
+{
+#include "bli_system.h"
+#include "bli_config.h"
+#include "bli_config_macro_defs.h"
+#include "bli_type_defs.h"
+#include "bli_macro_defs.h"
+}
+
 #include "core/tensor_iterator.hpp"
-#include "core/tensor_class.hpp"
+#include "core/tblis_tensor.hpp"
 #include "core/tensor_iface.hpp"
 #include "core/tensor_templates.hpp"
 #include "core/tensor_slicer.hpp"
@@ -31,7 +35,7 @@ void tblis_finalize();
 #include "core/tblis_mutex.hpp"
 #include "core/tblis_thread.hpp"
 
-#include "blis-like/tblis_constants.hpp"
+#include "blis-like/tblis_config.hpp"
 #include "blis-like/tblis_scatter_matrix.hpp"
 #include "blis-like/tblis_block_scatter_matrix.hpp"
 #include "blis-like/tblis_tensor_matrix.hpp"

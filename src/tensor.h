@@ -1,6 +1,8 @@
 #ifndef _TENSOR_H_
 #define _TENSOR_H_
 
+#include <complex.h>
+
 enum reduce_t
 {
     REDUCE_SUM      = 0,
@@ -13,11 +15,6 @@ enum reduce_t
     REDUCE_NORM_2   = 6,
     REDUCE_NORM_INF = REDUCE_MAX_ABS
 };
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 /**
  * Main interface definitions
@@ -44,13 +41,13 @@ int tensor_dmult(  double alpha, const   double* A, gint_t ndim_A, const dim_t* 
                                  const   double* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
                    double  beta,         double* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
 
-int tensor_cmult(scomplex alpha, const scomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
-                                 const scomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
-                 scomplex  beta,       scomplex* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
+int tensor_cmult(complex float alpha, const complex float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
+                                 const complex float* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
+                 complex float  beta,       complex float* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
 
-int tensor_zmult(dcomplex alpha, const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
-                                 const dcomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
-                 dcomplex  beta,       dcomplex* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
+int tensor_zmult(complex double alpha, const complex double* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
+                                 const complex double* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
+                 complex double  beta,       complex double* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
 
 /**
  * Contract two tensors into a third
@@ -66,13 +63,13 @@ int tensor_dcontract(  double alpha, const   double* A, gint_t ndim_A, const dim
                                      const   double* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
                        double  beta,         double* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
 
-int tensor_ccontract(scomplex alpha, const scomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
-                                     const scomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
-                     scomplex  beta,       scomplex* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
+int tensor_ccontract(complex float alpha, const complex float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
+                                     const complex float* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
+                     complex float  beta,       complex float* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
 
-int tensor_zcontract(dcomplex alpha, const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
-                                     const dcomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
-                     dcomplex  beta,       dcomplex* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
+int tensor_zcontract(complex double alpha, const complex double* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
+                                     const complex double* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
+                     complex double  beta,       complex double* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
 
 /**
  * Weight a tensor by a second and sum onto a third
@@ -89,13 +86,13 @@ int tensor_dweight(  double alpha, const   double* A, gint_t ndim_A, const dim_t
                                    const   double* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
                      double  beta,         double* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
 
-int tensor_cweight(scomplex alpha, const scomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
-                                   const scomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
-                   scomplex  beta,       scomplex* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
+int tensor_cweight(complex float alpha, const complex float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
+                                   const complex float* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
+                   complex float  beta,       complex float* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
 
-int tensor_zweight(dcomplex alpha, const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
-                                   const dcomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
-                   dcomplex  beta,       dcomplex* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
+int tensor_zweight(complex double alpha, const complex double* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
+                                   const complex double* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
+                   complex double  beta,       complex double* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
 
 /**
  * Sum the outer product of two tensors onto a third
@@ -111,13 +108,13 @@ int tensor_douter_prod(  double alpha, const   double* A, gint_t ndim_A, const d
                                        const   double* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
                          double  beta,         double* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
 
-int tensor_couter_prod(scomplex alpha, const scomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
-                                       const scomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
-                       scomplex  beta,       scomplex* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
+int tensor_couter_prod(complex float alpha, const complex float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
+                                       const complex float* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
+                       complex float  beta,       complex float* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
 
-int tensor_zouter_prod(dcomplex alpha, const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
-                                       const dcomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
-                       dcomplex  beta,       dcomplex* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
+int tensor_zouter_prod(complex double alpha, const complex double* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
+                                       const complex double* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,
+                       complex double  beta,       complex double* C, gint_t ndim_C, const dim_t* len_C, const inc_t* stride_C, const char* idx_C);
 
 /**
  * sum a tensor (presumably operated on in one or more ways) onto a second
@@ -131,11 +128,11 @@ int tensor_ssum(   float alpha, const    float* A, gint_t ndim_A, const dim_t* l
 int tensor_dsum(  double alpha, const   double* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
                   double  beta,         double* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
 
-int tensor_csum(scomplex alpha, const scomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
-                scomplex  beta,       scomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
+int tensor_csum(complex float alpha, const complex float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
+                complex float  beta,       complex float* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
 
-int tensor_zsum(dcomplex alpha, const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
-                dcomplex  beta,       dcomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
+int tensor_zsum(complex double alpha, const complex double* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
+                complex double  beta,       complex double* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
 
 /**
  * Sum over (semi)diagonal elements of a tensor and sum onto a second
@@ -151,11 +148,11 @@ int tensor_strace(   float alpha, const    float* A, gint_t ndim_A, const dim_t*
 int tensor_dtrace(  double alpha, const   double* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
                     double  beta,         double* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
 
-int tensor_ctrace(scomplex alpha, const scomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
-                  scomplex  beta,       scomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
+int tensor_ctrace(complex float alpha, const complex float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
+                  complex float  beta,       complex float* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
 
-int tensor_ztrace(dcomplex alpha, const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
-                  dcomplex  beta,       dcomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
+int tensor_ztrace(complex double alpha, const complex double* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
+                  complex double  beta,       complex double* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
 
 /**
  * Replicate a tensor and sum onto a second
@@ -169,11 +166,11 @@ int tensor_sreplicate(   float alpha, const    float* A, gint_t ndim_A, const di
 int tensor_dreplicate(  double alpha, const   double* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
                         double  beta,         double* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
 
-int tensor_creplicate(scomplex alpha, const scomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
-                      scomplex  beta,       scomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
+int tensor_creplicate(complex float alpha, const complex float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
+                      complex float  beta,       complex float* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
 
-int tensor_zreplicate(dcomplex alpha, const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
-                      dcomplex  beta,       dcomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
+int tensor_zreplicate(complex double alpha, const complex double* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
+                      complex double  beta,       complex double* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
 
 /**
  * Transpose a tensor and sum onto a second
@@ -187,11 +184,11 @@ int tensor_stranspose(   float alpha, const    float* A, gint_t ndim_A, const di
 int tensor_dtranspose(  double alpha, const   double* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
                         double  beta,         double* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
 
-int tensor_ctranspose(scomplex alpha, const scomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
-                      scomplex  beta,       scomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
+int tensor_ctranspose(complex float alpha, const complex float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
+                      complex float  beta,       complex float* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
 
-int tensor_ztranspose(dcomplex alpha, const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
-                      dcomplex  beta,       dcomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
+int tensor_ztranspose(complex double alpha, const complex double* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
+                      complex double  beta,       complex double* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B);
 
 /**
  * Return the dot product of two tensors
@@ -202,11 +199,11 @@ int tensor_sdot(const    float* A, gint_t ndim_A, const dim_t* len_A, const inc_
 int tensor_ddot(const   double* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
                 const   double* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B,   double* val);
 
-int tensor_cdot(const scomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
-                const scomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B, scomplex* val);
+int tensor_cdot(const complex float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
+                const complex float* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B, complex float* val);
 
-int tensor_zdot(const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
-                const dcomplex* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B, dcomplex* val);
+int tensor_zdot(const complex double* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,
+                const complex double* B, gint_t ndim_B, const dim_t* len_B, const inc_t* stride_B, const char* idx_B, complex double* val);
 
 /**
  * Scale a tensor by a scalar
@@ -215,20 +212,20 @@ int tensor_sscale(   float alpha,    float* A, gint_t ndim_A, const dim_t* len_A
 
 int tensor_dscale(  double alpha,   double* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A);
 
-int tensor_cscale(scomplex alpha, scomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A);
+int tensor_cscale(complex float alpha, complex float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A);
 
-int tensor_zscale(dcomplex alpha, dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A);
+int tensor_zscale(complex double alpha, complex double* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A);
 
 /**
  * Return the reduction of a tensor, along with the corresponding index (as an offset from A) for MAX, MIN, MAX_ABS, and MIN_ABS reductions
  */
-int tensor_sreduce(reduce_t op, const    float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,    float* val, inc_t* idx);
+int tensor_sreduce(reduce_t op, const          float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,          float* val, inc_t* idx);
 
-int tensor_dreduce(reduce_t op, const   double* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,   double* val, inc_t* idx);
+int tensor_dreduce(reduce_t op, const         double* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A,         double* val, inc_t* idx);
 
-int tensor_creduce(reduce_t op, const scomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A, scomplex* val, inc_t* idx);
+int tensor_creduce(reduce_t op, const complex  float* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A, complex  float* val, inc_t* idx);
 
-int tensor_zreduce(reduce_t op, const dcomplex* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A, dcomplex* val, inc_t* idx);
+int tensor_zreduce(reduce_t op, const complex double* A, gint_t ndim_A, const dim_t* len_A, const inc_t* stride_A, const char* idx_A, complex double* val, inc_t* idx);
 
 /**
  * Calculate the number of non-zero (and hence stored) elements in the given tensor.
@@ -239,9 +236,5 @@ siz_t tensor_size(gint_t ndim, const dim_t* len, const inc_t* stride);
  * Calculate the size of the buffer need for this tensor (in floating point words).
  */
 siz_t tensor_storage_size(gint_t ndim, const dim_t* len, const inc_t* stride);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

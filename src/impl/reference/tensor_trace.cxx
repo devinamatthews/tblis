@@ -87,12 +87,12 @@ int tensor_trace_reference<  double>(  double alpha, const Tensor<  double>& A, 
                                        double  beta,       Tensor<  double>& B, const std::string& idx_B);
 
 template
-int tensor_trace_reference<sComplex>(sComplex alpha, const Tensor<sComplex>& A, const std::string& idx_A,
-                                     sComplex  beta,       Tensor<sComplex>& B, const std::string& idx_B);
+int tensor_trace_reference<scomplex>(scomplex alpha, const Tensor<scomplex>& A, const std::string& idx_A,
+                                     scomplex  beta,       Tensor<scomplex>& B, const std::string& idx_B);
 
 template
-int tensor_trace_reference<dComplex>(dComplex alpha, const Tensor<dComplex>& A, const std::string& idx_A,
-                                     dComplex  beta,       Tensor<dComplex>& B, const std::string& idx_B);
+int tensor_trace_reference<dcomplex>(dcomplex alpha, const Tensor<dcomplex>& A, const std::string& idx_A,
+                                     dcomplex  beta,       Tensor<dcomplex>& B, const std::string& idx_B);
 
 }
 }

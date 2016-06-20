@@ -1,6 +1,8 @@
 #include "tblis.hpp"
 #include "impl/tensor_impl.hpp"
 
+#include "external/lawrap/blas.h"
+
 using namespace std;
 
 namespace tblis
@@ -9,9 +11,9 @@ namespace impl
 {
 
 template <typename T>
-int tensor_contract_blas(T alpha, const Tensor<T>& A, const std::string& idx_A,
-                                  const Tensor<T>& B, const std::string& idx_B,
-                         T  beta,       Tensor<T>& C, const std::string& idx_C)
+int tensor_contract_blas(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
+                                  const const_tensor_view<T>& B, const std::string& idx_B,
+                         T  beta,             tensor_view<T>& C, const std::string& idx_C)
 {
     string idx_AB_AC(A.dimension(), 0);
     string idx_AB_BC(B.dimension(), 0);
@@ -108,50 +110,51 @@ int tensor_contract_blas(T alpha, const Tensor<T>& A, const std::string& idx_A,
         }
     }
 
-    Tensor<T> ar(ndim_AB+ndim_AC, len_AB_AC);
-    Tensor<T> br(ndim_AB+ndim_BC, len_AB_BC);
-    Tensor<T> cr(ndim_AC+ndim_BC, len_AC_BC);
+    tensor<T> ar(len_AB_AC);
+    tensor<T> br(len_AB_BC);
+    tensor<T> cr(len_AC_BC);
 
-    Matrix<T> am, bm, cm;
-    Scalar<T> alp(alpha);
-    Scalar<T> zero;
+    matrix_view<T> am, bm, cm;
 
-    Matricize(ar, am, ndim_AB);
-    Matricize(br, bm, ndim_AB);
-    Matricize(cr, cm, ndim_AC);
+    matricize(ar, am, ndim_AB);
+    matricize(br, bm, ndim_AB);
+    matricize(cr, cm, ndim_AC);
     am.transpose(true);
 
-    Normalize(ar, idx_AB_AC);
-    Normalize(br, idx_AB_BC);
-    Normalize(cr, idx_AC_BC);
+    normalize(ar, idx_AB_AC);
+    normalize(br, idx_AB_BC);
+    normalize(cr, idx_AC_BC);
 
     tensor_transpose_impl<T>(1.0, A, idx_A, 0.0, ar, idx_AB_AC);
     tensor_transpose_impl<T>(1.0, B, idx_B, 0.0, br, idx_AB_BC);
-    bli_gemm(alp, am, bm, zero, cm);
+    LAWrap::gemm('T', 'N', cm.length(), cm.width(), am.length(),
+                 alpha, am.data(), 1, am.stride(1),
+                        bm.data(), 1, bm.stride(1),
+                   0.0, cm.data(), 1, cm.stride(1));
     tensor_transpose_impl<T>(1.0, cr, idx_AC_BC, beta, C, idx_C);
 
     return 0;
 }
 
 template
-int tensor_contract_blas<   float>(   float alpha, const Tensor<   float>& A, const std::string& idx_A,
-                                                   const Tensor<   float>& B, const std::string& idx_B,
-                                      float  beta,       Tensor<   float>& C, const std::string& idx_C);
+int tensor_contract_blas<   float>(   float alpha, const const_tensor_view<   float>& A, const std::string& idx_A,
+                                                   const const_tensor_view<   float>& B, const std::string& idx_B,
+                                      float  beta,             tensor_view<   float>& C, const std::string& idx_C);
 
 template
-int tensor_contract_blas<  double>(  double alpha, const Tensor<  double>& A, const std::string& idx_A,
-                                                   const Tensor<  double>& B, const std::string& idx_B,
-                                     double  beta,       Tensor<  double>& C, const std::string& idx_C);
+int tensor_contract_blas<  double>(  double alpha, const const_tensor_view<  double>& A, const std::string& idx_A,
+                                                   const const_tensor_view<  double>& B, const std::string& idx_B,
+                                     double  beta,             tensor_view<  double>& C, const std::string& idx_C);
 
 template
-int tensor_contract_blas<sComplex>(sComplex alpha, const Tensor<sComplex>& A, const std::string& idx_A,
-                                                   const Tensor<sComplex>& B, const std::string& idx_B,
-                                   sComplex  beta,       Tensor<sComplex>& C, const std::string& idx_C);
+int tensor_contract_blas<scomplex>(scomplex alpha, const const_tensor_view<scomplex>& A, const std::string& idx_A,
+                                                   const const_tensor_view<scomplex>& B, const std::string& idx_B,
+                                   scomplex  beta,             tensor_view<scomplex>& C, const std::string& idx_C);
 
 template
-int tensor_contract_blas<dComplex>(dComplex alpha, const Tensor<dComplex>& A, const std::string& idx_A,
-                                                   const Tensor<dComplex>& B, const std::string& idx_B,
-                                   dComplex  beta,       Tensor<dComplex>& C, const std::string& idx_C);
+int tensor_contract_blas<dcomplex>(dcomplex alpha, const const_tensor_view<dcomplex>& A, const std::string& idx_A,
+                                                   const const_tensor_view<dcomplex>& B, const std::string& idx_B,
+                                   dcomplex  beta,             tensor_view<dcomplex>& C, const std::string& idx_C);
 
 }
 }

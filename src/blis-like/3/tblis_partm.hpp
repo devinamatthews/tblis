@@ -8,7 +8,7 @@ namespace tblis
 namespace blis_like
 {
 
-template <template <typename> class MT, int Dim>
+template <template <typename> class MT, int Dim, int Threading=matrix_constants::NT_NONE>
 struct Partition
 {
     template <typename T, typename Child, typename... Children>
@@ -113,14 +113,14 @@ struct Partition
     };
 };
 
-template <template <typename> class MT>
-using PartitionM = Partition<MT,matrix_constants::DIM_M>;
+template <template <typename> class MT, int Threading=matrix_constants::NT_NONE>
+using PartitionM = Partition<MT, matrix_constants::DIM_M, Threading>;
 
-template <template <typename> class NT>
-using PartitionN = Partition<NT,matrix_constants::DIM_N>;
+template <template <typename> class NT, int Threading=matrix_constants::NT_NONE>
+using PartitionN = Partition<NT, matrix_constants::DIM_N, Threading>;
 
-template <template <typename> class KT>
-using PartitionK = Partition<KT,matrix_constants::DIM_K>;
+template <template <typename> class KT, int Threading=matrix_constants::NT_NONE>
+using PartitionK = Partition<KT, matrix_constants::DIM_K, Threading>;
 
 }
 }

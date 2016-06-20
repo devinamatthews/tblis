@@ -33,7 +33,8 @@ void AccumulateMicroTile(dim_t m, dim_t n, const T* restrict p_ab,
 
 template <typename T, dim_t MR, dim_t NR>
 void AccumulateMicroTile(dim_t m, dim_t n, const T* restrict p_ab,
-                         T beta, T* restrict p_c, const inc_t* restrict rs_c, inc_t cs_c)
+                         T beta, T* restrict p_c,
+                         const inc_t* restrict rs_c, inc_t cs_c)
 {
     if (beta == 0.0)
     {
@@ -59,7 +60,8 @@ void AccumulateMicroTile(dim_t m, dim_t n, const T* restrict p_ab,
 
 template <typename T, dim_t MR, dim_t NR>
 void AccumulateMicroTile(dim_t m, dim_t n, const T* restrict p_ab,
-                         T beta, T* restrict p_c, inc_t rs_c, const inc_t* restrict cs_c)
+                         T beta, T* restrict p_c,
+                         inc_t rs_c, const inc_t* restrict cs_c)
 {
     if (beta == 0.0)
     {
@@ -85,7 +87,9 @@ void AccumulateMicroTile(dim_t m, dim_t n, const T* restrict p_ab,
 
 template <typename T, dim_t MR, dim_t NR>
 void AccumulateMicroTile(dim_t m, dim_t n, const T* restrict p_ab,
-                         T beta, T* restrict p_c, const inc_t* restrict rs_c, const inc_t* restrict cs_c)
+                         T beta, T* restrict p_c,
+                         const inc_t* restrict rs_c,
+                         const inc_t* restrict cs_c)
 {
     if (beta == 0.0)
     {
@@ -111,11 +115,13 @@ void AccumulateMicroTile(dim_t m, dim_t n, const T* restrict p_ab,
 
 template <typename T, dim_t MR, dim_t NR>
 void GenericMicroKernel(dim_t k,
-                        T alpha, const T* p_a, const T* p_b,
-                        T beta, T* p_c, inc_t rs_c, inc_t cs_c,
-                        const auxinfo_t* data)
+                        const T* restrict alpha,
+                        const T* restrict p_a, const T* restrict p_b,
+                        const T* restrict beta,
+                        T* restrict p_c, inc_t rs_c, inc_t cs_c,
+                        const void* restrict data, const void* restrict cntx)
 {
-    T p_ab[MR*NR] __attribute__((aligned(BLIS_STACK_BUF_ALIGN_SIZE))) = {};
+    T p_ab[MR*NR] __attribute__((aligned(64))) = {};
 
     while (k --> 0)
     {
@@ -142,9 +148,10 @@ void GenericMicroKernel(dim_t k,
     AccumulateMicroTile<T,MR,NR>(MR, NR, p_ab, beta, p_c, rs_c, cs_c);
 }
 
-template <template <typename> class MT, template <typename> class NT>
+template <typename Config>
 template <typename T>
-void MicroKernel<MT,NT>::run<T>::operator()(ThreadCommunicator& comm, T alpha, Matrix<T>& A, Matrix<T>& B,
+void MicroKernel<Config>::run<T>::operator()(ThreadCommunicator& comm,
+                                             T alpha, const Matrix<T>& A, const Matrix<T>& B,
                                              T beta, Matrix<T>& C) const
 {
     const T* p_a = A.data();
@@ -160,37 +167,30 @@ void MicroKernel<MT,NT>::run<T>::operator()(ThreadCommunicator& comm, T alpha, M
     auxinfo_t data;
     //bli_auxinfo_set_next_ab(p_a, p_b, data);
 
-    cntx_t context;
-    context.blkszs[BLIS_MR].v[blis_type<T>::value] = MR;
-    context.blkszs[BLIS_MR].e[blis_type<T>::value] = MR;
-    context.blkszs[BLIS_NR].v[blis_type<T>::value] = NR;
-    context.blkszs[BLIS_NR].e[blis_type<T>::value] = NR;
-
     if (m == MR && n == NR)
     {
-        gemm_ukr_t<T>::value(k,
-                             fwd(alpha), fwd(p_a), fwd(p_b),
-                             fwd(beta), fwd(p_c), rs_c, cs_c,
-                             &data, &context);
+        ukr(k, &alpha, p_a, p_b,
+            &beta, p_c, rs_c, cs_c,
+            &data, nullptr);
     }
     else
     {
-        T p_ab[MR*NR] __attribute__((aligned(BLIS_STACK_BUF_ALIGN_SIZE)));
+        T p_ab[MR*NR] __attribute__((aligned(64)));
         static constexpr T zero = 0.0;
 
-        gemm_ukr_t<T>::value(k,
-                             fwd(alpha), fwd(p_a), fwd(p_b),
-                             fwd(zero), fwd(p_ab), 1, MR,
-                             &data, &context);
+        ukr(k, &alpha, p_a, p_b,
+            &zero, p_ab, 1, MR,
+            &data, nullptr);
 
         AccumulateMicroTile<T,MR,NR>(m, n, p_ab,
                                      beta, p_c, rs_c, cs_c);
     }
 }
 
-template <template <typename> class MT, template <typename> class NT>
+template <typename Config>
 template <typename T>
-void MicroKernel<MT,NT>::run<T>::operator()(ThreadCommunicator& comm, T alpha, Matrix<T>& A, Matrix<T>& B,
+void MicroKernel<Config>::run<T>::operator()(ThreadCommunicator& comm,
+                                             T alpha, const Matrix<T>& A, const Matrix<T>& B,
                                              T beta, ScatterMatrix<T>& C) const
 {
     const T* p_a = A.data();
@@ -208,28 +208,20 @@ void MicroKernel<MT,NT>::run<T>::operator()(ThreadCommunicator& comm, T alpha, M
     auxinfo_t data;
     //bli_auxinfo_set_next_ab(p_a, p_b, data);
 
-    cntx_t context;
-    context.blkszs[BLIS_MR].v[blis_type<T>::value] = MR;
-    context.blkszs[BLIS_MR].e[blis_type<T>::value] = MR;
-    context.blkszs[BLIS_NR].v[blis_type<T>::value] = NR;
-    context.blkszs[BLIS_NR].e[blis_type<T>::value] = NR;
-
     if (m == MR && n == NR && rs_c != 0 && cs_c != 0)
     {
-        gemm_ukr_t<T>::value(k,
-                             fwd(alpha), fwd(p_a), fwd(p_b),
-                             fwd(beta), fwd(p_c), rs_c, cs_c,
-                             &data, &context);
+        ukr(k, &alpha, p_a, p_b,
+            &beta, p_c, rs_c, cs_c,
+            &data, nullptr);
     }
     else
     {
-        T p_ab[MR*NR] __attribute__((aligned(BLIS_STACK_BUF_ALIGN_SIZE)));
+        T p_ab[MR*NR] __attribute__((aligned(64)));
         static constexpr T zero = 0.0;
 
-        gemm_ukr_t<T>::value(k,
-                             fwd(alpha), fwd(p_a), fwd(p_b),
-                             fwd(zero), fwd(p_ab), 1, MR,
-                             &data, &context);
+        ukr(k, &alpha, p_a, p_b,
+            &zero, p_ab, 1, MR,
+            &data, nullptr);
 
         if (rs_c == 0 && cs_c == 0)
         {
@@ -254,9 +246,10 @@ void MicroKernel<MT,NT>::run<T>::operator()(ThreadCommunicator& comm, T alpha, M
     }
 }
 
-template <template <typename> class MT, template <typename> class NT>
+template <typename Config>
 template <typename T>
-void MicroKernel<MT,NT>::run<T>::operator()(ThreadCommunicator& comm, T alpha, Matrix<T>& A, Matrix<T>& B,
+void MicroKernel<Config>::run<T>::operator()(ThreadCommunicator& comm,
+                                             T alpha, const Matrix<T>& A, const Matrix<T>& B,
                                              T beta, BlockScatterMatrix<T,MR,NR>& C) const
 {
     const T* p_a = A.data();
@@ -274,28 +267,20 @@ void MicroKernel<MT,NT>::run<T>::operator()(ThreadCommunicator& comm, T alpha, M
     auxinfo_t data;
     //bli_auxinfo_set_next_ab(p_a, p_b, data);
 
-    cntx_t context;
-    context.blkszs[BLIS_MR].v[blis_type<T>::value] = MR;
-    context.blkszs[BLIS_MR].e[blis_type<T>::value] = MR;
-    context.blkszs[BLIS_NR].v[blis_type<T>::value] = NR;
-    context.blkszs[BLIS_NR].e[blis_type<T>::value] = NR;
-
     if (m == MR && n == NR && rs_c != 0 && cs_c != 0)
     {
-        gemm_ukr_t<T>::value(k,
-                             fwd(alpha), fwd(p_a), fwd(p_b),
-                             fwd(beta), fwd(p_c), rs_c, cs_c,
-                             &data, &context);
+        ukr(k, &alpha, p_a, p_b,
+            &beta, p_c, rs_c, cs_c,
+            &data, nullptr);
     }
     else
     {
-        T p_ab[MR*NR] __attribute__((aligned(BLIS_STACK_BUF_ALIGN_SIZE)));
+        T p_ab[MR*NR] __attribute__((aligned(64)));
         static constexpr T zero = 0.0;
 
-        gemm_ukr_t<T>::value(k,
-                             fwd(alpha), fwd(p_a), fwd(p_b),
-                             fwd(zero), fwd(p_ab), 1, MR,
-                             &data, &context);
+        ukr(k, &alpha, p_a, p_b,
+            &zero, p_ab, 1, MR,
+            &data, nullptr);
 
         if (rs_c == 0 && cs_c == 0)
         {

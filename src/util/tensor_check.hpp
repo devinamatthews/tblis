@@ -9,86 +9,6 @@
 namespace tblis
 {
 
-template <typename T> class Tensor;
-
-namespace util
-{
-
-template <typename len_type, typename stride_type>
-int check_tensor(gint_t ndim, const len_type len, const stride_type stride)
-{
-    if (ndim < 0)
-    {
-        abort();
-    }
-
-    if (ndim > 0 && !len)
-    {
-        abort();
-    }
-
-    #if !TENSOR_ALLOW_NULL_STRIDE
-    if (ndim > 0 && !stride)
-    {
-        abort();
-    }
-    #endif
-
-    for (gint_t i = 0;i < ndim;i++)
-    {
-        if (len[i] <= 0)
-        {
-            abort();
-        }
-
-        #if TENSOR_REQUIRE_POSITIVE_STRIDES
-        if (!!stride && stride[i] <= 0)
-        {
-            abort();
-        }
-        #endif
-    }
-
-    #if TENSOR_REQUIRE_DISJOINT_STRIDES
-
-    if (!!stride)
-    {
-        std::vector<std::pair<inc_t,gint_t> > stride_idx;
-        stride_idx.reserve(ndim);
-
-        for (gint_t i = 0;i < ndim;i++)
-        {
-            if (len[i] > 1)
-            stride_idx.push_back(std::make_pair(std::abs(stride[i]), i));
-        }
-
-        sort(stride_idx);
-
-        for (gint_t i = 1;i < stride_idx.size();i++)
-        {
-            if (stride_idx[i].first < stride_idx[i-1].first*len[stride_idx[i-1].second])
-            {
-                abort();
-            }
-        }
-    }
-
-    #endif
-
-    return 0;
-}
-
-template <typename len_type, typename stride_type>
-int check_tensor(gint_t ndim, const len_type len, const void* data, const stride_type stride)
-{
-    if (!data)
-    {
-        abort();
-    }
-
-    return check_tensor(ndim, len, stride);
-}
-
 template <typename T>
 int check_tensor_indices(const Tensor<T>& A, const std::string& idx_A)
 {
@@ -255,7 +175,6 @@ int check_tensor_indices(const Tensor<T>& A, std::string idx_A,
     return 0;
 }
 
-}
 }
 
 #endif

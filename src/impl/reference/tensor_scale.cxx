@@ -46,10 +46,10 @@ template
 int tensor_scale_reference<  double>(  double alpha, Tensor<  double>& A, const std::string& idx_A);
 
 template
-int tensor_scale_reference<sComplex>(sComplex alpha, Tensor<sComplex>& A, const std::string& idx_A);
+int tensor_scale_reference<scomplex>(scomplex alpha, Tensor<scomplex>& A, const std::string& idx_A);
 
 template
-int tensor_scale_reference<dComplex>(dComplex alpha, Tensor<dComplex>& A, const std::string& idx_A);
+int tensor_scale_reference<dcomplex>(dcomplex alpha, Tensor<dcomplex>& A, const std::string& idx_A);
 
 }
 }

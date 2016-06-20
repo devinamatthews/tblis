@@ -7,8 +7,8 @@ namespace blis_like
 
 namespace detail
 {
-    MemoryPool BuffersForA(BLIS_POOL_ADDR_ALIGN_SIZE);
-    MemoryPool BuffersForB(BLIS_POOL_ADDR_ALIGN_SIZE);
+    MemoryPool BuffersForA(4096);
+    MemoryPool BuffersForB(4096);
 }
 
 template <typename T, dim_t MR, dim_t KR>
@@ -94,7 +94,8 @@ void PackMicroPanel(dim_t m, dim_t k,
 
 template <typename T, dim_t MR, dim_t KR>
 void PackMicroPanel(dim_t m, dim_t k,
-                    const T* restrict & p_a, const inc_t* restrict & rs_a, inc_t cs_a,
+                    const T* restrict & p_a,
+                    const inc_t* restrict & rs_a, inc_t cs_a,
                     T* restrict & p_ap)
 {
     dim_t k_rem = util::remainder(k, KR);
@@ -147,7 +148,8 @@ void PackMicroPanel(dim_t m, dim_t k,
 
 template <typename T, dim_t MR, dim_t KR>
 void PackMicroPanel(dim_t m, dim_t k,
-                    const T* restrict & p_a, inc_t rs_a, const inc_t* restrict cs_a,
+                    const T* restrict & p_a,
+                    inc_t rs_a, const inc_t* restrict cs_a,
                     T* restrict & p_ap)
 {
     dim_t k_rem = util::remainder(k, KR);
@@ -197,7 +199,8 @@ void PackMicroPanel(dim_t m, dim_t k,
 
 template <typename T, dim_t MR, dim_t KR>
 void PackMicroPanel(dim_t m, dim_t k,
-                    const T* restrict & p_a, const inc_t* restrict & rs_a, const inc_t* restrict cs_a,
+                    const T* restrict & p_a,
+                    const inc_t* restrict & rs_a, const inc_t* restrict cs_a,
                     T* restrict & p_ap)
 {
     dim_t k_rem = util::remainder(k, KR);

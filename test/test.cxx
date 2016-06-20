@@ -10,10 +10,8 @@
 #include <iomanip>
 
 #include "tblis.hpp"
-#include "util/util.hpp"
 
 using namespace std;
-using namespace blis;
 using namespace tblis;
 using namespace tblis::impl;
 using namespace tblis::util;
@@ -28,43 +26,25 @@ mt19937 engine;
 }
 
 template <typename T>
-void gemm_ref(T alpha, obj_t* A, obj_t* B, T beta, obj_t* C)
+void gemm_ref(T alpha, const Matrix<T>& A, const Matrix<T>& B, T beta, Matrix<T>& C)
 {
-    T* ptr_A = (T*)bli_obj_buffer(*A);
-    T* ptr_B = (T*)bli_obj_buffer(*B);
-    T* ptr_C = (T*)bli_obj_buffer(*C);
+    const T* ptr_A = A.data();
+    const T* ptr_B = B.data();
+          T* ptr_C = C.data();
 
-    dim_t m_A = bli_obj_length(*A);
-    dim_t m_C = bli_obj_length(*C);
-    dim_t n_B = bli_obj_width(*B);
-    dim_t n_C = bli_obj_width(*C);
-    dim_t k_A = bli_obj_width(*A);
-    dim_t k_B = bli_obj_length(*B);
+    dim_t m_A = A.length();
+    dim_t m_C = C.length();
+    dim_t n_B = B.width();
+    dim_t n_C = C.width();
+    dim_t k_A = A.width();
+    dim_t k_B = B.width();
 
-    inc_t rs_A = bli_obj_row_stride(*A);
-    inc_t cs_A = bli_obj_col_stride(*A);
-    inc_t rs_B = bli_obj_row_stride(*B);
-    inc_t cs_B = bli_obj_col_stride(*B);
-    inc_t rs_C = bli_obj_row_stride(*C);
-    inc_t cs_C = bli_obj_col_stride(*C);
-
-    if (bli_obj_has_trans(*A))
-    {
-        swap(m_A, k_A);
-        swap(rs_A, cs_A);
-    }
-
-    if (bli_obj_has_trans(*B))
-    {
-        swap(k_B, n_B);
-        swap(rs_B, cs_B);
-    }
-
-    if (bli_obj_has_trans(*C))
-    {
-        swap(m_C, n_C);
-        swap(rs_C, cs_C);
-    }
+    inc_t rs_A = A.row_stride();
+    inc_t cs_A = A.col_stride();
+    inc_t rs_B = B.row_stride();
+    inc_t cs_B = B.col_stride();
+    inc_t rs_C = C.row_stride();
+    inc_t cs_C = C.col_stride();
 
     ASSERT(m_A == m_C);
     ASSERT(n_B == n_C);
@@ -160,15 +140,15 @@ template <> const string& TypeName<double>()
     return name;
 }
 
-template <> const string& TypeName<sComplex>()
+template <> const string& TypeName<scomplex>()
 {
-    static string name = "sComplex";
+    static string name = "scomplex";
     return name;
 }
 
-template <> const string& TypeName<dComplex>()
+template <> const string& TypeName<dcomplex>()
 {
-    static string name = "dComplex";
+    static string name = "dcomplex";
     return name;
 }
 
@@ -1038,7 +1018,6 @@ void TestTBLIS(siz_t N)
 
         T ref_val, calc_val;
         T scale = 10.0*RandomUnit<T>();
-        Scalar<T> scale_obj(scale), res_obj;
 
         cout << endl;
         cout << "Testing TBLIS/" << (pass == 0 ? "GEMM" :
@@ -1063,27 +1042,19 @@ void TestTBLIS(siz_t N)
 
         D = C;
         gemm_ref(scale, A, B, scale, D);
-        bli_normfm(D, res_obj);
-        ref_val = (T)res_obj;
+        tblis_normfm(D, ref_val);
 
         D = C;
         tblis_gemm(scale, A, B, scale, D);
         tblis_normfm(D, calc_val);
 
         passfail("REF", ref_val, calc_val);
-
-        D = C;
-        bli_gemm(scale_obj, A, B, scale_obj, D);
-        bli_normfm(D, res_obj);
-        ref_val = (T)res_obj;
-
-        passfail("BLIS", ref_val, calc_val);
     }
 }
 
-template <> void TestTBLIS<sComplex>(siz_t N) {}
+template <> void TestTBLIS<scomplex>(siz_t N) {}
 
-template <> void TestTBLIS<dComplex>(siz_t N) {}
+template <> void TestTBLIS<dcomplex>(siz_t N) {}
 
 template <typename T>
 void TestMult(siz_t N)
@@ -1827,8 +1798,8 @@ int main(int argc, char **argv)
 
     Test<   float>(N, R);
     Test<  double>(N, R);
-    Test<sComplex>(N, R);
-    Test<dComplex>(N, R);
+    Test<scomplex>(N, R);
+    Test<dcomplex>(N, R);
 
     tblis_finalize();
 

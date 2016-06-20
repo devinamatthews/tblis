@@ -1,0 +1,10 @@
+*.o
+*.a
+*.la
+.project
+.cproject
+.deps
+.settings
+.ptp-sync
+.ptp-sync-folder
+.git.bak

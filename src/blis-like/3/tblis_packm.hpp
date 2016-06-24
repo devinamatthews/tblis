@@ -44,9 +44,9 @@ struct PackRowPanel
 {
     void operator()(ThreadCommunicator& comm, const Matrix<T>& A, Matrix<T>& Ap) const;
 
-    void operator()(ThreadCommunicator& comm, const ScatterMatrix<T>& A, Matrix<T>& Ap) const;
+    void operator()(ThreadCommunicator& comm, const const_scatter_matrix_view<T>& A, Matrix<T>& Ap) const;
 
-    void operator()(ThreadCommunicator& comm, const BlockScatterMatrix<T,(Trans ? KR : MR),(Trans ? MR : KR)>& A, Matrix<T>& Ap) const;
+    void operator()(ThreadCommunicator& comm, const block_scatter_matrix<T,(Trans ? KR : MR),(Trans ? MR : KR)>& A, Matrix<T>& Ap) const;
 };
 
 template <typename T>
@@ -57,13 +57,13 @@ struct PackNoop
         memset(Ap.data(), 0, Ap.width()*Ap.length()*sizeof(T));
     }
 
-    void operator()(ThreadCommunicator& comm, ScatterMatrix<T>& A, Matrix<T>& Ap) const
+    void operator()(ThreadCommunicator& comm, const_scatter_matrix_view<T>& A, Matrix<T>& Ap) const
     {
         memset(Ap.data(), 0, Ap.width()*Ap.length()*sizeof(T));
     }
 
     template <dim_t UB, dim_t VB>
-    void operator()(ThreadCommunicator& comm, BlockScatterMatrix<T,UB,VB>& A, Matrix<T>& Ap) const
+    void operator()(ThreadCommunicator& comm, block_scatter_matrix<T,UB,VB>& A, Matrix<T>& Ap) const
     {
         memset(Ap.data(), 0, Ap.width()*Ap.length()*sizeof(T));
     }

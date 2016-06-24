@@ -92,6 +92,12 @@ struct TBLIS_CONFIG_STRUCT(TBLIS_CONFIG_NAME)
     template <> struct gemm_ukr<  double> { static constexpr gemm_ukr_t<  double> value = BLIS_DGEMM_UKERNEL; };
     template <> struct gemm_ukr<scomplex> { static constexpr gemm_ukr_t<scomplex> value = BLIS_CGEMM_UKERNEL; };
     template <> struct gemm_ukr<dcomplex> { static constexpr gemm_ukr_t<dcomplex> value = BLIS_ZGEMM_UKERNEL; };
+
+    template <typename T> struct gemm_row_major {};
+    template <> struct gemm_row_major<   float> { static constexpr bool value = BLIS_SGEMM_UKERNEL_PREFERS_CONTIG_ROWS; };
+    template <> struct gemm_row_major<  double> { static constexpr bool value = BLIS_DGEMM_UKERNEL_PREFERS_CONTIG_ROWS; };
+    template <> struct gemm_row_major<scomplex> { static constexpr bool value = BLIS_CGEMM_UKERNEL_PREFERS_CONTIG_ROWS; };
+    template <> struct gemm_row_major<dcomplex> { static constexpr bool value = BLIS_ZGEMM_UKERNEL_PREFERS_CONTIG_ROWS; };
 };
 
 }

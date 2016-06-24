@@ -6,17 +6,22 @@
 namespace MArray
 {
 
-template <typename idx_type, typename stride_type, unsigned N=1>
+template <unsigned N=1>
 class viterator
 {
     public:
+        typedef unsigned idx_type;
+        typedef ptrdiff_t stride_type;
+
+        viterator() {}
+
         viterator(const viterator&) = default;
 
         viterator(viterator&&) = default;
 
         template <typename Len, typename... Strides,
-                  typename=typename std::enable_if<detail::is_container_of<idx_type, Len>::value &&
-                                                   detail::are_containers_of<stride_type, Strides...>::value &&
+                  typename=typename std::enable_if<detail::is_container<Len>::value &&
+                                                   detail::are_containers<Strides...>::value &&
                                                    sizeof...(Strides) == N>::type>
         viterator(const Len& len, const Strides&... strides)
         : _ndim(len.size()), _pos(len.size()), _len(len.size()), _first(true), _empty(false)
@@ -158,17 +163,17 @@ class viterator
         }
 
     private:
-        size_t _ndim;
+        size_t _ndim = 0;
         std::vector<idx_type> _pos;
         std::vector<idx_type> _len;
         std::array<std::vector<stride_type>,N> _strides;
-        bool _first;
-        bool _empty;
+        bool _first = true;
+        bool _empty = true;
 };
 
 template <typename idx_type, typename stride_type, typename... Strides,
-          typename=typename std::enable_if<detail::are_vectors_of<stride_type, Strides...>::value>::type>
-viterator<idx_type, stride_type, 1+sizeof...(Strides)>
+          typename=typename std::enable_if<detail::are_containers<Strides...>::value>::type>
+viterator<1+sizeof...(Strides)>
 make_iterator(const std::vector<idx_type>& len,
               const std::vector<stride_type>& stride0,
               const Strides&... strides)

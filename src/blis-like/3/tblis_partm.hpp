@@ -28,18 +28,32 @@ struct Partition
         void operator()(ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
         {
             using namespace matrix_constants;
+            using namespace std::placeholders;
 
             constexpr dim_t M_def  = MT<T>::def;
             constexpr dim_t M_max  = MT<T>::max;
             constexpr dim_t M_iota = MT<T>::iota;
 
-            dim_t m_u = (Dim == DIM_M ? A.length() : Dim == DIM_N ? B.width() : A.width());
-            dim_t m_v = (Dim == DIM_M ? C.length() : Dim == DIM_N ? C.width() : B.length());
+            auto length = [&](dim_t m_u, dim_t m_v)
+            {
+                (Dim == DIM_M ? A.length(0, m_u) : Dim == DIM_N ? B.length(1, m_u) : A.length(1, m_u));
+                (Dim == DIM_M ? C.length(0, m_v) : Dim == DIM_N ? C.length(1, m_v) : B.length(0, m_v));
+            };
+
+            auto shift = [&](dim_t m)
+            {
+                (Dim == DIM_M ? A.shift(0, m) : Dim == DIM_N ? B.shift(1, m) : A.shift(1, m));
+                (Dim == DIM_M ? C.shift(0, m) : Dim == DIM_N ? C.shift(1, m) : B.shift(0, m));
+            };
+
+            dim_t m_u = (Dim == DIM_M ? A.length(0) : Dim == DIM_N ? B.length(1) : A.length(1));
+            dim_t m_v = (Dim == DIM_M ? C.length(0) : Dim == DIM_N ? C.length(1) : B.length(0));
 
             ASSERT(distribute <= comm.num_threads());
 
             dim_t m_first = 0;
-            dim_t m_last = std::max(m_u, m_v);
+            dim_t m_last = std::min(m_u, m_v);
+            dim_t m_max = m_last;
 
             if (distribute > 1)
             {
@@ -49,9 +63,9 @@ struct Partition
                     ganged = true;
                 }
 
-                std::tie(m_first, m_last) =
+                std::tie(m_first, m_last, m_max) =
                     subcomm.distribute_over_gangs(distribute,
-                                                  std::max(m_u, m_v),
+                                                  std::min(m_u, m_v),
                                                   M_iota);
 
                 //printf_locked("%d: gang (%d,%d) %ld %ld %ld %ld\n",
@@ -61,50 +75,51 @@ struct Partition
 
             ThreadCommunicator& child_comm = (distribute > 1 ? subcomm : comm);
 
-            dim_t m_last_u = std::min(m_last, m_u);
-            dim_t m_last_v = std::min(m_last, m_v);
-
             //printf_locked("%d: bef (%d,%d) %p %p %p %p %p %p\n",
             //              Dim, child_comm.gang_num(), child_comm.thread_num(),
             //              &A, A.data(), &B, B.data(), &C, C.data());
 
-            (Dim == DIM_M ? A.length(m_last_u-m_first) : Dim == DIM_N ? B.width(m_last_u-m_first) : A.width(m_last_u-m_first));
-            (Dim == DIM_M ? C.length(m_last_v-m_first) : Dim == DIM_N ? C.width(m_last_v-m_first) : B.length(m_last_v-m_first));
-            (Dim == DIM_M ? A.shift_down(m_first) : Dim == DIM_N ? B.shift_right(m_first) : A.shift_right(m_first));
-            (Dim == DIM_M ? C.shift_down(m_first) : Dim == DIM_N ? C.shift_right(m_first) : B.shift_down(m_first));
+            length(m_last-m_first);
+            shift(m_first);
 
-            dim_t u = 0;
-            dim_t v = 0;
-            for (dim_t off_u  =  m_first,   off_v  =  m_first;
-                       off_u  < m_last_u && off_v  < m_last_v;
-                       off_u +=        u,   off_v +=        v)
+            int count = 0;
+            dim_t m_loc = 0;
+            dim_t m_off = m_first;
+
+            if ((m_last-m_first)%M_def <= (M_max-M_def))
             {
-                if (m_last_u-off_u <= M_max && m_last_v-off_v <= M_max)
-                {
-                    u = m_last_u-off_u;
-                    v = m_last_v-off_v;
-                }
-                else
-                {
-                    u = M_def;
-                    v = M_def;
-                }
-
-                (Dim == DIM_M ? A.length(u) : Dim == DIM_N ? B.width(u) : A.width(u));
-                (Dim == DIM_M ? C.length(v) : Dim == DIM_N ? C.width(v) : B.length(v));
-
+                m_loc = std::min(m_last-m_off, M_max);
+                length(m_loc, m_loc);
                 child(child_comm, alpha, A, B, beta, C);
-
-                (Dim == DIM_M ? A.shift_down() : Dim == DIM_N ? B.shift_right() : A.shift_right());
-                (Dim == DIM_M ? C.shift_down() : Dim == DIM_N ? C.shift_right() : B.shift_down());
-
+                shift(m_loc);
                 if (Dim == DIM_K) beta = 1.0;
+                m_off += m_loc;
+                count++;
             }
 
-            (Dim == DIM_M ? A.shift_up(m_last_u) : Dim == DIM_N ? B.shift_left(m_last_u) : A.shift_left(m_last_u));
-            (Dim == DIM_M ? C.shift_up(m_last_v) : Dim == DIM_N ? C.shift_left(m_last_v) : B.shift_up(m_last_v));
-            (Dim == DIM_M ? A.length(m_u) : Dim == DIM_N ? B.width(m_u) : A.width(m_u));
-            (Dim == DIM_M ? C.length(m_v) : Dim == DIM_N ? C.width(m_v) : B.length(m_v));
+            while (m_off < m_last)
+            {
+                m_loc = std::min(m_last-m_off, M_def);
+                length(m_loc, m_loc);
+                child(child_comm, alpha, A, B, beta, C);
+                shift(m_loc);
+                if (Dim == DIM_K) beta = 1.0;
+                m_off += m_loc;
+                count++;
+            }
+
+            dim_t n_this = (m_last-m_first+M_def-1)/M_def - (((m_last-m_first)%M_def) <= M_max-M_def);
+            dim_t n_max = (m_max-m_first+M_def-1)/M_def - (((m_max-m_first)%M_def) <= M_max-M_def);
+            assert(count == n_this);
+
+            length(0, 0);
+            for (;n_this < n_max;n_this++)
+            {
+                child(child_comm, alpha, A, B, beta, C);
+            }
+
+            shift(-m_last);
+            length(m_u, m_v);
 
             //printf_locked("%d: aft (%d,%d) %p %p %p %p %p %p\n",
             //              Dim, child_comm.gang_num(), child_comm.thread_num(),

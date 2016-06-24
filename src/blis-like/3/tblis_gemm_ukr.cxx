@@ -151,8 +151,9 @@ void GenericMicroKernel(dim_t k,
 template <typename Config>
 template <typename T>
 void MicroKernel<Config>::run<T>::operator()(ThreadCommunicator& comm,
-                                             T alpha, const Matrix<T>& A, const Matrix<T>& B,
-                                             T beta, Matrix<T>& C) const
+                                             T alpha, const const_matrix_view<T>& A,
+                                                      const const_matrix_view<T>& B,
+                                             T  beta,             matrix_view<T>& C) const
 {
     const T* p_a = A.data();
     const T* p_b = B.data();
@@ -190,8 +191,9 @@ void MicroKernel<Config>::run<T>::operator()(ThreadCommunicator& comm,
 template <typename Config>
 template <typename T>
 void MicroKernel<Config>::run<T>::operator()(ThreadCommunicator& comm,
-                                             T alpha, const Matrix<T>& A, const Matrix<T>& B,
-                                             T beta, ScatterMatrix<T>& C) const
+                                             T alpha, const const_matrix_view<T>& A,
+                                                      const const_matrix_view<T>& B,
+                                             T  beta,           const_scatter_matrix_view<T>& C) const
 {
     const T* p_a = A.data();
     const T* p_b = B.data();
@@ -249,8 +251,9 @@ void MicroKernel<Config>::run<T>::operator()(ThreadCommunicator& comm,
 template <typename Config>
 template <typename T>
 void MicroKernel<Config>::run<T>::operator()(ThreadCommunicator& comm,
-                                             T alpha, const Matrix<T>& A, const Matrix<T>& B,
-                                             T beta, BlockScatterMatrix<T,MR,NR>& C) const
+                                             T alpha,  const const_matrix_view<T>& A,
+                                                       const const_matrix_view<T>& B,
+                                             T  beta, block_scatter_matrix<T,MR,NR>& C) const
 {
     const T* p_a = A.data();
     const T* p_b = B.data();

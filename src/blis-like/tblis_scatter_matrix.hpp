@@ -8,454 +8,870 @@ namespace tblis
 namespace blis_like
 {
 
-enum scatter_t
-{
-    SCATTER_NONE = 0x0,
-    SCATTER_ROWS = 0x1,
-    SCATTER_COLS = 0x2,
-    SCATTER_BOTH = SCATTER_ROWS|SCATTER_COLS
-};
+template <typename T>
+class const_scatter_matrix_view;
 
 template <typename T>
-class ScatterMatrix
-{
-    public:
-        typedef T type;
-        typedef typename real_type<T>::type real_type;
+class scatter_matrix_view;
 
-    private:
-        trans_op_t _conjtrans;
-        type* _ptr;
-        dim_t _m;
-        dim_t _n;
-        inc_t _rs;
-        inc_t _cs;
-        inc_t* _rscat;
-        inc_t* _cscat;
+template <typename T, unsigned ndim> void copy(const_scatter_matrix_view<T> a, scatter_matrix_view<T> b);
+
+namespace detail
+{
+    template <typename T>
+    class const_scatter_matrix_ref;
+
+    template <typename T>
+    class scatter_matrix_ref;
+
+    template <typename T>
+    class const_scatter_matrix_slice;
+
+    template <typename T>
+    class scatter_matrix_slice;
+
+    template <typename T>
+    class const_scatter_matrix_ref
+    {
+        template <typename T_> friend class tblis::blis_like::const_scatter_matrix_view;
+        template <typename T_> friend class tblis::blis_like::scatter_matrix_view;
+        template <typename T_> friend class const_scatter_matrix_ref;
+        template <typename T_> friend class scatter_matrix_ref;
+        template <typename T_> friend class const_scatter_matrix_slice;
+        template <typename T_> friend class scatter_matrix_slice;
+
+        protected:
+            typedef scatter_matrix_view<T> base;
+
+            typedef typename base::stride_type stride_type;
+            typedef typename base::scatter_type scatter_type;
+            typedef typename base::idx_type idx_type;
+            typedef typename base::value_type value_type;
+            typedef typename base::pointer pointer;
+            typedef typename base::const_pointer const_pointer;
+            typedef typename base::reference reference;
+            typedef typename base::const_reference const_reference;
+
+            base& array;
+            stride_type idx;
+
+            const_scatter_matrix_ref(const const_scatter_matrix_ref& other) = default;
+
+            const_scatter_matrix_ref(const base& array, idx_type i)
+            : array(const_cast<base&>(static_cast<const base&>(array))),
+              idx(array.stride_[1] == 0 ? array.scatter_[1][i] : i*array.stride_[1]) {}
+
+            const_scatter_matrix_ref& operator=(const const_scatter_matrix_ref&) = delete;
+
+        public:
+            const_reference operator[](idx_type i) const
+            {
+                return data()[array.stride_[0] == 0 ? array.scatter_[0][i] : i*array.stride_[0]];
+            }
+
+            const_reference operator()(idx_type i) const
+            {
+                return (*this)[i];
+            }
+
+            const_pointer data() const
+            {
+                return array.data_+idx;
+            }
+    };
+
+    template <typename T>
+    class scatter_matrix_ref : public const_scatter_matrix_ref<T>
+    {
+        template <typename T_> friend class tblis::blis_like::const_scatter_matrix_view;
+        template <typename T_> friend class tblis::blis_like::scatter_matrix_view;
+        template <typename T_> friend class const_scatter_matrix_ref;
+        template <typename T_> friend class scatter_matrix_ref;
+        template <typename T_> friend class const_scatter_matrix_slice;
+        template <typename T_> friend class scatter_matrix_slice;
+
+        protected:
+            typedef scatter_matrix_view<T> base;
+            typedef const_scatter_matrix_ref<T> parent;
+
+            typedef typename base::stride_type stride_type;
+            typedef typename base::scatter_type scatter_type;
+            typedef typename base::idx_type idx_type;
+            typedef typename base::value_type value_type;
+            typedef typename base::pointer pointer;
+            typedef typename base::const_pointer const_pointer;
+            typedef typename base::reference reference;
+            typedef typename base::const_reference const_reference;
+
+            using parent::array;
+            using parent::idx;
+
+            scatter_matrix_ref(const parent& other)
+            : parent(other) {}
+
+            scatter_matrix_ref(const scatter_matrix_ref& other) = default;
+
+            scatter_matrix_ref(scatter_matrix_view<T>& array, stride_type idx, idx_type i)
+            : parent(array, idx, i) {}
+
+            scatter_matrix_ref& operator=(const scatter_matrix_ref&) = delete;
+
+        public:
+            using parent::operator[];
+
+            reference operator[](idx_type i)
+            {
+                return const_cast<reference>(parent::operator[](i));
+            }
+
+            using parent::operator();
+
+            reference operator()(idx_type i)
+            {
+                return (*this)[i];
+            }
+
+            using parent::data;
+
+            pointer data()
+            {
+                return const_cast<pointer>(parent::data());
+            }
+    };
+
+    template <typename T>
+    class const_scatter_matrix_slice
+    {
+        template <typename T_> friend class tblis::blis_like::const_scatter_matrix_view;
+        template <typename T_> friend class tblis::blis_like::scatter_matrix_view;
+        template <typename T_> friend class const_scatter_matrix_ref;
+        template <typename T_> friend class scatter_matrix_ref;
+        template <typename T_> friend class const_scatter_matrix_slice;
+        template <typename T_> friend class scatter_matrix_slice;
+
+        protected:
+            typedef scatter_matrix_view<T> base;
+
+            typedef typename base::stride_type stride_type;
+            typedef typename base::scatter_type scatter_type;
+            typedef typename base::idx_type idx_type;
+            typedef typename base::value_type value_type;
+            typedef typename base::pointer pointer;
+            typedef typename base::const_pointer const_pointer;
+            typedef typename base::reference reference;
+            typedef typename base::const_reference const_reference;
+
+            base& array;
+            stride_type idx;
+            idx_type len;
+            scatter_type cscat;
+
+            const_scatter_matrix_slice(const const_scatter_matrix_slice& other) = default;
+
+            template <typename I>
+            const_scatter_matrix_slice(const const_scatter_matrix_view<T>& array, const range_t<I>& r)
+            : array(const_cast<base&>(static_cast<const base&>(array))),
+              idx(array.stride_[1] == 0 ? array.scatter_[1][r.front()] : r.front()*array.stride_[1]),
+              len(r.size()), cscat(array.stride_[1] == 0 ? array.scatter_[1]+r.front() : nullptr) {}
+
+            const_scatter_matrix_slice& operator=(const const_scatter_matrix_slice&) = delete;
+
+        public:
+
+            template <typename I>
+            const_scatter_matrix_view<T> operator[](const range_t<I>& x) const
+            {
+                assert(x.front() <= x.back() && x.front() >= 0 && x.back() <= array.len_[0]);
+
+                if (array.stride_[0] == 0)
+                {
+                    if (array.stride_[1] == 0)
+                        return {x.size(), len, data()+array.scatter_[0][x.front()], array.scatter_[0]+x.front(), cscat};
+                    else
+                        return {x.size(), len, data()+array.scatter_[0][x.front()], array.scatter_[0]+x.front(), array.stride_[1]};
+                }
+                else
+                {
+                    if (array.stride_[1] == 0)
+                        return {x.size(), len, data()+x.front()*array.stride_[0], array.stride_[0], cscat};
+                    else
+                        return {x.size(), len, data()+x.front()*array.stride_[0], array.stride_[0], array.stride_[1]};
+                }
+            }
+
+            const_scatter_matrix_view<T> operator[](MArray::slice::all_t x) const
+            {
+                return *this;
+            }
+
+            template <typename I>
+            const_scatter_matrix_view<T> operator()(const range_t<I>& x) const
+            {
+                return (*this)[x];
+            }
+
+            const_scatter_matrix_view<T> operator()(MArray::slice::all_t x) const
+            {
+                return (*this)[x];
+            }
+
+            const_pointer data() const
+            {
+                return array.data_+idx;
+            }
+
+            operator const_scatter_matrix_view<T>() const
+            {
+                return (*this)[range(array.len_[0])];
+            }
+    };
+
+    template <typename T>
+    class scatter_matrix_slice : public const_scatter_matrix_slice<T>
+    {
+        template <typename T_> friend class tblis::blis_like::const_scatter_matrix_view;
+        template <typename T_> friend class tblis::blis_like::scatter_matrix_view;
+        template <typename T_> friend class const_scatter_matrix_ref;
+        template <typename T_> friend class scatter_matrix_ref;
+        template <typename T_> friend class const_scatter_matrix_slice;
+        template <typename T_> friend class scatter_matrix_slice;
+
+        protected:
+            typedef scatter_matrix_view<T> base;
+            typedef const_scatter_matrix_slice<T> parent;
+
+            typedef typename base::stride_type stride_type;
+            typedef typename base::scatter_type scatter_type;
+            typedef typename base::idx_type idx_type;
+            typedef typename base::value_type value_type;
+            typedef typename base::pointer pointer;
+            typedef typename base::const_pointer const_pointer;
+            typedef typename base::reference reference;
+            typedef typename base::const_reference const_reference;
+
+            using parent::array;
+            using parent::idx;
+            using parent::len;
+            using parent::cscat;
+
+            scatter_matrix_slice(const parent& other)
+            : parent(other) {}
+
+            scatter_matrix_slice(const scatter_matrix_slice& other) = default;
+
+            template <typename I>
+            scatter_matrix_slice(scatter_matrix_view<T>& array, const range_t<I>& r)
+            : parent(array, r) {}
+
+        public:
+            scatter_matrix_slice& operator=(const parent& other)
+            {
+                copy(view(other), view(*this));
+                return *this;
+            }
+
+            scatter_matrix_slice& operator=(const scatter_matrix_slice& other)
+            {
+                copy(view(other), view(*this));
+                return *this;
+            }
+
+            using parent::operator[];
+
+            template <typename I>
+            scatter_matrix_view<T> operator[](const range_t<I>& x)
+            {
+                return {parent::operator[](x)};
+            }
+
+            scatter_matrix_view<T> operator[](MArray::slice::all_t x)
+            {
+                return {parent::operator[](x)};
+            }
+
+            using parent::operator();
+
+            template <typename I>
+            scatter_matrix_view<T> operator()(const range_t<I>& x)
+            {
+                return (*this)[x];
+            }
+
+            scatter_matrix_view<T> operator()(MArray::slice::all_t x)
+            {
+                return (*this)[x];
+            }
+
+            using parent::data;
+
+            pointer data()
+            {
+                return const_cast<pointer>(parent::data());
+            }
+
+            using parent::operator constscatter_matrix_view<T>;
+
+            operator scatter_matrix_view<T>()
+            {
+                return {parent::operator const_scatter_matrix_view<T>()};
+            }
+    };
+
+    template <typename T>
+    const_scatter_matrix_view<T> view(const const_scatter_matrix_slice<T>& x)
+    {
+        return x;
+    }
+
+    template <typename T>
+    scatter_matrix_view<T> view(scatter_matrix_slice<T>& x)
+    {
+        return x;
+    }
+
+    template <typename T>
+    scatter_matrix_view<T> view(scatter_matrix_slice<T>&& x)
+    {
+        return x;
+    }
+}
+
+template <typename T>
+class const_scattar_matrix_view
+{
+    template <typename T_> friend class const_scatter_matrix_view;
+    template <typename T_> friend class scatter_matrix_view;
+    template <typename T_> friend class const_scatter_matrix_ref;
+    template <typename T_> friend class scatter_matrix_ref;
+    template <typename T_> friend class const_scatter_matrix_slice;
+    template <typename T_> friend class scatter_matrix_slice;
+
+    public:
+        typedef unsigned idx_type;
+        typedef size_t size_type;
+        typedef ptrdiff_t stride_type;
+        typedef const stride_type* scatter_type;
+        typedef T value_type;
+        typedef T* pointer;
+        typedef const T* const_pointer;
+        typedef T& reference;
+        typedef const T& const_reference;
 
     protected:
-        void create()
-        {
-            _conjtrans = BLIS_NO_TRANSPOSE;
-            _ptr = NULL;
-            _m = 0;
-            _n = 0;
-            _rs = 0;
-            _cs = 0;
-            _rscat = NULL;
-            _cscat = NULL;
-        }
+        pointer data_ = nullptr;
+        std::array<idx_type,2> len_ = {};
+        std::array<stride_type,2> stride_ = {};
+        std::array<scatter_type,2> scatter_ = {};
 
-        void create(const ScatterMatrix& other)
-        {
-            _conjtrans = other._conjtrans;
-            _ptr = other._ptr;
-            _m = other._m;
-            _n = other._n;
-            _rs = other._rs;
-            _cs = other._cs;
-            _rscat = other._rscat;
-            _cscat = other._cscat;
-        }
-
-        void create(dim_t m, dim_t n, type* p, inc_t rs, inc_t cs)
-        {
-            _conjtrans = BLIS_NO_TRANSPOSE;
-            _ptr = p;
-            _m = m;
-            _n = n;
-            _rs = rs;
-            _cs = cs;
-            _rscat = NULL;
-            _cscat = NULL;
-        }
-
-        void create(dim_t m, dim_t n, type* p, inc_t rs, inc_t* cscat)
-        {
-            _conjtrans = BLIS_NO_TRANSPOSE;
-            _ptr = p;
-            _m = m;
-            _n = n;
-            _rs = rs;
-            _cs = 0;
-            _rscat = NULL;
-            _cscat = cscat;
-        }
-
-        void create(dim_t m, dim_t n, type* p, inc_t* rscat, inc_t cs)
-        {
-            _conjtrans = BLIS_NO_TRANSPOSE;
-            _ptr = p;
-            _m = m;
-            _n = n;
-            _rs = 0;
-            _cs = cs;
-            _rscat = rscat;
-            _cscat = NULL;
-        }
-
-        void create(dim_t m, dim_t n, type* p, inc_t* rscat, inc_t* cscat)
-        {
-            _conjtrans = BLIS_NO_TRANSPOSE;
-            _ptr = p;
-            _m = m;
-            _n = n;
-            _rs = 0;
-            _cs = 0;
-            _rscat = rscat;
-            _cscat = cscat;
-        }
+        const_scattar_matrix_view& operator=(const const_scattar_matrix_view& other) = delete;
 
     public:
-        ScatterMatrix()
-        {
-            create();
-        }
+        const_scattar_matrix_view() {}
 
-        ScatterMatrix(const ScatterMatrix& other)
-        {
-            create(other);
-        }
-
-        explicit ScatterMatrix(type* p)
-        {
-            create(1, 1, p, 1, 1);
-        }
-
-        ScatterMatrix(dim_t m, dim_t n, type* p)
-        {
-            create(m, n, p, 1, m);
-        }
-
-        ScatterMatrix(dim_t m, dim_t n, type* p, inc_t rs, inc_t cs)
-        {
-            create(m, n, p, rs, cs);
-        }
-
-        ScatterMatrix(dim_t m, dim_t n, type* p, inc_t rs, inc_t* cscat)
-        {
-            create(m, n, p, rs, cscat);
-        }
-
-        ScatterMatrix(dim_t m, dim_t n, type* p, inc_t* rscat, inc_t cs)
-        {
-            create(m, n, p, rscat, cs);
-        }
-
-        ScatterMatrix(dim_t m, dim_t n, type* p, inc_t* rscat, inc_t* cscat)
-        {
-            create(m, n, p, rscat, cscat);
-        }
-
-        ScatterMatrix& operator=(const ScatterMatrix& other)
+        const_scattar_matrix_view(const const_scattar_matrix_view<T>& other)
         {
             reset(other);
-            return *this;
+        }
+
+        const_scattar_matrix_view(const scatter_matrix_view<T>& other)
+        {
+            reset(other);
+        }
+
+        const_scattar_matrix_view(idx_type m, idx_type n, const_pointer ptr, stride_type rs, stride_type cs)
+        {
+            reset(m, n, ptr, rs, cs);
+        }
+
+        const_scattar_matrix_view(idx_type m, idx_type n, const_pointer ptr, scatter_type rscat, stride_type cs)
+        {
+            reset(m, n, ptr, rscat, cs);
+        }
+
+        const_scattar_matrix_view(idx_type m, idx_type n, const_pointer ptr, stride_type rs, scatter_type cscat)
+        {
+            reset(m, n, ptr, rs, cscat);
+        }
+
+        const_scattar_matrix_view(idx_type m, idx_type n, const_pointer ptr, scatter_type rscat, scatter_type cscat)
+        {
+            reset(m, n, ptr, rscat, cscat);
         }
 
         void reset()
         {
-            create();
+            data_ = nullptr;
+            len_.fill(0);
+            stride_.fill(0);
         }
 
-        void reset(const ScatterMatrix& other)
+        void reset(const const_scattar_matrix_view<T>& other)
         {
-            if (&other == this) return;
-            create(other);
+            data_ = other.data_;
+            len_ = other.len_;
+            stride_ = other.stride_;
         }
 
-        void reset(type* p)
+        void reset(const scattar_matrix_view<T,>& other)
         {
-            create(1, 1, p, 1, 1);
+            reset(static_cast<const const_scattar_matrix_view<T>&>(other));
         }
 
-        void reset(dim_t m, dim_t n, type* p)
+        void reset(idx_type m, idx_type n, const_pointer ptr, stride_type rs, stride_type cs)
         {
-            create(m, n, p, 1, m);
+            data_ = const_cast<pointer>(ptr);
+            len_[0] = m;
+            len_[1] = n;
+            stride_[0] = rs;
+            stride_[1] = cs;
+            scatter_[0] = nullptr;
+            scatter_[1] = nullptr;
         }
 
-        void reset(dim_t m, dim_t n, type* p, inc_t rs, inc_t cs)
+        void reset(idx_type m, idx_type n, const_pointer ptr, scatter_type rscat, stride_type cs)
         {
-            create(m, n, p, rs, cs);
+            data_ = const_cast<pointer>(ptr);
+            len_[0] = m;
+            len_[1] = n;
+            stride_[0] = 0;
+            stride_[1] = cs;
+            scatter_[0] = rscat;
+            scatter_[1] = nullptr;
         }
 
-        void reset(dim_t m, dim_t n, type* p, inc_t rs, inc_t* cscat)
+        void reset(idx_type m, idx_type n, const_pointer ptr, stride_type rs, scatter_type cscat)
         {
-            create(m, n, p, rs, cscat);
+            data_ = const_cast<pointer>(ptr);
+            len_[0] = m;
+            len_[1] = n;
+            stride_[0] = rs;
+            stride_[1] = 0;
+            scatter_[0] = nullptr;
+            scatter_[1] = cscat;
         }
 
-        void reset(dim_t m, dim_t n, type* p, inc_t* rscat, inc_t cs)
+        void reset(idx_type m, idx_type n, const_pointer ptr, scatter_type rscat, scatter_type cscat)
         {
-            create(m, n, p, rscat, cs);
+            data_ = const_cast<pointer>(ptr);
+            len_[0] = m;
+            len_[1] = n;
+            stride_[0] = 0;
+            stride_[1] = 0;
+            scatter_[0] = rscat;
+            scatter_[1] = cscat;
         }
 
-        void reset(dim_t m, dim_t n, type* p, inc_t* rscat, inc_t* cscat)
+        void shift(unsigned dim, stride_type n)
         {
-            create(m, n, p, rscat, cscat);
-        }
+            assert(dim < 2);
 
-        void reset(dim_t m, dim_t n, type* p, inc_t rs, inc_t cs, inc_t* rscat, inc_t* cscat)
-        {
-            if (rs == 0 && cs == 0)
-                create(m, n, p, rscat, cscat);
-            else if (rs == 0)
-                create(m, n, p, rscat, cs);
-            else if (cs == 0)
-                create(m, n, p, rs, cscat);
-            else
-                create(m, n, p, rs, cs);
-        }
-
-        bool is_view() const
-        {
-            return true;
-        }
-
-        bool is_transposed() const
-        {
-            return _conjtrans.transpose();
-        }
-
-        bool transpose()
-        {
-            bool old = is_transposed();
-            bli_obj_toggle_trans(_conjtrans);
-            return old;
-        }
-
-        bool transpose(bool trans)
-        {
-            bool old = is_transposed();
-            bli_obj_set_onlytrans(trans ? BLIS_TRANSPOSE : BLIS_NO_TRANSPOSE, _conjtrans);
-            return old;
-        }
-
-        trans_t transpose(trans_t trans)
-        {
-            trans_t old = bli_obj_onlytrans_status(_conjtrans);
-            bli_obj_set_onlytrans(trans, _conjtrans);
-            return old;
-        }
-
-        bool is_conjugated() const
-        {
-            return _conjtrans.conjugate();
-        }
-
-        bool conjugate()
-        {
-            bool old = is_conjugated();
-            bli_obj_toggle_conj(_conjtrans);
-            return old;
-        }
-
-        bool conjugate(bool conj)
-        {
-            bool old = is_conjugated();
-            bli_obj_set_conj(conj ? BLIS_CONJUGATE : BLIS_NO_CONJUGATE, _conjtrans);
-            return old;
-        }
-
-        conj_t conjugate(conj_t conj)
-        {
-            conj_t old = bli_obj_conj_status(_conjtrans);
-            bli_obj_set_conj(conj, _conjtrans);
-            return old;
-        }
-
-        trans_op_t conjtrans()
-        {
-            return bli_obj_conjtrans_status(_conjtrans);
-        }
-
-        trans_op_t conjtrans(trans_op_t conjtrans)
-        {
-            trans_op_t old = this->conjtrans();
-            bli_obj_set_conjtrans(conjtrans, _conjtrans);
-            return old;
-        }
-
-        dim_t length() const
-        {
-            return _m;
-        }
-
-        dim_t length(dim_t m)
-        {
-            dim_t old = _m;
-            _m = m;
-            return old;
-        }
-
-        dim_t width() const
-        {
-            return _n;
-        }
-
-        dim_t width(dim_t n)
-        {
-            dim_t old = _n;
-            _n = n;
-            return old;
-        }
-
-        inc_t row_stride() const
-        {
-            return _rs;
-        }
-
-        inc_t row_stride(inc_t rs)
-        {
-            inc_t old = _rs;
-            _rs = rs;
-            if (_rs) _rscat = NULL;
-            return old;
-        }
-
-        inc_t col_stride() const
-        {
-            return _cs;
-        }
-
-        inc_t col_stride(inc_t cs)
-        {
-            inc_t old = _cs;
-            _cs = cs;
-            if (_cs) _cscat = NULL;
-            return old;
-        }
-
-        inc_t* row_scatter()
-        {
-            return _rscat;
-        }
-
-        const inc_t* row_scatter() const
-        {
-            return _rscat;
-        }
-
-        void row_scatter(inc_t* rscat)
-        {
-            _rscat = rscat;
-            if (!_rscat) _rs = 0;
-        }
-
-        inc_t* col_scatter()
-        {
-            return _cscat;
-        }
-
-        const inc_t* col_scatter() const
-        {
-            return _cscat;
-        }
-
-        void col_scatter(inc_t* cscat)
-        {
-            _cscat = cscat;
-            if (!_cscat) _cs = 0;
-        }
-
-        void shift_down(dim_t m)
-        {
-            if (_rs == 0)
+            if (stride_[dim] == 0)
             {
-                _rscat += m;
+                scatter_[dim] += n;
             }
             else
             {
-                _ptr += m*_rs;
+                data_ += n*stride_[dim];
             }
         }
 
-        void shift_up(dim_t m)
+        void shift_down(unsigned dim)
         {
-            shift_down(-m);
+            shift(dim, len_[dim]);
         }
 
-        void shift_right(dim_t n)
+        void shift_up(unsigned dim)
         {
-            if (_cs == 0)
+            shift(dim, -stride_type(len_[dim]));
+        }
+
+        const_scattar_matrix_view<T> shifted(unsigned dim, stride_type n) const
+        {
+            const_scattar_matrix_view<T> r(*this);
+            r.shift(dim, n);
+            return r;
+        }
+
+        const_scattar_matrix_view<T> shifted_down(unsigned dim) const
+        {
+            return shifted(dim, len_[dim]);
+        }
+
+        const_scattar_matrix_view<T> shifted_up(unsigned dim) const
+        {
+            return shifted(dim, -stride_type(len_[dim]));
+        }
+
+        template <typename U>
+        void permute(const std::array<U, 2>& perm)
+        {
+            assert((perm[0] == 0 && perm[1] == 1) ||
+                   (perm[0] == 1 && perm[1] == 0));
+
+            if (perm[0] == 1)
             {
-                _cscat += n;
-            }
-            else
-            {
-                _ptr += n*_cs;
-            }
-        }
-
-        void shift_left(dim_t n)
-        {
-            shift_right(-n);
-        }
-
-        void shift_down()
-        {
-            shift_down(length());
-        }
-
-        void shift_up()
-        {
-            shift_up(length());
-        }
-
-        void shift_right()
-        {
-            shift_right(width());
-        }
-
-        void shift_left()
-        {
-            shift_left(width());
-        }
-
-        type* data()
-        {
-            return _ptr;
-        }
-
-        const type* data() const
-        {
-            return _ptr;
-        }
-
-        ScatterMatrix operator^(trans_op_t trans)
-        {
-            ScatterMatrix view(*this);
-
-            if (trans.transpose()) view.transpose();
-            if (trans.conjugate()) view.conjugate();
-
-            return view;
-        }
-
-        friend void ViewNoTranspose(ScatterMatrix& A, ScatterMatrix& V)
-        {
-            blis::detail::AssertNotSelfView(A, V);
-
-            if (A.is_conjugated()) V.conjugate();
-
-            if (A.is_transposed())
-            {
-                V.reset(A.width(), A.length(), A.data(),
-                        A.col_stride(), A.row_stride(),
-                        A.col_scatter(), A.row_scatter());
-            }
-            else
-            {
-                V.reset(A.length(), A.width(), A.data(),
-                        A.row_stride(), A.col_stride(),
-                        A.row_scatter(), A.col_scatter());
+                using std::swap;
+                swap(len_[0], len_[1]);
+                swap(stride_[0], stride_[1]);
+                swap(scatter_[0], scatter_[1]);
             }
         }
 
-        friend void ViewNoTranspose(ScatterMatrix&& A, ScatterMatrix& V)
+        template <typename U>
+        const_scattar_matrix_view<T> permuted(const std::array<U, 2>& perm) const
         {
-            ViewNoTranspose(A, V);
+            const_scattar_matrix_view<T> r(*this);
+            r.permute(perm);
+            return r;
+        }
+
+        void permute(unsigned p0, unsigned p1)
+        {
+            permute(make_array(p0, p1));
+        }
+
+        const_scattar_matrix_view<T> permuted(unsigned p0, unsigned p1) const
+        {
+            return permuted(make_array(p0, p1));
+        }
+
+        void transpose()
+        {
+            permute(1, 0);
+        }
+
+        const_scattar_matrix_view<T> transposed() const
+        {
+            return permuted(1, 0);
+        }
+
+        detail::const_scatter_matrix_ref<T> operator[](idx_type i) const
+        {
+            assert(i < len_[0]);
+            return {*this, i};
+        }
+
+        template <typename I>
+        detail::const_scatter_matrix_slice<T> operator[](const range_t<I>& x) const
+        {
+            assert(x.front() >= 0 && x.back() <= len_[0]);
+            return {*this, x};
+        }
+
+        detail::const_scatter_matrix_slice<T> operator[](MArray::slice::all_t x) const
+        {
+            return {*this, range(len_[0])};
+        }
+
+        template <typename I0, typename I1, typename=
+            stl_ext::enable_if_t<MArray::detail::are_indices_or_slices<I0, I1>::value>>
+        auto operator()(I0&& i0, I1&& i1) const ->
+        decltype((*this)[i0][i1])
+        {
+            return (*this)[i0][i1];
+        }
+
+        const_pointer data() const
+        {
+            return data_;
+        }
+
+        idx_type length(unsigned dim) const
+        {
+            assert(dim < 2);
+            return len_[dim];
+        }
+
+        idx_type length(unsigned dim, idx_type len)
+        {
+            assert(dim < 2);
+            std::swap(len, len_[dim]);
+            return len;
+        }
+
+        const std::array<idx_type, 2>& lengths() const
+        {
+            return len_;
+        }
+
+        stride_type stride(unsigned dim) const
+        {
+            assert(dim < 2);
+            return stride_[dim];
+        }
+
+        stride_type stride(unsigned dim, stride_type stride)
+        {
+            assert(dim < 2);
+            std::swap(stride, stride_[dim]);
+            scatter_[dim] = nullptr;
+            return stride;
+        }
+
+        const std::array<stride_type, 2>& strides() const
+        {
+            return stride_;
+        }
+
+        scatter_type scatter(unsigned dim) const
+        {
+            assert(dim < 2);
+            return scatter_[dim];
+        }
+
+        void scatter(unsigned dim, scatter_type scatter)
+        {
+            assert(dim < 2);
+            std::swap(scatter, scatter_[dim]);
+            stride_[dim] = 0;
+        }
+
+        const std::array<scatter_type, 2>& scatters() const
+        {
+            return scatter_;
+        }
+
+        unsigned dimension() const
+        {
+            return 2;
         }
 };
+
+template <typename T>
+class scatter_matrix_view : protected const_scatter_matrix_view<T>
+{
+    protected:
+        typedef const_scatter_matrix_view<T> base;
+
+    public:
+        using typename base::idx_type;
+        using typename base::size_type;
+        using typename base::stride_type;
+        using typename base::value_type;
+        using typename base::pointer;
+        using typename base::const_pointer;
+        using typename base::reference;
+        using typename base::const_reference;
+
+    protected:
+        using base::data_;
+        using base::len_;
+        using base::stride_;
+
+        scatter_matrix_view(const parent& other)
+        : parent(other) {}
+
+    public:
+        scatter_matrix_view() {}
+
+        scatter_matrix_view(scatter_matrix_view<T>& other)
+        : parent(other) {}
+
+        scatter_matrix_view(scatter_matrix_view<T>&& other)
+        : parent(other) {}
+
+        scatter_matrix_view(idx_type m, idx_type n, pointer ptr, stride_type rs, stride_type cs)
+        {
+            reset(m, n, ptr, rs, cs);
+        }
+
+        scatter_matrix_view(idx_type m, idx_type n, pointer ptr, scatter_type rscat, stride_type cs)
+        {
+            reset(m, n, ptr, rscat, cs);
+        }
+
+        scatter_matrix_view(idx_type m, idx_type n, pointer ptr, stride_type rs, scatter_type cscat)
+        {
+            reset(m, n, ptr, rs, cscat);
+        }
+
+        scatter_matrix_view(idx_type m, idx_type n, pointer ptr, scatter_type rscat, scatter_type cscat)
+        {
+            reset(m, n, ptr, rscat, cscat);
+        }
+
+        void reset()
+        {
+            base::reset();
+        }
+
+        void reset(scatter_matrix_view<T>& other)
+        {
+            base::reset(other);
+        }
+
+        void reset(scatter_matrix_view<T>&& other)
+        {
+            base::reset(other);
+        }
+
+        void reset(idx_type m, idx_type n, pointer ptr, stride_type rs, stride_type cs)
+        {
+            base::reset(m, n, ptr, rs, cs);
+        }
+
+        void reset(idx_type m, idx_type n, pointer ptr, scatter_type rscat, stride_type cs)
+        {
+            base::reset(m, n, ptr, rscat, cs);
+        }
+
+        void reset(idx_type m, idx_type n, pointer ptr, stride_type rs, scatter_type cscat)
+        {
+            base::reset(m, n, ptr, rs, cscat;
+        }
+
+        void reset(idx_type m, idx_type n, pointer ptr, scatter_type rscat, scatter_type cscat)
+        {
+            base::reset(m, n, ptr, rscat, cscat);
+        }
+
+        scatter_matrix_view& operator=(const const_scatter_matrix_view<T>& other)
+        {
+            copy(other, *this);
+            return *this;
+        }
+
+        scatter_matrix_view& operator=(const scatter_matrix_view<T>& other)
+        {
+            return operator=(static_cast<const const_scatter_matrix_view<T>&>(other));
+        }
+
+        scatter_matrix_view& operator=(const T& value)
+        {
+            for (idx_type j = 0;j < len_[1];j++)
+            {
+                for (idx_type i = 0;i < len_[0];i++)
+                {
+                    (*this)[i][j] = value;
+                }
+            }
+
+            return *this;
+        }
+
+        using base::shift;
+        using base::shift_down;
+        using base::shift_up
+        using base::shifted;
+        using base::shifted_down;
+        using base::shifted_up;
+
+        scatter_matrix_view<T> shifted(unsigned dim, stride_type n)
+        {
+            return base::shifted(dim, n);
+        }
+
+        scatter_matrix_view<T> shifted_down(unsigned dim)
+        {
+            return base::shifted_down(dim);
+        }
+
+        scatter_matrix_view<T> shifted_up(unsigned dim)
+        {
+            return base::shifted_up(dim);
+        }
+
+        using base::permute;
+        using base::permuted;
+
+        template <typename U>
+        scatter_matrix_view<T> permuted(const std::array<U, 2>& perm)
+        {
+            return base::permuted(perm);
+        }
+
+        scatter_matrix_view<T> permuted(unsigned p0, unsigned p1)
+        {
+            return base::permuted(p0, p1);
+        }
+
+        using base::tranpose;
+        using base::tranposed;
+
+        scattar_matrix_view<T> transposed()
+        {
+            return base::transposed();
+        }
+
+        void rotate_dim(unsigned dim, stride_type shift)
+        {
+            assert(dim < 2);
+            abort();
+            //TODO
+        }
+
+        template <typename U>
+        void rotate(const std::array<U, 2>& shift)
+        {
+            for (unsigned dim = 0;dim < ndim;dim++)
+            {
+                rotate_dim(dim, shift[dim]);
+            }
+        }
+
+        void rotate(stride_type s0, stride_type s1)
+        {
+            rotate(make_array(s0, s1));
+        }
+
+        using base::operator[];
+
+        detail::scatter_matrix_ref<T> operator[](idx_type i)
+        {
+            return base::operator[](i);
+        }
+
+        template <typename I>
+        detail::scatter_matrix_slice<T> operator[](const range_t<I>& x)
+        {
+            return base::operator[](x);
+        }
+
+        detail::scatter_matrix_slice<T> operator[](MArray::slice::all_t x)
+        {
+            return base::operator[](x);
+        }
+
+        using base::operator();
+
+        template <typename I0, typename I1, typename=
+            stl_ext::enable_if_t<MArray::detail::are_indices_or_slices<I0, I1>::value>>
+        auto operator()(I0&& i0, I1&& i1) ->
+        decltype((*this)[i0][i1])
+        {
+            return (*this)[i0][i1];
+        }
+
+        using base::data;
+
+        pointer data()
+        {
+            return const_cast<pointer>(base::data());
+        }
+
+        using base::length;
+        using base::lengths;
+        using base::stride;
+        using base::strides;
+        using base::scatter;
+        using base::scatters;
+        using base::dimension;
+};
+
+template <typename T, unsigned ndim> void copy(const_scatter_matrix_view<T> a, scatter_matrix_view<T> b)
+{
+    typedef const_scatter_matrix_view<T>::idx_type idx_type;
+
+    assert(a.lengths() == b.lengths());
+
+    for (idx_type j = 0;j < a.length(1);j++)
+    {
+        for (idx_type i = 0;i < a.length(0);i++)
+        {
+            b[i][j] = a[i][j];
+        }
+    }
+}
 
 }
 }

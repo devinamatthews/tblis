@@ -5,9 +5,7 @@
 
 #include <condition_variable>
 
-#include "tblis_mutex.hpp"
-
-#include "util/util.hpp"
+#include "tblis.hpp"
 
 #ifndef BLIS_TREE_BARRIER_ARITY
 #define BLIS_TREE_BARRIER_ARITY 0
@@ -130,10 +128,13 @@ namespace detail
             Barrier barrier;
         };
 
-        std::vector<int> thread_barrier;
+        constexpr static int group_size = BLIS_TREE_BARRIER_ARITY;
+
+        int nthread;
         bool is_tree = true;
 
-        TreeBarrier(int nthread, int group_size=BLIS_TREE_BARRIER_ARITY)
+        TreeBarrier(int nthread)
+        : nthread(nthread)
         {
             if (group_size == 0 || group_size >= nthread)
             {
@@ -146,18 +147,18 @@ namespace detail
             int nleaders = nthread;
             do
             {
-                nleaders = (nleaders+group_size-1)/group_size;
+                nleaders = ceil_div(nleaders, group_size);
                 nbarrier += nleaders;
             }
             while (nleaders > 1);
 
-            barriers = (Barrier*)bli_malloc(sizeof(Barrier)*nbarrier);
+            barriers = (Barrier*)::operator new(sizeof(Barrier)*nbarrier);
 
             int idx = 0;
             int nchildren = nthread;
             do
             {
-                int nparents = (nchildren+group_size-1)/group_size;
+                int nparents = ceil_div(nchildren, group_size);
                 for (int i = 0;i < nparents;i++)
                 {
                     new (barriers+idx+i)
@@ -168,10 +169,6 @@ namespace detail
                 nchildren = nparents;
             }
             while (nchildren > 1);
-
-            thread_barrier.resize(nthread);
-            for (int i = 0;i < nthread;i++)
-                thread_barrier[i] = i/group_size;
         }
 
         TreeBarrier(const TreeBarrier&) = delete;
@@ -180,9 +177,19 @@ namespace detail
 
         ~TreeBarrier()
         {
+            int nbarrier = 0;
+            int nleaders = nthread;
+            do
+            {
+                nleaders = ceil_div(nleaders, group_size);
+                nbarrier += nleaders;
+            }
+            while (nleaders > 1);
+
             if (is_tree)
             {
-                if (barriers) bli_free(barriers);
+                for (int i = 0;i < nbarrier;i++) barriers[i].~Barrier();
+                ::operator delete(barriers);
             }
             else
             {
@@ -194,7 +201,7 @@ namespace detail
         {
             if (is_tree)
             {
-                barriers[thread_barrier[tid]].wait();
+                barriers[tid/group_size].wait();
             }
             else
             {
@@ -228,11 +235,24 @@ class ThreadContext
             barrier(tid);
         }
 
+        void send_nowait(int tid, void* object)
+        {
+            _buffer = object;
+            barrier(tid);
+        }
+
         void* receive(int tid)
         {
             barrier(tid);
             void* object = _buffer;
             barrier(tid);
+            return object;
+        }
+
+        void* receive_nowait(int tid)
+        {
+            barrier(tid);
+            void* object = _buffer;
             return object;
         }
 
@@ -269,7 +289,7 @@ class ThreadCommunicator
 
         bool master() const
         {
-            return thread_num() == 0;
+            return _tid == 0;
         }
 
         void barrier()
@@ -305,6 +325,21 @@ class ThreadCommunicator
             else
             {
                 object = static_cast<T*>(_context->receive(_tid));
+            }
+        }
+
+        template <typename T>
+        void broadcast_nowait(T*& object, int root=0)
+        {
+            if (_nthread == 1) return;
+
+            if (_tid == root)
+            {
+                _context->send_nowait(_tid, object);
+            }
+            else
+            {
+                object = static_cast<T*>(_context->receive_nowait(_tid));
             }
         }
 
@@ -357,12 +392,12 @@ class ThreadCommunicator
             return gang(n, block, new_tid, new_nthread);
         }
 
-        std::pair<dim_t,dim_t> distribute_over_gangs(int ngang, dim_t n, dim_t granularity=1)
+        std::tuple<dim_t,dim_t,dim_t> distribute_over_gangs(int ngang, dim_t n, dim_t granularity=1)
         {
             return distribute(ngang, _gid, n, granularity);
         }
 
-        std::pair<dim_t,dim_t> distribute_over_threads(dim_t n, dim_t granularity=1)
+        std::tuple<dim_t,dim_t,dim_t> distribute_over_threads(dim_t n, dim_t granularity=1)
         {
             return distribute(_nthread, _tid, n, granularity);
         }
@@ -380,16 +415,16 @@ class ThreadCommunicator
 
             std::shared_ptr<ThreadContext>* contexts;
             std::vector<std::shared_ptr<ThreadContext>> contexts_root;
-            if (_tid == 0)
+            if (master())
             {
                 contexts_root.resize(n);
                 contexts = contexts_root.data();
             }
-            broadcast(contexts);
+            broadcast_nowait(contexts);
 
             if (new_tid == 0 && new_nthread > 1)
             {
-                contexts[block].reset(new ThreadContext(new_nthread));
+                contexts[block] = std::make_shared<ThreadContext>(new_nthread);
             }
 
             barrier();
@@ -402,11 +437,14 @@ class ThreadCommunicator
             return new_comm;
         }
 
-        std::pair<dim_t,dim_t> distribute(int nelem, int elem, dim_t n, dim_t granularity)
+        std::tuple<dim_t,dim_t,dim_t> distribute(int nelem, int elem, dim_t n, dim_t granularity)
         {
             dim_t ng = (n+granularity-1)/granularity;
+            dim_t max_size = ((ng+nelem-1)/nelem)*granularity;
+
             return {         (( elem   *ng)/nelem)*granularity,
-                    std::min((((elem+1)*ng)/nelem)*granularity, n)};
+                    std::min((((elem+1)*ng)/nelem)*granularity, n),
+                             (( elem   *ng)/nelem)*granularity+max_size};
         }
 
         std::shared_ptr<ThreadContext> _context;

@@ -1005,7 +1005,7 @@ template <typename T>
 void TestTBLIS(siz_t N)
 {
     Matrix<T> A, B, C, D;
-    ScatterMatrix<T> sA, sB, sC;
+    const_scatter_matrix_view<T> sA, sB, sC;
 
     for (int pass = 0;pass < 3;pass++)
     {

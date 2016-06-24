@@ -47,29 +47,19 @@ struct MicroKernel
         constexpr static gemm_ukr_t<T> ukr = Config::template gemm_ukr<T>::value;
 
         void operator()(ThreadCommunicator& comm,
-                        T alpha, const Matrix<T>& A, const Matrix<T>& B,
-                        T beta, Matrix<T>& C) const;
+                        T alpha, const const_matrix_view<T>& A,
+                                 const const_matrix_view<T>& B,
+                        T  beta,             matrix_view<T>& C) const;
 
         void operator()(ThreadCommunicator& comm,
-                        T alpha, const Matrix<T>& A, const Matrix<T>& B,
-                        T beta, ScatterMatrix<T>& C) const;
+                        T alpha, const const_matrix_view<T>& A,
+                                 const const_matrix_view<T>& B,
+                        T  beta,           const_scatter_matrix_view<T>& C) const;
 
         void operator()(ThreadCommunicator& comm,
-                        T alpha, const Matrix<T>& A, const Matrix<T>& B,
-                        T beta, BlockScatterMatrix<T,MR,NR>& C) const;
-    };
-};
-
-struct Noop
-{
-    template <typename T>
-    struct run
-    {
-        void operator()(ThreadCommunicator& comm, T alpha, Matrix<T>& A, Matrix<T>& B, T beta, Matrix<T>& C) const
-        {}
-
-        void operator()(ThreadCommunicator& comm, T alpha, Matrix<T>& A, Matrix<T>& B, T beta, ScatterMatrix<T>& C) const
-        {}
+                        T alpha,  const const_matrix_view<T>& A,
+                                  const const_matrix_view<T>& B,
+                        T  beta, block_scatter_matrix<T,MR,NR>& C) const;
     };
 };
 

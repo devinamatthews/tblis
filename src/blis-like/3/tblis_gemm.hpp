@@ -1,12 +1,7 @@
 #ifndef _TENSOR_TBLIS_GEMM_HPP_
 #define _TENSOR_TBLIS_GEMM_HPP_
 
-#include <type_traits>
-#include <utility>
-
 #include "tblis.hpp"
-
-#include "util/util.hpp"
 
 namespace tblis
 {
@@ -91,17 +86,17 @@ using GotoGEMM = GEMM<PartitionN<Config::NC, matrix_constants::NT_JC>,
                       PartitionM<Config::MR, matrix_constants::NT_JR>,
                       MicroKernel<Config>>::run<T>;
 
-template <typename T, typename MatrixA, typename MatrixB, typename MatrixC>
+template <typename Config, typename T, typename MatrixA, typename MatrixB, typename MatrixC>
 void tblis_gemm_int(T alpha, MatrixA&& A, MatrixB&& B, T beta, MatrixC&& C)
 {
     ASSERT(A.length() == C.length(), "m dimension does not match");
     ASSERT(A.width() == B.length(), "k dimension does not match");
     ASSERT(B.width() == C.width(), "n dimension does not match");
 
-    GotoGEMM<T>()(alpha, A, B, beta, C);
+    GotoGEMM<T,Config>()(alpha, A, B, beta, C);
 }
 
-template <typename U, typename MatrixA, typename MatrixB, typename MatrixC>
+template <typename Config, typename U, typename MatrixA, typename MatrixB, typename MatrixC>
 void tblis_gemm(U alpha, const MatrixA& A, const MatrixB& B, U beta, MatrixC&& C)
 {
     MatrixA Av;
@@ -117,7 +112,7 @@ void tblis_gemm(U alpha, const MatrixA& A, const MatrixB& B, U beta, MatrixC&& C
         ViewNoTranspose(const_cast<MatrixA&>(A)^T, Av);
         ViewNoTranspose(                     C ^T, Cv);
 
-        tblis_gemm_int(alpha, Bv, Av, beta, Cv);
+        tblis_gemm_int<Config>(alpha, Bv, Av, beta, Cv);
     }
     else
     {
@@ -125,7 +120,7 @@ void tblis_gemm(U alpha, const MatrixA& A, const MatrixB& B, U beta, MatrixC&& C
         ViewNoTranspose(const_cast<MatrixB&>(B), Bv);
         ViewNoTranspose(                     C , Cv);
 
-        tblis_gemm_int(alpha, Av, Bv, beta, Cv);
+        tblis_gemm_int<Config>(alpha, Av, Bv, beta, Cv);
     }
 }
 

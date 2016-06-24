@@ -104,9 +104,9 @@ int tensor_contract_blis_int(const std::vector<dim_t>& len_M,
     vector<inc_t> scat_K_A(k);
     vector<inc_t> scat_K_B(k);
 
-    TensorMatrix<T> at(len_M, len_K, const_cast<T*>(A), stride_M_A, stride_K_A);
-    TensorMatrix<T> bt(len_K, len_N, const_cast<T*>(B), stride_K_B, stride_N_B);
-    TensorMatrix<T> ct(len_M, len_N,                C , stride_M_C, stride_N_C);
+    tensor_matrix<T> at(len_M, len_K, const_cast<T*>(A), stride_M_A, stride_K_A);
+    tensor_matrix<T> bt(len_K, len_N, const_cast<T*>(B), stride_K_B, stride_N_B);
+    tensor_matrix<T> ct(len_M, len_N,                C , stride_M_C, stride_N_C);
 
     at.row_scatter(scat_M_A.data());
     at.col_scatter(scat_K_A.data());
@@ -163,9 +163,9 @@ int tensor_contract_blis_int(const std::vector<dim_t>& len_M,
     vector<inc_t> s_N_B(n);
     vector<inc_t> s_N_C(n);
 
-    TensorMatrix<T> at(len_M, len_K, const_cast<T*>(A), stride_M_A, stride_K_A);
-    TensorMatrix<T> bt(len_K, len_N, const_cast<T*>(B), stride_K_B, stride_N_B);
-    TensorMatrix<T> ct(len_M, len_N,                C , stride_M_C, stride_N_C);
+    tensor_matrix<T> at(len_M, len_K, const_cast<T*>(A), stride_M_A, stride_K_A);
+    tensor_matrix<T> bt(len_K, len_N, const_cast<T*>(B), stride_K_B, stride_N_B);
+    tensor_matrix<T> ct(len_M, len_N,                C , stride_M_C, stride_N_C);
 
     at.template row_block_scatter<M>(s_M_A.data(), scat_M_A.data());
     bt.template col_block_scatter<N>(s_N_B.data(), scat_N_B.data());
@@ -197,9 +197,9 @@ int tensor_contract_blis_int(const std::vector<dim_t>& len_M,
     printf("\n");
     */
 
-    BlockScatterMatrix<T,M,0> abs(m, k, const_cast<T*>(A), s_M_A.data(),         NULL, scat_M_A.data(), scat_K_A.data());
-    BlockScatterMatrix<T,0,N> bbs(k, n, const_cast<T*>(B),         NULL, s_N_B.data(), scat_K_B.data(), scat_N_B.data());
-    BlockScatterMatrix<T,M,N> cbs(m, n,                C , s_M_C.data(), s_N_C.data(), scat_M_C.data(), scat_N_C.data());
+    block_scatter_matrix<T,M,0> abs(m, k, const_cast<T*>(A), s_M_A.data(),         NULL, scat_M_A.data(), scat_K_A.data());
+    block_scatter_matrix<T,0,N> bbs(k, n, const_cast<T*>(B),         NULL, s_N_B.data(), scat_K_B.data(), scat_N_B.data());
+    block_scatter_matrix<T,M,N> cbs(m, n,                C , s_M_C.data(), s_N_C.data(), scat_M_C.data(), scat_N_C.data());
 
     tblis_gemm_int(alpha, abs, bbs, beta, cbs);
 
@@ -209,7 +209,7 @@ int tensor_contract_blis_int(const std::vector<dim_t>& len_M,
 #elif IMPL_TYPE == TENSOR
 
 template <typename T, dim_t MR, dim_t NR>
-void BlockScatter(ThreadCommunicator& comm, TensorMatrix<T>& A, inc_t* rs, inc_t* cs, inc_t* rscat, inc_t* cscat)
+void BlockScatter(ThreadCommunicator& comm, tensor_matrix<T>& A, inc_t* rs, inc_t* cs, inc_t* rscat, inc_t* cscat)
 {
     dim_t m = A.length();
     dim_t n = A.width();
@@ -242,7 +242,7 @@ template <dim_t MR, dim_t NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT
     MatrifyAndRun(Parent& parent, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         BlockScatter<T,MR,NR>(comm, A, parent.rs, parent.cs, parent.rscat, parent.cscat);
-        BlockScatterMatrix<T,MR,NR> M(A.length(), A.width(), A.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
+        block_scatter_matrix<T,MR,NR> M(A.length(), A.width(), A.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
         //ScatterMatrix<T> M(A.length(), A.width(), A.data(), parent.rscat, parent.cscat);
         parent.child(comm, alpha, M, B, beta, C);
     }
@@ -254,7 +254,7 @@ template <dim_t MR, dim_t NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT
     MatrifyAndRun(Parent& parent, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         BlockScatter<T,MR,NR>(comm, B, parent.rs, parent.cs, parent.rscat, parent.cscat);
-        BlockScatterMatrix<T,MR,NR> M(B.length(), B.width(), B.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
+        block_scatter_matrix<T,MR,NR> M(B.length(), B.width(), B.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
         //ScatterMatrix<T> M(B.length(), B.width(), B.data(), parent.rscat, parent.cscat);
         parent.child(comm, alpha, A, M, beta, C);
     }
@@ -266,7 +266,7 @@ template <dim_t MR, dim_t NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT
     MatrifyAndRun(Parent& parent, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         BlockScatter<T,MR,NR>(comm, C, parent.rs, parent.cs, parent.rscat, parent.cscat);
-        BlockScatterMatrix<T,MR,NR> M(C.length(), C.width(), C.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
+        block_scatter_matrix<T,MR,NR> M(C.length(), C.width(), C.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
         //ScatterMatrix<T> M(C.length(), C.width(), C.data(), parent.rscat, parent.cscat);
         parent.child(comm, alpha, A, B, beta, M);
     }
@@ -403,9 +403,9 @@ int tensor_contract_blis_int(const std::vector<dim_t>& len_M,
                              T  beta,       T* C, const std::vector<inc_t>& stride_M_C,
                                                   const std::vector<inc_t>& stride_N_C)
 {
-    TensorMatrix<T> at(len_M, len_K, const_cast<T*>(A), stride_M_A, stride_K_A);
-    TensorMatrix<T> bt(len_K, len_N, const_cast<T*>(B), stride_K_B, stride_N_B);
-    TensorMatrix<T> ct(len_M, len_N,                C , stride_M_C, stride_N_C);
+    tensor_matrix<T> at(len_M, len_K, const_cast<T*>(A), stride_M_A, stride_K_A);
+    tensor_matrix<T> bt(len_K, len_N, const_cast<T*>(B), stride_K_B, stride_N_B);
+    tensor_matrix<T> ct(len_M, len_N,                C , stride_M_C, stride_N_C);
 
     dim_t jc_way = bli_read_nway_from_env( "BLIS_JC_NT" );
     dim_t ic_way = bli_read_nway_from_env( "BLIS_IC_NT" );

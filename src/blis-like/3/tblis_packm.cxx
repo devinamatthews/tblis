@@ -283,7 +283,7 @@ void PackRowPanel<T,MR,KR,Trans>::operator()(ThreadCommunicator& comm, const Mat
 }
 
 template <typename T, dim_t MR, dim_t KR, bool Trans>
-void PackRowPanel<T,MR,KR,Trans>::operator()(ThreadCommunicator& comm, const ScatterMatrix<T>& A, Matrix<T>& Ap) const
+void PackRowPanel<T,MR,KR,Trans>::operator()(ThreadCommunicator& comm, const const_scatter_matrix_view<T>& A, Matrix<T>& Ap) const
 {
     dim_t m_a = (Trans ? A.width () : A.length());
     dim_t k_a = (Trans ? A.length() : A.width ());
@@ -338,9 +338,9 @@ void PackRowPanel<T,MR,KR,Trans>::operator()(ThreadCommunicator& comm, const Sca
 static Mutex pack_lock;
 
 template <typename T, dim_t MR, dim_t KR, bool Trans>
-void PackRowPanel<T,MR,KR,Trans>::operator()(ThreadCommunicator& comm, const BlockScatterMatrix<T,(Trans ? KR : MR),(Trans ? MR : KR)>& A_, Matrix<T>& Ap) const
+void PackRowPanel<T,MR,KR,Trans>::operator()(ThreadCommunicator& comm, const block_scatter_matrix<T,(Trans ? KR : MR),(Trans ? MR : KR)>& A_, Matrix<T>& Ap) const
 {
-    BlockScatterMatrix<T,(Trans ? KR : MR),(Trans ? MR : KR)> A(A_);
+    block_scatter_matrix<T,(Trans ? KR : MR),(Trans ? MR : KR)> A(A_);
 
     dim_t m_a = (Trans ? A.width () : A.length());
     dim_t k_a = (Trans ? A.length() : A.width ());

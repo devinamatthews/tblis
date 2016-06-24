@@ -23,23 +23,28 @@ using tensor_view = MArray::varray_view<T>;
 template <typename T, typename Allocator=MArray::aligned_allocator<T,MARRAY_BASE_ALIGNMENT>>
 using tensor = MArray::varray<T, Allocator>;
 
-template <typename T, unsigned ndim>
-using const_marray_view = MArray::const_marray_view<T, ndim>;
+using MArray::const_marray_view;
+using MArray::marray_view;
+using MArray::marray;
 
-template <typename T, unsigned ndim>
-using marray_view = MArray::marray_view<T, ndim>;
+using MArray::const_matrix_view;
+using MArray::matrix_view;
+using MArray::matrix;
 
-template <typename T, unsigned ndim, typename Allocator=MArray::aligned_allocator<T,MARRAY_BASE_ALIGNMENT>>
-using marray = MArray::marray<T, ndim, Allocator>;
+using MArray::const_row_view;
+using MArray::row_view;
+using MArray::row;
 
-template <typename T>
-using const_matrix_view = MArray::const_matrix_view<T>;
+using MArray::Layout;
+using MArray::COLUMN_MAJOR;
+using MArray::ROW_MAJOR;
+using MArray::DEFAULT;
 
-template <typename T>
-using matrix_view = MArray::matrix_view<T>;
+using MArray::make_array;
+using MArray::make_vector;
 
-template <typename T, typename Allocator=MArray::aligned_allocator<T,MARRAY_BASE_ALIGNMENT>>
-using matrix = MArray::matrix<T, Allocator>;
+using MArray::range_t;
+using MArray::range;
 
 namespace detail
 {
@@ -576,27 +581,22 @@ void matricize(const_tensor_view<T>  A,
  * unary diagonal operation. Any combination of these operations may be performed.
  */
 template <typename T>
-int tensor_mult(T alpha, const Tensor<T>& A, std::string idx_A,
-                         const Tensor<T>& B, std::string idx_B,
-                T  beta,       Tensor<T>& C, std::string idx_C)
+int tensor_mult(T alpha, const_tensor_view<T> A, std::string idx_A,
+                         const_tensor_view<T> B, std::string idx_B,
+                T  beta,       tensor_view<T> C, std::string idx_C)
 {
-    #if TENSOR_ERROR_CHECKING
-    util::check_tensor_indices(A, idx_A, B, idx_B, C, idx_C,
-                               true, true, true,
-                               true, true, true,
-                               true);
-    #endif
+    check_tensor_indices(A, idx_A, B, idx_B, C, idx_C,
+                         true, true, true,
+                         true, true, true,
+                         true);
 
-    std::string idx_A_, idx_B_, idx_C_;
-    Tensor<T> A_, B_, C_;
+    diagonal(A, idx_A);
+    diagonal(B, idx_B);
+    diagonal(C, idx_C);
 
-    LockedDiagonal(A, idx_A, A_, idx_A_);
-    LockedDiagonal(B, idx_B, B_, idx_B_);
-          Diagonal(C, idx_C, C_, idx_C_);
-
-    return impl::tensor_mult_impl(alpha, A_, idx_A_,
-                                         B_, idx_B_,
-                                   beta, C_, idx_C_);
+    return impl::tensor_mult_impl(alpha, A, idx_A,
+                                         B, idx_B,
+                                   beta, C, idx_C);
 }
 
 /**
@@ -606,27 +606,22 @@ int tensor_mult(T alpha, const Tensor<T>& A, std::string idx_A,
  * Indices may be transposed in any tensor. Any index group may be empty (in the case that ef... is empty, this reduces to an outer product).
  */
 template <typename T>
-int tensor_contract(T alpha, const Tensor<T>& A, std::string idx_A,
-                             const Tensor<T>& B, std::string idx_B,
-                    T  beta,       Tensor<T>& C, std::string idx_C)
+int tensor_contract(T alpha, const_tensor_view<T> A, std::string idx_A,
+                             const_tensor_view<T> B, std::string idx_B,
+                    T  beta,       tensor_view<T> C, std::string idx_C)
 {
-    #if TENSOR_ERROR_CHECKING
-    util::check_tensor_indices(A, idx_A, B, idx_B, C, idx_C,
-                               false, false, false,
-                               true, true, true,
-                               false);
-    #endif
+    check_tensor_indices(A, idx_A, B, idx_B, C, idx_C,
+                         false, false, false,
+                         true, true, true,
+                         false);
 
-    std::string idx_A_, idx_B_, idx_C_;
-    Tensor<T> A_, B_, C_;
+    diagonal(A, idx_A);
+    diagonal(B, idx_B);
+    diagonal(C, idx_C);
 
-    LockedDiagonal(A, idx_A, A_, idx_A_);
-    LockedDiagonal(B, idx_B, B_, idx_B_);
-          Diagonal(C, idx_C, C_, idx_C_);
-
-    return impl::tensor_contract_impl(alpha, A_, idx_A_,
-                                             B_, idx_B_,
-                                       beta, C_, idx_C_);
+    return impl::tensor_contract_impl(alpha, A, idx_A,
+                                             B, idx_B,
+                                       beta, C, idx_C);
 }
 
 /**
@@ -637,27 +632,22 @@ int tensor_contract(T alpha, const Tensor<T>& A, std::string idx_A,
  * (in the case that ef... is empty, this reduces to an outer product).
  */
 template <typename T>
-int tensor_weight(T alpha, const Tensor<T>& A, std::string idx_A,
-                           const Tensor<T>& B, std::string idx_B,
-                  T  beta,       Tensor<T>& C, std::string idx_C)
+int tensor_weight(T alpha, const_tensor_view<T> A, std::string idx_A,
+                           const_tensor_view<T> B, std::string idx_B,
+                  T  beta,       tensor_view<T> C, std::string idx_C)
 {
-    #if TENSOR_ERROR_CHECKING
-    util::check_tensor_indices(A, idx_A, B, idx_B, C, idx_C,
-                               false, false, false,
-                               false, true, true,
-                               true);
-    #endif
+    check_tensor_indices(A, idx_A, B, idx_B, C, idx_C,
+                         false, false, false,
+                         false, true, true,
+                         true);
 
-    std::string idx_A_, idx_B_, idx_C_;
-    Tensor<T> A_, B_, C_;
+    diagonal(A, idx_A);
+    diagonal(B, idx_B);
+    diagonal(C, idx_C);
 
-    LockedDiagonal(A, idx_A, A_, idx_A_);
-    LockedDiagonal(B, idx_B, B_, idx_B_);
-          Diagonal(C, idx_C, C_, idx_C_);
-
-    return impl::tensor_weight_impl(alpha, A_, idx_A_,
-                                           B_, idx_B_,
-                                     beta, C_, idx_C_);
+    return impl::tensor_weight_impl(alpha, A, idx_A,
+                                           B, idx_B,
+                                     beta, C, idx_C);
 }
 
 /**
@@ -667,27 +657,22 @@ int tensor_weight(T alpha, const Tensor<T>& A, std::string idx_A,
  * Indices may be transposed in any tensor.
  */
 template <typename T>
-int tensor_outer_prod(T alpha, const Tensor<T>& A, std::string idx_A,
-                               const Tensor<T>& B, std::string idx_B,
-                      T  beta,       Tensor<T>& C, std::string idx_C)
+int tensor_outer_prod(T alpha, const_tensor_view<T> A, std::string idx_A,
+                               const_tensor_view<T> B, std::string idx_B,
+                      T  beta,       tensor_view<T> C, std::string idx_C)
 {
-    #if TENSOR_ERROR_CHECKING
-    util::check_tensor_indices(A, idx_A, B, idx_B, C, idx_C,
-                               false, false, false,
-                               false, true, true,
-                               false);
-    #endif
+    check_tensor_indices(A, idx_A, B, idx_B, C, idx_C,
+                         false, false, false,
+                         false, true, true,
+                         false);
 
-    std::string idx_A_, idx_B_, idx_C_;
-    Tensor<T> A_, B_, C_;
+    diagonal(A, idx_A);
+    diagonal(B, idx_B);
+    diagonal(C, idx_C);
 
-    LockedDiagonal(A, idx_A, A_, idx_A_);
-    LockedDiagonal(B, idx_B, B_, idx_B_);
-          Diagonal(C, idx_C, C_, idx_C_);
-
-    return impl::tensor_outer_prod_impl(alpha, A_, idx_A_,
-                                               B_, idx_B_,
-                                         beta, C_, idx_C_);
+    return impl::tensor_outer_prod_impl(alpha, A, idx_A,
+                                               B, idx_B,
+                                         beta, C, idx_C);
 }
 
 /**
@@ -697,22 +682,17 @@ int tensor_outer_prod(T alpha, const Tensor<T>& A, std::string idx_A,
  * in any combination.
  */
 template <typename T>
-int tensor_sum(T alpha, const Tensor<T>& A, std::string idx_A,
-               T  beta,       Tensor<T>& B, std::string idx_B)
+int tensor_sum(T alpha, const_tensor_view<T> A, std::string idx_A,
+               T  beta,       tensor_view<T> B, std::string idx_B)
 {
-    #if TENSOR_ERROR_CHECKING
-    util::check_tensor_indices(A, idx_A, B, idx_B,
-                               true, true, true);
-    #endif
+    check_tensor_indices(A, idx_A, B, idx_B,
+                         true, true, true);
 
-    std::string idx_A_, idx_B_;
-    Tensor<T> A_, B_;
+    diagonal(A, idx_A);
+    diagonal(B, idx_B);
 
-    LockedDiagonal(A, idx_A, A_, idx_A_);
-          Diagonal(B, idx_B, B_, idx_B_);
-
-    return impl::tensor_sum_impl(alpha, A_, idx_A_,
-                                  beta, B_, idx_B_);
+    return impl::tensor_sum_impl(alpha, A, idx_A,
+                                  beta, B, idx_B);
 }
 
 /**
@@ -724,22 +704,17 @@ int tensor_sum(T alpha, const Tensor<T>& A, std::string idx_A,
  * are traced over, the result is the same as transpose.
  */
 template <typename T>
-int tensor_trace(T alpha, const Tensor<T>& A, std::string idx_A,
-                 T  beta,       Tensor<T>& B, std::string idx_B)
+int tensor_trace(T alpha, const_tensor_view<T> A, std::string idx_A,
+                 T  beta,       tensor_view<T> B, std::string idx_B)
 {
-    #if TENSOR_ERROR_CHECKING
-    util::check_tensor_indices(A, idx_A, B, idx_B,
-                               true, false, true);
-    #endif
+    check_tensor_indices(A, idx_A, B, idx_B,
+                         true, false, true);
 
-    std::string idx_A_, idx_B_;
-    Tensor<T> A_, B_;
+    diagonal(A, idx_A);
+    diagonal(B, idx_B);
 
-    LockedDiagonal(A, idx_A, A_, idx_A_);
-          Diagonal(B, idx_B, B_, idx_B_);
-
-    return impl::tensor_trace_impl(alpha, A_, idx_A_,
-                                    beta, B_, idx_B_);
+    return impl::tensor_trace_impl(alpha, A, idx_A,
+                                    beta, B, idx_B);
 }
 
 /**
@@ -749,22 +724,17 @@ int tensor_trace(T alpha, const Tensor<T>& A, std::string idx_A,
  * Any indices may be transposed.
  */
 template <typename T>
-int tensor_replicate(T alpha, const Tensor<T>& A, std::string idx_A,
-                     T  beta,       Tensor<T>& B, std::string idx_B)
+int tensor_replicate(T alpha, const_tensor_view<T> A, std::string idx_A,
+                     T  beta,       tensor_view<T> B, std::string idx_B)
 {
-    #if TENSOR_ERROR_CHECKING
-    util::check_tensor_indices(A, idx_A, B, idx_B,
-                               false, true, true);
-    #endif
+    check_tensor_indices(A, idx_A, B, idx_B,
+                         false, true, true);
 
-    std::string idx_A_, idx_B_;
-    Tensor<T> A_, B_;
+    diagonal(A, idx_A);
+    diagonal(B, idx_B);
 
-    LockedDiagonal(A, idx_A, A_, idx_A_);
-          Diagonal(B, idx_B, B_, idx_B_);
-
-    return impl::tensor_replicate_impl(alpha, A_, idx_A_,
-                                        beta, B_, idx_B_);
+    return impl::tensor_replicate_impl(alpha, A, idx_A,
+                                        beta, B, idx_B);
 }
 
 /**
@@ -774,30 +744,25 @@ int tensor_replicate(T alpha, const Tensor<T>& A, std::string idx_A,
  * the order in which the elements of the tensor are physically stored.
  */
 template <typename T>
-int tensor_transpose(T alpha, const Tensor<T>& A, std::string idx_A,
-                     T  beta,       Tensor<T>& B, std::string idx_B)
+int tensor_transpose(T alpha, const_tensor_view<T> A, std::string idx_A,
+                     T  beta,       tensor_view<T> B, std::string idx_B)
 {
-    #if TENSOR_ERROR_CHECKING
-    util::check_tensor_indices(A, idx_A, B, idx_B,
-                               false, false, true);
-    #endif
+    check_tensor_indices(A, idx_A, B, idx_B,
+                         false, false, true);
 
-    std::string idx_A_, idx_B_;
-    Tensor<T> A_, B_;
+    diagonal(A, idx_A);
+    diagonal(B, idx_B);
 
-    LockedDiagonal(A, idx_A, A_, idx_A_);
-          Diagonal(B, idx_B, B_, idx_B_);
-
-    return impl::tensor_transpose_impl(alpha, A_, idx_A_,
-                                        beta, B_, idx_B_);
+    return impl::tensor_transpose_impl(alpha, A, idx_A,
+                                        beta, B, idx_B);
 }
 
 /**
  * Return the dot product of two tensors
  */
 template <typename T>
-T tensor_dot(const Tensor<T>& A, std::string idx_A,
-             const Tensor<T>& B, std::string idx_B)
+T tensor_dot(const_tensor_view<T> A, std::string idx_A,
+             const_tensor_view<T> B, std::string idx_B)
 {
     T val;
     int ret = tensor_dot(A, idx_A, B, idx_B, val);
@@ -805,47 +770,37 @@ T tensor_dot(const Tensor<T>& A, std::string idx_A,
 }
 
 template <typename T>
-int tensor_dot(const Tensor<T>& A, std::string idx_A,
-               const Tensor<T>& B, std::string idx_B, T& val)
+int tensor_dot(const_tensor_view<T> A, std::string idx_A,
+               const_tensor_view<T> B, std::string idx_B, T& val)
 {
-    #if TENSOR_ERROR_CHECKING
-    util::check_tensor_indices(A, idx_A, B, idx_B,
-                               false, false, true);
-    #endif
+    check_tensor_indices(A, idx_A, B, idx_B,
+                         false, false, true);
 
-    std::string idx_A_, idx_B_;
-    Tensor<T> A_, B_;
+    diagonal(A, idx_A);
+    diagonal(B, idx_B);
 
-    LockedDiagonal(A, idx_A, A_, idx_A_);
-    LockedDiagonal(B, idx_B, B_, idx_B_);
-
-    return impl::tensor_dot_impl(A_, idx_A_,
-                                 B_, idx_B_, val);
+    return impl::tensor_dot_impl(A, idx_A,
+                                 B, idx_B, val);
 }
 
 /**
  * Scale a tensor by a scalar
  */
 template <typename T>
-int tensor_scale(T alpha, Tensor<T>& A, std::string idx_A)
+int tensor_scale(T alpha, tensor_view<T> A, std::string idx_A)
 {
-    #if TENSOR_ERROR_CHECKING
-    util::check_tensor_indices(A, idx_A);
-    #endif
+    check_tensor_indices(A, idx_A);
 
-    std::string idx_A_;
-    Tensor<T> A_;
+    diagonal(A, idx_A);
 
-    Diagonal(A, idx_A, A_, idx_A_);
-
-    return impl::tensor_scale_impl(alpha, A_, idx_A_);
+    return impl::tensor_scale_impl(alpha, A, idx_A);
 }
 
 /**
  * Return the reduction of a tensor, along with the corresponding index (as an offset from A) for MAX, MIN, MAX_ABS, and MIN_ABS reductions
  */
 template <typename T>
-std::pair<T,inc_t> tensor_reduce(reduce_t op, const Tensor<T>& A, std::string idx_A)
+std::pair<T,inc_t> tensor_reduce(reduce_t op, const_tensor_view<T> A, std::string idx_A)
 {
     std::pair<T,inc_t> p;
     int ret = tensor_reduce(op, A, idx_A, p.first, p.second);
@@ -853,7 +808,7 @@ std::pair<T,inc_t> tensor_reduce(reduce_t op, const Tensor<T>& A, std::string id
 }
 
 template <typename T>
-T tensor_reduce(reduce_t op, const Tensor<T>& A, std::string idx_A, inc_t& idx)
+T tensor_reduce(reduce_t op, const_tensor_view<T> A, std::string idx_A, inc_t& idx)
 {
     T val;
     int ret = tensor_reduce(op, A, idx_A, val, idx);
@@ -861,34 +816,26 @@ T tensor_reduce(reduce_t op, const Tensor<T>& A, std::string idx_A, inc_t& idx)
 }
 
 template <typename T>
-int tensor_reduce(reduce_t op, const Tensor<T>& A, std::string idx_A, T& val)
+int tensor_reduce(reduce_t op, const_tensor_view<T> A, std::string idx_A, T& val)
 {
    inc_t idx;
    return tensor_reduce(op, A, idx_A, val, idx);
 }
 
 template <typename T>
-int tensor_reduce(reduce_t op, const Tensor<T>& A, std::string idx_A, T& val, inc_t& idx)
+int tensor_reduce(reduce_t op, const_tensor_view<T> A, std::string idx_A, T& val, inc_t& idx)
 {
-    #if TENSOR_ERROR_CHECKING
-    util::check_tensor_indices(A, idx_A);
-    #endif
+    check_tensor_indices(A, idx_A);
 
-    std::string idx_A_;
-    Tensor<T> A_;
+    diagonal(A, idx_A);
 
-    LockedDiagonal(A, idx_A, A_, idx_A_);
-
-    return impl::tensor_reduce_impl(op, A_, idx_A_, val, idx);
+    return impl::tensor_reduce_impl(op, A, idx_A, val, idx);
 }
 
-template <typename len_type, typename stride_type>
-siz_t tensor_size(gint_t ndim, const len_type len, const stride_type stride)
+template <typename len_type>
+stl_ext::enable_if_t<std::is_integral<detail::pointer_type_t<len_type>>::value,siz_t>
+tensor_size(gint_t ndim, const len_type& len)
 {
-    #if TENSOR_ERROR_CHECKING
-    util::check_tensor(ndim, len, stride);
-    #endif
-
     siz_t size = 1;
 
     for (gint_t i = 0;i < ndim;i++)
@@ -899,40 +846,24 @@ siz_t tensor_size(gint_t ndim, const len_type len, const stride_type stride)
     return size;
 }
 
-template <typename len_type>
-siz_t tensor_size(gint_t ndim, const len_type len)
-{
-    return tensor_size(ndim, len, (inc_t*)NULL);
-}
-
 template <typename len_type, typename stride_type>
-siz_t tensor_storage_size(gint_t ndim, const len_type len, const stride_type stride)
+stl_ext::enable_if_t<std::is_integral<detail::pointer_type_t<len_type>>::value &&
+                     std::is_integral<detail::pointer_type_t<stride_type>>::value,siz_t>
+tensor_storage_size(gint_t ndim, const len_type& len, const stride_type& stride)
 {
     if (!stride)
     {
        return tensor_size(ndim, len, stride);
     }
 
-    #if TENSOR_ERROR_CHECKING
-    util::check_tensor(ndim, len, stride);
-    #endif
-
-    inc_t min_idx = 0;
-    inc_t max_idx = 0;
+    siz_t size = 1;
 
     for (gint_t i = 0;i < ndim;i++)
     {
-        if (stride[i] < 0)
-        {
-            min_idx += stride[i]*(len[i]-1);
-        }
-        else
-        {
-            max_idx += stride[i]*(len[i]-1);
-        }
+        size += std::abs(stride[i])*(len[i]-1);
     }
 
-    return (siz_t)(max_idx - min_idx + 1);
+    return size;
 }
 
 }

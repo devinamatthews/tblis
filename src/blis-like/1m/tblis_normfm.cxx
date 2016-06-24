@@ -13,7 +13,7 @@ static void tblis_normfm_int(const Matrix<T>& A, T& norm)
 }
 
 template <typename T>
-static void tblis_normfm_int(const ScatterMatrix<T>& A, T& restrict norm)
+static void tblis_normfm_int(const const_scatter_matrix_view<T>& A, T& restrict norm)
 {
     dim_t m = A.length();
     dim_t n = A.width();

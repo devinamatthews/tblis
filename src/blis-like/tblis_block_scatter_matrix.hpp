@@ -3,326 +3,162 @@
 
 #include "tblis.hpp"
 
-#include "util/util.hpp"
-
 namespace tblis
 {
 namespace blis_like
 {
 
 template <typename T, dim_t MB, dim_t NB>
-class BlockScatterMatrix
+class block_scatter_matrix
 {
     static_assert(MB > 0, "MB must be positive");
     static_assert(NB > 0, "NB must be positive");
 
     public:
-        typedef T type;
-        typedef typename real_type<T>::type real_type;
-
-    private:
-        trans_op_t _conjtrans;
-        type* _ptr;
-        dim_t _m;
-        dim_t _n;
-        dim_t _mb;
-        dim_t _nb;
-        inc_t* _rs;
-        inc_t* _cs;
-        inc_t* _rscat;
-        inc_t* _cscat;
-        dim_t _m_sub;
-        dim_t _n_sub;
-        inc_t _m_off;
-        inc_t _n_off;
-        inc_t _ptr_off;
-
-        constexpr static bool M_BLOCKED = (MB > 1);
-        constexpr static bool N_BLOCKED = (NB > 1);
+        typedef unsigned idx_type;
+        typedef size_t size_type;
+        typedef ptrdiff_t stride_type;
+        typedef const stride_type* scatter_type;
+        typedef T value_type;
+        typedef T* pointer;
+        typedef const T* const_pointer;
+        typedef T& reference;
+        typedef const T& const_reference;
 
     protected:
-        void create()
-        {
-            _conjtrans = BLIS_NO_TRANSPOSE;
-            _ptr = NULL;
-            _m = 0;
-            _n = 0;
-            _mb = 0;
-            _nb = 0;
-            _rs = NULL;
-            _cs = NULL;
-            _rscat = NULL;
-            _cscat = NULL;
-            _m_sub = 0;
-            _n_sub = 0;
-            _m_off = 0;
-            _n_off = 0;
-            _ptr_off = 0;
-        }
+        pointer data_;
+        std::array<idx_type, 2> len_;
+        std::array<scatter_type, 2> block_scatter_;
+        std::array<scatter_type, 2> scatter_;
 
-        void create(dim_t m, dim_t n, type* p, inc_t* rs, inc_t* cs,
-                    inc_t* rscat, inc_t* cscat)
-        {
-            _conjtrans = BLIS_NO_TRANSPOSE;
-            _ptr = p;
-            _m = m;
-            _n = n;
-            _mb = (m+MB-1)/MB;
-            _nb = (n+NB-1)/NB;
-            _rs = rs;
-            _cs = cs;
-            _rscat = rscat;
-            _cscat = cscat;
-            _m_sub = m;
-            _n_sub = n;
-            _m_off = 0;
-            _n_off = 0;
-        }
+        constexpr static bool M_BLOCKED = MB > 1;
+        constexpr static bool N_BLOCKED = NB > 1;
 
     public:
-        BlockScatterMatrix()
+        block_scatter_matrix()
         {
-            create();
+            reset();
         }
 
-        BlockScatterMatrix(const BlockScatterMatrix&) = default;
+        block_scatter_matrix(const block_scatter_matrix&) = default;
 
-        BlockScatterMatrix(dim_t m, dim_t n, type* p, inc_t* rs, inc_t* cs,
-                           inc_t* rscat, inc_t* cscat)
+        block_scatter_matrix(idx_type m, idx_type n, pointer p,
+                             scatter_type rbs, scatter_type cbs,
+                             scatter_type rscat, scatter_type cscat)
         {
-            create(m, n, p, rs, cs, rscat, cscat);
+            reset(m, n, p, rbs, cbs, rscat, cscat);
         }
 
-        BlockScatterMatrix& operator=(const BlockScatterMatrix&) = default;
+        block_scatter_matrix& operator=(const block_scatter_matrix&) = delete;
 
         void reset()
         {
-            create();
+            data_ = nullptr;
+            len_[0] = 0;
+            len_[1] = 0;
+            block_scatter_[0] = nullptr;
+            block_scatter_[1] = nullptr;
+            scatter_[0] = nullptr;
+            scatter_[1] = nullptr;
         }
 
-        void reset(const BlockScatterMatrix& other)
+        void reset(const block_scatter_matrix& other)
         {
-            *this = other;
+            data_ = other.data_;
+            len_[0] = other.len_[0];
+            len_[1] = other.len_[1];
+            block_scatter_[0] = other.block_scatter_[0];
+            block_scatter_[1] = other.block_scatter_[1];
+            scatter_[0] = other.scatter_[0];
+            scatter_[1] = other.scatter_[1];
         }
 
-        void reset(dim_t m, dim_t n, type* p, inc_t* rs, inc_t* cs,
-                   inc_t* rscat, inc_t* cscat)
+        void reset(dim_t m, dim_t n, pointer p, stride_type* rbs, stride_type* cbs,
+                   scatter_type rscat, scatter_type cscat)
         {
-            create(m, n, p, rs, cs, rscat, cscat);
+            data_ = p;
+            len_[0] = m;
+            len_[1] = n;
+            block_scatter_[0] = rbs;
+            block_scatter_[1] = cbs;
+            scatter_[0] = rscat;
+            scatter_[1] = cscat;
+
+            for (idx_type i = 0;i < m;i += MB)
+            {
+                stride_type s = (m-i) > 1 ? rscat[i+1]-rscat[i] : 0;
+                for (int j = i;j < std::min(i+MB,m)-1;j++)
+                {
+                    if (rscat[j+1]-rscat[j] != s) s = 0;
+                }
+                if (M_BLOCKED) assert(s == rbs[i/MB]);
+            }
+
+            for (idx_type i = 0;i < n;i += NB)
+            {
+                stride_type s = (n-i) > 1 ? cscat[i+1]-cscat[i] : 0;
+                for (int j = i;j < std::min(i+NB,n)-1;j++)
+                {
+                    if (cscat[j+1]-cscat[j] != s) s = 0;
+                }
+                if (N_BLOCKED) assert(s == cbs[i/NB]);
+            }
         }
 
-        bool is_view() const
+        idx_type length(unsigned dim) const
         {
-            return true;
+            assert(dim < 2);
+            return len_[dim];
         }
 
-        bool is_transposed() const
+        idx_type length(unsigned dim, idx_type m)
         {
-            return _conjtrans.transpose();
-        }
-
-        bool transpose()
-        {
-            bool old = is_transposed();
-            bli_obj_toggle_trans(_conjtrans);
-            return old;
-        }
-
-        bool transpose(bool trans)
-        {
-            bool old = is_transposed();
-            bli_obj_set_onlytrans(trans ? BLIS_TRANSPOSE : BLIS_NO_TRANSPOSE, _conjtrans);
-            return old;
-        }
-
-        trans_t transpose(trans_t trans)
-        {
-            trans_t old = bli_obj_onlytrans_status(_conjtrans);
-            bli_obj_set_onlytrans(trans, _conjtrans);
-            return old;
-        }
-
-        bool is_conjugated() const
-        {
-            return _conjtrans.conjugate();
-        }
-
-        bool conjugate()
-        {
-            bool old = is_conjugated();
-            bli_obj_toggle_conj(_conjtrans);
-            return old;
-        }
-
-        bool conjugate(bool conj)
-        {
-            bool old = is_conjugated();
-            bli_obj_set_conj(conj ? BLIS_CONJUGATE : BLIS_NO_CONJUGATE, _conjtrans);
-            return old;
-        }
-
-        conj_t conjugate(conj_t conj)
-        {
-            conj_t old = bli_obj_conj_status(_conjtrans);
-            bli_obj_set_conj(conj, _conjtrans);
-            return old;
-        }
-
-        trans_op_t conjtrans()
-        {
-            return bli_obj_conjtrans_status(_conjtrans);
-        }
-
-        trans_op_t conjtrans(trans_op_t conjtrans)
-        {
-            trans_op_t old = this->conjtrans();
-            bli_obj_set_conjtrans(conjtrans, _conjtrans);
-            return old;
-        }
-
-        dim_t length() const
-        {
-            return _m_sub;
-        }
-
-        dim_t length(dim_t m)
-        {
-            std::swap(m, _m_sub);
+            assert(dim < 2);
+            std::swap(m, len_[dim]);
             return m;
         }
 
-        dim_t width() const
+        stride_type stride(unsigned dim) const
         {
-            return _n_sub;
-        }
-
-        dim_t width(dim_t n)
-        {
-            std::swap(n, _n_sub);
-            return n;
-        }
-
-        inc_t row_stride() const
-        {
-            return (M_BLOCKED ? _rs[_m_off] : 0);
-        }
-
-        inc_t col_stride() const
-        {
-            return (N_BLOCKED ? _cs[_n_off] : 0);
-        }
-
-        const inc_t* row_scatter() const
-        {
-            static inc_t end = 0;
-            return (_m_off == _mb ? &end : _rscat + _m_off*MB);
-        }
-
-        const inc_t* col_scatter() const
-        {
-            static inc_t end = 0;
-            return (_n_off == _nb ? &end : _cscat + _n_off*NB);
-        }
-
-        void shift_down(dim_t m)
-        {
-            _ptr_off -= *row_scatter();
-            if (m < 0)
-            {
-                _m_off += (m-MB+1)/MB;
-            }
+            assert(dim < 2);
+            if (dim == 0)
+                return (M_BLOCKED ? *block_scatter_[0] : 0);
             else
-            {
-                _m_off += (m+MB-1)/MB;
-            }
-            _ptr_off += *row_scatter();
+                return (N_BLOCKED ? *block_scatter_[1] : 0);
         }
 
-        void shift_up(dim_t m)
+        scatter_type scatter(unsigned dim) const
         {
-            shift_down(-m);
+            assert(dim < 2);
+            return scatter_[dim];
         }
 
-        void shift_right(dim_t n)
+        void shift(unsigned dim, idx_type m)
         {
-            _ptr_off -= *col_scatter();
-            if (n < 0)
-            {
-                _n_off += (n-NB+1)/NB;
-            }
-            else
-            {
-                _n_off += (n+NB-1)/NB;
-            }
-            _ptr_off += *col_scatter();
+            assert(dim < 2);
+            scatter_[dim] += m;
+            block_scatter_[dim] += ceil_div(m, MB);
         }
 
-        void shift_left(dim_t n)
+        void shift_down(unsigned dim)
         {
-            shift_right(-n);
+            shift(dim, length(dim));
         }
 
-        void shift_down()
+        void shift_up(unsigned dim)
         {
-            shift_down(length());
+            shift(dim, -length(dim));
         }
 
-        void shift_up()
+        pointer data()
         {
-            shift_up(length());
+            return data_ + (stride(0) == 0 ? 0 : *scatter_[0])
+                         + (stride(1) == 0 ? 0 : *scatter_[1]);
         }
 
-        void shift_right()
+        const_pointer data() const
         {
-            shift_right(width());
-        }
-
-        void shift_left()
-        {
-            shift_left(width());
-        }
-
-        type* data()
-        {
-            return _ptr + (row_stride() == 0 ? 0 : *row_scatter())
-                        + (col_stride() == 0 ? 0 : *col_scatter());
-        }
-
-        const type* data() const
-        {
-            return _ptr + (row_stride() == 0 ? 0 : *row_scatter())
-                        + (col_stride() == 0 ? 0 : *col_scatter());
-        }
-
-        BlockScatterMatrix operator^(trans_op_t trans)
-        {
-            BlockScatterMatrix view(*this);
-
-            if (trans.transpose()) view.transpose();
-            if (trans.conjugate()) view.conjugate();
-
-            return view;
-        }
-
-        friend void ViewNoTranspose(BlockScatterMatrix& A, BlockScatterMatrix& V)
-        {
-            blis::detail::AssertNotSelfView(A, V);
-
-            if (A.is_conjugated()) V.conjugate();
-
-            if (A.is_transposed())
-            {
-                V.reset(A._n, A._m, A._ptr, A._cs, A._rs, A._cscat, A._rscat);
-            }
-            else
-            {
-                V.reset(A._m, A._n, A._ptr, A._rs, A._cs, A._rscat, A._cscat);
-            }
-        }
-
-        friend void ViewNoTranspose(BlockScatterMatrix&& A, BlockScatterMatrix& V)
-        {
-            ViewNoTranspose(A, V);
+            return const_cast<block_scatter_matrix&>(*this).data();
         }
 };
 

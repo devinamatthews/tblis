@@ -87,17 +87,28 @@ template <typename T> struct is_real<std::complex<T>> { static const bool value 
 template <typename T> struct is_complex                  { static const bool value = false; };
 template <typename T> struct is_complex<std::complex<T>> { static const bool value =  true; };
 
-namespace util
-{
-
-constexpr inline dim_t remainder(dim_t N, dim_t B)
+template <typename T, typename U>
+constexpr stl_ext::common_type_t<T,U> remainder(T N, U B)
 {
     return (B-1)-(N+B-1)%B;
 }
 
-constexpr inline dim_t round_up(dim_t N, dim_t B)
+template <typename T, typename U>
+constexpr stl_ext::common_type_t<T,U> round_up(T N, U B)
 {
     return N + remainder(N, B);
+}
+
+template <typename T, typename U>
+constexpr stl_ext::common_type_t<T,U> ceil_div(T N, U D)
+{
+    return (N > 0 ? (N+D-1)/D : (N-D+1)/D);
+}
+
+template <typename T, typename U>
+constexpr stl_ext::common_type_t<T,U> floor_div(T N, U D)
+{
+    return N/D;
 }
 
 template <typename T, typename U>
@@ -108,39 +119,13 @@ U* convert_and_align(T* x)
 }
 
 template <typename T, typename U>
-constexpr dim_t size_as_type(dim_t n)
+constexpr size_t size_as_type(size_t n)
 {
-    return (n*sizeof(T) + alignof(T)-1 + sizeof(U)-1)/sizeof(U);
+    return ceil_div(n*sizeof(T) + alignof(T), sizeof(U));
 }
 
-inline const char* ptr(const std::string& x)
+namespace util
 {
-    return x.c_str();
-}
-
-template <typename T>
-const T* ptr(const std::vector<T>& x)
-{
-    return &x[0];
-}
-
-template <typename T>
-const T* ptr(const T* x)
-{
-    return x;
-}
-
-template <typename T>
-T* ptr(std::vector<T>& x)
-{
-    return &x[0];
-}
-
-template <typename T>
-T* ptr(T* x)
-{
-    return x;
-}
 
 extern std::mt19937 engine;
 

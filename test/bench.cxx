@@ -10,8 +10,8 @@
 #include <iomanip>
 #include <functional>
 
+#include "../src/util/tblis_util.hpp"
 #include "tblis.hpp"
-#include "util/util.hpp"
 
 using namespace std;
 using namespace blis;

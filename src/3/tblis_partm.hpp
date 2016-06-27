@@ -8,7 +8,7 @@ namespace tblis
 namespace blis_like
 {
 
-template <template <typename> class MT, int Dim, int Threading=matrix_constants::NT_NONE>
+template <template <typename> class MT, int Dim>
 struct Partition
 {
     template <typename T, typename Child, typename... Children>
@@ -49,7 +49,7 @@ struct Partition
             dim_t m_u = (Dim == DIM_M ? A.length(0) : Dim == DIM_N ? B.length(1) : A.length(1));
             dim_t m_v = (Dim == DIM_M ? C.length(0) : Dim == DIM_N ? C.length(1) : B.length(0));
 
-            ASSERT(distribute <= comm.num_threads());
+            assert(distribute <= comm.num_threads());
 
             dim_t m_first = 0;
             dim_t m_last = std::min(m_u, m_v);
@@ -128,14 +128,14 @@ struct Partition
     };
 };
 
-template <template <typename> class MT, int Threading=matrix_constants::NT_NONE>
-using PartitionM = Partition<MT, matrix_constants::DIM_M, Threading>;
+template <template <typename> class MT>
+using PartitionM = Partition<MT, matrix_constants::DIM_M>;
 
-template <template <typename> class NT, int Threading=matrix_constants::NT_NONE>
-using PartitionN = Partition<NT, matrix_constants::DIM_N, Threading>;
+template <template <typename> class NT>
+using PartitionN = Partition<NT, matrix_constants::DIM_N>;
 
-template <template <typename> class KT, int Threading=matrix_constants::NT_NONE>
-using PartitionK = Partition<KT, matrix_constants::DIM_K, Threading>;
+template <template <typename> class KT>
+using PartitionK = Partition<KT, matrix_constants::DIM_K>;
 
 }
 }

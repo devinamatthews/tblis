@@ -26,22 +26,18 @@ namespace matrix_constants
 {
     enum {MAT_A, MAT_B, MAT_C};
     enum {DIM_M, DIM_N, DIM_K};
-    enum {NT_NONE, NT_IR, NT_JR, NT_IC, NT_JC, NT_KC};
 }
 
 }
 }
 
 #define TBLIS_CONFIG dunnington
-#define TBLIS_CONFIG_NAME Dunnington
 #include "tblis_config_import.hpp"
 
 #define TBLIS_CONFIG sandybridge
-#define TBLIS_CONFIG_NAME SandyBridge
 #include "tblis_config_import.hpp"
 
 #define TBLIS_CONFIG haswell
-#define TBLIS_CONFIG_NAME Haswell
 #include "tblis_config_import.hpp"
 
 #endif

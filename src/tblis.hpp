@@ -1,7 +1,7 @@
 #ifndef _TBLIS_HPP_
 #define _TBLIS_HPP_
 
-#include "config.h"
+#include "tblis_config.hpp"
 
 namespace tblis
 {
@@ -12,7 +12,7 @@ void tblis_finalize();
 
 }
 
-#include "util/util.hpp"
+#include "tblis_util.hpp"
 
 #define _DEFINED_SCOMPLEX
 #define _DEFINED_DCOMPLEX
@@ -25,40 +25,38 @@ extern "C"
 #include "bli_macro_defs.h"
 }
 
-#include "core/tensor_iterator.hpp"
-#include "core/tblis_tensor.hpp"
-#include "core/tensor_iface.hpp"
-#include "core/tensor_templates.hpp"
-#include "core/tensor_slicer.hpp"
-#include "core/tensor_partitioner.hpp"
-#include "core/tblis_memory_pool.hpp"
-#include "core/tblis_mutex.hpp"
-#include "core/tblis_thread.hpp"
+#include "tblis_tensor.hpp"
+#include "tensor_templates.hpp"
+#include "tblis_memory_pool.hpp"
+#include "tblis_yield.hpp"
+#include "tblis_mutex.hpp"
+#include "tblis_barrier.hpp"
+#include "tblis_thread.hpp"
 
-#include "blis-like/tblis_config.hpp"
-#include "blis-like/tblis_scatter_matrix.hpp"
-#include "blis-like/tblis_block_scatter_matrix.hpp"
-#include "blis-like/tblis_tensor_matrix.hpp"
+#include "tblis_config.hpp"
+#include "tblis_scatter_matrix.hpp"
+#include "tblis_block_scatter_matrix.hpp"
+#include "tblis_tensor_matrix.hpp"
 
-#include "blis-like/1v/tblis_addv.hpp"
-#include "blis-like/1v/tblis_asumv.hpp"
-#include "blis-like/1v/tblis_axpbyv.hpp"
-#include "blis-like/1v/tblis_axpyv.hpp"
-#include "blis-like/1v/tblis_copyv.hpp"
-#include "blis-like/1v/tblis_dotv.hpp"
-#include "blis-like/1v/tblis_normfv.hpp"
-#include "blis-like/1v/tblis_scal2v.hpp"
-#include "blis-like/1v/tblis_scalv.hpp"
-#include "blis-like/1v/tblis_setv.hpp"
-#include "blis-like/1v/tblis_sumv.hpp"
-#include "blis-like/1v/tblis_xpbyv.hpp"
-#include "blis-like/1v/tblis_zerov.hpp"
+#include "1v/tblis_addv.hpp"
+#include "1v/tblis_asumv.hpp"
+#include "1v/tblis_axpbyv.hpp"
+#include "1v/tblis_axpyv.hpp"
+#include "1v/tblis_copyv.hpp"
+#include "1v/tblis_dotv.hpp"
+#include "1v/tblis_normfv.hpp"
+#include "1v/tblis_scal2v.hpp"
+#include "1v/tblis_scalv.hpp"
+#include "1v/tblis_setv.hpp"
+#include "1v/tblis_sumv.hpp"
+#include "1v/tblis_xpbyv.hpp"
+#include "1v/tblis_zerov.hpp"
 
-#include "blis-like/1m/tblis_normfm.hpp"
+#include "1m/tblis_normfm.hpp"
 
-#include "blis-like/3/tblis_partm.hpp"
-#include "blis-like/3/tblis_packm.hpp"
-#include "blis-like/3/tblis_gemm_ukr.hpp"
-#include "blis-like/3/tblis_gemm.hpp"
+#include "3/tblis_partm.hpp"
+#include "3/tblis_packm.hpp"
+#include "3/tblis_gemm_ukr.hpp"
+#include "3/tblis_gemm.hpp"
 
 #endif

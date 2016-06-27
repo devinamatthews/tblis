@@ -14,15 +14,14 @@ namespace detail
     struct pointer_type;
 
     template <typename T>
-    struct pointer_type<T, stl_ext::enable_if_t<std::is_pointer<T>::value>>
+    struct pointer_type<T, stl_ext::enable_if_t<std::is_pointer<stl_ext::decay_t<T>>::value>>
     {
-        typedef stl_ext::remove_pointer_t<T> type;
+        typedef stl_ext::remove_pointer_t<stl_ext::decay_t<T>> type;
     };
 
     template <typename T>
     struct pointer_type<T, stl_ext::conditional_t<false,
-        has_member<decltype(std::declval<T>().data()),
-                   decltype(std::declval<T>().size())>,void>>
+        has_member<decltype(std::declval<T>().data())>,void>>
     {
         typedef stl_ext::remove_pointer_t<decltype(std::declval<T>().data())> type;
     };

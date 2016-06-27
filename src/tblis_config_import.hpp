@@ -47,8 +47,8 @@ namespace tblis
 namespace blis_like
 {
 
-#define TBLIS_CONFIG_STRUCT(name) TBLIS_CONCAT(name, Config)
-struct TBLIS_CONFIG_STRUCT(TBLIS_CONFIG_NAME)
+#define TBLIS_CONFIG_STRUCT(name) TBLIS_CONCAT(name, _config)
+struct TBLIS_CONFIG_STRUCT(TBLIS_CONFIG)
 #undef TBLIS_CONFIG_STRUCT
 {
     template <typename T> struct MC {};
@@ -98,6 +98,12 @@ struct TBLIS_CONFIG_STRUCT(TBLIS_CONFIG_NAME)
     template <> struct gemm_row_major<  double> { static constexpr bool value = BLIS_DGEMM_UKERNEL_PREFERS_CONTIG_ROWS; };
     template <> struct gemm_row_major<scomplex> { static constexpr bool value = BLIS_CGEMM_UKERNEL_PREFERS_CONTIG_ROWS; };
     template <> struct gemm_row_major<dcomplex> { static constexpr bool value = BLIS_ZGEMM_UKERNEL_PREFERS_CONTIG_ROWS; };
+
+#ifdef BLIS_TREE_BARRIER
+    constexpr static int tree_barrier_arity = BLIS_TREE_BARRIER_ARITY;
+#else
+    constexpr static int tree_barrier_arity = 0;
+#endif
 };
 
 }

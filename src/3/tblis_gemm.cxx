@@ -1,6 +1,6 @@
+#include "../util/tblis_util.hpp"
 #include "tblis.hpp"
 
-#include "util/util.hpp"
 
 namespace tblis
 {

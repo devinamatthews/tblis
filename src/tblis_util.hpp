@@ -11,9 +11,10 @@
 
 #define TBLIS_STRINGIZE(...) #__VA_ARGS__
 #define TBLIS_CONCAT(x,y) x##y
+#define TBLIS_FIRST_ARG(arg,...) arg
 
-#ifdef DEBUG
-inline void abort_with_message(const char* cond, const char* fmt, ...)
+#ifdef TBLIS_DEBUG
+inline void tblis_abort_with_message(const char* cond, const char* fmt, ...)
 {
     if (strlen(fmt) == 0)
     {
@@ -30,21 +31,45 @@ inline void abort_with_message(const char* cond, const char* fmt, ...)
     abort();
 }
 
-#define ASSERT(x,...) \
+#define TBLIS_ASSERT(x,...) \
 if (x) {} \
 else \
 { \
-    abort_with_message(#x, "" __VA_ARGS__) ; \
+    tblis_abort_with_message(TBLIS_STRINGIZE(x), "" __VA_ARGS__) ; \
 }
 #else
-#define ASSERT(x,...)
+#define TBLIS_ASSERT(...)
 #endif
 
-#define DEFINE_INSTANTIATIONS() \
-INSTANTIATION(   float,MR,NR,KR,MR<   float>::def,NR<   float>::def,KR<   float>::def) \
-INSTANTIATION(  double,MR,NR,KR,MR<  double>::def,NR<  double>::def,KR<  double>::def) \
-INSTANTIATION(scomplex,MR,NR,KR,MR<scomplex>::def,NR<scomplex>::def,KR<scomplex>::def) \
-INSTANTIATION(dcomplex,MR,NR,KR,MR<dcomplex>::def,NR<dcomplex>::def,KR<dcomplex>::def)
+#define TBLIS_INSTANTIATE_FOR_CONFIG(config) \
+INSTANTIATION(   float,config,config::template MR<   float>::def,config::template NR<   float>::def,config::template KR<   float>::def) \
+INSTANTIATION(  double,config,config::template MR<  double>::def,config::template NR<  double>::def,config::template KR<  double>::def) \
+INSTANTIATION(scomplex,config,config::template MR<scomplex>::def,config::template NR<scomplex>::def,config::template KR<scomplex>::def) \
+INSTANTIATION(dcomplex,config,config::template MR<dcomplex>::def,config::template NR<dcomplex>::def,config::template KR<dcomplex>::def)
+
+#define TBLIS_INSTANTIATE_FOR_CONFIGS1(config1) \
+INSTANTIATE_FOR_CONFIG(config1)
+
+#define TBLIS_INSTANTIATE_FOR_CONFIGS2(config1, config2) \
+TBLIS_INSTANTIATE_FOR_CONFIG(config1) \
+TBLIS_INSTANTIATE_FOR_CONFIGS1(config2)
+
+#define TBLIS_INSTANTIATE_FOR_CONFIGS3(config1, config2, config3) \
+TBLIS_INSTANTIATE_FOR_CONFIG(config1) \
+TBLIS_INSTANTIATE_FOR_CONFIGS2(config2, config3)
+
+#define TBLIS_INSTANTIATE_FOR_CONFIGS4(config1, config2, config3, config4) \
+TBLIS_INSTANTIATE_FOR_CONFIG(config1) \
+TBLIS_INSTANTIATE_FOR_CONFIGS3(config2, config3, config4)
+
+#define TBLIS_INSTANTIATE_FOR_CONFIGS5(config1, config2, config3, config4, config5) \
+TBLIS_INSTANTIATE_FOR_CONFIG(config1) \
+TBLIS_INSTANTIATE_FOR_CONFIGS4(config2, config3, config4, config5)
+
+#define TBLIS_INSTANTIATE_FOR_CONFIGS_(_1,_2,_3,_4,_5,NUM,...) \
+TBLIS_CONCAT(TBLIS_INSTANTIATE_FOR_CONFIGS, NUM)
+#define TBLIS_INSTANTIATE_FOR_CONFIGS(...) \
+TBLIS_INSTANTIATE_FOR_CONFIGS_(__VA_ARGS__,5,4,3,2,1)(__VA_ARGS__)
 
 template<typename T> std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
 {

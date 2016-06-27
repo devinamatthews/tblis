@@ -467,6 +467,13 @@ std::ostream& operator<<(std::ostream& os, const std::tuple<Args...>& t)
     return os;
 }
 
+template <typename T, typename U>
+std::ostream& operator<<(std::ostream& os, const std::pair<T, U>& t)
+{
+    os << '{' << t.first << ", " << t.second << '}';
+    return os;
+}
+
 template<typename T> std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
 {
     os << "[";

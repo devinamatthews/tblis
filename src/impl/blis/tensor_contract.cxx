@@ -1,6 +1,6 @@
+#include "../../util/tblis_util.hpp"
 #include "tblis.hpp"
 #include "impl/tensor_impl.hpp"
-#include "util/util.hpp"
 
 #define SCATTER_MATRIX 0
 #define TENSOR_SCATTER 1

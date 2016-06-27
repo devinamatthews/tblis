@@ -172,6 +172,11 @@ template<typename T> vector<T>& operator+=(vector<T>& v, T&& t)
     return v;
 }
 
+template<typename T> bool operator!(const std::vector<T>& x)
+{
+    return x.empty();
+}
+
 }
 
 #endif

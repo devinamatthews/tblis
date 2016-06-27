@@ -1,68 +1,24 @@
 #ifndef _TBLIS_MUTEX_HPP_
 #define _TBLIS_MUTEX_HPP_
 
-#define USE_OPENMP 0
-#define USE_PTHREADS 1
+#include "tblis.hpp"
 
-#include <atomic>
-#include <mutex>
-
-#if defined(__MIC__)
-#define TBLIS_ARCH_MIC 1
-#elif defined(__INTEL_COMPILER) || defined(__i386__) || defined(__x86_64__) || \
-      defined(_X86_) || defined(_M_IX86) || defined(_M_X64)
-#define TBLIS_ARCH_INTEL 1
-#elif defined(__arm__) || defined(_M_ARM) || defined(__aarch64__)
-#define TBLIS_ARCH_ARM 1
-#elif defined(_ARCH_PPC) || defined(_ARCH_PPC64)
-#define TBLIS_ARCH_PPC 1
-#endif
-
-#if USE_OSSPINLOCK && BLIS_OS_OSX
+#if TBLIS_USE_OSX_SPINLOCK
 #include <libkern/OSAtomic.h>
-#endif
-
-#if USE_PTHREADS
+#elif TBLIS_USE_PTHREAD_SPINLOCK || TBLIS_USE_PTHREAD_MUTEX
 #include <pthread.h>
-#include <cerrno>
-#include <system_error>
-#elif USE_OPENMP
+#elif TBLIS_USE_CXX11_SPINLOCK
+#include <atomic>
+#elif TBLIS_USE_OMP_LOCK
 #include <omp.h>
-#else
-#include <thread>
-#endif
-
-#if TBLIS_ARCH_INTEL
-#include <xmmintrin.h>
+#elif TBLIS_USE_CXX11_MUTEX
+#include <mutex>
 #endif
 
 namespace tblis
 {
 
-#if TBLIS_ARCH_MIC
-
-inline void yield()
-{
-    _mm_delay(32);
-}
-
-#elif TBLIS_ARCH_INTEL
-
-inline void yield()
-{
-    //_mm_pause();
-    __asm__ __volatile__ ("pause");
-}
-
-#else
-
-inline void yield() {}
-
-#endif
-
-#if USE_SPINLOCK
-
-#if USE_OSSPINLOCK && BLIS_OS_OSX
+#if TBLIS_USE_OSX_SPINLOCK
 
 class Mutex
 {
@@ -90,7 +46,7 @@ class Mutex
         OSSpinLock _lock = OS_SPINLOCK_INIT;
 };
 
-#elif USE_PTHREADS && !BLIS_OS_OSX
+#elif TBLIS_USE_PTHREAD_SPINLOCK
 
 class Mutex
 {
@@ -135,7 +91,7 @@ class Mutex
         pthread_spinlock_t _lock;
 };
 
-#else
+#elif TBLIS_USE_CXX11_SPINLOCK
 
 class Mutex
 {
@@ -165,11 +121,7 @@ class Mutex
         std::atomic_flag _flag = ATOMIC_FLAG_INIT;
 };
 
-#endif
-
-#else
-
-#if USE_PTHREADS
+#elif TBLIS_USE_PTHREAD_MUTEX
 
 class Mutex
 {
@@ -204,7 +156,7 @@ class Mutex
         pthread_mutex_t _mutex = PTHREAD_MUTEX_INITIALIZER;
 };
 
-#elif USE_OPENMP
+#elif TBLIS_USE_OMP_LOCK
 
 class Mutex
 {
@@ -242,7 +194,7 @@ class Mutex
         omp_lock_t _mutex;
 };
 
-#else
+#elif TBLIS_USE_CXX11_MUTEX
 
 using Mutex = std::mutex;
 

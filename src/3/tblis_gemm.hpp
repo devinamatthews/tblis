@@ -88,27 +88,37 @@ using GotoGEMM = GEMM<Config, 3, 0, 1, 6, 5, -1,
                       PartitionM<Config::MR>,
                       MicroKernel<Config>>::run<T>;
 
-template <typename Config, typename T, typename MatrixA, typename MatrixB, typename MatrixC>
-void tblis_gemm_int(T alpha, const MatrixA& A, const MatrixB& B, T beta, MatrixC&& C)
+template <typename Config, typename T>
+void tblis_gemm_int(T alpha, const_matrix_view<T>& A,
+                             const_matrix_view<T>& B,
+                    T  beta,       matrix_view<T>& C)
 {
+    constexpr bool row_major = Config::template gemm_row_major<T>::value;
+
     assert(A.length() == C.length(), "m dimension does not match");
     assert(A.width() == B.length(), "k dimension does not match");
     assert(B.width() == C.width(), "n dimension does not match");
 
-    GotoGEMM<T,Config>()(alpha, A, B, beta, C);
-}
-
-template <typename Config, typename T, typename MatrixA, typename MatrixB, typename MatrixC>
-void tblis_gemm(T alpha, const MatrixA& A, const MatrixB& B, T beta, MatrixC&& C)
-{
-    if ((Config::template gemm_row_major<T>::value ? C.row_stride() : C.col_stride()) == 1)
+    if (C.stride(!row_major) == 1)
     {
-        tblis_gemm_int<Config>(alpha, B.transposed(), A.transposed(), beta, C.transposed());
+        A.transpose();
+        B.transpose();
+        C.transpose();
+        GotoGEMM<T,Config>()(alpha, B, A, beta, C);
     }
     else
     {
-        tblis_gemm_int<Config>(alpha, A, B, beta, C);
+        GotoGEMM<T,Config>()(alpha, A, B, beta, C);
     }
+
+}
+
+template <typename T>
+void tblis_gemm(T alpha, const_matrix_view<T> A,
+                         const_matrix_view<T> B,
+                T  beta,       matrix_view<T> C)
+{
+    //TODO
 }
 
 }

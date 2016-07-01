@@ -5,10 +5,8 @@
 
 namespace tblis
 {
-namespace blis_like
-{
 
-template <typename T, dim_t MB, dim_t NB>
+template <typename T, idx_type MB, idx_type NB>
 class block_scatter_matrix
 {
     static_assert(MB > 0, "MB must be positive");
@@ -73,7 +71,7 @@ class block_scatter_matrix
             scatter_[1] = other.scatter_[1];
         }
 
-        void reset(dim_t m, dim_t n, pointer p, stride_type* rbs, stride_type* cbs,
+        void reset(idx_type m, idx_type n, pointer p, stride_type* rbs, stride_type* cbs,
                    scatter_type rscat, scatter_type cscat)
         {
             data_ = p;
@@ -162,7 +160,6 @@ class block_scatter_matrix
         }
 };
 
-}
 }
 
 #endif

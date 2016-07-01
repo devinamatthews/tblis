@@ -7,36 +7,36 @@
 #ifndef BLIS_SGEMM_UKERNEL
 #define BLIS_SGEMM_UKERNEL GenericMicroKernel<float,MR<float>::def,NR<float>::def>
 #else
-void BLIS_SGEMM_UKERNEL(dim_t k,
+void BLIS_SGEMM_UKERNEL(tblis::idx_type k,
                         const float* alpha, const float* p_a, const float* p_b,
-                        const float* beta, float* p_c, inc_t rs_c, inc_t cs_c,
+                        const float* beta, float* p_c, tblis::stride_type rs_c, tblis::stride_type cs_c,
                         const void* data, const void* ctx);
 #endif
 
 #ifndef BLIS_DGEMM_UKERNEL
 #define BLIS_DGEMM_UKERNEL GenericMicroKernel<double,MR<double>::def,NR<double>::def>
 #else
-void BLIS_DGEMM_UKERNEL(dim_t k,
+void BLIS_DGEMM_UKERNEL(tblis::idx_type k,
                         const double* alpha, const double* p_a, const double* p_b,
-                        const double* beta, double* p_c, inc_t rs_c, inc_t cs_c,
+                        const double* beta, double* p_c, tblis::stride_type rs_c, tblis::stride_type cs_c,
                         const void* data, const void* ctx);
 #endif
 
 #ifndef BLIS_CGEMM_UKERNEL
 #define BLIS_CGEMM_UKERNEL GenericMicroKernel<scomplex,MR<scomplex>::def,NR<scomplex>::def>
 #else
-void BLIS_CGEMM_UKERNEL(dim_t k,
+void BLIS_CGEMM_UKERNEL(tblis::idx_type k,
                         const scomplex* alpha, const scomplex* p_a, const scomplex* p_b,
-                        const scomplex* beta, scomplex* p_c, inc_t rs_c, inc_t cs_c,
+                        const scomplex* beta, scomplex* p_c, tblis::stride_type rs_c, tblis::stride_type cs_c,
                         const void* data, const void* ctx);
 #endif
 
 #ifndef BLIS_ZGEMM_UKERNEL
 #define BLIS_ZGEMM_UKERNEL GenericMicroKernel<dcomplex,MR<dcomplex>::def,NR<dcomplex>::def>
 #else
-void BLIS_ZGEMM_UKERNEL(dim_t k,
+void BLIS_ZGEMM_UKERNEL(tblis::idx_type k,
                         const dcomplex* alpha, const dcomplex* p_a, const dcomplex* p_b,
-                        const dcomplex* beta, dcomplex* p_c, inc_t rs_c, inc_t cs_c,
+                        const dcomplex* beta, dcomplex* p_c, tblis::stride_type rs_c, tblis::stride_type cs_c,
                         const void* data, const void* ctx);
 #endif
 
@@ -44,60 +44,19 @@ void BLIS_ZGEMM_UKERNEL(dim_t k,
 
 namespace tblis
 {
-namespace blis_like
-{
 
-#define TBLIS_CONFIG_STRUCT(name) TBLIS_CONCAT(name, _config)
-struct TBLIS_CONFIG_STRUCT(TBLIS_CONFIG)
-#undef TBLIS_CONFIG_STRUCT
+#define TBLIS_CONFIG_STRUCT TBLIS_CONCAT(TBLIS_CONFIG, _config)
+
+struct TBLIS_CONFIG_STRUCT
 {
     template <typename T> struct MC {};
-    template <> struct MC<   float> { static constexpr dim_t def = BLIS_DEFAULT_MC_S, max = BLIS_MAXIMUM_MC_S, iota = BLIS_DEFAULT_MR_S; };
-    template <> struct MC<  double> { static constexpr dim_t def = BLIS_DEFAULT_MC_D, max = BLIS_MAXIMUM_MC_D, iota = BLIS_DEFAULT_MR_D; };
-    template <> struct MC<scomplex> { static constexpr dim_t def = BLIS_DEFAULT_MC_C, max = BLIS_MAXIMUM_MC_C, iota = BLIS_DEFAULT_MR_C; };
-    template <> struct MC<dcomplex> { static constexpr dim_t def = BLIS_DEFAULT_MC_Z, max = BLIS_MAXIMUM_MC_Z, iota = BLIS_DEFAULT_MR_Z; };
-
     template <typename T> struct NC {};
-    template <> struct NC<   float> { static constexpr dim_t def = BLIS_DEFAULT_NC_S, max = BLIS_MAXIMUM_NC_S, iota = BLIS_DEFAULT_NR_S; };
-    template <> struct NC<  double> { static constexpr dim_t def = BLIS_DEFAULT_NC_D, max = BLIS_MAXIMUM_NC_D, iota = BLIS_DEFAULT_NR_D; };
-    template <> struct NC<scomplex> { static constexpr dim_t def = BLIS_DEFAULT_NC_C, max = BLIS_MAXIMUM_NC_C, iota = BLIS_DEFAULT_NR_C; };
-    template <> struct NC<dcomplex> { static constexpr dim_t def = BLIS_DEFAULT_NC_Z, max = BLIS_MAXIMUM_NC_Z, iota = BLIS_DEFAULT_NR_Z; };
-
     template <typename T> struct KC {};
-    template <> struct KC<   float> { static constexpr dim_t def = BLIS_DEFAULT_KC_S, max = BLIS_MAXIMUM_KC_S, iota = BLIS_DEFAULT_KR_S; };
-    template <> struct KC<  double> { static constexpr dim_t def = BLIS_DEFAULT_KC_D, max = BLIS_MAXIMUM_KC_D, iota = BLIS_DEFAULT_KR_D; };
-    template <> struct KC<scomplex> { static constexpr dim_t def = BLIS_DEFAULT_KC_C, max = BLIS_MAXIMUM_KC_C, iota = BLIS_DEFAULT_KR_C; };
-    template <> struct KC<dcomplex> { static constexpr dim_t def = BLIS_DEFAULT_KC_Z, max = BLIS_MAXIMUM_KC_Z, iota = BLIS_DEFAULT_KR_Z; };
-
     template <typename T> struct MR {};
-    template <> struct MR<   float> { static constexpr dim_t def = BLIS_DEFAULT_MR_S, extent = BLIS_PACKDIM_MR_S; };
-    template <> struct MR<  double> { static constexpr dim_t def = BLIS_DEFAULT_MR_D, extent = BLIS_PACKDIM_MR_D; };
-    template <> struct MR<scomplex> { static constexpr dim_t def = BLIS_DEFAULT_MR_C, extent = BLIS_PACKDIM_MR_C; };
-    template <> struct MR<dcomplex> { static constexpr dim_t def = BLIS_DEFAULT_MR_Z, extent = BLIS_PACKDIM_MR_Z; };
-
     template <typename T> struct NR {};
-    template <> struct NR<   float> { static constexpr dim_t def = BLIS_DEFAULT_NR_S, extent = BLIS_PACKDIM_NR_S; };
-    template <> struct NR<  double> { static constexpr dim_t def = BLIS_DEFAULT_NR_D, extent = BLIS_PACKDIM_NR_D; };
-    template <> struct NR<scomplex> { static constexpr dim_t def = BLIS_DEFAULT_NR_C, extent = BLIS_PACKDIM_NR_C; };
-    template <> struct NR<dcomplex> { static constexpr dim_t def = BLIS_DEFAULT_NR_Z, extent = BLIS_PACKDIM_NR_Z; };
-
     template <typename T> struct KR {};
-    template <> struct KR<   float> { static constexpr dim_t def = BLIS_DEFAULT_KR_S, extent = BLIS_PACKDIM_KR_S; };
-    template <> struct KR<  double> { static constexpr dim_t def = BLIS_DEFAULT_KR_D, extent = BLIS_PACKDIM_KR_D; };
-    template <> struct KR<scomplex> { static constexpr dim_t def = BLIS_DEFAULT_KR_C, extent = BLIS_PACKDIM_KR_C; };
-    template <> struct KR<dcomplex> { static constexpr dim_t def = BLIS_DEFAULT_KR_Z, extent = BLIS_PACKDIM_KR_Z; };
-
     template <typename T> struct gemm_ukr {};
-    template <> struct gemm_ukr<   float> { static constexpr gemm_ukr_t<   float> value = BLIS_SGEMM_UKERNEL; };
-    template <> struct gemm_ukr<  double> { static constexpr gemm_ukr_t<  double> value = BLIS_DGEMM_UKERNEL; };
-    template <> struct gemm_ukr<scomplex> { static constexpr gemm_ukr_t<scomplex> value = BLIS_CGEMM_UKERNEL; };
-    template <> struct gemm_ukr<dcomplex> { static constexpr gemm_ukr_t<dcomplex> value = BLIS_ZGEMM_UKERNEL; };
-
     template <typename T> struct gemm_row_major {};
-    template <> struct gemm_row_major<   float> { static constexpr bool value = BLIS_SGEMM_UKERNEL_PREFERS_CONTIG_ROWS; };
-    template <> struct gemm_row_major<  double> { static constexpr bool value = BLIS_DGEMM_UKERNEL_PREFERS_CONTIG_ROWS; };
-    template <> struct gemm_row_major<scomplex> { static constexpr bool value = BLIS_CGEMM_UKERNEL_PREFERS_CONTIG_ROWS; };
-    template <> struct gemm_row_major<dcomplex> { static constexpr bool value = BLIS_ZGEMM_UKERNEL_PREFERS_CONTIG_ROWS; };
 
 #ifdef BLIS_TREE_BARRIER
     constexpr static int tree_barrier_arity = BLIS_TREE_BARRIER_ARITY;
@@ -106,11 +65,50 @@ struct TBLIS_CONFIG_STRUCT(TBLIS_CONFIG)
 #endif
 };
 
-}
-}
+template <> struct TBLIS_CONFIG_STRUCT::MC<   float> { static constexpr idx_type def = BLIS_DEFAULT_MC_S, max = BLIS_MAXIMUM_MC_S, iota = BLIS_DEFAULT_MR_S; };
+template <> struct TBLIS_CONFIG_STRUCT::MC<  double> { static constexpr idx_type def = BLIS_DEFAULT_MC_D, max = BLIS_MAXIMUM_MC_D, iota = BLIS_DEFAULT_MR_D; };
+template <> struct TBLIS_CONFIG_STRUCT::MC<scomplex> { static constexpr idx_type def = BLIS_DEFAULT_MC_C, max = BLIS_MAXIMUM_MC_C, iota = BLIS_DEFAULT_MR_C; };
+template <> struct TBLIS_CONFIG_STRUCT::MC<dcomplex> { static constexpr idx_type def = BLIS_DEFAULT_MC_Z, max = BLIS_MAXIMUM_MC_Z, iota = BLIS_DEFAULT_MR_Z; };
 
+template <> struct TBLIS_CONFIG_STRUCT::NC<   float> { static constexpr idx_type def = BLIS_DEFAULT_NC_S, max = BLIS_MAXIMUM_NC_S, iota = BLIS_DEFAULT_NR_S; };
+template <> struct TBLIS_CONFIG_STRUCT::NC<  double> { static constexpr idx_type def = BLIS_DEFAULT_NC_D, max = BLIS_MAXIMUM_NC_D, iota = BLIS_DEFAULT_NR_D; };
+template <> struct TBLIS_CONFIG_STRUCT::NC<scomplex> { static constexpr idx_type def = BLIS_DEFAULT_NC_C, max = BLIS_MAXIMUM_NC_C, iota = BLIS_DEFAULT_NR_C; };
+template <> struct TBLIS_CONFIG_STRUCT::NC<dcomplex> { static constexpr idx_type def = BLIS_DEFAULT_NC_Z, max = BLIS_MAXIMUM_NC_Z, iota = BLIS_DEFAULT_NR_Z; };
+
+template <> struct TBLIS_CONFIG_STRUCT::KC<   float> { static constexpr idx_type def = BLIS_DEFAULT_KC_S, max = BLIS_MAXIMUM_KC_S, iota = BLIS_DEFAULT_KR_S; };
+template <> struct TBLIS_CONFIG_STRUCT::KC<  double> { static constexpr idx_type def = BLIS_DEFAULT_KC_D, max = BLIS_MAXIMUM_KC_D, iota = BLIS_DEFAULT_KR_D; };
+template <> struct TBLIS_CONFIG_STRUCT::KC<scomplex> { static constexpr idx_type def = BLIS_DEFAULT_KC_C, max = BLIS_MAXIMUM_KC_C, iota = BLIS_DEFAULT_KR_C; };
+template <> struct TBLIS_CONFIG_STRUCT::KC<dcomplex> { static constexpr idx_type def = BLIS_DEFAULT_KC_Z, max = BLIS_MAXIMUM_KC_Z, iota = BLIS_DEFAULT_KR_Z; };
+
+template <> struct TBLIS_CONFIG_STRUCT::MR<   float> { static constexpr idx_type def = BLIS_DEFAULT_MR_S, extent = BLIS_PACKDIM_MR_S; };
+template <> struct TBLIS_CONFIG_STRUCT::MR<  double> { static constexpr idx_type def = BLIS_DEFAULT_MR_D, extent = BLIS_PACKDIM_MR_D; };
+template <> struct TBLIS_CONFIG_STRUCT::MR<scomplex> { static constexpr idx_type def = BLIS_DEFAULT_MR_C, extent = BLIS_PACKDIM_MR_C; };
+template <> struct TBLIS_CONFIG_STRUCT::MR<dcomplex> { static constexpr idx_type def = BLIS_DEFAULT_MR_Z, extent = BLIS_PACKDIM_MR_Z; };
+
+template <> struct TBLIS_CONFIG_STRUCT::NR<   float> { static constexpr idx_type def = BLIS_DEFAULT_NR_S, extent = BLIS_PACKDIM_NR_S; };
+template <> struct TBLIS_CONFIG_STRUCT::NR<  double> { static constexpr idx_type def = BLIS_DEFAULT_NR_D, extent = BLIS_PACKDIM_NR_D; };
+template <> struct TBLIS_CONFIG_STRUCT::NR<scomplex> { static constexpr idx_type def = BLIS_DEFAULT_NR_C, extent = BLIS_PACKDIM_NR_C; };
+template <> struct TBLIS_CONFIG_STRUCT::NR<dcomplex> { static constexpr idx_type def = BLIS_DEFAULT_NR_Z, extent = BLIS_PACKDIM_NR_Z; };
+
+template <> struct TBLIS_CONFIG_STRUCT::KR<   float> { static constexpr idx_type def = BLIS_DEFAULT_KR_S, extent = BLIS_PACKDIM_KR_S; };
+template <> struct TBLIS_CONFIG_STRUCT::KR<  double> { static constexpr idx_type def = BLIS_DEFAULT_KR_D, extent = BLIS_PACKDIM_KR_D; };
+template <> struct TBLIS_CONFIG_STRUCT::KR<scomplex> { static constexpr idx_type def = BLIS_DEFAULT_KR_C, extent = BLIS_PACKDIM_KR_C; };
+template <> struct TBLIS_CONFIG_STRUCT::KR<dcomplex> { static constexpr idx_type def = BLIS_DEFAULT_KR_Z, extent = BLIS_PACKDIM_KR_Z; };
+
+template <> struct TBLIS_CONFIG_STRUCT::gemm_ukr<   float> { static constexpr gemm_ukr_t<   float> value = BLIS_SGEMM_UKERNEL; };
+template <> struct TBLIS_CONFIG_STRUCT::gemm_ukr<  double> { static constexpr gemm_ukr_t<  double> value = BLIS_DGEMM_UKERNEL; };
+template <> struct TBLIS_CONFIG_STRUCT::gemm_ukr<scomplex> { static constexpr gemm_ukr_t<scomplex> value = BLIS_CGEMM_UKERNEL; };
+template <> struct TBLIS_CONFIG_STRUCT::gemm_ukr<dcomplex> { static constexpr gemm_ukr_t<dcomplex> value = BLIS_ZGEMM_UKERNEL; };
+
+template <> struct TBLIS_CONFIG_STRUCT::gemm_row_major<   float> { static constexpr bool value = BLIS_SGEMM_UKERNEL_PREFERS_CONTIG_ROWS; };
+template <> struct TBLIS_CONFIG_STRUCT::gemm_row_major<  double> { static constexpr bool value = BLIS_DGEMM_UKERNEL_PREFERS_CONTIG_ROWS; };
+template <> struct TBLIS_CONFIG_STRUCT::gemm_row_major<scomplex> { static constexpr bool value = BLIS_CGEMM_UKERNEL_PREFERS_CONTIG_ROWS; };
+template <> struct TBLIS_CONFIG_STRUCT::gemm_row_major<dcomplex> { static constexpr bool value = BLIS_ZGEMM_UKERNEL_PREFERS_CONTIG_ROWS; };
+
+#undef TBLIS_CONFIG_STRUCT
 #undef TBLIS_CONFIG
-#undef TBLIS_CONFIG_NAME
+
+}
 
 #undef BLIS_KERNEL_H
 

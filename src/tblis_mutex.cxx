@@ -1,6 +1,4 @@
-#include "tblis_mutex.hpp"
-
-#include <cstdarg>
+#include "tblis.hpp"
 
 namespace tblis
 {

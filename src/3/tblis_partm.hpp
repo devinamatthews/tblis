@@ -5,8 +5,6 @@
 
 namespace tblis
 {
-namespace blis_like
-{
 
 template <template <typename> class MT, int Dim>
 struct Partition
@@ -30,30 +28,30 @@ struct Partition
             using namespace matrix_constants;
             using namespace std::placeholders;
 
-            constexpr dim_t M_def  = MT<T>::def;
-            constexpr dim_t M_max  = MT<T>::max;
-            constexpr dim_t M_iota = MT<T>::iota;
+            constexpr idx_type M_def  = MT<T>::def;
+            constexpr idx_type M_max  = MT<T>::max;
+            constexpr idx_type M_iota = MT<T>::iota;
 
-            auto length = [&](dim_t m_u, dim_t m_v)
+            auto length = [&](idx_type m_u, idx_type m_v)
             {
                 (Dim == DIM_M ? A.length(0, m_u) : Dim == DIM_N ? B.length(1, m_u) : A.length(1, m_u));
                 (Dim == DIM_M ? C.length(0, m_v) : Dim == DIM_N ? C.length(1, m_v) : B.length(0, m_v));
             };
 
-            auto shift = [&](dim_t m)
+            auto shift = [&](idx_type m)
             {
                 (Dim == DIM_M ? A.shift(0, m) : Dim == DIM_N ? B.shift(1, m) : A.shift(1, m));
                 (Dim == DIM_M ? C.shift(0, m) : Dim == DIM_N ? C.shift(1, m) : B.shift(0, m));
             };
 
-            dim_t m_u = (Dim == DIM_M ? A.length(0) : Dim == DIM_N ? B.length(1) : A.length(1));
-            dim_t m_v = (Dim == DIM_M ? C.length(0) : Dim == DIM_N ? C.length(1) : B.length(0));
+            idx_type m_u = (Dim == DIM_M ? A.length(0) : Dim == DIM_N ? B.length(1) : A.length(1));
+            idx_type m_v = (Dim == DIM_M ? C.length(0) : Dim == DIM_N ? C.length(1) : B.length(0));
 
             assert(distribute <= comm.num_threads());
 
-            dim_t m_first = 0;
-            dim_t m_last = std::min(m_u, m_v);
-            dim_t m_max = m_last;
+            idx_type m_first = 0;
+            idx_type m_last = std::min(m_u, m_v);
+            idx_type m_max = m_last;
 
             if (distribute > 1)
             {
@@ -79,12 +77,12 @@ struct Partition
             //              Dim, child_comm.gang_num(), child_comm.thread_num(),
             //              &A, A.data(), &B, B.data(), &C, C.data());
 
-            length(m_last-m_first);
+            length(m_last-m_first, m_last-m_first);
             shift(m_first);
 
             int count = 0;
-            dim_t m_loc = 0;
-            dim_t m_off = m_first;
+            idx_type m_loc = 0;
+            idx_type m_off = m_first;
 
             if ((m_last-m_first)%M_def <= (M_max-M_def))
             {
@@ -108,8 +106,8 @@ struct Partition
                 count++;
             }
 
-            dim_t n_this = (m_last-m_first+M_def-1)/M_def - (((m_last-m_first)%M_def) <= M_max-M_def);
-            dim_t n_max = (m_max-m_first+M_def-1)/M_def - (((m_max-m_first)%M_def) <= M_max-M_def);
+            idx_type n_this = (m_last-m_first+M_def-1)/M_def - (((m_last-m_first)%M_def) <= M_max-M_def);
+            idx_type n_max = (m_max-m_first+M_def-1)/M_def - (((m_max-m_first)%M_def) <= M_max-M_def);
             assert(count == n_this);
 
             length(0, 0);
@@ -137,7 +135,6 @@ using PartitionN = Partition<NT, matrix_constants::DIM_N>;
 template <template <typename> class KT>
 using PartitionK = Partition<KT, matrix_constants::DIM_K>;
 
-}
 }
 
 #endif

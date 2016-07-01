@@ -1,8 +1,6 @@
 #ifndef _TBLIS_BARRIER_HPP_
 #define _TBLIS_BARRIER_HPP_
 
-#include <condition_variable>
-
 #include "tblis.hpp"
 
 #if TBLIS_USE_PTHREAD_BARRIER

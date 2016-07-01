@@ -2,15 +2,15 @@
 
 namespace tblis
 {
-namespace blis_like
-{
 
 template <typename T>
-static void tblis_dotv_ref(bool conj_A, bool conj_B, dim_t n,
-                           const T* restrict A, inc_t inc_A,
-                           const T* restrict B, inc_t inc_B, T& restrict sum)
+static void tblis_dotv_ref(bool conj_A, bool conj_B, idx_type n,
+                           const T* restrict A, stride_type inc_A,
+                           const T* restrict B, stride_type inc_B, T& restrict dot)
 {
-    sum = T();
+    dot = T();
+
+    if (n == 0) return;
 
     conj_B = conj_A ^ conj_B;
 
@@ -18,16 +18,16 @@ static void tblis_dotv_ref(bool conj_A, bool conj_B, dim_t n,
     {
         if (conj_B)
         {
-            for (dim_t i = 0;i < n;i++)
+            for (idx_type i = 0;i < n;i++)
             {
-                sum += A[i]*conj(B[i]);
+                dot += A[i]*conj(B[i]);
             }
         }
         else
         {
-            for (dim_t i = 0;i < n;i++)
+            for (idx_type i = 0;i < n;i++)
             {
-                sum += A[i]*B[i];
+                dot += A[i]*B[i];
             }
         }
     }
@@ -35,95 +35,67 @@ static void tblis_dotv_ref(bool conj_A, bool conj_B, dim_t n,
     {
         if (conj_B)
         {
-            for (dim_t i = 0;i < n;i++)
+            for (idx_type i = 0;i < n;i++)
             {
-                sum += (*A)*conj(*B);
+                dot += (*A)*conj(*B);
                 A += inc_A;
                 B += inc_B;
             }
         }
         else
         {
-            for (dim_t i = 0;i < n;i++)
+            for (idx_type i = 0;i < n;i++)
             {
-                sum += (*A)*(*B);
+                dot += (*A)*(*B);
                 A += inc_A;
                 B += inc_B;
             }
         }
     }
 
-    if (conj_A) sum = conj(sum);
+    if (conj_A) dot = conj(dot);
 }
 
 template <typename T>
-static void tblis_dotv_int(const Matrix<T>& A, const Matrix<T>& B, T& sum)
+void tblis_dotv(const_row_view<T> A, const_row_view<T> B, T& dot)
 {
-    if (A.length() > 1)
-    {
-        tblis_dotv_ref(A.is_conjugated(), B.is_conjugated(),
-                       A.length(), A.data(), A.row_stride(),
-                                   B.data(), B.row_stride(), sum);
-    }
-    else
-    {
-        tblis_dotv_ref(A.is_conjugated(), B.is_conjugated(),
-                       A.width(), A.data(), A.col_stride(),
-                                  B.data(), B.col_stride(), sum);
-    }
+    assert(A.length() == B.length());
+    tblis_dotv_ref(false, false,
+                   A.length(), A.data(), A.stride(),
+                               B.data(), B.stride(), dot);
 }
 
 template <typename T>
-void tblis_dotv(bool conj_A, bool conj_B, dim_t n,
-                const T* A, inc_t inc_A,
-                const T* B, inc_t inc_B, T& sum)
+T tblis_dotv(const_row_view<T> A, const_row_view<T> B)
 {
-    if (n == 0) return;
-    tblis_dotv_ref(conj_A, conj_B, n, A, inc_A, B, inc_B, sum);
+    T dot;
+    tblis_dotv(A, B, dot);
+    return dot;
 }
 
 template <typename T>
-T tblis_dotv(bool conj_A, bool conj_B, dim_t n,
-             const T* A, inc_t inc_A,
-             const T* B, inc_t inc_B)
+void tblis_dotv(bool conj_A, bool conj_B, idx_type n,
+                const T* A, stride_type inc_A,
+                const T* B, stride_type inc_B, T& dot)
 {
-    T sum;
-    tblis_dotv(conj_A, conj_B, n, A, inc_A, B, inc_B, sum);
-    return sum;
+    tblis_dotv_ref(conj_A, conj_B, n, A, inc_A, B, inc_B, dot);
 }
 
 template <typename T>
-void tblis_dotv(const Matrix<T>& A, const Matrix<T>& B, T& sum)
+T tblis_dotv(bool conj_A, bool conj_B, idx_type n,
+             const T* A, stride_type inc_A,
+             const T* B, stride_type inc_B)
 {
-    Matrix<T> Av;
-    Matrix<T> Bv;
-
-    ViewNoTranspose(const_cast<Matrix<T>&>(A), Av);
-    ViewNoTranspose(const_cast<Matrix<T>&>(B), Bv);
-
-    ASSERT(A.length() == B.length());
-    ASSERT(A.width() == B.width());
-
-    if (A.length() == 0 || A.width() == 0) return;
-
-    tblis_dotv_int(A, B, sum);
+    T dot;
+    tblis_dotv(conj_A, conj_B, n, A, inc_A, B, inc_B, dot);
+    return dot;
 }
 
-template <typename T>
-T tblis_dotv(const Matrix<T>& A, const Matrix<T>& B)
-{
-    T sum;
-    tblis_dotv(A, B, sum);
-    return sum;
-}
+#define INSTANTIATE_FOR_TYPE(T) \
+template void tblis_dotv(bool conj_A, bool conj_B, idx_type n, const T* A, stride_type inc_A, const T* B, stride_type inc_B, T& dot); \
+template    T tblis_dotv(bool conj_A, bool conj_B, idx_type n, const T* A, stride_type inc_A, const T* B, stride_type inc_B); \
+template void tblis_dotv(const_row_view<T> A, const_row_view<T> B, T& dot); \
+template    T tblis_dotv(const_row_view<T> A, const_row_view<T> B);
+#include "tblis_instantiate_for_types.hpp"
 
-#define INSTANTIATION(T,MT,NT,KT,MR,NR,KR) \
-template void tblis_dotv(bool conj_A, bool conj_B, dim_t n, const T* A, inc_t inc_A, const T* B, inc_t inc_B, T& sum); \
-template    T tblis_dotv(bool conj_A, bool conj_B, dim_t n, const T* A, inc_t inc_A, const T* B, inc_t inc_B); \
-template void tblis_dotv(const Matrix<T>& A, const Matrix<T>& B, T& sum); \
-template    T tblis_dotv(const Matrix<T>& A, const Matrix<T>& B);
-DEFINE_INSTANTIATIONS()
-#undef INSTANTIATION
-
-}
 }

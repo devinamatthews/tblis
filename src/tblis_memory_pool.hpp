@@ -1,10 +1,7 @@
 #ifndef _TBLIS_MEMORY_POOL_HPP_
 #define _TBLIS_MEMORY_POOL_HPP_
 
-#include <memory>
-#include <list>
-
-#include "tblis_mutex.hpp"
+#include "tblis.hpp"
 
 namespace tblis
 {
@@ -109,7 +106,7 @@ class MemoryPool
                 if (entry.second >= size &&
                     (uintptr_t)entry.first % alignment == 0)
                 {
-                    ASSERT(entry.first);
+                    assert(entry.first);
                     ptr = entry.first;
                     size = entry.second;
                 }
@@ -136,7 +133,7 @@ class MemoryPool
         {
             std::lock_guard<Mutex> guard(_lock);
 
-            ASSERT(ptr);
+            assert(ptr);
             _free_list.emplace_front(ptr, size);
         }
 

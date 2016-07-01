@@ -5,8 +5,6 @@
 
 namespace tblis
 {
-namespace blis_like
-{
 
 namespace detail
 {
@@ -53,11 +51,11 @@ struct GEMM
         template <typename MatrixA, typename MatrixB, typename MatrixC>
         void operator()(T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
         {
-            dim_t jc_way = bli_read_nway_from_env( "BLIS_JC_NT" );
-            dim_t ic_way = bli_read_nway_from_env( "BLIS_IC_NT" );
-            dim_t jr_way = bli_read_nway_from_env( "BLIS_JR_NT" );
-            dim_t ir_way = bli_read_nway_from_env( "BLIS_IR_NT" );
-            dim_t nthread = jc_way*ic_way*jr_way*ir_way;
+            idx_type jc_way = envtol("BLIS_JC_NT");
+            idx_type ic_way = envtol("BLIS_IC_NT");
+            idx_type jr_way = envtol("BLIS_JR_NT");
+            idx_type ir_way = envtol("BLIS_IR_NT");
+            idx_type nthread = jc_way*ic_way*jr_way*ir_way;
 
             step<IC>().distribute = ic_way;
             step<JC>().distribute = jc_way;
@@ -77,51 +75,11 @@ struct GEMM
     };
 };
 
-template <typename T, typename Config>
-using GotoGEMM = GEMM<Config, 3, 0, 1, 6, 5, -1,
-                      PartitionN<Config::NC>,
-                      PartitionK<Config::KC>,
-                      PackB<Config::KR,Config::NR>,
-                      PartitionM<Config::MC>,
-                      PackA<Config::MR,Config::KR>,
-                      PartitionN<Config::NR>,
-                      PartitionM<Config::MR>,
-                      MicroKernel<Config>>::run<T>;
-
-template <typename Config, typename T>
-void tblis_gemm_int(T alpha, const_matrix_view<T>& A,
-                             const_matrix_view<T>& B,
-                    T  beta,       matrix_view<T>& C)
-{
-    constexpr bool row_major = Config::template gemm_row_major<T>::value;
-
-    assert(A.length() == C.length(), "m dimension does not match");
-    assert(A.width() == B.length(), "k dimension does not match");
-    assert(B.width() == C.width(), "n dimension does not match");
-
-    if (C.stride(!row_major) == 1)
-    {
-        A.transpose();
-        B.transpose();
-        C.transpose();
-        GotoGEMM<T,Config>()(alpha, B, A, beta, C);
-    }
-    else
-    {
-        GotoGEMM<T,Config>()(alpha, A, B, beta, C);
-    }
-
-}
-
-template <typename T>
+template <typename T, typename Config=TBLIS_DEFAULT_CONFIG>
 void tblis_gemm(T alpha, const_matrix_view<T> A,
                          const_matrix_view<T> B,
-                T  beta,       matrix_view<T> C)
-{
-    //TODO
-}
+                T  beta,       matrix_view<T> C);
 
-}
 }
 
 #endif

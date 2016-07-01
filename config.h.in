@@ -1,15 +1,23 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 
-#ifndef _CONFIG_H_
-#define _CONFIG_H_
+#if defined(__MIC__)
+#define ARCH_MIC 1
+#elif defined(__INTEL_COMPILER) || defined(__i386__) || defined(__x86_64__) || \
+      defined(_X86_) || defined(_M_IX86) || defined(_M_X64)
+#define ARCH_INTEL 1
+#elif defined(__arm__) || defined(_M_ARM) || defined(__aarch64__)
+#define ARCH_ARM 1
+#elif defined(_ARCH_PPC) || defined(_ARCH_PPC64)
+#define ARCH_PPC 1
+#endif
 
+
+/* Default configuration. */
+#undef DEFAULT_CONFIG
 
 /* Define if blis is to be used. */
 #undef HAVE_BLIS
-
-/* Define if blis++ is to be used. */
-#undef HAVE_BLIS__
 
 /* define if the compiler supports basic C++11 syntax */
 #undef HAVE_CXX11
@@ -74,6 +82,15 @@
 /* The top source directory. */
 #undef TOPDIR
 
+/* Use a spin-lock based on C++11 atomics */
+#undef USE_CXX11_SPINLOCK
+
+/* Use C++11 std::thread */
+#undef USE_CXX11_THREADS
+
+/* Use a spin-loop based barrier */
+#undef USE_SPIN_BARRIER
+
 /* Version number of package */
 #undef VERSION
 
@@ -90,11 +107,3 @@
 # define _Restrict
 # define __restrict__
 #endif
-
-
-#ifndef DEBUG
-#define NDEBUG
-#endif
-
-#endif
-

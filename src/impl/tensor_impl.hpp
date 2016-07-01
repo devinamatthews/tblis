@@ -22,9 +22,9 @@ enum impl_t
 extern impl_t impl_type;
 
 template <typename T>
-int tensor_mult_impl(T alpha, const Tensor<T>& A, const std::string& idx_A,
-                              const Tensor<T>& B, const std::string& idx_B,
-                     T  beta,       Tensor<T>& C, const std::string& idx_C)
+int tensor_mult_impl(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
+                              const const_tensor_view<T>& B, const std::string& idx_B,
+                     T  beta,             tensor_view<T>& C, const std::string& idx_C)
 {
     switch (impl_type)
     {
@@ -46,9 +46,9 @@ int tensor_mult_impl(T alpha, const Tensor<T>& A, const std::string& idx_A,
 }
 
 template <typename T>
-int tensor_contract_impl(T alpha, const Tensor<T>& A, const std::string& idx_A,
-                                  const Tensor<T>& B, const std::string& idx_B,
-                         T  beta,       Tensor<T>& C, const std::string& idx_C)
+int tensor_contract_impl(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
+                                  const const_tensor_view<T>& B, const std::string& idx_B,
+                         T  beta,             tensor_view<T>& C, const std::string& idx_C)
 {
     switch (impl_type)
     {
@@ -72,9 +72,9 @@ int tensor_contract_impl(T alpha, const Tensor<T>& A, const std::string& idx_A,
 }
 
 template <typename T>
-int tensor_weight_impl(T alpha, const Tensor<T>& A, const std::string& idx_A,
-                                const Tensor<T>& B, const std::string& idx_B,
-                       T  beta,       Tensor<T>& C, const std::string& idx_C)
+int tensor_weight_impl(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
+                                const const_tensor_view<T>& B, const std::string& idx_B,
+                       T  beta,             tensor_view<T>& C, const std::string& idx_C)
 {
     switch (impl_type)
     {
@@ -96,9 +96,9 @@ int tensor_weight_impl(T alpha, const Tensor<T>& A, const std::string& idx_A,
 }
 
 template <typename T>
-int tensor_outer_prod_impl(T alpha, const Tensor<T>& A, const std::string& idx_A,
-                                    const Tensor<T>& B, const std::string& idx_B,
-                           T  beta,       Tensor<T>& C, const std::string& idx_C)
+int tensor_outer_prod_impl(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
+                                    const const_tensor_view<T>& B, const std::string& idx_B,
+                           T  beta,             tensor_view<T>& C, const std::string& idx_C)
 {
     switch (impl_type)
     {
@@ -120,18 +120,15 @@ int tensor_outer_prod_impl(T alpha, const Tensor<T>& A, const std::string& idx_A
 }
 
 template <typename T>
-int tensor_sum_impl(T alpha, const Tensor<T>& A, const std::string& idx_A,
-                    T  beta,       Tensor<T>& B, const std::string& idx_B)
+int tensor_sum_impl(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
+                    T  beta,             tensor_view<T>& B, const std::string& idx_B)
 {
     switch (impl_type)
     {
         case REFERENCE:
+        case BLAS_BASED:
             return tensor_sum_reference(alpha, A, idx_A,
                                          beta, B, idx_B);
-            break;
-        case BLAS_BASED:
-            return tensor_sum_blas(alpha, A, idx_A,
-                                    beta, B, idx_B);
             break;
         case BLIS_BASED:
             abort();
@@ -141,8 +138,8 @@ int tensor_sum_impl(T alpha, const Tensor<T>& A, const std::string& idx_A,
 }
 
 template <typename T>
-int tensor_trace_impl(T alpha, const Tensor<T>& A, const std::string& idx_A,
-                      T  beta,       Tensor<T>& B, const std::string& idx_B)
+int tensor_trace_impl(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
+                      T  beta,             tensor_view<T>& B, const std::string& idx_B)
 {
     switch (impl_type)
     {
@@ -159,8 +156,8 @@ int tensor_trace_impl(T alpha, const Tensor<T>& A, const std::string& idx_A,
 }
 
 template <typename T>
-int tensor_replicate_impl(T alpha, const Tensor<T>& A, const std::string& idx_A,
-                          T  beta,       Tensor<T>& B, const std::string& idx_B)
+int tensor_replicate_impl(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
+                          T  beta,             tensor_view<T>& B, const std::string& idx_B)
 {
     switch (impl_type)
     {
@@ -177,8 +174,8 @@ int tensor_replicate_impl(T alpha, const Tensor<T>& A, const std::string& idx_A,
 }
 
 template <typename T>
-int tensor_transpose_impl(T alpha, const Tensor<T>& A, const std::string& idx_A,
-                          T  beta,       Tensor<T>& B, const std::string& idx_B)
+int tensor_transpose_impl(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
+                          T  beta,             tensor_view<T>& B, const std::string& idx_B)
 {
     switch (impl_type)
     {
@@ -195,8 +192,8 @@ int tensor_transpose_impl(T alpha, const Tensor<T>& A, const std::string& idx_A,
 }
 
 template <typename T>
-int tensor_dot_impl(const Tensor<T>& A, const std::string& idx_A,
-                    const Tensor<T>& B, const std::string& idx_B, T& val)
+int tensor_dot_impl(const const_tensor_view<T>& A, const std::string& idx_A,
+                    const const_tensor_view<T>& B, const std::string& idx_B, T& val)
 {
     switch (impl_type)
     {
@@ -213,7 +210,7 @@ int tensor_dot_impl(const Tensor<T>& A, const std::string& idx_A,
 }
 
 template <typename T>
-int tensor_scale_impl(T alpha, Tensor<T>& A, const std::string& idx_A)
+int tensor_scale_impl(T alpha, tensor_view<T>& A, const std::string& idx_A)
 {
     switch (impl_type)
     {
@@ -229,7 +226,7 @@ int tensor_scale_impl(T alpha, Tensor<T>& A, const std::string& idx_A)
 }
 
 template <typename T>
-int tensor_reduce_impl(reduce_t op, const Tensor<T>& A, const std::string& idx_A, T& val, dim_t& idx)
+int tensor_reduce_impl(reduce_t op, const const_tensor_view<T>& A, const std::string& idx_A, T& val, idx_type& idx)
 {
     switch (impl_type)
     {

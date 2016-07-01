@@ -2,6 +2,7 @@
 #include "impl/tensor_impl.hpp"
 
 using namespace std;
+using namespace MArray;
 
 namespace tblis
 {
@@ -9,9 +10,9 @@ namespace impl
 {
 
 template <typename T>
-int tensor_scale_reference(T alpha, Tensor<T>& A, const std::string& idx_A)
+int tensor_scale_reference(T alpha, tensor_view<T>& A, const std::string& idx_A)
 {
-    Iterator<> iter_A(A.lengths(), A.strides());
+    viterator<> iter_A(A.lengths(), A.strides());
 
     T* restrict A_ = A.data();
 
@@ -39,17 +40,10 @@ int tensor_scale_reference(T alpha, Tensor<T>& A, const std::string& idx_A)
     return 0;
 }
 
-template
-int tensor_scale_reference<   float>(   float alpha, Tensor<   float>& A, const std::string& idx_A);
-
-template
-int tensor_scale_reference<  double>(  double alpha, Tensor<  double>& A, const std::string& idx_A);
-
-template
-int tensor_scale_reference<scomplex>(scomplex alpha, Tensor<scomplex>& A, const std::string& idx_A);
-
-template
-int tensor_scale_reference<dcomplex>(dcomplex alpha, Tensor<dcomplex>& A, const std::string& idx_A);
+#define INSTANTIATE_FOR_TYPE(T) \
+template \
+int tensor_scale_reference(T alpha, tensor_view<T>& A, const std::string& idx_A);
+#include "tblis_instantiate_for_types.hpp"
 
 }
 }

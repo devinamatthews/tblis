@@ -4,6 +4,8 @@
 #include "external/lawrap/blas.h"
 
 using namespace std;
+using namespace stl_ext;
+using namespace LAWrap;
 
 namespace tblis
 {
@@ -15,100 +17,29 @@ int tensor_contract_blas(T alpha, const const_tensor_view<T>& A, const std::stri
                                   const const_tensor_view<T>& B, const std::string& idx_B,
                          T  beta,             tensor_view<T>& C, const std::string& idx_C)
 {
-    string idx_AB_AC(A.dimension(), 0);
-    string idx_AB_BC(B.dimension(), 0);
-    string idx_AC_BC(C.dimension(), 0);
+    string idx_AB = intersection(idx_A, idx_B);
+    string idx_AC = intersection(idx_A, idx_C);
+    string idx_BC = intersection(idx_B, idx_C);
 
-    gint_t ndim_AB =
-        set_intersection(idx_A.begin(), idx_A.end(),
-                         idx_B.begin(), idx_B.end(),
-                         idx_AB_AC.begin()) - idx_AB_AC.begin();
+    string idx_AB_AC = idx_AB + idx_AC;
+    string idx_AB_BC = idx_AB + idx_BC;
+    string idx_AC_BC = idx_AC + idx_BC;
 
-    gint_t ndim_AC =
-        set_intersection(idx_A.begin(), idx_A.end(),
-                         idx_C.begin(), idx_C.end(),
-                         idx_AC_BC.begin()) - idx_AC_BC.begin();
+    vector<idx_type> len_AB_AC(idx_AB_AC.size());
+    vector<idx_type> len_AB_BC(idx_AB_BC.size());
+    vector<idx_type> len_AC_BC(idx_AC_BC.size());
 
-    gint_t ndim_BC =
-        set_intersection(idx_B.begin(), idx_B.end(),
-                         idx_C.begin(), idx_C.end(),
-                         idx_AC_BC.begin()+ndim_AC) - (idx_AC_BC.begin()+ndim_AC);
+    for (unsigned i = 0;i < idx_AB_AC.size();i++)
+        for (unsigned j = 0;j < A.dimension();j++)
+            if (idx_AB_AC[i] == idx_A[j]) len_AB_AC[i] = A.length(j);
 
-    copy(idx_AB_AC.begin()        , idx_AB_AC.begin()+ndim_AB        , idx_AB_BC.begin()        );
-    copy(idx_AC_BC.begin()        , idx_AC_BC.begin()+ndim_AC        , idx_AB_AC.begin()+ndim_AB);
-    copy(idx_AC_BC.begin()+ndim_AC, idx_AC_BC.begin()+ndim_AC+ndim_BC, idx_AB_BC.begin()+ndim_AB);
+    for (unsigned i = 0;i < idx_AB_BC.size();i++)
+        for (unsigned j = 0;j < B.dimension();j++)
+            if (idx_AB_BC[i] == idx_B[j]) len_AB_BC[i] = B.length(j);
 
-    idx_AB_AC.resize(ndim_AB+ndim_AC);
-    idx_AB_BC.resize(ndim_AB+ndim_BC);
-    idx_AC_BC.resize(ndim_AC+ndim_BC);
-
-    assert(ndim_AB+ndim_AC == A.dimension());
-    assert(ndim_AB+ndim_BC == B.dimension());
-    assert(ndim_AC+ndim_BC == C.dimension());
-
-    vector<dim_t> len_AB_AC(ndim_AB+ndim_AC);
-    vector<dim_t> len_AB_BC(ndim_AB+ndim_BC);
-    vector<dim_t> len_AC_BC(ndim_AC+ndim_BC);
-
-    gint_t j = 0;
-    for (gint_t i = 0;i < A.dimension();i++)
-    {
-        if (ndim_AB+ndim_AC > j && idx_A[i] == idx_AB_AC[j])
-        {
-            len_AB_AC[j++] = A.length(i);
-        }
-    }
-    for (gint_t i = 0;i < A.dimension();i++)
-    {
-        if (ndim_AB+ndim_AC > j && idx_A[i] == idx_AB_AC[j])
-        {
-            len_AB_AC[j++] = A.length(i);
-        }
-        if (i == A.dimension()-1)
-        {
-            assert(j == ndim_AB+ndim_AC);
-        }
-    }
-
-    j = 0;
-    for (gint_t i = 0;i < B.dimension();i++)
-    {
-        if (ndim_AB+ndim_BC > j && idx_B[i] == idx_AB_BC[j])
-        {
-            len_AB_BC[j++] = B.length(i);
-        }
-    }
-    for (gint_t i = 0;i < B.dimension();i++)
-    {
-        if (ndim_AB+ndim_BC > j && idx_B[i] == idx_AB_BC[j])
-        {
-            len_AB_BC[j++] = B.length(i);
-        }
-        if (i == B.dimension()-1)
-        {
-            assert(j == ndim_AB+ndim_BC);
-        }
-    }
-
-    j = 0;
-    for (gint_t i = 0;i < C.dimension();i++)
-    {
-        if (ndim_AC+ndim_BC > j && idx_C[i] == idx_AC_BC[j])
-        {
-            len_AC_BC[j++] = C.length(i);
-        }
-    }
-    for (gint_t i = 0;i < C.dimension();i++)
-    {
-        if (ndim_AC+ndim_BC > j && idx_C[i] == idx_AC_BC[j])
-        {
-            len_AC_BC[j++] = C.length(i);
-        }
-        if (i == C.dimension()-1)
-        {
-            assert(j == ndim_AC+ndim_BC);
-        }
-    }
+    for (unsigned i = 0;i < idx_AC_BC.size();i++)
+        for (unsigned j = 0;j < C.dimension();j++)
+            if (idx_AC_BC[i] == idx_C[j]) len_AC_BC[i] = C.length(j);
 
     tensor<T> ar(len_AB_AC);
     tensor<T> br(len_AB_BC);
@@ -116,45 +47,27 @@ int tensor_contract_blas(T alpha, const const_tensor_view<T>& A, const std::stri
 
     matrix_view<T> am, bm, cm;
 
-    matricize(ar, am, ndim_AB);
-    matricize(br, bm, ndim_AB);
-    matricize(cr, cm, ndim_AC);
-    am.transpose(true);
-
-    normalize(ar, idx_AB_AC);
-    normalize(br, idx_AB_BC);
-    normalize(cr, idx_AC_BC);
+    matricize(ar, am, idx_AB.size());
+    matricize(br, bm, idx_AB.size());
+    matricize(cr, cm, idx_AC.size());
 
     tensor_transpose_impl<T>(1.0, A, idx_A, 0.0, ar, idx_AB_AC);
     tensor_transpose_impl<T>(1.0, B, idx_B, 0.0, br, idx_AB_BC);
-    LAWrap::gemm('T', 'N', cm.length(), cm.width(), am.length(),
-                 alpha, am.data(), 1, am.stride(1),
-                        bm.data(), 1, bm.stride(1),
-                   0.0, cm.data(), 1, cm.stride(1));
+    gemm('T', 'N', cm.length(0), cm.length(1), am.length(0),
+         alpha, am.data(), am.stride(1),
+                bm.data(), bm.stride(1),
+           0.0, cm.data(), cm.stride(1));
     tensor_transpose_impl<T>(1.0, cr, idx_AC_BC, beta, C, idx_C);
 
     return 0;
 }
 
-template
-int tensor_contract_blas<   float>(   float alpha, const const_tensor_view<   float>& A, const std::string& idx_A,
-                                                   const const_tensor_view<   float>& B, const std::string& idx_B,
-                                      float  beta,             tensor_view<   float>& C, const std::string& idx_C);
-
-template
-int tensor_contract_blas<  double>(  double alpha, const const_tensor_view<  double>& A, const std::string& idx_A,
-                                                   const const_tensor_view<  double>& B, const std::string& idx_B,
-                                     double  beta,             tensor_view<  double>& C, const std::string& idx_C);
-
-template
-int tensor_contract_blas<scomplex>(scomplex alpha, const const_tensor_view<scomplex>& A, const std::string& idx_A,
-                                                   const const_tensor_view<scomplex>& B, const std::string& idx_B,
-                                   scomplex  beta,             tensor_view<scomplex>& C, const std::string& idx_C);
-
-template
-int tensor_contract_blas<dcomplex>(dcomplex alpha, const const_tensor_view<dcomplex>& A, const std::string& idx_A,
-                                                   const const_tensor_view<dcomplex>& B, const std::string& idx_B,
-                                   dcomplex  beta,             tensor_view<dcomplex>& C, const std::string& idx_C);
+#define INSTANTIATE_FOR_TYPE(T) \
+template \
+int tensor_contract_blas<T>(T alpha, const const_tensor_view<T>& A, const std::string& idx_A, \
+                                     const const_tensor_view<T>& B, const std::string& idx_B, \
+                            T  beta,             tensor_view<T>& C, const std::string& idx_C);
+#include "tblis_instantiate_for_types.hpp"
 
 }
 }

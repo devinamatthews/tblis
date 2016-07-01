@@ -91,7 +91,8 @@ namespace MArray
                 reset(other);
             }
 
-            const_varray_view(const varray<T>& other)
+            template <typename Alloc>
+            const_varray_view(const varray<T, Alloc>& other)
             {
                 reset(other);
             }
@@ -127,7 +128,8 @@ namespace MArray
                 reset(static_cast<const const_varray_view<T>&>(other));
             }
 
-            void reset(const varray<T>& other)
+            template <typename Alloc>
+            void reset(const varray<T, Alloc>& other)
             {
                 reset(static_cast<const const_varray_view<T>&>(other));
             }
@@ -361,6 +363,12 @@ namespace MArray
                 return data_;
             }
 
+            const_pointer data(const_pointer ptr)
+            {
+                std::swap(ptr, const_cast<const_pointer>(data_));
+                return ptr;
+            }
+
             idx_type length(unsigned dim) const
             {
                 assert(dim < ndim_);
@@ -385,7 +393,7 @@ namespace MArray
                 return stride_[dim];
             }
 
-            stride_type stride(unsigned dim, stride_type stride) const
+            stride_type stride(unsigned dim, stride_type stride)
             {
                 assert(dim < ndim_);
                 std::swap(stride, stride_[dim]);
@@ -411,7 +419,7 @@ namespace MArray
                 swap(ndim_,   other.ndim_);
             }
 
-            friend void swap(const_varray_view& other& a, const_varray_view& other& b)
+            friend void swap(const_varray_view& a, const_varray_view& b)
             {
                 a.swap(b);
             }
@@ -456,6 +464,10 @@ namespace MArray
             varray_view(varray_view&& other)
             : parent(other) {}
 
+            template <typename Alloc>
+            varray_view(varray<T, Alloc>& other)
+            : parent(other) {}
+
             varray_view(const std::vector<idx_type>& len, pointer ptr, Layout layout=DEFAULT)
             {
                 reset(len, ptr, layout);
@@ -482,12 +494,18 @@ namespace MArray
                 ndim_ = other.ndim_;
             }
 
-            void reset(const varray_view<T>& other)
+            void reset(varray_view<T>& other)
             {
                 reset(static_cast<const const_varray_view<T>&>(other));
             }
 
-            void reset(const varray<T>& other)
+            void reset(varray_view<T>&& other)
+            {
+                reset(static_cast<const const_varray_view<T>&>(other));
+            }
+
+            template <typename Alloc>
+            void reset(varray<T, Alloc>& other)
             {
                 reset(static_cast<const const_varray_view<T>&>(other));
             }
@@ -594,10 +612,10 @@ namespace MArray
                 std::vector<stride_type> substride(ndim_-1);
 
                 std::copy_n(len_.begin(), dim, sublen.begin());
-                std::copy_n(len_.begin()+dim+1, ndim-dim-1, sublen.begin()+dim);
+                std::copy_n(len_.begin()+dim+1, ndim_-dim-1, sublen.begin()+dim);
 
                 std::copy_n(stride_.begin(), dim, substride.begin());
-                std::copy_n(stride_.begin()+dim+1, ndim-dim-1, substride.begin()+dim);
+                std::copy_n(stride_.begin()+dim+1, ndim_-dim-1, substride.begin()+dim);
 
                 pointer p = data_;
                 auto it = make_iterator(sublen, substride);
@@ -634,7 +652,7 @@ namespace MArray
 
             void rotate(const std::vector<stride_type>& shift)
             {
-                for (unsigned dim = 0;dim < ndim;dim++)
+                for (unsigned dim = 0;dim < ndim_;dim++)
                 {
                     rotate_dim(dim, shift[dim]);
                 }
@@ -688,6 +706,11 @@ namespace MArray
             pointer data()
             {
                 return const_cast<pointer>(base::data());
+            }
+
+            pointer data(pointer ptr)
+            {
+                return const_cast<pointer>(base::data(ptr));
             }
 
             using base::length;
@@ -831,7 +854,7 @@ namespace MArray
                  * It is OK to change the geometry of 'a' even if it is not
                  * a view since it is about to go out of scope.
                  */
-                for (unsigned i = 0;i < ndim;i++)
+                for (unsigned i = 0;i < ndim_;i++)
                 {
                     a.len_[i] = b.len_[i] = std::min(a.len_[i], b.len_[i]);
                 }
@@ -851,7 +874,7 @@ namespace MArray
                 assert(x.ndim_ == ndim_-1);
                 assert(dim < ndim_);
 
-                for (unsigned i = 0, j = 0;i < ndim;i++)
+                for (unsigned i = 0, j = 0;i < ndim_;i++)
                 {
                     if (i != dim)
                     {

@@ -5,18 +5,15 @@
 
 namespace tblis
 {
-namespace blis_like
-{
 
-template <typename T> void tblis_normfv(dim_t n, const T* A, inc_t inc_A, T& norm);
+template <typename T> void tblis_normfv(idx_type n, const T* A, stride_type inc_A, T& norm);
 
-template <typename T>    T tblis_normfv(dim_t n, const T* A, inc_t inc_A);
+template <typename T>    T tblis_normfv(idx_type n, const T* A, stride_type inc_A);
 
-template <typename T> void tblis_normfv(const Matrix<T>& A, T& norm);
+template <typename T> void tblis_normfv(const_row_view<T> A, T& norm);
 
-template <typename T>    T tblis_normfv(const Matrix<T>& A);
+template <typename T>    T tblis_normfv(const_row_view<T> A);
 
-}
 }
 
 #endif

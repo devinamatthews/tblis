@@ -1,7 +1,7 @@
 #ifndef _TBLIS_STACK_ALLOCATOR_HPP_
 #define _TBLIS_STACK_ALLOCATOR_HPP_
 
-#include <memory>
+#include "tblis.hpp"
 
 template <typename T>
 class stack_allocator

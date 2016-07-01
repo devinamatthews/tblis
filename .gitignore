@@ -1,5 +1,8 @@
 *.o
+*.lo
 *.a
+*.la
+*.so
 bin
 lib
 .autotools
@@ -11,4 +14,15 @@ lib
 .ptp-sync-folder
 autom4te.cache
 /config.h
+/tblis_config.hpp
+/src/tblis_instantiate_for_configs.hpp
+/src/tblis_instantiate_for_types.hpp
+/src/tblis_import_configs.hpp
+/src/external
 *~
+config.log
+config.status
+stamp-h1
+.dirstamp
+libtool
+Makefile

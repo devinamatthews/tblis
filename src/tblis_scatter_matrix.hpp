@@ -5,8 +5,6 @@
 
 namespace tblis
 {
-namespace blis_like
-{
 
 template <typename T>
 class const_scatter_matrix_view;
@@ -33,8 +31,8 @@ namespace detail
     template <typename T>
     class const_scatter_matrix_ref
     {
-        template <typename T_> friend class tblis::blis_like::const_scatter_matrix_view;
-        template <typename T_> friend class tblis::blis_like::scatter_matrix_view;
+        template <typename T_> friend class tblis::const_scatter_matrix_view;
+        template <typename T_> friend class tblis::scatter_matrix_view;
         template <typename T_> friend class const_scatter_matrix_ref;
         template <typename T_> friend class scatter_matrix_ref;
         template <typename T_> friend class const_scatter_matrix_slice;
@@ -83,8 +81,8 @@ namespace detail
     template <typename T>
     class scatter_matrix_ref : public const_scatter_matrix_ref<T>
     {
-        template <typename T_> friend class tblis::blis_like::const_scatter_matrix_view;
-        template <typename T_> friend class tblis::blis_like::scatter_matrix_view;
+        template <typename T_> friend class tblis::const_scatter_matrix_view;
+        template <typename T_> friend class tblis::scatter_matrix_view;
         template <typename T_> friend class const_scatter_matrix_ref;
         template <typename T_> friend class scatter_matrix_ref;
         template <typename T_> friend class const_scatter_matrix_slice;
@@ -142,8 +140,8 @@ namespace detail
     template <typename T>
     class const_scatter_matrix_slice
     {
-        template <typename T_> friend class tblis::blis_like::const_scatter_matrix_view;
-        template <typename T_> friend class tblis::blis_like::scatter_matrix_view;
+        template <typename T_> friend class tblis::const_scatter_matrix_view;
+        template <typename T_> friend class tblis::scatter_matrix_view;
         template <typename T_> friend class const_scatter_matrix_ref;
         template <typename T_> friend class scatter_matrix_ref;
         template <typename T_> friend class const_scatter_matrix_slice;
@@ -229,8 +227,8 @@ namespace detail
     template <typename T>
     class scatter_matrix_slice : public const_scatter_matrix_slice<T>
     {
-        template <typename T_> friend class tblis::blis_like::const_scatter_matrix_view;
-        template <typename T_> friend class tblis::blis_like::scatter_matrix_view;
+        template <typename T_> friend class tblis::const_scatter_matrix_view;
+        template <typename T_> friend class tblis::scatter_matrix_view;
         template <typename T_> friend class const_scatter_matrix_ref;
         template <typename T_> friend class scatter_matrix_ref;
         template <typename T_> friend class const_scatter_matrix_slice;
@@ -309,7 +307,7 @@ namespace detail
                 return const_cast<pointer>(parent::data());
             }
 
-            using parent::operator constscatter_matrix_view<T>;
+            using parent::operator const_scatter_matrix_view<T>;
 
             operator scatter_matrix_view<T>()
             {
@@ -337,7 +335,7 @@ namespace detail
 }
 
 template <typename T>
-class const_scattar_matrix_view
+class const_scatter_matrix_view
 {
     template <typename T_> friend class const_scatter_matrix_view;
     template <typename T_> friend class scatter_matrix_view;
@@ -363,37 +361,37 @@ class const_scattar_matrix_view
         std::array<stride_type,2> stride_ = {};
         std::array<scatter_type,2> scatter_ = {};
 
-        const_scattar_matrix_view& operator=(const const_scattar_matrix_view& other) = delete;
+        const_scatter_matrix_view& operator=(const const_scatter_matrix_view& other) = delete;
 
     public:
-        const_scattar_matrix_view() {}
+        const_scatter_matrix_view() {}
 
-        const_scattar_matrix_view(const const_scattar_matrix_view<T>& other)
+        const_scatter_matrix_view(const const_scatter_matrix_view<T>& other)
         {
             reset(other);
         }
 
-        const_scattar_matrix_view(const scatter_matrix_view<T>& other)
+        const_scatter_matrix_view(const scatter_matrix_view<T>& other)
         {
             reset(other);
         }
 
-        const_scattar_matrix_view(idx_type m, idx_type n, const_pointer ptr, stride_type rs, stride_type cs)
+        const_scatter_matrix_view(idx_type m, idx_type n, const_pointer ptr, stride_type rs, stride_type cs)
         {
             reset(m, n, ptr, rs, cs);
         }
 
-        const_scattar_matrix_view(idx_type m, idx_type n, const_pointer ptr, scatter_type rscat, stride_type cs)
+        const_scatter_matrix_view(idx_type m, idx_type n, const_pointer ptr, scatter_type rscat, stride_type cs)
         {
             reset(m, n, ptr, rscat, cs);
         }
 
-        const_scattar_matrix_view(idx_type m, idx_type n, const_pointer ptr, stride_type rs, scatter_type cscat)
+        const_scatter_matrix_view(idx_type m, idx_type n, const_pointer ptr, stride_type rs, scatter_type cscat)
         {
             reset(m, n, ptr, rs, cscat);
         }
 
-        const_scattar_matrix_view(idx_type m, idx_type n, const_pointer ptr, scatter_type rscat, scatter_type cscat)
+        const_scatter_matrix_view(idx_type m, idx_type n, const_pointer ptr, scatter_type rscat, scatter_type cscat)
         {
             reset(m, n, ptr, rscat, cscat);
         }
@@ -405,16 +403,16 @@ class const_scattar_matrix_view
             stride_.fill(0);
         }
 
-        void reset(const const_scattar_matrix_view<T>& other)
+        void reset(const const_scatter_matrix_view<T>& other)
         {
             data_ = other.data_;
             len_ = other.len_;
             stride_ = other.stride_;
         }
 
-        void reset(const scattar_matrix_view<T,>& other)
+        void reset(const scatter_matrix_view<T>& other)
         {
-            reset(static_cast<const const_scattar_matrix_view<T>&>(other));
+            reset(static_cast<const const_scatter_matrix_view<T>&>(other));
         }
 
         void reset(idx_type m, idx_type n, const_pointer ptr, stride_type rs, stride_type cs)
@@ -485,19 +483,19 @@ class const_scattar_matrix_view
             shift(dim, -stride_type(len_[dim]));
         }
 
-        const_scattar_matrix_view<T> shifted(unsigned dim, stride_type n) const
+        const_scatter_matrix_view<T> shifted(unsigned dim, stride_type n) const
         {
-            const_scattar_matrix_view<T> r(*this);
+            const_scatter_matrix_view<T> r(*this);
             r.shift(dim, n);
             return r;
         }
 
-        const_scattar_matrix_view<T> shifted_down(unsigned dim) const
+        const_scatter_matrix_view<T> shifted_down(unsigned dim) const
         {
             return shifted(dim, len_[dim]);
         }
 
-        const_scattar_matrix_view<T> shifted_up(unsigned dim) const
+        const_scatter_matrix_view<T> shifted_up(unsigned dim) const
         {
             return shifted(dim, -stride_type(len_[dim]));
         }
@@ -518,9 +516,9 @@ class const_scattar_matrix_view
         }
 
         template <typename U>
-        const_scattar_matrix_view<T> permuted(const std::array<U, 2>& perm) const
+        const_scatter_matrix_view<T> permuted(const std::array<U, 2>& perm) const
         {
-            const_scattar_matrix_view<T> r(*this);
+            const_scatter_matrix_view<T> r(*this);
             r.permute(perm);
             return r;
         }
@@ -530,7 +528,7 @@ class const_scattar_matrix_view
             permute(make_array(p0, p1));
         }
 
-        const_scattar_matrix_view<T> permuted(unsigned p0, unsigned p1) const
+        const_scatter_matrix_view<T> permuted(unsigned p0, unsigned p1) const
         {
             return permuted(make_array(p0, p1));
         }
@@ -540,7 +538,7 @@ class const_scattar_matrix_view
             permute(1, 0);
         }
 
-        const_scattar_matrix_view<T> transposed() const
+        const_scatter_matrix_view<T> transposed() const
         {
             return permuted(1, 0);
         }
@@ -647,6 +645,7 @@ class scatter_matrix_view : protected const_scatter_matrix_view<T>
         using typename base::idx_type;
         using typename base::size_type;
         using typename base::stride_type;
+        using typename base::scatter_type;
         using typename base::value_type;
         using typename base::pointer;
         using typename base::const_pointer;
@@ -658,17 +657,17 @@ class scatter_matrix_view : protected const_scatter_matrix_view<T>
         using base::len_;
         using base::stride_;
 
-        scatter_matrix_view(const parent& other)
-        : parent(other) {}
+        scatter_matrix_view(const base& other)
+        : base(other) {}
 
     public:
         scatter_matrix_view() {}
 
         scatter_matrix_view(scatter_matrix_view<T>& other)
-        : parent(other) {}
+        : base(other) {}
 
         scatter_matrix_view(scatter_matrix_view<T>&& other)
-        : parent(other) {}
+        : base(other) {}
 
         scatter_matrix_view(idx_type m, idx_type n, pointer ptr, stride_type rs, stride_type cs)
         {
@@ -717,7 +716,7 @@ class scatter_matrix_view : protected const_scatter_matrix_view<T>
 
         void reset(idx_type m, idx_type n, pointer ptr, stride_type rs, scatter_type cscat)
         {
-            base::reset(m, n, ptr, rs, cscat;
+            base::reset(m, n, ptr, rs, cscat);
         }
 
         void reset(idx_type m, idx_type n, pointer ptr, scatter_type rscat, scatter_type cscat)
@@ -751,7 +750,7 @@ class scatter_matrix_view : protected const_scatter_matrix_view<T>
 
         using base::shift;
         using base::shift_down;
-        using base::shift_up
+        using base::shift_up;
         using base::shifted;
         using base::shifted_down;
         using base::shifted_up;
@@ -785,10 +784,10 @@ class scatter_matrix_view : protected const_scatter_matrix_view<T>
             return base::permuted(p0, p1);
         }
 
-        using base::tranpose;
-        using base::tranposed;
+        using base::transpose;
+        using base::transposed;
 
-        scattar_matrix_view<T> transposed()
+        scatter_matrix_view<T> transposed()
         {
             return base::transposed();
         }
@@ -803,10 +802,8 @@ class scatter_matrix_view : protected const_scatter_matrix_view<T>
         template <typename U>
         void rotate(const std::array<U, 2>& shift)
         {
-            for (unsigned dim = 0;dim < ndim;dim++)
-            {
-                rotate_dim(dim, shift[dim]);
-            }
+            rotate_dim(0, shift[0]);
+            rotate_dim(1, shift[1]);
         }
 
         void rotate(stride_type s0, stride_type s1)
@@ -860,7 +857,7 @@ class scatter_matrix_view : protected const_scatter_matrix_view<T>
 
 template <typename T, unsigned ndim> void copy(const_scatter_matrix_view<T> a, scatter_matrix_view<T> b)
 {
-    typedef const_scatter_matrix_view<T>::idx_type idx_type;
+    typedef typename const_scatter_matrix_view<T>::idx_type idx_type;
 
     assert(a.lengths() == b.lengths());
 
@@ -873,7 +870,6 @@ template <typename T, unsigned ndim> void copy(const_scatter_matrix_view<T> a, s
     }
 }
 
-}
 }
 
 #endif

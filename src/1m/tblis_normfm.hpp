@@ -5,16 +5,19 @@
 
 namespace tblis
 {
-namespace blis_like
-{
 
-template <typename T, typename MatrixA>
-void tblis_normfm(const MatrixA& A, T& norm);
+template <typename T>
+void tblis_normfm(const_matrix_view<T> A, T& norm);
 
-template <typename MatrixA>
-typename MatrixA::type tblis_normfm(const MatrixA& A);
+template <typename T>
+void tblis_normfm(const_scatter_matrix_view<T> A, T& norm);
 
-}
+template <typename T>
+T tblis_normfm(const_matrix_view<T> A);
+
+template <typename T>
+T tblis_normfm(const_scatter_matrix_view<T> A);
+
 }
 
 #endif

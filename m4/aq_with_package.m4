@@ -52,7 +52,7 @@ AC_DEFUN([AQ_WITH_PACKAGE],
                     AC_MSG_ERROR([could not download $1 repository])
                 fi
             fi
-            if test -f $pkg_dir/configure; then
+            if test x"$5$6" != x && test -f $pkg_dir/configure; then
                 AC_MSG_NOTICE([configuring $1 in $pkg_dir])
                 ( cd $pkg_dir && ./configure )
                 AC_MSG_NOTICE([done configuring $1])

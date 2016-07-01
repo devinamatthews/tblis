@@ -5,18 +5,15 @@
 
 namespace tblis
 {
-namespace blis_like
-{
 
 template <typename T>
-void tblis_xpbyv(bool conj_A, dim_t n,
-                         const T* A, inc_t inc_A,
-                 T beta,       T* B, inc_t inc_B);
+void tblis_xpbyv(bool conj_A, idx_type n,
+                         const T* A, stride_type inc_A,
+                 T beta,       T* B, stride_type inc_B);
 
 template <typename T>
-void tblis_xpbyv(const Matrix<T>& A, T beta, Matrix<T>& B);
+void tblis_xpbyv(const_row_view<T> A, T beta, row_view<T> B);
 
-}
 }
 
 #endif

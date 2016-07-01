@@ -12,10 +12,11 @@
 #include "tblis.hpp"
 
 using namespace std;
+using namespace stl_ext;
+using namespace MArray;
 using namespace tblis;
 using namespace tblis::impl;
 using namespace tblis::util;
-using namespace tblis::blis_like;
 
 namespace tblis
 {
@@ -26,41 +27,43 @@ mt19937 engine;
 }
 
 template <typename T>
-void gemm_ref(T alpha, const Matrix<T>& A, const Matrix<T>& B, T beta, Matrix<T>& C)
+void gemm_ref(T alpha, const_matrix_view<T> A,
+                       const_matrix_view<T> B,
+              T  beta,       matrix_view<T> C)
 {
     const T* ptr_A = A.data();
     const T* ptr_B = B.data();
           T* ptr_C = C.data();
 
-    dim_t m_A = A.length();
-    dim_t m_C = C.length();
-    dim_t n_B = B.width();
-    dim_t n_C = C.width();
-    dim_t k_A = A.width();
-    dim_t k_B = B.width();
+    idx_type m_A = A.length(0);
+    idx_type m_C = C.length(0);
+    idx_type n_B = B.length(1);
+    idx_type n_C = C.length(1);
+    idx_type k_A = A.length(1);
+    idx_type k_B = B.length(0);
 
-    inc_t rs_A = A.row_stride();
-    inc_t cs_A = A.col_stride();
-    inc_t rs_B = B.row_stride();
-    inc_t cs_B = B.col_stride();
-    inc_t rs_C = C.row_stride();
-    inc_t cs_C = C.col_stride();
+    stride_type rs_A = A.stride(0);
+    stride_type cs_A = A.stride(1);
+    stride_type rs_B = B.stride(0);
+    stride_type cs_B = B.stride(1);
+    stride_type rs_C = C.stride(0);
+    stride_type cs_C = C.stride(1);
 
-    ASSERT(m_A == m_C);
-    ASSERT(n_B == n_C);
-    ASSERT(k_A == k_B);
+    assert(m_A == m_C);
+    assert(n_B == n_C);
+    assert(k_A == k_B);
 
-    dim_t m = m_A;
-    dim_t n = n_B;
-    dim_t k = k_A;
+    idx_type m = m_A;
+    idx_type n = n_B;
+    idx_type k = k_A;
 
-    for (dim_t im = 0;im < m;im++)
+    for (idx_type im = 0;im < m;im++)
     {
-        for (dim_t in = 0;in < n;in++)
+        for (idx_type in = 0;in < n;in++)
         {
             T tmp = T();
 
-            for (dim_t ik = 0;ik < k;ik++)
+            for (idx_type ik = 0;ik < k;ik++)
             {
                 tmp += ptr_A[im*rs_A + ik*cs_A]*ptr_B[ik*rs_B + in*cs_B];
             }
@@ -83,9 +86,9 @@ string permutation(string from, string to)
 
     string p = from;
 
-    for (gint_t i = 0;i < to.size();i++)
+    for (size_t i = 0;i < to.size();i++)
     {
-        for (gint_t j = 0;j < from.size();j++)
+        for (size_t j = 0;j < from.size();j++)
         {
             if (from[j] == to[i])
             {
@@ -99,7 +102,7 @@ string permutation(string from, string to)
 }
 
 template <typename T, typename U>
-void passfail(const string& label, inc_t ia, inc_t ib, T a, U b)
+void passfail(const string& label, stride_type ia, stride_type ib, T a, U b)
 {
     auto c = std::abs(a-b)/(std::abs((a+b)/U(2.0)+U(1e-15)));
     bool pass = (sizeof(c) == 4 ? c < 1e-3 : c < 1e-12) && ia == ib;
@@ -160,32 +163,32 @@ template <> const string& TypeName<dcomplex>()
  * initialized from the interior of the unit circle.
  */
 template <typename T>
-void RandomMatrix(siz_t N, dim_t m_min, dim_t n_min, Matrix<T>& t)
+void RandomMatrix(size_t N, idx_type m_min, idx_type n_min, matrix<T>& t)
 {
-    vector<inc_t> stride = RandomProductConstrainedSequence<inc_t>(3, N, {1, m_min, n_min});
+    vector<stride_type> stride = RandomProductConstrainedSequence<stride_type>(3, N, {1, m_min, n_min});
 
-    dim_t m = (m_min > 0 ? m_min : RandomInteger(1, stride[1]));
-    dim_t n = (n_min > 0 ? n_min : RandomInteger(1, stride[2]));
+    idx_type m = (m_min > 0 ? m_min : RandomInteger(1, stride[1]));
+    idx_type n = (n_min > 0 ? n_min : RandomInteger(1, stride[2]));
 
-    dim_t rs = stride[0];
-    dim_t cs = stride[1]*rs;
+    stride_type rs = stride[0];
+    stride_type cs = stride[1]*rs;
 
     /*
     if (rs == cs)
     {
-        ASSERT(m == 1 || n == 1);
+        assert(m == 1 || n == 1);
         (m == 1 ? rs : cs) = 1;
     }
     */
 
-    siz_t size = 1+(m-1)*rs+(n-1)*cs;
+    size_t size = 1+(m-1)*rs+(n-1)*cs;
 
     t.reset(m, n, rs, cs);
 
     T* data = t.data();
     fill(data, data+size, T());
 
-    Iterator<> it({m,n}, vector<inc_t>{rs,cs});
+    viterator<> it(make_vector(m,n), make_vector(rs,cs));
     while (it.next(data)) *data = RandomUnit<T>();
 }
 
@@ -197,7 +200,7 @@ void RandomMatrix(siz_t N, dim_t m_min, dim_t n_min, Matrix<T>& t)
  * initialized from the interior of the unit circle.
  */
 template <typename T>
-void RandomMatrix(siz_t N, Matrix<T>& t)
+void RandomMatrix(size_t N, matrix<T>& t)
 {
     RandomMatrix(N, 0, 0, t);
 }
@@ -210,17 +213,17 @@ void RandomMatrix(siz_t N, Matrix<T>& t)
  * initialized from the interior of the unit circle.
  */
 template <typename T>
-void RandomTensor(siz_t N, gint_t d, vector<dim_t> len_min, Tensor<T>& t)
+void RandomTensor(size_t N, unsigned d, vector<stride_type> len_min, tensor<T>& t)
 {
     //len_min.insert(len_min.begin(), 1);
-    //vector<inc_t> stride = RandomProductConstrainedSequence<inc_t>(d+1, N, len_min);
+    //vector<stride_type> stride = RandomProductConstrainedSequence<stride_type>(d+1, N, len_min);
 
-    vector<inc_t> stride = RandomProductConstrainedSequence<inc_t>(d, N, len_min);
+    vector<stride_type> stride = RandomProductConstrainedSequence<stride_type>(d, N, len_min);
     len_min.insert(len_min.begin(), 1);
     stride.insert(stride.begin(), 1);
 
-    vector<dim_t> len(d);
-    for (gint_t i = 0;i < d;i++)
+    vector<idx_type> len(d);
+    for (unsigned i = 0;i < d;i++)
     {
         if (len_min[i+1] > 0)
         {
@@ -235,8 +238,8 @@ void RandomTensor(siz_t N, gint_t d, vector<dim_t> len_min, Tensor<T>& t)
 
     stride.resize(d);
 
-    siz_t size = 1+(len[0]-1)*stride[0];
-    for (gint_t i = 1;i < d;i++)
+    size_t size = 1+(len[0]-1)*stride[0];
+    for (unsigned i = 1;i < d;i++)
     {
         stride[i] *= stride[i-1];
         size += (len[i]-1)*stride[i];
@@ -248,7 +251,7 @@ void RandomTensor(siz_t N, gint_t d, vector<dim_t> len_min, Tensor<T>& t)
     T* data = t.data();
     fill_n(data, size, T());
 
-    Iterator<> it(len, stride);
+    viterator<> it(len, stride);
     while (it.next(data)) *data = RandomUnit<T>();
 }
 
@@ -260,16 +263,16 @@ void RandomTensor(siz_t N, gint_t d, vector<dim_t> len_min, Tensor<T>& t)
  * initialized from the interior of the unit circle.
  */
 template <typename T>
-void RandomTensor(siz_t N, gint_t d, Tensor<T>& t)
+void RandomTensor(size_t N, unsigned d, tensor<T>& t)
 {
-    RandomTensor(N, d, vector<dim_t>(d, 0), t);
+    RandomTensor(N, d, vector<stride_type>(d, 0), t);
 }
 
 /*
  * Creates a random tensor of 1 to 8 dimensions.
  */
 template <typename T>
-void RandomTensor(siz_t N, Tensor<T>& t)
+void RandomTensor(size_t N, tensor<T>& t)
 {
     RandomTensor(N, RandomInteger(1,8), t);
 }
@@ -286,49 +289,49 @@ enum IndexType
 };
 
 template <typename T>
-void RandomTensors(siz_t N,
-                   gint_t ndim_A_only, gint_t ndim_B_only,
-                   gint_t ndim_AB,
-                   Tensor<T>& A, string& idx_A,
-                   Tensor<T>& B, string& idx_B)
+void RandomTensors(size_t N,
+                   unsigned ndim_A_only, unsigned ndim_B_only,
+                   unsigned ndim_AB,
+                   tensor<T>& A, string& idx_A,
+                   tensor<T>& B, string& idx_B)
 {
-    gint_t ndim_A = ndim_A_only+ndim_AB;
-    gint_t ndim_B = ndim_B_only+ndim_AB;
+    unsigned ndim_A = ndim_A_only+ndim_AB;
+    unsigned ndim_B = ndim_B_only+ndim_AB;
 
-    vector<pair<IndexType,gint_t>> types_A(ndim_A);
+    vector<pair<IndexType,unsigned>> types_A(ndim_A);
     {
-        gint_t i = 0;
-        for (gint_t j = 0;j < ndim_A_only;j++) types_A[i++] = pair<IndexType,gint_t>(TYPE_A, j);
-        for (gint_t j = 0;j < ndim_AB    ;j++) types_A[i++] = pair<IndexType,gint_t>(TYPE_AB, j);
+        unsigned i = 0;
+        for (unsigned j = 0;j < ndim_A_only;j++) types_A[i++] = {TYPE_A, j};
+        for (unsigned j = 0;j < ndim_AB    ;j++) types_A[i++] = {TYPE_AB, j};
     }
     random_shuffle(types_A.begin(), types_A.end());
 
-    vector<pair<IndexType,gint_t>> types_B(ndim_B);
+    vector<pair<IndexType,unsigned>> types_B(ndim_B);
     {
-        gint_t i = 0;
-        for (gint_t j = 0;j < ndim_B_only;j++) types_B[i++] = pair<IndexType,gint_t>(TYPE_B, j);
-        for (gint_t j = 0;j < ndim_AB    ;j++) types_B[i++] = pair<IndexType,gint_t>(TYPE_AB, j);
+        unsigned i = 0;
+        for (unsigned j = 0;j < ndim_B_only;j++) types_B[i++] = {TYPE_B, j};
+        for (unsigned j = 0;j < ndim_AB    ;j++) types_B[i++] = {TYPE_AB, j};
     }
     random_shuffle(types_B.begin(), types_B.end());
 
     string idx;
-    for (gint_t i = 0;i < ndim_A+ndim_B-ndim_AB;i++) idx.push_back('a'+i);
+    for (unsigned i = 0;i < ndim_A+ndim_B-ndim_AB;i++) idx.push_back('a'+i);
     random_shuffle(idx.begin(), idx.end());
 
-    gint_t c = 0;
+    unsigned c = 0;
     vector<char> idx_A_only(ndim_A_only);
-    for (gint_t i = 0;i < ndim_A_only;i++) idx_A_only[i] = idx[c++];
+    for (unsigned i = 0;i < ndim_A_only;i++) idx_A_only[i] = idx[c++];
 
     vector<char> idx_B_only(ndim_B_only);
-    for (gint_t i = 0;i < ndim_B_only;i++) idx_B_only[i] = idx[c++];
+    for (unsigned i = 0;i < ndim_B_only;i++) idx_B_only[i] = idx[c++];
 
     vector<char> idx_AB(ndim_AB);
-    for (gint_t i = 0;i < ndim_AB;i++) idx_AB[i] = idx[c++];
+    for (unsigned i = 0;i < ndim_AB;i++) idx_AB[i] = idx[c++];
 
     idx_A.resize(ndim_A);
     idx_B.resize(ndim_B);
 
-    for (gint_t i = 0;i < ndim_A;i++)
+    for (unsigned i = 0;i < ndim_A;i++)
     {
         switch (types_A[i].first)
         {
@@ -338,7 +341,7 @@ void RandomTensors(siz_t N,
         }
     }
 
-    for (gint_t i = 0;i < ndim_B;i++)
+    for (unsigned i = 0;i < ndim_B;i++)
     {
         switch (types_B[i].first)
         {
@@ -358,10 +361,10 @@ void RandomTensors(siz_t N,
 
     RandomTensor(N, ndim_A, A);
 
-    vector<inc_t> min_B(ndim_B);
-    for (gint_t i = 0;i < ndim_B;i++)
+    vector<stride_type> min_B(ndim_B);
+    for (unsigned i = 0;i < ndim_B;i++)
     {
-        for (gint_t j = 0;j < ndim_A;j++)
+        for (unsigned j = 0;j < ndim_A;j++)
         {
             if (idx_B[i] == idx_A[j]) min_B[i] = A.length(j);
         }
@@ -378,80 +381,80 @@ void RandomTensors(siz_t N,
 }
 
 template <typename T>
-void RandomTensors(siz_t N,
-                   gint_t ndim_A_only, gint_t ndim_B_only, gint_t ndim_C_only,
-                   gint_t ndim_AB, gint_t ndim_AC, gint_t ndim_BC,
-                   gint_t ndim_ABC,
-                   Tensor<T>& A, string& idx_A,
-                   Tensor<T>& B, string& idx_B,
-                   Tensor<T>& C, string& idx_C)
+void RandomTensors(size_t N,
+                   unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_C_only,
+                   unsigned ndim_AB, unsigned ndim_AC, unsigned ndim_BC,
+                   unsigned ndim_ABC,
+                   tensor<T>& A, string& idx_A,
+                   tensor<T>& B, string& idx_B,
+                   tensor<T>& C, string& idx_C)
 {
-    gint_t ndim_A = ndim_A_only+ndim_AB+ndim_AC+ndim_ABC;
-    gint_t ndim_B = ndim_B_only+ndim_AB+ndim_BC+ndim_ABC;
-    gint_t ndim_C = ndim_C_only+ndim_AC+ndim_BC+ndim_ABC;
+    unsigned ndim_A = ndim_A_only+ndim_AB+ndim_AC+ndim_ABC;
+    unsigned ndim_B = ndim_B_only+ndim_AB+ndim_BC+ndim_ABC;
+    unsigned ndim_C = ndim_C_only+ndim_AC+ndim_BC+ndim_ABC;
 
-    vector<pair<IndexType,gint_t>> types_A(ndim_A);
+    vector<pair<IndexType,unsigned>> types_A(ndim_A);
     {
-        gint_t i = 0;
-        for (gint_t j = 0;j < ndim_A_only;j++) types_A[i++] = pair<IndexType,gint_t>(TYPE_A, j);
-        for (gint_t j = 0;j < ndim_AB    ;j++) types_A[i++] = pair<IndexType,gint_t>(TYPE_AB, j);
-        for (gint_t j = 0;j < ndim_AC    ;j++) types_A[i++] = pair<IndexType,gint_t>(TYPE_AC, j);
-        for (gint_t j = 0;j < ndim_ABC   ;j++) types_A[i++] = pair<IndexType,gint_t>(TYPE_ABC, j);
+        unsigned i = 0;
+        for (unsigned j = 0;j < ndim_A_only;j++) types_A[i++] = {TYPE_A, j};
+        for (unsigned j = 0;j < ndim_AB    ;j++) types_A[i++] = {TYPE_AB, j};
+        for (unsigned j = 0;j < ndim_AC    ;j++) types_A[i++] = {TYPE_AC, j};
+        for (unsigned j = 0;j < ndim_ABC   ;j++) types_A[i++] = {TYPE_ABC, j};
     }
     random_shuffle(types_A.begin(), types_A.end());
 
-    vector<pair<IndexType,gint_t>> types_B(ndim_B);
+    vector<pair<IndexType,unsigned>> types_B(ndim_B);
     {
-        gint_t i = 0;
-        for (gint_t j = 0;j < ndim_B_only;j++) types_B[i++] = pair<IndexType,gint_t>(TYPE_B, j);
-        for (gint_t j = 0;j < ndim_AB    ;j++) types_B[i++] = pair<IndexType,gint_t>(TYPE_AB, j);
-        for (gint_t j = 0;j < ndim_BC    ;j++) types_B[i++] = pair<IndexType,gint_t>(TYPE_BC, j);
-        for (gint_t j = 0;j < ndim_ABC   ;j++) types_B[i++] = pair<IndexType,gint_t>(TYPE_ABC, j);
+        unsigned i = 0;
+        for (unsigned j = 0;j < ndim_B_only;j++) types_B[i++] = {TYPE_B, j};
+        for (unsigned j = 0;j < ndim_AB    ;j++) types_B[i++] = {TYPE_AB, j};
+        for (unsigned j = 0;j < ndim_BC    ;j++) types_B[i++] = {TYPE_BC, j};
+        for (unsigned j = 0;j < ndim_ABC   ;j++) types_B[i++] = {TYPE_ABC, j};
     }
     random_shuffle(types_B.begin(), types_B.end());
 
-    vector<pair<IndexType,gint_t>> types_C(ndim_C);
+    vector<pair<IndexType,unsigned>> types_C(ndim_C);
     {
-        gint_t i = 0;
-        for (gint_t j = 0;j < ndim_C_only;j++) types_C[i++] = pair<IndexType,gint_t>(TYPE_C, j);
-        for (gint_t j = 0;j < ndim_AC    ;j++) types_C[i++] = pair<IndexType,gint_t>(TYPE_AC, j);
-        for (gint_t j = 0;j < ndim_BC    ;j++) types_C[i++] = pair<IndexType,gint_t>(TYPE_BC, j);
-        for (gint_t j = 0;j < ndim_ABC   ;j++) types_C[i++] = pair<IndexType,gint_t>(TYPE_ABC, j);
+        unsigned i = 0;
+        for (unsigned j = 0;j < ndim_C_only;j++) types_C[i++] = {TYPE_C, j};
+        for (unsigned j = 0;j < ndim_AC    ;j++) types_C[i++] = {TYPE_AC, j};
+        for (unsigned j = 0;j < ndim_BC    ;j++) types_C[i++] = {TYPE_BC, j};
+        for (unsigned j = 0;j < ndim_ABC   ;j++) types_C[i++] = {TYPE_ABC, j};
     }
     random_shuffle(types_C.begin(), types_C.end());
 
     string idx;
-    for (gint_t i = 0;i < ndim_A_only+ndim_B_only+ndim_C_only+
-                          ndim_AB+ndim_AC+ndim_BC+ndim_ABC;i++) idx.push_back('a'+i);
+    for (unsigned i = 0;i < ndim_A_only+ndim_B_only+ndim_C_only+
+                            ndim_AB+ndim_AC+ndim_BC+ndim_ABC;i++) idx.push_back('a'+i);
     random_shuffle(idx.begin(), idx.end());
 
-    gint_t c = 0;
+    unsigned c = 0;
     vector<char> idx_A_only(ndim_A_only);
-    for (gint_t i = 0;i < ndim_A_only;i++) idx_A_only[i] = idx[c++];
+    for (unsigned i = 0;i < ndim_A_only;i++) idx_A_only[i] = idx[c++];
 
     vector<char> idx_B_only(ndim_B_only);
-    for (gint_t i = 0;i < ndim_B_only;i++) idx_B_only[i] = idx[c++];
+    for (unsigned i = 0;i < ndim_B_only;i++) idx_B_only[i] = idx[c++];
 
     vector<char> idx_C_only(ndim_C_only);
-    for (gint_t i = 0;i < ndim_C_only;i++) idx_C_only[i] = idx[c++];
+    for (unsigned i = 0;i < ndim_C_only;i++) idx_C_only[i] = idx[c++];
 
     vector<char> idx_AB(ndim_AB);
-    for (gint_t i = 0;i < ndim_AB;i++) idx_AB[i] = idx[c++];
+    for (unsigned i = 0;i < ndim_AB;i++) idx_AB[i] = idx[c++];
 
     vector<char> idx_AC(ndim_AC);
-    for (gint_t i = 0;i < ndim_AC;i++) idx_AC[i] = idx[c++];
+    for (unsigned i = 0;i < ndim_AC;i++) idx_AC[i] = idx[c++];
 
     vector<char> idx_BC(ndim_BC);
-    for (gint_t i = 0;i < ndim_BC;i++) idx_BC[i] = idx[c++];
+    for (unsigned i = 0;i < ndim_BC;i++) idx_BC[i] = idx[c++];
 
     vector<char> idx_ABC(ndim_ABC);
-    for (gint_t i = 0;i < ndim_ABC;i++) idx_ABC[i] = idx[c++];
+    for (unsigned i = 0;i < ndim_ABC;i++) idx_ABC[i] = idx[c++];
 
     idx_A.resize(ndim_A);
     idx_B.resize(ndim_B);
     idx_C.resize(ndim_C);
 
-    for (gint_t i = 0;i < ndim_A;i++)
+    for (unsigned i = 0;i < ndim_A;i++)
     {
         switch (types_A[i].first)
         {
@@ -463,7 +466,7 @@ void RandomTensors(siz_t N,
         }
     }
 
-    for (gint_t i = 0;i < ndim_B;i++)
+    for (unsigned i = 0;i < ndim_B;i++)
     {
         switch (types_B[i].first)
         {
@@ -475,7 +478,7 @@ void RandomTensors(siz_t N,
         }
     }
 
-    for (gint_t i = 0;i < ndim_C;i++)
+    for (unsigned i = 0;i < ndim_C;i++)
     {
         switch (types_C[i].first)
         {
@@ -554,10 +557,10 @@ void RandomTensors(siz_t N,
     {
         RandomTensor(N, ndim_A, A);
 
-        vector<inc_t> min_B(ndim_B);
-        for (gint_t i = 0;i < ndim_B;i++)
+        vector<stride_type> min_B(ndim_B);
+        for (unsigned i = 0;i < ndim_B;i++)
         {
-            for (gint_t j = 0;j < ndim_A;j++)
+            for (unsigned j = 0;j < ndim_A;j++)
             {
                 if (idx_B[i] == idx_A[j]) min_B[i] = A.length(j);
             }
@@ -565,11 +568,11 @@ void RandomTensors(siz_t N,
 
         RandomTensor(N, ndim_B, min_B, B);
 
-        inc_t siz = 1;
-        vector<inc_t> min_C(ndim_C);
-        for (gint_t i = 0;i < ndim_C;i++)
+        stride_type siz = 1;
+        vector<stride_type> min_C(ndim_C);
+        for (unsigned i = 0;i < ndim_C;i++)
         {
-            for (gint_t j = 0;j < ndim_A;j++)
+            for (unsigned j = 0;j < ndim_A;j++)
             {
                 if (idx_C[i] == idx_A[j])
                 {
@@ -577,7 +580,7 @@ void RandomTensors(siz_t N,
                     siz *= min_C[i];
                 }
             }
-            for (gint_t j = 0;j < ndim_B;j++)
+            for (unsigned j = 0;j < ndim_B;j++)
             {
                 if (idx_C[i] == idx_B[j])
                 {
@@ -636,15 +639,15 @@ void RandomTensors(siz_t N,
  * uniformly.
  */
 template <typename T>
-void RandomSum(siz_t N, Tensor<T>& A, string& idx_A,
-                        Tensor<T>& B, string& idx_B)
+void RandomSum(size_t N, tensor<T>& A, string& idx_A,
+                         tensor<T>& B, string& idx_B)
 {
-    gint_t ndim_A = RandomInteger(1,8);
-    gint_t ndim_B = RandomInteger(1,8);
+    unsigned ndim_A = RandomInteger(1,8);
+    unsigned ndim_B = RandomInteger(1,8);
 
-    gint_t ndim_AB = RandomInteger(0,min(ndim_A,ndim_B));
-    gint_t ndim_A_only = ndim_A-ndim_AB;
-    gint_t ndim_B_only = ndim_B-ndim_AB;
+    unsigned ndim_AB = RandomInteger(0,min(ndim_A,ndim_B));
+    unsigned ndim_A_only = ndim_A-ndim_AB;
+    unsigned ndim_B_only = ndim_B-ndim_AB;
 
     RandomTensors(N,
                   ndim_A_only, ndim_B_only,
@@ -659,11 +662,11 @@ void RandomSum(siz_t N, Tensor<T>& A, string& idx_A,
  * uniformly.
  */
 template <typename T>
-void RandomTrace(siz_t N, Tensor<T>& A, string& idx_A,
-                          Tensor<T>& B, string& idx_B)
+void RandomTrace(size_t N, tensor<T>& A, string& idx_A,
+                           tensor<T>& B, string& idx_B)
 {
-    gint_t ndim_A = RandomInteger(1,8);
-    gint_t ndim_B = RandomInteger(1,8);
+    unsigned ndim_A = RandomInteger(1,8);
+    unsigned ndim_B = RandomInteger(1,8);
 
     if (ndim_A < ndim_B) swap(ndim_A, ndim_B);
 
@@ -680,11 +683,11 @@ void RandomTrace(siz_t N, Tensor<T>& A, string& idx_A,
  * uniformly.
  */
 template <typename T>
-void RandomReplicate(siz_t N, Tensor<T>& A, string& idx_A,
-                              Tensor<T>& B, string& idx_B)
+void RandomReplicate(size_t N, tensor<T>& A, string& idx_A,
+                               tensor<T>& B, string& idx_B)
 {
-    gint_t ndim_A = RandomInteger(1,8);
-    gint_t ndim_B = RandomInteger(1,8);
+    unsigned ndim_A = RandomInteger(1,8);
+    unsigned ndim_B = RandomInteger(1,8);
 
     if (ndim_B < ndim_A) swap(ndim_A, ndim_B);
 
@@ -701,10 +704,10 @@ void RandomReplicate(siz_t N, Tensor<T>& A, string& idx_A,
  * uniformly.
  */
 template <typename T>
-void RandomTranspose(siz_t N, Tensor<T>& A, string& idx_A,
-                              Tensor<T>& B, string& idx_B)
+void RandomTranspose(size_t N, tensor<T>& A, string& idx_A,
+                               tensor<T>& B, string& idx_B)
 {
-    gint_t ndim_A = RandomInteger(1,8);
+    unsigned ndim_A = RandomInteger(1,8);
 
     RandomTensors(N,
                   0, 0,
@@ -719,10 +722,10 @@ void RandomTranspose(siz_t N, Tensor<T>& A, string& idx_A,
  * uniformly.
  */
 template <typename T>
-void RandomDot(siz_t N, Tensor<T>& A, string& idx_A,
-                        Tensor<T>& B, string& idx_B)
+void RandomDot(size_t N, tensor<T>& A, string& idx_A,
+                         tensor<T>& B, string& idx_B)
 {
-    gint_t ndim_A = RandomInteger(1,8);
+    unsigned ndim_A = RandomInteger(1,8);
 
     RandomTensors(N,
                   0, 0,
@@ -737,14 +740,14 @@ void RandomDot(siz_t N, Tensor<T>& A, string& idx_A,
  * uniformly.
  */
 template <typename T>
-void RandomMult(siz_t N, Tensor<T>& A, string& idx_A,
-                         Tensor<T>& B, string& idx_B,
-                         Tensor<T>& C, string& idx_C)
+void RandomMult(size_t N, tensor<T>& A, string& idx_A,
+                          tensor<T>& B, string& idx_B,
+                          tensor<T>& C, string& idx_C)
 {
-    gint_t ndim_A, ndim_B, ndim_C;
-    gint_t ndim_A_only, ndim_B_only, ndim_C_only;
-    gint_t ndim_AB, ndim_AC, ndim_BC;
-    gint_t ndim_ABC;
+    unsigned ndim_A, ndim_B, ndim_C;
+    unsigned ndim_A_only, ndim_B_only, ndim_C_only;
+    unsigned ndim_AB, ndim_AC, ndim_BC;
+    unsigned ndim_ABC;
     do
     {
         ndim_A = RandomInteger(1,8);
@@ -784,13 +787,13 @@ void RandomMult(siz_t N, Tensor<T>& A, string& idx_A,
  * uniformly.
  */
 template <typename T>
-void RandomGEMM(siz_t N, Matrix<T>& A,
-                         Matrix<T>& B,
-                         Matrix<T>& C)
+void RandomGEMM(size_t N, matrix<T>& A,
+                          matrix<T>& B,
+                          matrix<T>& C)
 {
-    dim_t m = RandomInteger(1, (dim_t)sqrt(N));
-    dim_t n = RandomInteger(1, (dim_t)sqrt(N));
-    dim_t k = RandomInteger(1, (dim_t)sqrt(N));
+    idx_type m = RandomInteger(1, (idx_type)sqrt(N));
+    idx_type n = RandomInteger(1, (idx_type)sqrt(N));
+    idx_type k = RandomInteger(1, (idx_type)sqrt(N));
 
     //m += (MR<T>::value-1)-(m-1)%MR<T>::value;
     //n += (NR<T>::value-1)-(n-1)%NR<T>::value;
@@ -799,38 +802,6 @@ void RandomGEMM(siz_t N, Matrix<T>& A,
     RandomMatrix(N, m, k, A);
     RandomMatrix(N, k, n, B);
     RandomMatrix(N, m, n, C);
-
-    switch (RandomInteger(5))
-    {
-        case 0: // ABC -> ABC
-            break;
-        case 1: // ABC -> ACB
-            swap(B, C);
-            A.transpose();
-            break;
-        case 2: // ABC -> BAC
-            swap(A, B);
-            A.transpose();
-            B.transpose();
-            C.transpose();
-            break;
-        case 3: // ABC -> BCA
-            swap(A, B);
-            swap(B, C);
-            B.transpose();
-            C.transpose();
-            break;
-        case 4: // ABC -> CAB
-            swap(A, B);
-            swap(A, C);
-            A.transpose();
-            C.transpose();
-            break;
-        case 5: // ABC -> CBA
-            swap(A, C);
-            B.transpose();
-            break;
-    }
 }
 
 /*
@@ -839,38 +810,16 @@ void RandomGEMM(siz_t N, Matrix<T>& A,
  * uniformly.
  */
 template <typename T>
-void RandomGEMV(siz_t N, Matrix<T>& A,
-                         Matrix<T>& B,
-                         Matrix<T>& C)
+void RandomGEMV(size_t N, matrix<T>& A,
+                          matrix<T>& B,
+                          matrix<T>& C)
 {
-    dim_t m = RandomInteger(1, (dim_t)sqrt(N));
-    dim_t k = RandomInteger(1, (dim_t)sqrt(N));
+    idx_type m = RandomInteger(1, (idx_type)sqrt(N));
+    idx_type k = RandomInteger(1, (idx_type)sqrt(N));
 
     RandomMatrix(N, m, k, A);
     RandomMatrix(N, k, 1, B);
     RandomMatrix(N, m, 1, C);
-
-    switch (RandomInteger(3))
-    {
-        case 0: // ABC -> ABC
-            break;
-        case 1: // ABC -> ACB
-            swap(B, C);
-            A.transpose();
-            break;
-        case 2: // ABC -> BAC
-            swap(A, B);
-            A.transpose();
-            B.transpose();
-            C.transpose();
-            break;
-        case 3: // ABC -> CAB
-            swap(A, B);
-            swap(A, C);
-            A.transpose();
-            C.transpose();
-            break;
-    }
 }
 
 /*
@@ -879,28 +828,16 @@ void RandomGEMV(siz_t N, Matrix<T>& A,
  * uniformly.
  */
 template <typename T>
-void RandomGER(siz_t N, Matrix<T>& A,
-                        Matrix<T>& B,
-                        Matrix<T>& C)
+void RandomGER(size_t N, matrix<T>& A,
+                         matrix<T>& B,
+                         matrix<T>& C)
 {
-    dim_t m = RandomInteger(1, (dim_t)sqrt(N));
-    dim_t n = RandomInteger(1, (dim_t)sqrt(N));
+    idx_type m = RandomInteger(1, (idx_type)sqrt(N));
+    idx_type n = RandomInteger(1, (idx_type)sqrt(N));
 
     RandomMatrix(N, m, 1, A);
     RandomMatrix(N, 1, n, B);
     RandomMatrix(N, m, n, C);
-
-    switch (RandomInteger(1))
-    {
-        case 0: // ABC -> ABC
-            break;
-        case 1: // ABC -> BAC
-            swap(A, B);
-            A.transpose();
-            B.transpose();
-            C.transpose();
-            break;
-    }
 }
 
 /*
@@ -909,12 +846,12 @@ void RandomGER(siz_t N, Matrix<T>& A,
  * uniformly.
  */
 template <typename T>
-void RandomContract(siz_t N, Tensor<T>& A, string& idx_A,
-                             Tensor<T>& B, string& idx_B,
-                             Tensor<T>& C, string& idx_C)
+void RandomContract(size_t N, tensor<T>& A, string& idx_A,
+                              tensor<T>& B, string& idx_B,
+                              tensor<T>& C, string& idx_C)
 {
-    gint_t ndim_A, ndim_B, ndim_C;
-    gint_t ndim_AB, ndim_AC, ndim_BC;
+    unsigned ndim_A, ndim_B, ndim_C;
+    unsigned ndim_AB, ndim_AC, ndim_BC;
     do
     {
         ndim_A = RandomInteger(1,8);
@@ -944,13 +881,13 @@ void RandomContract(siz_t N, Tensor<T>& A, string& idx_A,
  * uniformly.
  */
 template <typename T>
-void RandomWeight(siz_t N, Tensor<T>& A, string& idx_A,
-                           Tensor<T>& B, string& idx_B,
-                           Tensor<T>& C, string& idx_C)
+void RandomWeight(size_t N, tensor<T>& A, string& idx_A,
+                            tensor<T>& B, string& idx_B,
+                            tensor<T>& C, string& idx_C)
 {
-    gint_t ndim_A, ndim_B, ndim_C;
-    gint_t ndim_AC, ndim_BC;
-    gint_t ndim_ABC;
+    unsigned ndim_A, ndim_B, ndim_C;
+    unsigned ndim_AC, ndim_BC;
+    unsigned ndim_ABC;
     do
     {
         ndim_A = RandomInteger(1,8);
@@ -979,11 +916,11 @@ void RandomWeight(siz_t N, Tensor<T>& A, string& idx_A,
  * uniformly.
  */
 template <typename T>
-void RandomOuterProd(siz_t N, Tensor<T>& A, string& idx_A,
-                              Tensor<T>& B, string& idx_B,
-                              Tensor<T>& C, string& idx_C)
+void RandomOuterProd(size_t N, tensor<T>& A, string& idx_A,
+                               tensor<T>& B, string& idx_B,
+                               tensor<T>& C, string& idx_C)
 {
-    gint_t ndim_A, ndim_B, ndim_C;
+    unsigned ndim_A, ndim_B, ndim_C;
     do
     {
         ndim_A = RandomInteger(1,8);
@@ -1002,10 +939,9 @@ void RandomOuterProd(siz_t N, Tensor<T>& A, string& idx_A,
 }
 
 template <typename T>
-void TestTBLIS(siz_t N)
+void TestTBLIS(size_t N)
 {
-    Matrix<T> A, B, C, D;
-    const_scatter_matrix_view<T> sA, sB, sC;
+    matrix<T> A, B, C, D;
 
     for (int pass = 0;pass < 3;pass++)
     {
@@ -1024,20 +960,11 @@ void TestTBLIS(siz_t N)
                                      pass == 1 ? "GEMV" :
                                                  "GER") << " (" << TypeName<T>() << "):" << endl;
 
-        bool transa = A.is_transposed();
-        bool transb = B.is_transposed();
-        bool transc = C.is_transposed();
-
         cout << endl;
-        cout << "m, n, k    = " << (transa ? A.width() : A.length()) << ", "
-                                << (transb ? B.length() : B.width()) << ", "
-                                << (transa ? A.length() : A.width()) << endl;
-        cout << "rs_a, cs_a = " << A.row_stride() << ", " << A.col_stride() << endl;
-        cout << "rs_b, cs_b = " << B.row_stride() << ", " << B.col_stride() << endl;
-        cout << "rs_c, cs_c = " << C.row_stride() << ", " << C.col_stride() << endl;
-        cout << "trans_a    = " << transa << endl;
-        cout << "trans_b    = " << transb << endl;
-        cout << "trans_c    = " << transc << endl;
+        cout << "m, n, k    = " << C.length(1) << ", " << C.length(1) << ", " << A.length(1) << endl;
+        cout << "rs_a, cs_a = " << A.stride(0) << ", " << A.stride(1) << endl;
+        cout << "rs_b, cs_b = " << B.stride(0) << ", " << B.stride(1) << endl;
+        cout << "rs_c, cs_c = " << C.stride(0) << ", " << C.stride(1) << endl;
         cout << endl;
 
         D = C;
@@ -1052,14 +979,14 @@ void TestTBLIS(siz_t N)
     }
 }
 
-template <> void TestTBLIS<scomplex>(siz_t N) {}
+template <> void TestTBLIS<scomplex>(size_t N) {}
 
-template <> void TestTBLIS<dcomplex>(siz_t N) {}
+template <> void TestTBLIS<dcomplex>(size_t N) {}
 
 template <typename T>
-void TestMult(siz_t N)
+void TestMult(size_t N)
 {
-    Tensor<T> A, B, C, D;
+    tensor<T> A, B, C, D;
     string idx_A, idx_B, idx_C;
 
     T ref_val, calc_val, scale;
@@ -1174,9 +1101,9 @@ void TestMult(siz_t N)
 }
 
 template <typename T>
-void TestContract(siz_t N)
+void TestContract(size_t N)
 {
-    Tensor<T> A, B, C, D;
+    tensor<T> A, B, C, D;
     string idx_A, idx_B, idx_C;
 
     RandomContract(N, A, idx_A, B, idx_B, C, idx_C);
@@ -1224,9 +1151,9 @@ void TestContract(siz_t N)
 }
 
 template <typename T>
-void TestWeight(siz_t N)
+void TestWeight(size_t N)
 {
-    Tensor<T> A, B, C, D;
+    tensor<T> A, B, C, D;
     string idx_A, idx_B, idx_C;
 
     RandomWeight(N, A, idx_A, B, idx_B, C, idx_C);
@@ -1261,9 +1188,9 @@ void TestWeight(siz_t N)
 }
 
 template <typename T>
-void TestOuterProd(siz_t N)
+void TestOuterProd(size_t N)
 {
-    Tensor<T> A, B, C, D;
+    tensor<T> A, B, C, D;
     string idx_A, idx_B, idx_C;
 
     RandomOuterProd(N, A, idx_A, B, idx_B, C, idx_C);
@@ -1298,9 +1225,9 @@ void TestOuterProd(siz_t N)
 }
 
 template <typename T>
-void TestSum(siz_t N)
+void TestSum(size_t N)
 {
-    Tensor<T> A, B, C;
+    tensor<T> A, B, C;
     string idx_A, idx_B;
 
     T ref_val, calc_val, scale, sum_b;
@@ -1389,11 +1316,11 @@ void TestSum(siz_t N)
     cout << "idx_B    = " << idx_B << endl;
     cout << endl;
 
-    inc_t sz = 1;
-    for (gint_t i = 0;i < B.dimension();i++)
+    stride_type sz = 1;
+    for (unsigned i = 0;i < B.dimension();i++)
     {
         bool found = false;
-        for (gint_t j = 0;j < A.dimension();j++)
+        for (unsigned j = 0;j < A.dimension();j++)
         {
             if (idx_A[j] == idx_B[i])
             {
@@ -1425,9 +1352,9 @@ void TestSum(siz_t N)
 }
 
 template <typename T>
-void TestTrace(siz_t N)
+void TestTrace(size_t N)
 {
-    Tensor<T> A, B;
+    tensor<T> A, B;
     string idx_A, idx_B;
 
     RandomTrace(N, A, idx_A, B, idx_B);
@@ -1454,9 +1381,9 @@ void TestTrace(siz_t N)
 }
 
 template <typename T>
-void TestReplicate(siz_t N)
+void TestReplicate(size_t N)
 {
-    Tensor<T> A, B;
+    tensor<T> A, B;
     string idx_A, idx_B;
 
     RandomReplicate(N, A, idx_A, B, idx_B);
@@ -1475,11 +1402,11 @@ void TestReplicate(siz_t N)
     T ref_val, sum_b, calc_val, scale;
     scale = 10.0*RandomUnit<T>();
 
-    inc_t sz = 1;
-    for (gint_t i = 0;i < B.dimension();i++)
+    stride_type sz = 1;
+    for (unsigned i = 0;i < B.dimension();i++)
     {
         bool found = false;
-        for (gint_t j = 0;j < A.dimension();j++)
+        for (unsigned j = 0;j < A.dimension();j++)
         {
             if (idx_A[j] == idx_B[i])
             {
@@ -1503,9 +1430,9 @@ void TestReplicate(siz_t N)
 }
 
 template <typename T>
-void TestDot(siz_t N)
+void TestDot(size_t N)
 {
-    Tensor<T> A, B;
+    tensor<T> A, B;
     string idx_A, idx_B;
 
     RandomDot(N, A, idx_A, B, idx_B);
@@ -1521,8 +1448,8 @@ void TestDot(siz_t N)
 
     tensor_transpose(T(1.0), A, idx_A, T(0.0), B, idx_B);
     T* data = B.data();
-    Iterator<> it(B.lengths(), B.strides());
-    while (it.next(data)) *data = blis::conj(*data);
+    viterator<> it(B.lengths(), B.strides());
+    while (it.next(data)) *data = stl_ext::conj(*data);
     Normalize(A, idx_A);
     tensor_reduce(REDUCE_NORM_2, A, idx_A, ref_val);
     tensor_dot(A, idx_A, B, idx_B, calc_val);
@@ -1539,14 +1466,14 @@ void TestDot(siz_t N)
 }
 
 template <typename T>
-void TestTranspose(siz_t N)
+void TestTranspose(size_t N)
 {
-    Tensor<T> A, B, C;
+    tensor<T> A, B, C;
     string idx_A, idx_B;
 
     RandomTranspose(N, A, idx_A, B, idx_B);
 
-    gint_t ndim = A.dimension();
+    unsigned ndim = A.dimension();
     string perm = permutation(idx_A, idx_B);
 
     cout << endl;
@@ -1571,13 +1498,13 @@ void TestTranspose(siz_t N)
 
     B = A;
     idx_B = idx_A;
-    vector<dim_t> len_C(ndim);
-    vector<inc_t> stride_C(ndim);
+    vector<idx_type> len_C(ndim);
+    vector<stride_type> stride_C(ndim);
     do
     {
-        for (gint_t i = 0;i < ndim;i++)
+        for (unsigned i = 0;i < ndim;i++)
         {
-            gint_t j; for (j = 0;j < ndim && idx_A[j] != perm[i];j++);
+            unsigned j; for (j = 0;j < ndim && idx_A[j] != perm[i];j++) continue;
             idx_C[i] = idx_B[j];
             len_C[i] = B.length(j);
             stride_C[i] = B.stride(j);
@@ -1594,9 +1521,9 @@ void TestTranspose(siz_t N)
 }
 
 template <typename T>
-void TestScale(siz_t N)
+void TestScale(size_t N)
 {
-    Tensor<T> A;
+    tensor<T> A;
     string idx_A = "abcdefgh";
 
     RandomTensor(N, A);
@@ -1628,14 +1555,14 @@ void TestScale(siz_t N)
 }
 
 template <typename T>
-void TestReduce(siz_t N)
+void TestReduce(size_t N)
 {
-    Tensor<T> A;
+    tensor<T> A;
     string idx_A = "abcdefgh";
 
     RandomTensor(N, A);
     idx_A.resize(A.dimension());
-    siz_t NA = A.size();
+    size_t NA = A.size();
 
     cout << endl;
     cout << "Testing reduction (" << TypeName<T>() << "):" << endl;
@@ -1645,13 +1572,13 @@ void TestReduce(siz_t N)
 
     impl_type = REFERENCE;
     T ref_val, blas_val;
-    inc_t ref_idx, blas_idx;
+    stride_type ref_idx, blas_idx;
 
     T* data = A.data();
 
     tensor_reduce(REDUCE_SUM, A, idx_A, ref_val, ref_idx);
     blas_val = 0;
-    for (siz_t i = 0;i < NA;i++)
+    for (size_t i = 0;i < NA;i++)
     {
         blas_val += data[i];
     }
@@ -1659,7 +1586,7 @@ void TestReduce(siz_t N)
 
     tensor_reduce(REDUCE_SUM_ABS, A, idx_A, ref_val, ref_idx);
     blas_val = 0;
-    for (siz_t i = 0;i < NA;i++)
+    for (size_t i = 0;i < NA;i++)
     {
         blas_val += std::abs(data[i]);
     }
@@ -1668,7 +1595,7 @@ void TestReduce(siz_t N)
     tensor_reduce(REDUCE_MAX, A, idx_A, ref_val, ref_idx);
     blas_val = data[0];
     blas_idx = 0;
-    for (siz_t i = 0;i < NA;i++)
+    for (size_t i = 0;i < NA;i++)
     {
         if (data[i] > blas_val)
         {
@@ -1681,7 +1608,7 @@ void TestReduce(siz_t N)
     tensor_reduce(REDUCE_MAX_ABS, A, idx_A, ref_val, ref_idx);
     blas_val = std::abs(data[0]);
     blas_idx = 0;
-    for (siz_t i = 0;i < NA;i++)
+    for (size_t i = 0;i < NA;i++)
     {
         if (std::abs(data[i]) > blas_val)
         {
@@ -1695,7 +1622,7 @@ void TestReduce(siz_t N)
     tensor_reduce(REDUCE_MIN, A, idx_A, ref_val, ref_idx);
     set(data[0], blas_val);
     blas_idx = 0;
-    for (siz_t i = 0;i < NA;i++)
+    for (size_t i = 0;i < NA;i++)
     {
         if (data[i] < blas_val)
         {
@@ -1708,7 +1635,7 @@ void TestReduce(siz_t N)
     tensor_reduce(REDUCE_MIN_ABS, A, idx_A, ref_val, ref_idx);
     set(std::abs(data[0]), blas_val);
     blas_idx = 0;
-    for (siz_t i = 0;i < NA;i++)
+    for (size_t i = 0;i < NA;i++)
     {
         if (std::abs(data[i]) < blas_val)
         {
@@ -1721,7 +1648,7 @@ void TestReduce(siz_t N)
 
     tensor_reduce(REDUCE_NORM_2, A, idx_A, ref_val, ref_idx);
     blas_val = 0;
-    for (siz_t i = 0;i < NA;i++)
+    for (size_t i = 0;i < NA;i++)
     {
         blas_val += norm2(data[i]);
     }
@@ -1736,29 +1663,29 @@ void TestReduce(siz_t N)
 }
 
 template <typename T>
-void Test(siz_t N_in_bytes, gint_t R)
+void Test(size_t N_in_bytes, int R)
 {
-    siz_t N = N_in_bytes/sizeof(T);
+    size_t N = N_in_bytes/sizeof(T);
 
-    for (gint_t i = 0;i < R;i++) TestTBLIS<T>(N);
+    for (int i = 0;i < R;i++) TestTBLIS<T>(N);
 
-    //for (gint_t i = 0;i < R;i++) TestReduce<T>(N);
-    //for (gint_t i = 0;i < R;i++) TestScale<T>(N);
-    //for (gint_t i = 0;i < R;i++) TestTranspose<T>(N);
-    //for (gint_t i = 0;i < R;i++) TestDot<T>(N);
-    //for (gint_t i = 0;i < R;i++) TestReplicate<T>(N);
-    //for (gint_t i = 0;i < R;i++) TestTrace<T>(N);
-    //for (gint_t i = 0;i < R;i++) TestSum<T>(N);
-    //for (gint_t i = 0;i < R;i++) TestOuterProd<T>(N);
-    //for (gint_t i = 0;i < R;i++) TestWeight<T>(N);
-    for (gint_t i = 0;i < R;i++) TestContract<T>(N);
-    //for (gint_t i = 0;i < R;i++) TestMult<T>(N);
+    //for (int i = 0;i < R;i++) TestReduce<T>(N);
+    //for (int i = 0;i < R;i++) TestScale<T>(N);
+    //for (int i = 0;i < R;i++) TestTranspose<T>(N);
+    //for (int i = 0;i < R;i++) TestDot<T>(N);
+    //for (int i = 0;i < R;i++) TestReplicate<T>(N);
+    //for (int i = 0;i < R;i++) TestTrace<T>(N);
+    //for (int i = 0;i < R;i++) TestSum<T>(N);
+    //for (int i = 0;i < R;i++) TestOuterProd<T>(N);
+    //for (int i = 0;i < R;i++) TestWeight<T>(N);
+    for (int i = 0;i < R;i++) TestContract<T>(N);
+    //for (int i = 0;i < R;i++) TestMult<T>(N);
 }
 
 int main(int argc, char **argv)
 {
-    siz_t N = 1024*1024;
-    gint_t R = 10;
+    size_t N = 1024*1024;
+    int R = 10;
     time_t seed = time(NULL);
 
     tblis_init();

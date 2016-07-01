@@ -5,8 +5,6 @@
 
 namespace tblis
 {
-namespace blis_like
-{
 
 template <typename T>
 class tensor_matrix
@@ -77,8 +75,8 @@ class tensor_matrix
             leading_len_[1] = 0;
             leading_stride_[0] = 0;
             leading_stride_[1] = 0;
-            iterator_[0] = MArray::viterator();
-            iterator_[1] = MArray::viterator();
+            iterator_[0] = MArray::viterator<>();
+            iterator_[1] = MArray::viterator<>();
         }
 
         void reset(const tensor_matrix& other)
@@ -161,20 +159,20 @@ class tensor_matrix
             if (!stride_m.empty()) stride_m_.assign(stride_m.begin()+1, stride_m.end());
             if (!stride_n.empty()) stride_n_.assign(stride_n.begin()+1, stride_n.end());
 
-            for (dim_t len : len_m_) len_[0] *= len;
-            for (dim_t len : len_n_) len_[1] *= len;
+            for (idx_type len : len_m_) len_[0] *= len;
+            for (idx_type len : len_n_) len_[1] *= len;
 
-            iterator_[0] = MArray::viterator(len_m_, stride_m_);
-            iterator_[1] = MArray::viterator(len_n_, stride_n_);
+            iterator_[0] = MArray::viterator<>(len_m_, stride_m_);
+            iterator_[1] = MArray::viterator<>(len_n_, stride_n_);
         }
 
-        dim_t length(unsigned dim) const
+        idx_type length(unsigned dim) const
         {
             assert(dim < 2);
             return len_[dim];
         }
 
-        dim_t length(unsigned dim, idx_type m)
+        idx_type length(unsigned dim, idx_type m)
         {
             assert(dim < 2);
             std::swap(m, len_[dim]);
@@ -232,7 +230,7 @@ class tensor_matrix
             }
         }
 
-        template <dim_t MR>
+        template <idx_type MR>
         void fill_block_scatter(unsigned dim, stride_type* block_scatter, stride_type* scatter)
         {
             assert(dim < 2);
@@ -269,7 +267,6 @@ class tensor_matrix
         }
 };
 
-}
 }
 
 #endif

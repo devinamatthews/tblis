@@ -2,6 +2,9 @@
 #define _TBLIS_HPP_
 
 #include "tblis_config.hpp"
+#ifdef _tblis_restrict
+#define restrict _tblis_restrict
+#endif
 
 namespace tblis
 {
@@ -18,22 +21,25 @@ void tblis_finalize();
 #define _DEFINED_DCOMPLEX
 extern "C"
 {
-#include "bli_system.h"
-#include "bli_config.h"
-#include "bli_config_macro_defs.h"
-#include "bli_type_defs.h"
-#include "bli_macro_defs.h"
+//#include "bli_system.h"
+//#include "bli_config.h"
+//#include "bli_config_macro_defs.h"
+//#include "bli_type_defs.h"
+//#include "bli_macro_defs.h"
 }
+#undef _DEFINED_SCOMPLEX
+#undef _DEFINED_DCOMPLEX
+
+#include "impl/tensor_impl.hpp"
 
 #include "tblis_tensor.hpp"
-#include "tensor_templates.hpp"
-#include "tblis_memory_pool.hpp"
 #include "tblis_yield.hpp"
 #include "tblis_mutex.hpp"
 #include "tblis_barrier.hpp"
 #include "tblis_thread.hpp"
+#include "tblis_memory_pool.hpp"
+#include "tblis_import_configs.hpp"
 
-#include "tblis_config.hpp"
 #include "tblis_scatter_matrix.hpp"
 #include "tblis_block_scatter_matrix.hpp"
 #include "tblis_tensor_matrix.hpp"

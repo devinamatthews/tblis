@@ -11,8 +11,6 @@
 #include <atomic>
 #elif TBLIS_USE_OMP_LOCK
 #include <omp.h>
-#elif TBLIS_USE_CXX11_MUTEX
-#include <mutex>
 #endif
 
 namespace tblis
@@ -197,8 +195,6 @@ class Mutex
 #elif TBLIS_USE_CXX11_MUTEX
 
 using Mutex = std::mutex;
-
-#endif
 
 #endif
 

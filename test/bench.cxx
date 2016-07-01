@@ -10,15 +10,11 @@
 #include <iomanip>
 #include <functional>
 
-#include "../src/util/tblis_util.hpp"
 #include "tblis.hpp"
 
 using namespace std;
-using namespace blis;
 using namespace tblis;
 using namespace tblis::impl;
-using namespace tblis::util;
-using namespace tblis::blis_like;
 
 namespace tblis
 {
@@ -28,11 +24,11 @@ mt19937 engine;
 }
 }
 
-template <dim_t Rsub=1>
-double RunKernel(dim_t R, const function<void()>& kernel)
+template <idx_type Rsub=1>
+double RunKernel(idx_type R, const function<void()>& kernel)
 {
     double bias = numeric_limits<double>::max();
-    for (dim_t r = 0;r < R;r++)
+    for (idx_type r = 0;r < R;r++)
     {
         double t0 = bli_clock();
         double t1 = bli_clock();
@@ -40,10 +36,10 @@ double RunKernel(dim_t R, const function<void()>& kernel)
     }
 
     double dt = numeric_limits<double>::max();
-    for (dim_t r = 0;r < R;r++)
+    for (idx_type r = 0;r < R;r++)
     {
         double t0 = bli_clock();
-        for (dim_t rs = 0;rs < Rsub;rs++) kernel();
+        for (idx_type rs = 0;rs < Rsub;rs++) kernel();
         double t1 = bli_clock();
         dt = min(dt, t1-t0);
     }
@@ -51,12 +47,12 @@ double RunKernel(dim_t R, const function<void()>& kernel)
     return dt-bias;
 }
 
-void RunExperiment(dim_t m0, dim_t m1, dim_t m_step,
-                   dim_t n0, dim_t n1, dim_t n_step,
-                   dim_t k0, dim_t k1, dim_t k_step,
-                   const function<void(dim_t,dim_t,dim_t)>& experiment)
+void RunExperiment(idx_type m0, idx_type m1, idx_type m_step,
+                   idx_type n0, idx_type n1, idx_type n_step,
+                   idx_type k0, idx_type k1, idx_type k_step,
+                   const function<void(idx_type,idx_type,idx_type)>& experiment)
 {
-    for (dim_t m = m0, n = n0, k = k0;
+    for (idx_type m = m0, n = n0, k = k0;
          m >= min(m0,m1) && m <= max(m0,m1) &&
          n >= min(n0,n1) && n <= max(n0,n1) &&
          k >= min(k0,k1) && k <= max(k0,k1);
@@ -67,14 +63,14 @@ void RunExperiment(dim_t m0, dim_t m1, dim_t m_step,
 }
 
 template <typename T>
-void Benchmark(gint_t R)
+void Benchmark(int R)
 {
     using namespace std::placeholders;
 
     FILE *mout, *tout;
 
     auto rand_experiment =
-    [&](dim_t m, dim_t n, dim_t k, const std::function<double(double,dim_t,dim_t,dim_t)>& eff_dim)
+    [&](idx_type m, idx_type n, idx_type k, const std::function<double(double,idx_type,idx_type,idx_type)>& eff_dim)
     {
         printf("%ld %ld %ld\n", m, n, k);
 
@@ -111,16 +107,16 @@ void Benchmark(gint_t R)
 
         for (int i = 0;i < 3;i++)
         {
-            vector<dim_t> len_m = RandomProductConstrainedSequence<dim_t, ROUND_NEAREST>(RandomInteger(1, 3), m);
-            vector<dim_t> len_n = RandomProductConstrainedSequence<dim_t, ROUND_NEAREST>(RandomInteger(1, 3), n);
-            vector<dim_t> len_k = RandomProductConstrainedSequence<dim_t, ROUND_NEAREST>(RandomInteger(1, 3), k);
+            vector<idx_type> len_m = RandomProductConstrainedSequence<idx_type, ROUND_NEAREST>(RandomInteger(1, 3), m);
+            vector<idx_type> len_n = RandomProductConstrainedSequence<idx_type, ROUND_NEAREST>(RandomInteger(1, 3), n);
+            vector<idx_type> len_k = RandomProductConstrainedSequence<idx_type, ROUND_NEAREST>(RandomInteger(1, 3), k);
 
             string idx_A, idx_B, idx_C;
-            vector<dim_t> len_A, len_B, len_C;
+            vector<idx_type> len_A, len_B, len_C;
             char idx = 'a';
 
-            dim_t tm = 1;
-            for (dim_t len : len_m)
+            idx_type tm = 1;
+            for (idx_type len : len_m)
             {
                 idx_A.push_back(idx);
                 len_A.push_back(len);
@@ -130,8 +126,8 @@ void Benchmark(gint_t R)
                 tm *= len;
             }
 
-            dim_t tn = 1;
-            for (dim_t len : len_n)
+            idx_type tn = 1;
+            for (idx_type len : len_n)
             {
                 idx_B.push_back(idx);
                 len_B.push_back(len);
@@ -141,8 +137,8 @@ void Benchmark(gint_t R)
                 tn *= len;
             }
 
-            dim_t tk = 1;
-            for (dim_t len : len_k)
+            idx_type tk = 1;
+            for (idx_type len : len_k)
             {
                 idx_A.push_back(idx);
                 len_A.push_back(len);
@@ -189,7 +185,7 @@ void Benchmark(gint_t R)
     };
 
     auto reg_experiment =
-    [&](dim_t m, dim_t n, dim_t k, const std::function<double(double,dim_t,dim_t,dim_t)>& eff_dim)
+    [&](idx_type m, idx_type n, idx_type k, const std::function<double(double,idx_type,idx_type,idx_type)>& eff_dim)
     {
         printf("%ld %ld %ld\n", m, n, k);
 
@@ -225,9 +221,9 @@ void Benchmark(gint_t R)
         }
 
         {
-            Tensor<T> A(4, vector<dim_t>{m/10, k/10, 10, 10});
-            Tensor<T> B(4, vector<dim_t>{k/10, n/10, 10, 10});
-            Tensor<T> C(4, vector<dim_t>{m/10, n/10, 10, 10});
+            Tensor<T> A(4, vector<idx_type>{m/10, k/10, 10, 10});
+            Tensor<T> B(4, vector<idx_type>{k/10, n/10, 10, 10});
+            Tensor<T> C(4, vector<idx_type>{m/10, n/10, 10, 10});
 
             double gflops = 2*m*n*k*1e-9;
             impl_type = BLAS_BASED;
@@ -244,7 +240,7 @@ void Benchmark(gint_t R)
         tout = fopen("out.tensor.reg.square", "w");
 
         auto square_exp = bind(reg_experiment, _1, _2, _3,
-                               [](double gflops, dim_t m, dim_t n, dim_t k)
+                               [](double gflops, idx_type m, idx_type n, idx_type k)
                                { return pow(gflops/2e-9, 1.0/3.0); });
         RunExperiment(20, 1000, 20,
                       20, 1000, 20,
@@ -261,7 +257,7 @@ void Benchmark(gint_t R)
         tout = fopen("out.tensor.reg.rankk", "w");
 
         auto rankk_exp = bind(reg_experiment, _1, _2, _3,
-                              [](double gflops, dim_t m, dim_t n, dim_t k)
+                              [](double gflops, idx_type m, idx_type n, idx_type k)
                               { return gflops/2e-9/m/n; });
         RunExperiment(1000, 1000,  0,
                       1000, 1000,  0,
@@ -278,7 +274,7 @@ void Benchmark(gint_t R)
         tout = fopen("out.tensor.reg.pp", "w");
 
         auto pp_exp = bind(reg_experiment, _1, _2, _3,
-                           [](double gflops, dim_t m, dim_t n, dim_t k)
+                           [](double gflops, idx_type m, idx_type n, idx_type k)
                            { return sqrt(gflops/2e-9/k); });
         RunExperiment( 20, 1000, 20,
                        20, 1000, 20,
@@ -295,7 +291,7 @@ void Benchmark(gint_t R)
         tout = fopen("out.tensor.reg.bp", "w");
 
         auto bp_exp = bind(reg_experiment, _1, _2, _3,
-                           [](double gflops, dim_t m, dim_t n, dim_t k)
+                           [](double gflops, idx_type m, idx_type n, idx_type k)
                            { return gflops/2e-9/m/k; });
         RunExperiment( 90,   90,  0,
                        20, 2000, 20,
@@ -312,7 +308,7 @@ void Benchmark(gint_t R)
         tout = fopen("out.tensor.rand.square", "w");
 
         auto square_exp = bind(rand_experiment, _1, _2, _3,
-                               [](double gflops, dim_t m, dim_t n, dim_t k)
+                               [](double gflops, idx_type m, idx_type n, idx_type k)
                                { return pow(gflops/2e-9, 1.0/3.0); });
         RunExperiment(20, 1000, 20,
                       20, 1000, 20,
@@ -329,7 +325,7 @@ void Benchmark(gint_t R)
         tout = fopen("out.tensor.rand.rankk", "w");
 
         auto rankk_exp = bind(rand_experiment, _1, _2, _3,
-                              [](double gflops, dim_t m, dim_t n, dim_t k)
+                              [](double gflops, idx_type m, idx_type n, idx_type k)
                               { return gflops/2e-9/m/n; });
         RunExperiment(1000, 1000,  0,
                       1000, 1000,  0,
@@ -346,7 +342,7 @@ void Benchmark(gint_t R)
         tout = fopen("out.tensor.rand.pp", "w");
 
         auto pp_exp = bind(rand_experiment, _1, _2, _3,
-                           [](double gflops, dim_t m, dim_t n, dim_t k)
+                           [](double gflops, idx_type m, idx_type n, idx_type k)
                            { return sqrt(gflops/2e-9/k); });
         RunExperiment( 20, 1000, 20,
                        20, 1000, 20,
@@ -363,7 +359,7 @@ void Benchmark(gint_t R)
         tout = fopen("out.tensor.rand.bp", "w");
 
         auto bp_exp = bind(rand_experiment, _1, _2, _3,
-                           [](double gflops, dim_t m, dim_t n, dim_t k)
+                           [](double gflops, idx_type m, idx_type n, idx_type k)
                            { return gflops/2e-9/m/k; });
         RunExperiment( 96,   96,  0,
                        20, 2000, 20,
@@ -380,7 +376,7 @@ void Benchmark(gint_t R)
         tout = fopen("out.tensor.reg.square", "w");
 
         auto square_exp = bind(reg_experiment, _1, _2, _3,
-                               [](double gflops, dim_t m, dim_t n, dim_t k)
+                               [](double gflops, idx_type m, idx_type n, idx_type k)
                                { return pow(gflops/2e-9, 1.0/3.0); });
         RunExperiment(20, 1000, 20,
                       20, 1000, 20,
@@ -397,7 +393,7 @@ void Benchmark(gint_t R)
         tout = fopen("out.tensor.reg.rankk", "w");
 
         auto rankk_exp = bind(reg_experiment, _1, _2, _3,
-                              [](double gflops, dim_t m, dim_t n, dim_t k)
+                              [](double gflops, idx_type m, idx_type n, idx_type k)
                               { return gflops/2e-9/m/n; });
         RunExperiment(1000, 1000,  0,
                       1000, 1000,  0,
@@ -414,7 +410,7 @@ void Benchmark(gint_t R)
         tout = fopen("out.tensor.reg.pp", "w");
 
         auto pp_exp = bind(reg_experiment, _1, _2, _3,
-                           [](double gflops, dim_t m, dim_t n, dim_t k)
+                           [](double gflops, idx_type m, idx_type n, idx_type k)
                            { return sqrt(gflops/2e-9/k); });
         RunExperiment( 20, 1000, 20,
                        20, 1000, 20,
@@ -431,7 +427,7 @@ void Benchmark(gint_t R)
         tout = fopen("out.tensor.reg.bp", "w");
 
         auto bp_exp = bind(reg_experiment, _1, _2, _3,
-                           [](double gflops, dim_t m, dim_t n, dim_t k)
+                           [](double gflops, idx_type m, idx_type n, idx_type k)
                            { return gflops/2e-9/m/k; });
         RunExperiment( 90,   90,  0,
                        20, 2000, 20,
@@ -445,7 +441,7 @@ void Benchmark(gint_t R)
 
 int main(int argc, char **argv)
 {
-    gint_t R = 20;
+    int R = 20;
     time_t seed = time(NULL);
 
     tblis_init();

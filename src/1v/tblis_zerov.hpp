@@ -5,14 +5,11 @@
 
 namespace tblis
 {
-namespace blis_like
-{
 
-template <typename T> void tblis_zerov(dim_t n, T* A, inc_t inc_A);
+template <typename T> void tblis_zerov(idx_type n, T* A, stride_type inc_A);
 
-template <typename T> void tblis_zerov(Matrix<T>& A);
+template <typename T> void tblis_zerov(row_view<T> A);
 
-}
 }
 
 #endif

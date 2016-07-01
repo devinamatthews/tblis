@@ -1486,7 +1486,8 @@ namespace MArray
                 reset(other);
             }
 
-            const_marray_view(const marray<T, ndim>& other)
+            template <typename Alloc>
+            const_marray_view(const marray<T, ndim, Alloc>& other)
             {
                 reset(other);
             }
@@ -1539,7 +1540,8 @@ namespace MArray
                 reset(static_cast<const const_marray_view<T, ndim>&>(other));
             }
 
-            void reset(const marray<T, ndim>& other)
+            template <typename Alloc>
+            void reset(const marray<T, ndim, Alloc>& other)
             {
                 reset(static_cast<const const_marray_view<T, ndim>&>(other));
             }
@@ -1714,6 +1716,20 @@ namespace MArray
             permuted(Args&&... args) const
             {
                 return permuted(make_array((unsigned)std::forward<Args>(args)...));
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==2>::type
+            transpose()
+            {
+                permute(1, 0);
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==2,const_marray_view<T, ndim>>::type
+            transposed() const
+            {
+                return permuted(1, 0);
             }
 
             template <typename U, size_t newdim>
@@ -1896,6 +1912,12 @@ namespace MArray
                 return data_;
             }
 
+            const_pointer data(const_pointer ptr)
+            {
+                std::swap(ptr, const_cast<const_pointer>(data_));
+                return ptr;
+            }
+
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_==1, idx_type>::type
             length() const
@@ -2029,7 +2051,8 @@ namespace MArray
             marray_view(marray_view<T, ndim>&& other)
             : parent(other) {}
 
-            marray_view(marray<T, ndim>& other)
+            template <typename Alloc>
+            marray_view(marray<T, ndim, Alloc>& other)
             : parent(other) {}
 
             template <typename U>
@@ -2076,7 +2099,8 @@ namespace MArray
                 base::reset(other);
             }
 
-            void reset(marray<T, ndim>& other)
+            template <typename Alloc>
+            void reset(marray<T, ndim, Alloc>& other)
             {
                 base::reset(other);
             }
@@ -2121,7 +2145,8 @@ namespace MArray
                 return operator=(static_cast<const const_marray_view<T, ndim>&>(other));
             }
 
-            marray_view& operator=(const marray<T, ndim>& other)
+            template <typename Alloc>
+            marray_view& operator=(const marray<T, ndim, Alloc>& other)
             {
                 return operator=(static_cast<const const_marray_view<T, ndim>&>(other));
             }
@@ -2136,7 +2161,7 @@ namespace MArray
 
             using base::shift;
             using base::shift_down;
-            using base::shift_up
+            using base::shift_up;
             using base::shifted;
             using base::shifted_down;
             using base::shifted_up;
@@ -2193,6 +2218,16 @@ namespace MArray
             permuted(Args&&... args)
             {
                 return base::permuted(std::forward<Args>(args)...);
+            }
+
+            using base::transpose;
+            using base::transposed;
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==2,marray_view<T, ndim>>::type
+            transposed()
+            {
+                return base::transposed();
             }
 
             using base::lowered;
@@ -2396,6 +2431,11 @@ namespace MArray
             pointer data()
             {
                 return const_cast<pointer>(base::data());
+            }
+
+            pointer data(pointer ptr)
+            {
+                return const_cast<pointer>(base::data(ptr));
             }
 
             using base::length;
@@ -2720,6 +2760,15 @@ namespace MArray
 
             using base::permute;
             using parent::permute;
+
+            using base::permuted;
+            using parent::permuted;
+
+            using base::transpose;
+            using parent::transpose;
+
+            using base::transposed;
+            using parent::transposed;
 
             using base::lower;
             using parent::lower;

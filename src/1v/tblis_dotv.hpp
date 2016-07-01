@@ -5,26 +5,23 @@
 
 namespace tblis
 {
-namespace blis_like
-{
 
 template <typename T>
-void tblis_dotv(bool conj_A, bool conj_B, dim_t n,
-                const T* A, inc_t inc_A,
-                const T* B, inc_t inc_B, T& sum);
+void tblis_dotv(bool conj_A, bool conj_B, idx_type n,
+                const T* A, stride_type inc_A,
+                const T* B, stride_type inc_B, T& dot);
 
 template <typename T>
-T tblis_dotv(bool conj_A, bool conj_B, dim_t n,
-             const T* A, inc_t inc_A,
-             const T* B, inc_t inc_B);
+T tblis_dotv(bool conj_A, bool conj_B, idx_type n,
+             const T* A, stride_type inc_A,
+             const T* B, stride_type inc_B);
 
 template <typename T>
-void tblis_dotv(const Matrix<T>& A, const Matrix<T>& B, T& sum);
+void tblis_dotv(const_row_view<T> A, const_row_view<T> B, T& dot);
 
 template <typename T>
-T tblis_dotv(const Matrix<T>& A, const Matrix<T>& B);
+T tblis_dotv(const_row_view<T> A, const_row_view<T> B);
 
-}
 }
 
 #endif

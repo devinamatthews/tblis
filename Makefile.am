@@ -1,33 +1,28 @@
 lib_LTLIBRARIES = lib/libtblis.la
 lib_libtblis_la_SOURCES = \
-    src/blis-like/1m/tblis_normfm.cxx \
+    src/1m/tblis_normfm.cxx \
     \
-    src/blis-like/1v/tblis_addv.cxx \
-    src/blis-like/1v/tblis_asumv.cxx \
-    src/blis-like/1v/tblis_axpbyv.cxx \
-    src/blis-like/1v/tblis_axpyv.cxx \
-    src/blis-like/1v/tblis_copyv.cxx \
-    src/blis-like/1v/tblis_dotv.cxx \
-    src/blis-like/1v/tblis_normfv.cxx \
-    src/blis-like/1v/tblis_scal2v.cxx \
-    src/blis-like/1v/tblis_scalv.cxx \
-    src/blis-like/1v/tblis_setv.cxx \
-    src/blis-like/1v/tblis_sumv.cxx \
-    src/blis-like/1v/tblis_xpbyv.cxx \
-    src/blis-like/1v/tblis_zerov.cxx \
+    src/1v/tblis_addv.cxx \
+    src/1v/tblis_asumv.cxx \
+    src/1v/tblis_axpbyv.cxx \
+    src/1v/tblis_axpyv.cxx \
+    src/1v/tblis_copyv.cxx \
+    src/1v/tblis_dotv.cxx \
+    src/1v/tblis_normfv.cxx \
+    src/1v/tblis_scal2v.cxx \
+    src/1v/tblis_scalv.cxx \
+    src/1v/tblis_setv.cxx \
+    src/1v/tblis_sumv.cxx \
+    src/1v/tblis_xpbyv.cxx \
+    src/1v/tblis_zerov.cxx \
     \
-    src/blis-like/3/tblis_gemm_ukr.cxx \
-    src/blis-like/3/tblis_gemm.cxx \
-    src/blis-like/3/tblis_packm.cxx \
-    \
-	src/core/tblis_mutex.cxx \
-	src/core/tensor_c99.cxx \
+    src/3/tblis_gemm.cxx \
 	\
 	src/impl/blas/tensor_contract.cxx \
 	src/impl/blas/tensor_mult.cxx \
 	src/impl/blas/tensor_outer_prod.cxx \
-	src/impl/blas/tensor_sum.cxx \
 	src/impl/blas/tensor_weight.cxx \
+	\
 	src/impl/blis/tensor_contract.cxx \
 	\
 	src/impl/reference/tensor_contract.cxx \
@@ -43,17 +38,176 @@ lib_libtblis_la_SOURCES = \
 	src/impl/reference/tensor_weight.cxx \
 	\
 	src/impl/tensor_impl.cxx \
+	src/impl/tensor_impl.cxx \
 	\
+	src/tblis_mutex.cxx \
 	src/tblis.cxx
 	
+noinst_LIBRARIES =
+lib_libtblis_la_LIBADD =
+	
+if ENABLE_ARMV7A
+noinst_LIBRARIES += lib/libarmv7a.a
+lib_libtblis_la_LIBADD += lib/libarmv7a.a
+lib_libarmv7a_a_SOURCES = src/external/blis/config/armv7a/kernels/3/bli_cgemm_kernel_2x2.S \
+                          src/external/blis/config/armv7a/kernels/3/bli_dgemm_kernel_4x4.S \
+                          src/external/blis/config/armv7a/kernels/3/bli_sgemm_kernel_4x4.S \
+                          src/external/blis/config/armv7a/kernels/3/bli_zgemm_kernel_2x2.S \
+                          src/external/blis/config/armv7a/kernels/3/bli_gemm_opt_4x4.c
+lib_libarmv7a_a_CCASFLAGS = -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
+lib_libarmv7a_a_CFLAGS = -Isrc/external/blis/config/armv7a -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
+endif
+
+if ENABLE_ARMV8A
+noinst_LIBRARIES += lib/libarmv8a.a
+lib_libtblis_la_LIBADD += lib/libarmv8a.a
+lib_libarmv8a_a_SOURCES = src/external/blis/config/armv8a/kernels/3/bli_gemm_opt_4x4.c
+lib_libarmv8a_a_CFLAGS = -Isrc/external/blis/config/armv8a -march=armv8-a+fp+simd -mcpu=cortex-a57.cortex-a53
+endif
+
+if ENABLE_BGQ
+noinst_LIBRARIES += lib/libbgq.a
+lib_libtblis_la_LIBADD += lib/libbgq.a
+lib_libbgq_a_SOURCES = src/external/blis/config/bgq/kernels/3/bli_gemm_int_8x8.c
+lib_libbgq_a_CFLAGS = -Isrc/external/blis/config/bgq -qasm=gcc -qkeyword=asm -qprefetch -qunroll=yes
+endif
+
+if ENABLE_BULLDOZER
+noinst_LIBRARIES += lib/libbulldozer.a
+lib_libtblis_la_LIBADD += lib/libbulldozer.a
+lib_libbulldozer_a_SOURCES = src/external/blis/config/bulldozer/kernels/3/bli_gemm_asm_d4x6_fma4.c
+lib_libbulldozer_a_CFLAGS = -Isrc/external/blis/config/bulldozer -mavx -mfma -march=bdver2 -mfpmath=sse
+endif
+
+if ENABLE_CARRIZO
+noinst_LIBRARIES += lib/libcarrizo.a
+lib_libtblis_la_LIBADD += lib/libcarrizo.a
+lib_libcarrizo_a_SOURCES = src/external/blis/config/carrizo/kernels/3/bli_gemm_asm_d8x3.c
+lib_libcarrizo_a_CFLAGS = -Isrc/external/blis/config/carrizo -mavx -mfma -march=bdver4 -mfpmath=sse
+endif
+
+if ENABLE_CORTEX_A15
+noinst_LIBRARIES += lib/libcortex-a15.a
+lib_libtblis_la_LIBADD += lib/libcortex-a15.a
+lib_libcortex_a15_a_SOURCES = src/external/blis/config/cortex-a15/kernels/3/bli_gemm_opt_4x4.c
+lib_libcortex_a15_a_CFLAGS = -Isrc/external/blis/config/cortex-a15 -mfloat-abi=hard -mfpu=neon -march=armv7-a
+endif
+
+if ENABLE_CORTEX_A9
+noinst_LIBRARIES += lib/libcortex-a9.a
+lib_libtblis_la_LIBADD += lib/libcortex-a9.a
+lib_libcortex_a9_a_SOURCES = src/external/blis/config/cortex-a9/kernels/3/bli_gemm_opt_4x4.c
+lib_libcortex_a9_a_CFLAGS = -Isrc/external/blis/config/cortex-a9 -mfloat-abi=hard -mfpu=neon -march=armv7-a
+endif
+
+if ENABLE_DUNNINGTON
+noinst_LIBRARIES += lib/libdunnington.a
+lib_libtblis_la_LIBADD += lib/libdunnington.a
+lib_libdunnington_a_SOURCES = src/external/blis/config/dunnington/kernels/3/bli_gemm_asm_d4x4.c
+lib_libdunnington_a_CFLAGS = -Isrc/external/blis/config/dunnington -msse3 -march=corei7 -mfpmath=sse #-xSSE4.2
+endif
+
+if ENABLE_HASWELL
+noinst_LIBRARIES += lib/libhaswell.a
+lib_libtblis_la_LIBADD += lib/libhaswell.a
+lib_libhaswell_a_SOURCES = src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d12x4.c \
+						   src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d8x6.c \
+						   src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d6x8.c \
+						   src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d4x12.c
+lib_libhaswell_a_CFLAGS = -Isrc/external/blis/config/haswell -mavx2 -mfma -mfpmath=sse -march=core-avx2 #-xCORE-AVX2
+endif
+
+if ENABLE_KNL
+noinst_LIBRARIES += lib/libknl.a
+lib_libtblis_la_LIBADD += lib/libknl.a
+lib_libknl_a_SOURCES = src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c \
+					    src/external/blis/config/knl/kernels/3/bli_dgemm_opt_30x8_att.c \
+					    src/external/blis/config/knl/kernels/3/bli_sgemm_opt_30x16_att.c
+lib_libknl_a_CFLAGS = -Isrc/external/blis/config/knl -mavx512f -mavx512pf -mfpmath=sse -march=knl #-xMIC-AVX512
+endif
+
+if ENABLE_LOONGSON3A
+noinst_LIBRARIES += lib/libloongson3a.a
+lib_libtblis_la_LIBADD += lib/libloongson3a.a
+lib_libloongson3a_a_SOURCES = src/external/blis/config/loongson3a/kernels/3/bli_gemm_opt_d4x4.c
+lib_libloongson3a_a_CFLAGS = -Isrc/external/blis/config/loongson3a -march=loongson3a -mtune=loongson3a #-xSSE4.2
+endif
+
+if ENABLE_MIC
+noinst_LIBRARIES += lib/libmic.a
+lib_libtblis_la_LIBADD += lib/libmic.a
+lib_libmic_a_SOURCES = src/external/blis/config/mic/kernels/3/bli_dgemm_opt_30x8.c \
+					   src/external/blis/config/mic/kernels/3/bli_sgemm_opt_30x16.c
+lib_libmic_a_CFLAGS = -Isrc/external/blis/config/mic -fasm-blocks
+endif
+
+if ENABLE_PILEDRIVER
+noinst_LIBRARIES += lib/libpiledriver.a
+lib_libtblis_la_LIBADD += lib/libpiledriver.a
+lib_libpiledriver_a_SOURCES = src/external/blis/config/piledriver/kernels/3/bli_gemm_asm_d8x3.c
+lib_libpiledriver_a_CFLAGS = -Isrc/external/blis/config/piledriver -mavx -mfma -march=bdver2 -mfpmath=sse
+endif
+
+if ENABLE_POWER7
+noinst_LIBRARIES += lib/libpower7.a
+lib_libtblis_la_LIBADD += lib/libpower7.a
+lib_libpower7_a_SOURCES = src/external/blis/config/power7/kernels/3/bli_gemm_opt_8x4.c
+lib_libpower7_a_CFLAGS = -Isrc/external/blis/config/power7 -mcpu=power7 -mtune=power7 -mvsx
+endif
+
+if ENABLE_SANDYBRIDGE
+noinst_LIBRARIES += lib/libsandybridge.a
+lib_libtblis_la_LIBADD += lib/libsandybridge.a
+lib_libsandybridge_a_SOURCES = src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c \
+						       src/external/blis/config/sandybridge/kernels/3/bli_gemm_int_d8x4.c
+lib_libsandybridge_a_CFLAGS = -Isrc/external/blis/config/sandybridge -mavx -mfpmath=sse -march=corei7-avx #-xAVX
+endif
+
 bin_PROGRAMS = bin/test bin/bench
 bin_test_SOURCES = test/test.cxx
 bin_bench_SOURCES = test/bench.cxx
-	
+
 VPATH += $(srcdir)
 
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src @blis_INCLUDES@ @blis___INCLUDES@
+AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -Isrc/external/blis/frame/0 \
+              -Isrc/external/blis/frame/0/copysc -Isrc/external/blis/frame/1 \
+              -Isrc/external/blis/frame/1/kernels -Isrc/external/blis/frame/1/packv \
+              -Isrc/external/blis/frame/1/scalv -Isrc/external/blis/frame/1/unpackv \
+              -Isrc/external/blis/frame/1d -Isrc/external/blis/frame/1f \
+              -Isrc/external/blis/frame/1f/kernels -Isrc/external/blis/frame/1m \
+              -Isrc/external/blis/frame/1m/packm -Isrc/external/blis/frame/1m/packm/ukernels \
+              -Isrc/external/blis/frame/1m/scalm -Isrc/external/blis/frame/1m/unpackm \
+              -Isrc/external/blis/frame/1m/unpackm/ukernels -Isrc/external/blis/frame/2 \
+              -Isrc/external/blis/frame/2/gemv -Isrc/external/blis/frame/2/ger \
+              -Isrc/external/blis/frame/2/hemv -Isrc/external/blis/frame/2/her \
+              -Isrc/external/blis/frame/2/her2 -Isrc/external/blis/frame/2/symv \
+              -Isrc/external/blis/frame/2/syr -Isrc/external/blis/frame/2/syr2 \
+              -Isrc/external/blis/frame/2/trmv -Isrc/external/blis/frame/2/trsv \
+              -Isrc/external/blis/frame/3 -Isrc/external/blis/frame/3/gemm \
+              -Isrc/external/blis/frame/3/gemm/ind -Isrc/external/blis/frame/3/hemm \
+              -Isrc/external/blis/frame/3/her2k -Isrc/external/blis/frame/3/herk \
+              -Isrc/external/blis/frame/3/symm -Isrc/external/blis/frame/3/syr2k \
+              -Isrc/external/blis/frame/3/syrk -Isrc/external/blis/frame/3/trmm \
+              -Isrc/external/blis/frame/3/trmm3 -Isrc/external/blis/frame/3/trsm \
+              -Isrc/external/blis/frame/3/ukernels -Isrc/external/blis/frame/base \
+              -Isrc/external/blis/frame/base/check -Isrc/external/blis/frame/base/noopt \
+              -Isrc/external/blis/frame/cntl -Isrc/external/blis/frame/compat \
+              -Isrc/external/blis/frame/compat/cblas -Isrc/external/blis/frame/compat/cblas/f77_sub \
+              -Isrc/external/blis/frame/compat/cblas/src -Isrc/external/blis/frame/compat/check \
+              -Isrc/external/blis/frame/compat/f2c -Isrc/external/blis/frame/compat/f2c/util \
+              -Isrc/external/blis/frame/include -Isrc/external/blis/frame/include/level0 \
+              -Isrc/external/blis/frame/include/level0/io \
+              -Isrc/external/blis/frame/include/level0/ri \
+              -Isrc/external/blis/frame/include/level0/ri3 \
+              -Isrc/external/blis/frame/include/level0/rih \
+              -Isrc/external/blis/frame/include/level0/ro \
+              -Isrc/external/blis/frame/include/level0/rpi -Isrc/external/blis/frame/ind \
+              -Isrc/external/blis/frame/ind/cntx -Isrc/external/blis/frame/ind/include \
+              -Isrc/external/blis/frame/ind/oapi -Isrc/external/blis/frame/ind/tapi \
+              -Isrc/external/blis/frame/ind/ukernels/gemm \
+              -Isrc/external/blis/frame/ind/ukernels/trsm -Isrc/external/blis/frame/util \
+              -Isrc/external/blis/frame/thread -Isrc/external/blis
 AM_LDFLAGS = -pthread
-bin_test_LDADD = lib/libtblis.la @blis_LIBS@
-bin_bench_LDADD = lib/libtblis.la @blis_LIBS@
+bin_test_LDADD = lib/libtblis.la
+bin_bench_LDADD = lib/libtblis.la

@@ -1,16 +1,30 @@
 #ifndef _TBLIS_UTIL_HPP_
 #define _TBLIS_UTIL_HPP_
 
-#include <vector>
-#include <string>
-#include <algorithm>
-#include <ostream>
-#include <cstdio>
+#include <cassert>
 #include <cstdarg>
-#include <random>
+#include <cstdio>
+#include <cstdlib>
 
-#define TBLIS_STRINGIZE(...) #__VA_ARGS__
-#define TBLIS_CONCAT(x,y) x##y
+#include <algorithm>
+#include <list>
+#include <memory>
+#include <mutex>
+#include <ostream>
+#include <random>
+#include <string>
+#include <vector>
+
+#define MARRAY_DEFAULT_LAYOUT COLUMN_MAJOR
+#include "external/marray/include/varray.hpp"
+#include "external/stl_ext/include/algorithm.hpp"
+#include "external/stl_ext/include/vector.hpp"
+#include "external/stl_ext/include/complex.hpp"
+
+#define TBLIS_STRINGIZE_(...) #__VA_ARGS__
+#define TBLIS_STRINGIZE(...) TBLIS_STRINGIZE_(__VA_ARGS__)
+#define TBLIS_CONCAT_(x,y) x##y
+#define TBLIS_CONCAT(x,y) TBLIS_CONCAT_(x,y)
 #define TBLIS_FIRST_ARG(arg,...) arg
 
 #ifdef TBLIS_DEBUG
@@ -41,36 +55,6 @@ else \
 #define TBLIS_ASSERT(...)
 #endif
 
-#define TBLIS_INSTANTIATE_FOR_CONFIG(config) \
-INSTANTIATION(   float,config,config::template MR<   float>::def,config::template NR<   float>::def,config::template KR<   float>::def) \
-INSTANTIATION(  double,config,config::template MR<  double>::def,config::template NR<  double>::def,config::template KR<  double>::def) \
-INSTANTIATION(scomplex,config,config::template MR<scomplex>::def,config::template NR<scomplex>::def,config::template KR<scomplex>::def) \
-INSTANTIATION(dcomplex,config,config::template MR<dcomplex>::def,config::template NR<dcomplex>::def,config::template KR<dcomplex>::def)
-
-#define TBLIS_INSTANTIATE_FOR_CONFIGS1(config1) \
-INSTANTIATE_FOR_CONFIG(config1)
-
-#define TBLIS_INSTANTIATE_FOR_CONFIGS2(config1, config2) \
-TBLIS_INSTANTIATE_FOR_CONFIG(config1) \
-TBLIS_INSTANTIATE_FOR_CONFIGS1(config2)
-
-#define TBLIS_INSTANTIATE_FOR_CONFIGS3(config1, config2, config3) \
-TBLIS_INSTANTIATE_FOR_CONFIG(config1) \
-TBLIS_INSTANTIATE_FOR_CONFIGS2(config2, config3)
-
-#define TBLIS_INSTANTIATE_FOR_CONFIGS4(config1, config2, config3, config4) \
-TBLIS_INSTANTIATE_FOR_CONFIG(config1) \
-TBLIS_INSTANTIATE_FOR_CONFIGS3(config2, config3, config4)
-
-#define TBLIS_INSTANTIATE_FOR_CONFIGS5(config1, config2, config3, config4, config5) \
-TBLIS_INSTANTIATE_FOR_CONFIG(config1) \
-TBLIS_INSTANTIATE_FOR_CONFIGS4(config2, config3, config4, config5)
-
-#define TBLIS_INSTANTIATE_FOR_CONFIGS_(_1,_2,_3,_4,_5,NUM,...) \
-TBLIS_CONCAT(TBLIS_INSTANTIATE_FOR_CONFIGS, NUM)
-#define TBLIS_INSTANTIATE_FOR_CONFIGS(...) \
-TBLIS_INSTANTIATE_FOR_CONFIGS_(__VA_ARGS__,5,4,3,2,1)(__VA_ARGS__)
-
 template<typename T> std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
 {
     os << "[";
@@ -95,22 +79,71 @@ template<typename T> bool operator!(const std::vector<T>& x)
 namespace tblis
 {
 
+enum reduce_t
+{
+    REDUCE_SUM      = 0,
+    REDUCE_SUM_ABS  = 1,
+    REDUCE_MAX      = 2,
+    REDUCE_MAX_ABS  = 3,
+    REDUCE_MIN      = 4,
+    REDUCE_MIN_ABS  = 5,
+    REDUCE_NORM_1   = REDUCE_SUM_ABS,
+    REDUCE_NORM_2   = 6,
+    REDUCE_NORM_INF = REDUCE_MAX_ABS
+};
+
+using idx_type = MArray::varray<float>::idx_type;
+using stride_type = MArray::varray<float>::stride_type;
+
+template <typename T>
+using const_tensor_view = MArray::const_varray_view<T>;
+
+template <typename T>
+using tensor_view = MArray::varray_view<T>;
+
+template <typename T, typename Allocator=MArray::aligned_allocator<T,MARRAY_BASE_ALIGNMENT>>
+using tensor = MArray::varray<T, Allocator>;
+
+using MArray::const_marray_view;
+using MArray::marray_view;
+using MArray::marray;
+
+using MArray::const_matrix_view;
+using MArray::matrix_view;
+using MArray::matrix;
+
+using MArray::const_row_view;
+using MArray::row_view;
+using MArray::row;
+
+using MArray::Layout;
+using MArray::COLUMN_MAJOR;
+using MArray::ROW_MAJOR;
+using MArray::DEFAULT;
+
+using MArray::make_array;
+using MArray::make_vector;
+
+using MArray::range_t;
+using MArray::range;
+
 typedef std::complex<float> scomplex;
 typedef std::complex<double> dcomplex;
 
-template <typename T> struct real_type                  { typedef T type; };
-template <typename T> struct real_type<std::complex<T>> { typedef T type; };
-template <typename T> using real_type_t = typename real_type<T>::type;
+using stl_ext::real;
+using stl_ext::imag;
+using stl_ext::conj;
+using stl_ext::real_type_t;
+using stl_ext::complex_type_t;
+using stl_ext::is_complex;
+using stl_ext::norm2;
 
-template <typename T> struct complex_type                  { typedef std::complex<T> type; };
-template <typename T> struct complex_type<std::complex<T>> { typedef std::complex<T> type; };
-template <typename T> using complex_type_t = typename complex_type<T>::type;
-
-template <typename T> struct is_real                  { static const bool value =  true; };
-template <typename T> struct is_real<std::complex<T>> { static const bool value = false; };
-
-template <typename T> struct is_complex                  { static const bool value = false; };
-template <typename T> struct is_complex<std::complex<T>> { static const bool value =  true; };
+inline long envtol(const std::string& env, long fallback=0)
+{
+    char* str = getenv(env.c_str());
+    if (str) return strtol(str, nullptr, 10);
+    return fallback;
+}
 
 template <typename T, typename U>
 constexpr stl_ext::common_type_t<T,U> remainder(T N, U B)
@@ -147,6 +180,21 @@ template <typename T, typename U>
 constexpr size_t size_as_type(size_t n)
 {
     return ceil_div(n*sizeof(T) + alignof(T), sizeof(U));
+}
+
+template <typename T>
+using gemm_ukr_t =
+void (*)(idx_type k,
+         const T* restrict alpha,
+         const T* restrict a, const T* restrict b,
+         const T* restrict beta,
+         T* restrict c, stride_type rs_c, stride_type cs_c,
+         const void* restrict data, const void* restrict cntx);
+
+namespace matrix_constants
+{
+    enum {MAT_A, MAT_B, MAT_C};
+    enum {DIM_M, DIM_N, DIM_K};
 }
 
 namespace util
@@ -243,12 +291,12 @@ inline
 int RandomWeightedChoice(const std::vector<double>& w)
 {
     int n = w.size();
-    ASSERT(n > 0);
+    assert(n > 0);
 
     double s = 0;
     for (int i = 0;i < n;i++)
     {
-        ASSERT(w[i] >= 0);
+        assert(w[i] >= 0);
         s += w[i];
     }
 
@@ -259,7 +307,7 @@ int RandomWeightedChoice(const std::vector<double>& w)
         c -= w[i];
     }
 
-    ASSERT(0);
+    assert(0);
     return -1;
 }
 
@@ -272,12 +320,12 @@ typename std::enable_if<std::is_integral<T>::value,int>::type
 RandomWeightedChoice(const std::vector<T>& w)
 {
     int n = w.size();
-    ASSERT(n > 0);
+    assert(n > 0);
 
     T s = 0;
     for (int i = 0;i < n;i++)
     {
-        ASSERT(w[i] >= 0);
+        assert(w[i] >= 0);
         s += w[i];
     }
 
@@ -288,7 +336,7 @@ RandomWeightedChoice(const std::vector<T>& w)
         c -= w[i];
     }
 
-    ASSERT(0);
+    assert(0);
     return -1;
 }
 
@@ -300,13 +348,13 @@ inline
 std::vector<double> RandomSumConstrainedSequence(int n, double s,
                                                  const std::vector<double>& mn)
 {
-    ASSERT(n > 0);
-    ASSERT(s >= 0);
-    ASSERT(mn.size() == n);
-    ASSERT(mn[0] >= 0);
+    assert(n > 0);
+    assert(s >= 0);
+    assert(mn.size() == n);
+    assert(mn[0] >= 0);
 
     s -= mn[0];
-    ASSERT(s >= 0);
+    assert(s >= 0);
 
     std::vector<double> p(n+1);
 
@@ -314,9 +362,9 @@ std::vector<double> RandomSumConstrainedSequence(int n, double s,
     p[n] = 1;
     for (int i = 1;i < n;i++)
     {
-        ASSERT(mn[i] >= 0);
+        assert(mn[i] >= 0);
         s -= mn[i];
-        ASSERT(s >= 0);
+        assert(s >= 0);
         p[i] = RandomNumber<double>();
     }
     std::sort(p.begin(), p.end());
@@ -338,7 +386,7 @@ std::vector<double> RandomSumConstrainedSequence(int n, double s,
 inline
 std::vector<double> RandomSumConstrainedSequence(int n, double s)
 {
-    ASSERT(n > 0);
+    assert(n > 0);
     return RandomSumConstrainedSequence(n, s, std::vector<double>(n));
 }
 
@@ -350,15 +398,15 @@ template <typename T>
 typename std::enable_if<std::is_integral<T>::value,std::vector<T>>::type
 RandomSumConstrainedSequence(int n, T s, const std::vector<T>& mn)
 {
-    ASSERT(n >  0);
-    ASSERT(s >= 0);
-    ASSERT(mn.size() == n);
+    assert(n >  0);
+    assert(s >= 0);
+    assert(mn.size() == n);
 
     for (int i = 0;i < n;i++)
     {
-        ASSERT(mn[i] >= 0);
+        assert(mn[i] >= 0);
         s -= mn[i];
-        ASSERT(s >= 0);
+        assert(s >= 0);
     }
 
     std::vector<T> p(n+1);
@@ -389,7 +437,7 @@ template <typename T>
 typename std::enable_if<std::is_integral<T>::value,std::vector<T>>::type
 RandomSumConstrainedSequence(int n, T s)
 {
-    ASSERT(n > 0);
+    assert(n > 0);
     return RandomSumConstrainedSequence(n, s, std::vector<T>(n));
 }
 
@@ -401,9 +449,9 @@ inline
 std::vector<double> RandomProductConstrainedSequence(int n, double p,
                                                      const std::vector<double>& mn)
 {
-    ASSERT(n >  0);
-    ASSERT(p >= 1);
-    ASSERT(mn.size() == n);
+    assert(n >  0);
+    assert(p >= 1);
+    assert(mn.size() == n);
 
     std::vector<double> log_mn(n);
     for (int i = 0;i < n;i++)
@@ -424,7 +472,7 @@ std::vector<double> RandomProductConstrainedSequence(int n, double p,
 inline
 std::vector<double> RandomProductConstrainedSequence(int n, double p)
 {
-    ASSERT(n > 0);
+    assert(n > 0);
     return RandomProductConstrainedSequence(n, p, std::vector<double>(n, 1.0));
 }
 
@@ -438,9 +486,9 @@ template <typename T, rounding_mode mode=ROUND_DOWN>
 typename std::enable_if<std::is_integral<T>::value,std::vector<T>>::type
 RandomProductConstrainedSequence(int n, T p, const std::vector<T>& mn)
 {
-    ASSERT(n >  0);
-    ASSERT(p >= 1);
-    ASSERT(mn.size() == n);
+    assert(n >  0);
+    assert(p >= 1);
+    assert(mn.size() == n);
 
     std::vector<double> mnd(n);
     for (int i = 0;i < n;i++)
@@ -473,14 +521,14 @@ template <typename T, rounding_mode mode=ROUND_DOWN>
 typename std::enable_if<std::is_integral<T>::value,std::vector<T>>::type
 RandomProductConstrainedSequence(int n, T p)
 {
-    ASSERT(n > 0);
+    assert(n > 0);
     return RandomProductConstrainedSequence<T,mode>(n, p, std::vector<T>(n, T(1)));
 }
 
 template <typename T, typename U>
 T permute(const T& a, const U& p)
 {
-    ASSERT(a.size() == p.size());
+    assert(a.size() == p.size());
     T ap(a);
     for (size_t i = 0;i < a.size();i++) ap[p[i]] = a[i];
     return ap;

@@ -2,7 +2,7 @@
 #include "impl/tensor_impl.hpp"
 
 using namespace std;
-using namespace tblis::blis_like;
+using namespace MArray;
 
 namespace tblis
 {
@@ -10,10 +10,10 @@ namespace impl
 {
 
 template <typename T>
-int tensor_transpose_reference(T alpha, const Tensor<T>& A, const std::string& idx_A,
-                               T  beta,       Tensor<T>& B, const std::string& idx_B)
+int tensor_transpose_reference(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
+                               T  beta,             tensor_view<T>& B, const std::string& idx_B)
 {
-    gint_t ndim = A.dimension();
+    unsigned ndim = A.dimension();
 
     if (ndim == 0)
     {
@@ -21,12 +21,12 @@ int tensor_transpose_reference(T alpha, const Tensor<T>& A, const std::string& i
         return 0;
     }
 
-    const vector<inc_t>& strides_A = A.strides();
-    const vector<inc_t>& strides_B = B.strides();
-    const vector<dim_t>& len_A = A.lengths();
+    const vector<stride_type>& strides_A = A.strides();
+    const vector<stride_type>& strides_B = B.strides();
+    const vector<idx_type>& len_A = A.lengths();
 
     string idx;
-    for (gint_t i = 0;i < ndim;i++) idx.push_back(i);
+    for (unsigned i = 0;i < ndim;i++) idx.push_back(i);
 
     sort(idx.begin(), idx.end(),
     [&](char a, char b)
@@ -35,22 +35,22 @@ int tensor_transpose_reference(T alpha, const Tensor<T>& A, const std::string& i
                min(strides_A[b], strides_B[b]);
     });
 
-    vector<inc_t> strides_Ar(ndim-1);
-    vector<inc_t> strides_Br(ndim-1);
-    vector<dim_t> len(ndim-1);
+    vector<stride_type> strides_Ar(ndim-1);
+    vector<stride_type> strides_Br(ndim-1);
+    vector<idx_type> len(ndim-1);
 
-    for (gint_t i = 0;i < ndim-1;i++)
+    for (unsigned i = 0;i < ndim-1;i++)
     {
         strides_Ar[i] = strides_A[idx[i+1]];
         strides_Br[i] = strides_B[idx[i+1]];
         len[i] = len_A[idx[i+1]];
     }
 
-    inc_t stride_A0 = strides_A[idx[0]];
-    inc_t stride_B0 = strides_B[idx[0]];
-    dim_t len0 = len_A[idx[0]];
+    stride_type stride_A0 = strides_A[idx[0]];
+    stride_type stride_B0 = strides_B[idx[0]];
+    idx_type len0 = len_A[idx[0]];
 
-    Iterator<2> iter_AB(len, strides_Ar, strides_Br);
+    viterator<2> iter_AB(len, strides_Ar, strides_Br);
 
     const T* restrict A_ = A.data();
           T* restrict B_ = B.data();
@@ -142,21 +142,11 @@ int tensor_transpose_reference(T alpha, const Tensor<T>& A, const std::string& i
     return 0;
 }
 
-template
-int tensor_transpose_reference<   float>(   float alpha, const Tensor<   float>& A, const std::string& idx_A,
-                                            float  beta,       Tensor<   float>& B, const std::string& idx_B);
-
-template
-int tensor_transpose_reference<  double>(  double alpha, const Tensor<  double>& A, const std::string& idx_A,
-                                           double  beta,       Tensor<  double>& B, const std::string& idx_B);
-
-template
-int tensor_transpose_reference<scomplex>(scomplex alpha, const Tensor<scomplex>& A, const std::string& idx_A,
-                                         scomplex  beta,       Tensor<scomplex>& B, const std::string& idx_B);
-
-template
-int tensor_transpose_reference<dcomplex>(dcomplex alpha, const Tensor<dcomplex>& A, const std::string& idx_A,
-                                         dcomplex  beta,       Tensor<dcomplex>& B, const std::string& idx_B);
+#define INSTANTIATE_FOR_TYPE(T) \
+template \
+int tensor_transpose_reference<T>(T alpha, const const_tensor_view<T>& A, const std::string& idx_A, \
+                                  T  beta,             tensor_view<T>& B, const std::string& idx_B);
+#include "tblis_instantiate_for_types.hpp"
 
 }
 }

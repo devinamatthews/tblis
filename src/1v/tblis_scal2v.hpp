@@ -5,18 +5,15 @@
 
 namespace tblis
 {
-namespace blis_like
-{
 
 template <typename T>
-void tblis_scal2v(bool conj_A, dim_t n,
-                  T alpha, const T* A, inc_t inc_A,
-                                 T* B, inc_t inc_B);
+void tblis_scal2v(bool conj_A, idx_type n,
+                  T alpha, const T* A, stride_type inc_A,
+                                 T* B, stride_type inc_B);
 
 template <typename T>
-void tblis_scal2v(T alpha, const Matrix<T>& A, Matrix<T>& B);
+void tblis_scal2v(T alpha, const_row_view<T> A, row_view<T> B);
 
-}
 }
 
 #endif

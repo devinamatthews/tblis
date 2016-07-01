@@ -165,7 +165,7 @@ namespace detail
                            const std::array<std::array<stride_type,ndim>,N>& strides)
         {
             off0 += strides[I-1][i];
-            inc_offsets_helper<stride_type, ndim, N, I+1, Offsets...>(i, off..., strides);
+            inc_offsets_helper<ndim, N, I+1, Offsets...>(i, off..., strides);
         }
 
         template <typename stride_type>
@@ -174,7 +174,7 @@ namespace detail
                            const std::array<std::vector<stride_type>,N>& strides)
         {
             off0 += strides[I-1][i];
-            inc_offsets_helper<stride_type, ndim, N, I+1, Offsets...>(i, off..., strides);
+            inc_offsets_helper<0, N, I+1, Offsets...>(i, off..., strides);
         }
     };
 
@@ -229,7 +229,7 @@ namespace detail
                            const std::array<std::array<stride_type,ndim>,N>& strides)
         {
             off0 -= pos[i]*strides[I-1][i];
-            dec_offsets_helper<idx_type, stride_type, ndim, N, I+1, Offsets...>(i, off..., pos, strides);
+            dec_offsets_helper<ndim, N, I+1, Offsets...>(i, off..., pos, strides);
         }
 
         template <typename idx_type, typename stride_type>
@@ -239,7 +239,7 @@ namespace detail
                            const std::array<std::vector<stride_type>,N>& strides)
         {
             off0 -= pos[i]*strides[I-1][i];
-            dec_offsets_helper<idx_type, stride_type, ndim, N, I+1, Offsets...>(i, off..., pos, strides);
+            dec_offsets_helper<0, N, I+1, Offsets...>(i, off..., pos, strides);
         }
     };
 
@@ -296,7 +296,7 @@ namespace detail
         {
             off0 = 0;
             for (unsigned i = 0;i < ndim;i++) off0 += pos[i]*strides[I-1][i];
-            set_offsets_helper<idx_type, stride_type, ndim, N, I+1, Offsets...>(off..., pos, strides);
+            set_offsets_helper<ndim, N, I+1, Offsets...>(off..., pos, strides);
         }
 
         template <typename idx_type, typename stride_type>
@@ -306,7 +306,7 @@ namespace detail
         {
             off0 = 0;
             for (unsigned i = 0;i < ndim;i++) off0 += pos[i]*strides[I-1][i];
-            set_offsets_helper<idx_type, stride_type, ndim, N, I+1, Offsets...>(off..., pos, strides);
+            set_offsets_helper<0, N, I+1, Offsets...>(off..., pos, strides);
         }
     };
 
@@ -357,7 +357,7 @@ namespace detail
         {
             assert(stride0.size() == ndim);
             std::copy_n(stride0.begin(), ndim, _strides[I-1].begin());
-            set_strides_helper<stride_type, ndim, N, I+1, Strides...>(strides..., _strides);
+            set_strides_helper<ndim, N, I+1, Strides...>(strides..., _strides);
         }
 
         template <typename stride_type>
@@ -365,7 +365,7 @@ namespace detail
                            std::array<std::vector<stride_type>,N>& _strides)
         {
             _strides[I-1].assign(stride0.begin(), stride0.end());
-            set_strides_helper<stride_type, ndim, N, I+1, Strides...>(strides..., _strides);
+            set_strides_helper<0, N, I+1, Strides...>(strides..., _strides);
         }
     };
 

@@ -1,7 +1,11 @@
 #include "tblis.hpp"
 #include "impl/tensor_impl.hpp"
 
+#include "external/lawrap/blas.h"
+
 using namespace std;
+using namespace stl_ext;
+using namespace LAWrap;
 
 namespace tblis
 {
@@ -9,89 +13,50 @@ namespace impl
 {
 
 template <typename T>
-int tensor_outer_prod_blas(T alpha, const Tensor<T>& A, const std::string& idx_A,
-                                    const Tensor<T>& B, const std::string& idx_B,
-                           T  beta,       Tensor<T>& C, const std::string& idx_C)
+int tensor_outer_prod_blas(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
+                                    const const_tensor_view<T>& B, const std::string& idx_B,
+                           T  beta,             tensor_view<T>& C, const std::string& idx_C)
 {
-    string idx_AC_BC(C.dimension(), 0);
+    string idx_AC = intersection(idx_A, idx_C);
+    string idx_BC = intersection(idx_B, idx_C);
 
-    gint_t ndim_AC =
-        set_intersection(idx_A.begin(), idx_A.end(),
-                         idx_C.begin(), idx_C.end(),
-                         idx_AC_BC.begin()) - idx_AC_BC.begin();
+    string idx_AC_BC = idx_AC + idx_BC;
 
-    gint_t ndim_BC =
-        set_intersection(idx_B.begin(), idx_B.end(),
-                         idx_C.begin(), idx_C.end(),
-                         idx_AC_BC.begin()+ndim_AC) - (idx_AC_BC.begin()+ndim_AC);
+    vector<idx_type> len_AC_BC(idx_AC_BC.size());
 
-    assert(ndim_AC+ndim_BC == C.dimension());
+    for (unsigned i = 0;i < idx_AC_BC.size();i++)
+        for (unsigned j = 0;j < C.dimension();j++)
+            if (idx_AC_BC[i] == idx_C[j]) len_AC_BC[i] = C.length(j);
 
-    vector<dim_t> len_AC_BC(ndim_AC+ndim_BC);
+    tensor<T> ar(A.lengths());
+    tensor<T> br(B.lengths());
+    tensor<T> cr(len_AC_BC);
 
-    gint_t j = 0;
-    for (gint_t i = 0;i < C.dimension();i++)
-    {
-        if (ndim_AC+ndim_BC > j && idx_C[i] == idx_AC_BC[j])
-        {
-            len_AC_BC[j++] = C.length(i);
-        }
-    }
-    for (gint_t i = 0;i < C.dimension();i++)
-    {
-        if (ndim_AC+ndim_BC > j && idx_C[i] == idx_AC_BC[j])
-        {
-            len_AC_BC[j++] = C.length(i);
-        }
-        if (i == C.dimension()-1)
-        {
-            assert(j == ndim_AC+ndim_BC);
-        }
-    }
+    matrix_view<T> am, bm, cm;
 
-    Tensor<T> ar(A.dimension(), A.lengths());
-    Tensor<T> br(B.dimension(), B.lengths());
-    Tensor<T> cr(ndim_AC+ndim_BC, len_AC_BC);
+    matricize(ar, am, 0);
+    matricize(br, bm, 0);
+    matricize(cr, cm, idx_AC.size());
 
-    Matrix<T> am, bm, cm;
-    Scalar<T> alp(alpha);
-    Scalar<T> zero;
-
-    Matricize(ar, am, 0);
-    Matricize(br, bm, 0);
-    Matricize(cr, cm, ndim_AC);
-    am.transpose(true);
-
-    Normalize(cr, idx_AC_BC);
+    normalize(cr, idx_AC_BC);
 
     tensor_transpose_impl<T>(1.0, A, idx_A, 0.0, ar, idx_A);
     tensor_transpose_impl<T>(1.0, B, idx_B, 0.0, br, idx_B);
-    bli_setm(zero, cm);
-    bli_ger(alp, am, bm, cm);
+    tblis_zerov(cm.length(0)*cm.length(1), cm.data(), 1);
+    ger(cm.length(0), cm.length(1),
+        alpha, am.data(), 1, bm.data(), 1,
+               cm.data(), cm.stride(1));
     tensor_transpose_impl<T>(1.0, cr, idx_AC_BC, beta, C, idx_C);
 
     return 0;
 }
 
-template
-int tensor_outer_prod_blas<   float>(   float alpha, const Tensor<   float>& A, const std::string& idx_A,
-                                                     const Tensor<   float>& B, const std::string& idx_B,
-                                        float  beta,       Tensor<   float>& C, const std::string& idx_C);
-
-template
-int tensor_outer_prod_blas<  double>(  double alpha, const Tensor<  double>& A, const std::string& idx_A,
-                                                     const Tensor<  double>& B, const std::string& idx_B,
-                                       double  beta,       Tensor<  double>& C, const std::string& idx_C);
-
-template
-int tensor_outer_prod_blas<scomplex>(scomplex alpha, const Tensor<scomplex>& A, const std::string& idx_A,
-                                                     const Tensor<scomplex>& B, const std::string& idx_B,
-                                     scomplex  beta,       Tensor<scomplex>& C, const std::string& idx_C);
-
-template
-int tensor_outer_prod_blas<dcomplex>(dcomplex alpha, const Tensor<dcomplex>& A, const std::string& idx_A,
-                                                     const Tensor<dcomplex>& B, const std::string& idx_B,
-                                     dcomplex  beta,       Tensor<dcomplex>& C, const std::string& idx_C);
+#define INSTANTIATE_FOR_TYPE(T) \
+template \
+int tensor_outer_prod_blas<T>(T alpha, const const_tensor_view<T>& A, const std::string& idx_A, \
+                                       const const_tensor_view<T>& B, const std::string& idx_B, \
+                              T  beta,             tensor_view<T>& C, const std::string& idx_C);
+#include "tblis_instantiate_for_types.hpp"
 
 }
 }

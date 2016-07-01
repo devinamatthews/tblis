@@ -5,12 +5,12 @@ namespace tblis
 
 void tblis_init()
 {
-    bli_init();
+    //bli_init();
 }
 
 void tblis_finalize()
 {
-    bli_finalize();
+    //bli_finalize();
 }
 
 }

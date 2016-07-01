@@ -2,6 +2,8 @@
 #include "impl/tensor_impl.hpp"
 
 using namespace std;
+using namespace stl_ext;
+using namespace MArray;
 
 namespace tblis
 {
@@ -9,69 +11,64 @@ namespace impl
 {
 
 template <typename T>
-int tensor_contract_reference(T alpha, const Tensor<T>& A, const std::string& idx_A,
-                                       const Tensor<T>& B, const std::string& idx_B,
-                              T  beta,       Tensor<T>& C, const std::string& idx_C)
+int tensor_contract_reference(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
+                                       const const_tensor_view<T>& B, const std::string& idx_B,
+                              T  beta,             tensor_view<T>& C, const std::string& idx_C)
 {
-    string idx_AB, idx_AC, idx_BC;
+    string idx_AB = intersection(idx_A, idx_B);
+    string idx_AC = intersection(idx_A, idx_C);
+    string idx_BC = intersection(idx_B, idx_C);
 
-    gint_t ndim_AB  = util::set_intersection(idx_A, idx_B, idx_AB).size();
-    gint_t ndim_AC  = util::set_intersection(idx_A, idx_C, idx_AC).size();
-    gint_t ndim_BC  = util::set_intersection(idx_B, idx_C, idx_BC).size();
+    vector<stride_type> len_AB(idx_AB.size());
+    vector<stride_type> len_AC(idx_AC.size());
+    vector<stride_type> len_BC(idx_BC.size());
 
-    vector<inc_t> len_AB(ndim_AB);
-    vector<inc_t> len_AC(ndim_AC);
-    vector<inc_t> len_BC(ndim_BC);
+    vector<stride_type> stride_A_AB(idx_AB.size());
+    vector<stride_type> stride_B_AB(idx_AB.size());
+    vector<stride_type> stride_A_AC(idx_AC.size());
+    vector<stride_type> stride_C_AC(idx_AC.size());
+    vector<stride_type> stride_B_BC(idx_BC.size());
+    vector<stride_type> stride_C_BC(idx_BC.size());
 
-    vector<inc_t> stride_A_AB(ndim_AB);
-    vector<inc_t> stride_B_AB(ndim_AB);
-    vector<inc_t> stride_A_AC(ndim_AC);
-    vector<inc_t> stride_C_AC(ndim_AC);
-    vector<inc_t> stride_B_BC(ndim_BC);
-    vector<inc_t> stride_C_BC(ndim_BC);
+    for (unsigned i = 0;i < idx_AB.size();i++)
+        for (unsigned j = 0;j < A.dimension();j++)
+            if (idx_AB[i] == idx_A[j])
+            {
+                len_AB[i] = A.length(j);
+                stride_A_AB[i] = A.stride(j);
+            }
 
-    for (gint_t i = 0, k = 0, l = 0;i < A.dimension();i++)
-    {
-        if (k < ndim_AB && idx_A[i] == idx_AB[k])
-        {
-            len_AB[k] = A.length(i);
-            stride_A_AB[k++] = A.stride(i);
-        }
-        else if (l < ndim_AC && idx_A[i] == idx_AC[l])
-        {
-            len_AC[l] = A.length(i);
-            stride_A_AC[l++] = A.stride(i);
-        }
-    }
+    for (unsigned i = 0;i < idx_AB.size();i++)
+        for (unsigned j = 0;j < B.dimension();j++)
+            if (idx_AB[i] == idx_B[j]) stride_B_AB[i] = B.stride(j);
 
-    for (gint_t i = 0, k = 0, l = 0;i < B.dimension();i++)
-    {
-        if (k < ndim_AB && idx_B[i] == idx_AB[k])
-        {
-            stride_B_AB[k++] = B.stride(i);
-        }
-        else if (l < ndim_BC && idx_B[i] == idx_BC[l])
-        {
-            len_BC[l] = B.length(i);
-            stride_B_BC[l++] = B.stride(i);
-        }
-    }
+    for (unsigned i = 0;i < idx_AC.size();i++)
+        for (unsigned j = 0;j < A.dimension();j++)
+            if (idx_AC[i] == idx_A[j])
+            {
+                len_AC[i] = A.length(j);
+                stride_A_AC[i] = A.stride(j);
+            }
 
-    for (gint_t i = 0, k = 0, l = 0;i < C.dimension();i++)
-    {
-        if (k < ndim_AC && idx_C[i] == idx_AC[k])
-        {
-            stride_C_AC[k++] = C.stride(i);
-        }
-        else if (l < ndim_BC && idx_C[i] == idx_BC[l])
-        {
-            stride_C_BC[l++] = C.stride(i);
-        }
-    }
+    for (unsigned i = 0;i < idx_AC.size();i++)
+        for (unsigned j = 0;j < C.dimension();j++)
+            if (idx_AC[i] == idx_C[j]) stride_C_AC[i] = C.stride(j);
 
-    Iterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
-    Iterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
-    Iterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
+    for (unsigned i = 0;i < idx_BC.size();i++)
+        for (unsigned j = 0;j < B.dimension();j++)
+            if (idx_BC[i] == idx_B[j])
+            {
+                len_BC[i] = B.length(j);
+                stride_B_BC[i] = B.stride(j);
+            }
+
+    for (unsigned i = 0;i < idx_BC.size();i++)
+        for (unsigned j = 0;j < C.dimension();j++)
+            if (idx_BC[i] == idx_C[j]) stride_C_BC[i] = C.stride(j);
+
+    viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
+    viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
+    viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
 
     const T* restrict A_ = A.data();
     const T* restrict B_ = B.data();
@@ -115,25 +112,12 @@ int tensor_contract_reference(T alpha, const Tensor<T>& A, const std::string& id
     return 0;
 }
 
-template
-int tensor_contract_reference<   float>(   float alpha, const Tensor<   float>& A, const std::string& idx_A,
-                                                        const Tensor<   float>& B, const std::string& idx_B,
-                                           float  beta,       Tensor<   float>& C, const std::string& idx_C);
-
-template
-int tensor_contract_reference<  double>(  double alpha, const Tensor<  double>& A, const std::string& idx_A,
-                                                        const Tensor<  double>& B, const std::string& idx_B,
-                                          double  beta,       Tensor<  double>& C, const std::string& idx_C);
-
-template
-int tensor_contract_reference<scomplex>(scomplex alpha, const Tensor<scomplex>& A, const std::string& idx_A,
-                                                        const Tensor<scomplex>& B, const std::string& idx_B,
-                                        scomplex  beta,       Tensor<scomplex>& C, const std::string& idx_C);
-
-template
-int tensor_contract_reference<dcomplex>(dcomplex alpha, const Tensor<dcomplex>& A, const std::string& idx_A,
-                                                        const Tensor<dcomplex>& B, const std::string& idx_B,
-                                        dcomplex  beta,       Tensor<dcomplex>& C, const std::string& idx_C);
+#define INSTANTIATE_FOR_TYPE(T) \
+template \
+int tensor_contract_reference(T alpha, const const_tensor_view<T>& A, const std::string& idx_A, \
+                                       const const_tensor_view<T>& B, const std::string& idx_B, \
+                              T  beta,             tensor_view<T>& C, const std::string& idx_C);
+#include "tblis_instantiate_for_types.hpp"
 
 }
 }

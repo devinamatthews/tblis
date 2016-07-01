@@ -56,6 +56,26 @@ m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
 _AM_AUTOCONF_VERSION(m4_defn([AC_AUTOCONF_VERSION]))])
 
+# Figure out how to run the assembler.                      -*- Autoconf -*-
+
+# Copyright (C) 2001-2014 Free Software Foundation, Inc.
+#
+# This file is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+# AM_PROG_AS
+# ----------
+AC_DEFUN([AM_PROG_AS],
+[# By default we simply use the C compiler to build assembly code.
+AC_REQUIRE([AC_PROG_CC])
+test "${CCAS+set}" = set || CCAS=$CC
+test "${CCASFLAGS+set}" = set || CCASFLAGS=$CFLAGS
+AC_ARG_VAR([CCAS],      [assembler compiler command (defaults to CC)])
+AC_ARG_VAR([CCASFLAGS], [assembler compiler flags (defaults to CFLAGS)])
+_AM_IF_OPTION([no-dependencies],, [_AM_DEPENDENCIES([CCAS])])dnl
+])
+
 # AM_AUX_DIR_EXPAND                                         -*- Autoconf -*-
 
 # Copyright (C) 2001-2014 Free Software Foundation, Inc.
@@ -770,35 +790,6 @@ else
 fi
 ])
 
-#  -*- Autoconf -*-
-# Obsolete and "removed" macros, that must however still report explicit
-# error messages when used, to smooth transition.
-#
-# Copyright (C) 1996-2014 Free Software Foundation, Inc.
-#
-# This file is free software; the Free Software Foundation
-# gives unlimited permission to copy and/or distribute it,
-# with or without modifications, as long as this notice is preserved.
-
-AC_DEFUN([AM_CONFIG_HEADER],
-[AC_DIAGNOSE([obsolete],
-['$0': this macro is obsolete.
-You should use the 'AC][_CONFIG_HEADERS' macro instead.])dnl
-AC_CONFIG_HEADERS($@)])
-
-AC_DEFUN([AM_PROG_CC_STDC],
-[AC_PROG_CC
-am_cv_prog_cc_stdc=$ac_cv_prog_cc_stdc
-AC_DIAGNOSE([obsolete],
-['$0': this macro is obsolete.
-You should simply use the 'AC][_PROG_CC' macro instead.
-Also, your code should no longer depend upon 'am_cv_prog_cc_stdc',
-but upon 'ac_cv_prog_cc_stdc'.])])
-
-AC_DEFUN([AM_C_PROTOTYPES],
-         [AC_FATAL([automatic de-ANSI-fication support has been removed])])
-AU_DEFUN([fp_C_PROTOTYPES], [AM_C_PROTOTYPES])
-
 # Helper functions for option handling.                     -*- Autoconf -*-
 
 # Copyright (C) 2001-2014 Free Software Foundation, Inc.
@@ -1216,9 +1207,9 @@ AC_SUBST([am__untar])
 ]) # _AM_PROG_TAR
 
 m4_include([m4/aq_check_func_with_path.m4])
-m4_include([m4/aq_check_header_with_path.m4])
 m4_include([m4/aq_with_package.m4])
 m4_include([m4/ax_cxx_compile_stdcxx_11.m4])
+m4_include([m4/ax_prefix_config_h.m4])
 m4_include([m4/libtool.m4])
 m4_include([m4/ltoptions.m4])
 m4_include([m4/ltsugar.m4])

@@ -14,12 +14,23 @@
 namespace tblis
 {
 
+namespace detail
+{
+    template <typename Body>
+    void parallelize(Body& body, int nthread, int arity);
+
+    template <typename Body> void* run_thread(void* raw_data);
+}
+
 class ThreadContext
 {
     friend class ThreadCommunicator;
-    template <typename Body> friend void parallelize(int nthread, const Body& body);
+    template <typename Body> friend void detail::parallelize(Body& body, int nthread, int arity);
 
     public:
+        ThreadContext(int nthread, int arity=0)
+        : _barrier(nthread, arity), _nthread(nthread) {}
+
         void barrier(int tid)
         {
             _barrier.wait(tid);
@@ -59,22 +70,14 @@ class ThreadContext
         }
 
     protected:
-        ThreadContext(int nthread, int arity=0)
-        : _barrier(nthread, arity), _nthread(nthread) {}
-
         TreeBarrier _barrier;
         void* _buffer = NULL;
         int _nthread;
 };
 
-namespace detail
-{
-    template <typename Body> void* run_thread(void* raw_data);
-}
-
 class ThreadCommunicator
 {
-    template <typename Body> friend void parallelize(int nthread, const Body& body);
+    template <typename Body> friend void detail::parallelize(Body& body, int nthread, int arity);
     template <typename Body> friend void* detail::run_thread(void* raw_data);
 
     public:
@@ -194,12 +197,12 @@ class ThreadCommunicator
             return gang(n, block, new_tid, new_nthread);
         }
 
-        std::tuple<dim_t,dim_t,dim_t> distribute_over_gangs(int ngang, dim_t n, dim_t granularity=1)
+        std::tuple<idx_type,idx_type,idx_type> distribute_over_gangs(int ngang, idx_type n, idx_type granularity=1)
         {
             return distribute(ngang, _gid, n, granularity);
         }
 
-        std::tuple<dim_t,dim_t,dim_t> distribute_over_threads(dim_t n, dim_t granularity=1)
+        std::tuple<idx_type,idx_type,idx_type> distribute_over_threads(idx_type n, idx_type granularity=1)
         {
             return distribute(_nthread, _tid, n, granularity);
         }
@@ -239,14 +242,15 @@ class ThreadCommunicator
             return new_comm;
         }
 
-        std::tuple<dim_t,dim_t,dim_t> distribute(int nelem, int elem, dim_t n, dim_t granularity)
+        std::tuple<idx_type,idx_type,idx_type> distribute(int nelem, int elem, idx_type n, idx_type granularity)
         {
-            dim_t ng = (n+granularity-1)/granularity;
-            dim_t max_size = ((ng+nelem-1)/nelem)*granularity;
+            idx_type ng = (n+granularity-1)/granularity;
+            idx_type max_size = ((ng+nelem-1)/nelem)*granularity;
 
-            return {         (( elem   *ng)/nelem)*granularity,
-                    std::min((((elem+1)*ng)/nelem)*granularity, n),
-                             (( elem   *ng)/nelem)*granularity+max_size};
+            return std::tuple<idx_type,idx_type,idx_type>
+                (         (( elem   *ng)/nelem)*granularity,
+                 std::min((((elem+1)*ng)/nelem)*granularity, n),
+                          (( elem   *ng)/nelem)*granularity+max_size);
         }
 
         std::shared_ptr<ThreadContext> _context;
@@ -261,7 +265,7 @@ namespace detail
 #if TBLIS_USE_OPENMP_THREADS
 
 template <typename Body>
-void parallelize(const Body& body, int nthread, int arity)
+void parallelize(Body& body, int nthread, int arity)
 {
     std::shared_ptr<ThreadContext> context = std::make_shared<ThreadContext>(nthread, arity);
 
@@ -278,11 +282,11 @@ void parallelize(const Body& body, int nthread, int arity)
 template <typename Body>
 struct thread_data
 {
-    const Body& body;
+    Body& body;
     const std::shared_ptr<ThreadContext>& context;
     int tid;
 
-    thread_data(const Body& body,
+    thread_data(Body& body,
                 const std::shared_ptr<ThreadContext>& context,
                 int tid)
     : body(body), context(context), tid(tid) {}
@@ -299,7 +303,7 @@ void* run_thread(void* raw_data)
 }
 
 template <typename Body>
-void parallelize(const Body& body, int nthread, int arity)
+void parallelize(Body& body, int nthread, int arity)
 {
     std::vector<pthread_t> threads; threads.reserve(nthread);
     std::vector<detail::thread_data<Body>> data; data.reserve(nthread);
@@ -317,8 +321,7 @@ void parallelize(const Body& body, int nthread, int arity)
 
     }
 
-    Body body_copy(body);
-    body_copy(comm);
+    body(comm);
 
     for (auto& t : threads)
     {
@@ -330,7 +333,7 @@ void parallelize(const Body& body, int nthread, int arity)
 #elif TBLIS_USE_CXX11_THREADS
 
 template <typename Body>
-void parallelize(const Body& body, int nthread, int arity)
+void parallelize(Body& body, int nthread, int arity)
 {
     std::vector<std::thread> threads; threads.reserve(nthread);
 
@@ -347,8 +350,7 @@ void parallelize(const Body& body, int nthread, int arity)
         });
     }
 
-    Body body_copy(body);
-    body_copy(comm);
+    body(comm);
 
     for (auto& t : threads) t.join();
 }
@@ -358,7 +360,7 @@ void parallelize(const Body& body, int nthread, int arity)
 }
 
 template <typename Body>
-void parallelize(const Body& body, int nthread, int arity=0)
+void parallelize(Body body, int nthread, int arity=0)
 {
     if (nthread > 1)
     {
@@ -367,8 +369,7 @@ void parallelize(const Body& body, int nthread, int arity=0)
     else
     {
         ThreadCommunicator comm;
-        Body body_copy(body);
-        body_copy(comm);
+        body(comm);
     }
 }
 

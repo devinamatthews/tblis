@@ -3,58 +3,8 @@
 
 #include "tblis.hpp"
 
-#define MARRAY_DEFAULT_LAYOUT COLUMN_MAJOR
-#include "external/marray/include/varray.hpp"
-#include "external/stl_ext/include/algorithm.hpp"
-#include "external/stl_ext/include/vector.hpp"
-
 namespace tblis
 {
-
-enum reduce_t
-{
-    REDUCE_SUM      = 0,
-    REDUCE_SUM_ABS  = 1,
-    REDUCE_MAX      = 2,
-    REDUCE_MAX_ABS  = 3,
-    REDUCE_MIN      = 4,
-    REDUCE_MIN_ABS  = 5,
-    REDUCE_NORM_1   = REDUCE_SUM_ABS,
-    REDUCE_NORM_2   = 6,
-    REDUCE_NORM_INF = REDUCE_MAX_ABS
-};
-
-template <typename T>
-using const_tensor_view = MArray::const_varray_view<T>;
-
-template <typename T>
-using tensor_view = MArray::varray_view<T>;
-
-template <typename T, typename Allocator=MArray::aligned_allocator<T,MARRAY_BASE_ALIGNMENT>>
-using tensor = MArray::varray<T, Allocator>;
-
-using MArray::const_marray_view;
-using MArray::marray_view;
-using MArray::marray;
-
-using MArray::const_matrix_view;
-using MArray::matrix_view;
-using MArray::matrix;
-
-using MArray::const_row_view;
-using MArray::row_view;
-using MArray::row;
-
-using MArray::Layout;
-using MArray::COLUMN_MAJOR;
-using MArray::ROW_MAJOR;
-using MArray::DEFAULT;
-
-using MArray::make_array;
-using MArray::make_vector;
-
-using MArray::range_t;
-using MArray::range;
 
 namespace detail
 {
@@ -132,19 +82,19 @@ namespace detail
     {
         using stl_ext::sort;
 
-        std::vector<std::pair<char,dim_t> > idx_len;
+        std::vector<std::pair<char,idx_type> > idx_len;
         idx_len.reserve(A.dimension());
 
         assert(idx_A.size() == A.dimension());
 
-        for (gint_t i = 0;i < A.dimension();i++)
+        for (unsigned i = 0;i < A.dimension();i++)
         {
             idx_len.emplace_back(idx_A[i], A.length(i));
         }
 
         sort(idx_len);
 
-        for (gint_t i = 1;i < idx_len.size();i++)
+        for (unsigned i = 1;i < idx_len.size();i++)
         {
             if (idx_len[i].first  == idx_len[i-1].first)
                 assert(idx_len[i].second == idx_len[i-1].second);
@@ -169,26 +119,26 @@ namespace detail
         using stl_ext::intersection;
         using stl_ext::exclusion;
 
-        std::vector<std::pair<char,dim_t>> idx_len;
+        std::vector<std::pair<char,idx_type>> idx_len;
         idx_len.reserve(A.dimension()+
                         B.dimension());
 
         assert(idx_A.size() == A.dimension());
         assert(idx_B.size() == B.dimension());
 
-        for (gint_t i = 0;i < A.dimension();i++)
+        for (unsigned i = 0;i < A.dimension();i++)
         {
             idx_len.emplace_back(idx_A[i], A.length(i));
         }
 
-        for (gint_t i = 0;i < B.dimension();i++)
+        for (unsigned i = 0;i < B.dimension();i++)
         {
             idx_len.emplace_back(idx_B[i], B.length(i));
         }
 
         sort(idx_len);
 
-        for (gint_t i = 1;i < idx_len.size();i++)
+        for (unsigned i = 1;i < idx_len.size();i++)
         {
             if (idx_len[i].first  == idx_len[i-1].first)
                 assert(idx_len[i].second == idx_len[i-1].second);
@@ -241,7 +191,7 @@ namespace detail
         using stl_ext::intersection;
         using stl_ext::exclusion;
 
-        std::vector<std::pair<char,dim_t>> idx_len;
+        std::vector<std::pair<char,idx_type>> idx_len;
         idx_len.reserve(A.dimension()+
                         B.dimension()+
                         C.dimension());
@@ -250,24 +200,24 @@ namespace detail
         assert(idx_B.size() == B.dimension());
         assert(idx_C.size() == C.dimension());
 
-        for (gint_t i = 0;i < A.dimension();i++)
+        for (unsigned i = 0;i < A.dimension();i++)
         {
             idx_len.emplace_back(idx_A[i], A.length(i));
         }
 
-        for (gint_t i = 0;i < B.dimension();i++)
+        for (unsigned i = 0;i < B.dimension();i++)
         {
             idx_len.emplace_back(idx_B[i], B.length(i));
         }
 
-        for (gint_t i = 0;i < C.dimension();i++)
+        for (unsigned i = 0;i < C.dimension();i++)
         {
             idx_len.emplace_back(idx_C[i], C.length(i));
         }
 
         sort(idx_len);
 
-        for (gint_t i = 1;i < idx_len.size();i++)
+        for (unsigned i = 1;i < idx_len.size();i++)
         {
             if (idx_len[i].first  == idx_len[i-1].first)
                 assert(idx_len[i].second == idx_len[i-1].second);
@@ -295,49 +245,168 @@ namespace detail
 
         return 0;
     }
-}
 
-template <typename T>
-void normalize(const_tensor_view<T>& AN, std::string& idx_AN)
-{
-    assert(AN.dimension() == idx_AN.size());
+    template <typename... Args> struct has_member;
 
-    unsigned ndim = AN.dimension();
-    std::vector<unsigned> inds_A = MArray::range(ndim);
-    stl_ext::sort(inds_A, detail::sort_by_idx(AN, idx_AN));
+    template <typename T, typename=void>
+    struct pointer_type;
 
-    std::string idx = idx_AN;
-    std::vector<dim_t> len(ndim);
-    std::vector<inc_t> stride(ndim);
-
-    for (unsigned i = 0;i < ndim;i++)
+    template <typename T>
+    struct pointer_type<T, stl_ext::enable_if_t<std::is_pointer<stl_ext::decay_t<T>>::value>>
     {
-        idx_AN[i] = idx[inds_A[i]];
-        len[i] = AN.length(inds_A[i]);
-        stride[i] = AN.stride(inds_A[i]);
+        typedef stl_ext::remove_pointer_t<stl_ext::decay_t<T>> type;
+    };
+
+    template <typename T>
+    struct pointer_type<T, stl_ext::conditional_t<false,
+        has_member<decltype(std::declval<T>().data())>,void>>
+    {
+        typedef stl_ext::remove_pointer_t<decltype(std::declval<T>().data())> type;
+    };
+
+    template <typename T>
+    using pointer_type_t = typename pointer_type<T>::type;
+
+    template <typename... Args> struct check_template_types;
+
+    template <typename T, typename A_ptr, typename A_len, typename A_stride, typename A_idx,
+              typename U>
+    struct check_template_types<T, A_ptr, A_len, A_stride, A_idx, U>
+    {
+        typedef stl_ext::enable_if<(std::is_same<float,T>::value ||
+                                    std::is_same<double,T>::value ||
+                                    std::is_same<scomplex,T>::value ||
+                                    std::is_same<dcomplex,T>::value) &&
+                                   std::is_same<pointer_type_t<A_ptr>,T>::value &&
+                                   std::is_integral<pointer_type_t<A_len>>::value &&
+                                   std::is_integral<pointer_type_t<A_stride>>::value &&
+                                   std::is_integral<pointer_type_t<A_idx>>::value,
+                                   U> type;
+    };
+
+    template <typename T, typename A_ptr, typename A_len, typename A_stride, typename A_idx,
+                          typename B_ptr, typename B_len, typename B_stride, typename B_idx,
+              typename U>
+    struct check_template_types<T, A_ptr, A_len, A_stride, A_idx,
+                                   B_ptr, B_len, B_stride, B_idx, U>
+    {
+        typedef stl_ext::enable_if<(std::is_same<float,T>::value ||
+                                    std::is_same<double,T>::value ||
+                                    std::is_same<scomplex,T>::value ||
+                                    std::is_same<dcomplex,T>::value) &&
+                                   std::is_same<pointer_type_t<A_ptr>,T>::value &&
+                                   std::is_same<pointer_type_t<B_ptr>,T>::value &&
+                                   std::is_integral<pointer_type_t<A_len>>::value &&
+                                   std::is_integral<pointer_type_t<B_len>>::value &&
+                                   std::is_integral<pointer_type_t<A_stride>>::value &&
+                                   std::is_integral<pointer_type_t<B_stride>>::value &&
+                                   std::is_integral<pointer_type_t<A_idx>>::value &&
+                                   std::is_integral<pointer_type_t<B_idx>>::value,
+                                   U> type;
+    };
+
+    template <typename T, typename A_ptr, typename A_len, typename A_stride, typename A_idx,
+                          typename B_ptr, typename B_len, typename B_stride, typename B_idx,
+                          typename C_ptr, typename C_len, typename C_stride, typename C_idx,
+              typename U>
+    struct check_template_types<T, A_ptr, A_len, A_stride, A_idx,
+                                   B_ptr, B_len, B_stride, B_idx,
+                                   C_ptr, C_len, C_stride, C_idx, U>
+    {
+        typedef stl_ext::enable_if<(std::is_same<float,T>::value ||
+                                    std::is_same<double,T>::value ||
+                                    std::is_same<scomplex,T>::value ||
+                                    std::is_same<dcomplex,T>::value) &&
+                                   std::is_same<pointer_type_t<A_ptr>,T>::value &&
+                                   std::is_same<pointer_type_t<B_ptr>,T>::value &&
+                                   std::is_same<pointer_type_t<C_ptr>,T>::value &&
+                                   std::is_integral<pointer_type_t<A_len>>::value &&
+                                   std::is_integral<pointer_type_t<B_len>>::value &&
+                                   std::is_integral<pointer_type_t<C_len>>::value &&
+                                   std::is_integral<pointer_type_t<A_stride>>::value &&
+                                   std::is_integral<pointer_type_t<B_stride>>::value &&
+                                   std::is_integral<pointer_type_t<C_stride>>::value &&
+                                   std::is_integral<pointer_type_t<A_idx>>::value &&
+                                   std::is_integral<pointer_type_t<B_idx>>::value &&
+                                   std::is_integral<pointer_type_t<C_idx>>::value,
+                                   U> type;
+    };
+
+    template <typename... Args>
+    using check_template_types_t = typename check_template_types<Args...>::type;
+
+    template <typename Len>
+    stl_ext::enable_if_t<std::is_pointer<Len>::value,std::vector<idx_type>>
+    make_len(unsigned ndim, const Len& x)
+    {
+        return {x, x+ndim};
     }
 
-    AN.reset(len, AN.data(), stride);
-}
+    template <typename Len>
+    stl_ext::enable_if_t<!std::is_pointer<Len>::value,std::vector<idx_type>>
+    make_len(unsigned ndim, const Len& x)
+    {
+        assert(x.size() == ndim);
+        return {x.data(), x.data()+ndim};
+    }
 
-template <typename T>
-const_tensor_view<T> normalized(const_tensor_view<T> A, std::string& idx_AN)
-{
-    normalize(A, idx_AN);
-    return A;
-}
+    template <typename Stride>
+    stl_ext::enable_if_t<std::is_pointer<Stride>::value,std::vector<stride_type>>
+    make_stride(unsigned ndim, const Stride& x)
+    {
+        return {x, x+ndim};
+    }
 
-template <typename T>
-void normalize(tensor_view<T>& AN, std::string& idx_AN)
-{
-    normalize(reinterpret_cast<const_tensor_view<T>&>(AN), idx_AN);
-}
+    template <typename Stride>
+    stl_ext::enable_if_t<!std::is_pointer<Stride>::value,std::vector<stride_type>>
+    make_stride(unsigned ndim, const Stride& x)
+    {
+        assert(x.size() == ndim);
+        return {x.data(), x.data()+ndim};
+    }
 
-template <typename T>
-tensor_view<T> normalized(tensor_view<T> A, std::string& idx_AN)
-{
-    normalize(A, idx_AN);
-    return A;
+    template <typename Idx>
+    stl_ext::enable_if_t<std::is_pointer<Idx>::value,std::string>
+    make_idx(unsigned ndim, const Idx& x)
+    {
+        return {x, x+ndim};
+    }
+
+    template <typename Idx>
+    stl_ext::enable_if_t<!std::is_pointer<Idx>::value,std::string>
+    make_idx(unsigned ndim, const Idx& x)
+    {
+        assert(x.size() == ndim);
+        return {x.data(), x.data()+ndim};
+    }
+
+    template <typename Ptr>
+    stl_ext::enable_if_t<std::is_pointer<Ptr>::value,pointer_type_t<Ptr>*>
+    make_ptr(Ptr& x)
+    {
+        return x;
+    }
+
+    template <typename Ptr>
+    stl_ext::enable_if_t<std::is_pointer<Ptr>::value,const pointer_type_t<Ptr>*>
+    make_ptr(const Ptr& x)
+    {
+        return x;
+    }
+
+    template <typename Ptr>
+    stl_ext::enable_if_t<!std::is_pointer<Ptr>::value,pointer_type_t<Ptr>*>
+    make_ptr(Ptr& x)
+    {
+        return x.data();
+    }
+
+    template <typename Ptr>
+    stl_ext::enable_if_t<!std::is_pointer<Ptr>::value,const pointer_type_t<Ptr>*>
+    make_ptr(const Ptr& x)
+    {
+        return x.data();
+    }
 }
 
 template <typename T>
@@ -350,8 +419,8 @@ void diagonal(const_tensor_view<T>& AD, std::string& idx_AD)
     stl_ext::sort(inds_A, detail::sort_by_idx(AD, idx_AD));
 
     std::string idx = idx_AD;
-    std::vector<dim_t> len(ndim_A);
-    std::vector<inc_t> stride(ndim_A);
+    std::vector<idx_type> len(ndim_A);
+    std::vector<stride_type> stride(ndim_A);
 
     unsigned ndim_AD = 0;
     for (unsigned i = 0;i < ndim_A;i++)
@@ -400,13 +469,13 @@ tensor_view<T> diagonal_of(tensor_view<T> A, std::string& idx_AD)
 template <typename T>
 void partition(const_tensor_view<T>  A,
                const_tensor_view<T>& A0, const_tensor_view<T>& A1,
-               unsigned dim, dim_t off)
+               unsigned dim, idx_type off)
 {
     assert(&A0 != &A1);
     assert(dim < A.dimension());
     assert(off >= 0);
 
-    std::vector<dim_t> len = A.lengths();
+    std::vector<idx_type> len = A.lengths();
     off = std::min(off, len[dim]);
 
     len[dim] -= off;
@@ -419,7 +488,7 @@ void partition(const_tensor_view<T>  A,
 template <typename T>
 void partition(tensor_view<T>  A,
                tensor_view<T>& A0, tensor_view<T>& A1,
-               unsigned dim, dim_t off)
+               unsigned dim, idx_type off)
 {
     partition(A,
               reinterpret_cast<const_tensor_view<T>&>(A0),
@@ -436,7 +505,7 @@ void unpartition(const_tensor_view<T>  A0, const_tensor_view<T> A1,
     assert(detail::are_congruent_along(A0, A1, dim));
     assert(A0.data()+A0.length(dim)*A0.stride(dim) == A1.data());
 
-    std::vector<dim_t> len = A0.lengths();
+    std::vector<idx_type> len = A0.lengths();
     len[dim] += A1.length(dim);
     A.reset(len, A0.data(), A0.strides());
 }
@@ -454,15 +523,15 @@ void unpartition(tensor_view<T>  A0, tensor_view<T> A1,
 template <typename T>
 void slice(const_tensor_view<T>  A,
            const_tensor_view<T>& A0, const_tensor_view<T>& a1, const_tensor_view<T>& A2,
-           unsigned dim, dim_t off)
+           unsigned dim, idx_type off)
 {
     assert(&A0 != &a1);
     assert(&A0 != &A2);
     assert(dim < A.dimension());
     assert(off >= 0 && off < A.length(dim));
 
-    std::vector<dim_t> len = A.lengths();
-    std::vector<dim_t> stride = A.strides();
+    std::vector<idx_type> len = A.lengths();
+    std::vector<idx_type> stride = A.strides();
 
     len[dim] -= off+1;
     A2.reset(len, A.data()+(off+1)*stride[dim], stride);
@@ -478,7 +547,7 @@ void slice(const_tensor_view<T>  A,
 template <typename T>
 void slice(tensor_view<T>  A,
            tensor_view<T>& A0, tensor_view<T>& a1, tensor_view<T>& A2,
-           unsigned dim, dim_t off)
+           unsigned dim, idx_type off)
 {
     slice(A,
           reinterpret_cast<const_tensor_view<T>&>(A0),
@@ -495,8 +564,8 @@ void slice_front(const_tensor_view<T>  A,
     assert(&a0 != &A1);
     assert(dim < A.dimension());
 
-    std::vector<dim_t> len = A.lengths();
-    std::vector<dim_t> stride = A.strides();
+    std::vector<idx_type> len = A.lengths();
+    std::vector<idx_type> stride = A.strides();
 
     len[dim]--;
     A1.reset(len, A.data()+stride[dim], stride);
@@ -525,8 +594,8 @@ void slice_back(const_tensor_view<T>  A,
     assert(&A0 != &a1);
     assert(dim < A.dimension());
 
-    std::vector<dim_t> len = A.lengths();
-    std::vector<dim_t> stride = A.strides();
+    std::vector<idx_type> len = A.lengths();
+    std::vector<idx_type> stride = A.strides();
 
     len[dim]--;
     A0.reset(len, A.data(), stride);
@@ -560,7 +629,7 @@ void unslice(const_tensor_view<T>  A0, const_tensor_view<T> a1, const_tensor_vie
     assert(a1.data() == A0.data()+A0.length(dim)*A0.stride(dim));
     assert(A2.data() == A0.data()+(A0.length(dim)+1)*A0.stride(dim));
 
-    std::vector<dim_t> len = A0.lengths();
+    std::vector<idx_type> len = A0.lengths();
     len[dim] += A2.length(dim)+1;
     A.reset(len, A0.data(), A0.strides());
 }
@@ -585,7 +654,7 @@ void unslice_front(const_tensor_view<T>  a0, const_tensor_view<T> A1,
     assert(detail::are_congruent_along(a0, A1, dim));
     assert(A1.data() == a0.data()+A1.stride(dim));
 
-    std::vector<dim_t> len = A1.lengths();
+    std::vector<idx_type> len = A1.lengths();
     len[dim]++;
     A.reset(len, a0.data(), A1.strides());
 }
@@ -610,7 +679,7 @@ void unslice_back(const_tensor_view<T>  A0, const_tensor_view<T> a1,
     assert(detail::are_congruent_along(A0, a1, dim));
     assert(a1.data() == A0.data()+A0.length(dim)*A0.stride(dim));
 
-    std::vector<dim_t> len = A0.lengths();
+    std::vector<idx_type> len = A0.lengths();
     len[dim]++;
     A.reset(len, A0.data(), A0.strides());
 }
@@ -635,8 +704,8 @@ void fold(const_tensor_view<T>& AF, std::string& idx_AF)
     stl_ext::sort(inds_A, detail::sort_by_stride(AF, idx_AF));
 
     std::string idx = idx_AF;
-    std::vector<dim_t> len(ndim);
-    std::vector<inc_t> stride(ndim);
+    std::vector<idx_type> len(ndim);
+    std::vector<stride_type> stride(ndim);
 
     unsigned newdim = 0;
     for (unsigned i = 0;i < ndim;i++)
@@ -720,19 +789,19 @@ void matricize(const_tensor_view<T>  A,
             assert(A.stride(i) == A.stride(i+1)*A.length(i+1));
     }
 
-    dim_t m = 1;
+    idx_type m = 1;
     for (unsigned i = 0;i < split;i++)
     {
         m *= A.length(i);
     }
 
-    dim_t n = 1;
+    idx_type n = 1;
     for (unsigned i = split;i < ndim;i++)
     {
         n *= A.length(i);
     }
 
-    inc_t rs, cs;
+    stride_type rs, cs;
 
     if (ndim == 0)
     {
@@ -752,13 +821,18 @@ void matricize(const_tensor_view<T>  A,
     AM.reset(m, n, A.data(), rs, cs);
 }
 
-/**
+/*******************************************************************************
+ *
  * Multiply two tensors together and sum onto a third
  *
- * This form generalizes contraction and weighting with the unary operations trace, transpose, and replicate. Note that
- * the binary contraction operation is similar in form to the unary trace operation, while the binary weighting operation is similar in form to the
- * unary diagonal operation. Any combination of these operations may be performed.
- */
+ * This form generalizes contraction and weighting with the unary operations
+ * trace, transpose, and replicate. Note that the binary contraction operation
+ * is similar in form to the unary trace operation, while the binary weighting
+ * operation is similar in form to the unary diagonal operation. Any combination
+ * of these operations may be performed.
+ *
+ ******************************************************************************/
+
 template <typename T>
 int tensor_mult(T alpha, const_tensor_view<T> A, std::string idx_A,
                          const_tensor_view<T> B, std::string idx_B,
@@ -778,12 +852,36 @@ int tensor_mult(T alpha, const_tensor_view<T> A, std::string idx_A,
                                    beta, C, idx_C);
 }
 
-/**
+template <typename T, typename A_ptr, typename A_len, typename A_stride, typename A_idx,
+                      typename B_ptr, typename B_len, typename B_stride, typename B_idx,
+                      typename C_ptr, typename C_len, typename C_stride, typename C_idx>
+detail::check_template_types_t<T, A_ptr, A_len, A_stride, A_idx,
+                                  B_ptr, B_len, B_stride, B_idx,
+                                  C_ptr, C_len, C_stride, C_idx, int>
+tensor_mult(T alpha, const A_ptr& A, unsigned ndim_A, const A_len& len_A, const A_stride& stride_A, const A_idx& idx_A,
+                     const B_ptr& B, unsigned ndim_B, const B_len& len_B, const B_stride& stride_B, const B_idx& idx_B,
+            T  beta,       C_ptr& C, unsigned ndim_C, const C_len& len_C, const C_stride& stride_C, const C_idx& idx_C)
+{
+    const_tensor_view<T> A_(make_len(ndim_A, len_A), make_ptr(A), make_stride(ndim_A, stride_A));
+    const_tensor_view<T> B_(make_len(ndim_B, len_B), make_ptr(B), make_stride(ndim_B, stride_B));
+          tensor_view<T> C_(make_len(ndim_C, len_C), make_ptr(C), make_stride(ndim_C, stride_C));
+
+    return tensor_mult(alpha, A_, make_idx(ndim_A, idx_A),
+                              B_, make_idx(ndim_B, idx_B),
+                        beta, C_, make_idx(ndim_C, idx_C));
+}
+
+/*******************************************************************************
+ *
  * Contract two tensors into a third
  *
- * The general form for a contraction is ab...ef... * ef...cd... -> ab...cd... where the indices ef... will be summed over.
- * Indices may be transposed in any tensor. Any index group may be empty (in the case that ef... is empty, this reduces to an outer product).
- */
+ * The general form for a contraction is ab...ef... * ef...cd... -> ab...cd...
+ * where the indices ef... will be summed over. Indices may be transposed in any
+ * tensor. Any index group may be empty (in the case that ef... is empty, this
+ * reduces to an outer product).
+ *
+ ******************************************************************************/
+
 template <typename T>
 int tensor_contract(T alpha, const_tensor_view<T> A, std::string idx_A,
                              const_tensor_view<T> B, std::string idx_B,
@@ -803,13 +901,36 @@ int tensor_contract(T alpha, const_tensor_view<T> A, std::string idx_A,
                                        beta, C, idx_C);
 }
 
-/**
+template <typename T, typename A_ptr, typename A_len, typename A_stride, typename A_idx,
+                      typename B_ptr, typename B_len, typename B_stride, typename B_idx,
+                      typename C_ptr, typename C_len, typename C_stride, typename C_idx>
+detail::check_template_types_t<T, A_ptr, A_len, A_stride, A_idx,
+                                  B_ptr, B_len, B_stride, B_idx,
+                                  C_ptr, C_len, C_stride, C_idx, int>
+tensor_contract(T alpha, const A_ptr& A, unsigned ndim_A, const A_len& len_A, const A_stride& stride_A, const A_idx& idx_A,
+                         const B_ptr& B, unsigned ndim_B, const B_len& len_B, const B_stride& stride_B, const B_idx& idx_B,
+                T  beta,       C_ptr& C, unsigned ndim_C, const C_len& len_C, const C_stride& stride_C, const C_idx& idx_C)
+{
+    const_tensor_view<T> A_(make_len(ndim_A, len_A), make_ptr(A), make_stride(ndim_A, stride_A));
+    const_tensor_view<T> B_(make_len(ndim_B, len_B), make_ptr(B), make_stride(ndim_B, stride_B));
+          tensor_view<T> C_(make_len(ndim_C, len_C), make_ptr(C), make_stride(ndim_C, stride_C));
+
+    return tensor_contract(alpha, A_, make_idx(ndim_A, idx_A),
+                                  B_, make_idx(ndim_B, idx_B),
+                            beta, C_, make_idx(ndim_C, idx_C));
+}
+
+/*******************************************************************************
+ *
  * Weight a tensor by a second and sum onto a third
  *
- * The general form for a weighting is ab...ef... * ef...cd... -> ab...cd...ef... with no indices being summed over.
- * Indices may be transposed in any tensor. Any index group may be empty
- * (in the case that ef... is empty, this reduces to an outer product).
- */
+ * The general form for a weighting is ab...ef... * ef...cd... -> ab...cd...ef...
+ * with no indices being summed over. Indices may be transposed in any tensor.
+ * Any index group may be empty (in the case that ef... is empty, this reduces
+ * to an outer product).
+ *
+ ******************************************************************************/
+
 template <typename T>
 int tensor_weight(T alpha, const_tensor_view<T> A, std::string idx_A,
                            const_tensor_view<T> B, std::string idx_B,
@@ -829,12 +950,34 @@ int tensor_weight(T alpha, const_tensor_view<T> A, std::string idx_A,
                                      beta, C, idx_C);
 }
 
-/**
+template <typename T, typename A_ptr, typename A_len, typename A_stride, typename A_idx,
+                      typename B_ptr, typename B_len, typename B_stride, typename B_idx,
+                      typename C_ptr, typename C_len, typename C_stride, typename C_idx>
+detail::check_template_types_t<T, A_ptr, A_len, A_stride, A_idx,
+                                  B_ptr, B_len, B_stride, B_idx,
+                                  C_ptr, C_len, C_stride, C_idx, int>
+tensor_weight(T alpha, const A_ptr& A, unsigned ndim_A, const A_len& len_A, const A_stride& stride_A, const A_idx& idx_A,
+                       const B_ptr& B, unsigned ndim_B, const B_len& len_B, const B_stride& stride_B, const B_idx& idx_B,
+              T  beta,       C_ptr& C, unsigned ndim_C, const C_len& len_C, const C_stride& stride_C, const C_idx& idx_C)
+{
+    const_tensor_view<T> A_(make_len(ndim_A, len_A), make_ptr(A), make_stride(ndim_A, stride_A));
+    const_tensor_view<T> B_(make_len(ndim_B, len_B), make_ptr(B), make_stride(ndim_B, stride_B));
+          tensor_view<T> C_(make_len(ndim_C, len_C), make_ptr(C), make_stride(ndim_C, stride_C));
+
+    return tensor_weight(alpha, A_, make_idx(ndim_A, idx_A),
+                                B_, make_idx(ndim_B, idx_B),
+                          beta, C_, make_idx(ndim_C, idx_C));
+}
+
+/*******************************************************************************
+ *
  * Sum the outer product of two tensors onto a third
  *
- * The general form for an outer product is ab... * cd... -> ab...cd... with no indices being summed over.
- * Indices may be transposed in any tensor.
- */
+ * The general form for an outer product is ab... * cd... -> ab...cd... with no
+ * indices being summed over. Indices may be transposed in any tensor.
+ *
+ ******************************************************************************/
+
 template <typename T>
 int tensor_outer_prod(T alpha, const_tensor_view<T> A, std::string idx_A,
                                const_tensor_view<T> B, std::string idx_B,
@@ -854,12 +997,34 @@ int tensor_outer_prod(T alpha, const_tensor_view<T> A, std::string idx_A,
                                          beta, C, idx_C);
 }
 
-/**
- * sum a tensor (presumably operated on in one or more ways) onto a second
+template <typename T, typename A_ptr, typename A_len, typename A_stride, typename A_idx,
+                      typename B_ptr, typename B_len, typename B_stride, typename B_idx,
+                      typename C_ptr, typename C_len, typename C_stride, typename C_idx>
+detail::check_template_types_t<T, A_ptr, A_len, A_stride, A_idx,
+                                  B_ptr, B_len, B_stride, B_idx,
+                                  C_ptr, C_len, C_stride, C_idx, int>
+tensor_outer_prod(T alpha, const A_ptr& A, unsigned ndim_A, const A_len& len_A, const A_stride& stride_A, const A_idx& idx_A,
+                           const B_ptr& B, unsigned ndim_B, const B_len& len_B, const B_stride& stride_B, const B_idx& idx_B,
+                  T  beta,       C_ptr& C, unsigned ndim_C, const C_len& len_C, const C_stride& stride_C, const C_idx& idx_C)
+{
+    const_tensor_view<T> A_(make_len(ndim_A, len_A), make_ptr(A), make_stride(ndim_A, stride_A));
+    const_tensor_view<T> B_(make_len(ndim_B, len_B), make_ptr(B), make_stride(ndim_B, stride_B));
+          tensor_view<T> C_(make_len(ndim_C, len_C), make_ptr(C), make_stride(ndim_C, stride_C));
+
+    return tensor_outer_prod(alpha, A_, make_idx(ndim_A, idx_A),
+                                    B_, make_idx(ndim_B, idx_B),
+                              beta, C_, make_idx(ndim_C, idx_C));
+}
+
+/*******************************************************************************
  *
- * This form generalizes all of the unary operations trace, transpose, and replicate, which may be performed
- * in any combination.
- */
+ * Sum a tensor (presumably operated on in one or more ways) onto a second
+ *
+ * This form generalizes all of the unary operations trace, transpose, and
+ * replicate, which may be performed in any combination.
+ *
+ ******************************************************************************/
+
 template <typename T>
 int tensor_sum(T alpha, const_tensor_view<T> A, std::string idx_A,
                T  beta,       tensor_view<T> B, std::string idx_B)
@@ -874,14 +1039,33 @@ int tensor_sum(T alpha, const_tensor_view<T> A, std::string idx_A,
                                   beta, B, idx_B);
 }
 
-/**
+template <typename T, typename A_ptr, typename A_len, typename A_stride, typename A_idx,
+                      typename B_ptr, typename B_len, typename B_stride, typename B_idx>
+detail::check_template_types_t<T, A_ptr, A_len, A_stride, A_idx,
+                                  B_ptr, B_len, B_stride, B_idx, int>
+tensor_sum(T alpha, const A_ptr& A, unsigned ndim_A, const A_len& len_A, const A_stride& stride_A, const A_idx& idx_A,
+           T  beta, const B_ptr& B, unsigned ndim_B, const B_len& len_B, const B_stride& stride_B, const B_idx& idx_B)
+{
+    const_tensor_view<T> A_(make_len(ndim_A, len_A), make_ptr(A), make_stride(ndim_A, stride_A));
+          tensor_view<T> B_(make_len(ndim_B, len_B), make_ptr(B), make_stride(ndim_B, stride_B));
+
+    return tensor_sum(alpha, A_, make_idx(ndim_A, idx_A),
+                       beta, B_, make_idx(ndim_B, idx_B));
+}
+
+/*******************************************************************************
+ *
  * Sum over (semi)diagonal elements of a tensor and sum onto a second
  *
- * The general form for a trace operation is ab...k*l*... -> ab... where k* denotes the index k appearing one or more times, etc. and where
- * the indices kl... will be summed (traced) over. Indices may be transposed, and multiple appearances
- * of the traced indices kl... need not appear together. Either set of indices may be empty, with the special case that when no indices
- * are traced over, the result is the same as transpose.
- */
+ * The general form for a trace operation is ab...k*l*... -> ab... where k*
+ * denotes the index k appearing one or more times, etc. and where the indices
+ * kl... will be summed (traced) over. Indices may be transposed, and multiple
+ * appearances of the traced indices kl... need not appear together. Either set
+ * of indices may be empty, with the special case that when no indices are
+ * traced over, the result is the same as transpose.
+ *
+ ******************************************************************************/
+
 template <typename T>
 int tensor_trace(T alpha, const_tensor_view<T> A, std::string idx_A,
                  T  beta,       tensor_view<T> B, std::string idx_B)
@@ -896,12 +1080,30 @@ int tensor_trace(T alpha, const_tensor_view<T> A, std::string idx_A,
                                     beta, B, idx_B);
 }
 
-/**
+template <typename T, typename A_ptr, typename A_len, typename A_stride, typename A_idx,
+                      typename B_ptr, typename B_len, typename B_stride, typename B_idx>
+detail::check_template_types_t<T, A_ptr, A_len, A_stride, A_idx,
+                                  B_ptr, B_len, B_stride, B_idx, int>
+tensor_trace(T alpha, const A_ptr& A, unsigned ndim_A, const A_len& len_A, const A_stride& stride_A, const A_idx& idx_A,
+             T  beta, const B_ptr& B, unsigned ndim_B, const B_len& len_B, const B_stride& stride_B, const B_idx& idx_B)
+{
+    const_tensor_view<T> A_(make_len(ndim_A, len_A), make_ptr(A), make_stride(ndim_A, stride_A));
+          tensor_view<T> B_(make_len(ndim_B, len_B), make_ptr(B), make_stride(ndim_B, stride_B));
+
+    return tensor_trace(alpha, A_, make_idx(ndim_A, idx_A),
+                         beta, B_, make_idx(ndim_B, idx_B));
+}
+
+/*******************************************************************************
+ *
  * Replicate a tensor and sum onto a second
  *
- * The general form for a replication operation is ab... -> ab...c*d*... where c* denotes the index c appearing one or more times.
- * Any indices may be transposed.
- */
+ * The general form for a replication operation is ab... -> ab...c*d*... where
+ * c* denotes the index c appearing one or more times. Any indices may be
+ * transposed.
+ *
+ ******************************************************************************/
+
 template <typename T>
 int tensor_replicate(T alpha, const_tensor_view<T> A, std::string idx_A,
                      T  beta,       tensor_view<T> B, std::string idx_B)
@@ -916,12 +1118,30 @@ int tensor_replicate(T alpha, const_tensor_view<T> A, std::string idx_A,
                                         beta, B, idx_B);
 }
 
-/**
+template <typename T, typename A_ptr, typename A_len, typename A_stride, typename A_idx,
+                      typename B_ptr, typename B_len, typename B_stride, typename B_idx>
+detail::check_template_types_t<T, A_ptr, A_len, A_stride, A_idx,
+                                  B_ptr, B_len, B_stride, B_idx, int>
+tensor_replicate(T alpha, const A_ptr& A, unsigned ndim_A, const A_len& len_A, const A_stride& stride_A, const A_idx& idx_A,
+                 T  beta, const B_ptr& B, unsigned ndim_B, const B_len& len_B, const B_stride& stride_B, const B_idx& idx_B)
+{
+    const_tensor_view<T> A_(make_len(ndim_A, len_A), make_ptr(A), make_stride(ndim_A, stride_A));
+          tensor_view<T> B_(make_len(ndim_B, len_B), make_ptr(B), make_stride(ndim_B, stride_B));
+
+    return tensor_replicate(alpha, A_, make_idx(ndim_A, idx_A),
+                             beta, B_, make_idx(ndim_B, idx_B));
+}
+
+/*******************************************************************************
+ *
  * Transpose a tensor and sum onto a second
  *
- * The general form for a transposition operation is ab... -> P(ab...) where P is some permutation. Transposition may change
- * the order in which the elements of the tensor are physically stored.
- */
+ * The general form for a transposition operation is ab... -> P(ab...) where P
+ * is some permutation. Transposition may change the order in which the elements
+ * of the tensor are physically stored.
+ *
+ ******************************************************************************/
+
 template <typename T>
 int tensor_transpose(T alpha, const_tensor_view<T> A, std::string idx_A,
                      T  beta,       tensor_view<T> B, std::string idx_B)
@@ -936,9 +1156,26 @@ int tensor_transpose(T alpha, const_tensor_view<T> A, std::string idx_A,
                                         beta, B, idx_B);
 }
 
-/**
+template <typename T, typename A_ptr, typename A_len, typename A_stride, typename A_idx,
+                      typename B_ptr, typename B_len, typename B_stride, typename B_idx>
+detail::check_template_types_t<T, A_ptr, A_len, A_stride, A_idx,
+                                  B_ptr, B_len, B_stride, B_idx, int>
+tensor_transpose(T alpha, const A_ptr& A, unsigned ndim_A, const A_len& len_A, const A_stride& stride_A, const A_idx& idx_A,
+                 T  beta, const B_ptr& B, unsigned ndim_B, const B_len& len_B, const B_stride& stride_B, const B_idx& idx_B)
+{
+    const_tensor_view<T> A_(make_len(ndim_A, len_A), make_ptr(A), make_stride(ndim_A, stride_A));
+          tensor_view<T> B_(make_len(ndim_B, len_B), make_ptr(B), make_stride(ndim_B, stride_B));
+
+    return tensor_transpose(alpha, A_, make_idx(ndim_A, idx_A),
+                             beta, B_, make_idx(ndim_B, idx_B));
+}
+
+/*******************************************************************************
+ *
  * Return the dot product of two tensors
- */
+ *
+ ******************************************************************************/
+
 template <typename T>
 T tensor_dot(const_tensor_view<T> A, std::string idx_A,
              const_tensor_view<T> B, std::string idx_B)
@@ -962,9 +1199,41 @@ int tensor_dot(const_tensor_view<T> A, std::string idx_A,
                                  B, idx_B, val);
 }
 
-/**
+template <typename T, typename A_ptr, typename A_len, typename A_stride, typename A_idx,
+                      typename B_ptr, typename B_len, typename B_stride, typename B_idx>
+detail::check_template_types_t<T, A_ptr, A_len, A_stride, A_idx,
+                                  B_ptr, B_len, B_stride, B_idx, T>
+tensor_dot(T alpha, const A_ptr& A, unsigned ndim_A, const A_len& len_A, const A_stride& stride_A, const A_idx& idx_A,
+           T  beta, const B_ptr& B, unsigned ndim_B, const B_len& len_B, const B_stride& stride_B, const B_idx& idx_B)
+{
+    const_tensor_view<T> A_(make_len(ndim_A, len_A), make_ptr(A), make_stride(ndim_A, stride_A));
+    const_tensor_view<T> B_(make_len(ndim_B, len_B), make_ptr(B), make_stride(ndim_B, stride_B));
+
+    return tensor_dot(A_, make_idx(ndim_A, idx_A),
+                      B_, make_idx(ndim_B, idx_B));
+}
+
+template <typename T, typename A_ptr, typename A_len, typename A_stride, typename A_idx,
+                      typename B_ptr, typename B_len, typename B_stride, typename B_idx>
+detail::check_template_types_t<T, A_ptr, A_len, A_stride, A_idx,
+                                  B_ptr, B_len, B_stride, B_idx, int>
+tensor_dot(T alpha, const A_ptr& A, unsigned ndim_A, const A_len& len_A, const A_stride& stride_A, const A_idx& idx_A,
+           T  beta, const B_ptr& B, unsigned ndim_B, const B_len& len_B, const B_stride& stride_B, const B_idx& idx_B,
+           T& val)
+{
+    const_tensor_view<T> A_(make_len(ndim_A, len_A), make_ptr(A), make_stride(ndim_A, stride_A));
+    const_tensor_view<T> B_(make_len(ndim_B, len_B), make_ptr(B), make_stride(ndim_B, stride_B));
+
+    return tensor_dot(A_, make_idx(ndim_A, idx_A),
+                      B_, make_idx(ndim_B, idx_B), val);
+}
+
+/*******************************************************************************
+ *
  * Scale a tensor by a scalar
- */
+ *
+ ******************************************************************************/
+
 template <typename T>
 int tensor_scale(T alpha, tensor_view<T> A, std::string idx_A)
 {
@@ -975,19 +1244,31 @@ int tensor_scale(T alpha, tensor_view<T> A, std::string idx_A)
     return impl::tensor_scale_impl(alpha, A, idx_A);
 }
 
-/**
- * Return the reduction of a tensor, along with the corresponding index (as an offset from A) for MAX, MIN, MAX_ABS, and MIN_ABS reductions
- */
-template <typename T>
-std::pair<T,inc_t> tensor_reduce(reduce_t op, const_tensor_view<T> A, std::string idx_A)
+template <typename T, typename A_ptr, typename A_len, typename A_stride, typename A_idx>
+detail::check_template_types_t<T, A_ptr, A_len, A_stride, A_idx, int>
+tensor_scale(T alpha, A_ptr& A, unsigned ndim_A, const A_len& len_A, const A_stride& stride_A, const A_idx& idx_A)
 {
-    std::pair<T,inc_t> p;
+    tensor_view<T> A_(make_len(ndim_A, len_A), make_ptr(A), make_stride(ndim_A, stride_A));
+    return tensor_scale(alpha, A_, make_idx(ndim_A, idx_A));
+}
+
+/*******************************************************************************
+ *
+ * Return the reduction of a tensor, along with the corresponding index (as an
+ * offset from A) for MAX, MIN, MAX_ABS, and MIN_ABS reductions
+ *
+ ******************************************************************************/
+
+template <typename T>
+std::pair<T,stride_type> tensor_reduce(reduce_t op, const_tensor_view<T> A, std::string idx_A)
+{
+    std::pair<T,stride_type> p;
     int ret = tensor_reduce(op, A, idx_A, p.first, p.second);
     return p;
 }
 
 template <typename T>
-T tensor_reduce(reduce_t op, const_tensor_view<T> A, std::string idx_A, inc_t& idx)
+T tensor_reduce(reduce_t op, const_tensor_view<T> A, std::string idx_A, stride_type& idx)
 {
     T val;
     int ret = tensor_reduce(op, A, idx_A, val, idx);
@@ -997,12 +1278,12 @@ T tensor_reduce(reduce_t op, const_tensor_view<T> A, std::string idx_A, inc_t& i
 template <typename T>
 int tensor_reduce(reduce_t op, const_tensor_view<T> A, std::string idx_A, T& val)
 {
-   inc_t idx;
+   stride_type idx;
    return tensor_reduce(op, A, idx_A, val, idx);
 }
 
 template <typename T>
-int tensor_reduce(reduce_t op, const_tensor_view<T> A, std::string idx_A, T& val, inc_t& idx)
+int tensor_reduce(reduce_t op, const_tensor_view<T> A, std::string idx_A, T& val, stride_type& idx)
 {
     check_tensor_indices(A, idx_A);
 
@@ -1011,13 +1292,54 @@ int tensor_reduce(reduce_t op, const_tensor_view<T> A, std::string idx_A, T& val
     return impl::tensor_reduce_impl(op, A, idx_A, val, idx);
 }
 
-template <typename len_type>
-stl_ext::enable_if_t<std::is_integral<detail::pointer_type_t<len_type>>::value,siz_t>
-tensor_size(gint_t ndim, const len_type& len)
+template <typename T, typename A_ptr, typename A_len, typename A_stride, typename A_idx>
+detail::check_template_types_t<T, A_ptr, A_len, A_stride, A_idx, std::pair<T,stride_type>>
+tensor_reduce(reduce_t op, const A_ptr& A, unsigned ndim_A, const A_len& len_A, const A_stride& stride_A, const A_idx& idx_A)
 {
-    siz_t size = 1;
+    const_tensor_view<T> A_(make_len(ndim_A, len_A), make_ptr(A), make_stride(ndim_A, stride_A));
+    return tensor_reduce(op, A_, make_idx(ndim_A, idx_A));
+}
 
-    for (gint_t i = 0;i < ndim;i++)
+template <typename T, typename A_ptr, typename A_len, typename A_stride, typename A_idx>
+detail::check_template_types_t<T, A_ptr, A_len, A_stride, A_idx, int>
+tensor_reduce(reduce_t op, const A_ptr& A, unsigned ndim_A, const A_len& len_A, const A_stride& stride_A, const A_idx& idx_A,
+              stride_type& idx)
+{
+    const_tensor_view<T> A_(make_len(ndim_A, len_A), make_ptr(A), make_stride(ndim_A, stride_A));
+    return tensor_reduce(op, A_, make_idx(ndim_A, idx_A), idx);
+}
+
+template <typename T, typename A_ptr, typename A_len, typename A_stride, typename A_idx>
+detail::check_template_types_t<T, A_ptr, A_len, A_stride, A_idx, int>
+tensor_reduce(reduce_t op, const A_ptr& A, unsigned ndim_A, const A_len& len_A, const A_stride& stride_A, const A_idx& idx_A,
+              T& val)
+{
+    const_tensor_view<T> A_(make_len(ndim_A, len_A), make_ptr(A), make_stride(ndim_A, stride_A));
+    return tensor_reduce(op, A_, make_idx(ndim_A, idx_A), val);
+}
+
+template <typename T, typename A_ptr, typename A_len, typename A_stride, typename A_idx>
+detail::check_template_types_t<T, A_ptr, A_len, A_stride, A_idx, int>
+tensor_reduce(reduce_t op, const A_ptr& A, unsigned ndim_A, const A_len& len_A, const A_stride& stride_A, const A_idx& idx_A,
+              T& val, stride_type& idx)
+{
+    const_tensor_view<T> A_(make_len(ndim_A, len_A), make_ptr(A), make_stride(ndim_A, stride_A));
+    return tensor_reduce(op, A_, make_idx(ndim_A, idx_A), val, idx);
+}
+
+/*******************************************************************************
+ *
+ * Storage size helper functions.
+ *
+ ******************************************************************************/
+
+template <typename len_type>
+stl_ext::enable_if_t<std::is_integral<detail::pointer_type_t<len_type>>::value,size_t>
+tensor_size(unsigned ndim, const len_type& len)
+{
+    size_t size = 1;
+
+    for (unsigned i = 0;i < ndim;i++)
     {
         size *= len[i];
     }
@@ -1027,17 +1349,17 @@ tensor_size(gint_t ndim, const len_type& len)
 
 template <typename len_type, typename stride_type>
 stl_ext::enable_if_t<std::is_integral<detail::pointer_type_t<len_type>>::value &&
-                     std::is_integral<detail::pointer_type_t<stride_type>>::value,siz_t>
-tensor_storage_size(gint_t ndim, const len_type& len, const stride_type& stride)
+                     std::is_integral<detail::pointer_type_t<stride_type>>::value,size_t>
+tensor_storage_size(unsigned ndim, const len_type& len, const stride_type& stride)
 {
     if (!stride)
     {
        return tensor_size(ndim, len);
     }
 
-    siz_t size = 1;
+    size_t size = 1;
 
-    for (gint_t i = 0;i < ndim;i++)
+    for (unsigned i = 0;i < ndim;i++)
     {
         size += std::abs(stride[i])*(len[i]-1);
     }

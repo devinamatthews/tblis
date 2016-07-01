@@ -2,6 +2,8 @@
 #include "impl/tensor_impl.hpp"
 
 using namespace std;
+using namespace stl_ext;
+using namespace MArray;
 
 namespace tblis
 {
@@ -9,126 +11,113 @@ namespace impl
 {
 
 template <typename T>
-int tensor_mult_reference(T alpha, const Tensor<T>& A, const std::string& idx_A,
-                                   const Tensor<T>& B, const std::string& idx_B,
-                          T  beta,       Tensor<T>& C, const std::string& idx_C)
+int tensor_mult_reference(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
+                                   const const_tensor_view<T>& B, const std::string& idx_B,
+                          T  beta,             tensor_view<T>& C, const std::string& idx_C)
 {
-    string idx_A_only, idx_B_only, idx_C_only;
-    string idx_AB, idx_AC, idx_BC;
-    string idx_ABC;
+    string idx_ABC = intersection(idx_A, idx_B, idx_C);
+    string idx_AB = exclusion(intersection(idx_A, idx_B), idx_ABC);
+    string idx_AC = exclusion(intersection(idx_A, idx_C), idx_ABC);
+    string idx_BC = exclusion(intersection(idx_B, idx_C), idx_ABC);
+    string idx_A_only = exclusion(idx_A, idx_B, idx_C);
+    string idx_B_only = exclusion(idx_B, idx_A, idx_C);
+    string idx_C_only = exclusion(idx_C, idx_A, idx_B);
 
-    util::set_intersection(idx_A, idx_B, idx_AB);
-    util::set_intersection(idx_A, idx_C, idx_AC);
-    util::set_intersection(idx_B, idx_C, idx_BC);
+    vector<stride_type> len_A(idx_A_only.size());
+    vector<stride_type> len_B(idx_B_only.size());
+    vector<stride_type> len_C(idx_C_only.size());
+    vector<stride_type> len_AB(idx_AB.size());
+    vector<stride_type> len_AC(idx_AC.size());
+    vector<stride_type> len_BC(idx_BC.size());
+    vector<stride_type> len_ABC(idx_ABC.size());
 
-    gint_t ndim_ABC = util::set_intersection(idx_AB, idx_BC, idx_ABC).size();
+    vector<stride_type> stride_A_A(idx_A_only.size());
+    vector<stride_type> stride_B_B(idx_B_only.size());
+    vector<stride_type> stride_C_C(idx_C_only.size());
+    vector<stride_type> stride_A_AB(idx_AB.size());
+    vector<stride_type> stride_B_AB(idx_AB.size());
+    vector<stride_type> stride_A_AC(idx_AC.size());
+    vector<stride_type> stride_C_AC(idx_AC.size());
+    vector<stride_type> stride_B_BC(idx_BC.size());
+    vector<stride_type> stride_C_BC(idx_BC.size());
+    vector<stride_type> stride_A_ABC(idx_ABC.size());
+    vector<stride_type> stride_B_ABC(idx_ABC.size());
+    vector<stride_type> stride_C_ABC(idx_ABC.size());
 
-    gint_t ndim_A = util::set_difference(
-                    util::set_difference(idx_A, idx_AB, idx_A_only), idx_AC).size();
-    gint_t ndim_B = util::set_difference(
-                    util::set_difference(idx_B, idx_AB, idx_B_only), idx_BC).size();
-    gint_t ndim_C = util::set_difference(
-                    util::set_difference(idx_C, idx_AC, idx_C_only), idx_BC).size();
-
-    gint_t ndim_AB = util::set_difference(idx_AB, idx_ABC).size();
-    gint_t ndim_AC = util::set_difference(idx_AC, idx_ABC).size();
-    gint_t ndim_BC = util::set_difference(idx_BC, idx_ABC).size();
-
-    vector<inc_t> len_A(ndim_A);
-    vector<inc_t> len_B(ndim_B);
-    vector<inc_t> len_C(ndim_C);
-    vector<inc_t> len_AB(ndim_AB);
-    vector<inc_t> len_AC(ndim_AC);
-    vector<inc_t> len_BC(ndim_BC);
-    vector<inc_t> len_ABC(ndim_ABC);
-
-    vector<inc_t> stride_A_A(ndim_A);
-    vector<inc_t> stride_B_B(ndim_B);
-    vector<inc_t> stride_C_C(ndim_C);
-    vector<inc_t> stride_A_AB(ndim_AB);
-    vector<inc_t> stride_B_AB(ndim_AB);
-    vector<inc_t> stride_A_AC(ndim_AC);
-    vector<inc_t> stride_C_AC(ndim_AC);
-    vector<inc_t> stride_B_BC(ndim_BC);
-    vector<inc_t> stride_C_BC(ndim_BC);
-    vector<inc_t> stride_A_ABC(ndim_ABC);
-    vector<inc_t> stride_B_ABC(ndim_ABC);
-    vector<inc_t> stride_C_ABC(ndim_ABC);
-
-    for (gint_t i = 0, j = 0, k = 0, l = 0, m = 0;i < A.dimension();i++)
+    for (unsigned i = 0, j = 0, k = 0, l = 0, m = 0;i < A.dimension();i++)
     {
-        if (j < ndim_A && idx_A[i] == idx_A_only[j])
+        if (j < idx_A_only.size() && idx_A[i] == idx_A_only[j])
         {
             len_A[j] = A.length(i);
             stride_A_A[j++] = A.stride(i);
         }
-        else if (k < ndim_AB && idx_A[i] == idx_AB[k])
+        else if (k < idx_AB.size() && idx_A[i] == idx_AB[k])
         {
             len_AB[k] = A.length(i);
             stride_A_AB[k++] = A.stride(i);
         }
-        else if (l < ndim_AC && idx_A[i] == idx_AC[l])
+        else if (l < idx_AC.size() && idx_A[i] == idx_AC[l])
         {
             len_AC[l] = A.length(i);
             stride_A_AC[l++] = A.stride(i);
         }
-        else if (m < ndim_ABC && idx_A[i] == idx_ABC[m])
+        else if (m < idx_ABC.size() && idx_A[i] == idx_ABC[m])
         {
             len_ABC[m] = A.length(i);
             stride_A_ABC[m++] = A.stride(i);
         }
     }
 
-    for (gint_t i = 0, j = 0, k = 0, l = 0, m = 0;i < B.dimension();i++)
+    for (unsigned i = 0, j = 0, k = 0, l = 0, m = 0;i < B.dimension();i++)
     {
-        if (j < ndim_B && idx_B[i] == idx_B_only[j])
+        if (j < idx_B_only.size() && idx_B[i] == idx_B_only[j])
         {
             len_B[j] = B.length(i);
             stride_B_B[j++] = B.stride(i);
         }
-        else if (k < ndim_AB && idx_B[i] == idx_AB[k])
+        else if (k < idx_AB.size() && idx_B[i] == idx_AB[k])
         {
             stride_B_AB[k++] = B.stride(i);
         }
-        else if (l < ndim_BC && idx_B[i] == idx_BC[l])
+        else if (l < idx_BC.size() && idx_B[i] == idx_BC[l])
         {
             len_BC[l] = B.length(i);
             stride_B_BC[l++] = B.stride(i);
         }
-        else if (m < ndim_ABC && idx_B[i] == idx_ABC[m])
+        else if (m < idx_ABC.size() && idx_B[i] == idx_ABC[m])
         {
             stride_B_ABC[m++] = B.stride(i);
         }
     }
 
-    for (gint_t i = 0, j = 0, k = 0, l = 0, m = 0;i < C.dimension();i++)
+    for (unsigned i = 0, j = 0, k = 0, l = 0, m = 0;i < C.dimension();i++)
     {
-        if (j < ndim_C && idx_C[i] == idx_C_only[j])
+        if (j < idx_C_only.size() && idx_C[i] == idx_C_only[j])
         {
             len_C[j] = C.length(i);
             stride_C_C[j++] = C.stride(i);
         }
-        else if (k < ndim_AC && idx_C[i] == idx_AC[k])
+        else if (k < idx_AC.size() && idx_C[i] == idx_AC[k])
         {
             stride_C_AC[k++] = C.stride(i);
         }
-        else if (l < ndim_BC && idx_C[i] == idx_BC[l])
+        else if (l < idx_BC.size() && idx_C[i] == idx_BC[l])
         {
             stride_C_BC[l++] = C.stride(i);
         }
-        else if (m < ndim_ABC && idx_C[i] == idx_ABC[m])
+        else if (m < idx_ABC.size() && idx_C[i] == idx_ABC[m])
         {
             stride_C_ABC[m++] = C.stride(i);
         }
     }
 
-    Iterator<1> iter_A(len_A, stride_A_A);
-    Iterator<1> iter_B(len_B, stride_B_B);
-    Iterator<1> iter_C(len_C, stride_C_C);
-    Iterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
-    Iterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
-    Iterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
-    Iterator<3> iter_ABC(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
+    viterator<1> iter_A(len_A, stride_A_A);
+    viterator<1> iter_B(len_B, stride_B_B);
+    viterator<1> iter_C(len_C, stride_C_C);
+    viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
+    viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
+    viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
+    viterator<3> iter_ABC(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
 
     const T* restrict A_ = A.data();
     const T* restrict B_ = B.data();
@@ -197,25 +186,12 @@ int tensor_mult_reference(T alpha, const Tensor<T>& A, const std::string& idx_A,
     return 0;
 }
 
-template
-int tensor_mult_reference<   float>(   float alpha, const Tensor<   float>& A, const std::string& idx_A,
-                                                    const Tensor<   float>& B, const std::string& idx_B,
-                                       float  beta,       Tensor<   float>& C, const std::string& idx_C);
-
-template
-int tensor_mult_reference<  double>(  double alpha, const Tensor<  double>& A, const std::string& idx_A,
-                                                    const Tensor<  double>& B, const std::string& idx_B,
-                                      double  beta,       Tensor<  double>& C, const std::string& idx_C);
-
-template
-int tensor_mult_reference<scomplex>(scomplex alpha, const Tensor<scomplex>& A, const std::string& idx_A,
-                                                    const Tensor<scomplex>& B, const std::string& idx_B,
-                                    scomplex  beta,       Tensor<scomplex>& C, const std::string& idx_C);
-
-template
-int tensor_mult_reference<dcomplex>(dcomplex alpha, const Tensor<dcomplex>& A, const std::string& idx_A,
-                                                    const Tensor<dcomplex>& B, const std::string& idx_B,
-                                    dcomplex  beta,       Tensor<dcomplex>& C, const std::string& idx_C);
+#define INSTANTIATE_FOR_TYPE(T) \
+template \
+int tensor_mult_reference<T>(T alpha, const const_tensor_view<T>& A, const std::string& idx_A, \
+                                      const const_tensor_view<T>& B, const std::string& idx_B, \
+                             T  beta,             tensor_view<T>& C, const std::string& idx_C);
+#include "tblis_instantiate_for_types.hpp"
 
 }
 }

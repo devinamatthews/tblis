@@ -4,6 +4,9 @@
 #include TBLIS_CONFIG_HEADER(TBLIS_CONFIG)
 #undef TBLIS_CONFIG_HEADER
 
+extern "C"
+{
+
 #ifndef BLIS_SGEMM_UKERNEL
 #define BLIS_SGEMM_UKERNEL GenericMicroKernel<float,MR<float>::def,NR<float>::def>
 #else
@@ -23,22 +26,24 @@ void BLIS_DGEMM_UKERNEL(tblis::idx_type k,
 #endif
 
 #ifndef BLIS_CGEMM_UKERNEL
-#define BLIS_CGEMM_UKERNEL GenericMicroKernel<scomplex,MR<scomplex>::def,NR<scomplex>::def>
+#define BLIS_CGEMM_UKERNEL GenericMicroKernel<tblis::scomplex,MR<tblis::scomplex>::def,NR<tblis::scomplex>::def>
 #else
 void BLIS_CGEMM_UKERNEL(tblis::idx_type k,
-                        const scomplex* alpha, const scomplex* p_a, const scomplex* p_b,
-                        const scomplex* beta, scomplex* p_c, tblis::stride_type rs_c, tblis::stride_type cs_c,
+                        const tblis::scomplex* alpha, const tblis::scomplex* p_a, const tblis::scomplex* p_b,
+                        const tblis::scomplex* beta, tblis::scomplex* p_c, tblis::stride_type rs_c, tblis::stride_type cs_c,
                         const void* data, const void* ctx);
 #endif
 
 #ifndef BLIS_ZGEMM_UKERNEL
-#define BLIS_ZGEMM_UKERNEL GenericMicroKernel<dcomplex,MR<dcomplex>::def,NR<dcomplex>::def>
+#define BLIS_ZGEMM_UKERNEL GenericMicroKernel<tblis::dcomplex,MR<tblis::dcomplex>::def,NR<tblis::dcomplex>::def>
 #else
 void BLIS_ZGEMM_UKERNEL(tblis::idx_type k,
-                        const dcomplex* alpha, const dcomplex* p_a, const dcomplex* p_b,
-                        const dcomplex* beta, dcomplex* p_c, tblis::stride_type rs_c, tblis::stride_type cs_c,
+                        const tblis::dcomplex* alpha, const tblis::dcomplex* p_a, const tblis::dcomplex* p_b,
+                        const tblis::dcomplex* beta, tblis::dcomplex* p_c, tblis::stride_type rs_c, tblis::stride_type cs_c,
                         const void* data, const void* ctx);
 #endif
+
+}
 
 #include "bli_kernel_macro_defs.h"
 

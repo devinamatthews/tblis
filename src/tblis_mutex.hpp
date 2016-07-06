@@ -94,7 +94,7 @@ class Mutex
 class Mutex
 {
     public:
-        constexpr Mutex() noexcept {}
+        Mutex() noexcept {}
 
         Mutex(const Mutex&) = delete;
 
@@ -124,7 +124,7 @@ class Mutex
 class Mutex
 {
     public:
-        constexpr Mutex() noexcept {}
+        Mutex() noexcept {}
 
         Mutex(const Mutex&) = delete;
 

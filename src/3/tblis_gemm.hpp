@@ -65,9 +65,15 @@ struct GEMM
 
             parallelize
             (
-                [=](ThreadCommunicator& comm) mutable
+                [&](ThreadCommunicator& comm)
                 {
-                    child(comm, alpha, A, B, beta, C);
+                    // Capturing these by value (and declaring the lambda
+                    // mutable) apparently prevents the implicit definition of
+                    // a const reference copy ctor which causes problems later
+                    MatrixA A_(A);
+                    MatrixB B_(B);
+                    MatrixC C_(C);
+                    child(comm, alpha, A_, B_, beta, C_);
                 },
                 nthread, Config::tree_barrier_arity
             );

@@ -71,7 +71,7 @@ class block_scatter_matrix
             scatter_[1] = other.scatter_[1];
         }
 
-        void reset(idx_type m, idx_type n, pointer p, stride_type* rbs, stride_type* cbs,
+        void reset(idx_type m, idx_type n, pointer p, scatter_type rbs, scatter_type cbs,
                    scatter_type rscat, scatter_type cscat)
         {
             data_ = p;
@@ -84,22 +84,22 @@ class block_scatter_matrix
 
             for (idx_type i = 0;i < m;i += MB)
             {
-                stride_type s = (m-i) > 1 ? rscat[i+1]-rscat[i] : 0;
-                for (int j = i;j < std::min(i+MB,m)-1;j++)
+                stride_type s = (m-i) > 1 ? rscat[i+1]-rscat[i] : -1;
+                for (int j = i+1;j+1 < std::min(i+MB,m);j++)
                 {
                     if (rscat[j+1]-rscat[j] != s) s = 0;
                 }
-                if (M_BLOCKED) assert(s == rbs[i/MB]);
+                if (M_BLOCKED) assert(s == -1 || s == rbs[i/MB]);
             }
 
             for (idx_type i = 0;i < n;i += NB)
             {
-                stride_type s = (n-i) > 1 ? cscat[i+1]-cscat[i] : 0;
-                for (int j = i;j < std::min(i+NB,n)-1;j++)
+                stride_type s = (n-i) > 1 ? cscat[i+1]-cscat[i] : -1;
+                for (int j = i+1;j+1 < std::min(i+NB,n);j++)
                 {
                     if (cscat[j+1]-cscat[j] != s) s = 0;
                 }
-                if (N_BLOCKED) assert(s == cbs[i/NB]);
+                if (N_BLOCKED) assert(s == -1 || s == cbs[i/NB]);
             }
         }
 

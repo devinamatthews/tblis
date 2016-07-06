@@ -254,7 +254,7 @@ stl_ext::enable_if_t<is_arithmetic<T>::value &&
                      is_arithmetic<U>::value,bool>
 operator<(T a, const complex<U>& b)
 {
-    return a.real()+a.imag() < b.real()+b.imag();
+    return a < b.real()+b.imag();
 }
 
 template <typename T, typename U>

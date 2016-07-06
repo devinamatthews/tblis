@@ -25,8 +25,7 @@ namespace MArray
     template <typename T, typename Allocator>
     class varray;
 
-    template <typename T> void copy(const const_varray_view<T>& a, varray_view<T>& b);
-    template <typename T> void copy(const const_varray_view<T>& a, varray_view<T>&& b);
+    template <typename T> void copy(const_varray_view<T> a, varray_view<T> b);
 
     template <typename T>
     class const_varray_view
@@ -97,6 +96,16 @@ namespace MArray
                 reset(other);
             }
 
+            const_varray_view(const_varray_view<T>&& other)
+            {
+                reset(std::move(other));
+            }
+
+            const_varray_view(varray_view<T>&& other)
+            {
+                reset(std::move(other));
+            }
+
             const_varray_view(const std::vector<idx_type>& len, const_pointer ptr, Layout layout=DEFAULT)
             {
                 reset(len, ptr, layout);
@@ -134,6 +143,19 @@ namespace MArray
                 reset(static_cast<const const_varray_view<T>&>(other));
             }
 
+            void reset(const_varray_view<T>&& other)
+            {
+                data_ = other.data_;
+                len_ = std::move(other.len_);
+                stride_ = std::move(other.stride_);
+                ndim_ = other.ndim_;
+            }
+
+            void reset(varray_view<T>&& other)
+            {
+                reset(static_cast<const_varray_view<T>&&>(other));
+            }
+
             void reset(const std::vector<idx_type>& len, const_pointer ptr, Layout layout = DEFAULT)
             {
                 reset(len, ptr, default_strides(len, layout));
@@ -146,12 +168,7 @@ namespace MArray
                 data_ = const_cast<pointer>(ptr);
                 len_ = len;
                 stride_ = stride;
-            }
-
-            void shift(stride_type n)
-            {
-                assert(ndim_ == 0);
-                shift(0, n);
+                ndim_ = len.size();
             }
 
             void shift(unsigned dim, stride_type n)
@@ -160,34 +177,16 @@ namespace MArray
                 data_ += n*stride_[dim];
             }
 
-            void shift_down()
-            {
-                assert(ndim_ == 0);
-                shift_down(0);
-            }
-
             void shift_down(unsigned dim)
             {
                 assert(dim < ndim_);
                 shift(dim, len_[dim]);
             }
 
-            void shift_up()
-            {
-                assert(ndim_ == 0);
-                shift_up(0);
-            }
-
             void shift_up(unsigned dim)
             {
                 assert(dim < ndim_);
                 shift(dim, -stride_type(len_[dim]));
-            }
-
-            const_varray_view<T> shifted(stride_type n) const
-            {
-                assert(ndim_ == 0);
-                return shifted(0, n);
             }
 
             const_varray_view<T> shifted(unsigned dim, stride_type n) const
@@ -198,22 +197,10 @@ namespace MArray
                 return r;
             }
 
-            const_varray_view<T> shifted_down() const
-            {
-                assert(ndim_ == 0);
-                return shifted_down(0);
-            }
-
             const_varray_view<T> shifted_down(unsigned dim) const
             {
                 assert(dim < ndim_);
                 return shifted(dim, len_[dim]);
-            }
-
-            const_varray_view<T> shifted_up() const
-            {
-                assert(ndim_ == 0);
-                return shifted_up(0);
             }
 
             const_varray_view<T> shifted_up(unsigned dim) const
@@ -365,7 +352,7 @@ namespace MArray
 
             const_pointer data(const_pointer ptr)
             {
-                std::swap(ptr, const_cast<const_pointer>(data_));
+                std::swap(const_cast<pointer&>(ptr), data_);
                 return ptr;
             }
 
@@ -434,17 +421,16 @@ namespace MArray
 
         protected:
             typedef const_varray_view<T> base;
-            typedef const_varray_view<T> parent;
 
         public:
-            using typename base::idx_type;
-            using typename base::size_type;
-            using typename base::stride_type;
-            using typename base::value_type;
-            using typename base::pointer;
-            using typename base::const_pointer;
-            using typename base::reference;
-            using typename base::const_reference;
+            typedef typename base::idx_type idx_type;
+            typedef typename base::size_type size_type;
+            typedef typename base::stride_type stride_type;
+            typedef typename base::value_type value_type;
+            typedef typename base::pointer pointer;
+            typedef typename base::const_pointer const_pointer;
+            typedef typename base::reference reference;
+            typedef typename base::const_reference const_reference;
 
         protected:
             using base::data_;
@@ -452,21 +438,20 @@ namespace MArray
             using base::stride_;
             using base::ndim_;
 
-            varray_view(const parent& other)
-            : parent(other) {}
-
         public:
+            using base::default_strides;
+
             varray_view() {}
 
-            varray_view(varray_view& other)
-            : parent(other) {}
-
-            varray_view(varray_view&& other)
-            : parent(other) {}
+            varray_view(const varray_view& other)
+            : base(other) {}
 
             template <typename Alloc>
-            varray_view(varray<T, Alloc>& other)
-            : parent(other) {}
+            varray_view(const varray<T, Alloc>& other)
+            : base(other) {}
+
+            varray_view(varray_view&& other)
+            : base(std::move(other)) {}
 
             varray_view(const std::vector<idx_type>& len, pointer ptr, Layout layout=DEFAULT)
             {
@@ -480,62 +465,55 @@ namespace MArray
 
             void reset()
             {
-                data_ = nullptr;
-                len_.clear();
-                stride_.clear();
-                ndim_ = 0;
+                base::reset();
             }
 
-            void reset(const const_varray_view<T>& other)
+            void reset(const varray_view<T>& other)
             {
-                data_ = other.data_;
-                len_ = other.len_;
-                stride_ = other.stride_;
-                ndim_ = other.ndim_;
+                base::reset(other);
             }
 
-            void reset(varray_view<T>& other)
+            template <typename Alloc>
+            void reset(const varray<T, Alloc>& other)
             {
-                reset(static_cast<const const_varray_view<T>&>(other));
+                base::reset(other);
             }
 
             void reset(varray_view<T>&& other)
             {
-                reset(static_cast<const const_varray_view<T>&>(other));
+                base::reset(std::move(other));
             }
 
-            template <typename Alloc>
-            void reset(varray<T, Alloc>& other)
+            void reset(const std::vector<idx_type>& len, pointer ptr, Layout layout = DEFAULT)
             {
-                reset(static_cast<const const_varray_view<T>&>(other));
+                base::reset(len, ptr, layout);
             }
 
-            void reset(const std::vector<idx_type>& len, const_pointer ptr, Layout layout = DEFAULT)
+            void reset(const std::vector<idx_type>& len, pointer ptr, const std::vector<stride_type>& stride)
             {
-                reset(len, ptr, default_strides(len, layout));
+                base::reset(len, ptr, stride);
             }
 
-            void reset(const std::vector<idx_type>& len, const_pointer ptr, const std::vector<stride_type>& stride)
-            {
-                assert(len.size() > 0);
-                assert(len.size() == stride.size());
-                data_ = const_cast<pointer>(ptr);
-                len_ = len;
-                stride_ = stride;
-            }
-
-            varray_view& operator=(const const_varray_view<T>& other)
+            const varray_view& operator=(const const_varray_view<T>& other) const
             {
                 copy(other, *this);
                 return *this;
             }
 
-            varray_view& operator=(const varray_view& other)
+            const varray_view& operator=(const varray_view<T>& other) const
             {
-                return operator=(static_cast<const const_varray_view<T>&>(other));
+                copy(other, *this);
+                return *this;
             }
 
-            varray_view& operator=(const T& value)
+            template <typename Alloc>
+            const varray_view& operator=(const varray<T, Alloc>& other) const
+            {
+                copy(other, *this);
+                return *this;
+            }
+
+            const varray_view& operator=(const T& value) const
             {
                 auto it = make_iterator(len_, stride_);
                 auto a_ = data_;
@@ -546,52 +524,32 @@ namespace MArray
             using base::shift;
             using base::shift_down;
             using base::shift_up;
-            using base::shifted;
-            using base::shifted_down;
-            using base::shifted_up;
 
-            varray_view<T> shifted(stride_type n)
-            {
-                return base::shifted(n);
-            }
-
-            varray_view<T> shifted(unsigned dim, stride_type n)
+            varray_view<T> shifted(unsigned dim, stride_type n) const
             {
                 return base::shifted(dim, n);
             }
 
-            varray_view<T> shifted_down()
-            {
-                return base::shifted_down();
-            }
-
-            varray_view<T> shifted_down(unsigned dim)
+            varray_view<T> shifted_down(unsigned dim) const
             {
                 return base::shifted_down(dim);
             }
 
-            varray_view<T> shifted_up()
-            {
-                return base::shifted_up();
-            }
-
-            varray_view<T> shifted_up(unsigned dim)
+            varray_view<T> shifted_up(unsigned dim) const
             {
                 return base::shifted_up(dim);
             }
 
             using base::permute;
-            using base::permuted;
 
-            varray_view<T> permuted(const std::vector<unsigned>& perm)
+            varray_view<T> permuted(const std::vector<unsigned>& perm) const
             {
                 return base::permuted(perm);
             }
 
             using base::lower;
-            using base::lowered;
 
-            varray_view<T> lowered(const std::vector<unsigned>& split)
+            varray_view<T> lowered(const std::vector<unsigned>& split) const
             {
                 return base::lowered(split);
             }
@@ -658,37 +616,31 @@ namespace MArray
                 }
             }
 
-            using base::front;
-
-            reference front()
+            reference front() const
             {
                 return const_cast<reference>(base::front());
             }
 
-            varray_view<T> front(unsigned dim)
+            varray_view<T> front(unsigned dim) const
             {
                 return base::front(dim);
             }
 
-            using base::back;
-
-            reference back()
+            reference back() const
             {
                 return const_cast<reference>(base::back());
             }
 
-            varray_view<T> back(unsigned dim)
+            varray_view<T> back(unsigned dim) const
             {
                 return base::back(dim);
             }
-
-            using base::operator();
 
             template <typename... Args>
             detail::enable_if_t<detail::are_indices_or_slices<Args...>::value &&
                                 !detail::are_convertible<idx_type, Args...>::value,
                                 varray_view<T>>
-            operator()(Args&&... args)
+            operator()(Args&&... args) const
             {
                 return base::operator()(std::forward<Args>(args)...);
             }
@@ -696,14 +648,12 @@ namespace MArray
             template <typename... Args>
             detail::enable_if_t<detail::are_convertible<idx_type, Args...>::value,
                                 reference>
-            operator()(Args&&... args)
+            operator()(Args&&... args) const
             {
                 return const_cast<reference>(base::operator()(std::forward<Args>(args)...));
             }
 
-            using base::data;
-
-            pointer data()
+            pointer data() const
             {
                 return const_cast<pointer>(base::data());
             }
@@ -718,11 +668,20 @@ namespace MArray
             using base::stride;
             using base::strides;
             using base::dimension;
-            using base::swap;
+
+            void swap(varray_view& other)
+            {
+                base::swap(other);
+            }
 
             friend void swap(varray_view& a, varray_view& b)
             {
                 a.swap(b);
+            }
+
+            operator const const_varray_view<T>&() const
+            {
+                return *this;
             }
     };
 
@@ -734,18 +693,17 @@ namespace MArray
         template <typename T_, typename Allocator_> friend class varray;
 
         protected:
-            typedef const_varray_view<T> base;
-            typedef varray_view<T> parent;
+            typedef varray_view<T> base;
 
         public:
-            using typename base::idx_type;
-            using typename base::size_type;
-            using typename base::stride_type;
-            using typename base::value_type;
-            using typename base::pointer;
-            using typename base::const_pointer;
-            using typename base::reference;
-            using typename base::const_reference;
+            typedef typename base::idx_type idx_type;
+            typedef typename base::size_type size_type;
+            typedef typename base::stride_type stride_type;
+            typedef typename base::value_type value_type;
+            typedef typename base::pointer pointer;
+            typedef typename base::const_pointer const_pointer;
+            typedef typename base::reference reference;
+            typedef typename base::const_reference const_reference;
 
         protected:
             using base::data_;
@@ -760,9 +718,20 @@ namespace MArray
 
             varray() {}
 
+            varray(const const_varray_view<T>& other, Layout layout=DEFAULT)
+            {
+                reset(other, layout);
+            }
+
             varray(const varray_view<T>& other, Layout layout=DEFAULT)
             {
-                reset(other);
+                reset(other, layout);
+            }
+
+            template <typename OAlloc>
+            varray(const varray<T, OAlloc>& other, Layout layout=DEFAULT)
+            {
+                reset(other, layout);
             }
 
             varray(const varray& other)
@@ -790,11 +759,34 @@ namespace MArray
                 reset();
             }
 
-            using parent::operator=;
-
-            varray& operator=(const varray& other)
+            const varray& operator=(const const_varray_view<T>& other) const
             {
-                parent::operator=(other);
+                base::operator=(other);
+                return *this;
+            }
+
+            const varray& operator=(const varray_view<T>& other) const
+            {
+                base::operator=(other);
+                return *this;
+            }
+
+            const varray& operator=(const varray& other) const
+            {
+                base::operator=(other);
+                return *this;
+            }
+
+            template <typename OAlloc>
+            const varray& operator=(const varray<T, OAlloc>& other) const
+            {
+                base::operator=(other);
+                return *this;
+            }
+
+            const varray& operator=(const T& value) const
+            {
+                base::operator=(value);
                 return *this;
             }
 
@@ -811,7 +803,7 @@ namespace MArray
                 base::reset();
             }
 
-            void reset(const varray_view<T>& other, Layout layout=DEFAULT)
+            void reset(const const_varray_view<T>& other, Layout layout=DEFAULT)
             {
                 if (std::is_scalar<T>::value)
                 {
@@ -823,6 +815,17 @@ namespace MArray
                 }
 
                 *this = other;
+            }
+
+            void reset(const varray_view<T>& other, Layout layout=DEFAULT)
+            {
+                reset(static_cast<const const_varray_view<T>&>(other), layout);
+            }
+
+            template <typename OAlloc>
+            void reset(const varray<T, OAlloc>& other, Layout layout=DEFAULT)
+            {
+                reset(static_cast<const const_varray_view<T>&>(other), layout);
             }
 
             void reset(varray&& other)
@@ -841,7 +844,7 @@ namespace MArray
                 size_ = std::accumulate(len.begin(), len.end(), size_t(1), std::multiplies<size_t>());
                 layout_ = layout;
 
-                base::reset(len, Allocator::allocate(size_), base::default_strides(len, layout));
+                base::reset(len, Allocator::allocate(size_), default_strides(len, layout));
             }
 
             void resize(const std::vector<idx_type>& len, const T& val=T())
@@ -864,8 +867,8 @@ namespace MArray
 
             void push_back(const T& x)
             {
-                assert(ndim_ == 1);
-                resize(len_[0]+1);
+                assert(base::ndim_ == 1);
+                resize(base::len_[0]+1);
                 back() = x;
             }
 
@@ -876,10 +879,7 @@ namespace MArray
 
                 for (unsigned i = 0, j = 0;i < ndim_;i++)
                 {
-                    if (i != dim)
-                    {
-                        assert(len_[i] == x.len_[j++]);
-                    }
+                    assert(i == dim || len_[i] == x.len_[j++]);
                 }
 
                 std::vector<idx_type> len = len_;
@@ -890,14 +890,14 @@ namespace MArray
 
             void pop_back()
             {
-                assert(ndim_ == 1);
-                resize(len_[0]-1);
+                assert(base::ndim_ == 1);
+                resize(base::len_[0]-1);
             }
 
             void pop_back(unsigned dim)
             {
                 assert(dim < ndim_);
-                assert(len_[dim] > 0);
+                assert(base::len_[dim] > 0);
 
                 std::vector<idx_type> len = len_;
                 len[dim]--;
@@ -905,38 +905,124 @@ namespace MArray
             }
 
             using base::permute;
-            using parent::permute;
+
+            varray_view<T> permuted(const std::vector<unsigned>& perm)
+            {
+                return base::permuted(perm);
+            }
+
+            const_varray_view<T> permuted(const std::vector<unsigned>& perm) const
+            {
+                return base::permuted(perm);
+            }
 
             using base::lower;
-            using parent::lower;
 
-            using parent::rotate_dim;
-            using parent::rotate;
+            varray_view<T> lowered(const std::vector<unsigned>& split)
+            {
+                return base::lowered(split);
+            }
 
-            using base::front;
-            using parent::front;
+            const_varray_view<T> lowered(const std::vector<unsigned>& split) const
+            {
+                return base::lowered(split);
+            }
 
-            using base::back;
-            using parent::back;
+            using base::rotate_dim;
+            using base::rotate;
 
-            using base::operator();
-            using parent::operator();
+            reference front()
+            {
+                return base::front();
+            }
 
-            using base::data;
-            using parent::data;
+            const_reference front() const
+            {
+                return base::front();
+            }
 
-            using base::lengths;
-            using base::strides;
-            using base::dimension;
+            varray_view<T> front(unsigned dim)
+            {
+                return base::front(dim);
+            }
+
+            const_varray_view<T> front(unsigned dim) const
+            {
+                return base::front(dim);
+            }
+
+            reference back()
+            {
+                return base::back();
+            }
+
+            const_reference back() const
+            {
+                return base::back();
+            }
+
+            varray_view<T> back(unsigned dim)
+            {
+                return base::back(dim);
+            }
+
+            const_varray_view<T> back(unsigned dim) const
+            {
+                return base::back(dim);
+            }
+
+            template <typename... Args>
+            detail::enable_if_t<detail::are_indices_or_slices<Args...>::value &&
+                                !detail::are_convertible<idx_type, Args...>::value,
+                                varray_view<T>>
+            operator()(Args&&... args)
+            {
+                return base::operator()(std::forward<Args>(args)...);
+            }
+
+            template <typename... Args>
+            detail::enable_if_t<detail::are_indices_or_slices<Args...>::value &&
+                                !detail::are_convertible<idx_type, Args...>::value,
+                                const_varray_view<T>>
+            operator()(Args&&... args) const
+            {
+                return base::operator()(std::forward<Args>(args)...);
+            }
+
+            template <typename... Args>
+            detail::enable_if_t<detail::are_convertible<idx_type, Args...>::value,
+                                reference>
+            operator()(Args&&... args)
+            {
+                return base::operator()(std::forward<Args>(args)...);
+            }
+
+            template <typename... Args>
+            detail::enable_if_t<detail::are_convertible<idx_type, Args...>::value,
+                                const_reference>
+            operator()(Args&&... args) const
+            {
+                return base::operator()(std::forward<Args>(args)...);
+            }
+
+            pointer data()
+            {
+                return base::data();
+            }
+
+            const_pointer data() const
+            {
+                return base::data();
+            }
 
             idx_type length(unsigned dim) const
             {
                 return base::length(dim);
             }
 
-            idx_type length(unsigned dim, idx_type len)
+            const std::vector<idx_type>& lengths() const
             {
-                return base::length(dim, len);
+                return base::lengths();
             }
 
             stride_type stride(unsigned dim) const
@@ -944,9 +1030,14 @@ namespace MArray
                 return base::stride(dim);
             }
 
-            stride_type stride(unsigned dim, stride_type stride) const
+            const std::vector<stride_type>& strides() const
             {
-                return base::stride(dim, stride);
+                return base::strides();
+            }
+
+            unsigned dimension() const
+            {
+                return base::dimension();
             }
 
             void swap(varray& other)
@@ -961,10 +1052,20 @@ namespace MArray
             {
                 a.swap(b);
             }
+
+            operator const const_varray_view<T>&() const
+            {
+                return *this;
+            }
+
+            operator const varray_view<T>&() const
+            {
+                return *this;
+            }
     };
 
     template <typename T>
-    void copy(const const_varray_view<T>& a, varray_view<T>& b)
+    void copy(const_varray_view<T> a, varray_view<T> b)
     {
         assert(a.lengths() == b.lengths());
 
@@ -972,12 +1073,6 @@ namespace MArray
         auto a_ = a.data();
         auto b_ = b.data();
         while (it.next(a_, b_)) *b_ = *a_;
-    }
-
-    template <typename T>
-    void copy(const const_varray_view<T>& a, varray_view<T>&& b)
-    {
-        copy(a, b);
     }
 
 }

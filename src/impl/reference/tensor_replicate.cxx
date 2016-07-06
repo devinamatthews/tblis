@@ -1,5 +1,4 @@
 #include "tblis.hpp"
-#include "impl/tensor_impl.hpp"
 
 using namespace std;
 using namespace stl_ext;
@@ -12,8 +11,13 @@ namespace impl
 
 template <typename T>
 int tensor_replicate_reference(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
-                               T  beta,             tensor_view<T>& B, const std::string& idx_B)
+                               T  beta, const       tensor_view<T>& B, const std::string& idx_B)
 {
+    if (alpha == T(0))
+    {
+        return tensor_scale_reference(beta, B, idx_B);
+    }
+
     string idx_AB = intersection(idx_A, idx_B);
     string idx_B_only = exclusion(idx_B, idx_AB);
 
@@ -52,21 +56,19 @@ int tensor_replicate_reference(T alpha, const const_tensor_view<T>& A, const std
 
     while (iter_AB.next(A_, B_))
     {
-        T temp = (alpha == 0.0 ? *A_ : alpha*(*A_));
+        T temp = alpha*(*A_);
 
-        if (beta == 0.0)
+        if (beta == T(0))
         {
             while (iter_B.next(B_))
             {
-                assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                 *B_ = temp;
             }
         }
-        else if (beta == 1.0)
+        else if (beta == T(1))
         {
             while (iter_B.next(B_))
             {
-                assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                 *B_ += temp;
             }
         }
@@ -74,7 +76,6 @@ int tensor_replicate_reference(T alpha, const const_tensor_view<T>& A, const std
         {
             while (iter_B.next(B_))
             {
-                assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                 *B_ = temp + beta*(*B_);
             }
         }
@@ -86,7 +87,7 @@ int tensor_replicate_reference(T alpha, const const_tensor_view<T>& A, const std
 #define INSTANTIATE_FOR_TYPE(T) \
 template \
 int tensor_replicate_reference<T>(T alpha, const const_tensor_view<T>& A, const std::string& idx_A, \
-                                  T  beta,             tensor_view<T>& B, const std::string& idx_B);
+                                  T  beta, const       tensor_view<T>& B, const std::string& idx_B);
 #include "tblis_instantiate_for_types.hpp"
 
 }

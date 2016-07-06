@@ -83,37 +83,31 @@ namespace std
 
 template<typename T> vector<T> operator+(const vector<T>& v1, const vector<T>& v2)
 {
-    vector<T> r;
-    r.reserve(v1.size()+v2.size());
-    std::copy(v1.begin(), v1.end(), std::back_inserter(r));
-    std::copy(v2.begin(), v2.end(), std::back_inserter(r));
+    vector<T> r(v1);
+    r.insert(r.end(), v2.begin(), v2.end());
     return r;
 }
 
 template<typename T> vector<T> operator+(vector<T>&& v1, const vector<T>& v2)
 {
-    vector<T> r;
-    r.reserve(v1.size()+v2.size());
-    std::move(v1.begin(), v1.end(), std::back_inserter(r));
-    std::copy(v2.begin(), v2.end(), std::back_inserter(r));
+    vector<T> r(std::move(v1));
+    r.insert(r.end(), v2.begin(), v2.end());
     return r;
 }
 
 template<typename T> vector<T> operator+(const vector<T>& v1, vector<T>&& v2)
 {
-    vector<T> r;
-    r.reserve(v1.size()+v2.size());
-    std::copy(v1.begin(), v1.end(), std::back_inserter(r));
-    std::move(v2.begin(), v2.end(), std::back_inserter(r));
+    vector<T> r(v1);
+    r.insert(r.end(), std::make_move_iterator(v2.begin()),
+                      std::make_move_iterator(v2.end()));
     return r;
 }
 
 template<typename T> vector<T> operator+(vector<T>&& v1, vector<T>&& v2)
 {
-    vector<T> r;
-    r.reserve(v1.size()+v2.size());
-    std::move(v1.begin(), v1.end(), std::back_inserter(r));
-    std::move(v2.begin(), v2.end(), std::back_inserter(r));
+    vector<T> r(std::move(v1));
+    r.insert(r.end(), std::make_move_iterator(v2.begin()),
+                      std::make_move_iterator(v2.end()));
     return r;
 }
 

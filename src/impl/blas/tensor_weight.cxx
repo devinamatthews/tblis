@@ -1,5 +1,4 @@
 #include "tblis.hpp"
-#include "impl/tensor_impl.hpp"
 
 #include "external/lawrap/blas.h"
 
@@ -16,7 +15,7 @@ namespace impl
 template <typename T>
 int tensor_weight_blas(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
                                 const const_tensor_view<T>& B, const std::string& idx_B,
-                       T  beta,             tensor_view<T>& C, const std::string& idx_C)
+                       T  beta, const       tensor_view<T>& C, const std::string& idx_C)
 {
     string idx_ABC = intersection(idx_A, idx_B, idx_C);
     string idx_A_not_ABC = exclusion(idx_A, idx_ABC);
@@ -88,12 +87,15 @@ int tensor_weight_blas(T alpha, const const_tensor_view<T>& A, const std::string
     tensor<T> ar(len_A_not_ABC);
     tensor<T> br(len_B_not_ABC);
     tensor<T> cr(len_AC_BC);
+          tensor_view<T> arv(ar);
+          tensor_view<T> brv(br);
+    const_tensor_view<T> crv(cr);
 
     matrix_view<T> am, bm, cm;
 
-    matricize(ar, am, 0);
-    matricize(br, bm, 0);
-    matricize(cr, cm, idx_AC.size());
+    matricize<T>(ar, am, 0);
+    matricize<T>(br, bm, 0);
+    matricize<T>(cr, cm, idx_AC.size());
 
     const T* ptr_A = A.data();
     const T* ptr_B = B.data();
@@ -111,13 +113,13 @@ int tensor_weight_blas(T alpha, const const_tensor_view<T>& A, const std::string
         B_not_ABC.data(ptr_B);
         C_not_ABC.data(ptr_C);
 
-        tensor_transpose_impl<T>(1.0, A_not_ABC, idx_A_not_ABC, 0.0, ar, idx_A_not_ABC);
-        tensor_transpose_impl<T>(1.0, B_not_ABC, idx_B_not_ABC, 0.0, br, idx_B_not_ABC);
+        tensor_transpose_impl<T>(1.0, A_not_ABC, idx_A_not_ABC, 0.0, arv, idx_A_not_ABC);
+        tensor_transpose_impl<T>(1.0, B_not_ABC, idx_B_not_ABC, 0.0, brv, idx_B_not_ABC);
         tblis_zerov(cm.length(0)*cm.length(1), cm.data(), 1);
         ger(cm.length(0), cm.length(1),
             alpha, am.data(), 1, bm.data(), 1,
             cm.data(), cm.stride(1));
-        tensor_transpose_impl<T>(1.0, cr, idx_AC_BC, beta, C_not_ABC, idx_C_not_ABC);
+        tensor_transpose_impl<T>(1.0, crv, idx_AC_BC, beta, C_not_ABC, idx_C_not_ABC);
     }
 
     return 0;
@@ -127,7 +129,7 @@ int tensor_weight_blas(T alpha, const const_tensor_view<T>& A, const std::string
 template \
 int tensor_weight_blas<T>(T alpha, const const_tensor_view<T>& A, const std::string& idx_A, \
                                    const const_tensor_view<T>& B, const std::string& idx_B, \
-                          T  beta,             tensor_view<T>& C, const std::string& idx_C);
+                          T  beta, const       tensor_view<T>& C, const std::string& idx_C);
 #include "tblis_instantiate_for_types.hpp"
 
 }

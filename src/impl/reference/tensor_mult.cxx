@@ -1,5 +1,4 @@
 #include "tblis.hpp"
-#include "impl/tensor_impl.hpp"
 
 using namespace std;
 using namespace stl_ext;
@@ -13,8 +12,13 @@ namespace impl
 template <typename T>
 int tensor_mult_reference(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
                                    const const_tensor_view<T>& B, const std::string& idx_B,
-                          T  beta,             tensor_view<T>& C, const std::string& idx_C)
+                          T  beta, const       tensor_view<T>& C, const std::string& idx_C)
 {
+    if (alpha == T(0))
+    {
+        return tensor_scale_reference(beta, C, idx_C);
+    }
+
     string idx_ABC = intersection(idx_A, idx_B, idx_C);
     string idx_AB = exclusion(intersection(idx_A, idx_B), idx_ABC);
     string idx_AC = exclusion(intersection(idx_A, idx_C), idx_ABC);
@@ -131,43 +135,36 @@ int tensor_mult_reference(T alpha, const const_tensor_view<T>& A, const std::str
             {
                 T temp = T();
 
-                if (alpha != 0.0)
+                while (iter_AB.next(A_, B_))
                 {
-                    while (iter_AB.next(A_, B_))
+                    T temp_A = T();
+                    while (iter_A.next(A_))
                     {
-                        T temp_A = T();
-                        while (iter_A.next(A_))
-                        {
-                            assert (A_-A.data() >= 0 && A_-A.data() < A.size());
-                            temp_A += *A_;
-                        }
-
-                        T temp_B = T();
-                        while (iter_B.next(B_))
-                        {
-                            assert (B_-B.data() >= 0 && B_-B.data() < B.size());
-                            temp_B += *B_;
-                        }
-
-                        temp += temp_A*temp_B;
+                        temp_A += *A_;
                     }
 
-                    temp *= alpha;
+                    T temp_B = T();
+                    while (iter_B.next(B_))
+                    {
+                        temp_B += *B_;
+                    }
+
+                    temp += temp_A*temp_B;
                 }
 
-                if (beta == 0.0)
+                temp *= alpha;
+
+                if (beta == T(0))
                 {
                     while (iter_C.next(C_))
                     {
-                        assert (C_-C.data() >= 0 && C_-C.data() < C.size());
                         *C_ = temp;
                     }
                 }
-                else if (beta == 1.0)
+                else if (beta == T(1))
                 {
                     while (iter_C.next(C_))
                     {
-                        assert (C_-C.data() >= 0 && C_-C.data() < C.size());
                         *C_ += temp;
                     }
                 }
@@ -175,7 +172,6 @@ int tensor_mult_reference(T alpha, const const_tensor_view<T>& A, const std::str
                 {
                     while (iter_C.next(C_))
                     {
-                        assert (C_-C.data() >= 0 && C_-C.data() < C.size());
                         *C_ = temp + beta*(*C_);
                     }
                 }
@@ -190,7 +186,7 @@ int tensor_mult_reference(T alpha, const const_tensor_view<T>& A, const std::str
 template \
 int tensor_mult_reference<T>(T alpha, const const_tensor_view<T>& A, const std::string& idx_A, \
                                       const const_tensor_view<T>& B, const std::string& idx_B, \
-                             T  beta,             tensor_view<T>& C, const std::string& idx_C);
+                             T  beta, const       tensor_view<T>& C, const std::string& idx_C);
 #include "tblis_instantiate_for_types.hpp"
 
 }

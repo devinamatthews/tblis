@@ -160,19 +160,19 @@ struct MicroKernel
         constexpr static gemm_ukr_t<T> ukr = Config::template gemm_ukr<T>::value;
 
         void operator()(ThreadCommunicator& comm,
-                        T alpha, const const_matrix_view<T>& A,
-                                 const const_matrix_view<T>& B,
-                        T  beta,             matrix_view<T>& C) const
+                        T alpha, matrix_view<T>& A,
+                                 matrix_view<T>& B,
+                        T  beta, matrix_view<T>& C) const
         {
             const T* p_a = A.data();
             const T* p_b = B.data();
                   T* p_c = C.data();
 
-            idx_type m = C.length();
-            idx_type n = C.width();
-            idx_type k = A.width();
-            stride_type rs_c = C.row_stride();
-            stride_type cs_c = C.col_stride();
+            idx_type m = C.length(0);
+            idx_type n = C.length(1);
+            idx_type k = A.length(1);
+            stride_type rs_c = C.stride(0);
+            stride_type cs_c = C.stride(1);
 
             if (m == MR && n == NR)
             {
@@ -195,21 +195,21 @@ struct MicroKernel
         }
 
         void operator()(ThreadCommunicator& comm,
-                        T alpha, const const_matrix_view<T>& A,
-                                 const const_matrix_view<T>& B,
-                        T  beta,     scatter_matrix_view<T>& C) const
+                        T alpha,         matrix_view<T>& A,
+                                         matrix_view<T>& B,
+                        T  beta, scatter_matrix_view<T>& C) const
         {
             const T* p_a = A.data();
             const T* p_b = B.data();
                   T* p_c = C.data();
 
-            idx_type m = C.length();
-            idx_type n = C.width();
-            idx_type k = A.width();
-            stride_type rs_c = C.row_stride();
-            stride_type cs_c = C.col_stride();
-            const stride_type* rscat_c = C.row_scatter();
-            const stride_type* cscat_c = C.col_scatter();
+            idx_type m = C.length(0);
+            idx_type n = C.length(1);
+            idx_type k = A.length(1);
+            stride_type rs_c = C.stride(0);
+            stride_type cs_c = C.stride(1);
+            const stride_type* rscat_c = C.scatter(0);
+            const stride_type* cscat_c = C.scatter(1);
 
             if (m == MR && n == NR && rs_c != 0 && cs_c != 0)
             {
@@ -250,21 +250,21 @@ struct MicroKernel
         }
 
         void operator()(ThreadCommunicator& comm,
-                        T alpha,    const const_matrix_view<T>& A,
-                                    const const_matrix_view<T>& B,
+                        T alpha,                matrix_view<T>& A,
+                                                matrix_view<T>& B,
                         T  beta, block_scatter_matrix<T,MR,NR>& C) const
         {
             const T* p_a = A.data();
             const T* p_b = B.data();
                   T* p_c = C.data();
 
-            idx_type m = C.length();
-            idx_type n = C.width();
-            idx_type k = A.width();
-            stride_type rs_c = C.row_stride();
-            stride_type cs_c = C.col_stride();
-            const stride_type* rscat_c = C.row_scatter();
-            const stride_type* cscat_c = C.col_scatter();
+            idx_type m = C.length(0);
+            idx_type n = C.length(1);
+            idx_type k = A.length(1);
+            stride_type rs_c = C.stride(0);
+            stride_type cs_c = C.stride(1);
+            const stride_type* rscat_c = C.scatter(0);
+            const stride_type* cscat_c = C.scatter(1);
 
             if (m == MR && n == NR && rs_c != 0 && cs_c != 0)
             {

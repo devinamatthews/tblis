@@ -1,5 +1,4 @@
 #include "tblis.hpp"
-#include "impl/tensor_impl.hpp"
 
 using namespace std;
 using namespace stl_ext;
@@ -12,7 +11,7 @@ namespace impl
 
 template <typename T>
 int tensor_trace_reference(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
-                           T  beta,             tensor_view<T>& B, const std::string& idx_B)
+                           T  beta, const       tensor_view<T>& B, const std::string& idx_B)
 {
     string idx_AB = intersection(idx_A, idx_B);
     string idx_A_only = exclusion(idx_A, idx_AB);
@@ -54,21 +53,20 @@ int tensor_trace_reference(T alpha, const const_tensor_view<T>& A, const std::st
     {
         T temp = T();
 
-        if (alpha != 0.0)
+        if (alpha != T(0))
         {
             while (iter_A.next(A_))
             {
-                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
                 temp += *A_;
             }
             temp *= alpha;
         }
 
-        if (beta == 0.0)
+        if (beta == T(0))
         {
             *B_ = temp;
         }
-        else if (beta == 1.0)
+        else if (beta == T(1))
         {
             *B_ += temp;
         }
@@ -84,7 +82,7 @@ int tensor_trace_reference(T alpha, const const_tensor_view<T>& A, const std::st
 #define INSTANTIATE_FOR_TYPE(T) \
 template \
 int tensor_trace_reference<T>(T alpha, const const_tensor_view<T>& A, const std::string& idx_A, \
-                              T  beta,             tensor_view<T>& B, const std::string& idx_B);
+                              T  beta, const       tensor_view<T>& B, const std::string& idx_B);
 #include "tblis_instantiate_for_types.hpp"
 
 }

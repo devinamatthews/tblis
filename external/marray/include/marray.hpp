@@ -935,13 +935,7 @@ namespace MArray
         }
 
         template <typename T, unsigned ndim, unsigned dim>
-        marray_view<T, ndim-dim+1> view(marray_ref<T, ndim, dim>& x)
-        {
-            return x;
-        }
-
-        template <typename T, unsigned ndim, unsigned dim>
-        marray_view<T, ndim-dim+1> view(marray_ref<T, ndim, dim>&& x)
+        marray_view<T, ndim-dim+1> view(const marray_ref<T, ndim, dim>& x)
         {
             return x;
         }
@@ -1270,13 +1264,7 @@ namespace MArray
         }
 
         template <typename T, unsigned ndim, unsigned dim, unsigned newdim>
-        marray_view<T, ndim+newdim-dim+1> view(marray_slice<T, ndim, dim, newdim>& x)
-        {
-            return x;
-        }
-
-        template <typename T, unsigned ndim, unsigned dim, unsigned newdim>
-        marray_view<T, ndim+newdim-dim+1> view(marray_slice<T, ndim, dim, newdim>&& x)
+        marray_view<T, ndim+newdim-dim+1> view(const marray_slice<T, ndim, dim, newdim>& x)
         {
             return x;
         }
@@ -1988,11 +1976,6 @@ namespace MArray
             {
                 return ndim;
             }
-
-            //operator const marray_view<T, ndim>&() const
-            //{
-            //    return static_cast<const marray_view<T, ndim>&>(*this);
-            //}
     };
 
     template <typename T, unsigned ndim>
@@ -2008,52 +1991,53 @@ namespace MArray
 
         protected:
             typedef const_marray_view<T, ndim> base;
-            typedef const_marray_view<T, ndim> parent;
 
         public:
-            using typename base::idx_type;
-            using typename base::size_type;
-            using typename base::stride_type;
-            using typename base::value_type;
-            using typename base::pointer;
-            using typename base::const_pointer;
-            using typename base::reference;
-            using typename base::const_reference;
+            typedef typename base::idx_type idx_type;
+            typedef typename base::size_type size_type;
+            typedef typename base::stride_type stride_type;
+            typedef typename base::value_type value_type;
+            typedef typename base::pointer pointer;
+            typedef typename base::const_pointer const_pointer;
+            typedef typename base::reference reference;
+            typedef typename base::const_reference const_reference;
 
         protected:
             using base::data_;
             using base::len_;
             using base::stride_;
 
-            marray_view(const parent& other)
-            : parent(other) {}
-
             using base::get_len_from_args;
-            using base::get_ptr_from_args;
+            using base:: get_ptr_from_args;
             using base::get_value_from_args;
             using base::get_layout_from_args;
+            using base::get_layout_early_from_args;
             using base::get_stride_from_args;
 
-            template <typename... Args> using starts_with_len = typename base::template starts_with_len<Args...>;
-            template <typename... Args> using has_const_ptr = typename base::template has_const_ptr<Args...>;
-            template <typename... Args> using has_ptr = typename base::template has_ptr<Args...>;
-            template <typename... Args> using has_value = typename base::template has_value<Args...>;
-            template <typename... Args> using has_uninit = typename base::template has_uninit<Args...>;
-            template <typename... Args> using has_layout = typename base::template has_layout<Args...>;
-            template <typename... Args> using ends_with_stride = typename base::template ends_with_stride<Args...>;
+            template <typename... Args> using starts_with_len =
+                typename base::template starts_with_len<Args...>;
+            template <typename... Args> using has_const_ptr =
+                typename base::template has_const_ptr<Args...>;
+            template <typename... Args> using has_ptr =
+                typename base::template has_ptr<Args...>;
+            template <typename... Args> using has_value =
+                typename base::template has_value<Args...>;
+            template <typename... Args> using has_uninit =
+                typename base::template has_uninit<Args...>;
+            template <typename... Args> using has_layout =
+                typename base::template has_layout<Args...>;
+            template <typename... Args> using ends_with_stride =
+                typename base::template ends_with_stride<Args...>;
 
         public:
             marray_view() {}
 
-            marray_view(marray_view<T, ndim>& other)
-            : parent(other) {}
-
-            marray_view(marray_view<T, ndim>&& other)
-            : parent(other) {}
+            marray_view(const marray_view<T, ndim>& other)
+            : base(other) {}
 
             template <typename Alloc>
             marray_view(marray<T, ndim, Alloc>& other)
-            : parent(other) {}
+            : base(other) {}
 
             template <typename U>
             marray_view(const std::array<U, ndim>& len, pointer ptr, Layout layout=DEFAULT)
@@ -2089,12 +2073,7 @@ namespace MArray
                 base::reset();
             }
 
-            void reset(marray_view<T, ndim>& other)
-            {
-                base::reset(other);
-            }
-
-            void reset(marray_view<T, ndim>&& other)
+            void reset(const marray_view<T, ndim>& other)
             {
                 base::reset(other);
             }
@@ -2106,7 +2085,7 @@ namespace MArray
             }
 
             template <typename U>
-            void reset(const std::array<U, ndim>& len, const_pointer ptr, Layout layout = DEFAULT)
+            void reset(const std::array<U, ndim>& len, pointer ptr, Layout layout = DEFAULT)
             {
                 base::reset(len, ptr, layout);
             }
@@ -2134,24 +2113,26 @@ namespace MArray
                 base::reset(std::forward<Args>(args)...);
             }
 
-            marray_view& operator=(const const_marray_view<T, ndim>& other)
+            const marray_view& operator=(const const_marray_view<T, ndim>& other) const
             {
                 copy(other, *this);
                 return *this;
             }
 
-            marray_view& operator=(const marray_view<T, ndim>& other)
+            const marray_view& operator=(const marray_view& other) const
             {
-                return operator=(static_cast<const const_marray_view<T, ndim>&>(other));
+                copy(other, *this);
+                return *this;
             }
 
             template <typename Alloc>
-            marray_view& operator=(const marray<T, ndim, Alloc>& other)
+            const marray_view& operator=(const marray<T, ndim, Alloc>& other) const
             {
-                return operator=(static_cast<const const_marray_view<T, ndim>&>(other));
+                copy(other, *this);
+                return *this;
             }
 
-            marray_view& operator=(const T& value)
+            const marray_view& operator=(const T& value) const
             {
                 auto it = make_iterator(len_, stride_);
                 auto a_ = data_;
@@ -2160,53 +2141,49 @@ namespace MArray
             }
 
             using base::shift;
-            using base::shift_down;
             using base::shift_up;
-            using base::shifted;
-            using base::shifted_down;
-            using base::shifted_up;
+            using base::shift_down;
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_==1,marray_view<T,ndim>>::type
-            shifted(stride_type n)
+            shifted(stride_type n) const
             {
                 return base::shifted(n);
             }
 
-            marray_view<T,ndim> shifted(unsigned dim, stride_type n)
+            marray_view<T,ndim> shifted(unsigned dim, stride_type n) const
             {
                 return base::shifted(dim, n);
             }
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_==1,marray_view<T,ndim>>::type
-            shifted_down()
+            shifted_down() const
             {
                 return base::shifted_down();
             }
 
-            marray_view<T,ndim> shifted_down(unsigned dim)
+            marray_view<T,ndim> shifted_down(unsigned dim) const
             {
                 return base::shifted_down(dim);
             }
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_==1,marray_view<T,ndim>>::type
-            shifted_up()
+            shifted_up() const
             {
                 return base::shifted_up();
             }
 
-            marray_view<T,ndim> shifted_up(unsigned dim)
+            marray_view<T,ndim> shifted_up(unsigned dim) const
             {
                 return base::shifted_up(dim);
             }
 
             using base::permute;
-            using base::permuted;
 
             template <typename U>
-            marray_view<T, ndim> permuted(const std::array<U, ndim>& perm)
+            marray_view<T, ndim> permuted(const std::array<U, ndim>& perm) const
             {
                 return base::permuted(perm);
             }
@@ -2215,25 +2192,22 @@ namespace MArray
             detail::enable_if_t<sizeof...(Args) == ndim &&
                                 detail::are_convertible<unsigned, Args...>::value,
                                 marray_view<T, ndim>>
-            permuted(Args&&... args)
+            permuted(Args&&... args) const
             {
                 return base::permuted(std::forward<Args>(args)...);
             }
 
             using base::transpose;
-            using base::transposed;
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_==2,marray_view<T, ndim>>::type
-            transposed()
+            transposed() const
             {
                 return base::transposed();
             }
 
-            using base::lowered;
-
             template <typename U, size_t newdim>
-            marray_view<T, newdim+1> lowered(const std::array<U, newdim>& split)
+            marray_view<T, newdim+1> lowered(const std::array<U, newdim>& split) const
             {
                 return base::lowered(split);
             }
@@ -2241,7 +2215,7 @@ namespace MArray
             template <typename... Args>
             detail::enable_if_t<detail::are_convertible<unsigned, Args...>::value,
                                 marray_view<T, sizeof...(Args)+1>>
-            lowered(Args&&... args)
+            lowered(Args&&... args) const
             {
                 return base::lowered(std::forward<Args>(args)...);
             }
@@ -2317,118 +2291,108 @@ namespace MArray
                 rotate(make_array((stride_type)std::forward<Args>(args)...));
             }
 
-            using base::front;
-
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_==1, reference>::type
-            front()
+            front() const
             {
                 return const_cast<reference>(base::front());
             }
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_==1, reference>::type
-            front(unsigned dim)
+            front(unsigned dim) const
             {
                 return const_cast<reference>(base::front(dim));
             }
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_!=1, marray_view<T, ndim-1>>::type
-            front(unsigned dim)
+            front(unsigned dim) const
             {
                 return base::front(dim);
             }
 
-            using base::back;
-
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_==1, reference>::type
-            back()
+            back() const
             {
                 return const_cast<reference>(base::back());
             }
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_==1, reference>::type
-            back(unsigned dim)
+            back(unsigned dim) const
             {
                 return const_cast<reference>(base::back(dim));
             }
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_!=1, marray_view<T, ndim-1>>::type
-            back(unsigned dim)
+            back(unsigned dim) const
             {
                 return base::back(dim);
             }
 
-            using base::operator[];
-
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_==1, reference>::type
-            operator[](idx_type i)
+            operator[](idx_type i) const
             {
                 return const_cast<reference>(base::operator[](i));
             }
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_!=1, detail::marray_ref<T, ndim, 2>>::type
-            operator[](idx_type i)
+            operator[](idx_type i) const
             {
                 return base::operator[](i);
             }
 
             template <typename I, unsigned ndim_=ndim>
             typename std::enable_if<ndim_==1, marray_view<T, 1>>::type
-            operator[](const range_t<I>& x)
+            operator[](const range_t<I>& x) const
             {
                 return base::operator[](x);
             }
 
             template <typename I, unsigned ndim_=ndim>
             typename std::enable_if<ndim_!=1, detail::marray_slice<T, ndim, 2, 1>>::type
-            operator[](const range_t<I>& x)
+            operator[](const range_t<I>& x) const
             {
                 return base::operator[](x);
             }
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_==1, marray_view<T, 1>>::type
-            operator[](slice::all_t x)
+            operator[](slice::all_t x) const
             {
                 return base::operator[](x);
             }
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_!=1, detail::marray_slice<T, ndim, 2, 1>>::type
-            operator[](slice::all_t x)
+            operator[](slice::all_t x) const
             {
                 return base::operator[](x);
             }
 
-            using base::operator();
-
             template <typename Arg, typename=
                 typename std::enable_if<detail::is_index_or_slice<Arg>::value>::type>
-            auto operator()(Arg&& arg) ->
-            decltype((*this)[std::forward<Arg>(arg)])
+            auto operator()(Arg&& arg) const ->
+            decltype(base::operator()(std::forward<Arg>(arg)))
             {
-                return (*this)[std::forward<Arg>(arg)];
+                return base::operator()(std::forward<Arg>(arg));
             }
 
-            template <typename Arg, typename... Args, typename=
-                typename std::enable_if<sizeof...(Args) == ndim-1 &&
-                                        detail::are_indices_or_slices<Arg, Args...>::value>::type>
-            auto operator()(Arg&& arg, Args&&... args) ->
-            decltype((*this)[std::forward<Arg>(arg)](std::forward<Args>(args)...))
+            template <typename... Args, typename=
+                typename std::enable_if<sizeof...(Args) == ndim &&
+                                        detail::are_indices_or_slices<Args...>::value>::type>
+            auto operator()(Args&&... args) const ->
+            decltype(base::operator()(std::forward<Args>(args)...))
             {
-                return (*this)[std::forward<Arg>(arg)](std::forward<Args>(args)...);
+                return base::operator()(std::forward<Args>(args)...);
             }
 
-            using base::data;
-
-            pointer data()
+            pointer data() const
             {
                 return const_cast<pointer>(base::data());
             }
@@ -2443,6 +2407,16 @@ namespace MArray
             using base::stride;
             using base::strides;
             using base::dimension;
+
+            operator const const_marray_view<T,ndim>&() const
+            {
+                return *this;
+            }
+
+            operator const_marray_view<T,ndim>() const
+            {
+                return *this;
+            }
     };
 
     template <typename T, unsigned ndim, typename Allocator=aligned_allocator<T, MARRAY_BASE_ALIGNMENT>>
@@ -2457,18 +2431,17 @@ namespace MArray
         template <typename T_, unsigned ndim_, unsigned dim_, unsigned newdim_> friend class detail::marray_slice;
 
         protected:
-            typedef const_marray_view<T, ndim> base;
-            typedef marray_view<T, ndim> parent;
+            typedef marray_view<T, ndim> base;
 
         public:
-            using typename base::idx_type;
-            using typename base::size_type;
-            using typename base::stride_type;
-            using typename base::value_type;
-            using typename base::pointer;
-            using typename base::const_pointer;
-            using typename base::reference;
-            using typename base::const_reference;
+            typedef typename base::idx_type idx_type;
+            typedef typename base::size_type size_type;
+            typedef typename base::stride_type stride_type;
+            typedef typename base::value_type value_type;
+            typedef typename base::pointer pointer;
+            typedef typename base::const_pointer const_pointer;
+            typedef typename base::reference reference;
+            typedef typename base::const_reference const_reference;
 
         protected:
             using base::data_;
@@ -2478,27 +2451,46 @@ namespace MArray
             Layout layout_ = DEFAULT;
 
             using base::get_len_from_args;
-            using base::get_ptr_from_args;
+            using base:: get_ptr_from_args;
             using base::get_value_from_args;
             using base::get_layout_from_args;
+            using base::get_layout_early_from_args;
             using base::get_stride_from_args;
 
-            template <typename... Args> using starts_with_len = typename base::template starts_with_len<Args...>;
-            template <typename... Args> using has_const_ptr = typename base::template has_const_ptr<Args...>;
-            template <typename... Args> using has_ptr = typename base::template has_ptr<Args...>;
-            template <typename... Args> using has_value = typename base::template has_value<Args...>;
-            template <typename... Args> using has_uninit = typename base::template has_uninit<Args...>;
-            template <typename... Args> using has_layout = typename base::template has_layout<Args...>;
-            template <typename... Args> using ends_with_stride = typename base::template ends_with_stride<Args...>;
+            template <typename... Args> using starts_with_len =
+                typename base::template starts_with_len<Args...>;
+            template <typename... Args> using has_const_ptr =
+                typename base::template has_const_ptr<Args...>;
+            template <typename... Args> using has_ptr =
+                typename base::template has_ptr<Args...>;
+            template <typename... Args> using has_value =
+                typename base::template has_value<Args...>;
+            template <typename... Args> using has_uninit =
+                typename base::template has_uninit<Args...>;
+            template <typename... Args> using has_layout =
+                typename base::template has_layout<Args...>;
+            template <typename... Args> using ends_with_stride =
+                typename base::template ends_with_stride<Args...>;
 
         public:
             using base::default_strides;
 
             marray() {}
 
+            marray(const const_marray_view<T, ndim>& other, Layout layout=DEFAULT)
+            {
+                reset(other, layout);
+            }
+
             marray(const marray_view<T, ndim>& other, Layout layout=DEFAULT)
             {
-                reset(other);
+                reset(other, layout);
+            }
+
+            template <typename OAlloc>
+            marray(const marray<T, ndim, OAlloc>& other, Layout layout=DEFAULT)
+            {
+                reset(other, layout);
             }
 
             marray(const marray& other)
@@ -2550,11 +2542,34 @@ namespace MArray
                 reset();
             }
 
-            using parent::operator=;
-
-            marray& operator=(const marray& other)
+            const marray& operator=(const const_marray_view<T, ndim>& other) const
             {
-                parent::operator=(other);
+                base::operator=(other);
+                return *this;
+            }
+
+            const marray& operator=(const marray_view<T, ndim>& other) const
+            {
+                base::operator=(other);
+                return *this;
+            }
+
+            template <typename OAlloc>
+            const marray& operator=(const marray<T, ndim, OAlloc>& other) const
+            {
+                base::operator=(other);
+                return *this;
+            }
+
+            const marray& operator=(const marray& other) const
+            {
+                base::operator=(other);
+                return *this;
+            }
+
+            const marray& operator=(const T& value) const
+            {
+                base::operator=(value);
                 return *this;
             }
 
@@ -2571,7 +2586,7 @@ namespace MArray
                 base::reset();
             }
 
-            void reset(const marray_view<T, ndim>& other, Layout layout=DEFAULT)
+            void reset(const const_marray_view<T, ndim>& other, Layout layout=DEFAULT)
             {
                 if (std::is_scalar<T>::value)
                 {
@@ -2583,6 +2598,17 @@ namespace MArray
                 }
 
                 *this = other;
+            }
+
+            void reset(const marray_view<T, ndim>& other, Layout layout=DEFAULT)
+            {
+                reset(static_cast<const const_marray_view<T, ndim>&>(other), layout);
+            }
+
+            template <typename OAlloc>
+            void reset(const marray<T, ndim, OAlloc>& other, Layout layout=DEFAULT)
+            {
+                reset(static_cast<const const_marray_view<T, ndim>&>(other), layout);
             }
 
             void reset(marray&& other)
@@ -2633,7 +2659,7 @@ namespace MArray
                 size_ = std::accumulate(len.begin(), len.end(), size_t(1), std::multiplies<size_t>());
                 layout_ = layout;
 
-                base::reset(len, Allocator::allocate(size_), base::default_strides(len, layout));
+                base::reset(len, Allocator::allocate(size_), default_strides(len, layout));
             }
 
             template <typename... Args>
@@ -2728,16 +2754,13 @@ namespace MArray
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_!=1>::type
-            push_back(unsigned dim, const marray_view<T, ndim_-1>& x)
+            push_back(unsigned dim, const const_marray_view<T, ndim-1>& x)
             {
                 assert(dim < ndim);
 
                 for (unsigned i = 0, j = 0;i < ndim;i++)
                 {
-                    if (i != dim)
-                    {
-                        assert(len_[i] == x.len_[j++]);
-                    }
+                    assert(i == dim || len_[i] == x.len_[j++]);
                 }
 
                 std::array<idx_type, ndim> len = len_;
@@ -2759,41 +2782,295 @@ namespace MArray
             }
 
             using base::permute;
-            using parent::permute;
 
-            using base::permuted;
-            using parent::permuted;
+            template <typename U>
+            marray_view<T, ndim> permuted(const std::array<U, ndim>& perm)
+            {
+                return base::permuted(perm);
+            }
+
+            template <typename U>
+            const_marray_view<T, ndim> permuted(const std::array<U, ndim>& perm) const
+            {
+                return base::permuted(perm);
+            }
+
+            template <typename... Args>
+            detail::enable_if_t<sizeof...(Args) == ndim &&
+                                detail::are_convertible<unsigned, Args...>::value,
+                                marray_view<T, ndim>>
+            permuted(Args&&... args)
+            {
+                return base::permuted(std::forward<Args>(args)...);
+            }
+
+            template <typename... Args>
+            detail::enable_if_t<sizeof...(Args) == ndim &&
+                                detail::are_convertible<unsigned, Args...>::value,
+                                const_marray_view<T, ndim>>
+            permuted(Args&&... args) const
+            {
+                return base::permuted(std::forward<Args>(args)...);
+            }
 
             using base::transpose;
-            using parent::transpose;
 
-            using base::transposed;
-            using parent::transposed;
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==2,marray_view<T, ndim>>::type
+            transposed()
+            {
+                return base::transposed();
+            }
 
-            using base::lower;
-            using parent::lower;
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==2,const_marray_view<T, ndim>>::type
+            transposed() const
+            {
+                return base::transposed();
+            }
 
-            using parent::rotate_dim;
-            using parent::rotate;
+            template <typename U, size_t newdim>
+            marray_view<T, newdim+1> lowered(const std::array<U, newdim>& split)
+            {
+                return base::lowered(split);
+            }
 
-            using base::front;
-            using parent::front;
+            template <typename U, size_t newdim>
+            const_marray_view<T, newdim+1> lowered(const std::array<U, newdim>& split) const
+            {
+                return base::lowered(split);
+            }
 
-            using base::back;
-            using parent::back;
+            template <typename... Args>
+            detail::enable_if_t<detail::are_convertible<unsigned, Args...>::value,
+                                marray_view<T, sizeof...(Args)+1>>
+            lowered(Args&&... args)
+            {
+                return base::lowered(std::forward<Args>(args)...);
+            }
 
-            using base::operator[];
-            using parent::operator[];
+            template <typename... Args>
+            detail::enable_if_t<detail::are_convertible<unsigned, Args...>::value,
+                                const_marray_view<T, sizeof...(Args)+1>>
+            lowered(Args&&... args) const
+            {
+                return base::lowered(std::forward<Args>(args)...);
+            }
 
-            using base::operator();
-            using parent::operator();
+            using base::rotate_dim;
+            using base::rotate;
 
-            using base::data;
-            using parent::data;
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==1, reference>::type
+            front()
+            {
+                return base::front();
+            }
 
-            using base::lengths;
-            using base::strides;
-            using base::dimension;
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==1, const_reference>::type
+            front() const
+            {
+                return base::front();
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==1>::type
+            front(unsigned dim) const
+            {
+                return base::front(dim);
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==1, const_reference>::type
+            front(unsigned dim) const
+            {
+                return base::front(dim);
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_!=1, marray_view<T, ndim-1>>::type
+            front(unsigned dim)
+            {
+                return base::front(dim);
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_!=1, const_marray_view<T, ndim-1>>::type
+            front(unsigned dim) const
+            {
+                return base::front(dim);
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==1, reference>::type
+            back()
+            {
+                return base::back();
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==1, const_reference>::type
+            back() const
+            {
+                return base::back();
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==1, reference>::type
+            back(unsigned dim)
+            {
+                return base::back(dim);
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==1, const_reference>::type
+            back(unsigned dim) const
+            {
+                return base::back(dim);
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_!=1, marray_view<T, ndim-1>>::type
+            back(unsigned dim)
+            {
+                return base::back(dim);
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_!=1, const_marray_view<T, ndim-1>>::type
+            back(unsigned dim) const
+            {
+                return base::back(dim);
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==1, reference>::type
+            operator[](idx_type i)
+            {
+                return base::operator[](i);
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==1, const_reference>::type
+            operator[](idx_type i) const
+            {
+                return base::operator[](i);
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_!=1, detail::marray_ref<T, ndim, 2>>::type
+            operator[](idx_type i)
+            {
+                return base::operator[](i);
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_!=1, detail::const_marray_ref<T, ndim, 2>>::type
+            operator[](idx_type i) const
+            {
+                return base::operator[](i);
+            }
+
+            template <typename I, unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==1, marray_view<T, 1>>::type
+            operator[](const range_t<I>& x)
+            {
+                return base::operator[](x);
+            }
+
+            template <typename I, unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==1, const_marray_view<T, 1>>::type
+            operator[](const range_t<I>& x) const
+            {
+                return base::operator[](x);
+            }
+
+            template <typename I, unsigned ndim_=ndim>
+            typename std::enable_if<ndim_!=1, detail::marray_slice<T, ndim, 2, 1>>::type
+            operator[](const range_t<I>& x)
+            {
+                return base::operator[](x);
+            }
+
+            template <typename I, unsigned ndim_=ndim>
+            typename std::enable_if<ndim_!=1, detail::const_marray_slice<T, ndim, 2, 1>>::type
+            operator[](const range_t<I>& x) const
+            {
+                return base::operator[](x);
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==1, marray_view<T, 1>>::type
+            operator[](slice::all_t x)
+            {
+                return base::operator[](x);
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==1, const_marray_view<T, 1>>::type
+            operator[](slice::all_t x) const
+            {
+                return base::operator[](x);
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_!=1, detail::marray_slice<T, ndim, 2, 1>>::type
+            operator[](slice::all_t x)
+            {
+                return base::operator[](x);
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_!=1, detail::const_marray_slice<T, ndim, 2, 1>>::type
+            operator[](slice::all_t x) const
+            {
+                return base::operator[](x);
+            }
+
+            template <typename Arg, typename=
+                typename std::enable_if<detail::is_index_or_slice<Arg>::value>::type>
+            auto operator()(Arg&& arg) ->
+            decltype(base::operator()(std::forward<Arg>(arg)))
+            {
+                return base::operator()(std::forward<Arg>(arg));
+            }
+
+            template <typename Arg, typename=
+                typename std::enable_if<detail::is_index_or_slice<Arg>::value>::type>
+            auto operator()(Arg&& arg) const ->
+            decltype(base::base::operator()(std::forward<Arg>(arg)))
+            {
+                return base::base::operator()(std::forward<Arg>(arg));
+            }
+
+            template <typename... Args, typename=
+                typename std::enable_if<sizeof...(Args) == ndim &&
+                                        detail::are_indices_or_slices<Args...>::value>::type>
+            auto operator()(Args&&... args) ->
+            decltype(base::operator()(std::forward<Args>(args)...))
+            {
+                return base::operator()(std::forward<Args>(args)...);
+            }
+
+            template <typename... Args, typename=
+                typename std::enable_if<sizeof...(Args) == ndim &&
+                                        detail::are_indices_or_slices<Args...>::value>::type>
+            auto operator()(Args&&... args) const ->
+            decltype(base::base::operator()(std::forward<Args>(args)...))
+            {
+                return base::base::operator()(std::forward<Args>(args)...);
+            }
+
+            pointer data()
+            {
+                return base::data();
+            }
+
+            const_pointer data() const
+            {
+                return base::data();
+            }
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_==1, idx_type>::type
@@ -2802,21 +3079,14 @@ namespace MArray
                 return base::length();
             }
 
-            template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_==1, idx_type>::type
-            length(idx_type len)
-            {
-                return base::length(len);
-            }
-
             idx_type length(unsigned dim) const
             {
                 return base::length(dim);
             }
 
-            idx_type length(unsigned dim, idx_type len)
+            const std::array<idx_type, ndim>& lengths() const
             {
-                 return base::length(dim, len);
+                return base::lengths();
             }
 
             template <unsigned ndim_=ndim>
@@ -2826,29 +3096,25 @@ namespace MArray
                 return base::stride();
             }
 
-            template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_==1, stride_type>::type
-            stride(stride_type stride)
-            {
-                return base::stride(stride);
-            }
-
             stride_type stride(unsigned dim) const
             {
                 return base::stride(dim);
             }
 
-            stride_type stride(unsigned dim, stride_type stride)
+            const std::array<stride_type, ndim>& strides() const
             {
-                return base::stride(dim, stride);
+                return base::strides();
+            }
+
+            unsigned dimension() const
+            {
+                return base::dimension();
             }
 
             void swap(marray& other)
             {
                 using std::swap;
-                swap(data_,   other.data_);
-                swap(len_,    other.len_);
-                swap(stride_, other.stride_);
+                base::swap(other);
                 swap(size_,   other.size_);
                 swap(layout_, other.layout_);
             }
@@ -2856,6 +3122,26 @@ namespace MArray
             friend void swap(marray& a, marray& b)
             {
                 a.swap(b);
+            }
+
+            operator const const_marray_view<T,ndim>&() const
+            {
+                return *this;
+            }
+
+            operator const marray_view<T,ndim>&() const
+            {
+                return *this;
+            }
+
+            operator const_marray_view<T,ndim>() const
+            {
+                return *this;
+            }
+
+            operator marray_view<T,ndim>() const
+            {
+                return *this;
             }
     };
 
@@ -2884,19 +3170,25 @@ namespace MArray
     template <typename T>
     const_matrix_view<T> operator^(const const_matrix_view<T>& m, transpose_t t)
     {
-        return {m.length(1), m.length(0), m.data(), m.stride(1), m.stride(0)};
+        return m.transposed();
     }
 
     template <typename T>
-    matrix_view<T> operator^(matrix_view<T>& m, transpose_t t)
+    matrix_view<T> operator^(const matrix_view<T>& m, transpose_t t)
     {
-        return {m.length(1), m.length(0), m.data(), m.stride(1), m.stride(0)};
+        return m.transposed();
     }
 
-    template <typename T>
-    matrix_view<T> operator^(matrix_view<T>&& m, transpose_t t)
+    template <typename T, typename Alloc>
+    const_matrix_view<T> operator^(const matrix<T, Alloc>& m, transpose_t t)
     {
-        return m^transpose::T;
+        return m.transposed();
+    }
+
+    template <typename T, typename Alloc>
+    matrix_view<T> operator^(matrix<T, Alloc>& m, transpose_t t)
+    {
+        return m.transposed();
     }
 
     inline
@@ -2924,9 +3216,9 @@ namespace MArray
     }
 
     template <typename U>
-    void gemm(const U& alpha, const const_matrix_view<U>& a,
-                              const const_matrix_view<U>& b,
-              const U&  beta,             matrix_view<U>& c)
+    void gemm(U& alpha, const_matrix_view<U> a,
+                        const_matrix_view<U> b,
+              U&  beta,       matrix_view<U> c)
     {
         using transpose::T;
 
@@ -2938,33 +3230,25 @@ namespace MArray
         bool transa = (a.stride(1) == 1) != transc;
         bool transb = (b.stride(1) == 1) != transc;
 
-        const_matrix_view<U> at = (transa ? a^T : a);
-        const_matrix_view<U> bt = (transb ? b^T : b);
-              matrix_view<U> ct = (transc ? c^T : c);
+        if (transa) a.transpose();
+        if (transb) b.transpose();
+        if (transc) c.transpose();
 
-        assert(at.length(0) == ct.length(0));
-        assert(bt.length(1) == ct.length(1));
-        assert(at.length(1) == bt.length(0));
+        assert(a.length(0) == c.length(0));
+        assert(b.length(1) == c.length(1));
+        assert(a.length(1) == b.length(0));
 
-        gemm(ct.length(0), ct.length(1), at.length(1),
-             alpha, at.data(), at.stride(1),
-                    bt.data(), bt.stride(1),
-              beta, ct.data(), ct.stride(1));
-    }
-
-    template <typename T>
-    void gemm(const T& alpha, const const_matrix_view<T>&  a,
-                              const const_matrix_view<T>&  b,
-              const T&  beta,             matrix_view<T>&& c)
-    {
-        gemm(alpha, a, b, beta, c);
+        gemm(c.length(0), c.length(1), a.length(1),
+             alpha, a.data(), a.stride(1),
+                    b.data(), b.stride(1),
+              beta, c.data(), c.stride(1));
     }
 
     template <typename U>
     void gemm(char transa, char transb,
-              const U& alpha, const const_matrix_view<U>& a,
-                              const const_matrix_view<U>& b,
-              const U&  beta,             matrix_view<U>& c)
+              U alpha, const_matrix_view<U> a,
+                       const_matrix_view<U> b,
+              U  beta,       matrix_view<U> c)
     {
         using transpose::T;
 
@@ -2978,15 +3262,6 @@ namespace MArray
             if (toupper(transb) == 'T') gemm(alpha, a  , b^T, beta, c);
             else                        gemm(alpha, a  , b  , beta, c);
         }
-    }
-
-    template <typename T>
-    void gemm(char transa, char transb,
-              const T& alpha, const matrix_view<T>&  a,
-                              const matrix_view<T>&  b,
-              const T&  beta,       matrix_view<T>&& c)
-    {
-        gemm(transa, transb, alpha, a, b, beta, c);
     }
 }
 

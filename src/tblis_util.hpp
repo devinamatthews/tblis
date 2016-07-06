@@ -5,6 +5,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
+#include <ctime>
 
 #include <algorithm>
 #include <list>
@@ -14,6 +15,10 @@
 #include <random>
 #include <string>
 #include <vector>
+
+#ifdef __MACH__
+#include <mach/mach_time.h>
+#endif
 
 #define MARRAY_DEFAULT_LAYOUT COLUMN_MAJOR
 #include "external/marray/include/varray.hpp"
@@ -60,6 +65,15 @@ template<typename T> std::ostream& operator<<(std::ostream& os, const std::vecto
     os << "[";
     if (!v.empty()) os << v[0];
     for (int i = 1;i < v.size();i++) os << ", " << v[i];
+    os << "]";
+    return os;
+}
+
+template<typename T, size_t N> std::ostream& operator<<(std::ostream& os, const std::array<T,N>& v)
+{
+    os << "[";
+    if (N) os << v[0];
+    for (int i = 1;i < N;i++) os << ", " << v[i];
     os << "]";
     return os;
 }
@@ -197,8 +211,63 @@ namespace matrix_constants
     enum {DIM_M, DIM_N, DIM_K};
 }
 
+template <typename... Args> struct has_member_helper;
+template <typename... Args>
+using has_member = stl_ext::conditional_t<false,
+    has_member_helper<Args...>,void>;
+
+template <typename T> struct blocksize_traits_helper;
+
+template <typename T, size_t N>
+struct blocksize_traits_helper<std::array<T,N>>
+{
+    static constexpr size_t value = N;
+};
+
+template <typename T>
+struct blocksize_traits
+{
+    private:
+        template<typename U>
+        static std::array<int,U::max> _max_helper(U*);
+        static std::array<int,T::def> _max_helper(...);
+
+        template<typename U>
+        static std::array<int,U::iota> _iota_helper(U*);
+        static std::array<int,      1> _iota_helper(...);
+
+        template<typename U>
+        static std::array<int,U::extent> _extent_helper(U*);
+        static std::array<int,   T::def> _extent_helper(...);
+
+    public:
+        static constexpr idx_type def = T::def;
+        static constexpr idx_type max = blocksize_traits_helper<decltype(_max_helper((T*)0))>::value;
+        static constexpr idx_type iota = blocksize_traits_helper<decltype(_iota_helper((T*)0))>::value;
+        static constexpr idx_type extent = blocksize_traits_helper<decltype(_extent_helper((T*)0))>::value;
+};
+
 namespace util
 {
+
+inline double tic()
+{
+    #ifdef __MACH__
+    static double conv = -1.0;
+    if (conv < 0)
+    {
+        mach_timebase_info_data_t timebase;
+        mach_timebase_info(&timebase);
+        conv = (double)timebase.numer / (double)timebase.denom;
+    }
+    uint64_t nsec = mach_absolute_time();
+    return conv*(double)nsec/1e9;
+    #else
+    timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (double)ts.tv_sec+(double)ts.tv_nsec/1e9;
+    #endif
+}
 
 extern std::mt19937 engine;
 

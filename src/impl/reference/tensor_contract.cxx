@@ -1,5 +1,4 @@
 #include "tblis.hpp"
-#include "impl/tensor_impl.hpp"
 
 using namespace std;
 using namespace stl_ext;
@@ -13,8 +12,13 @@ namespace impl
 template <typename T>
 int tensor_contract_reference(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
                                        const const_tensor_view<T>& B, const std::string& idx_B,
-                              T  beta,             tensor_view<T>& C, const std::string& idx_C)
+                              T  beta, const       tensor_view<T>& C, const std::string& idx_C)
 {
+    if (alpha == T(0))
+    {
+        return tensor_scale_reference(beta, C, idx_C);
+    }
+
     string idx_AB = intersection(idx_A, idx_B);
     string idx_AC = intersection(idx_A, idx_C);
     string idx_BC = intersection(idx_B, idx_C);
@@ -80,30 +84,22 @@ int tensor_contract_reference(T alpha, const const_tensor_view<T>& A, const std:
         {
             T temp = T();
 
-            if (alpha != 0.0)
+            while (iter_AB.next(A_, B_))
             {
-                while (iter_AB.next(A_, B_))
-                {
-                    assert (A_-A.data() >= 0 && A_-A.data() < A.size());
-                    assert (B_-B.data() >= 0 && B_-B.data() < B.size());
-                    temp += (*A_)*(*B_);
-                }
-                temp *= alpha;
+                temp += (*A_)*(*B_);
             }
+            temp *= alpha;
 
-            if (beta == 0.0)
+            if (beta == T(0))
             {
-                assert (C_-C.data() >= 0 && C_-C.data() < C.size());
                 *C_ = temp;
             }
-            else if (beta == 1.0)
+            else if (beta == T(1))
             {
-                assert (C_-C.data() >= 0 && C_-C.data() < C.size());
                 *C_ += temp;
             }
             else
             {
-                assert (C_-C.data() >= 0 && C_-C.data() < C.size());
                 *C_ = temp + beta*(*C_);
             }
         }
@@ -116,7 +112,7 @@ int tensor_contract_reference(T alpha, const const_tensor_view<T>& A, const std:
 template \
 int tensor_contract_reference(T alpha, const const_tensor_view<T>& A, const std::string& idx_A, \
                                        const const_tensor_view<T>& B, const std::string& idx_B, \
-                              T  beta,             tensor_view<T>& C, const std::string& idx_C);
+                              T  beta, const       tensor_view<T>& C, const std::string& idx_C);
 #include "tblis_instantiate_for_types.hpp"
 
 }

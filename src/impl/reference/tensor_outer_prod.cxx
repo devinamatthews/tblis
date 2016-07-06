@@ -1,5 +1,4 @@
 #include "tblis.hpp"
-#include "impl/tensor_impl.hpp"
 
 using namespace std;
 using namespace stl_ext;
@@ -13,8 +12,13 @@ namespace impl
 template <typename T>
 int tensor_outer_prod_reference(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
                                          const const_tensor_view<T>& B, const std::string& idx_B,
-                                T  beta,             tensor_view<T>& C, const std::string& idx_C)
+                                T  beta, const       tensor_view<T>& C, const std::string& idx_C)
 {
+    if (alpha == T(0))
+    {
+        return tensor_scale_reference(beta, C, idx_C);
+    }
+
     string idx_AC = intersection(idx_A, idx_C);
     string idx_BC = intersection(idx_B, idx_C);
 
@@ -54,45 +58,23 @@ int tensor_outer_prod_reference(T alpha, const const_tensor_view<T>& A, const st
     const T* restrict B_ = B.data();
           T* restrict C_ = C.data();
 
-    if (alpha == 0.0)
-    {
-        viterator<1> iter_C(C.lengths(), C.strides());
+    viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
+    viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
 
-        if (beta == 0.0)
+    while (iter_AC.next(A_, C_))
+    {
+        if (beta == T(0))
         {
-            while (iter_C.next(C_))
+            while (iter_BC.next(B_, C_))
             {
-                *C_ = T();
+                *C_ = alpha*(*A_)*(*B_);
             }
         }
         else
         {
-            while (iter_C.next(C_))
+            while (iter_BC.next(B_, C_))
             {
-                *C_ *= beta;
-            }
-        }
-    }
-    else
-    {
-        viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
-        viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
-
-        while (iter_AC.next(A_, C_))
-        {
-            if (beta == 0.0)
-            {
-                while (iter_BC.next(B_, C_))
-                {
-                    *C_ = alpha*(*A_)*(*B_);
-                }
-            }
-            else
-            {
-                while (iter_BC.next(B_, C_))
-                {
-                    *C_ = alpha*(*A_)*(*B_) + beta*(*C_);
-                }
+                *C_ = alpha*(*A_)*(*B_) + beta*(*C_);
             }
         }
     }
@@ -104,7 +86,7 @@ int tensor_outer_prod_reference(T alpha, const const_tensor_view<T>& A, const st
 template \
 int tensor_outer_prod_reference(T alpha, const const_tensor_view<T>& A, const std::string& idx_A, \
                                          const const_tensor_view<T>& B, const std::string& idx_B, \
-                                T  beta,             tensor_view<T>& C, const std::string& idx_C);
+                                T  beta, const       tensor_view<T>& C, const std::string& idx_C);
 #include "tblis_instantiate_for_types.hpp"
 
 }

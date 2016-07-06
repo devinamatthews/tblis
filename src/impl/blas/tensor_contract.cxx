@@ -1,5 +1,4 @@
 #include "tblis.hpp"
-#include "impl/tensor_impl.hpp"
 
 #include "external/lawrap/blas.h"
 
@@ -15,7 +14,7 @@ namespace impl
 template <typename T>
 int tensor_contract_blas(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
                                   const const_tensor_view<T>& B, const std::string& idx_B,
-                         T  beta,             tensor_view<T>& C, const std::string& idx_C)
+                         T  beta, const       tensor_view<T>& C, const std::string& idx_C)
 {
     string idx_AB = intersection(idx_A, idx_B);
     string idx_AC = intersection(idx_A, idx_C);
@@ -44,20 +43,23 @@ int tensor_contract_blas(T alpha, const const_tensor_view<T>& A, const std::stri
     tensor<T> ar(len_AB_AC);
     tensor<T> br(len_AB_BC);
     tensor<T> cr(len_AC_BC);
+          tensor_view<T> arv(ar);
+          tensor_view<T> brv(br);
+    const_tensor_view<T> crv(cr);
 
     matrix_view<T> am, bm, cm;
 
-    matricize(ar, am, idx_AB.size());
-    matricize(br, bm, idx_AB.size());
-    matricize(cr, cm, idx_AC.size());
+    matricize<T>(ar, am, idx_AB.size());
+    matricize<T>(br, bm, idx_AB.size());
+    matricize<T>(cr, cm, idx_AC.size());
 
-    tensor_transpose_impl<T>(1.0, A, idx_A, 0.0, ar, idx_AB_AC);
-    tensor_transpose_impl<T>(1.0, B, idx_B, 0.0, br, idx_AB_BC);
+    tensor_transpose_impl<T>(1.0, A, idx_A, 0.0, arv, idx_AB_AC);
+    tensor_transpose_impl<T>(1.0, B, idx_B, 0.0, brv, idx_AB_BC);
     gemm('T', 'N', cm.length(0), cm.length(1), am.length(0),
          alpha, am.data(), am.stride(1),
                 bm.data(), bm.stride(1),
            0.0, cm.data(), cm.stride(1));
-    tensor_transpose_impl<T>(1.0, cr, idx_AC_BC, beta, C, idx_C);
+    tensor_transpose_impl<T>(1.0, crv, idx_AC_BC, beta, C, idx_C);
 
     return 0;
 }
@@ -66,7 +68,7 @@ int tensor_contract_blas(T alpha, const const_tensor_view<T>& A, const std::stri
 template \
 int tensor_contract_blas<T>(T alpha, const const_tensor_view<T>& A, const std::string& idx_A, \
                                      const const_tensor_view<T>& B, const std::string& idx_B, \
-                            T  beta,             tensor_view<T>& C, const std::string& idx_C);
+                            T  beta, const       tensor_view<T>& C, const std::string& idx_C);
 #include "tblis_instantiate_for_types.hpp"
 
 }

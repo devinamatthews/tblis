@@ -1,5 +1,4 @@
 #include "tblis.hpp"
-#include "impl/tensor_impl.hpp"
 
 using namespace std;
 using namespace MArray;
@@ -10,21 +9,20 @@ namespace impl
 {
 
 template <typename T>
-int tensor_scale_reference(T alpha, tensor_view<T>& A, const std::string& idx_A)
+int tensor_scale_reference(T alpha, const tensor_view<T>& A, const std::string& idx_A)
 {
     viterator<> iter_A(A.lengths(), A.strides());
 
     T* restrict A_ = A.data();
 
-    if (alpha == 0.0)
+    if (alpha == T(0))
     {
         while (iter_A.next(A_))
         {
-            assert (A_-A.data() >= 0 && A_-A.data() < A.size());
-            *A_ = 0.0;
+            *A_ = T();
         }
     }
-    else if (alpha == 1.0)
+    else if (alpha == T(0))
     {
         // do nothing
     }
@@ -32,7 +30,6 @@ int tensor_scale_reference(T alpha, tensor_view<T>& A, const std::string& idx_A)
     {
         while (iter_A.next(A_))
         {
-            assert (A_-A.data() >= 0 && A_-A.data() < A.size());
             *A_ *= alpha;
         }
     }
@@ -42,7 +39,7 @@ int tensor_scale_reference(T alpha, tensor_view<T>& A, const std::string& idx_A)
 
 #define INSTANTIATE_FOR_TYPE(T) \
 template \
-int tensor_scale_reference(T alpha, tensor_view<T>& A, const std::string& idx_A);
+int tensor_scale_reference(T alpha, const tensor_view<T>& A, const std::string& idx_A);
 #include "tblis_instantiate_for_types.hpp"
 
 }

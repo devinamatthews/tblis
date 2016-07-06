@@ -1,5 +1,4 @@
 #include "tblis.hpp"
-#include "impl/tensor_impl.hpp"
 
 using namespace std;
 using namespace MArray;
@@ -11,7 +10,7 @@ namespace impl
 
 template <typename T>
 int tensor_transpose_reference(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
-                               T  beta,             tensor_view<T>& B, const std::string& idx_B)
+                               T  beta, const       tensor_view<T>& B, const std::string& idx_B)
 {
     unsigned ndim = A.dimension();
 
@@ -22,8 +21,12 @@ int tensor_transpose_reference(T alpha, const const_tensor_view<T>& A, const std
     }
 
     const vector<stride_type>& strides_A = A.strides();
-    const vector<stride_type>& strides_B = B.strides();
+    vector<stride_type> strides_B(ndim);
     const vector<idx_type>& len_A = A.lengths();
+
+    for (unsigned i = 0;i < ndim;i++)
+        for (unsigned j = 0;j < ndim;j++)
+            if (idx_A[i] == idx_B[j]) strides_B[i] = B.stride(j);
 
     string idx;
     for (unsigned i = 0;i < ndim;i++) idx.push_back(i);
@@ -55,17 +58,16 @@ int tensor_transpose_reference(T alpha, const const_tensor_view<T>& A, const std
     const T* restrict A_ = A.data();
           T* restrict B_ = B.data();
 
-    if (alpha == 0.0)
+    if (alpha == T(0))
     {
-        if (beta == 0.0)
+        if (beta == T(0))
         {
             while (iter_AB.next(A_, B_))
             {
-                assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                 tblis_zerov(len0, B_, stride_B0);
             }
         }
-        else if (beta == 1.0)
+        else if (beta == T(1))
         {
             // do nothing
         }
@@ -73,28 +75,23 @@ int tensor_transpose_reference(T alpha, const const_tensor_view<T>& A, const std
         {
             while (iter_AB.next(A_, B_))
             {
-                assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                 tblis_scalv(len0, beta, B_, stride_B0);
             }
         }
     }
-    else if (alpha == 1.0)
+    else if (alpha == T(1))
     {
-        if (beta == 0.0)
+        if (beta == T(0))
         {
             while (iter_AB.next(A_, B_))
             {
-                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
-                assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                 tblis_copyv(false, len0, A_, stride_A0, B_, stride_B0);
             }
         }
-        else if (beta == 1.0)
+        else if (beta == T(1))
         {
             while (iter_AB.next(A_, B_))
             {
-                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
-                assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                 tblis_addv(false, len0, A_, stride_A0, B_, stride_B0);
             }
         }
@@ -102,29 +99,23 @@ int tensor_transpose_reference(T alpha, const const_tensor_view<T>& A, const std
         {
             while (iter_AB.next(A_, B_))
             {
-                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
-                assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                 tblis_xpbyv(false, len0, A_, stride_A0, beta, B_, stride_B0);
             }
         }
     }
     else
     {
-        if (beta == 0.0)
+        if (beta == T(0))
         {
             while (iter_AB.next(A_, B_))
             {
-                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
-                assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                 tblis_scal2v(false, len0, alpha, A_, stride_A0, B_, stride_B0);
             }
         }
-        else if (beta == 1.0)
+        else if (beta == T(1))
         {
             while (iter_AB.next(A_, B_))
             {
-                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
-                assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                 tblis_axpyv(false, len0, alpha, A_, stride_A0, B_, stride_B0);
             }
         }
@@ -132,8 +123,6 @@ int tensor_transpose_reference(T alpha, const const_tensor_view<T>& A, const std
         {
             while (iter_AB.next(A_, B_))
             {
-                assert (A_-A.data() >= 0 && A_-A.data() < A.size());
-                assert (B_-B.data() >= 0 && B_-B.data() < B.size());
                 tblis_axpbyv(false, len0, alpha, A_, stride_A0, beta, B_, stride_B0);
             }
         }
@@ -145,7 +134,7 @@ int tensor_transpose_reference(T alpha, const const_tensor_view<T>& A, const std
 #define INSTANTIATE_FOR_TYPE(T) \
 template \
 int tensor_transpose_reference<T>(T alpha, const const_tensor_view<T>& A, const std::string& idx_A, \
-                                  T  beta,             tensor_view<T>& B, const std::string& idx_B);
+                                  T  beta, const       tensor_view<T>& B, const std::string& idx_B);
 #include "tblis_instantiate_for_types.hpp"
 
 }

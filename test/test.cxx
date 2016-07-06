@@ -165,30 +165,15 @@ template <> const string& TypeName<dcomplex>()
 template <typename T>
 void RandomMatrix(size_t N, idx_type m_min, idx_type n_min, matrix<T>& t)
 {
-    vector<stride_type> stride = RandomProductConstrainedSequence<stride_type>(3, N, {1, m_min, n_min});
+    vector<idx_type> len = RandomProductConstrainedSequence<idx_type>(2, N, {m_min, n_min});
 
-    idx_type m = (m_min > 0 ? m_min : RandomInteger(1, stride[1]));
-    idx_type n = (n_min > 0 ? n_min : RandomInteger(1, stride[2]));
+    idx_type m = (m_min > 0 ? m_min : RandomInteger(1, len[0]));
+    idx_type n = (n_min > 0 ? n_min : RandomInteger(1, len[1]));
 
-    stride_type rs = stride[0];
-    stride_type cs = stride[1]*rs;
-
-    /*
-    if (rs == cs)
-    {
-        assert(m == 1 || n == 1);
-        (m == 1 ? rs : cs) = 1;
-    }
-    */
-
-    size_t size = 1+(m-1)*rs+(n-1)*cs;
-
-    t.reset(m, n, rs, cs);
+    t.reset(m, n);
 
     T* data = t.data();
-    fill(data, data+size, T());
-
-    viterator<> it(make_vector(m,n), make_vector(rs,cs));
+    miterator<2> it(t.lengths(), t.strides());
     while (it.next(data)) *data = RandomUnit<T>();
 }
 
@@ -213,45 +198,20 @@ void RandomMatrix(size_t N, matrix<T>& t)
  * initialized from the interior of the unit circle.
  */
 template <typename T>
-void RandomTensor(size_t N, unsigned d, vector<stride_type> len_min, tensor<T>& t)
+void RandomTensor(size_t N, unsigned d, vector<idx_type> len_min, tensor<T>& t)
 {
-    //len_min.insert(len_min.begin(), 1);
-    //vector<stride_type> stride = RandomProductConstrainedSequence<stride_type>(d+1, N, len_min);
-
-    vector<stride_type> stride = RandomProductConstrainedSequence<stride_type>(d, N, len_min);
-    len_min.insert(len_min.begin(), 1);
-    stride.insert(stride.begin(), 1);
+    vector<idx_type> len_max = RandomProductConstrainedSequence<idx_type>(d, N, len_min);
 
     vector<idx_type> len(d);
     for (unsigned i = 0;i < d;i++)
     {
-        if (len_min[i+1] > 0)
-        {
-            len[i] = len_min[i+1];
-        }
-        else
-        {
-            //len[i] = RandomInteger(1, stride[i+1]);
-            len[i] = stride[i+1];
-        }
+        len[i] = (len_min[i] > 0 ? len_min[i] : RandomInteger(1, len_max[i]));
     }
 
-    stride.resize(d);
-
-    size_t size = 1+(len[0]-1)*stride[0];
-    for (unsigned i = 1;i < d;i++)
-    {
-        stride[i] *= stride[i-1];
-        size += (len[i]-1)*stride[i];
-    }
-
-    t.reset(d, len, stride);
-    assert(size == t.size());
+    t.reset(len);
 
     T* data = t.data();
-    fill_n(data, size, T());
-
-    viterator<> it(len, stride);
+    viterator<> it(t.lengths(), t.strides());
     while (it.next(data)) *data = RandomUnit<T>();
 }
 
@@ -265,7 +225,7 @@ void RandomTensor(size_t N, unsigned d, vector<stride_type> len_min, tensor<T>& 
 template <typename T>
 void RandomTensor(size_t N, unsigned d, tensor<T>& t)
 {
-    RandomTensor(N, d, vector<stride_type>(d, 0), t);
+    RandomTensor(N, d, vector<idx_type>(d), t);
 }
 
 /*
@@ -361,7 +321,7 @@ void RandomTensors(size_t N,
 
     RandomTensor(N, ndim_A, A);
 
-    vector<stride_type> min_B(ndim_B);
+    vector<idx_type> min_B(ndim_B);
     for (unsigned i = 0;i < ndim_B;i++)
     {
         for (unsigned j = 0;j < ndim_A;j++)
@@ -557,7 +517,7 @@ void RandomTensors(size_t N,
     {
         RandomTensor(N, ndim_A, A);
 
-        vector<stride_type> min_B(ndim_B);
+        vector<idx_type> min_B(ndim_B);
         for (unsigned i = 0;i < ndim_B;i++)
         {
             for (unsigned j = 0;j < ndim_A;j++)
@@ -569,7 +529,7 @@ void RandomTensors(size_t N,
         RandomTensor(N, ndim_B, min_B, B);
 
         stride_type siz = 1;
-        vector<stride_type> min_C(ndim_C);
+        vector<idx_type> min_C(ndim_C);
         for (unsigned i = 0;i < ndim_C;i++)
         {
             for (unsigned j = 0;j < ndim_A;j++)
@@ -744,10 +704,10 @@ void RandomMult(size_t N, tensor<T>& A, string& idx_A,
                           tensor<T>& B, string& idx_B,
                           tensor<T>& C, string& idx_C)
 {
-    unsigned ndim_A, ndim_B, ndim_C;
-    unsigned ndim_A_only, ndim_B_only, ndim_C_only;
-    unsigned ndim_AB, ndim_AC, ndim_BC;
-    unsigned ndim_ABC;
+    int ndim_A, ndim_B, ndim_C;
+    int ndim_A_only, ndim_B_only, ndim_C_only;
+    int ndim_AB, ndim_AC, ndim_BC;
+    int ndim_ABC;
     do
     {
         ndim_A = RandomInteger(1,8);
@@ -799,9 +759,14 @@ void RandomGEMM(size_t N, matrix<T>& A,
     //n += (NR<T>::value-1)-(n-1)%NR<T>::value;
     //k += (KR<T>::value-1)-(k-1)%KR<T>::value;
 
+    //m = n = k = 256;
+    //m = 255;
+
     RandomMatrix(N, m, k, A);
     RandomMatrix(N, k, n, B);
     RandomMatrix(N, m, n, C);
+
+    //printf("%.15f %.15f\n", (double)real(tblis_normfm(A)), (double)real(tblis_normfm(B)));
 }
 
 /*
@@ -850,8 +815,8 @@ void RandomContract(size_t N, tensor<T>& A, string& idx_A,
                               tensor<T>& B, string& idx_B,
                               tensor<T>& C, string& idx_C)
 {
-    unsigned ndim_A, ndim_B, ndim_C;
-    unsigned ndim_AB, ndim_AC, ndim_BC;
+    int ndim_A, ndim_B, ndim_C;
+    int ndim_AB, ndim_AC, ndim_BC;
     do
     {
         ndim_A = RandomInteger(1,8);
@@ -885,9 +850,9 @@ void RandomWeight(size_t N, tensor<T>& A, string& idx_A,
                             tensor<T>& B, string& idx_B,
                             tensor<T>& C, string& idx_C)
 {
-    unsigned ndim_A, ndim_B, ndim_C;
-    unsigned ndim_AC, ndim_BC;
-    unsigned ndim_ABC;
+    int ndim_A, ndim_B, ndim_C;
+    int ndim_AC, ndim_BC;
+    int ndim_ABC;
     do
     {
         ndim_A = RandomInteger(1,8);
@@ -961,21 +926,22 @@ void TestTBLIS(size_t N)
                                                  "GER") << " (" << TypeName<T>() << "):" << endl;
 
         cout << endl;
-        cout << "m, n, k    = " << C.length(1) << ", " << C.length(1) << ", " << A.length(1) << endl;
+        cout << "m, n, k    = " << C.length(0) << ", " << C.length(1) << ", " << A.length(1) << endl;
         cout << "rs_a, cs_a = " << A.stride(0) << ", " << A.stride(1) << endl;
         cout << "rs_b, cs_b = " << B.stride(0) << ", " << B.stride(1) << endl;
         cout << "rs_c, cs_c = " << C.stride(0) << ", " << C.stride(1) << endl;
         cout << endl;
 
-        D = C;
+        D.reset(C);
         gemm_ref(scale, A, B, scale, D);
         tblis_normfm(D, ref_val);
 
-        D = C;
+        D.reset(C);
         tblis_gemm(scale, A, B, scale, D);
         tblis_normfm(D, calc_val);
 
         passfail("REF", ref_val, calc_val);
+        //exit(0);
     }
 }
 
@@ -1010,12 +976,12 @@ void TestMult(size_t N)
     cout << endl;
 
     impl_type = BLAS_BASED;
-    D = C;
+    D.reset(C);
     tensor_contract(scale, A, idx_A, B, idx_B, scale, D, idx_C);
     tensor_reduce(REDUCE_NORM_2, D, idx_C, ref_val);
 
     impl_type = REFERENCE;
-    D = C;
+    D.reset(C);
     tensor_mult(scale, A, idx_A, B, idx_B, scale, D, idx_C);
     tensor_reduce(REDUCE_NORM_2, D, idx_C, calc_val);
 
@@ -1036,12 +1002,12 @@ void TestMult(size_t N)
     cout << endl;
 
     impl_type = BLAS_BASED;
-    D = C;
+    D.reset(C);
     tensor_weight(scale, A, idx_A, B, idx_B, scale, D, idx_C);
     tensor_reduce(REDUCE_NORM_2, D, idx_C, ref_val);
 
     impl_type = REFERENCE;
-    D = C;
+    D.reset(C);
     tensor_mult(scale, A, idx_A, B, idx_B, scale, D, idx_C);
     tensor_reduce(REDUCE_NORM_2, D, idx_C, calc_val);
 
@@ -1062,12 +1028,12 @@ void TestMult(size_t N)
     cout << endl;
 
     impl_type = BLAS_BASED;
-    D = C;
+    D.reset(C);
     tensor_outer_prod(scale, A, idx_A, B, idx_B, scale, D, idx_C);
     tensor_reduce(REDUCE_NORM_2, D, idx_C, ref_val);
 
     impl_type = REFERENCE;
-    D = C;
+    D.reset(C);
     tensor_mult(scale, A, idx_A, B, idx_B, scale, D, idx_C);
     tensor_reduce(REDUCE_NORM_2, D, idx_C, calc_val);
 
@@ -1088,12 +1054,12 @@ void TestMult(size_t N)
     cout << endl;
 
     impl_type = BLAS_BASED;
-    D = C;
+    D.reset(C);
     tensor_mult(scale, A, idx_A, B, idx_B, scale, D, idx_C);
     tensor_reduce(REDUCE_NORM_2, D, idx_C, ref_val);
 
     impl_type = REFERENCE;
-    D = C;
+    D.reset(C);
     tensor_mult(scale, A, idx_A, B, idx_B, scale, D, idx_C);
     tensor_reduce(REDUCE_NORM_2, D, idx_C, calc_val);
 
@@ -1127,12 +1093,12 @@ void TestContract(size_t N)
     cout << endl;
 
     impl_type = REFERENCE;
-    D = C;
+    D.reset(C);
     tensor_contract(scale, A, idx_A, B, idx_B, scale, D, idx_C);
     tensor_reduce(REDUCE_NORM_2, D, idx_C, ref_val);
 
     impl_type = BLAS_BASED;
-    D = C;
+    D.reset(C);
     tensor_contract(scale, A, idx_A, B, idx_B, scale, D, idx_C);
     impl_type = REFERENCE;
     tensor_reduce(REDUCE_NORM_2, D, idx_C, calc_val);
@@ -1140,7 +1106,7 @@ void TestContract(size_t N)
     passfail("BLAS", ref_val, calc_val);
 
     impl_type = BLIS_BASED;
-    D = C;
+    D.reset(C);
     tensor_contract(scale, A, idx_A, B, idx_B, scale, D, idx_C);
     impl_type = REFERENCE;
     tensor_reduce(REDUCE_NORM_2, D, idx_C, calc_val);
@@ -1175,12 +1141,12 @@ void TestWeight(size_t N)
     scale = 10.0*RandomUnit<T>();
 
     impl_type = BLAS_BASED;
-    D = C;
+    D.reset(C);
     tensor_weight(scale, A, idx_A, B, idx_B, scale, D, idx_C);
     tensor_reduce(REDUCE_NORM_2, D, idx_C, ref_val);
 
     impl_type = REFERENCE;
-    D = C;
+    D.reset(C);
     tensor_weight(scale, A, idx_A, B, idx_B, scale, D, idx_C);
     tensor_reduce(REDUCE_NORM_2, D, idx_C, calc_val);
 
@@ -1212,12 +1178,12 @@ void TestOuterProd(size_t N)
     scale = 10.0*RandomUnit<T>();
 
     impl_type = BLAS_BASED;
-    D = C;
+    D.reset(C);
     tensor_outer_prod(scale, A, idx_A, B, idx_B, scale, D, idx_C);
     tensor_reduce(REDUCE_NORM_2, D, idx_C, ref_val);
 
     impl_type = REFERENCE;
-    D = C;
+    D.reset(C);
     tensor_outer_prod(scale, A, idx_A, B, idx_B, scale, D, idx_C);
     tensor_reduce(REDUCE_NORM_2, D, idx_C, calc_val);
 
@@ -1248,12 +1214,12 @@ void TestSum(size_t N)
     cout << endl;
 
     impl_type = REFERENCE;
-    C = B;
+    C.reset(B);
     tensor_transpose(scale, A, idx_A, scale, C, idx_B);
     tensor_reduce(REDUCE_NORM_2, C, idx_B, ref_val);
 
     impl_type = REFERENCE;
-    C = B;
+    C.reset(B);
     tensor_sum(scale, A, idx_A, scale, C, idx_B);
     tensor_reduce(REDUCE_NORM_2, C, idx_B, calc_val);
 
@@ -1271,12 +1237,12 @@ void TestSum(size_t N)
     cout << endl;
 
     impl_type = REFERENCE;
-    C = B;
+    C.reset(B);
     tensor_trace(scale, A, idx_A, scale, C, idx_B);
     tensor_reduce(REDUCE_NORM_2, C, idx_B, ref_val);
 
     impl_type = REFERENCE;
-    C = B;
+    C.reset(B);
     tensor_sum(scale, A, idx_A, scale, C, idx_B);
     tensor_reduce(REDUCE_NORM_2, C, idx_B, calc_val);
 
@@ -1294,12 +1260,12 @@ void TestSum(size_t N)
     cout << endl;
 
     impl_type = REFERENCE;
-    C = B;
+    C.reset(B);
     tensor_replicate(scale, A, idx_A, scale, C, idx_B);
     tensor_reduce(REDUCE_NORM_2, C, idx_B, ref_val);
 
     impl_type = REFERENCE;
-    C = B;
+    C.reset(B);
     tensor_sum(scale, A, idx_A, scale, C, idx_B);
     tensor_reduce(REDUCE_NORM_2, C, idx_B, calc_val);
 
@@ -1339,12 +1305,12 @@ void TestSum(size_t N)
     passfail("SUM", scale*(sz*ref_val+sum_b), calc_val);
 
     impl_type = BLAS_BASED;
-    C = B;
+    C.reset(B);
     tensor_sum(scale, A, idx_A, scale, C, idx_B);
     tensor_reduce(REDUCE_NORM_2, C, idx_B, ref_val);
 
     impl_type = REFERENCE;
-    C = B;
+    C.reset(B);
     tensor_sum(scale, A, idx_A, scale, C, idx_B);
     tensor_reduce(REDUCE_NORM_2, C, idx_B, calc_val);
 
@@ -1450,17 +1416,16 @@ void TestDot(size_t N)
     T* data = B.data();
     viterator<> it(B.lengths(), B.strides());
     while (it.next(data)) *data = stl_ext::conj(*data);
-    Normalize(A, idx_A);
     tensor_reduce(REDUCE_NORM_2, A, idx_A, ref_val);
     tensor_dot(A, idx_A, B, idx_B, calc_val);
     passfail("NRM2", ref_val*ref_val, calc_val);
 
-    B = 1.0;
+    B = T(1);
     tensor_reduce(REDUCE_SUM, A, idx_A, ref_val);
     tensor_dot(A, idx_A, B, idx_B, calc_val);
     passfail("UNIT", ref_val, calc_val);
 
-    B = 0.0;
+    B = T(0);
     tensor_dot(A, idx_A, B, idx_B, calc_val);
     passfail("ZERO", T(0.0), calc_val);
 }
@@ -1488,18 +1453,17 @@ void TestTranspose(size_t N)
 
     scale = 10.0*RandomUnit<T>();
 
-    C = A;
+    C.reset(A);
     string idx_C = idx_A;
     tensor_reduce(REDUCE_NORM_2, A, idx_A, ref_val);
-    tensor_transpose(T(1.0), A, idx_A, T(0.0), B, idx_B);
+    tensor_transpose(T(1), A, idx_A, T(0), B, idx_B);
     tensor_transpose(scale, B, idx_B, scale, C, idx_C);
     tensor_reduce(REDUCE_NORM_2, C, idx_C, calc_val);
     passfail("INVERSE", T(2.0*std::abs(scale))*ref_val, calc_val);
 
-    B = A;
+    B.reset(A);
     idx_B = idx_A;
     vector<idx_type> len_C(ndim);
-    vector<stride_type> stride_C(ndim);
     do
     {
         for (unsigned i = 0;i < ndim;i++)
@@ -1507,11 +1471,10 @@ void TestTranspose(size_t N)
             unsigned j; for (j = 0;j < ndim && idx_A[j] != perm[i];j++) continue;
             idx_C[i] = idx_B[j];
             len_C[i] = B.length(j);
-            stride_C[i] = B.stride(j);
         }
-        C.reset(ndim, len_C, stride_C);
-        tensor_transpose(T(1.0), B, idx_B, T(0.0), C, idx_C);
-        B = C;
+        C.reset(len_C);
+        tensor_transpose(T(1), B, idx_B, T(0), C, idx_C);
+        B.reset(C);
         idx_B = idx_C;
     }
     while (idx_C != idx_A);
@@ -1562,7 +1525,7 @@ void TestReduce(size_t N)
 
     RandomTensor(N, A);
     idx_A.resize(A.dimension());
-    size_t NA = A.size();
+    size_t NA = A.stride(A.dimension()-1)*A.length(A.dimension()-1);
 
     cout << endl;
     cout << "Testing reduction (" << TypeName<T>() << "):" << endl;
@@ -1655,7 +1618,7 @@ void TestReduce(size_t N)
     blas_val = sqrt(real(blas_val));
     passfail("REDUCE_NORM_2", ref_val, blas_val);
 
-    A = 1;
+    A = T(1);
     tensor_reduce(REDUCE_SUM, A, idx_A, ref_val, ref_idx);
     blas_val = 1;
     for (int i = 0;i < A.dimension();i++) blas_val *= A.length(i);
@@ -1669,13 +1632,13 @@ void Test(size_t N_in_bytes, int R)
 
     for (int i = 0;i < R;i++) TestTBLIS<T>(N);
 
-    //for (int i = 0;i < R;i++) TestReduce<T>(N);
-    //for (int i = 0;i < R;i++) TestScale<T>(N);
-    //for (int i = 0;i < R;i++) TestTranspose<T>(N);
-    //for (int i = 0;i < R;i++) TestDot<T>(N);
-    //for (int i = 0;i < R;i++) TestReplicate<T>(N);
-    //for (int i = 0;i < R;i++) TestTrace<T>(N);
-    //for (int i = 0;i < R;i++) TestSum<T>(N);
+    for (int i = 0;i < R;i++) TestReduce<T>(N);
+    for (int i = 0;i < R;i++) TestScale<T>(N);
+    for (int i = 0;i < R;i++) TestTranspose<T>(N);
+    for (int i = 0;i < R;i++) TestDot<T>(N);
+    for (int i = 0;i < R;i++) TestReplicate<T>(N);
+    for (int i = 0;i < R;i++) TestTrace<T>(N);
+    for (int i = 0;i < R;i++) TestSum<T>(N);
     //for (int i = 0;i < R;i++) TestOuterProd<T>(N);
     //for (int i = 0;i < R;i++) TestWeight<T>(N);
     for (int i = 0;i < R;i++) TestContract<T>(N);
@@ -1723,10 +1686,10 @@ int main(int argc, char **argv)
     cout << "Using mt19937 with seed " << seed << endl;
     engine.seed(seed);
 
-    Test<   float>(N, R);
+    //Test<   float>(N, R);
     Test<  double>(N, R);
-    Test<scomplex>(N, R);
-    Test<dcomplex>(N, R);
+    //Test<scomplex>(N, R);
+    //Test<dcomplex>(N, R);
 
     tblis_finalize();
 

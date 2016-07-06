@@ -21,11 +21,15 @@ using GotoGEMM = typename GEMM<Config, 3, 0, 1, 6, 5, -1,
                                MicroKernel<Config>>::template run<T>;
 
 template <typename T, typename Config>
-void tblis_gemm(T alpha, const_matrix_view<T> A,
-                         const_matrix_view<T> B,
-                T  beta,       matrix_view<T> C)
+void tblis_gemm(T alpha, const_matrix_view<T> A_,
+                         const_matrix_view<T> B_,
+                T  beta,       matrix_view<T> C_)
 {
     constexpr bool row_major = Config::template gemm_row_major<T>::value;
+
+    matrix_view<T> A(reinterpret_cast<matrix_view<T>&>(A_));
+    matrix_view<T> B(reinterpret_cast<matrix_view<T>&>(B_));
+    matrix_view<T> C(C_);
 
     assert(A.length(0) == C.length(0));
     assert(A.length(1) == B.length(0));

@@ -1,5 +1,4 @@
 #include "tblis.hpp"
-#include "tensor_impl.hpp"
 
 namespace tblis
 {

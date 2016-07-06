@@ -1,7 +1,7 @@
 #include "tblis.hpp"
-#include "impl/tensor_impl.hpp"
 
 using namespace std;
+using namespace tblis::detail;
 
 namespace tblis
 {
@@ -16,25 +16,25 @@ namespace detail
 template <typename T, idx_type MR, idx_type NR>
 void BlockScatter(ThreadCommunicator& comm, tensor_matrix<T>& A, stride_type* rs, stride_type* cs, stride_type* rscat, stride_type* cscat)
 {
-    idx_type m = A.length();
-    idx_type n = A.width();
+    idx_type m = A.length(0);
+    idx_type n = A.length(1);
 
     idx_type first, last;
     std::tie(first, last, std::ignore) = comm.distribute_over_threads(m, MR);
 
-    A.length(last-first);
-    A.shift_down(first);
-    A.template row_block_scatter<MR>(rs+first/MR, rscat+first);
-    A.shift_up(first);
-    A.length(m);
+    A.length(0, last-first);
+    A.shift(0, first);
+    A.template fill_block_scatter<MR>(0, rs+first/MR, rscat+first);
+    A.shift(0, -first);
+    A.length(0, m);
 
     std::tie(first, last, std::ignore) = comm.distribute_over_threads(n, NR);
 
-    A.width(last-first);
-    A.shift_right(first);
-    A.template col_block_scatter<NR>(cs+first/NR, cscat+first);
-    A.shift_left(first);
-    A.width(n);
+    A.length(1, last-first);
+    A.shift(1, first);
+    A.template fill_block_scatter<NR>(1, cs+first/NR, cscat+first);
+    A.shift(1, -first);
+    A.length(1, n);
 
     comm.barrier();
 }
@@ -47,8 +47,8 @@ template <idx_type MR, idx_type NR> struct MatrifyAndRun<MR, NR, matrix_constant
     MatrifyAndRun(Parent& parent, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         BlockScatter<T,MR,NR>(comm, A, parent.rs, parent.cs, parent.rscat, parent.cscat);
-        block_scatter_matrix<T,MR,NR> M(A.length(), A.width(), A.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
-        //ScatterMatrix<T> M(A.length(), A.width(), A.data(), parent.rscat, parent.cscat);
+        block_scatter_matrix<T,MR,NR> M(A.length(0), A.length(1), A.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
+        //ScatterMatrix<T> M(A.length(0), A.length(1), A.data(), parent.rscat, parent.cscat);
         parent.child(comm, alpha, M, B, beta, C);
     }
 };
@@ -59,8 +59,8 @@ template <idx_type MR, idx_type NR> struct MatrifyAndRun<MR, NR, matrix_constant
     MatrifyAndRun(Parent& parent, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         BlockScatter<T,MR,NR>(comm, B, parent.rs, parent.cs, parent.rscat, parent.cscat);
-        block_scatter_matrix<T,MR,NR> M(B.length(), B.width(), B.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
-        //ScatterMatrix<T> M(B.length(), B.width(), B.data(), parent.rscat, parent.cscat);
+        block_scatter_matrix<T,MR,NR> M(B.length(0), B.length(1), B.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
+        //ScatterMatrix<T> M(B.length(0), B.length(1), B.data(), parent.rscat, parent.cscat);
         parent.child(comm, alpha, A, M, beta, C);
     }
 };
@@ -71,8 +71,8 @@ template <idx_type MR, idx_type NR> struct MatrifyAndRun<MR, NR, matrix_constant
     MatrifyAndRun(Parent& parent, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         BlockScatter<T,MR,NR>(comm, C, parent.rs, parent.cs, parent.rscat, parent.cscat);
-        block_scatter_matrix<T,MR,NR> M(C.length(), C.width(), C.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
-        //ScatterMatrix<T> M(C.length(), C.width(), C.data(), parent.rscat, parent.cscat);
+        block_scatter_matrix<T,MR,NR> M(C.length(0), C.length(1), C.data(), parent.rs, parent.cs, parent.rscat, parent.cscat);
+        //ScatterMatrix<T> M(C.length(0), C.length(1), C.data(), parent.rscat, parent.cscat);
         parent.child(comm, alpha, A, B, beta, M);
     }
 };
@@ -105,8 +105,8 @@ struct Matrify
             constexpr idx_type MR = MT<T>::def;
             constexpr idx_type NR = NT<T>::def;
 
-            idx_type m = (Mat == MAT_A ? A.length() : Mat == MAT_B ? B.length() : C.length());
-            idx_type n = (Mat == MAT_A ? A.width()  : Mat == MAT_B ? B.width()  : C.width());
+            idx_type m = (Mat == MAT_A ? A.length(0) : Mat == MAT_B ? B.length(0) : C.length(0));
+            idx_type n = (Mat == MAT_A ? A.length(1) : Mat == MAT_B ? B.length(1) : C.length(1));
 
             if (rscat == NULL)
             {
@@ -158,13 +158,12 @@ struct MatrifyAndPack
             constexpr idx_type MR = MT<T>::def;
             constexpr idx_type NR = NT<T>::def;
 
-            idx_type m = (Mat == MAT_A ? A.length() : Mat == MAT_B ? B.length() : C.length());
-            idx_type n = (Mat == MAT_A ? A.width()  : Mat == MAT_B ? B.width()  : C.width());
+            idx_type m = (Mat == MAT_A ? A.length(0) : Mat == MAT_B ? B.length(0) : C.length(0));
+            idx_type n = (Mat == MAT_A ? A.length(1) : Mat == MAT_B ? B.length(1) : C.length(1));
             m = round_up(m, MR);
             n = round_up(n, NR);
 
-            MemoryPool& PackBuf = (Mat == MAT_A ? detail::BuffersForA
-                                                : detail::BuffersForB);
+            MemoryPool& PackBuf = (Mat == MAT_A ? BuffersForA : BuffersForB);
 
             auto& pack_buffer = this->child.pack_buffer;
             T*& pack_ptr = this->child.pack_ptr;
@@ -174,7 +173,7 @@ struct MatrifyAndPack
                 if (comm.master())
                 {
                     idx_type scatter_size = size_as_type<stride_type,T>(2*m + 2*n);
-                    pack_buffer = PackBuf.allocate<T>(m*(n+TBLIS_MAX_UNROLL) + scatter_size);
+                    pack_buffer = PackBuf.allocate<T>(m*n + std::max(m,n)*TBLIS_MAX_UNROLL + scatter_size);
                     pack_ptr = pack_buffer;
                 }
 
@@ -197,7 +196,7 @@ using MatrifyAndPackA = MatrifyAndPack<MR,KR,matrix_constants::MAT_A>;
 template <template <typename> class KR, template <typename> class NR>
 using MatrifyAndPackB = MatrifyAndPack<KR,NR,matrix_constants::MAT_B>;
 
-template <typename Config, typename T>
+template <typename T, typename Config=TBLIS_DEFAULT_CONFIG>
 int tensor_contract_blis_int(const std::vector<idx_type>& len_M,
                              const std::vector<idx_type>& len_N,
                              const std::vector<idx_type>& len_K,
@@ -212,16 +211,16 @@ int tensor_contract_blis_int(const std::vector<idx_type>& len_M,
     tensor_matrix<T> bt(len_K, len_N, const_cast<T*>(B), stride_K_B, stride_N_B);
     tensor_matrix<T> ct(len_M, len_N,                C , stride_M_C, stride_N_C);
 
-    GEMM<Config, 4, 0, 1, 9, 8, -1,
-         PartitionN<Config::NC>,
-         PartitionK<Config::KC>,
-         MatrifyAndPackB<Config::KR, Config::NR>,
-         PartitionM<Config::MC>,
-         MatrifyAndPackA<Config::MR, Config::KR>,
-         MatrifyC<Config::MR, Config::NR>,
-         PartitionN<Config::NR>,
-         PartitionM<Config::MR>,
-         MicroKernel<Config>>::run<T> gemm;
+    typename GEMM<Config, 4, 0, 1, 9, 8, -1,
+                  PartitionN<Config::template NC>,
+                  PartitionK<Config::template KC>,
+                  MatrifyAndPackB<Config::template KR, Config::template NR>,
+                  PartitionM<Config::template MC>,
+                  MatrifyAndPackA<Config::template MR, Config::template KR>,
+                  MatrifyC<Config::template MR, Config::template NR>,
+                  PartitionN<Config::template NR>,
+                  PartitionM<Config::template MR>,
+                  MicroKernel<Config>>::template run<T> gemm;
 
     gemm(alpha, at, bt, beta, ct);
 
@@ -231,7 +230,7 @@ int tensor_contract_blis_int(const std::vector<idx_type>& len_M,
 template <typename T>
 int tensor_contract_blis(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
                                   const const_tensor_view<T>& B, const std::string& idx_B,
-                         T  beta,             tensor_view<T>& C, const std::string& idx_C)
+                         T  beta, const       tensor_view<T>& C, const std::string& idx_C)
 {
     unsigned dim_A = A.dimension();
     unsigned dim_B = B.dimension();
@@ -405,7 +404,7 @@ int tensor_contract_blis(T alpha, const const_tensor_view<T>& A, const std::stri
 template \
 int tensor_contract_blis<T>(T alpha, const const_tensor_view<T>& A, const std::string& idx_A, \
                                      const const_tensor_view<T>& B, const std::string& idx_B, \
-                            T  beta,             tensor_view<T>& C, const std::string& idx_C);
+                            T  beta, const       tensor_view<T>& C, const std::string& idx_C);
 #include "tblis_instantiate_for_types.hpp"
 
 }

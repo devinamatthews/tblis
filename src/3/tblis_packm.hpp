@@ -254,8 +254,10 @@ void PackMicroPanel(idx_type m, idx_type k,
 template <typename T, idx_type MR, idx_type KR, bool Trans>
 struct PackRowPanel
 {
-    void operator()(ThreadCommunicator& comm, const const_matrix_view<T>& A, matrix_view<T>& Ap) const
+    void operator()(ThreadCommunicator& comm, matrix_view<T>& A, matrix_view<T>& Ap) const
     {
+        //printf("before: %.15f\n", (double)real(tblis_normfm(A)));
+
         idx_type m_a = A.length( Trans);
         idx_type k_a = A.length(!Trans);
         stride_type rs_a = A.stride( Trans);
@@ -271,12 +273,19 @@ struct PackRowPanel
 
         for (idx_type off_m = off_first;off_m < off_last;off_m += MR)
         {
+            //printf("%d %d : %d %ld\n", off_m, std::min(MR, off_last-off_m), MR, p_ap-Ap.data());
+            //printf("bsub: %.15f\n", (double)real(tblis_normfm(std::min(MR, off_last-off_m), k_a, p_a, rs_a, cs_a)));
+            //auto p_ap_old = p_ap;
             PackMicroPanel<T,MR,KR>(std::min(MR, off_last-off_m), k_a,
                                     p_a, rs_a, cs_a, p_ap);
+            //printf("asub: %.15f\n", (double)real(tblis_normfm(MR, k_a, p_ap_old, 1, MR)));
         }
+
+        //printf("%d %d %ld %ld\n", Ap.length(0), Ap.length(1), Ap.stride(0), Ap.stride(1));
+        //printf("after: %.15f\n", (double)real(tblis_normfm(Ap)));
     }
 
-    void operator()(ThreadCommunicator& comm, const const_scatter_matrix_view<T>& A, matrix_view<T>& Ap) const
+    void operator()(ThreadCommunicator& comm, const_scatter_matrix_view<T>& A, matrix_view<T>& Ap) const
     {
         idx_type m_a = A.length( Trans);
         idx_type k_a = A.length(!Trans);
@@ -426,8 +435,8 @@ struct Pack
             constexpr idx_type MR = (Trans ? NT<T>::def : MT<T>::def);
             constexpr idx_type NR = (Trans ? MT<T>::def : NT<T>::def);
 
-            idx_type m_p = A.length( Trans);
-            idx_type n_p = A.length(!Trans);
+            idx_type m_p = (Trans ? B.length(1) : A.length(0));
+            idx_type n_p = (Trans ? B.length(0) : A.length(1));
             m_p = round_up(m_p, MR);
             n_p = round_up(n_p, NR);
 
@@ -447,6 +456,12 @@ struct Pack
                              pack_ptr,
                              Trans?   1 : n_p,
                              Trans? n_p :   1);
+
+            assert(P.length(0) == Trans ? n_p : m_p);
+            assert(P.length(1) == Trans ? m_p : n_p);
+            assert(P.data() == pack_ptr);
+            assert(P.stride(0) == Trans ?   1 : n_p);
+            assert(P.stride(1) == Trans ? n_p :   1);
 
             typedef PackRowPanel<T,MR,NR,Trans> Pack;
             PackAndRun<Pack,Mat>(child, comm, alpha, A, B, beta, C, P);

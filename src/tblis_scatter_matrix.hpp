@@ -459,7 +459,7 @@ class const_scatter_matrix_view
             scatter_[1] = cscat;
         }
 
-        void shift(unsigned dim, stride_type n)
+        void shift_down(unsigned dim, idx_type n)
         {
             assert(dim < 2);
 
@@ -473,31 +473,52 @@ class const_scatter_matrix_view
             }
         }
 
+        void shift_up(unsigned dim, idx_type n)
+        {
+            assert(dim < 2);
+
+            if (stride_[dim] == 0)
+            {
+                scatter_[dim] -= n;
+            }
+            else
+            {
+                data_ -= n*stride_[dim];
+            }
+        }
+
         void shift_down(unsigned dim)
         {
-            shift(dim, len_[dim]);
+            shift_down(dim, len_[dim]);
         }
 
         void shift_up(unsigned dim)
         {
-            shift(dim, -stride_type(len_[dim]));
+            shift_up(dim, len_[dim]);
         }
 
-        const_scatter_matrix_view<T> shifted(unsigned dim, stride_type n) const
+        const_scatter_matrix_view<T> shifted_down(unsigned dim, idx_type n) const
         {
             const_scatter_matrix_view<T> r(*this);
-            r.shift(dim, n);
+            r.shift_down(dim, n);
+            return r;
+        }
+
+        const_scatter_matrix_view<T> shifted_up(unsigned dim, idx_type n) const
+        {
+            const_scatter_matrix_view<T> r(*this);
+            r.shift_up(dim, n);
             return r;
         }
 
         const_scatter_matrix_view<T> shifted_down(unsigned dim) const
         {
-            return shifted(dim, len_[dim]);
+            return shifted_down(dim, len_[dim]);
         }
 
         const_scatter_matrix_view<T> shifted_up(unsigned dim) const
         {
-            return shifted(dim, -stride_type(len_[dim]));
+            return shifted_up(dim, len_[dim]);
         }
 
         template <typename U>
@@ -724,18 +745,18 @@ class scatter_matrix_view : protected const_scatter_matrix_view<T>
             base::reset(m, n, ptr, rscat, cscat);
         }
 
-        scatter_matrix_view& operator=(const const_scatter_matrix_view<T>& other)
+        scatter_matrix_view& operator=(const const_scatter_matrix_view<T>& other) const
         {
             copy(other, *this);
             return *this;
         }
 
-        scatter_matrix_view& operator=(const scatter_matrix_view<T>& other)
+        scatter_matrix_view& operator=(const scatter_matrix_view<T>& other) const
         {
             return operator=(static_cast<const const_scatter_matrix_view<T>&>(other));
         }
 
-        scatter_matrix_view& operator=(const T& value)
+        scatter_matrix_view& operator=(const T& value) const
         {
             for (idx_type j = 0;j < len_[1];j++)
             {
@@ -748,51 +769,50 @@ class scatter_matrix_view : protected const_scatter_matrix_view<T>
             return *this;
         }
 
-        using base::shift;
         using base::shift_down;
         using base::shift_up;
-        using base::shifted;
-        using base::shifted_down;
-        using base::shifted_up;
 
-        scatter_matrix_view<T> shifted(unsigned dim, stride_type n)
+        scatter_matrix_view<T> shifted_down(unsigned dim, idx_type n) const
         {
-            return base::shifted(dim, n);
+            return base::shifted_down(dim, n);
         }
 
-        scatter_matrix_view<T> shifted_down(unsigned dim)
+        scatter_matrix_view<T> shifted_up(unsigned dim, idx_type n) const
+        {
+            return base::shifted_up(dim, n);
+        }
+
+        scatter_matrix_view<T> shifted_down(unsigned dim) const
         {
             return base::shifted_down(dim);
         }
 
-        scatter_matrix_view<T> shifted_up(unsigned dim)
+        scatter_matrix_view<T> shifted_up(unsigned dim) const
         {
             return base::shifted_up(dim);
         }
 
         using base::permute;
-        using base::permuted;
 
         template <typename U>
-        scatter_matrix_view<T> permuted(const std::array<U, 2>& perm)
+        scatter_matrix_view<T> permuted(const std::array<U, 2>& perm) const
         {
             return base::permuted(perm);
         }
 
-        scatter_matrix_view<T> permuted(unsigned p0, unsigned p1)
+        scatter_matrix_view<T> permuted(unsigned p0, unsigned p1) const
         {
             return base::permuted(p0, p1);
         }
 
         using base::transpose;
-        using base::transposed;
 
-        scatter_matrix_view<T> transposed()
+        scatter_matrix_view<T> transposed() const
         {
             return base::transposed();
         }
 
-        void rotate_dim(unsigned dim, stride_type shift)
+        void rotate_dim(unsigned dim, stride_type shift) const
         {
             assert(dim < 2);
             abort();
@@ -800,48 +820,42 @@ class scatter_matrix_view : protected const_scatter_matrix_view<T>
         }
 
         template <typename U>
-        void rotate(const std::array<U, 2>& shift)
+        void rotate(const std::array<U, 2>& shift) const
         {
             rotate_dim(0, shift[0]);
             rotate_dim(1, shift[1]);
         }
 
-        void rotate(stride_type s0, stride_type s1)
+        void rotate(stride_type s0, stride_type s1) const
         {
             rotate(make_array(s0, s1));
         }
 
-        using base::operator[];
-
-        detail::scatter_matrix_ref<T> operator[](idx_type i)
+        detail::scatter_matrix_ref<T> operator[](idx_type i) const
         {
             return base::operator[](i);
         }
 
         template <typename I>
-        detail::scatter_matrix_slice<T> operator[](const range_t<I>& x)
+        detail::scatter_matrix_slice<T> operator[](const range_t<I>& x) const
         {
             return base::operator[](x);
         }
 
-        detail::scatter_matrix_slice<T> operator[](MArray::slice::all_t x)
+        detail::scatter_matrix_slice<T> operator[](MArray::slice::all_t x) const
         {
             return base::operator[](x);
         }
-
-        using base::operator();
 
         template <typename I0, typename I1, typename=
             stl_ext::enable_if_t<MArray::detail::are_indices_or_slices<I0, I1>::value>>
-        auto operator()(I0&& i0, I1&& i1) ->
+        auto operator()(I0&& i0, I1&& i1) const ->
         decltype((*this)[i0][i1])
         {
             return (*this)[i0][i1];
         }
 
-        using base::data;
-
-        pointer data()
+        pointer data() const
         {
             return const_cast<pointer>(base::data());
         }

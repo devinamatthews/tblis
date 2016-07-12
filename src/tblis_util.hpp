@@ -174,7 +174,7 @@ constexpr stl_ext::common_type_t<T,U> round_up(T N, U B)
 template <typename T, typename U>
 constexpr stl_ext::common_type_t<T,U> ceil_div(T N, U D)
 {
-    return (N > 0 ? (N+D-1)/D : (N-D+1)/D);
+    return (N >= 0 ? (N+D-1)/D : (N-D+1)/D);
 }
 
 template <typename T, typename U>

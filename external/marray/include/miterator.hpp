@@ -273,7 +273,7 @@ namespace detail
                            const std::array<std::array<stride_type,ndim>,N>& strides)
         {
             off0 = 0;
-            for (unsigned i = 0;i < ndim;i++) off0 += pos[i]*strides[N-1][i];
+            for (unsigned i = 0;i < pos.size();i++) off0 += pos[i]*strides[N-1][i];
         }
 
         template <typename idx_type, typename stride_type>
@@ -282,7 +282,7 @@ namespace detail
                            const std::array<std::vector<stride_type>,N>& strides)
         {
             off0 = 0;
-            for (unsigned i = 0;i < ndim;i++) off0 += pos[i]*strides[N-1][i];
+            for (unsigned i = 0;i < pos.size();i++) off0 += pos[i]*strides[N-1][i];
         }
     };
 
@@ -295,7 +295,7 @@ namespace detail
                            const std::array<std::array<stride_type,ndim>,N>& strides)
         {
             off0 = 0;
-            for (unsigned i = 0;i < ndim;i++) off0 += pos[i]*strides[I-1][i];
+            for (unsigned i = 0;i < pos.size();i++) off0 += pos[i]*strides[I-1][i];
             set_offsets_helper<ndim, N, I+1, Offsets...>(off..., pos, strides);
         }
 
@@ -305,7 +305,7 @@ namespace detail
                            const std::array<std::vector<stride_type>,N>& strides)
         {
             off0 = 0;
-            for (unsigned i = 0;i < ndim;i++) off0 += pos[i]*strides[I-1][i];
+            for (unsigned i = 0;i < pos.size();i++) off0 += pos[i]*strides[I-1][i];
             set_offsets_helper<0, N, I+1, Offsets...>(off..., pos, strides);
         }
     };

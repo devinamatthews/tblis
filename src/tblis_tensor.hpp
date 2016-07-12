@@ -20,47 +20,58 @@ namespace detail
         }
     };
 
-    sort_by_idx_helper sort_by_idx(const std::string& idx)
+    inline sort_by_idx_helper sort_by_idx(const std::string& idx)
     {
         return sort_by_idx_helper(idx);
     }
 
-    template <size_t N>
     struct sort_by_stride_helper
     {
-        const std::array<std::vector<stride_type>,N>& strides
+        std::vector<const std::vector<stride_type>*> strides;
 
-        sort_by_stride_helper(const std::array<std::vector<stride_type>,N>& strides)
+        sort_by_stride_helper(const std::vector<const std::vector<stride_type>*>& strides)
         : strides(strides) {}
+
+        sort_by_stride_helper(std::vector<const std::vector<stride_type>*>&& strides)
+        : strides(std::move(strides)) {}
+
+        sort_by_stride_helper(const std::vector<std::vector<stride_type>*>& strides)
+        : strides(strides.begin(), strides.end()) {}
 
         bool operator()(unsigned i, unsigned j) const
         {
-            stride_type min_i = strides[0][i];
-            stride_type min_j = strides[0][j];
+            stride_type min_i = (*strides[0])[i];
+            stride_type min_j = (*strides[0])[j];
 
-            for (size_t k = 1;k < N;k++)
+            for (size_t k = 1;k < strides.size();k++)
             {
-                min_i = std::min(min_i, strides[k][i]);
-                min_j = std::min(min_j, strides[k][j]);
+                min_i = std::min(min_i, (*strides[k])[i]);
+                min_j = std::min(min_j, (*strides[k])[j]);
             }
 
             return min_i < min_j;
         }
     };
 
-    sort_by_stride_helper<1> sort_by_stride(const std::tuple<std::vector<stride_type>&>& strides)
+    inline sort_by_stride_helper sort_by_stride(const std::vector<const std::vector<stride_type>*>& strides)
     {
-        return {{std::get<0>(strides)}};
+        return {strides};
     }
 
-    sort_by_stride_helper<2> sort_by_stride(const std::tuple<std::vector<stride_type>&,std::vector<stride_type>&>& strides)
+    inline sort_by_stride_helper sort_by_stride(std::vector<const std::vector<stride_type>*>&& strides)
     {
-        return {{std::get<0>(strides), std::get<1>(strides)}};
+        return {std::move(strides)};
     }
 
-    sort_by_stride_helper<3> sort_by_stride(const std::tuple<std::vector<stride_type>&,std::vector<stride_type>&,std::vector<stride_type>&>& strides)
+    inline sort_by_stride_helper sort_by_stride(const std::vector<std::vector<stride_type>*>& strides)
     {
-        return {{std::get<0>(strides), std::get<1>(strides), std::get<2>(strides)}};
+        return {strides};
+    }
+
+    template <typename... Strides>
+    sort_by_stride_helper sort_by_stride(const Strides&... strides)
+    {
+        return {{&strides...}};
     }
 
     template <typename T>
@@ -94,6 +105,45 @@ namespace detail
         }
 
         return true;
+    }
+
+    inline bool are_compatible(const std::vector<idx_type>& len_A,
+                               const std::vector<stride_type>& stride_A,
+                               const std::vector<idx_type>& len_B,
+                               const std::vector<stride_type>& stride_B)
+    {
+        assert(len_A.size() == stride_A.size());
+        std::vector<size_t> dims_A = range(len_A.size());
+        stl_ext::sort(dims_A, detail::sort_by_stride(stride_A));
+        auto len_Ar = stl_ext::permuted(len_A, dims_A);
+        auto stride_Ar = stl_ext::permuted(stride_A, dims_A);
+
+        assert(len_B.size() == stride_B.size());
+        std::vector<size_t> dims_B = range(len_B.size());
+        stl_ext::sort(dims_B, detail::sort_by_stride(stride_B));
+        auto len_Br = stl_ext::permuted(len_B, dims_B);
+        auto stride_Br = stl_ext::permuted(stride_B, dims_B);
+
+        if (stl_ext::prod(len_Ar) != stl_ext::prod(len_Br))
+            return false;
+
+        MArray::viterator<> it_A(len_Ar, stride_Ar);
+        MArray::viterator<> it_B(len_Br, stride_Br);
+
+        stride_type off_A = 0, off_B = 0;
+        while (it_A.next(off_A) + it_B.next(off_B))
+            if (off_A != off_B) return false;
+
+        return true;
+    }
+
+    template <typename T>
+    bool are_compatible(const const_tensor_view<T>& A,
+                        const const_tensor_view<T>& B)
+    {
+        return A.data() == B.data() &&
+            are_compatible(A.lengths(), A.strides(),
+                           B.lengths(), B.strides());
     }
 
     template <typename T>
@@ -431,7 +481,11 @@ void diagonal(const_tensor_view<T>& AD, std::string& idx_AD)
     unsigned ndim_AD = 0;
     for (unsigned i = 0;i < ndim_A;i++)
     {
-        if (i == 0 || idx[inds_A[i]] != idx[inds_A[i-1]])
+        if (AD.length(inds_A[i]) == 1)
+        {
+            //do nothing
+        }
+        else if (i == 0 || idx[inds_A[i]] != idx[inds_A[i-1]])
         {
             idx_AD[ndim_AD] = idx[inds_A[i]];
             len[ndim_AD] = AD.length(inds_A[i]);
@@ -700,119 +754,58 @@ void unslice_back(tensor_view<T> A0, tensor_view<T> a1,
                  dim);
 }
 
-bool are_contiguous(std::vector<idx_type>& lengths,
-                    std::tuple<std::vector<stride_type>>& strides,
-                    unsigned i, unsigned im1)
-{
-    auto& s0 = std::get<0>(strides);
-    return s0[i] == s0[im1]*lengths[im1];
-}
-
-bool are_contiguous(std::vector<idx_type>& lengths,
-                    std::tuple<std::vector<stride_type>,std::vector<stride_type>>& strides,
-                    unsigned i, unsigned im1)
-{
-    auto& s0 = std::get<0>(strides);
-    auto& s1 = std::get<1>(strides);
-    return s0[i] == s0[im1]*lengths[im1] &&
-           s1[i] == s1[im1]*lengths[im1];
-}
-
-bool are_contiguous(std::vector<idx_type>& lengths,
-                    std::tuple<std::vector<stride_type>,std::vector<stride_type>,std::vector<stride_type>>& strides,
-                    unsigned i, unsigned im1)
-{
-    auto& s0 = std::get<0>(strides);
-    auto& s1 = std::get<1>(strides);
-    auto& s2 = std::get<2>(strides);
-    return s0[i] == s0[im1]*lengths[im1] &&
-           s1[i] == s1[im1]*lengths[im1] &&
-           s2[i] == s2[im1]*lengths[im1];
-}
-
-void swap_strides(std::tuple<std::vector<stride_type>>& oldstrides,
-                  std::tuple<std::vector<stride_type>&>& strides)
-{
-    std::get<0>(oldstrides).swap(std::get<0>(strides));
-}
-
-void swap_strides(std::tuple<std::vector<stride_type>,std::vector<stride_type>>& oldstrides,
-                  std::tuple<std::vector<stride_type>&,std::vector<stride_type>&>& strides)
-{
-    std::get<0>(oldstrides).swap(std::get<0>(strides));
-    std::get<1>(oldstrides).swap(std::get<1>(strides));
-}
-
-void swap_strides(std::tuple<std::vector<stride_type>,std::vector<stride_type>,std::vector<stride_type>>& oldstrides,
-                  std::tuple<std::vector<stride_type>&,std::vector<stride_type>&,std::vector<stride_type>&>& strides)
-{
-    std::get<0>(oldstrides).swap(std::get<0>(strides));
-    std::get<1>(oldstrides).swap(std::get<1>(strides));
-    std::get<2>(oldstrides).swap(std::get<2>(strides));
-}
-
-void push_back_strides(std::tuple<std::vector<stride_type>&>& strides,
-                       std::tuple<std::vector<stride_type>>& oldstrides,
-                       unsigned i)
-{
-    std::get<0>(oldstrides).push_back(std::get<0>(strides)[i]);
-}
-
-void push_back_strides(std::tuple<std::vector<stride_type>&,std::vector<stride_type>&>& strides,
-                       std::tuple<std::vector<stride_type>,std::vector<stride_type>>& oldstrides,
-                       unsigned i)
-{
-    std::get<0>(oldstrides).push_back(std::get<0>(strides)[i]);
-    std::get<1>(oldstrides).push_back(std::get<1>(strides)[i]);
-}
-
-void push_back_strides(std::tuple<std::vector<stride_type>&,std::vector<stride_type>&,std::vector<stride_type>&>& strides,
-                       std::tuple<std::vector<stride_type>,std::vector<stride_type>,std::vector<stride_type>>& oldstrides,
-                       unsigned i)
-{
-    std::get<0>(strides).push_back(std::get<0>(oldstrides)[i]);
-    std::get<1>(strides).push_back(std::get<1>(oldstrides)[i]);
-    std::get<2>(strides).push_back(std::get<2>(oldstrides)[i]);
-}
-
-template <typename... Strides>
-void fold(std::vector<idx_type>& lengths, std::tuple<Strides&...>&& strides, std::string& idx)
+inline void fold(std::vector<idx_type>& lengths,
+                 const std::vector<std::vector<stride_type>*>& strides,
+                 std::string& idx)
 {
     unsigned ndim = lengths.size();
     std::vector<unsigned> inds = MArray::range(ndim);
-    stl_ext::sort(inds, detail::sort_by_stride(strides));
+    stl_ext::sort(inds, detail::sort_by_stride(*strides[0]));
 
-    std::string oldidx; oldidx.swap(idx);
-    std::vector<idx_type> oldlengths; oldlengths.swap(lengths);
-    std::tuple<Strides...> oldstrides; swap_strides(oldstrides, strides);
+    std::string oldidx;
+    std::vector<idx_type> oldlengths;
+    std::vector<std::vector<stride_type>> oldstrides(strides.size());
+
+    oldidx.swap(idx);
+    oldlengths.swap(lengths);
+    for (size_t i = 0;i < strides.size();i++) oldstrides[i].swap(*strides[i]);
 
     for (unsigned i = 0;i < ndim;i++)
     {
-        if (i != 0 && are_contiguous(oldlengths, oldstrides, inds[i], inds[i-1]))
-        {
-            lengths.back() *= oldlengths[inds[i]];
-        }
-        else
-        {
-            idx.push_back(oldidx[inds[i]]);
-            lengths.push_back(oldlengths[inds[i]]);
-            push_back_strides(strides, oldstrides, inds[i]);
-        }
+        if (i == 0) goto nofold;
+        for (size_t j = 0;j < strides.size();j++)
+            if (oldstrides[j][inds[i]] != oldstrides[j][inds[i-1]]*
+                                          oldlengths[inds[i-1]])
+                goto nofold;
+
+        lengths.back() *= oldlengths[inds[i]];
+        continue;
+
+        nofold:
+        idx.push_back(oldidx[inds[i]]);
+        lengths.push_back(oldlengths[inds[i]]);
+        for (size_t j = 0;j < strides.size();j++)
+            strides[j]->push_back(oldstrides[j][inds[i]]);
+    }
+
+    for (size_t i = 0;i < strides.size();i++)
+    {
+        assert(detail::are_compatible(oldlengths, oldstrides[i],
+                                      lengths, *strides[i]));
     }
 }
 
 template <typename T>
 void fold(const_tensor_view<T>& AF, std::string& idx_AF)
 {
-    unsigned ndim = AF.dimension();
-    assert(ndim == idx_AF.size());
+    assert(AF.dimension() == idx_AF.size());
 
-    std::vector<idx_type> len = AF.lengths();
-    std::vector<stride_type> stride = AF.strides();
+    auto len = AF.lengths();
+    auto stride = AF.strides();
 
-    fold(len, std::tie(stride), idx_AF);
+    fold(len, {&stride}, idx_AF);
 
-    AF.reset(len, AF.data(), stride[0]);
+    AF.reset(len, AF.data(), stride);
 }
 
 template <typename T>
@@ -825,50 +818,29 @@ template <typename T>
 void fold(const_tensor_view<T>& AF, std::string& idx_AF,
           const_tensor_view<T>& BF, std::string& idx_BF)
 {
-    std::string idx_AB = stl_ext::intersection(idx_AF, idx_BF);
-    std::string idx_A_only = stl_ext::exclusion(idx_AF, idx_AB);
-    std::string idx_B_only = stl_ext::exclusion(idx_BF, idx_AB);
+    assert(AF.dimension() == idx_AF.size());
+    assert(BF.dimension() == idx_BF.size());
 
-    std::vector<idx_type> len_A(idx_A_only.size());
-    std::vector<idx_type> len_B(idx_B_only.size());
-    std::vector<idx_type> len_AB(idx_AB.size());
+    using stl_ext::intersection;
+    using stl_ext::exclusion;
+    using stl_ext::select_from;
 
-    std::vector<stride_type> stride_A_A(idx_A_only.size());
-    std::vector<stride_type> stride_B_B(idx_B_only.size());
-    std::vector<stride_type> stride_A_AB(idx_AB.size());
-    std::vector<stride_type> stride_B_AB(idx_AB.size());
+    auto idx_AB = intersection(idx_AF, idx_BF);
+    auto len_AB = select_from(AF.lengths(), idx_AF, idx_AB);
+    auto stride_A_AB = select_from(AF.strides(), idx_AF, idx_AB);
+    auto stride_B_AB = select_from(BF.strides(), idx_BF, idx_AB);
 
-    for (unsigned i = 0;i < idx_A_only.size();i++)
-        for (unsigned j = 0;j < AF.dimension();j++)
-            if (idx_A_only[i] == idx_AF[j])
-            {
-                len_A[i] = AF.length(j);
-                stride_A_A[i] = AF.stride(j);
-            }
+    auto idx_A_only = exclusion(idx_AF, idx_AB);
+    auto len_A = select_from(AF.lengths(), idx_AF, idx_A_only);
+    auto stride_A_A = select_from(AF.strides(), idx_AF, idx_A_only);
 
-    for (unsigned i = 0;i < idx_B_only.size();i++)
-        for (unsigned j = 0;j < BF.dimension();j++)
-            if (idx_B_only[i] == idx_BF[j])
-            {
-                len_B[i] = BF.length(j);
-                stride_B_B[i] = BF.stride(j);
-            }
+    auto idx_B_only = exclusion(idx_BF, idx_AB);
+    auto len_B = select_from(BF.lengths(), idx_BF, idx_B_only);
+    auto stride_B_B = select_from(BF.strides(), idx_BF, idx_B_only);
 
-    for (unsigned i = 0;i < idx_AB.size();i++)
-        for (unsigned j = 0;j < AF.dimension();j++)
-            if (idx_AB[i] == idx_AF[j])
-            {
-                len_AB[i] = AF.length(j);
-                stride_A_AB[i] = AF.stride(j);
-            }
-
-    for (unsigned i = 0;i < idx_AB.size();i++)
-        for (unsigned j = 0;j < BF.dimension();j++)
-            if (idx_AB[i] == idx_BF[j]) stride_B_AB[i] = BF.stride(j);
-
-    fold(len_A, std::tie(stride_A_A), idx_A_only);
-    fold(len_B, std::tie(stride_B_B), idx_B_only);
-    fold(len_AB, std::tie(stride_A_AB, stride_B_AB), idx_AB);
+    fold(len_A, {&stride_A_A}, idx_A_only);
+    fold(len_B, {&stride_B_B}, idx_B_only);
+    fold(len_AB, {&stride_A_AB, &stride_B_AB}, idx_AB);
 
     AF.reset(len_A+len_AB, AF.data(), stride_A_A+stride_A_AB);
     BF.reset(len_B+len_AB, BF.data(), stride_B_B+stride_B_AB);
@@ -889,114 +861,54 @@ void fold(const_tensor_view<T>& AF, std::string& idx_AF,
           const_tensor_view<T>& BF, std::string& idx_BF,
                 tensor_view<T>& CF, std::string& idx_CF)
 {
-    std::string idx_ABC = stl_ext::intersection(idx_AF, idx_BF, idx_CF);
-    std::string idx_AB = stl_ext::exclusion(stl_ext::intersection(idx_AF, idx_BF), idx_ABC);
-    std::string idx_AC = stl_ext::exclusion(stl_ext::intersection(idx_AF, idx_CF), idx_ABC);
-    std::string idx_BC = stl_ext::exclusion(stl_ext::intersection(idx_BF, idx_CF), idx_ABC);
-    std::string idx_A_only = stl_ext::exclusion(idx_AF, idx_BF, idx_CF);
-    std::string idx_B_only = stl_ext::exclusion(idx_BF, idx_AF, idx_CF);
-    std::string idx_C_only = stl_ext::exclusion(idx_CF, idx_AF, idx_BF);
+    assert(AF.dimension() == idx_AF.size());
+    assert(BF.dimension() == idx_BF.size());
+    assert(CF.dimension() == idx_CF.size());
 
-    std::vector<idx_type> len_A(idx_A_only.size());
-    std::vector<idx_type> len_B(idx_B_only.size());
-    std::vector<idx_type> len_C(idx_C_only.size());
-    std::vector<idx_type> len_AB(idx_AB.size());
-    std::vector<idx_type> len_AC(idx_AC.size());
-    std::vector<idx_type> len_BC(idx_BC.size());
-    std::vector<idx_type> len_ABC(idx_ABC.size());
+    using stl_ext::intersection;
+    using stl_ext::exclusion;
+    using stl_ext::select_from;
 
-    std::vector<stride_type> stride_A_A(idx_A_only.size());
-    std::vector<stride_type> stride_B_B(idx_B_only.size());
-    std::vector<stride_type> stride_C_C(idx_C_only.size());
-    std::vector<stride_type> stride_A_AB(idx_AB.size());
-    std::vector<stride_type> stride_B_AB(idx_AB.size());
-    std::vector<stride_type> stride_A_AC(idx_AC.size());
-    std::vector<stride_type> stride_C_AC(idx_AC.size());
-    std::vector<stride_type> stride_B_BC(idx_BC.size());
-    std::vector<stride_type> stride_C_BC(idx_BC.size());
-    std::vector<stride_type> stride_A_ABC(idx_ABC.size());
-    std::vector<stride_type> stride_B_ABC(idx_ABC.size());
-    std::vector<stride_type> stride_C_ABC(idx_ABC.size());
+    auto idx_ABC = intersection(idx_AF, idx_BF, idx_CF);
+    auto len_ABC = select_from(AF.lengths(), idx_AF, idx_ABC);
+    auto stride_A_ABC = select_from(AF.strides(), idx_AF, idx_ABC);
+    auto stride_B_ABC = select_from(BF.strides(), idx_BF, idx_ABC);
+    auto stride_C_ABC = select_from(CF.strides(), idx_CF, idx_ABC);
 
-    for (unsigned i = 0, j = 0, k = 0, l = 0, m = 0;i < AF.dimension();i++)
-    {
-        if (j < idx_A_only.size() && idx_AF[i] == idx_A_only[j])
-        {
-            len_A[j] = AF.length(i);
-            stride_A_A[j++] = AF.stride(i);
-        }
-        else if (k < idx_AB.size() && idx_AF[i] == idx_AB[k])
-        {
-            len_AB[k] = AF.length(i);
-            stride_A_AB[k++] = AF.stride(i);
-        }
-        else if (l < idx_AC.size() && idx_AF[i] == idx_AC[l])
-        {
-            len_AC[l] = AF.length(i);
-            stride_A_AC[l++] = AF.stride(i);
-        }
-        else if (m < idx_ABC.size() && idx_AF[i] == idx_ABC[m])
-        {
-            len_ABC[m] = AF.length(i);
-            stride_A_ABC[m++] = AF.stride(i);
-        }
-    }
+    auto idx_AB = exclusion(intersection(idx_AF, idx_BF), idx_ABC);
+    auto len_AB = select_from(AF.lengths(), idx_AF, idx_AB);
+    auto stride_A_AB = select_from(AF.strides(), idx_AF, idx_AB);
+    auto stride_B_AB = select_from(BF.strides(), idx_BF, idx_AB);
 
-    for (unsigned i = 0, j = 0, k = 0, l = 0, m = 0;i < BF.dimension();i++)
-    {
-        if (j < idx_B_only.size() && idx_BF[i] == idx_B_only[j])
-        {
-            len_B[j] = BF.length(i);
-            stride_B_B[j++] = BF.stride(i);
-        }
-        else if (k < idx_AB.size() && idx_BF[i] == idx_AB[k])
-        {
-            assert(len_AB[k] == BF.length(i));
-            stride_B_AB[k++] = BF.stride(i);
-        }
-        else if (l < idx_BC.size() && idx_BF[i] == idx_BC[l])
-        {
-            len_BC[l] = BF.length(i);
-            stride_B_BC[l++] = BF.stride(i);
-        }
-        else if (m < idx_ABC.size() && idx_BF[i] == idx_ABC[m])
-        {
-            assert(len_ABC[m] == BF.length(i));
-            stride_B_ABC[m++] = BF.stride(i);
-        }
-    }
+    auto idx_AC = exclusion(intersection(idx_AF, idx_CF), idx_ABC);
+    auto len_AC = select_from(AF.lengths(), idx_AF, idx_AC);
+    auto stride_A_AC = select_from(AF.strides(), idx_AF, idx_AC);
+    auto stride_C_AC = select_from(CF.strides(), idx_CF, idx_AC);
 
-    for (unsigned i = 0, j = 0, k = 0, l = 0, m = 0;i < CF.dimension();i++)
-    {
-        if (j < idx_C_only.size() && idx_CF[i] == idx_C_only[j])
-        {
-            len_C[j] = CF.length(i);
-            stride_C_C[j++] = CF.stride(i);
-        }
-        else if (k < idx_AC.size() && idx_CF[i] == idx_AC[k])
-        {
-            assert(len_AC[k] == CF.length(i));
-            stride_C_AC[k++] = CF.stride(i);
-        }
-        else if (l < idx_BC.size() && idx_CF[i] == idx_BC[l])
-        {
-            assert(len_BC[l] == CF.length(i));
-            stride_C_BC[l++] = CF.stride(i);
-        }
-        else if (m < idx_ABC.size() && idx_CF[i] == idx_ABC[m])
-        {
-            assert(len_ABC[m] == CF.length(i));
-            stride_C_ABC[m++] = CF.stride(i);
-        }
-    }
+    auto idx_BC = exclusion(intersection(idx_BF, idx_CF), idx_ABC);
+    auto len_BC = select_from(BF.lengths(), idx_BF, idx_BC);
+    auto stride_B_BC = select_from(BF.strides(), idx_BF, idx_BC);
+    auto stride_C_BC = select_from(CF.strides(), idx_CF, idx_BC);
 
-    fold(  len_A, std::tie(                              stride_A_A), idx_A_only);
-    fold(  len_B, std::tie(                              stride_B_B), idx_B_only);
-    fold(  len_C, std::tie(                              stride_C_C), idx_C_only);
-    fold( len_AB, std::tie(               stride_A_AB,  stride_B_AB),     idx_AB);
-    fold( len_AC, std::tie(               stride_A_AC,  stride_C_AC),     idx_AC);
-    fold( len_BC, std::tie(               stride_B_BC,  stride_C_BC),     idx_BC);
-    fold(len_ABC, std::tie(stride_A_ABC, stride_B_ABC, stride_C_ABC),    idx_ABC);
+    auto idx_A_only = exclusion(idx_AF, idx_BF, idx_CF);
+    auto len_A = select_from(AF.lengths(), idx_AF, idx_A_only);
+    auto stride_A_A = select_from(AF.strides(), idx_AF, idx_A_only);
+
+    auto idx_B_only = exclusion(idx_BF, idx_AF, idx_CF);
+    auto len_B = select_from(BF.lengths(), idx_BF, idx_B_only);
+    auto stride_B_B = select_from(BF.strides(), idx_BF, idx_B_only);
+
+    auto idx_C_only = exclusion(idx_CF, idx_AF, idx_BF);
+    auto len_C = select_from(CF.lengths(), idx_CF, idx_C_only);
+    auto stride_C_C = select_from(CF.strides(), idx_CF, idx_C_only);
+
+    fold(  len_A, {                                &stride_A_A}, idx_A_only);
+    fold(  len_B, {                                &stride_B_B}, idx_B_only);
+    fold(  len_C, {                                &stride_C_C}, idx_C_only);
+    fold( len_AB, {                &stride_A_AB,  &stride_B_AB},     idx_AB);
+    fold( len_AC, {                &stride_A_AC,  &stride_C_AC},     idx_AC);
+    fold( len_BC, {                &stride_B_BC,  &stride_C_BC},     idx_BC);
+    fold(len_ABC, {&stride_A_ABC, &stride_B_ABC, &stride_C_ABC},    idx_ABC);
 
     AF.reset(len_A+len_AB+len_AC+len_ABC, AF.data(), stride_A_A+stride_A_AB+stride_A_AC+stride_A_ABC);
     BF.reset(len_B+len_AB+len_BC+len_ABC, BF.data(), stride_B_B+stride_B_AB+stride_B_BC+stride_B_ABC);
@@ -1044,6 +956,16 @@ void matricize(const_tensor_view<T>  A,
     if (ndim == 0)
     {
         rs = cs = 1;
+    }
+    else if (m == 1)
+    {
+        rs = n;
+        cs = 1;
+    }
+    else if (n == 1)
+    {
+        rs = 1;
+        cs = m;
     }
     else if (A.stride(0) < A.stride(ndim-1))
     {

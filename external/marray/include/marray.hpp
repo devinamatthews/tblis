@@ -128,7 +128,7 @@ namespace MArray
         protected:
             int type;
 
-            constexpr Layout(int type) : type(type) {}
+            constexpr explicit Layout(int type) : type(type) {}
     };
 
     class RowMajorLayout : public Layout
@@ -1273,8 +1273,6 @@ namespace MArray
     template <typename T, unsigned ndim>
     class const_marray_view
     {
-        static_assert(ndim > 0, "0-dimensional marrays are not allowed.");
-
         template <typename T_, unsigned ndim_> friend class const_marray_view;
         template <typename T_, unsigned ndim_> friend class marray_view;
         template <typename T_, unsigned ndim_, typename Allocator_> friend class marray;
@@ -1421,6 +1419,8 @@ namespace MArray
             static std::array<stride_type, ndim> default_strides(const std::array<U, ndim>& len, Layout layout=DEFAULT)
             {
                 std::array<stride_type, ndim> stride;
+
+                if (ndim == 0) return stride;
 
                 if (layout == ROW_MAJOR)
                 {
@@ -1582,84 +1582,52 @@ namespace MArray
                       get_stride_from_args(std::forward<Args>(args)...));
             }
 
-            template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_==1>::type
-            shift(stride_type n)
-            {
-                shift(0, n);
-            }
-
-            void shift(unsigned dim, stride_type n)
+            void shift_down(unsigned dim, idx_type n)
             {
                 assert(dim < ndim);
                 data_ += n*stride_[dim];
             }
 
-            template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_==1>::type
-            shift_down()
+            void shift_up(unsigned dim, idx_type n)
             {
-                shift_down(0);
+                assert(dim < ndim);
+                data_ -= n*stride_[dim];
             }
 
             void shift_down(unsigned dim)
             {
-                assert(dim < ndim);
-                shift(dim, len_[dim]);
-            }
-
-            template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_==1>::type
-            shift_up()
-            {
-                shift_up(0);
+                shift_down(dim, len_[dim]);
             }
 
             void shift_up(unsigned dim)
             {
-                assert(dim < ndim);
-                shift(dim, -stride_type(len_[dim]));
+                shift_up(dim, len_[dim]);
             }
 
-            template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_==1,const_marray_view<T,ndim>>::type
-            shifted(stride_type n) const
-            {
-                return shifted(0, n);
-            }
-
-            const_marray_view<T,ndim> shifted(unsigned dim, stride_type n) const
+            const_marray_view<T,ndim> shifted_down(unsigned dim, idx_type n) const
             {
                 assert(dim < ndim);
                 const_marray_view<T,ndim> r(*this);
-                r.shift(dim, n);
+                r.shift_down(dim, n);
                 return r;
             }
 
-            template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_==1,const_marray_view<T,ndim>>::type
-            shifted_down() const
+            const_marray_view<T,ndim> shifted_up(unsigned dim, idx_type n) const
             {
-                return shifted_down(0);
+                assert(dim < ndim);
+                const_marray_view<T,ndim> r(*this);
+                r.shift_up(dim, n);
+                return r;
             }
 
             const_marray_view<T,ndim> shifted_down(unsigned dim) const
             {
-                assert(dim < ndim);
-                return shifted(dim, len_[dim]);
-            }
-
-            template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_==1,const_marray_view<T,ndim>>::type
-            shifted_up() const
-            {
-                return shifted_up(0);
+                return shifted_down(dim, len_[dim]);
             }
 
             const_marray_view<T,ndim> shifted_up(unsigned dim) const
             {
-                assert(dim < ndim);
-                return shifted(dim, -stride_type(len_[dim]));
+                return shifted_up(dim, len_[dim]);
             }
 
             template <typename U>
@@ -1790,7 +1758,7 @@ namespace MArray
             }
 
             template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, const_marray_view<T, ndim-1>>::type
+            typename std::enable_if<(ndim_>1), const_marray_view<T, ndim-1>>::type
             front(unsigned dim) const
             {
                 assert(dim < ndim);
@@ -1824,7 +1792,7 @@ namespace MArray
             }
 
             template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, const_marray_view<T, ndim-1>>::type
+            typename std::enable_if<(ndim_>1), const_marray_view<T, ndim-1>>::type
             back(unsigned dim) const
             {
                 const_marray_view<T, ndim-1> view = front(dim);
@@ -1841,7 +1809,7 @@ namespace MArray
             }
 
             template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, detail::const_marray_ref<T, ndim, 2>>::type
+            typename std::enable_if<(ndim_>1), detail::const_marray_ref<T, ndim, 2>>::type
             operator[](idx_type i) const
             {
                 assert(i < len_[0]);
@@ -1857,7 +1825,7 @@ namespace MArray
             }
 
             template <typename I, unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, detail::const_marray_slice<T, ndim, 2, 1>>::type
+            typename std::enable_if<(ndim_>1), detail::const_marray_slice<T, ndim, 2, 1>>::type
             operator[](const range_t<I>& x) const
             {
                 assert(x.front() >= 0 && x.back() <= len_[0]);
@@ -1872,14 +1840,21 @@ namespace MArray
             }
 
             template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, detail::const_marray_slice<T, ndim, 2, 1>>::type
+            typename std::enable_if<(ndim_>1), detail::const_marray_slice<T, ndim, 2, 1>>::type
             operator[](slice::all_t x) const
             {
                 return {*this, 0, {}, {}, range(len_[0])};
             }
 
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==0, const_reference>::type
+            operator()() const
+            {
+                return *data_;
+            }
+
             template <typename Arg, typename=
-                typename std::enable_if<detail::is_index_or_slice<Arg>::value>::type>
+                typename std::enable_if<ndim==1 && detail::is_index_or_slice<Arg>::value>::type>
             auto operator()(Arg&& arg) const ->
             decltype((*this)[std::forward<Arg>(arg)])
             {
@@ -1887,7 +1862,7 @@ namespace MArray
             }
 
             template <typename Arg, typename... Args, typename=
-                typename std::enable_if<sizeof...(Args) == ndim-1 &&
+                typename std::enable_if<sizeof...(Args)+1 == ndim &&
                                         detail::are_indices_or_slices<Arg, Args...>::value>::type>
             auto operator()(Arg&& arg, Args&&... args) const ->
             decltype((*this)[std::forward<Arg>(arg)](std::forward<Args>(args)...))
@@ -2140,39 +2115,22 @@ namespace MArray
                 return *this;
             }
 
-            using base::shift;
             using base::shift_up;
             using base::shift_down;
 
-            template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_==1,marray_view<T,ndim>>::type
-            shifted(stride_type n) const
+            marray_view<T,ndim> shifted_down(unsigned dim, idx_type n) const
             {
-                return base::shifted(n);
+                return base::shifted_down(dim, n);
             }
 
-            marray_view<T,ndim> shifted(unsigned dim, stride_type n) const
+            marray_view<T,ndim> shifted_up(unsigned dim, idx_type n) const
             {
-                return base::shifted(dim, n);
-            }
-
-            template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_==1,marray_view<T,ndim>>::type
-            shifted_down() const
-            {
-                return base::shifted_down();
+                return base::shifted_up(dim, n);
             }
 
             marray_view<T,ndim> shifted_down(unsigned dim) const
             {
                 return base::shifted_down(dim);
-            }
-
-            template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_==1,marray_view<T,ndim>>::type
-            shifted_up() const
-            {
-                return base::shifted_up();
             }
 
             marray_view<T,ndim> shifted_up(unsigned dim) const
@@ -2306,7 +2264,7 @@ namespace MArray
             }
 
             template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, marray_view<T, ndim-1>>::type
+            typename std::enable_if<(ndim_>1), marray_view<T, ndim-1>>::type
             front(unsigned dim) const
             {
                 return base::front(dim);
@@ -2327,7 +2285,7 @@ namespace MArray
             }
 
             template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, marray_view<T, ndim-1>>::type
+            typename std::enable_if<(ndim_>1), marray_view<T, ndim-1>>::type
             back(unsigned dim) const
             {
                 return base::back(dim);
@@ -2341,7 +2299,7 @@ namespace MArray
             }
 
             template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, detail::marray_ref<T, ndim, 2>>::type
+            typename std::enable_if<(ndim_>1), detail::marray_ref<T, ndim, 2>>::type
             operator[](idx_type i) const
             {
                 return base::operator[](i);
@@ -2355,7 +2313,7 @@ namespace MArray
             }
 
             template <typename I, unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, detail::marray_slice<T, ndim, 2, 1>>::type
+            typename std::enable_if<(ndim_>1), detail::marray_slice<T, ndim, 2, 1>>::type
             operator[](const range_t<I>& x) const
             {
                 return base::operator[](x);
@@ -2369,14 +2327,14 @@ namespace MArray
             }
 
             template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, detail::marray_slice<T, ndim, 2, 1>>::type
+            typename std::enable_if<(ndim_>1), detail::marray_slice<T, ndim, 2, 1>>::type
             operator[](slice::all_t x) const
             {
                 return base::operator[](x);
             }
 
             template <typename Arg, typename=
-                typename std::enable_if<detail::is_index_or_slice<Arg>::value>::type>
+                typename std::enable_if<ndim==1 && detail::is_index_or_slice<Arg>::value>::type>
             auto operator()(Arg&& arg) const ->
             decltype(base::operator()(std::forward<Arg>(arg)))
             {
@@ -2753,7 +2711,7 @@ namespace MArray
             }
 
             template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1>::type
+            typename std::enable_if<(ndim_>1)>::type
             push_back(unsigned dim, const const_marray_view<T, ndim-1>& x)
             {
                 assert(dim < ndim);
@@ -2770,7 +2728,7 @@ namespace MArray
             }
 
             template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1>::type
+            typename std::enable_if<(ndim_>1)>::type
             pop_back(unsigned dim)
             {
                 assert(dim < ndim);
@@ -2889,14 +2847,14 @@ namespace MArray
             }
 
             template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, marray_view<T, ndim-1>>::type
+            typename std::enable_if<(ndim_>1), marray_view<T, ndim-1>>::type
             front(unsigned dim)
             {
                 return base::front(dim);
             }
 
             template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, const_marray_view<T, ndim-1>>::type
+            typename std::enable_if<(ndim_>1), const_marray_view<T, ndim-1>>::type
             front(unsigned dim) const
             {
                 return base::front(dim);
@@ -2931,14 +2889,14 @@ namespace MArray
             }
 
             template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, marray_view<T, ndim-1>>::type
+            typename std::enable_if<(ndim_>1), marray_view<T, ndim-1>>::type
             back(unsigned dim)
             {
                 return base::back(dim);
             }
 
             template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, const_marray_view<T, ndim-1>>::type
+            typename std::enable_if<(ndim_>1), const_marray_view<T, ndim-1>>::type
             back(unsigned dim) const
             {
                 return base::back(dim);
@@ -2959,14 +2917,14 @@ namespace MArray
             }
 
             template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, detail::marray_ref<T, ndim, 2>>::type
+            typename std::enable_if<(ndim_>1), detail::marray_ref<T, ndim, 2>>::type
             operator[](idx_type i)
             {
                 return base::operator[](i);
             }
 
             template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, detail::const_marray_ref<T, ndim, 2>>::type
+            typename std::enable_if<(ndim_>1), detail::const_marray_ref<T, ndim, 2>>::type
             operator[](idx_type i) const
             {
                 return base::operator[](i);
@@ -2987,14 +2945,14 @@ namespace MArray
             }
 
             template <typename I, unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, detail::marray_slice<T, ndim, 2, 1>>::type
+            typename std::enable_if<(ndim_>1), detail::marray_slice<T, ndim, 2, 1>>::type
             operator[](const range_t<I>& x)
             {
                 return base::operator[](x);
             }
 
             template <typename I, unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, detail::const_marray_slice<T, ndim, 2, 1>>::type
+            typename std::enable_if<(ndim_>1), detail::const_marray_slice<T, ndim, 2, 1>>::type
             operator[](const range_t<I>& x) const
             {
                 return base::operator[](x);
@@ -3015,21 +2973,35 @@ namespace MArray
             }
 
             template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, detail::marray_slice<T, ndim, 2, 1>>::type
+            typename std::enable_if<(ndim_>1), detail::marray_slice<T, ndim, 2, 1>>::type
             operator[](slice::all_t x)
             {
                 return base::operator[](x);
             }
 
             template <unsigned ndim_=ndim>
-            typename std::enable_if<ndim_!=1, detail::const_marray_slice<T, ndim, 2, 1>>::type
+            typename std::enable_if<(ndim_>1), detail::const_marray_slice<T, ndim, 2, 1>>::type
             operator[](slice::all_t x) const
             {
                 return base::operator[](x);
             }
 
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==0, const_reference>::type
+            operator()() const
+            {
+                return *data_;
+            }
+
+            template <unsigned ndim_=ndim>
+            typename std::enable_if<ndim_==0, reference>::type
+            operator()()
+            {
+                return *data_;
+            }
+
             template <typename Arg, typename=
-                typename std::enable_if<detail::is_index_or_slice<Arg>::value>::type>
+                typename std::enable_if<ndim==1 && detail::is_index_or_slice<Arg>::value>::type>
             auto operator()(Arg&& arg) ->
             decltype(base::operator()(std::forward<Arg>(arg)))
             {
@@ -3037,7 +3009,7 @@ namespace MArray
             }
 
             template <typename Arg, typename=
-                typename std::enable_if<detail::is_index_or_slice<Arg>::value>::type>
+                typename std::enable_if<ndim==1 && detail::is_index_or_slice<Arg>::value>::type>
             auto operator()(Arg&& arg) const ->
             decltype(base::base::operator()(std::forward<Arg>(arg)))
             {

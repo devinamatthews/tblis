@@ -15,7 +15,6 @@
 
 namespace MArray
 {
-
     template <typename T>
     class const_varray_view;
 
@@ -56,6 +55,8 @@ namespace MArray
             static std::vector<stride_type> default_strides(const std::vector<idx_type>& len, Layout layout=DEFAULT)
             {
                 std::vector<stride_type> stride(len.size());
+
+                if (stride.empty()) return stride;
 
                 int ndim = len.size();
                 if (layout == ROW_MAJOR)
@@ -163,7 +164,6 @@ namespace MArray
 
             void reset(const std::vector<idx_type>& len, const_pointer ptr, const std::vector<stride_type>& stride)
             {
-                assert(len.size() > 0);
                 assert(len.size() == stride.size());
                 data_ = const_cast<pointer>(ptr);
                 len_ = len;
@@ -171,42 +171,52 @@ namespace MArray
                 ndim_ = len.size();
             }
 
-            void shift(unsigned dim, stride_type n)
+            void shift_down(unsigned dim, idx_type n)
             {
                 assert(dim < ndim_);
                 data_ += n*stride_[dim];
             }
 
-            void shift_down(unsigned dim)
+            void shift_up(unsigned dim, idx_type n)
             {
                 assert(dim < ndim_);
-                shift(dim, len_[dim]);
+                data_ -= n*stride_[dim];
+            }
+
+            void shift_down(unsigned dim)
+            {
+                shift_down(dim, len_[dim]);
             }
 
             void shift_up(unsigned dim)
             {
-                assert(dim < ndim_);
-                shift(dim, -stride_type(len_[dim]));
+                shift_up(dim, len_[dim]);
             }
 
-            const_varray_view<T> shifted(unsigned dim, stride_type n) const
+            const_varray_view<T> shifted_down(unsigned dim, idx_type n) const
             {
                 assert(dim < ndim_);
                 const_varray_view<T> r(*this);
-                r.shift(dim, n);
+                r.shift_down(dim, n);
+                return r;
+            }
+
+            const_varray_view<T> shifted_up(unsigned dim, idx_type n) const
+            {
+                assert(dim < ndim_);
+                const_varray_view<T> r(*this);
+                r.shift_up(dim, n);
                 return r;
             }
 
             const_varray_view<T> shifted_down(unsigned dim) const
             {
-                assert(dim < ndim_);
-                return shifted(dim, len_[dim]);
+                return shifted_down(dim, len_[dim]);
             }
 
             const_varray_view<T> shifted_up(unsigned dim) const
             {
-                assert(dim < ndim_);
-                return shifted(dim, -stride_type(len_[dim]));
+                return shifted_up(dim, len_[dim]);
             }
 
             void permute(const std::vector<unsigned>& perm)
@@ -299,7 +309,6 @@ namespace MArray
 
             const_varray_view<T> front(unsigned dim) const
             {
-                assert(ndim_ > 1);
                 assert(dim < ndim_);
                 assert(len_[dim] > 0);
 
@@ -521,13 +530,17 @@ namespace MArray
                 return *this;
             }
 
-            using base::shift;
             using base::shift_down;
             using base::shift_up;
 
-            varray_view<T> shifted(unsigned dim, stride_type n) const
+            varray_view<T> shifted_down(unsigned dim, idx_type n) const
             {
-                return base::shifted(dim, n);
+                return base::shifted_down(dim, n);
+            }
+
+            varray_view<T> shifted_up(unsigned dim, idx_type n) const
+            {
+                return base::shifted_up(dim, n);
             }
 
             varray_view<T> shifted_down(unsigned dim) const
@@ -874,7 +887,7 @@ namespace MArray
 
             void push_back(unsigned dim, const varray_view<T>& x)
             {
-                assert(x.ndim_ == ndim_-1);
+                assert(x.ndim_+1 == ndim_);
                 assert(dim < ndim_);
 
                 for (unsigned i = 0, j = 0;i < ndim_;i++)

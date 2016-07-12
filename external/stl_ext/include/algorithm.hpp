@@ -504,6 +504,41 @@ translated(T s, U&& from, U&& to)
     return s;
 }
 
+template <typename T, typename U>
+void permute(T& v, const U& p)
+{
+    v = permuted(v, p);
+}
+
+template <typename T, typename U>
+T permuted(const T& v, const U& p)
+{
+    T v2; v2.reserve(v.size());
+    for (size_t i = 0;i < v.size();i++) v2.push_back(v[p[i]]);
+    return v2;
+}
+
+template <typename T, typename U>
+T select_from(const T& v, const U& s, const U& match)
+{
+    T v2; v2.reserve(match.size());
+
+    for (auto& m : match)
+    {
+        bool found = false;
+        for (size_t i = 0;i < s.size();i++)
+        {
+            if (s[i] == m)
+            {
+                v2.push_back(v[i]);
+                break;
+            }
+        }
+    }
+
+    return v2;
+}
+
 }
 
 #endif

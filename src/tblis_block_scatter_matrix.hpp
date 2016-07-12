@@ -131,21 +131,28 @@ class block_scatter_matrix
             return scatter_[dim];
         }
 
-        void shift(unsigned dim, idx_type m)
+        void shift_down(unsigned dim, idx_type n)
         {
             assert(dim < 2);
-            scatter_[dim] += m;
-            block_scatter_[dim] += ceil_div(m, MB);
+            scatter_[dim] += n;
+            block_scatter_[dim] += ceil_div(n, (dim ? NB : MB));
+        }
+
+        void shift_up(unsigned dim, idx_type n)
+        {
+            assert(dim < 2);
+            scatter_[dim] -= n;
+            block_scatter_[dim] -= ceil_div(n, (dim ? NB : MB));
         }
 
         void shift_down(unsigned dim)
         {
-            shift(dim, length(dim));
+            shift_down(dim, length(dim));
         }
 
         void shift_up(unsigned dim)
         {
-            shift(dim, -length(dim));
+            shift_up(dim, length(dim));
         }
 
         pointer data()

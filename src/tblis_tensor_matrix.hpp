@@ -179,20 +179,26 @@ class tensor_matrix
             return m;
         }
 
-        void shift(unsigned dim, idx_type m)
+        void shift_down(unsigned dim, idx_type n)
         {
             assert(dim < 2);
-            offset_[dim] += m;
+            offset_[dim] += n;
+        }
+
+        void shift_up(unsigned dim, idx_type n)
+        {
+            assert(dim < 2);
+            offset_[dim] -= n;
         }
 
         void shift_down(unsigned dim)
         {
-            shift(dim, length(dim));
+            shift_down(dim, len_[dim]);
         }
 
         void shift_up(unsigned dim)
         {
-            shift(dim, -length(dim));
+            shift_up(dim, len_[dim]);
         }
 
         pointer data()
@@ -209,10 +215,10 @@ class tensor_matrix
         {
             assert(dim < 2);
 
-            const auto& m = len_[dim];
-            const auto& off_m = offset_[dim];
-            const auto& m0 = leading_len_[dim];
-            const auto& s0 = leading_stride_[dim];
+            idx_type m = len_[dim];
+            idx_type off_m = offset_[dim];
+            idx_type m0 = leading_len_[dim];
+            stride_type s0 = leading_stride_[dim];
             auto& it = iterator_[dim];
 
             idx_type p0 = off_m%m0;
@@ -233,6 +239,7 @@ class tensor_matrix
         template <idx_type MR>
         void fill_block_scatter(unsigned dim, stride_type* block_scatter, stride_type* scatter)
         {
+            /*
             assert(dim < 2);
 
             const auto& m = len_[dim];
@@ -263,6 +270,21 @@ class tensor_matrix
                     nleft--;
                 }
                 p0 = 0;
+            }
+            */
+
+            fill_scatter(dim, scatter);
+
+            idx_type m = len_[dim];
+
+            for (idx_type i = 0;i < m;i += MR)
+            {
+                stride_type s = (m-i) > 1 ? scatter[i+1]-scatter[i] : 1;
+                for (idx_type j = i+1;j+1 < std::min(i+MR,m);j++)
+                {
+                    if (scatter[j+1]-scatter[j] != s) s = 0;
+                }
+                block_scatter[i/MR] = s;
             }
         }
 };

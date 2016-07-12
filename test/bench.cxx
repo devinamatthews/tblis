@@ -9,12 +9,19 @@
 #include <sstream>
 #include <iomanip>
 #include <functional>
+#include <set>
+#include <map>
 
 #include "tblis.hpp"
 
+#define LAWRAP_COMPLEX_DEFINED
+#include "external/lawrap/blas.h"
+
 using namespace std;
 using namespace tblis;
+using namespace tblis::util;
 using namespace tblis::impl;
+using namespace LAWrap;
 
 namespace tblis
 {
@@ -24,8 +31,35 @@ mt19937 engine;
 }
 }
 
-template <idx_type Rsub=1>
-double RunKernel(idx_type R, const function<void()>& kernel)
+range_t<idx_type> parse_range(const string& s)
+{
+    idx_type mn, mx;
+    idx_type delta = 1;
+
+    size_t colon1 = s.find(':');
+    size_t colon2 = s.find(':', colon1 == string::npos ? colon1 : colon1+1);
+
+    if (colon1 == string::npos)
+    {
+        mn = mx = stol(s);
+    }
+    else if (colon2 == string::npos)
+    {
+        mn = stol(s.substr(0,colon1));
+        mx = stol(s.substr(colon1+1));
+    }
+    else
+    {
+        mn = stol(s.substr(0,colon1));
+        mx = stol(s.substr(colon1+1,colon2-colon1-1));
+        delta = stol(s.substr(colon2+1));
+    }
+
+    return {mn, mx, delta};
+}
+
+template <typename Kernel, typename... Args>
+double run_kernel(idx_type R, const Kernel& kernel, Args&&... args)
 {
     double bias = numeric_limits<double>::max();
     for (idx_type r = 0;r < R;r++)
@@ -39,7 +73,7 @@ double RunKernel(idx_type R, const function<void()>& kernel)
     for (idx_type r = 0;r < R;r++)
     {
         double t0 = bli_clock();
-        for (idx_type rs = 0;rs < Rsub;rs++) kernel();
+        kernel(std::forward<Args>(args)...);
         double t1 = bli_clock();
         dt = min(dt, t1-t0);
     }
@@ -47,65 +81,143 @@ double RunKernel(idx_type R, const function<void()>& kernel)
     return dt-bias;
 }
 
-void RunExperiment(idx_type m0, idx_type m1, idx_type m_step,
-                   idx_type n0, idx_type n1, idx_type n_step,
-                   idx_type k0, idx_type k1, idx_type k_step,
-                   const function<void(idx_type,idx_type,idx_type)>& experiment)
+template <typename Experiment>
+void iterate_over_ranges_helper(const map<char,range_t<idx_type>>& ranges,
+                                map<char,range_t<idx_type>>::const_iterator range,
+                                map<char,idx_type>& values,
+                                const Experiment& experiment)
 {
-    for (idx_type m = m0, n = n0, k = k0;
-         m >= min(m0,m1) && m <= max(m0,m1) &&
-         n >= min(n0,n1) && n <= max(n0,n1) &&
-         k >= min(k0,k1) && k <= max(k0,k1);
-         m += m_step, n += n_step, k += k_step)
+    if (range == ranges.end())
     {
+        if      (m > 0 && m_range.begin() != m_range.end()) var = m;
+        else if (n > 0 && n_range.begin() != n_range.end()) var = n;
+        else if (k > 0 && k_range.begin() != k_range.end()) var = k;
+        else if (m <= 0 || n <= 0 || k <= 0)
+        {
+            cerr << "No variable dimension" << endl;
+            exit(1);
+        }
+
+        if (m <= 0) m = var;
+        if (n <= 0) n = var;
+        if (k <= 0) k = var;
+
         experiment(m, n, k);
+    }
+    else
+    {
+        for (idx_type v : *range)
+        {
+            iterate_over_ranges_helper(ranges, ++range, values, experiment);
+        }
     }
 }
 
-template <typename T>
-void Benchmark(int R)
+template <typename Experiment>
+void iterate_over_ranges(const map<char,range_t<idx_type>>& ranges,
+                         const Experiment& experiment)
 {
-    using namespace std::placeholders;
+    map<char,idx_type> values;
+    iterate_over_ranges_helper(ranges, ranges.begin(), values, experiment);
+}
 
-    FILE *mout, *tout;
+enum algo_t
+{
+    BLIS,
+    BLIS_COPY,
+    BLAS,
+    BLAS_COPY
+};
 
-    auto rand_experiment =
-    [&](idx_type m, idx_type n, idx_type k, const std::function<double(double,idx_type,idx_type,idx_type)>& eff_dim)
+template <typename T> struct type_char;
+template <> struct type_char<   float> { static constexpr char value = 's'; };
+template <> struct type_char<  double> { static constexpr char value = 'd'; };
+template <> struct type_char<scomplex> { static constexpr char value = 'c'; };
+template <> struct type_char<dcomplex> { static constexpr char value = 'z'; };
+
+template <typename T, algo_t Algorithm>
+struct gemm_experiment
+{
+    idx_type R;
+
+    gemm_experiment(idx_type R,
+                    const range_t<idx_type>& m_range,
+                    const range_t<idx_type>& n_range,
+                    const range_t<idx_type>& k_range)
+    : R(R)
     {
-        printf("%ld %ld %ld\n", m, n, k);
+        run_gemm(m_range, n_range, k_range, *this);
+    }
 
-        T alpha = 1.0;
-        T beta = 0.0;
+    void operator()(idx_type m, idx_type n, idx_type k)
+    {
+        matrix<T> A(m, k);
+        matrix<T> B(k, n);
+        matrix<T> C(m, n);
+        matrix<T> A_copy(m, k);
+        matrix<T> B_copy(k, n);
+        matrix<T> C_copy(m, n);
 
+        double dt = run_kernel(R,
+        [&]
         {
-            Matrix<T> A(m, k);
-            Matrix<T> B(k, n);
-            Matrix<T> C(m, n);
-            A = 0.0;
-            B = 0.0;
-            C = 0.0;
-
-            Scalar<T> alp(alpha);
-            Scalar<T> bet(beta);
-
-            double gflops = 2*m*n*k*1e-9;
-            double dt_1 = RunKernel(R, [&]{ bli_gemm(alp, A, B, bet, C); });
-            double dt_2 = RunKernel(R,
-            [&]
+            if (Algorithm == BLIS)
             {
-                Matrix<T> A2(k, m);
-                Matrix<T> B2(k, n);
-                Matrix<T> C2(m, n);
-                A2.transpose();
-                tblis_copyv(false, m*k, A.data(), 1, A2.data(), 1);
-                tblis_copyv(false, k*n, B.data(), 1, B2.data(), 1);
-                bli_gemm(alp, A2, B2, bet, C2);
-                tblis_xpbyv(false, m*n, C2.data(), 1, beta, C.data(), 1);
-            });
-            fprintf(mout, "%e %e %e\n", eff_dim(gflops,m,n,k), gflops/dt_1, gflops/dt_2);
-        }
+                tblis_gemm<T>(1.0, A, B, 0.0, C);
+            }
+            else if (Algorithm == BLIS_COPY)
+            {
+                tblis_copyv(false, m*k, A.data(), 1, A_copy.data(), 1);
+                tblis_copyv(false, k*n, B.data(), 1, B_copy.data(), 1);
+                tblis_gemm<T>(1.0, A_copy, B_copy, 0.0, C_copy);
+                tblis_copyv(false, m*n, C_copy.data(), 1, C.data(), 1);
+            }
+            else if (Algorithm == BLAS)
+            {
+                gemm('N', 'N', m, n, k,
+                     1.0, A.data(), m,
+                          B.data(), k,
+                     0.0, C.data(), m);
+            }
+            else if (Algorithm == BLAS_COPY)
+            {
+                copy(m*k, A.data(), 1, A_copy.data(), 1);
+                copy(k*n, B.data(), 1, B_copy.data(), 1);
+                gemm('N', 'N', m, n, k,
+                     1.0, A_copy.data(), m,
+                          B_copy.data(), k,
+                     0.0, C_copy.data(), m);
+                copy(m*n, C_copy.data(), 1, C.data(), 1);
+            }
+        });
+        double gflops = 2*m*n*k;
 
-        for (int i = 0;i < 3;i++)
+        printf("%e %e -- %s %c %d %d %d\n", gflops, gflops/dt,
+               (Algorithm == BLIS ? "blis" :
+                Algorithm == BLIS_COPY ? "blis+copy" :
+                Algorithm == BLAS ? "blas" : "blas+copy"),
+               type_char<T>::value, m, n, k);
+        fflush(stdout);
+    }
+};
+
+template <typename T, impl_t Implementation, int N=3>
+struct random_contraction
+{
+    idx_type R;
+
+    random_contraction(idx_type R,
+                    const range_t<idx_type>& m_range,
+                    const range_t<idx_type>& n_range,
+                    const range_t<idx_type>& k_range)
+    : R(R)
+    {
+        run_gemm(m_range, n_range, k_range, *this);
+    }
+
+    void operator()(idx_type m, idx_type n, idx_type k)
+    {
+        for (int i = 0;i < N;i++)
         {
             vector<idx_type> len_m = RandomProductConstrainedSequence<idx_type, ROUND_NEAREST>(RandomInteger(1, 3), m);
             vector<idx_type> len_n = RandomProductConstrainedSequence<idx_type, ROUND_NEAREST>(RandomInteger(1, 3), n);
@@ -115,6 +227,8 @@ void Benchmark(int R)
             vector<idx_type> len_A, len_B, len_C;
             char idx = 'a';
 
+            map<char,idx_type> lengths;
+
             idx_type tm = 1;
             for (idx_type len : len_m)
             {
@@ -122,6 +236,7 @@ void Benchmark(int R)
                 len_A.push_back(len);
                 idx_C.push_back(idx);
                 len_C.push_back(len);
+                lengths[idx] = len;
                 idx++;
                 tm *= len;
             }
@@ -133,6 +248,7 @@ void Benchmark(int R)
                 len_B.push_back(len);
                 idx_C.push_back(idx);
                 len_C.push_back(len);
+                lengths[idx] = len;
                 idx++;
                 tn *= len;
             }
@@ -144,13 +260,14 @@ void Benchmark(int R)
                 len_A.push_back(len);
                 idx_B.push_back(idx);
                 len_B.push_back(len);
+                lengths[idx] = len;
                 idx++;
                 tk *= len;
             }
 
-            vector<int> reorder_A = range<int>(len_A.size());
-            vector<int> reorder_B = range<int>(len_B.size());
-            vector<int> reorder_C = range<int>(len_C.size());
+            vector<unsigned> reorder_A = range<unsigned>(len_A.size());
+            vector<unsigned> reorder_B = range<unsigned>(len_B.size());
+            vector<unsigned> reorder_C = range<unsigned>(len_C.size());
 
             random_shuffle(reorder_A.begin(), reorder_A.end());
             random_shuffle(reorder_B.begin(), reorder_B.end());
@@ -163,288 +280,127 @@ void Benchmark(int R)
             idx_C = permute(idx_C, reorder_C);
             len_C = permute(len_C, reorder_C);
 
-            Tensor<T> A(len_A.size(), len_A);
-            Tensor<T> B(len_B.size(), len_B);
-            Tensor<T> C(len_C.size(), len_C);
-
-            len_A.resize(6);
-            len_B.resize(6);
-            len_C.resize(6);
+            tensor<T> A(len_A);
+            tensor<T> B(len_B);
+            tensor<T> C(len_C);
 
             double gflops = 2*tm*tn*tk*1e-9;
-            impl_type = BLAS_BASED;
-            double dt_blas = RunKernel(R, [&]{ tensor_contract(alpha, A, idx_A, B, idx_B, beta, C, idx_C); });
-            impl_type = BLIS_BASED;
-            double dt_blis = RunKernel(R, [&]{ tensor_contract(alpha, A, idx_A, B, idx_B, beta, C, idx_C); });
-            fprintf(tout, "%e %e %e - %s %ld %ld %ld %ld %ld %ld - %s %ld %ld %ld %ld %ld %ld - %s %ld %ld %ld %ld %ld %ld\n",
-                    eff_dim(gflops,m,n,k), gflops/dt_blas, gflops/dt_blis,
-                    idx_A.c_str(), len_A[0], len_A[1], len_A[2], len_A[3], len_A[4], len_A[5],
-                    idx_B.c_str(), len_B[0], len_B[1], len_B[2], len_B[3], len_B[4], len_B[5],
-                    idx_C.c_str(), len_C[0], len_C[1], len_C[2], len_C[3], len_C[4], len_C[5]);
+            impl_type = Implementation;
+            double dt = run_kernel(R, [&]{ tensor_contract<T>(1.0, A, idx_A, B, idx_B, 0.0, C, idx_C); });
+
+            printf("%e %e -- %s %c %s %s %s", gflops, gflops/dt,
+                   (Implementation == BLIS_BASED ? "rand_blis" : "rand_blas"),
+                   type_char<T>::value, idx_A.c_str(), idx_B.c_str(), idx_C.c_str());
+
+            for (auto& l : lengths) printf(" %d", l.second);
+            printf("\n");
+            fflush(stdout);
         }
-    };
-
-    auto reg_experiment =
-    [&](idx_type m, idx_type n, idx_type k, const std::function<double(double,idx_type,idx_type,idx_type)>& eff_dim)
-    {
-        printf("%ld %ld %ld\n", m, n, k);
-
-        T alpha = 1.0;
-        T beta = 0.0;
-
-        {
-            Matrix<T> A(m, k);
-            Matrix<T> B(k, n);
-            Matrix<T> C(m, n);
-            A = 0.0;
-            B = 0.0;
-            C = 0.0;
-
-            Scalar<T> alp(alpha);
-            Scalar<T> bet(beta);
-
-            double gflops = 2*m*n*k*1e-9;
-            double dt_1 = RunKernel(R, [&]{ bli_gemm(alp, A, B, bet, C); });
-            double dt_2 = RunKernel(R,
-            [&]
-            {
-                Matrix<T> A2(k, m);
-                Matrix<T> B2(k, n);
-                Matrix<T> C2(m, n);
-                A2.transpose();
-                tblis_copyv(false, m*k, A.data(), 1, A2.data(), 1);
-                tblis_copyv(false, k*n, B.data(), 1, B2.data(), 1);
-                bli_gemm(alp, A2, B2, bet, C2);
-                tblis_xpbyv(false, m*n, C2.data(), 1, beta, C.data(), 1);
-            });
-            fprintf(mout, "%e %e %e\n", eff_dim(gflops,m,n,k), gflops/dt_1, gflops/dt_2);
-        }
-
-        {
-            Tensor<T> A(4, vector<idx_type>{m/10, k/10, 10, 10});
-            Tensor<T> B(4, vector<idx_type>{k/10, n/10, 10, 10});
-            Tensor<T> C(4, vector<idx_type>{m/10, n/10, 10, 10});
-
-            double gflops = 2*m*n*k*1e-9;
-            impl_type = BLAS_BASED;
-            double dt_blas = RunKernel(R, [&]{ tensor_contract(alpha, A, "aebf", B, "ecfd", beta, C, "acbd"); });
-            impl_type = BLIS_BASED;
-            double dt_blis = RunKernel(R, [&]{ tensor_contract(alpha, A, "aebf", B, "ecfd", beta, C, "acbd"); });
-            fprintf(tout, "%e %e %e\n", eff_dim(gflops,m,n,k), gflops/dt_blas, gflops/dt_blis);
-        }
-    };
-
-    if (1)
-    {
-        mout = fopen("out.mat.reg.square", "w");
-        tout = fopen("out.tensor.reg.square", "w");
-
-        auto square_exp = bind(reg_experiment, _1, _2, _3,
-                               [](double gflops, idx_type m, idx_type n, idx_type k)
-                               { return pow(gflops/2e-9, 1.0/3.0); });
-        RunExperiment(20, 1000, 20,
-                      20, 1000, 20,
-                      20, 1000, 20,
-                      square_exp);
-
-        fclose(mout);
-        fclose(tout);
     }
+};
 
-    if (1)
-    {
-        mout = fopen("out.mat.reg.rankk", "w");
-        tout = fopen("out.tensor.reg.rankk", "w");
-
-        auto rankk_exp = bind(reg_experiment, _1, _2, _3,
-                              [](double gflops, idx_type m, idx_type n, idx_type k)
-                              { return gflops/2e-9/m/n; });
-        RunExperiment(1000, 1000,  0,
-                      1000, 1000,  0,
-                        20, 1000, 20,
-                      rankk_exp);
-
-        fclose(mout);
-        fclose(tout);
-    }
-
-    if (1)
-    {
-        mout = fopen("out.mat.reg.pp", "w");
-        tout = fopen("out.tensor.reg.pp", "w");
-
-        auto pp_exp = bind(reg_experiment, _1, _2, _3,
-                           [](double gflops, idx_type m, idx_type n, idx_type k)
-                           { return sqrt(gflops/2e-9/k); });
-        RunExperiment( 20, 1000, 20,
-                       20, 1000, 20,
-                      250,  250,  0,
-                      pp_exp);
-
-        fclose(mout);
-        fclose(tout);
-    }
-
-    if (1)
-    {
-        mout = fopen("out.mat.reg.bp", "w");
-        tout = fopen("out.tensor.reg.bp", "w");
-
-        auto bp_exp = bind(reg_experiment, _1, _2, _3,
-                           [](double gflops, idx_type m, idx_type n, idx_type k)
-                           { return gflops/2e-9/m/k; });
-        RunExperiment( 90,   90,  0,
-                       20, 2000, 20,
-                      250,  250,  0,
-                      bp_exp);
-
-        fclose(mout);
-        fclose(tout);
-    }
-
-    if (1)
-    {
-        mout = fopen("out.mat.rand.square", "w");
-        tout = fopen("out.tensor.rand.square", "w");
-
-        auto square_exp = bind(rand_experiment, _1, _2, _3,
-                               [](double gflops, idx_type m, idx_type n, idx_type k)
-                               { return pow(gflops/2e-9, 1.0/3.0); });
-        RunExperiment(20, 1000, 20,
-                      20, 1000, 20,
-                      20, 1000, 20,
-                      square_exp);
-
-        fclose(mout);
-        fclose(tout);
-    }
-
-    if (1)
-    {
-        mout = fopen("out.mat.rand.rankk", "w");
-        tout = fopen("out.tensor.rand.rankk", "w");
-
-        auto rankk_exp = bind(rand_experiment, _1, _2, _3,
-                              [](double gflops, idx_type m, idx_type n, idx_type k)
-                              { return gflops/2e-9/m/n; });
-        RunExperiment(1000, 1000,  0,
-                      1000, 1000,  0,
-                        20, 1000, 20,
-                      rankk_exp);
-
-        fclose(mout);
-        fclose(tout);
-    }
-
-    if (1)
-    {
-        mout = fopen("out.mat.rand.pp", "w");
-        tout = fopen("out.tensor.rand.pp", "w");
-
-        auto pp_exp = bind(rand_experiment, _1, _2, _3,
-                           [](double gflops, idx_type m, idx_type n, idx_type k)
-                           { return sqrt(gflops/2e-9/k); });
-        RunExperiment( 20, 1000, 20,
-                       20, 1000, 20,
-                      256,  256,  0,
-                      pp_exp);
-
-        fclose(mout);
-        fclose(tout);
-    }
-
-    if (1)
-    {
-        mout = fopen("out.mat.rand.bp", "w");
-        tout = fopen("out.tensor.rand.bp", "w");
-
-        auto bp_exp = bind(rand_experiment, _1, _2, _3,
-                           [](double gflops, idx_type m, idx_type n, idx_type k)
-                           { return gflops/2e-9/m/k; });
-        RunExperiment( 96,   96,  0,
-                       20, 2000, 20,
-                      256,  256,  0,
-                      bp_exp);
-
-        fclose(mout);
-        fclose(tout);
-    }
-
-    if (1)
-    {
-        mout = fopen("out.mat.reg.square", "w");
-        tout = fopen("out.tensor.reg.square", "w");
-
-        auto square_exp = bind(reg_experiment, _1, _2, _3,
-                               [](double gflops, idx_type m, idx_type n, idx_type k)
-                               { return pow(gflops/2e-9, 1.0/3.0); });
-        RunExperiment(20, 1000, 20,
-                      20, 1000, 20,
-                      20, 1000, 20,
-                      square_exp);
-
-        fclose(mout);
-        fclose(tout);
-    }
-
-    if (1)
-    {
-        mout = fopen("out.mat.reg.rankk", "w");
-        tout = fopen("out.tensor.reg.rankk", "w");
-
-        auto rankk_exp = bind(reg_experiment, _1, _2, _3,
-                              [](double gflops, idx_type m, idx_type n, idx_type k)
-                              { return gflops/2e-9/m/n; });
-        RunExperiment(1000, 1000,  0,
-                      1000, 1000,  0,
-                        20, 1000, 20,
-                      rankk_exp);
-
-        fclose(mout);
-        fclose(tout);
-    }
-
-    if (1)
-    {
-        mout = fopen("out.mat.reg.pp", "w");
-        tout = fopen("out.tensor.reg.pp", "w");
-
-        auto pp_exp = bind(reg_experiment, _1, _2, _3,
-                           [](double gflops, idx_type m, idx_type n, idx_type k)
-                           { return sqrt(gflops/2e-9/k); });
-        RunExperiment( 20, 1000, 20,
-                       20, 1000, 20,
-                      250,  250,  0,
-                      pp_exp);
-
-        fclose(mout);
-        fclose(tout);
-    }
-
-    if (1)
-    {
-        mout = fopen("out.mat.reg.bp", "w");
-        tout = fopen("out.tensor.reg.bp", "w");
-
-        auto bp_exp = bind(reg_experiment, _1, _2, _3,
-                           [](double gflops, idx_type m, idx_type n, idx_type k)
-                           { return gflops/2e-9/m/k; });
-        RunExperiment( 90,   90,  0,
-                       20, 2000, 20,
-                      250,  250,  0,
-                      bp_exp);
-
-        fclose(mout);
-        fclose(tout);
-    }
-}
-
-int main(int argc, char **argv)
+template <typename T, impl_t Implementation>
+struct regular_contraction
 {
-    int R = 20;
-    time_t seed = time(NULL);
+    idx_type R;
 
-    tblis_init();
+    regular_contraction(idx_type R,
+                    const range_t<idx_type>& m_range,
+                    const range_t<idx_type>& n_range,
+                    const range_t<idx_type>& k_range)
+    : R(R)
+    {
+
+    }
+
+    void operator()(idx_type m, idx_type n, idx_type k)
+    {
+        for (int i = 0;i < N;i++)
+        {
+            vector<idx_type> len_m = RandomProductConstrainedSequence<idx_type, ROUND_NEAREST>(RandomInteger(1, 3), m);
+            vector<idx_type> len_n = RandomProductConstrainedSequence<idx_type, ROUND_NEAREST>(RandomInteger(1, 3), n);
+            vector<idx_type> len_k = RandomProductConstrainedSequence<idx_type, ROUND_NEAREST>(RandomInteger(1, 3), k);
+
+            string idx_A, idx_B, idx_C;
+            vector<idx_type> len_A, len_B, len_C;
+            char idx = 'a';
+
+            map<char,idx_type> lengths;
+
+            idx_type tm = 1;
+            for (idx_type len : len_m)
+            {
+                idx_A.push_back(idx);
+                len_A.push_back(len);
+                idx_C.push_back(idx);
+                len_C.push_back(len);
+                lengths[idx] = len;
+                idx++;
+                tm *= len;
+            }
+
+            idx_type tn = 1;
+            for (idx_type len : len_n)
+            {
+                idx_B.push_back(idx);
+                len_B.push_back(len);
+                idx_C.push_back(idx);
+                len_C.push_back(len);
+                lengths[idx] = len;
+                idx++;
+                tn *= len;
+            }
+
+            idx_type tk = 1;
+            for (idx_type len : len_k)
+            {
+                idx_A.push_back(idx);
+                len_A.push_back(len);
+                idx_B.push_back(idx);
+                len_B.push_back(len);
+                lengths[idx] = len;
+                idx++;
+                tk *= len;
+            }
+
+            vector<unsigned> reorder_A = range<unsigned>(len_A.size());
+            vector<unsigned> reorder_B = range<unsigned>(len_B.size());
+            vector<unsigned> reorder_C = range<unsigned>(len_C.size());
+
+            random_shuffle(reorder_A.begin(), reorder_A.end());
+            random_shuffle(reorder_B.begin(), reorder_B.end());
+            random_shuffle(reorder_C.begin(), reorder_C.end());
+
+            idx_A = permute(idx_A, reorder_A);
+            len_A = permute(len_A, reorder_A);
+            idx_B = permute(idx_B, reorder_B);
+            len_B = permute(len_B, reorder_B);
+            idx_C = permute(idx_C, reorder_C);
+            len_C = permute(len_C, reorder_C);
+
+            tensor<T> A(len_A);
+            tensor<T> B(len_B);
+            tensor<T> C(len_C);
+
+            double gflops = 2*tm*tn*tk*1e-9;
+            impl_type = Implementation;
+            double dt = run_kernel(R, [&]{ tensor_contract<T>(1.0, A, idx_A, B, idx_B, 0.0, C, idx_C); });
+
+            printf("%e %e -- %s %c %s %s %s", gflops, gflops/dt,
+                   (Implementation == BLIS_BASED ? "rand_blis" : "rand_blas"),
+                   type_char<T>::value, idx_A.c_str(), idx_B.c_str(), idx_C.c_str());
+
+            for (auto& l : lengths) printf(" %d", l.second);
+            printf("\n");
+            fflush(stdout);
+        }
+    }
+};
+
+int main(int argc, char** argv)
+{
+    int R = 10;
+    time_t seed = time(nullptr);
 
     struct option opts[] = {{"rep", required_argument, NULL, 'r'},
                             {"seed", required_argument, NULL, 's'},
@@ -474,9 +430,98 @@ int main(int argc, char **argv)
     cout << "Using mt19937 with seed " << seed << endl;
     engine.seed(seed);
 
-    Benchmark<double>(R);
+    string line;
+    while (getline(cin, line) && !line.empty())
+    {
+        if (line[0] == '#') continue;
 
-    tblis_finalize();
+        string algo;
+        char dt;
+        istringstream(line) >> algo >> dt;
+
+        if (string("sdcz").find(dt) == string::npos)
+        {
+            cerr << "Unknown datatype: " << dt << endl;
+            exit(1);
+        }
+
+        if (algo == "blis" || algo == "blis+copy" ||
+            algo == "blas" || algo == "blas+copy" ||
+            algo == "random")
+        {
+            string m_range, n_range, k_range;
+            istringstream(line) >> m_range >> n_range >> k_range;
+
+            auto m = parse_range(m_range);
+            auto n = parse_range(n_range);
+            auto k = parse_range(k_range);
+
+            switch (dt)
+            {
+                case 's':
+                    if      (algo ==      "blis") gemm_experiment<float,     BLIS>(R, m, n, k);
+                    else if (algo == "blis+copy") gemm_experiment<float,BLIS_COPY>(R, m, n, k);
+                    else if (algo ==      "blas") gemm_experiment<float,     BLAS>(R, m, n, k);
+                    else if (algo == "blas+copy") gemm_experiment<float,BLAS_COPY>(R, m, n, k);
+                    //TODO contraction
+                    break;
+                case 'd':
+                    if      (algo ==      "blis") gemm_experiment<double,     BLIS>(R, m, n, k);
+                    else if (algo == "blis+copy") gemm_experiment<double,BLIS_COPY>(R, m, n, k);
+                    else if (algo ==      "blas") gemm_experiment<double,     BLAS>(R, m, n, k);
+                    else if (algo == "blas+copy") gemm_experiment<double,BLAS_COPY>(R, m, n, k);
+                    break;
+                case 'c':
+                    if      (algo ==      "blis") gemm_experiment<scomplex,     BLIS>(R, m, n, k);
+                    else if (algo == "blis+copy") gemm_experiment<scomplex,BLIS_COPY>(R, m, n, k);
+                    else if (algo ==      "blas") gemm_experiment<scomplex,     BLAS>(R, m, n, k);
+                    else if (algo == "blas+copy") gemm_experiment<scomplex,BLAS_COPY>(R, m, n, k);
+                    break;
+                case 'z':
+                    if      (algo ==      "blis") gemm_experiment<dcomplex,     BLIS>(R, m, n, k);
+                    else if (algo == "blis+copy") gemm_experiment<dcomplex,BLIS_COPY>(R, m, n, k);
+                    else if (algo ==      "blas") gemm_experiment<dcomplex,     BLAS>(R, m, n, k);
+                    else if (algo == "blas+copy") gemm_experiment<dcomplex,BLAS_COPY>(R, m, n, k);
+                    break;
+            }
+        }
+        else if (algo == "regular")
+        {
+            string idx_A, idx_B, idx_C;
+            istringstream(line) >> idx_A >> idx_B >> idx_C;
+
+            set<char> labels;
+            for (char c : idx_A) labels.insert(c);
+            for (char c : idx_B) labels.insert(c);
+            for (char c : idx_C) labels.insert(c);
+
+            map<char,range_t<idx_type>> ranges;
+            for (char c : labels)
+            {
+                string range;
+                istringstream(line) >> range;
+                ranges[c] = parse_range(range);
+            }
+
+            switch (dt)
+            {
+                case 's':
+                    //TODO contraction
+                    break;
+                case 'd':
+                    break;
+                case 'c':
+                    break;
+                case 'z':
+                    break;
+            }
+        }
+        else
+        {
+            cerr << "Unknown algorithm: " << algo << endl;
+            exit(1);
+        }
+    }
 
     return 0;
 }

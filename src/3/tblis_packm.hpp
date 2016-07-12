@@ -256,7 +256,7 @@ struct PackRowPanel
 {
     void operator()(ThreadCommunicator& comm, matrix_view<T>& A, matrix_view<T>& Ap) const
     {
-        //printf("before: %.15f\n", (double)real(tblis_normfm(A)));
+        printf("before: %.15f\n", (double)real(tblis_normfm(A)));
 
         idx_type m_a = A.length( Trans);
         idx_type k_a = A.length(!Trans);
@@ -281,8 +281,8 @@ struct PackRowPanel
             //printf("asub: %.15f\n", (double)real(tblis_normfm(MR, k_a, p_ap_old, 1, MR)));
         }
 
-        //printf("%d %d %ld %ld\n", Ap.length(0), Ap.length(1), Ap.stride(0), Ap.stride(1));
-        //printf("after: %.15f\n", (double)real(tblis_normfm(Ap)));
+        printf("%d %d %ld %ld\n", Ap.length(0), Ap.length(1), Ap.stride(0), Ap.stride(1));
+        printf("after: %.15f\n", (double)real(tblis_normfm(Ap)));
     }
 
     void operator()(ThreadCommunicator& comm, const_scatter_matrix_view<T>& A, matrix_view<T>& Ap) const
@@ -340,7 +340,7 @@ struct PackRowPanel
         p_ap += off_first*round_up(k_a, KR);
 
         A.length(Trans, MR);
-        A.shift(Trans, off_first);
+        A.shift_down(Trans, off_first);
 
         for (idx_type off_m = off_first;off_m < off_last;off_m += MR)
         {
@@ -374,7 +374,7 @@ struct PackRowPanel
             A.shift_down(Trans);
         }
 
-        A.shift(Trans, -off_last);
+        A.shift_up(Trans, off_last);
         A.length(Trans, m_a);
     }
 };
@@ -444,7 +444,7 @@ struct Pack
             {
                 if (comm.master())
                 {
-                    pack_buffer = PackBuf.allocate<T>(m_p*(n_p+TBLIS_MAX_UNROLL));
+                    pack_buffer = PackBuf.allocate<T>(m_p*n_p+std::max(m_p,n_p)*TBLIS_MAX_UNROLL);
                     pack_ptr = pack_buffer;
                 }
 

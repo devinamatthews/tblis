@@ -256,7 +256,7 @@ struct PackRowPanel
 {
     void operator()(ThreadCommunicator& comm, matrix_view<T>& A, matrix_view<T>& Ap) const
     {
-        printf("before: %.15f\n", (double)real(tblis_normfm(A)));
+        //printf("before: %.15f\n", (double)real(tblis_normfm(A)));
 
         idx_type m_a = A.length( Trans);
         idx_type k_a = A.length(!Trans);
@@ -267,6 +267,7 @@ struct PackRowPanel
 
         idx_type off_first, off_last;
         std::tie(off_first, off_last, std::ignore) = comm.distribute_over_threads(m_a, MR);
+        //printf_locked("pack [%d/%d] %d %d\n", comm.thread_num(), comm.num_threads(), off_first, off_last);
 
         p_a += off_first*rs_a;
         p_ap += off_first*round_up(k_a, KR);
@@ -281,8 +282,10 @@ struct PackRowPanel
             //printf("asub: %.15f\n", (double)real(tblis_normfm(MR, k_a, p_ap_old, 1, MR)));
         }
 
-        printf("%d %d %ld %ld\n", Ap.length(0), Ap.length(1), Ap.stride(0), Ap.stride(1));
-        printf("after: %.15f\n", (double)real(tblis_normfm(Ap)));
+        //comm.barrier();
+        //printf_locked("%s[%d]: %f\n", (Trans ? "B" : "A"), comm.thread_num(), pow((double)real(tblis_normfm(Ap)),2));
+        //printf("%d %d %ld %ld\n", Ap.length(0), Ap.length(1), Ap.stride(0), Ap.stride(1));
+        //printf("after: %.15f\n", (double)real(tblis_normfm(Ap)));
     }
 
     void operator()(ThreadCommunicator& comm, const_scatter_matrix_view<T>& A, matrix_view<T>& Ap) const
@@ -450,6 +453,10 @@ struct Pack
 
                 comm.broadcast(pack_ptr);
             }
+
+            //printf_locked("pack_ptr %d [%d/%d:%d] %p\n", Mat,
+            //              comm.thread_num(), comm.num_threads(),
+            //              comm.gang_num(), pack_ptr);
 
             matrix_view<T> P(Trans ? n_p : m_p,
                              Trans ? m_p : n_p,

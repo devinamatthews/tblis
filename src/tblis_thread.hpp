@@ -148,6 +148,24 @@ class ThreadCommunicator
             }
         }
 
+        template <typename T>
+        void reduce(T& value)
+        {
+            if (_nthread == 1) return;
+
+            T* ptr = (master() ? &value : nullptr);
+            broadcast(ptr);
+
+            for (int i = 1;i < _nthread;i++)
+            {
+                if (_tid == i) *ptr += value;
+                barrier();
+            }
+
+            value = *ptr;
+            barrier();
+        }
+
         ThreadCommunicator gang_evenly(int n)
         {
             if (n >= _nthread) return ThreadCommunicator(_tid);
@@ -360,8 +378,16 @@ void parallelize(Body& body, int nthread, int arity)
 }
 
 template <typename Body>
-void parallelize(Body body, int nthread, int arity=0)
+void parallelize(Body body, int nthread=0, int arity=0)
 {
+    if (nthread == 0)
+    {
+        nthread = envtol("BLIS_JC_NT", 1)*
+                  envtol("BLIS_IC_NT", 1)*
+                  envtol("BLIS_JR_NT", 1)*
+                  envtol("BLIS_IR_NT", 1);
+    }
+
     if (nthread > 1)
     {
         detail::parallelize(body, nthread, arity);

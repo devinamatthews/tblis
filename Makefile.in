@@ -713,20 +713,23 @@ lib_libtblis_la_LIBADD = $(am__append_2) $(am__append_4) \
 @ENABLE_CORTEX_A9_TRUE@lib_libcortex_a9_la_SOURCES = src/external/blis/config/cortex-a9/kernels/3/bli_gemm_opt_4x4.c
 @ENABLE_CORTEX_A9_TRUE@lib_libcortex_a9_la_CFLAGS = -Isrc/external/blis/config/cortex-a9 -mfloat-abi=hard -mfpu=neon -march=armv7-a
 @ENABLE_DUNNINGTON_TRUE@lib_libdunnington_la_SOURCES = src/external/blis/config/dunnington/kernels/3/bli_gemm_asm_d4x4.c
-@ENABLE_DUNNINGTON_TRUE@lib_libdunnington_la_CFLAGS = -Isrc/external/blis/config/dunnington -msse3 -march=corei7 -mfpmath=sse #-xSSE4.2
+@ENABLE_DUNNINGTON_TRUE@@ENABLE_INTEL_COMPILER_FALSE@lib_libdunnington_la_CFLAGS = -Isrc/external/blis/config/dunnington -msse3 -march=corei7 -mfpmath=sse
+@ENABLE_DUNNINGTON_TRUE@@ENABLE_INTEL_COMPILER_TRUE@lib_libdunnington_la_CFLAGS = -Isrc/external/blis/config/dunnington -xSSE4.2
 @ENABLE_HASWELL_TRUE@lib_libhaswell_la_SOURCES = src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d12x4.c \
 @ENABLE_HASWELL_TRUE@						    src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d8x6.c \
 @ENABLE_HASWELL_TRUE@						    src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d6x8.c \
 @ENABLE_HASWELL_TRUE@						    src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d4x12.c
 
-@ENABLE_HASWELL_TRUE@lib_libhaswell_la_CFLAGS = -Isrc/external/blis/config/haswell -mavx2 -mfma -mfpmath=sse -march=core-avx2 #-xCORE-AVX2
+@ENABLE_HASWELL_TRUE@@ENABLE_INTEL_COMPILER_FALSE@lib_libhaswell_la_CFLAGS = -Isrc/external/blis/config/haswell -mavx2 -mfma -mfpmath=sse -march=core-avx2
+@ENABLE_HASWELL_TRUE@@ENABLE_INTEL_COMPILER_TRUE@lib_libhaswell_la_CFLAGS = -Isrc/external/blis/config/haswell -xCORE-AVX2
 @ENABLE_KNL_TRUE@lib_libknl_la_SOURCES = src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c \
 @ENABLE_KNL_TRUE@					    src/external/blis/config/knl/kernels/3/bli_dgemm_opt_30x8_att.c \
 @ENABLE_KNL_TRUE@					    src/external/blis/config/knl/kernels/3/bli_sgemm_opt_30x16_att.c
 
-@ENABLE_KNL_TRUE@lib_libknl_la_CFLAGS = -Isrc/external/blis/config/knl -mavx512f -mavx512pf -mfpmath=sse -march=knl #-xMIC-AVX512
+@ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@lib_libknl_la_CFLAGS = -Isrc/external/blis/config/knl -mavx512f -mavx512pf -mfpmath=sse -march=knl
+@ENABLE_INTEL_COMPILER_TRUE@@ENABLE_KNL_TRUE@lib_libknl_la_CFLAGS = -Isrc/external/blis/config/knl -xMIC-AVX512
 @ENABLE_LOONGSON3A_TRUE@lib_libloongson3a_la_SOURCES = src/external/blis/config/loongson3a/kernels/3/bli_gemm_opt_d4x4.c
-@ENABLE_LOONGSON3A_TRUE@lib_libloongson3a_la_CFLAGS = -Isrc/external/blis/config/loongson3a -march=loongson3a -mtune=loongson3a #-xSSE4.2
+@ENABLE_LOONGSON3A_TRUE@lib_libloongson3a_la_CFLAGS = -Isrc/external/blis/config/loongson3a -march=loongson3a -mtune=loongson3a
 @ENABLE_MIC_TRUE@lib_libmic_la_SOURCES = src/external/blis/config/mic/kernels/3/bli_dgemm_opt_30x8.c \
 @ENABLE_MIC_TRUE@					    src/external/blis/config/mic/kernels/3/bli_sgemm_opt_30x16.c
 
@@ -738,7 +741,8 @@ lib_libtblis_la_LIBADD = $(am__append_2) $(am__append_4) \
 @ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_SOURCES = src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c \
 @ENABLE_SANDYBRIDGE_TRUE@						        src/external/blis/config/sandybridge/kernels/3/bli_gemm_int_d8x4.c
 
-@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_CFLAGS = -Isrc/external/blis/config/sandybridge -mavx -mfpmath=sse -march=corei7-avx #-xAVX
+@ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_CFLAGS = -Isrc/external/blis/config/sandybridge -mavx -mfpmath=sse -march=corei7-avx
+@ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_CFLAGS = -Isrc/external/blis/config/sandybridge -xAVX
 bin_test_SOURCES = test/test.cxx
 bin_bench_SOURCES = test/bench.cxx
 ACLOCAL_AMFLAGS = -I m4

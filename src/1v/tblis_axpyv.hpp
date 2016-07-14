@@ -7,6 +7,12 @@ namespace tblis
 {
 
 template <typename T>
+void tblis_axpyv_ref(ThreadCommunicator& comm,
+                     bool conj_A, idx_type n,
+                     T alpha, const T* A, stride_type inc_A,
+                                    T* B, stride_type inc_B);
+
+template <typename T>
 void tblis_axpyv(bool conj_A, idx_type n,
                  T alpha, const T* A, stride_type inc_A,
                                 T* B, stride_type inc_B);

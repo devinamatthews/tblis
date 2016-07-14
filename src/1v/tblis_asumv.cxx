@@ -4,33 +4,43 @@ namespace tblis
 {
 
 template <typename T>
-static void tblis_asumv_ref(idx_type n, const T* restrict A, stride_type inc_A, T& restrict sum)
+void tblis_asumv_ref(ThreadCommunicator& comm,
+                     idx_type n, const T* restrict A, stride_type inc_A, T& restrict sum)
 {
     sum = T();
 
     if (n == 0) return;
 
+    T subsum = T();
+
+    idx_type n_min, n_max;
+    std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(n);
+
     if (inc_A == 1)
     {
-        for (idx_type i = 0;i < n;i++)
+        for (idx_type i = n_min;i < n_max;i++)
         {
-            sum += std::abs(A[i]);
+            subsum += std::abs(A[i]);
         }
     }
     else
     {
-        for (idx_type i = 0;i < n;i++)
+        A += n_min*inc_A;
+        for (idx_type i = n_min;i < n_max;i++)
         {
-            sum += std::abs(*A);
+            subsum += std::abs(*A);
             A += inc_A;
         }
     }
+
+    comm.reduce(subsum);
+    sum = subsum;
 }
 
 template <typename T>
 void tblis_asumv(const_row_view<T> A, T& sum)
 {
-    tblis_asumv_ref(A.length(), A.data(), A.stride(), sum);
+    tblis_asumv(A.length(), A.data(), A.stride(), sum);
 }
 
 template <typename T>
@@ -44,7 +54,13 @@ T tblis_asumv(const_row_view<T> A)
 template <typename T>
 void tblis_asumv(idx_type n, const T* A, stride_type inc_A, T& sum)
 {
-    tblis_asumv_ref(n, A, inc_A, sum);
+    parallelize
+    (
+        [&](ThreadCommunicator& comm)
+        {
+            tblis_asumv_ref(comm, n, A, inc_A, sum);
+        }
+    );
 }
 
 template <typename T>
@@ -56,6 +72,7 @@ T tblis_asumv(idx_type n, const T* A, stride_type inc_A)
 }
 
 #define INSTANTIATE_FOR_TYPE(T) \
+template void tblis_asumv_ref(ThreadCommunicator& comm, idx_type n, const T* A, stride_type inc_A, T& sum); \
 template void tblis_asumv(idx_type n, const T* A, stride_type inc_A, T& sum); \
 template    T tblis_asumv(idx_type n, const T* A, stride_type inc_A); \
 template void tblis_asumv(const_row_view<T> A, T& sum); \

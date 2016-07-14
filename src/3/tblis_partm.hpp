@@ -83,12 +83,17 @@ struct Partition
                                                   std::min(m_u, m_v),
                                                   M_iota);
 
-                //printf_locked("%d: gang (%d,%d) %ld %ld %ld %ld\n",
+                //printf_locked("%d: gang (%d,%d) %d %d %d %d\n",
                 //              Dim, subcomm.gang_num(), subcomm.thread_num(),
                 //              m_u, m_v, m_first, m_last);
             }
 
             ThreadCommunicator& child_comm = (distribute > 1 ? subcomm : comm);
+
+            //printf_locked("part %d [%d/%d:%d/%d] %d %d %d:%d\n", Dim,
+            //              child_comm.thread_num(), child_comm.num_threads(),
+            //              child_comm.gang_num(), distribute,
+            //              m_first, m_last, std::min(m_u, m_v), M_def);
 
             //printf_locked("%d: bef (%d,%d) %p %p %p %p %p %p\n",
             //              Dim, child_comm.gang_num(), child_comm.thread_num(),

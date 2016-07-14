@@ -759,8 +759,11 @@ void RandomGEMM(size_t N, matrix<T>& A,
     //n += (NR<T>::value-1)-(n-1)%NR<T>::value;
     //k += (KR<T>::value-1)-(k-1)%KR<T>::value;
 
-    //m = n = k = 256;
-    //m = 255;
+    //m = 46;
+    //n = 334;
+    //k = 28;
+
+    //engine.seed(0);
 
     RandomMatrix(N, m, k, A);
     RandomMatrix(N, k, n, B);
@@ -917,8 +920,12 @@ void TestTBLIS(size_t N)
             case 2: RandomGER (N, A, B, C); break;
         }
 
+        D.reset(C);
+
         T ref_val, calc_val;
         T scale = 10.0*RandomUnit<T>();
+
+        //repeat:
 
         cout << endl;
         cout << "Testing TBLIS/" << (pass == 0 ? "GEMM" :
@@ -932,16 +939,22 @@ void TestTBLIS(size_t N)
         cout << "rs_c, cs_c = " << C.stride(0) << ", " << C.stride(1) << endl;
         cout << endl;
 
-        D.reset(C);
+        //printf("A: %f\n", pow((double)real(tblis_normfm(A)),2));
+        //printf("B: %f\n", pow((double)real(tblis_normfm(B)),2));
+        //printf("\n");
+
+        D = C;
         gemm_ref(scale, A, B, scale, D);
         tblis_normfm(D, ref_val);
 
-        D.reset(C);
+        D = C;
         tblis_gemm(scale, A, B, scale, D);
         tblis_normfm(D, calc_val);
 
         passfail("REF", ref_val, calc_val);
         //exit(0);
+
+        //goto repeat;
     }
 }
 

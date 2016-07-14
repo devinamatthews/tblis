@@ -35,48 +35,9 @@
 #ifndef BLIS_CONFIG_H
 #define BLIS_CONFIG_H
 
-#if 0
-#define BLIS_ENABLE_PTHREADS
-#endif
-
-#if 0
-#define BLIS_ENABLE_OPENMP
-#endif
-
-#if 0 == 64
 #define BLIS_INT_TYPE_SIZE 64
-#elif 32 == 32
-#define BLIS_INT_TYPE_SIZE 32
-#else
-// determine automatically
-#endif
-
-#if 0 == 64
-#define BLIS_BLAS2BLIS_INT_TYPE_SIZE 64
-#elif 32 == 32
 #define BLIS_BLAS2BLIS_INT_TYPE_SIZE 32
-#else
-// determine automatically
-#endif
-
-#ifndef BLIS_ENABLE_BLAS2BLIS
-#ifndef BLIS_DISABLE_BLAS2BLIS
-#if 0
-#define BLIS_ENABLE_BLAS2BLIS
-#else
 #define BLIS_DISABLE_BLAS2BLIS
-#endif
-#endif
-#endif
-
-#ifndef BLIS_ENABLE_CBLAS
-#ifndef BLIS_DISABLE_CBLAS
-#if 0
-#define BLIS_ENABLE_CBLAS
-#else
 #define BLIS_DISABLE_CBLAS
-#endif
-#endif
-#endif
 
 #endif

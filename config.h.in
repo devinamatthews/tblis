@@ -82,11 +82,38 @@
 /* The top source directory. */
 #undef TOPDIR
 
+/* Use a thread barrier based on C++11 condition variables */
+#undef USE_CXX11_BARRIER
+
+/* Use C++11 std::mutex for locking */
+#undef USE_CXX11_MUTEX
+
 /* Use a spin-lock based on C++11 atomics */
 #undef USE_CXX11_SPINLOCK
 
 /* Use C++11 std::thread */
 #undef USE_CXX11_THREADS
+
+/* Use omp_lock for locking */
+#undef USE_OMP_LOCK
+
+/* Use OpenMP for threading */
+#undef USE_OPENMP_THREADS
+
+/* Use OSSpinLock for locking */
+#undef USE_OSX_SPINLOCK
+
+/* Use pthread_barrier for thread barriers */
+#undef USE_PTHREAD_BARRIER
+
+/* Use pthread_mutex for locking */
+#undef USE_PTHREAD_MUTEX
+
+/* Use pthread_spinlock for locking */
+#undef USE_PTHREAD_SPINLOCK
+
+/* Use pthreads for threading */
+#undef USE_PTHREAD_THREADS
 
 /* Use a spin-loop based barrier */
 #undef USE_SPIN_BARRIER

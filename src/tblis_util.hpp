@@ -198,7 +198,7 @@ constexpr size_t size_as_type(size_t n)
 
 template <typename T>
 using gemm_ukr_t =
-void (*)(idx_type k,
+void (*)(stride_type k,
          const T* restrict alpha,
          const T* restrict a, const T* restrict b,
          const T* restrict beta,
@@ -234,7 +234,7 @@ struct blocksize_traits
 
         template<typename U>
         static std::array<int,U::iota> _iota_helper(U*);
-        static std::array<int,      1> _iota_helper(...);
+        static std::array<int, T::def> _iota_helper(...);
 
         template<typename U>
         static std::array<int,U::extent> _extent_helper(U*);

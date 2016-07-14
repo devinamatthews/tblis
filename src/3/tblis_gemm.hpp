@@ -51,10 +51,10 @@ struct GEMM
         template <typename MatrixA, typename MatrixB, typename MatrixC>
         void operator()(T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
         {
-            idx_type jc_way = envtol("BLIS_JC_NT");
-            idx_type ic_way = envtol("BLIS_IC_NT");
-            idx_type jr_way = envtol("BLIS_JR_NT");
-            idx_type ir_way = envtol("BLIS_IR_NT");
+            idx_type jc_way = envtol("BLIS_JC_NT", 1);
+            idx_type ic_way = envtol("BLIS_IC_NT", 1);
+            idx_type jr_way = envtol("BLIS_JR_NT", 1);
+            idx_type ir_way = envtol("BLIS_IR_NT", 1);
             idx_type nthread = jc_way*ic_way*jr_way*ir_way;
 
             step<IC>().distribute = ic_way;
@@ -70,10 +70,12 @@ struct GEMM
                     // Capturing these by value (and declaring the lambda
                     // mutable) apparently prevents the implicit definition of
                     // a const reference copy ctor which causes problems later
-                    MatrixA A_(A);
-                    MatrixB B_(B);
-                    MatrixC C_(C);
-                    child(comm, alpha, A_, B_, beta, C_);
+                    auto A_(A);
+                    auto B_(B);
+                    auto C_(C);
+                    auto child_(child);
+                    child_(comm, alpha, A_, B_, beta, C_);
+                    comm.barrier();
                 },
                 nthread, Config::tree_barrier_arity
             );

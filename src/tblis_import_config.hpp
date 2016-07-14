@@ -10,7 +10,7 @@ extern "C"
 #ifndef BLIS_SGEMM_UKERNEL
 #define BLIS_SGEMM_UKERNEL GenericMicroKernel<float,MR<float>::def,NR<float>::def>
 #else
-void BLIS_SGEMM_UKERNEL(tblis::idx_type k,
+void BLIS_SGEMM_UKERNEL(tblis::stride_type k,
                         const float* alpha, const float* p_a, const float* p_b,
                         const float* beta, float* p_c, tblis::stride_type rs_c, tblis::stride_type cs_c,
                         const void* data, const void* ctx);
@@ -19,7 +19,7 @@ void BLIS_SGEMM_UKERNEL(tblis::idx_type k,
 #ifndef BLIS_DGEMM_UKERNEL
 #define BLIS_DGEMM_UKERNEL GenericMicroKernel<double,MR<double>::def,NR<double>::def>
 #else
-void BLIS_DGEMM_UKERNEL(tblis::idx_type k,
+void BLIS_DGEMM_UKERNEL(tblis::stride_type k,
                         const double* alpha, const double* p_a, const double* p_b,
                         const double* beta, double* p_c, tblis::stride_type rs_c, tblis::stride_type cs_c,
                         const void* data, const void* ctx);
@@ -28,7 +28,7 @@ void BLIS_DGEMM_UKERNEL(tblis::idx_type k,
 #ifndef BLIS_CGEMM_UKERNEL
 #define BLIS_CGEMM_UKERNEL GenericMicroKernel<tblis::scomplex,MR<tblis::scomplex>::def,NR<tblis::scomplex>::def>
 #else
-void BLIS_CGEMM_UKERNEL(tblis::idx_type k,
+void BLIS_CGEMM_UKERNEL(tblis::stride_type k,
                         const tblis::scomplex* alpha, const tblis::scomplex* p_a, const tblis::scomplex* p_b,
                         const tblis::scomplex* beta, tblis::scomplex* p_c, tblis::stride_type rs_c, tblis::stride_type cs_c,
                         const void* data, const void* ctx);
@@ -37,7 +37,7 @@ void BLIS_CGEMM_UKERNEL(tblis::idx_type k,
 #ifndef BLIS_ZGEMM_UKERNEL
 #define BLIS_ZGEMM_UKERNEL GenericMicroKernel<tblis::dcomplex,MR<tblis::dcomplex>::def,NR<tblis::dcomplex>::def>
 #else
-void BLIS_ZGEMM_UKERNEL(tblis::idx_type k,
+void BLIS_ZGEMM_UKERNEL(tblis::stride_type k,
                         const tblis::dcomplex* alpha, const tblis::dcomplex* p_a, const tblis::dcomplex* p_b,
                         const tblis::dcomplex* beta, tblis::dcomplex* p_c, tblis::stride_type rs_c, tblis::stride_type cs_c,
                         const void* data, const void* ctx);

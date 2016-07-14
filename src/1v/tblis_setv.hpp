@@ -6,6 +6,8 @@
 namespace tblis
 {
 
+template <typename T> void tblis_setv_ref(ThreadCommunicator& comm, idx_type n, T alpha, T* A, stride_type inc_A);
+
 template <typename T> void tblis_setv(idx_type n, T alpha, T* A, stride_type inc_A);
 
 template <typename T> void tblis_setv(T alpha, row_view<T> A);

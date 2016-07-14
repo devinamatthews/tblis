@@ -41,6 +41,7 @@ namespace MArray
         protected:
             T from;
             T to;
+            T delta;
 
             typedef T value_type;
             typedef T size_type;
@@ -50,6 +51,7 @@ namespace MArray
             {
                 protected:
                     T val;
+                    T delta;
 
                 public:
                     using typename std::iterator<std::random_access_iterator_tag,T>::iterator_category;
@@ -58,18 +60,18 @@ namespace MArray
                     using typename std::iterator<std::random_access_iterator_tag,T>::pointer;
                     using typename std::iterator<std::random_access_iterator_tag,T>::reference;
 
-                    constexpr iterator() : val(0) {}
+                    constexpr iterator() : val(0), delta(0) {}
 
-                    constexpr iterator(T val) : val(val) {}
+                    constexpr iterator(T val, T delta) : val(val), delta(delta) {}
 
                     bool operator==(const iterator& other)
                     {
-                        return val == other.val;
+                        return val == other.val && delta == other.delta;
                     }
 
                     bool operator!=(const iterator& other)
                     {
-                        return val != other.val;
+                        return val != other.val || delta != other.delta;
                     }
 
                     value_type operator*() const
@@ -79,55 +81,55 @@ namespace MArray
 
                     iterator& operator++()
                     {
-                        ++val;
+                        val += delta;
                         return *this;
                     }
 
                     iterator operator++(int x)
                     {
                         iterator old(*this);
-                        ++val;
+                        val += delta;
                         return old;
                     }
 
                     iterator& operator--()
                     {
-                        --val;
+                        val -= delta;
                         return *this;
                     }
 
                     iterator operator--(int x)
                     {
                         iterator old(*this);
-                        --val;
+                        val -= delta;
                         return old;
                     }
 
                     iterator& operator+=(difference_type n)
                     {
-                        val += n;
+                        val += n*delta;
                         return *this;
                     }
 
                     iterator operator+(difference_type n)
                     {
-                        return iterator(val+n);
+                        return iterator(val+n*delta);
                     }
 
                     friend iterator operator+(difference_type n, const iterator& i)
                     {
-                        return iterator(i.val+n);
+                        return iterator(i.val+n*i.delta);
                     }
 
                     iterator& operator-=(difference_type n)
                     {
-                        val -= n;
+                        val -= n*delta;
                         return *this;
                     }
 
                     iterator operator-(difference_type n)
                     {
-                        return iterator(val-n);
+                        return iterator(val-n*delta);
                     }
 
                     difference_type operator-(const iterator& other)
@@ -157,31 +159,44 @@ namespace MArray
 
                     value_type operator[](difference_type n) const
                     {
-                        return val+n;
+                        return val+n*delta;
                     }
 
                     friend void swap(iterator& a, iterator& b)
                     {
                         using std::swap;
                         swap(a.val, b.val);
+                        swap(a.delta, b.delta);
                     }
             };
 
-            constexpr range_t(T from, T to) : from(from), to(to) {}
+            constexpr range_t()
+            : from(0), to(0), delta(0) {}
+
+            constexpr range_t(T from, T to, T delta)
+            : from(from), to(from+((to-from+delta-1)/delta)*delta), delta(delta) {}
+
+            range_t(const range_t&) = default;
+
+            range_t(range_t&&) = default;
+
+            range_t& operator=(const range_t&) = default;
+
+            range_t& operator=(range_t&&) = default;
 
             size_type size() const
             {
-                return to-from;
+                return (to-from)/delta;
             }
 
             iterator begin() const
             {
-                return iterator(from);
+                return iterator(from, delta);
             }
 
             iterator end() const
             {
-                return iterator(to);
+                return iterator(to, delta);
             }
 
             value_type front() const
@@ -191,12 +206,12 @@ namespace MArray
 
             value_type back() const
             {
-                return to-1;
+                return to-delta;
             }
 
             value_type operator[](size_type n) const
             {
-                return from+n;
+                return from+n*delta;
             }
 
             operator std::vector<T>() const
@@ -208,13 +223,19 @@ namespace MArray
     template <typename T>
     range_t<T> range(T to)
     {
-        return range_t<T>(T(), to);
+        return {T(), to, 1};
     }
 
     template <typename T>
     range_t<T> range(T from, T to)
     {
-        return range_t<T>(from, to);
+        return {from, to, 1};
+    }
+
+    template <typename T>
+    range_t<T> range(T from, T to, T delta)
+    {
+        return {from, to, delta};
     }
 }
 

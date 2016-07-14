@@ -8,6 +8,59 @@ namespace tblis
 namespace impl
 {
 
+struct prime_factorization
+{
+    int n;
+    int sqrt_n;
+    int f;
+
+    prime_factorization(int n)
+    : n(abs(n)), sqrt_n(sqrt(abs(n))), f(2) {}
+
+    int next()
+    {
+        for (;f <= sqrt_n;f++)
+        {
+            if (n%f == 0)
+            {
+                n /= f;
+                return f;
+            }
+        }
+
+        if (n != 1)
+        {
+            int tmp = n;
+            n = 1;
+            return tmp;
+        }
+
+        return 1;
+    }
+};
+
+void partition_2x2(int num_threads, long work1, long work2, int& nt1, int& nt2)
+{
+    prime_factorization pf(num_threads);
+
+    nt1 = nt2 = 1;
+
+    int f;
+    while ((f = pf.next()) != 1)
+    {
+        if (work1 > work2)
+        {
+            work1 /= f;
+            nt1 *= f;
+        }
+        else
+        {
+            work2 /= f;
+            nt2 *= f;
+        }
+    }
+}
+
 template <typename T>
 int tensor_transpose_reference(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
                                T  beta, const       tensor_view<T>& B, const std::string& idx_B)
@@ -53,80 +106,109 @@ int tensor_transpose_reference(T alpha, const const_tensor_view<T>& A, const std
     stride_type stride_B0 = strides_B[idx[0]];
     idx_type len0 = len_A[idx[0]];
 
-    viterator<2> iter_AB(len, strides_Ar, strides_Br);
+    parallelize
+    (
+        [&](ThreadCommunicator& comm)
+        {
+            viterator<2> iter_AB(len, strides_Ar, strides_Br);
 
-    const T* restrict A_ = A.data();
-          T* restrict B_ = B.data();
+            idx_type n = stl_ext::prod(len);
+            int nt = comm.num_threads();
 
-    if (alpha == T(0))
-    {
-        if (beta == T(0))
-        {
-            while (iter_AB.next(A_, B_))
+            int nt_outer, nt_inner;
+            partition_2x2(nt, n, len0, nt_outer, nt_inner);
+
+            ThreadCommunicator subcomm = comm.gang_evenly(nt_outer);
+
+            idx_type n_min, n_max;
+            std::tie(n_min, n_max, std::ignore) =
+                subcomm.distribute_over_gangs(nt_outer, n);
+
+            stride_type off_A, off_B;
+            iter_AB.position(n_min, off_A, off_B);
+
+            const T* A_ = A.data() + off_A;
+                  T* B_ = B.data() + off_B;
+
+            if (alpha == T(0))
             {
-                tblis_zerov(len0, B_, stride_B0);
+                if (beta == T(0))
+                {
+                    for (idx_type i = n_min;i < n_max;i++)
+                    {
+                        iter_AB.next(A_, B_);
+                        tblis_zerov_ref(subcomm, len0, B_, stride_B0);
+                    }
+                }
+                else if (beta == T(1))
+                {
+                    // do nothing
+                }
+                else
+                {
+                    for (idx_type i = n_min;i < n_max;i++)
+                    {
+                        iter_AB.next(A_, B_);
+                        tblis_scalv_ref(subcomm, len0, beta, B_, stride_B0);
+                    }
+                }
+            }
+            else if (alpha == T(1))
+            {
+                if (beta == T(0))
+                {
+                    for (idx_type i = n_min;i < n_max;i++)
+                    {
+                        iter_AB.next(A_, B_);
+                        tblis_copyv_ref(subcomm, false, len0, A_, stride_A0, B_, stride_B0);
+                    }
+                }
+                else if (beta == T(1))
+                {
+                    for (idx_type i = n_min;i < n_max;i++)
+                    {
+                        iter_AB.next(A_, B_);
+                        tblis_addv_ref(subcomm, false, len0, A_, stride_A0, B_, stride_B0);
+                    }
+                }
+                else
+                {
+                    for (idx_type i = n_min;i < n_max;i++)
+                    {
+                        iter_AB.next(A_, B_);
+                        tblis_xpbyv_ref(subcomm, false, len0, A_, stride_A0, beta, B_, stride_B0);
+                    }
+                }
+            }
+            else
+            {
+                if (beta == T(0))
+                {
+                    for (idx_type i = n_min;i < n_max;i++)
+                    {
+                        iter_AB.next(A_, B_);
+                        tblis_scal2v_ref(subcomm, false, len0, alpha, A_, stride_A0, B_, stride_B0);
+                    }
+                }
+                else if (beta == T(1))
+                {
+                    for (idx_type i = n_min;i < n_max;i++)
+                    {
+                        iter_AB.next(A_, B_);
+                        tblis_axpyv_ref(subcomm, false, len0, alpha, A_, stride_A0, B_, stride_B0);
+                    }
+                }
+                else
+                {
+                    for (idx_type i = n_min;i < n_max;i++)
+                    {
+                        iter_AB.next(A_, B_);
+                        tblis_axpbyv_ref(subcomm, false, len0, alpha, A_, stride_A0, beta, B_, stride_B0);
+                    }
+                }
             }
         }
-        else if (beta == T(1))
-        {
-            // do nothing
-        }
-        else
-        {
-            while (iter_AB.next(A_, B_))
-            {
-                tblis_scalv(len0, beta, B_, stride_B0);
-            }
-        }
-    }
-    else if (alpha == T(1))
-    {
-        if (beta == T(0))
-        {
-            while (iter_AB.next(A_, B_))
-            {
-                tblis_copyv(false, len0, A_, stride_A0, B_, stride_B0);
-            }
-        }
-        else if (beta == T(1))
-        {
-            while (iter_AB.next(A_, B_))
-            {
-                tblis_addv(false, len0, A_, stride_A0, B_, stride_B0);
-            }
-        }
-        else
-        {
-            while (iter_AB.next(A_, B_))
-            {
-                tblis_xpbyv(false, len0, A_, stride_A0, beta, B_, stride_B0);
-            }
-        }
-    }
-    else
-    {
-        if (beta == T(0))
-        {
-            while (iter_AB.next(A_, B_))
-            {
-                tblis_scal2v(false, len0, alpha, A_, stride_A0, B_, stride_B0);
-            }
-        }
-        else if (beta == T(1))
-        {
-            while (iter_AB.next(A_, B_))
-            {
-                tblis_axpyv(false, len0, alpha, A_, stride_A0, B_, stride_B0);
-            }
-        }
-        else
-        {
-            while (iter_AB.next(A_, B_))
-            {
-                tblis_axpbyv(false, len0, alpha, A_, stride_A0, beta, B_, stride_B0);
-            }
-        }
-    }
+    );
 
     return 0;
 }

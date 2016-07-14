@@ -176,17 +176,17 @@ struct TreeBarrier
 
     ~TreeBarrier()
     {
-        int nbarrier = 0;
-        int nleaders = nthread;
-        do
-        {
-            nleaders = ceil_div(nleaders, group_size);
-            nbarrier += nleaders;
-        }
-        while (nleaders > 1);
-
         if (is_tree)
         {
+            int nbarrier = 0;
+            int nleaders = nthread;
+            do
+            {
+                nleaders = ceil_div(nleaders, group_size);
+                nbarrier += nleaders;
+            }
+            while (nleaders > 1);
+
             for (int i = 0;i < nbarrier;i++) barriers[i].~Barrier();
             ::operator delete(barriers);
         }

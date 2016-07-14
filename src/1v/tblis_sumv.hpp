@@ -6,6 +6,8 @@
 namespace tblis
 {
 
+template <typename T> void tblis_sumv_ref(ThreadCommunicator& comm, idx_type n, const T* A, stride_type inc_A, T& sum);
+
 template <typename T> void tblis_sumv(idx_type n, const T* A, stride_type inc_A, T& sum);
 
 template <typename T>    T tblis_sumv(idx_type n, const T* A, stride_type inc_A);

@@ -115,7 +115,7 @@ void AccumulateMicroTile(idx_type m, idx_type n, const T* restrict p_ab,
 }
 
 template <typename T, idx_type MR, idx_type NR>
-void GenericMicroKernel(idx_type k,
+void GenericMicroKernel(stride_type k,
                         const T* restrict alpha,
                         const T* restrict p_a, const T* restrict p_b,
                         const T* restrict beta,
@@ -152,6 +152,13 @@ void GenericMicroKernel(idx_type k,
 template <typename Config>
 struct MicroKernel
 {
+    struct auxinfo_t
+    {
+        int pack_a, pack_b;
+        const void*  a_next;
+        const void*  b_next;
+    };
+
     template <typename T>
     struct run
     {
@@ -174,24 +181,31 @@ struct MicroKernel
             stride_type rs_c = C.stride(0);
             stride_type cs_c = C.stride(1);
 
+            auxinfo_t aux{0, 0, p_a, p_b};
+
             if (m == MR && n == NR)
             {
-                ukr(k, &alpha, p_a, p_b,
+                ukr((long)k, &alpha, p_a, p_b,
                     &beta, p_c, rs_c, cs_c,
-                    nullptr, nullptr);
+                    &aux, nullptr);
             }
             else
             {
                 T p_ab[MR*NR] __attribute__((aligned(64)));
                 static constexpr T zero = 0.0;
 
-                ukr(k, &alpha, p_a, p_b,
+                ukr((long)k, &alpha, p_a, p_b,
                     &zero, p_ab, 1, MR,
-                    nullptr, nullptr);
+                    &aux, nullptr);
 
                 AccumulateMicroTile<T,MR,NR>(m, n, p_ab,
                                              beta, p_c, rs_c, cs_c);
             }
+
+            //printf_locked("%p %f -- %d %d %d %ld %ld %f %f %p %p %f %f\n", p_c, pow((double)real(tblis_normfm(m, n, p_c, rs_c, cs_c)),2),
+            //              m, n, k, rs_c, cs_c, (double)real(alpha), (double)real(beta),
+            //              p_a, p_b, pow((double)real(tblis_normfv(MR*k, p_a, 1)),2),
+            //              pow((double)real(tblis_normfv(NR*k, p_b, 1)),2));
         }
 
         void operator()(ThreadCommunicator& comm,
@@ -211,11 +225,13 @@ struct MicroKernel
             const stride_type* rscat_c = C.scatter(0);
             const stride_type* cscat_c = C.scatter(1);
 
+            auxinfo_t aux{0, 0, p_a, p_b};
+
             if (m == MR && n == NR && rs_c != 0 && cs_c != 0)
             {
                 ukr(k, &alpha, p_a, p_b,
                     &beta, p_c, rs_c, cs_c,
-                    nullptr, nullptr);
+                    &aux, nullptr);
             }
             else
             {
@@ -224,7 +240,7 @@ struct MicroKernel
 
                 ukr(k, &alpha, p_a, p_b,
                     &zero, p_ab, 1, MR,
-                    nullptr, nullptr);
+                    &aux, nullptr);
 
                 if (rs_c == 0 && cs_c == 0)
                 {
@@ -266,11 +282,13 @@ struct MicroKernel
             const stride_type* rscat_c = C.scatter(0);
             const stride_type* cscat_c = C.scatter(1);
 
+            auxinfo_t aux{0, 0, p_a, p_b};
+
             if (m == MR && n == NR && rs_c != 0 && cs_c != 0)
             {
                 ukr(k, &alpha, p_a, p_b,
                     &beta, p_c, rs_c, cs_c,
-                    nullptr, nullptr);
+                    &aux, nullptr);
             }
             else
             {
@@ -279,7 +297,7 @@ struct MicroKernel
 
                 ukr(k, &alpha, p_a, p_b,
                     &zero, p_ab, 1, MR,
-                    nullptr, nullptr);
+                    &aux, nullptr);
 
                 if (rs_c == 0 && cs_c == 0)
                 {

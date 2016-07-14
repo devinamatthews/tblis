@@ -103,7 +103,11 @@ if ENABLE_DUNNINGTON
 noinst_LTLIBRARIES += lib/libdunnington.la
 lib_libtblis_la_LIBADD += lib/libdunnington.la
 lib_libdunnington_la_SOURCES = src/external/blis/config/dunnington/kernels/3/bli_gemm_asm_d4x4.c
-lib_libdunnington_la_CFLAGS = -Isrc/external/blis/config/dunnington -msse3 -march=corei7 -mfpmath=sse #-xSSE4.2
+if ENABLE_INTEL_COMPILER
+lib_libdunnington_la_CFLAGS = -Isrc/external/blis/config/dunnington -xSSE4.2
+else
+lib_libdunnington_la_CFLAGS = -Isrc/external/blis/config/dunnington -msse3 -march=corei7 -mfpmath=sse
+endif
 endif
 
 if ENABLE_HASWELL
@@ -113,7 +117,11 @@ lib_libhaswell_la_SOURCES = src/external/blis/config/haswell/kernels/3/bli_gemm_
 						    src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d8x6.c \
 						    src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d6x8.c \
 						    src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d4x12.c
-lib_libhaswell_la_CFLAGS = -Isrc/external/blis/config/haswell -mavx2 -mfma -mfpmath=sse -march=core-avx2 #-xCORE-AVX2
+if ENABLE_INTEL_COMPILER
+lib_libhaswell_la_CFLAGS = -Isrc/external/blis/config/haswell -xCORE-AVX2
+else
+lib_libhaswell_la_CFLAGS = -Isrc/external/blis/config/haswell -mavx2 -mfma -mfpmath=sse -march=core-avx2
+endif
 endif
 
 if ENABLE_KNL
@@ -122,14 +130,18 @@ lib_libtblis_la_LIBADD += lib/libknl.la
 lib_libknl_la_SOURCES = src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c \
 					    src/external/blis/config/knl/kernels/3/bli_dgemm_opt_30x8_att.c \
 					    src/external/blis/config/knl/kernels/3/bli_sgemm_opt_30x16_att.c
-lib_libknl_la_CFLAGS = -Isrc/external/blis/config/knl -mavx512f -mavx512pf -mfpmath=sse -march=knl #-xMIC-AVX512
+if ENABLE_INTEL_COMPILER
+lib_libknl_la_CFLAGS = -Isrc/external/blis/config/knl -xMIC-AVX512
+else
+lib_libknl_la_CFLAGS = -Isrc/external/blis/config/knl -mavx512f -mavx512pf -mfpmath=sse -march=knl
+endif
 endif
 
 if ENABLE_LOONGSON3A
 noinst_LTLIBRARIES += lib/libloongson3a.la
 lib_libtblis_la_LIBADD += lib/libloongson3a.la
 lib_libloongson3a_la_SOURCES = src/external/blis/config/loongson3a/kernels/3/bli_gemm_opt_d4x4.c
-lib_libloongson3a_la_CFLAGS = -Isrc/external/blis/config/loongson3a -march=loongson3a -mtune=loongson3a #-xSSE4.2
+lib_libloongson3a_la_CFLAGS = -Isrc/external/blis/config/loongson3a -march=loongson3a -mtune=loongson3a
 endif
 
 if ENABLE_MIC
@@ -159,7 +171,11 @@ noinst_LTLIBRARIES += lib/libsandybridge.la
 lib_libtblis_la_LIBADD += lib/libsandybridge.la
 lib_libsandybridge_la_SOURCES = src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c \
 						        src/external/blis/config/sandybridge/kernels/3/bli_gemm_int_d8x4.c
-lib_libsandybridge_la_CFLAGS = -Isrc/external/blis/config/sandybridge -mavx -mfpmath=sse -march=corei7-avx #-xAVX
+if ENABLE_INTEL_COMPILER
+lib_libsandybridge_la_CFLAGS = -Isrc/external/blis/config/sandybridge -xAVX
+else
+lib_libsandybridge_la_CFLAGS = -Isrc/external/blis/config/sandybridge -mavx -mfpmath=sse -march=corei7-avx
+endif
 endif
 
 bin_PROGRAMS = bin/test bin/bench

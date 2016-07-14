@@ -14,19 +14,94 @@ AC_PROG_CXX([g++ clang++ icpc])
 AX_CXX_COMPILE_STDCXX_11([noext])
 AC_LANG([C++])
 AC_C_RESTRICT
-AC_OPENMP
 
 AC_SEARCH_LIBS([clock_gettime], [rt])
-
-CPPFLAGS="$CPPFLAGS $OPENMP_CXXFLAGS"
-LDFLAGS="$LDFLAGS $OPENMP_CXXFLAGS"
 
 topdir="\"`(cd $srcdir && pwd)`\""
 AC_DEFINE_UNQUOTED([TOPDIR], [$topdir], [The top source directory.])
 
-AC_DEFINE([USE_CXX11_SPINLOCK], [1], [Use a spin-lock based on C++11 atomics])
-AC_DEFINE([USE_SPIN_BARRIER], [1], [Use a spin-loop based barrier])
-AC_DEFINE([USE_CXX11_THREADS], [1], [Use C++11 std::thread])
+#
+# Determine threading options
+#
+
+AC_ARG_ENABLE([threading], AS_HELP_STRING([--enable-threading@<:@=model@:>@],
+    [enable threading with the specified model, one of openmp, pthread, or c++11 @<:@default=openmp if available, or no threading when --enable-threading not specified@:>@]),
+    [thread_model=$enable_threading], [thread_model=no])
+
+if test x"$thread_model" = xyes; then
+    thread_model=auto
+fi
+    
+if test x"$thread_model" = xopenmp -o x"$thread_model" = xauto; then
+    AC_OPENMP
+    CPPFLAGS="$CPPFLAGS $OPENMP_CXXFLAGS"
+    LDFLAGS="$LDFLAGS $OPENMP_CXXFLAGS"
+    AC_CHECK_HEADER([omp.h], [thread_model=openmp],
+    [
+        if test x"$thread_model" = xopenmp; then
+            AC_MSG_ERROR([OpenMP requested but not available.])
+        fi
+    ])
+fi
+    
+if test x"$thread_model" = xpthread -o x"$thread_model" = xauto; then
+    CPPFLAGS="$CPPFLAGS -pthread"
+    LDFLAGS="$LDFLAGS -pthread"
+    AC_CHECK_HEADER([pthread.h], [thread_model=pthread],
+    [
+        if test x"$thread_model" = xpthread; then
+            AC_MSG_ERROR([pthreads requested but not available.])
+        fi
+    ])
+fi
+
+if test x"$thread_model" = xauto; then
+    thread_model=c++11
+fi
+
+if test x"$thread_model" = xopenmp; then
+    AC_DEFINE([USE_OPENMP_THREADS], [1], [Use OpenMP for threading])
+elif test x"$thread_model" = xpthread; then
+    AC_DEFINE([USE_PTHREAD_THREADS], [1], [Use pthreads for threading])
+elif test x"$thread_model" = xc++11; then
+    AC_DEFINE([USE_CXX11_THREADS], [1], [Use C++11 std::thread])
+elif test x"$thread_model" != xno; then
+    AC_MSG_ERROR([Invalid threading model specified.])
+fi
+
+AC_ARG_WITH([mutex], AS_HELP_STRING([--with-mutex=type],
+    [use a mutex of the specified type, one of pthread_mutex, pthread_spinlock, osspinlock, std_mutex, omp_lock, or spinlock @<:@default=spinlock@:>@]),
+    [mutex_type=$with_mutex], [mutex_type=spinlock])
+    
+if test x"$mutex_type" = xpthread_mutex; then
+    AC_DEFINE([USE_PTHREAD_MUTEX], [1], [Use pthread_mutex for locking])
+elif test x"$mutex_type" = xpthread_spinlock; then
+    AC_DEFINE([USE_PTHREAD_SPINLOCK], [1], [Use pthread_spinlock for locking])
+elif test x"$mutex_type" = xosspinlock; then
+    AC_DEFINE([USE_OSX_SPINLOCK], [1], [Use OSSpinLock for locking])
+elif test x"$mutex_type" = xstd_mutex; then
+    AC_DEFINE([USE_CXX11_MUTEX], [1], [Use C++11 std::mutex for locking])
+elif test x"$mutex_type" = xomp_lock; then
+    AC_DEFINE([USE_OMP_LOCK], [1], [Use omp_lock for locking])
+elif test x"$mutex_type" = xspinlock; then
+    AC_DEFINE([USE_CXX11_SPINLOCK], [1], [Use a spin-lock based on C++11 atomics])
+else
+    AC_MSG_ERROR([Invalid mutex type specified.])
+fi
+
+AC_ARG_WITH([barrier], AS_HELP_STRING([--with-barrier=type],
+    [use a barrier of the specified type, one of pthread, c++11, spin @<:@default=spin@:>@]),
+    [barrier_type=$with_barrier], [barrier_type=spin])
+    
+if test x"$barrier_type" = xpthread; then
+    AC_DEFINE([USE_PTHREAD_BARRIER], [1], [Use pthread_barrier for thread barriers])
+elif test x"$barrier_type" = xc++11; then
+    AC_DEFINE([USE_CXX11_BARRIER], [1], [Use a thread barrier based on C++11 condition variables])
+elif test x"$barrier_type" = xspin; then
+    AC_DEFINE([USE_SPIN_BARRIER], [1], [Use a spin-loop based barrier])
+else
+    AC_MSG_ERROR([Invalid barrier type specified.])
+fi
 
 #
 # Check for BLIS
@@ -38,8 +113,8 @@ AQ_WITH_PACKAGE([blis], [https://github.com/flame/blis],
 # Determine configurations to build
 #
 
-AC_ARG_ENABLE(config,
-[  --enable-config         a comma-separated list of configurations
+AC_ARG_ENABLE([config],
+[  --enable-config=...     a comma-separated list of configurations
                           @<:@default=reference@:>@
   
                           possible values are:
@@ -80,6 +155,21 @@ AM_CONDITIONAL(ENABLE_MIC, [echo $configs | grep -q mic])
 AM_CONDITIONAL(ENABLE_PILEDRIVER, [echo $configs | grep -q piledriver])
 AM_CONDITIONAL(ENABLE_POWER7, [echo $configs | grep -q power7])
 AM_CONDITIONAL(ENABLE_SANDYBRIDGE, [echo $configs | grep -q sandybridge])
+
+vendor_string=`$CC --version 2>/dev/null`
+if test x"$vendor_string" = x; then
+    vendor_string=`$CC -qversion 2>/dev/null`
+fi
+if test x"$vendor_string" = x; then
+    AC_MSG_ERROR([Unable to determine compiler vendor.])
+fi
+
+cc_vendor=`echo $vendor_string | $EGREP -o 'icc|gcc|clang|emcc|pnacl|IBM' | { read first rest ; echo $first ; }`
+if test x"$cc_vendor" = x; then
+    AC_MSG_ERROR([Unable to determine compiler vendor.])
+fi
+
+AM_CONDITIONAL(ENABLE_INTEL_COMPILER, [test x"$cc_vendor" = xicc])
 
 AH_TOP([
 #if defined(__MIC__)

@@ -638,6 +638,8 @@ LIBOBJS
 INSTANTIATE_FOR_TYPES
 INSTANTIATE_TYPES_FOR_CONFIGS
 IMPORT_CONFIGS
+ENABLE_INTEL_COMPILER_FALSE
+ENABLE_INTEL_COMPILER_TRUE
 ENABLE_SANDYBRIDGE_FALSE
 ENABLE_SANDYBRIDGE_TRUE
 ENABLE_POWER7_FALSE
@@ -815,7 +817,10 @@ with_gnu_ld
 with_sysroot
 enable_libtool_lock
 enable_maintainer_mode
+enable_threading
 enable_openmp
+with_mutex
+with_barrier
 with_blis
 enable_config
 '
@@ -1467,8 +1472,13 @@ Optional Features:
   --enable-maintainer-mode
                           enable make rules and dependencies not useful (and
                           sometimes confusing) to the casual installer
+  --enable-threading[=model]
+                          enable threading with the specified model, one of
+                          openmp, pthread, or c++11 [default=openmp if
+                          available, or no threading when --enable-threading
+                          not specified]
   --disable-openmp        do not use OpenMP
-  --enable-config         a comma-separated list of configurations
+  --enable-config=...     a comma-separated list of configurations
                           [default=reference]
 
                           possible values are:
@@ -1495,6 +1505,11 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-sysroot[=DIR]    Search for dependent libraries within DIR (or the
                           compiler's sysroot if not specified).
+  --with-mutex=type       use a mutex of the specified type, one of
+                          pthread_mutex, pthread_spinlock, osspinlock,
+                          std_mutex, omp_lock, or spinlock [default=spinlock]
+  --with-barrier=type     use a barrier of the specified type, one of pthread,
+                          c++11, spin [default=spin]
   --with-blis=<dir>       Specify the location of blis.
 
 Some influential environment variables:
@@ -1976,6 +1991,97 @@ fi
   as_fn_set_status $ac_retval
 
 } # ac_fn_cxx_try_link
+
+# ac_fn_cxx_check_header_mongrel LINENO HEADER VAR INCLUDES
+# ---------------------------------------------------------
+# Tests whether HEADER exists, giving a warning if it cannot be compiled using
+# the include files in INCLUDES and setting the cache variable VAR
+# accordingly.
+ac_fn_cxx_check_header_mongrel ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  if eval \${$3+:} false; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
+$as_echo_n "checking for $2... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+else
+  # Is the header compilable?
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking $2 usability" >&5
+$as_echo_n "checking $2 usability... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+#include <$2>
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ac_header_compiler=yes
+else
+  ac_header_compiler=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_header_compiler" >&5
+$as_echo "$ac_header_compiler" >&6; }
+
+# Is the header present?
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking $2 presence" >&5
+$as_echo_n "checking $2 presence... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <$2>
+_ACEOF
+if ac_fn_cxx_try_cpp "$LINENO"; then :
+  ac_header_preproc=yes
+else
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.i conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_header_preproc" >&5
+$as_echo "$ac_header_preproc" >&6; }
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_cxx_preproc_warn_flag in #((
+  yes:no: )
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: accepted by the compiler, rejected by the preprocessor!" >&5
+$as_echo "$as_me: WARNING: $2: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: proceeding with the compiler's result" >&5
+$as_echo "$as_me: WARNING: $2: proceeding with the compiler's result" >&2;}
+    ;;
+  no:yes:* )
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: present but cannot be compiled" >&5
+$as_echo "$as_me: WARNING: $2: present but cannot be compiled" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2:     check for missing prerequisite headers?" >&5
+$as_echo "$as_me: WARNING: $2:     check for missing prerequisite headers?" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: see the Autoconf documentation" >&5
+$as_echo "$as_me: WARNING: $2: see the Autoconf documentation" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2:     section \"Present But Cannot Be Compiled\"" >&5
+$as_echo "$as_me: WARNING: $2:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: proceeding with the compiler's result" >&5
+$as_echo "$as_me: WARNING: $2: proceeding with the compiler's result" >&2;}
+( $as_echo "## ----------------------------------- ##
+## Report this to dmatthews@utexas.edu ##
+## ----------------------------------- ##"
+     ) | sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
+$as_echo_n "checking for $2... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  eval "$3=\$ac_header_compiler"
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+fi
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_cxx_check_header_mongrel
 
 # ac_fn_cxx_check_func LINENO FUNC VAR
 # ------------------------------------
@@ -16769,6 +16875,88 @@ _ACEOF
  esac
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing clock_gettime" >&5
+$as_echo_n "checking for library containing clock_gettime... " >&6; }
+if ${ac_cv_search_clock_gettime+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char clock_gettime ();
+int
+main ()
+{
+return clock_gettime ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' rt; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_search_clock_gettime=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_clock_gettime+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_clock_gettime+:} false; then :
+
+else
+  ac_cv_search_clock_gettime=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_clock_gettime" >&5
+$as_echo "$ac_cv_search_clock_gettime" >&6; }
+ac_res=$ac_cv_search_clock_gettime
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+
+topdir="\"`(cd $srcdir && pwd)`\""
+
+cat >>confdefs.h <<_ACEOF
+#define TOPDIR $topdir
+_ACEOF
+
+
+#
+# Determine threading options
+#
+
+# Check whether --enable-threading was given.
+if test "${enable_threading+set}" = set; then :
+  enableval=$enable_threading; thread_model=$enable_threading
+else
+  thread_model=no
+fi
+
+
+if test x"$thread_model" = xyes; then
+    thread_model=auto
+fi
+
+if test x"$thread_model" = xopenmp -o x"$thread_model" = xauto; then
+
   OPENMP_CXXFLAGS=
   # Check whether --enable-openmp was given.
 if test "${enable_openmp+set}" = set; then :
@@ -16834,83 +17022,121 @@ $as_echo "$ac_cv_prog_cxx_openmp" >&6; }
   fi
 
 
+    CPPFLAGS="$CPPFLAGS $OPENMP_CXXFLAGS"
+    LDFLAGS="$LDFLAGS $OPENMP_CXXFLAGS"
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing clock_gettime" >&5
-$as_echo_n "checking for library containing clock_gettime... " >&6; }
-if ${ac_cv_search_clock_gettime+:} false; then :
-  $as_echo_n "(cached) " >&6
+ac_fn_cxx_check_header_mongrel "$LINENO" "omp.h" "ac_cv_header_omp_h" "$ac_includes_default"
+if test "x$ac_cv_header_omp_h" = xyes; then :
+  thread_model=openmp
 else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
 
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char clock_gettime ();
-int
-main ()
-{
-return clock_gettime ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' rt; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_cxx_try_link "$LINENO"; then :
-  ac_cv_search_clock_gettime=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_clock_gettime+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_clock_gettime+:} false; then :
+        if test x"$thread_model" = xopenmp; then
+            as_fn_error $? "OpenMP requested but not available." "$LINENO" 5
+        fi
 
+fi
+
+
+fi
+
+if test x"$thread_model" = xpthread -o x"$thread_model" = xauto; then
+    CPPFLAGS="$CPPFLAGS -pthread"
+    LDFLAGS="$LDFLAGS -pthread"
+    ac_fn_cxx_check_header_mongrel "$LINENO" "pthread.h" "ac_cv_header_pthread_h" "$ac_includes_default"
+if test "x$ac_cv_header_pthread_h" = xyes; then :
+  thread_model=pthread
 else
-  ac_cv_search_clock_gettime=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_clock_gettime" >&5
-$as_echo "$ac_cv_search_clock_gettime" >&6; }
-ac_res=$ac_cv_search_clock_gettime
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+        if test x"$thread_model" = xpthread; then
+            as_fn_error $? "pthreads requested but not available." "$LINENO" 5
+        fi
 
 fi
 
 
-CPPFLAGS="$CPPFLAGS $OPENMP_CXXFLAGS"
-LDFLAGS="$LDFLAGS $OPENMP_CXXFLAGS"
+fi
 
-topdir="\"`(cd $srcdir && pwd)`\""
+if test x"$thread_model" = xauto; then
+    thread_model=c++11
+fi
 
-cat >>confdefs.h <<_ACEOF
-#define TOPDIR $topdir
-_ACEOF
+if test x"$thread_model" = xopenmp; then
 
+$as_echo "#define USE_OPENMP_THREADS 1" >>confdefs.h
 
+elif test x"$thread_model" = xpthread; then
 
-$as_echo "#define USE_CXX11_SPINLOCK 1" >>confdefs.h
+$as_echo "#define USE_PTHREAD_THREADS 1" >>confdefs.h
 
-
-$as_echo "#define USE_SPIN_BARRIER 1" >>confdefs.h
-
+elif test x"$thread_model" = xc++11; then
 
 $as_echo "#define USE_CXX11_THREADS 1" >>confdefs.h
 
+elif test x"$thread_model" != xno; then
+    as_fn_error $? "Invalid threading model specified." "$LINENO" 5
+fi
+
+
+# Check whether --with-mutex was given.
+if test "${with_mutex+set}" = set; then :
+  withval=$with_mutex; mutex_type=$with_mutex
+else
+  mutex_type=spinlock
+fi
+
+
+if test x"$mutex_type" = xpthread_mutex; then
+
+$as_echo "#define USE_PTHREAD_MUTEX 1" >>confdefs.h
+
+elif test x"$mutex_type" = xpthread_spinlock; then
+
+$as_echo "#define USE_PTHREAD_SPINLOCK 1" >>confdefs.h
+
+elif test x"$mutex_type" = xosspinlock; then
+
+$as_echo "#define USE_OSX_SPINLOCK 1" >>confdefs.h
+
+elif test x"$mutex_type" = xstd_mutex; then
+
+$as_echo "#define USE_CXX11_MUTEX 1" >>confdefs.h
+
+elif test x"$mutex_type" = xomp_lock; then
+
+$as_echo "#define USE_OMP_LOCK 1" >>confdefs.h
+
+elif test x"$mutex_type" = xspinlock; then
+
+$as_echo "#define USE_CXX11_SPINLOCK 1" >>confdefs.h
+
+else
+    as_fn_error $? "Invalid mutex type specified." "$LINENO" 5
+fi
+
+
+# Check whether --with-barrier was given.
+if test "${with_barrier+set}" = set; then :
+  withval=$with_barrier; barrier_type=$with_barrier
+else
+  barrier_type=spin
+fi
+
+
+if test x"$barrier_type" = xpthread; then
+
+$as_echo "#define USE_PTHREAD_BARRIER 1" >>confdefs.h
+
+elif test x"$barrier_type" = xc++11; then
+
+$as_echo "#define USE_CXX11_BARRIER 1" >>confdefs.h
+
+elif test x"$barrier_type" = xspin; then
+
+$as_echo "#define USE_SPIN_BARRIER 1" >>confdefs.h
+
+else
+    as_fn_error $? "Invalid barrier type specified." "$LINENO" 5
+fi
 
 #
 # Check for BLIS
@@ -17141,6 +17367,28 @@ fi
 else
   ENABLE_SANDYBRIDGE_TRUE='#'
   ENABLE_SANDYBRIDGE_FALSE=
+fi
+
+
+vendor_string=`$CC --version 2>/dev/null`
+if test x"$vendor_string" = x; then
+    vendor_string=`$CC -qversion 2>/dev/null`
+fi
+if test x"$vendor_string" = x; then
+    as_fn_error $? "Unable to determine compiler vendor." "$LINENO" 5
+fi
+
+cc_vendor=`echo $vendor_string | $EGREP -o 'icc|gcc|clang|emcc|pnacl|IBM' | { read first rest ; echo $first ; }`
+if test x"$cc_vendor" = x; then
+    as_fn_error $? "Unable to determine compiler vendor." "$LINENO" 5
+fi
+
+ if test x"$cc_vendor" = xicc; then
+  ENABLE_INTEL_COMPILER_TRUE=
+  ENABLE_INTEL_COMPILER_FALSE='#'
+else
+  ENABLE_INTEL_COMPILER_TRUE='#'
+  ENABLE_INTEL_COMPILER_FALSE=
 fi
 
 
@@ -17397,6 +17645,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_SANDYBRIDGE_TRUE}" && test -z "${ENABLE_SANDYBRIDGE_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_SANDYBRIDGE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_INTEL_COMPILER_TRUE}" && test -z "${ENABLE_INTEL_COMPILER_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_INTEL_COMPILER\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

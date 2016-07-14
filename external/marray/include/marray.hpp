@@ -2365,16 +2365,6 @@ namespace MArray
             using base::stride;
             using base::strides;
             using base::dimension;
-
-            operator const const_marray_view<T,ndim>&() const
-            {
-                return *this;
-            }
-
-            operator const_marray_view<T,ndim>() const
-            {
-                return *this;
-            }
     };
 
     template <typename T, unsigned ndim, typename Allocator=aligned_allocator<T, MARRAY_BASE_ALIGNMENT>>
@@ -3094,26 +3084,6 @@ namespace MArray
             friend void swap(marray& a, marray& b)
             {
                 a.swap(b);
-            }
-
-            operator const const_marray_view<T,ndim>&() const
-            {
-                return *this;
-            }
-
-            operator const marray_view<T,ndim>&() const
-            {
-                return *this;
-            }
-
-            operator const_marray_view<T,ndim>() const
-            {
-                return *this;
-            }
-
-            operator marray_view<T,ndim>() const
-            {
-                return *this;
             }
     };
 

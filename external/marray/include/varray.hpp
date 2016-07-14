@@ -691,11 +691,6 @@ namespace MArray
             {
                 a.swap(b);
             }
-
-            operator const const_varray_view<T>&() const
-            {
-                return *this;
-            }
     };
 
     template <typename T, typename Allocator=aligned_allocator<T, MARRAY_BASE_ALIGNMENT>>
@@ -1064,16 +1059,6 @@ namespace MArray
             friend void swap(varray& a, varray& b)
             {
                 a.swap(b);
-            }
-
-            operator const const_varray_view<T>&() const
-            {
-                return *this;
-            }
-
-            operator const varray_view<T>&() const
-            {
-                return *this;
             }
     };
 

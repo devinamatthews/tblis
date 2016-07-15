@@ -1738,7 +1738,7 @@ namespace MArray
                                 const_marray_view<T, sizeof...(Args)+1>>
             lowered(Args&&... args) const
             {
-                return lower(make_array((unsigned)std::forward<Args>(args)...));
+                return lowered(make_array((unsigned)std::forward<Args>(args)...));
             }
 
             template <unsigned ndim_=ndim>

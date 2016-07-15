@@ -162,9 +162,9 @@ struct gemm_experiment
 
     void operator()(const map<char,idx_type>& values) const
     {
-        idx_type m = values.at('m');
-        idx_type n = values.at('n');
-        idx_type k = values.at('k');
+        stride_type m = values.at('m');
+        stride_type n = values.at('n');
+        stride_type k = values.at('k');
 
         matrix<T> A(m, k);
         matrix<T> B(k, n);
@@ -248,7 +248,7 @@ struct random_contraction
 
             map<char,idx_type> lengths;
 
-            idx_type tm = 1;
+            stride_type tm = 1;
             for (idx_type len : len_m)
             {
                 idx_A.push_back(idx);
@@ -260,7 +260,7 @@ struct random_contraction
                 tm *= len;
             }
 
-            idx_type tn = 1;
+            stride_type tn = 1;
             for (idx_type len : len_n)
             {
                 idx_B.push_back(idx);
@@ -272,7 +272,7 @@ struct random_contraction
                 tn *= len;
             }
 
-            idx_type tk = 1;
+            stride_type tk = 1;
             for (idx_type len : len_k)
             {
                 idx_A.push_back(idx);
@@ -336,23 +336,21 @@ struct regular_contraction
         vector<idx_type> len_A, len_B, len_C;
 
         stride_type ntot = 1;
+        for (auto& p : lengths) ntot *= p.second;
 
         for (char c : idx_A)
         {
             len_A.push_back(lengths.at(c));
-            ntot *= len_A.back();
         }
 
         for (char c : idx_B)
         {
             len_B.push_back(lengths.at(c));
-            ntot *= len_B.back();
         }
 
         for (char c : idx_C)
         {
             len_C.push_back(lengths.at(c));
-            ntot *= len_C.back();
         }
 
         tensor<T> A(len_A);

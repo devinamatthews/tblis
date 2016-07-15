@@ -325,10 +325,8 @@ lib_libpower7_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	-o $@
 @ENABLE_POWER7_TRUE@am_lib_libpower7_la_rpath =
 lib_libsandybridge_la_LIBADD =
-am__lib_libsandybridge_la_SOURCES_DIST = src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c \
-	src/external/blis/config/sandybridge/kernels/3/bli_gemm_int_d8x4.c
-@ENABLE_SANDYBRIDGE_TRUE@am_lib_libsandybridge_la_OBJECTS = src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo \
-@ENABLE_SANDYBRIDGE_TRUE@	src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_int_d8x4.lo
+am__lib_libsandybridge_la_SOURCES_DIST = src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c
+@ENABLE_SANDYBRIDGE_TRUE@am_lib_libsandybridge_la_OBJECTS = src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo
 lib_libsandybridge_la_OBJECTS = $(am_lib_libsandybridge_la_OBJECTS)
 lib_libsandybridge_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
@@ -745,9 +743,7 @@ lib_libtblis_la_LIBADD = $(am__append_2) $(am__append_4) \
 @ENABLE_PILEDRIVER_TRUE@lib_libpiledriver_la_CFLAGS = -Isrc/external/blis/config/piledriver -mavx -mfma -march=bdver2 -mfpmath=sse
 @ENABLE_POWER7_TRUE@lib_libpower7_la_SOURCES = src/external/blis/config/power7/kernels/3/bli_gemm_opt_8x4.c
 @ENABLE_POWER7_TRUE@lib_libpower7_la_CFLAGS = -Isrc/external/blis/config/power7 -mcpu=power7 -mtune=power7 -mvsx
-@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_SOURCES = src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c \
-@ENABLE_SANDYBRIDGE_TRUE@						        src/external/blis/config/sandybridge/kernels/3/bli_gemm_int_d8x4.c
-
+@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_SOURCES = src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_CFLAGS = -Isrc/external/blis/config/sandybridge -mavx -mfpmath=sse -march=corei7-avx
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_CFLAGS = -Isrc/external/blis/config/sandybridge -xAVX
 bin_test_SOURCES = test/test.cxx
@@ -1109,8 +1105,6 @@ src/external/blis/config/sandybridge/kernels/3/$(DEPDIR)/$(am__dirstamp):
 	@: > src/external/blis/config/sandybridge/kernels/3/$(DEPDIR)/$(am__dirstamp)
 src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo: src/external/blis/config/sandybridge/kernels/3/$(am__dirstamp) \
 	src/external/blis/config/sandybridge/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_int_d8x4.lo: src/external/blis/config/sandybridge/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/sandybridge/kernels/3/$(DEPDIR)/$(am__dirstamp)
 
 lib/libsandybridge.la: $(lib_libsandybridge_la_OBJECTS) $(lib_libsandybridge_la_DEPENDENCIES) $(EXTRA_lib_libsandybridge_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CCLD)$(lib_libsandybridge_la_LINK) $(am_lib_libsandybridge_la_rpath) $(lib_libsandybridge_la_OBJECTS) $(lib_libsandybridge_la_LIBADD) $(LIBS)
@@ -1405,7 +1399,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/piledriver/kernels/3/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/power7/kernels/3/$(DEPDIR)/lib_libpower7_la-bli_gemm_opt_8x4.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/sandybridge/kernels/3/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_asm_d8x4.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/sandybridge/kernels/3/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_int_d8x4.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/impl/$(DEPDIR)/tensor_impl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/impl/blas/$(DEPDIR)/tensor_contract.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/impl/blas/$(DEPDIR)/tensor_mult.Plo@am__quote@
@@ -1648,13 +1641,6 @@ src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_as
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c' object='src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libsandybridge_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo `test -f 'src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c' || echo '$(srcdir)/'`src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c
-
-src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_int_d8x4.lo: src/external/blis/config/sandybridge/kernels/3/bli_gemm_int_d8x4.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libsandybridge_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_int_d8x4.lo -MD -MP -MF src/external/blis/config/sandybridge/kernels/3/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_int_d8x4.Tpo -c -o src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_int_d8x4.lo `test -f 'src/external/blis/config/sandybridge/kernels/3/bli_gemm_int_d8x4.c' || echo '$(srcdir)/'`src/external/blis/config/sandybridge/kernels/3/bli_gemm_int_d8x4.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/sandybridge/kernels/3/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_int_d8x4.Tpo src/external/blis/config/sandybridge/kernels/3/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_int_d8x4.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/sandybridge/kernels/3/bli_gemm_int_d8x4.c' object='src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_int_d8x4.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libsandybridge_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_int_d8x4.lo `test -f 'src/external/blis/config/sandybridge/kernels/3/bli_gemm_int_d8x4.c' || echo '$(srcdir)/'`src/external/blis/config/sandybridge/kernels/3/bli_gemm_int_d8x4.c
 
 .cxx.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\

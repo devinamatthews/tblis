@@ -169,8 +169,7 @@ endif
 if ENABLE_SANDYBRIDGE
 noinst_LTLIBRARIES += lib/libsandybridge.la
 lib_libtblis_la_LIBADD += lib/libsandybridge.la
-lib_libsandybridge_la_SOURCES = src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c \
-						        src/external/blis/config/sandybridge/kernels/3/bli_gemm_int_d8x4.c
+lib_libsandybridge_la_SOURCES = src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c
 if ENABLE_INTEL_COMPILER
 lib_libsandybridge_la_CFLAGS = -Isrc/external/blis/config/sandybridge -xAVX
 else

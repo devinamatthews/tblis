@@ -2,13 +2,12 @@
 #define _TBLIS_HPP_
 
 #include "tblis_config.hpp"
+
 #if !defined(restrict) && defined(_tblis_restrict)
-#define TBLIS_RESTRICT_DEFINED
 #define restrict _tblis_restrict
 #endif
 
 #if !defined(NDEBUG) && !defined(TBLIS_DEBUG)
-#define TBLID_NDEBUG_DEFINED
 #define NDEBUG
 #endif
 
@@ -70,13 +69,5 @@ extern "C"
 #include "3/tblis_packm.hpp"
 #include "3/tblis_gemm_ukr.hpp"
 #include "3/tblis_gemm.hpp"
-
-#ifdef TBLIS_RESTRICT_DEFINED
-#undef restrict
-#endif
-
-#ifdef TBLID_NDEBUG_DEFINED
-#undef NDEBUG
-#endif
 
 #endif

@@ -42,7 +42,7 @@ lib_libtblis_la_SOURCES = \
 	src/tblis_mutex.cxx \
 	src/tblis.cxx
 
-LIBS = $(BLAS_LIBS) $(LIBS) $(FLIBS)
+LIBS := $(BLAS_LIBS) $(LIBS) $(FLIBS)
 	
 noinst_LTLIBRARIES =
 lib_libtblis_la_LIBADD =

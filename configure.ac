@@ -10,6 +10,8 @@ AC_CONFIG_HEADERS(config.h)
 AC_PROG_CC([gcc clang icc])
 AC_PROG_CC_C99
 AM_PROG_AS
+AC_PROG_EGREP
+AC_PROG_AWK
 AX_BLAS([blas_found=yes])
 AC_PROG_CXX([g++ clang++ icpc])
 AX_CXX_COMPILE_STDCXX_11([noext])

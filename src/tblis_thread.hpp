@@ -373,6 +373,15 @@ void parallelize(Body& body, int nthread, int arity)
     for (auto& t : threads) t.join();
 }
 
+#else
+
+template <typename Body>
+void parallelize(Body& body, int nthread, int arity)
+{
+    ThreadCommunicator comm;
+    body(comm);
+}
+
 #endif
 
 }

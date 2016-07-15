@@ -96,6 +96,7 @@ int tensor_weight_blas(T alpha, const const_tensor_view<T>& A, const std::string
     matricize<T>(ar, am, 0);
     matricize<T>(br, bm, 0);
     matricize<T>(cr, cm, idx_AC.size());
+    am.transpose();
 
     const T* ptr_A = A.data();
     const T* ptr_B = B.data();
@@ -115,10 +116,7 @@ int tensor_weight_blas(T alpha, const const_tensor_view<T>& A, const std::string
 
         tensor_transpose_impl<T>(1.0, A_not_ABC, idx_A_not_ABC, 0.0, arv, idx_A_not_ABC);
         tensor_transpose_impl<T>(1.0, B_not_ABC, idx_B_not_ABC, 0.0, brv, idx_B_not_ABC);
-        tblis_zerov(cm.length(0)*cm.length(1), cm.data(), 1);
-        ger(cm.length(0), cm.length(1),
-            alpha, am.data(), 1, bm.data(), 1,
-            cm.data(), cm.stride(1));
+        tblis_gemm<T>(alpha, am, bm, 0.0, cm);
         tensor_transpose_impl<T>(1.0, crv, idx_AC_BC, beta, C_not_ABC, idx_C_not_ABC);
     }
 

@@ -52,13 +52,11 @@ int tensor_contract_blas(T alpha, const const_tensor_view<T>& A, const std::stri
     matricize<T>(ar, am, idx_AB.size());
     matricize<T>(br, bm, idx_AB.size());
     matricize<T>(cr, cm, idx_AC.size());
+    am.transpose();
 
     tensor_transpose_impl<T>(1.0, A, idx_A, 0.0, arv, idx_AB_AC);
     tensor_transpose_impl<T>(1.0, B, idx_B, 0.0, brv, idx_AB_BC);
-    gemm('T', 'N', cm.length(0), cm.length(1), am.length(0),
-         alpha, am.data(), am.stride(1),
-                bm.data(), bm.stride(1),
-           0.0, cm.data(), cm.stride(1));
+    tblis_gemm<T>(alpha, am, bm, 0.0, cm);
     tensor_transpose_impl<T>(1.0, crv, idx_AC_BC, beta, C, idx_C);
 
     return 0;

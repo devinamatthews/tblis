@@ -39,13 +39,11 @@ int tensor_outer_prod_blas(T alpha, const const_tensor_view<T>& A, const std::st
     matricize<T>(ar, am, 0);
     matricize<T>(br, bm, 0);
     matricize<T>(cr, cm, idx_AC.size());
+    am.transpose();
 
     tensor_transpose_impl<T>(1.0, A, idx_A, 0.0, arv, idx_A);
     tensor_transpose_impl<T>(1.0, B, idx_B, 0.0, brv, idx_B);
-    tblis_zerov(cm.length(0)*cm.length(1), cm.data(), 1);
-    ger(cm.length(0), cm.length(1),
-        alpha, am.data(), 1, bm.data(), 1,
-               cm.data(), cm.stride(1));
+    tblis_gemm<T>(alpha, am, bm, 0.0, cm);
     tensor_transpose_impl<T>(1.0, crv, idx_AC_BC, beta, C, idx_C);
 
     return 0;

@@ -109,6 +109,7 @@ int tensor_mult_blas(T alpha, const const_tensor_view<T>& A, const std::string& 
     matricize<T>(ar, am, idx_AB.size());
     matricize<T>(br, bm, idx_AB.size());
     matricize<T>(cr, cm, idx_AC.size());
+    am.transpose();
 
     const T* ptr_A = A.data();
     const T* ptr_B = B.data();
@@ -128,10 +129,7 @@ int tensor_mult_blas(T alpha, const const_tensor_view<T>& A, const std::string& 
 
         tensor_trace_impl<T>(1.0, A_not_ABC, idx_A_not_ABC, 0.0, arv, idx_AB_AC);
         tensor_trace_impl<T>(1.0, B_not_ABC, idx_B_not_ABC, 0.0, brv, idx_AB_BC);
-        gemm('T', 'N', cm.length(0), cm.length(1), am.length(0),
-             alpha, am.data(), am.stride(1),
-                    bm.data(), bm.stride(1),
-               0.0, cm.data(), cm.stride(1));
+        tblis_gemm<T>(alpha, am, bm, 0.0, cm);
         tensor_replicate_impl<T>(1.0, crv, idx_AC_BC, beta, C_not_ABC, idx_C_not_ABC);
     }
 

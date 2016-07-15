@@ -1,6 +1,5 @@
 AC_INIT(tblis, 1.0, dmatthews@utexas.edu, tblis, http://www.github.com/devinamatthews/tblis)
 AM_INIT_AUTOMAKE([foreign silent-rules subdir-objects])
-LT_INIT
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE([disable])
 
@@ -11,10 +10,13 @@ AC_CONFIG_HEADERS(config.h)
 AC_PROG_CC([gcc clang icc])
 AC_PROG_CC_C99
 AM_PROG_AS
+AX_BLAS([blas_found=yes])
 AC_PROG_CXX([g++ clang++ icpc])
 AX_CXX_COMPILE_STDCXX_11([noext])
 AC_LANG([C++])
 AC_C_RESTRICT
+
+AM_CONDITIONAL([ENABLE_BLAS], [test x"$blas_found" = xyes])
 
 AC_SEARCH_LIBS([clock_gettime], [rt])
 
@@ -214,6 +216,8 @@ done
 
 AC_SUBST([INSTANTIATE_FOR_TYPES], [$instantiate_for_types])
 AM_SUBST_NOTMAKE([INSTANTIATE_FOR_TYPES])
+
+LT_INIT
                 
 mkdir -p bin
 

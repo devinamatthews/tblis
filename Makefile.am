@@ -178,7 +178,10 @@ lib_libsandybridge_la_CFLAGS = -Isrc/external/blis/config/sandybridge -mavx -mfp
 endif
 endif
 
-bin_PROGRAMS = bin/test bin/bench
+bin_PROGRAMS = bin/test
+if ENABLE_BLAS
+bin_PROGRAMS += bin/bench
+endif
 bin_test_SOURCES = test/test.cxx
 bin_bench_SOURCES = test/bench.cxx
 

@@ -118,11 +118,13 @@ host_triplet = @host@
 @ENABLE_POWER7_TRUE@am__append_28 = lib/libpower7.la
 @ENABLE_SANDYBRIDGE_TRUE@am__append_29 = lib/libsandybridge.la
 @ENABLE_SANDYBRIDGE_TRUE@am__append_30 = lib/libsandybridge.la
-bin_PROGRAMS = bin/test$(EXEEXT) bin/bench$(EXEEXT)
+bin_PROGRAMS = bin/test$(EXEEXT) $(am__EXEEXT_1)
+@ENABLE_BLAS_TRUE@am__append_31 = bin/bench
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/aq_check_func_with_path.m4 \
 	$(top_srcdir)/m4/aq_with_package.m4 \
+	$(top_srcdir)/m4/ax_blas.m4 \
 	$(top_srcdir)/m4/ax_cxx_compile_stdcxx_11.m4 \
 	$(top_srcdir)/m4/ax_prefix_config_h.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
@@ -364,6 +366,7 @@ am_lib_libtblis_la_OBJECTS = src/1m/tblis_normfm.lo \
 	src/impl/reference/tensor_weight.lo src/impl/tensor_impl.lo \
 	src/tblis_mutex.lo src/tblis.lo
 lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
+@ENABLE_BLAS_TRUE@am__EXEEXT_1 = bin/bench$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 am_bin_bench_OBJECTS = test/bench.$(OBJEXT)
 bin_bench_OBJECTS = $(am_bin_bench_OBJECTS)
@@ -518,13 +521,13 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BLAS_LIBS = @BLAS_LIBS@
 CC = @CC@
 CCAS = @CCAS@
 CCASDEPMODE = @CCASDEPMODE@
 CCASFLAGS = @CCASFLAGS@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
-CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CXX = @CXX@
 CXXCPP = @CXXCPP@
@@ -541,7 +544,10 @@ ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
+F77 = @F77@
+FFLAGS = @FFLAGS@
 FGREP = @FGREP@
+FLIBS = @FLIBS@
 GREP = @GREP@
 HAVE_CXX11 = @HAVE_CXX11@
 INSTALL = @INSTALL@
@@ -591,6 +597,7 @@ ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
+ac_ct_F77 = @ac_ct_F77@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@

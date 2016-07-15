@@ -64,7 +64,7 @@ struct Partition
             idx_type m_u = (Dim == DIM_M ? A.length(0) : Dim == DIM_N ? B.length(1) : A.length(1));
             idx_type m_v = (Dim == DIM_M ? C.length(0) : Dim == DIM_N ? C.length(1) : B.length(0));
 
-            assert(distribute <= comm.num_threads());
+            //assert(distribute <= comm.num_threads());
 
             idx_type m_first = 0;
             idx_type m_last = std::min(m_u, m_v);

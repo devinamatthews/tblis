@@ -41,8 +41,6 @@ lib_libtblis_la_SOURCES = \
 	\
 	src/tblis_mutex.cxx \
 	src/tblis.cxx
-
-LIBS := $(BLAS_LIBS) $(LIBS) $(FLIBS)
 	
 noinst_LTLIBRARIES =
 lib_libtblis_la_LIBADD =
@@ -229,4 +227,4 @@ AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/external/blis/frame/0 
               -Isrc/external/blis/frame/thread -Isrc/external/blis
 AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la
-bin_bench_LDADD = lib/libtblis.la
+bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS) $(FLIBS)

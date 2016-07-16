@@ -163,6 +163,12 @@ namespace MArray
         template <bool Cond, typename T, typename U>
         using conditional_t = typename std::conditional<Cond,T,U>::type;
 
+        template <typename T, typename U=void>
+        using enable_if_integral_t = enable_if_t<std::is_integral<T>::value,U>;
+
+        template <typename T, typename U=void>
+        using enable_if_not_integral_t = enable_if_t<!std::is_integral<T>::value,U>;
+
         template <typename... Args> struct types {};
 
         template <typename Types1, typename Types2>
@@ -1423,7 +1429,8 @@ namespace MArray
             }
 
             template <typename U>
-            static std::array<stride_type, ndim> default_strides(const std::array<U, ndim>& len, Layout layout=DEFAULT)
+            static detail::enable_if_integral_t<U,std::array<stride_type, ndim>>
+            default_strides(const std::array<U, ndim>& len, Layout layout=DEFAULT)
             {
                 std::array<stride_type, ndim> stride;
 
@@ -1483,7 +1490,8 @@ namespace MArray
                 reset(other);
             }
 
-            template <typename Alloc>
+            template <typename Alloc, typename=
+                detail::enable_if_not_integral_t<Alloc>>
             const_marray_view(const marray<T, ndim, Alloc>& other)
             {
                 reset(other);
@@ -1494,7 +1502,8 @@ namespace MArray
                 reset(len, ptr, layout);
             }
 
-            template <typename U>
+            template <typename U, typename=
+                detail::enable_if_integral_t<U>>
             const_marray_view(const std::array<U, ndim>& len, const_pointer ptr, Layout layout=DEFAULT)
             {
                 reset(len, ptr, layout);
@@ -1505,7 +1514,9 @@ namespace MArray
                 reset(len, ptr, stride);
             }
 
-            template <typename U, typename V>
+            template <typename U, typename V, typename=
+                detail::enable_if_t<std::is_integral<U>::value &&
+                                    std::is_integral<V>::value>>
             const_marray_view(const std::array<U, ndim>& len, const_pointer ptr, const std::array<V, ndim>& stride)
             {
                 reset(len, ptr, stride);
@@ -1550,7 +1561,8 @@ namespace MArray
             }
 
             template <typename Alloc>
-            void reset(const marray<T, ndim, Alloc>& other)
+            detail::enable_if_not_integral_t<Alloc>
+            reset(const marray<T, ndim, Alloc>& other)
             {
                 reset(static_cast<const const_marray_view<T, ndim>&>(other));
             }
@@ -1561,7 +1573,8 @@ namespace MArray
             }
 
             template <typename U>
-            void reset(const std::array<U, ndim>& len, const_pointer ptr, Layout layout = DEFAULT)
+            detail::enable_if_integral_t<U>
+            reset(const std::array<U, ndim>& len, const_pointer ptr, Layout layout = DEFAULT)
             {
                 reset(len, ptr, default_strides(len, layout));
             }
@@ -1596,7 +1609,9 @@ namespace MArray
             }
 
             template <typename U, typename V>
-            void reset(const std::array<U, ndim>& len, const_pointer ptr, const std::array<V, ndim>& stride)
+            detail::enable_if_t<std::is_integral<U>::value &&
+                                std::is_integral<V>::value>
+            reset(const std::array<U, ndim>& len, const_pointer ptr, const std::array<V, ndim>& stride)
             {
                 data_ = const_cast<pointer>(ptr);
                 std::copy_n(len.begin(), ndim, len_.begin());
@@ -1657,7 +1672,8 @@ namespace MArray
             }
 
             template <typename U>
-            void permute(const std::array<U, ndim>& perm)
+            detail::enable_if_integral_t<U>
+            permute(const std::array<U, ndim>& perm)
             {
                 std::array<idx_type, ndim> len = len_;
                 std::array<stride_type, ndim> stride = stride_;
@@ -1681,7 +1697,8 @@ namespace MArray
             }
 
             template <typename U>
-            const_marray_view<T,ndim> permuted(const std::array<U, ndim>& perm) const
+            detail::enable_if_integral_t<U,const_marray_view<T,ndim>>
+            permuted(const std::array<U, ndim>& perm) const
             {
                 const_marray_view<T,ndim> r(*this);
                 r.permute(perm);
@@ -1728,7 +1745,8 @@ namespace MArray
             }
 
             template <typename U, size_t nsplit>
-            const_marray_view<T, nsplit+1> lowered(const std::array<U, nsplit>& split) const
+            detail::enable_if_integral_t<U,const_marray_view<T, nsplit+1>>
+            lowered(const std::array<U, nsplit>& split) const
             {
                 assert(nsplit < ndim);
 
@@ -2053,7 +2071,8 @@ namespace MArray
             marray_view(const marray_view<T, ndim>& other)
             : base(other) {}
 
-            template <typename Alloc>
+            template <typename Alloc, typename=
+                detail::enable_if_not_integral_t<Alloc>>
             marray_view(marray<T, ndim, Alloc>& other)
             : base(other) {}
 
@@ -2062,7 +2081,8 @@ namespace MArray
                 reset(len, ptr, layout);
             }
 
-            template <typename U>
+            template <typename U, typename=
+                detail::enable_if_integral_t<U>>
             marray_view(const std::array<U, ndim>& len, pointer ptr, Layout layout=DEFAULT)
             {
                 reset(len, ptr, layout);
@@ -2073,7 +2093,9 @@ namespace MArray
                 reset(len, ptr, stride);
             }
 
-            template <typename U, typename V>
+            template <typename U, typename V, typename=
+                detail::enable_if_t<std::is_integral<U>::value &&
+                                    std::is_integral<V>::value>>
             marray_view(const std::array<U, ndim>& len, pointer ptr, const std::array<V, ndim>& stride)
             {
                 reset(len, ptr, stride);
@@ -2109,7 +2131,8 @@ namespace MArray
             }
 
             template <typename Alloc>
-            void reset(marray<T, ndim, Alloc>& other)
+            detail::enable_if_not_integral_t<Alloc>
+            reset(marray<T, ndim, Alloc>& other)
             {
                 base::reset(other);
             }
@@ -2120,7 +2143,8 @@ namespace MArray
             }
 
             template <typename U>
-            void reset(const std::array<U, ndim>& len, pointer ptr, Layout layout = DEFAULT)
+            detail::enable_if_integral_t<U>
+            reset(const std::array<U, ndim>& len, pointer ptr, Layout layout = DEFAULT)
             {
                 base::reset(len, ptr, layout);
             }
@@ -2131,7 +2155,9 @@ namespace MArray
             }
 
             template <typename U, typename V>
-            void reset(const std::array<U, ndim>& len, pointer ptr, const std::array<V, ndim>& stride)
+            detail::enable_if_t<std::is_integral<U>::value &&
+                                std::is_integral<V>::value>
+            reset(const std::array<U, ndim>& len, pointer ptr, const std::array<V, ndim>& stride)
             {
                 base::reset(len, ptr, stride);
             }
@@ -2209,7 +2235,8 @@ namespace MArray
             }
 
             template <typename U>
-            marray_view<T, ndim> permuted(const std::array<U, ndim>& perm) const
+            detail::enable_if_integral_t<U,marray_view<T, ndim>>
+            permuted(const std::array<U, ndim>& perm) const
             {
                 return base::permuted(perm);
             }
@@ -2241,7 +2268,8 @@ namespace MArray
             }
 
             template <typename U, size_t nsplit>
-            marray_view<T, nsplit+1> lowered(const std::array<U, nsplit>& split) const
+            detail::enable_if_integral_t<U,marray_view<T, nsplit+1>>
+            lowered(const std::array<U, nsplit>& split) const
             {
                 return base::lowered(split);
             }
@@ -2316,7 +2344,8 @@ namespace MArray
             }
 
             template <typename U>
-            void rotate(const std::array<U, ndim>& shift)
+            detail::enable_if_integral_t<U>
+            rotate(const std::array<U, ndim>& shift)
             {
                 for (unsigned dim = 0;dim < ndim;dim++)
                 {
@@ -2522,7 +2551,8 @@ namespace MArray
                 reset(other, layout);
             }
 
-            template <typename OAlloc>
+            template <typename OAlloc, typename=
+                detail::enable_if_not_integral_t<OAlloc>>
             marray(const marray<T, ndim, OAlloc>& other, Layout layout=DEFAULT)
             {
                 reset(other, layout);
@@ -2543,7 +2573,8 @@ namespace MArray
                 reset(len, val, layout);
             }
 
-            template <typename U>
+            template <typename U, typename=
+                detail::enable_if_integral_t<U>>
             explicit marray(const std::array<U, ndim>& len, const T& val=T(), Layout layout=DEFAULT)
             {
                 reset(len, val, layout);
@@ -2554,7 +2585,8 @@ namespace MArray
                 reset(len, u, layout);
             }
 
-            template <typename U>
+            template <typename U, typename=
+                detail::enable_if_integral_t<U>>
             marray(const std::array<U, ndim>& len, uninitialized_t u, Layout layout=DEFAULT)
             {
                 reset(len, u, layout);
@@ -2653,7 +2685,8 @@ namespace MArray
             }
 
             template <typename OAlloc>
-            void reset(const marray<T, ndim, OAlloc>& other, Layout layout=DEFAULT)
+            detail::enable_if_not_integral_t<OAlloc>
+            reset(const marray<T, ndim, OAlloc>& other, Layout layout=DEFAULT)
             {
                 reset(static_cast<const const_marray_view<T, ndim>&>(other), layout);
             }
@@ -2669,7 +2702,8 @@ namespace MArray
             }
 
             template <typename U>
-            void reset(const std::array<U, ndim>& len, const T& val=T(), Layout layout=DEFAULT)
+            detail::enable_if_integral_t<U>
+            reset(const std::array<U, ndim>& len, const T& val=T(), Layout layout=DEFAULT)
             {
                 reset(len, uninitialized, layout);
                 std::uninitialized_fill_n(data_, size_, val);
@@ -2713,7 +2747,8 @@ namespace MArray
             }
 
             template <typename U>
-            void reset(const std::array<U, ndim>& len, uninitialized_t u, Layout layout=DEFAULT)
+            detail::enable_if_integral_t<U>
+            reset(const std::array<U, ndim>& len, uninitialized_t u, Layout layout=DEFAULT)
             {
                 size_ = std::accumulate(len.begin(), len.end(), size_t(1), std::multiplies<size_t>());
                 layout_ = layout;
@@ -2751,7 +2786,8 @@ namespace MArray
             }
 
             template <typename U>
-            void resize(const std::array<U, ndim>& len, const T& val=T())
+            detail::enable_if_integral_t<U>
+            resize(const std::array<U, ndim>& len, const T& val=T())
             {
                 marray a(std::move(*this));
                 reset(len, val, layout_);
@@ -2857,7 +2893,8 @@ namespace MArray
             }
 
             template <typename U>
-            marray_view<T, ndim> permuted(const std::array<U, ndim>& perm)
+            detail::enable_if_integral_t<U,marray_view<T, ndim>>
+            permuted(const std::array<U, ndim>& perm)
             {
                 return base::permuted(perm);
             }
@@ -2868,7 +2905,8 @@ namespace MArray
             }
 
             template <typename U>
-            const_marray_view<T, ndim> permuted(const std::array<U, ndim>& perm) const
+            detail::enable_if_integral_t<U,const_marray_view<T, ndim>>
+            permuted(const std::array<U, ndim>& perm) const
             {
                 return base::permuted(perm);
             }
@@ -2916,7 +2954,8 @@ namespace MArray
             }
 
             template <typename U, size_t nsplit>
-            marray_view<T, nsplit+1> lowered(const std::array<U, nsplit>& split)
+            detail::enable_if_integral_t<U,marray_view<T, nsplit+1>>
+            lowered(const std::array<U, nsplit>& split)
             {
                 return base::lowered(split);
             }
@@ -2928,7 +2967,8 @@ namespace MArray
             }
 
             template <typename U, size_t nsplit>
-            const_marray_view<T, nsplit+1> lowered(const std::array<U, nsplit>& split) const
+            detail::enable_if_integral_t<U, const_marray_view<T, nsplit+1>>
+            lowered(const std::array<U, nsplit>& split) const
             {
                 return base::lowered(split);
             }

@@ -58,7 +58,8 @@ namespace MArray
             }
 
             template <typename U>
-            static std::vector<stride_type> default_strides(const std::vector<U>& len, Layout layout=DEFAULT)
+            static detail::enable_if_integral_t<U,std::vector<stride_type>>
+            default_strides(const std::vector<U>& len, Layout layout=DEFAULT)
             {
                 std::vector<stride_type> stride(len.size());
 
@@ -97,7 +98,8 @@ namespace MArray
                 reset(other);
             }
 
-            template <typename Alloc>
+            template <typename Alloc, typename=
+                detail::enable_if_not_integral_t<Alloc>>
             const_varray_view(const varray<T, Alloc>& other)
             {
                 reset(other);
@@ -118,7 +120,8 @@ namespace MArray
                 reset(len, ptr, layout);
             }
 
-            template <typename U>
+            template <typename U, typename=
+                detail::enable_if_integral_t<U>>
             const_varray_view(const std::vector<U>& len, const_pointer ptr, Layout layout=DEFAULT)
             {
                 reset(len, ptr, layout);
@@ -129,7 +132,9 @@ namespace MArray
                 reset(len, ptr, stride);
             }
 
-            template <typename U, typename V>
+            template <typename U, typename V, typename=
+                detail::enable_if_t<std::is_integral<U>::value &&
+                                     std::is_integral<V>::value>>
             const_varray_view(const std::vector<U>& len, const_pointer ptr, const std::vector<V>& stride)
             {
                 reset(len, ptr, stride);
@@ -157,7 +162,8 @@ namespace MArray
             }
 
             template <typename Alloc>
-            void reset(const varray<T, Alloc>& other)
+            detail::enable_if_not_integral_t<Alloc>
+            reset(const varray<T, Alloc>& other)
             {
                 reset(static_cast<const const_varray_view<T>&>(other));
             }
@@ -181,7 +187,8 @@ namespace MArray
             }
 
             template <typename U>
-            void reset(const std::vector<U>& len, const_pointer ptr, Layout layout = DEFAULT)
+            detail::enable_if_integral_t<U>
+            reset(const std::vector<U>& len, const_pointer ptr, Layout layout = DEFAULT)
             {
                 reset(len, ptr, default_strides(len, layout));
             }
@@ -192,7 +199,9 @@ namespace MArray
             }
 
             template <typename U, typename V>
-            void reset(const std::vector<U>& len, const_pointer ptr, const std::vector<V>& stride)
+            detail::enable_if_t<std::is_integral<U>::value &&
+                                 std::is_integral<V>::value>
+            reset(const std::vector<U>& len, const_pointer ptr, const std::vector<V>& stride)
             {
                 assert(len.size() == stride.size());
                 data_ = const_cast<pointer>(ptr);
@@ -241,7 +250,8 @@ namespace MArray
             }
 
             template <typename U>
-            void permute(const std::vector<U>& perm)
+            detail::enable_if_integral_t<U>
+            permute(const std::vector<U>& perm)
             {
                 assert(perm.size() == ndim_);
 
@@ -267,7 +277,8 @@ namespace MArray
             }
 
             template <typename U>
-            const_varray_view<T> permuted(const std::vector<U>& perm) const
+            detail::enable_if_integral_t<U,const_varray_view<T>>
+            permuted(const std::vector<U>& perm) const
             {
                 const_varray_view<T> r(*this);
                 r.permute(perm);
@@ -280,7 +291,8 @@ namespace MArray
             }
 
             template <typename U>
-            void lower(const std::vector<U>& split)
+            detail::enable_if_integral_t<U>
+            lower(const std::vector<U>& split)
             {
                 assert(split.size() < ndim_);
 
@@ -333,7 +345,8 @@ namespace MArray
             }
 
             template <typename U>
-            const_varray_view<T> lowered(const std::vector<U>& split) const
+            detail::enable_if_integral_t<U,const_varray_view<T>>
+            lowered(const std::vector<U>& split) const
             {
                 const_varray_view<T> r(*this);
                 r.lower(split);
@@ -495,7 +508,8 @@ namespace MArray
             varray_view(const varray_view& other)
             : base(other) {}
 
-            template <typename Alloc>
+            template <typename Alloc, typename=
+                detail::enable_if_not_integral_t<Alloc>>
             varray_view(const varray<T, Alloc>& other)
             : base(other) {}
 
@@ -507,7 +521,8 @@ namespace MArray
                 reset(len, ptr, layout);
             }
 
-            template <typename U>
+            template <typename U, typename=
+                detail::enable_if_integral_t<U>>
             varray_view(const std::vector<U>& len, pointer ptr, Layout layout=DEFAULT)
             {
                 reset(len, ptr, layout);
@@ -518,7 +533,9 @@ namespace MArray
                 reset(len, ptr, stride);
             }
 
-            template <typename U, typename V>
+            template <typename U, typename V, typename=
+                detail::enable_if_t<std::is_integral<U>::value &&
+                                     std::is_integral<V>::value>>
             varray_view(const std::vector<U>& len, pointer ptr, const std::vector<V>& stride)
             {
                 reset(len, ptr, stride);
@@ -535,7 +552,8 @@ namespace MArray
             }
 
             template <typename Alloc>
-            void reset(const varray<T, Alloc>& other)
+            detail::enable_if_not_integral_t<Alloc>
+            reset(const varray<T, Alloc>& other)
             {
                 base::reset(other);
             }
@@ -551,7 +569,8 @@ namespace MArray
             }
 
             template <typename U>
-            void reset(const std::vector<U>& len, pointer ptr, Layout layout = DEFAULT)
+            detail::enable_if_integral_t<U>
+            reset(const std::vector<U>& len, pointer ptr, Layout layout = DEFAULT)
             {
                 base::reset(len, ptr, layout);
             }
@@ -562,7 +581,9 @@ namespace MArray
             }
 
             template <typename U, typename V>
-            void reset(const std::vector<U>& len, pointer ptr, const std::vector<V>& stride)
+            detail::enable_if_t<std::is_integral<U>::value &&
+                                 std::is_integral<V>::value>
+            reset(const std::vector<U>& len, pointer ptr, const std::vector<V>& stride)
             {
                 base::reset(len, ptr, stride);
             }
@@ -621,7 +642,8 @@ namespace MArray
             }
 
             template <typename U>
-            varray_view<T> permuted(const std::vector<U>& perm) const
+            detail::enable_if_integral_t<U,varray_view<T>>
+            permuted(const std::vector<U>& perm) const
             {
                 return base::permuted(perm);
             }
@@ -634,7 +656,8 @@ namespace MArray
             }
 
             template <typename U>
-            varray_view<T> lowered(const std::vector<U>& split) const
+            detail::enable_if_integral_t<U,varray_view<T>>
+            lowered(const std::vector<U>& split) const
             {
                 return base::lowered(split);
             }
@@ -699,7 +722,8 @@ namespace MArray
             }
 
             template <typename U>
-            void rotate(const std::vector<U>& shift)
+            detail::enable_if_integral_t<U>
+            rotate(const std::vector<U>& shift)
             {
                 for (unsigned dim = 0;dim < ndim_;dim++)
                 {
@@ -814,7 +838,8 @@ namespace MArray
                 reset(other, layout);
             }
 
-            template <typename OAlloc>
+            template <typename OAlloc, typename=
+                detail::enable_if_not_integral_t<OAlloc>>
             varray(const varray<T, OAlloc>& other, Layout layout=DEFAULT)
             {
                 reset(other, layout);
@@ -835,7 +860,8 @@ namespace MArray
                 reset(len, val, layout);
             }
 
-            template <typename U>
+            template <typename U, typename=
+                detail::enable_if_integral_t<U>>
             explicit varray(const std::vector<U>& len, const T& val=T(), Layout layout=DEFAULT)
             {
                 reset(len, val, layout);
@@ -846,7 +872,8 @@ namespace MArray
                 reset(len, u, layout);
             }
 
-            template <typename U>
+            template <typename U, typename=
+                detail::enable_if_integral_t<U>>
             varray(const std::vector<U>& len, uninitialized_t u, Layout layout=DEFAULT)
             {
                 reset(len, u, layout);
@@ -921,7 +948,8 @@ namespace MArray
             }
 
             template <typename OAlloc>
-            void reset(const varray<T, OAlloc>& other, Layout layout=DEFAULT)
+            detail::enable_if_not_integral_t<OAlloc>
+            reset(const varray<T, OAlloc>& other, Layout layout=DEFAULT)
             {
                 reset(static_cast<const const_varray_view<T>&>(other), layout);
             }
@@ -937,7 +965,8 @@ namespace MArray
             }
 
             template <typename U>
-            void reset(const std::vector<U>& len, const T& val=T(), Layout layout=DEFAULT)
+            detail::enable_if_integral_t<U>
+            reset(const std::vector<U>& len, const T& val=T(), Layout layout=DEFAULT)
             {
                 reset(len, uninitialized, layout);
                 std::uninitialized_fill_n(data_, size_, val);
@@ -949,7 +978,8 @@ namespace MArray
             }
 
             template <typename U>
-            void reset(const std::vector<U>& len, uninitialized_t u, Layout layout=DEFAULT)
+            detail::enable_if_integral_t<U>
+            reset(const std::vector<U>& len, uninitialized_t u, Layout layout=DEFAULT)
             {
                 size_ = std::accumulate(len.begin(), len.end(), size_t(1), std::multiplies<size_t>());
                 layout_ = layout;
@@ -963,7 +993,8 @@ namespace MArray
             }
 
             template <typename U>
-            void resize(const std::vector<U>& len, const T& val=T())
+            detail::enable_if_integral_t<U>
+            resize(const std::vector<U>& len, const T& val=T())
             {
                 varray a(std::move(*this));
                 reset(len, val, layout_);
@@ -1028,7 +1059,8 @@ namespace MArray
             }
 
             template <typename U>
-            varray_view<T> permuted(const std::vector<U>& perm)
+            detail::enable_if_integral_t<U,varray_view<T>>
+            permuted(const std::vector<U>& perm)
             {
                 return base::permuted(perm);
             }
@@ -1039,7 +1071,8 @@ namespace MArray
             }
 
             template <typename U>
-            const_varray_view<T> permuted(const std::vector<U>& perm) const
+            detail::enable_if_integral_t<U,const_varray_view<T>>
+            permuted(const std::vector<U>& perm) const
             {
                 return base::permuted(perm);
             }
@@ -1052,7 +1085,8 @@ namespace MArray
             }
 
             template <typename U>
-            varray_view<T> lowered(const std::vector<U>& split)
+            detail::enable_if_integral_t<U,varray_view<T>>
+            lowered(const std::vector<U>& split)
             {
                 return base::lowered(split);
             }
@@ -1063,7 +1097,8 @@ namespace MArray
             }
 
             template <typename U>
-            const_varray_view<T> lowered(const std::vector<U>& split) const
+            detail::enable_if_integral_t<U,const_varray_view<T>>
+            lowered(const std::vector<U>& split) const
             {
                 return base::lowered(split);
             }

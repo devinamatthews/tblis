@@ -368,7 +368,9 @@ lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
 PROGRAMS = $(bin_PROGRAMS)
 am_bin_bench_OBJECTS = test/bench.$(OBJEXT)
 bin_bench_OBJECTS = $(am_bin_bench_OBJECTS)
-bin_bench_DEPENDENCIES = lib/libtblis.la
+am__DEPENDENCIES_1 =
+bin_bench_DEPENDENCIES = lib/libtblis.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_bin_test_OBJECTS = test/test.$(OBJEXT)
 bin_test_OBJECTS = $(am_bin_test_OBJECTS)
 bin_test_DEPENDENCIES = lib/libtblis.la
@@ -556,7 +558,7 @@ INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
-LIBS := $(BLAS_LIBS) $(LIBS) $(FLIBS)
+LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
@@ -790,7 +792,7 @@ AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/external/blis/frame/0 
 
 AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la
-bin_bench_LDADD = lib/libtblis.la
+bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS) $(FLIBS)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 

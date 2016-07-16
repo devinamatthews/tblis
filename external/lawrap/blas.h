@@ -48,8 +48,8 @@ void     FC_FUNC(cscal,CSCAL)  (const integer* n, const scomplex* alpha,       s
 void     FC_FUNC(csscal,CSSCAL)(const integer* n, const    float* alpha,       scomplex* x, const integer* incx);
 void     FC_FUNC(ccopy,CCOPY)  (const integer* n,                        const scomplex* x, const integer* incx,       scomplex* y, const integer* incy);
 void     FC_FUNC(caxpy,CAXPY)  (const integer* n, const scomplex* alpha, const scomplex* x, const integer* incx,       scomplex* y, const integer* incy);
-scomplex FC_FUNC(cdotu,CDOTU)  (const integer* n,                        const scomplex* x, const integer* incx, const scomplex* y, const integer* incy);
-scomplex FC_FUNC(cdotc,CDOTC)  (const integer* n,                        const scomplex* x, const integer* incx, const scomplex* y, const integer* incy);
+lawrap_fake_scomplex FC_FUNC(cdotu,CDOTU)  (const integer* n,                        const scomplex* x, const integer* incx, const scomplex* y, const integer* incy);
+lawrap_fake_scomplex FC_FUNC(cdotc,CDOTC)  (const integer* n,                        const scomplex* x, const integer* incx, const scomplex* y, const integer* incy);
 float    FC_FUNC(scnrm2,SCNRM2)(const integer* n,                        const scomplex* x, const integer* incx);
 float    FC_FUNC(scasum,SCASUM)(const integer* n,                        const scomplex* x, const integer* incx);
 integer  FC_FUNC(icamax,ICAMAX)(const integer* n,                        const scomplex* x, const integer* incx);
@@ -61,8 +61,8 @@ void     FC_FUNC(zscal,ZSCAL)  (const integer* n, const dcomplex* alpha,       d
 void     FC_FUNC(zdscal,ZDSCAL)(const integer* n, const   double* alpha,       dcomplex* x, const integer* incx);
 void     FC_FUNC(zcopy,ZCOPY)  (const integer* n,                        const dcomplex* x, const integer* incx,       dcomplex* y, const integer* incy);
 void     FC_FUNC(zaxpy,ZAXPY)  (const integer* n, const dcomplex* alpha, const dcomplex* x, const integer* incx,       dcomplex* y, const integer* incy);
-dcomplex FC_FUNC(zdotu,ZDOTU)  (const integer* n,                        const dcomplex* x, const integer* incx, const dcomplex* y, const integer* incy);
-dcomplex FC_FUNC(zdotc,ZDOTC)  (const integer* n,                        const dcomplex* x, const integer* incx, const dcomplex* y, const integer* incy);
+lawrap_fake_dcomplex FC_FUNC(zdotu,ZDOTU)  (const integer* n,                        const dcomplex* x, const integer* incx, const dcomplex* y, const integer* incy);
+lawrap_fake_dcomplex FC_FUNC(zdotc,ZDOTC)  (const integer* n,                        const dcomplex* x, const integer* incx, const dcomplex* y, const integer* incy);
 double   FC_FUNC(dznrm2,DZNRM2)(const integer* n,                        const dcomplex* x, const integer* incx);
 double   FC_FUNC(dzasum,DZASUM)(const integer* n,                        const dcomplex* x, const integer* incx);
 integer  FC_FUNC(izamax,IZAMAX)(const integer* n,                        const dcomplex* x, const integer* incx);
@@ -179,6 +179,10 @@ void FC_FUNC(zher2k,ZHER2K)(                  const char* uplo, const char* tran
 void FC_FUNC(ztrmm,ZTRMM)  (const char* side, const char* uplo, const char* transa,                     const char* diag, const integer* m, const integer* n,                   const dcomplex* alpha, const dcomplex* a, const integer* lda,       dcomplex* b, const integer* ldb);
 void FC_FUNC(ztrsm,ZTRSM)  (const char* side, const char* uplo, const char* transa,                     const char* diag, const integer* m, const integer* n,                   const dcomplex* alpha, const dcomplex* a, const integer* lda,       dcomplex* b, const integer* ldb);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 /******************************************************************************
@@ -360,13 +364,15 @@ static inline void   c_caxpy (const integer n, const scomplex alpha, const scomp
 static inline scomplex c_cdotu (const integer n, const scomplex* x, const integer incx,
                                                  const scomplex* y, const integer incy)
 {
-    return FC_FUNC(cdotu,CDOTU)(&n, x, &incx, y, &incy);
+    lawrap_fake_scomplex tmp = FC_FUNC(cdotu,CDOTU)(&n, x, &incx, y, &incy);
+    return *(scomplex*)&tmp;
 }
 
 static inline scomplex c_cdotc (const integer n, const scomplex* x, const integer incx,
                                                  const scomplex* y, const integer incy)
 {
-    return FC_FUNC(cdotc,CDOTC)(&n, x, &incx, y, &incy);
+    lawrap_fake_scomplex tmp = FC_FUNC(cdotc,CDOTC)(&n, x, &incx, y, &incy);
+    return *(scomplex*)&tmp;
 }
 
 static inline float c_scnrm2 (const integer n, const scomplex* x, const integer incx)
@@ -426,13 +432,15 @@ static inline void   c_zaxpy (const integer n, const dcomplex alpha, const dcomp
 static inline dcomplex c_zdotu (const integer n, const dcomplex* x, const integer incx,
                                                  const dcomplex* y, const integer incy)
 {
-    return FC_FUNC(zdotu,ZDOTU)(&n, x, &incx, y, &incy);
+    lawrap_fake_dcomplex tmp = FC_FUNC(zdotu,ZDOTU)(&n, x, &incx, y, &incy);
+    return *(dcomplex*)&tmp;
 }
 
 static inline dcomplex c_zdotc (const integer n, const dcomplex* x, const integer incx,
                                                  const dcomplex* y, const integer incy)
 {
-    return FC_FUNC(zdotc,ZDOTC)(&n, x, &incx, y, &incy);
+    lawrap_fake_dcomplex tmp = FC_FUNC(zdotc,ZDOTC)(&n, x, &incx, y, &incy);
+    return *(dcomplex*)&tmp;
 }
 
 static inline double c_dznrm2 (const integer n, const dcomplex* x, const integer incx)
@@ -1198,9 +1206,7 @@ static inline void c_ztrsm (const char side, const char uplo, const char transa,
     FC_FUNC(ztrsm,ZTRSM)(&side, &uplo, &transa, &diag, &m, &n, &alpha, a, &lda, b, &ldb);
 }
 
-#ifdef __cplusplus
-}
-#else
+#ifndef __cplusplus
 
 /*
  * #define more familiar names for the C versions

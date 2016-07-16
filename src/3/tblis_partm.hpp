@@ -49,16 +49,10 @@ struct Partition
                 (Dim == DIM_M ? C.length(0, m_v) : Dim == DIM_N ? C.length(1, m_v) : B.length(0, m_v));
             };
 
-            auto shift_down = [&](idx_type m)
+            auto shift = [&](idx_type m)
             {
-                (Dim == DIM_M ? A.shift_down(0, m) : Dim == DIM_N ? B.shift_down(1, m) : A.shift_down(1, m));
-                (Dim == DIM_M ? C.shift_down(0, m) : Dim == DIM_N ? C.shift_down(1, m) : B.shift_down(0, m));
-            };
-
-            auto shift_up = [&](idx_type m)
-            {
-                (Dim == DIM_M ? A.shift_up(0, m) : Dim == DIM_N ? B.shift_up(1, m) : A.shift_up(1, m));
-                (Dim == DIM_M ? C.shift_up(0, m) : Dim == DIM_N ? C.shift_up(1, m) : B.shift_up(0, m));
+                (Dim == DIM_M ? A.shift(0, m) : Dim == DIM_N ? B.shift(1, m) : A.shift(1, m));
+                (Dim == DIM_M ? C.shift(0, m) : Dim == DIM_N ? C.shift(1, m) : B.shift(0, m));
             };
 
             idx_type m_u = (Dim == DIM_M ? A.length(0) : Dim == DIM_N ? B.length(1) : A.length(1));
@@ -100,7 +94,7 @@ struct Partition
             //              &A, A.data(), &B, B.data(), &C, C.data());
 
             length(m_last-m_first, m_last-m_first);
-            shift_down(m_first);
+            shift(m_first);
 
             int count = 0;
             idx_type m_loc = 0;
@@ -112,7 +106,7 @@ struct Partition
                 m_loc = std::min(m_last-m_off, M_max);
                 length(m_loc, m_loc);
                 child(child_comm, alpha, A, B, beta, C);
-                shift_down(m_loc);
+                shift(m_loc);
                 if (Dim == DIM_K) beta = 1.0;
                 m_off += m_loc;
                 count++;
@@ -127,7 +121,7 @@ struct Partition
                 //printf("%d %d\n", m_off, m_loc);
                 length(m_loc, m_loc);
                 child(child_comm, alpha, A, B, beta, C);
-                shift_down(m_loc);
+                shift(m_loc);
                 if (Dim == DIM_K) beta = 1.0;
                 m_off += m_loc;
                 count++;
@@ -161,7 +155,7 @@ struct Partition
             }
             */
 
-            shift_up(m_last);
+            shift(-m_last);
             length(m_u, m_v);
 
             assert(a_ptr == A.data());

@@ -978,7 +978,7 @@ void matricize(const_tensor_view<T>  A,
         cs = (split == ndim ? 1 : A.stride( ndim-1));
     }
 
-    AM.reset(m, n, A.data(), rs, cs);
+    AM.reset({m, n}, A.data(), {rs, cs});
 }
 
 template <typename T>

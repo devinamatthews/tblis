@@ -6,6 +6,21 @@
 #include <string.h>
 #include <stdio.h>
 
+#pragma pack(push)
+#pragma pack(4)
+typedef struct
+{
+    float real;
+    float imag;
+} lawrap_fake_scomplex;
+#pragma pack(8)
+typedef struct
+{
+    double real;
+    double imag;
+} lawrap_fake_dcomplex;
+#pragma pack(pop)
+
 #ifndef LAWRAP_COMPLEX_DEFINED
 
 #ifdef __cplusplus
@@ -28,20 +43,8 @@ typedef double complex dcomplex;
 
 #else
 
-#pragma pack(push)
-#pragma pack(4)
-typedef struct scomplex_
-{
-    float real;
-    float imag;
-} scomplex;
-#pragma pack(8)
-typedef struct dcomplex_
-{
-    double real;
-    double imag;
-} dcomplex;
-#pragma pack(pop)
+typedef lawrap_fake_scomplex scomplex;
+typedef lawrap_fake_dcomplex dcomplex;
 
 //TODO: add creal etc.
 

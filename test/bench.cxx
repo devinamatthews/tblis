@@ -166,12 +166,12 @@ struct gemm_experiment
         stride_type n = values.at('n');
         stride_type k = values.at('k');
 
-        matrix<T> A(m, k);
-        matrix<T> B(k, n);
-        matrix<T> C(m, n);
-        matrix<T> A_copy(m, k);
-        matrix<T> B_copy(k, n);
-        matrix<T> C_copy(m, n);
+        matrix<T> A({m, k});
+        matrix<T> B({k, n});
+        matrix<T> C({m, n});
+        matrix<T> A_copy({m, k});
+        matrix<T> B_copy({k, n});
+        matrix<T> C_copy({m, n});
 
         double dt = run_kernel(R,
         [&]
@@ -207,7 +207,7 @@ struct gemm_experiment
         });
         double gflops = 2*m*n*k*1e-9;
 
-        printf("%e %e -- %s %c %d %d %d\n", gflops, gflops/dt,
+        printf("%e %e -- %s %c %ld %ld %ld\n", gflops, gflops/dt,
                (Algorithm == BLIS ? "blis" :
                 Algorithm == BLIS_COPY ? "blis+copy" :
                 Algorithm == BLAS ? "blas" : "blas+copy"),
@@ -311,7 +311,7 @@ struct random_contraction
                    (Implementation == BLIS ? "rand_blis" : "rand_blas"),
                    type_char<T>::value, idx_A.c_str(), idx_B.c_str(), idx_C.c_str());
 
-            for (auto& l : lengths) printf(" %d", l.second);
+            for (auto& l : lengths) printf(" %ld", l.second);
             printf("\n");
             fflush(stdout);
         }
@@ -365,7 +365,7 @@ struct regular_contraction
                (Implementation == BLIS ? "reg_blis" : "reg_blas"),
                type_char<T>::value, idx_A.c_str(), idx_B.c_str(), idx_C.c_str());
 
-        for (auto& l : lengths) printf(" %d", l.second);
+        for (auto& l : lengths) printf(" %ld", l.second);
         printf("\n");
         fflush(stdout);
     }

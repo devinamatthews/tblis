@@ -343,7 +343,7 @@ struct PackRowPanel
         p_ap += off_first*round_up(k_a, KR);
 
         A.length(Trans, MR);
-        A.shift_down(Trans, off_first);
+        A.shift(Trans, off_first);
 
         for (idx_type off_m = off_first;off_m < off_last;off_m += MR)
         {
@@ -377,7 +377,7 @@ struct PackRowPanel
             A.shift_down(Trans);
         }
 
-        A.shift_up(Trans, off_last);
+        A.shift(Trans, off_last);
         A.length(Trans, m_a);
     }
 };
@@ -458,11 +458,11 @@ struct Pack
             //              comm.thread_num(), comm.num_threads(),
             //              comm.gang_num(), pack_ptr);
 
-            matrix_view<T> P(Trans ? n_p : m_p,
-                             Trans ? m_p : n_p,
+            matrix_view<T> P({Trans ? n_p : m_p,
+                              Trans ? m_p : n_p},
                              pack_ptr,
-                             Trans?   1 : n_p,
-                             Trans? n_p :   1);
+                             {Trans?   1 : n_p,
+                              Trans? n_p :   1});
 
             assert(P.length(0) == Trans ? n_p : m_p);
             assert(P.length(1) == Trans ? m_p : n_p);

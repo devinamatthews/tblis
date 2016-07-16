@@ -170,7 +170,7 @@ void RandomMatrix(size_t N, idx_type m_min, idx_type n_min, matrix<T>& t)
     idx_type m = (m_min > 0 ? m_min : RandomInteger(1, len[0]));
     idx_type n = (n_min > 0 ? n_min : RandomInteger(1, len[1]));
 
-    t.reset(m, n);
+    t.reset({m, n});
 
     T* data = t.data();
     miterator<2> it(t.lengths(), t.strides());

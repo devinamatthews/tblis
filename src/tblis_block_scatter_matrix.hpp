@@ -13,7 +13,7 @@ class block_scatter_matrix
     static_assert(NB > 0, "NB must be positive");
 
     public:
-        typedef unsigned idx_type;
+        typedef ssize_t idx_type;
         typedef size_t size_type;
         typedef ptrdiff_t stride_type;
         typedef const stride_type* scatter_type;
@@ -131,28 +131,21 @@ class block_scatter_matrix
             return scatter_[dim];
         }
 
-        void shift_down(unsigned dim, idx_type n)
+        void shift(unsigned dim, idx_type n)
         {
             assert(dim < 2);
             scatter_[dim] += n;
             block_scatter_[dim] += ceil_div(n, (dim ? NB : MB));
         }
 
-        void shift_up(unsigned dim, idx_type n)
-        {
-            assert(dim < 2);
-            scatter_[dim] -= n;
-            block_scatter_[dim] -= ceil_div(n, (dim ? NB : MB));
-        }
-
         void shift_down(unsigned dim)
         {
-            shift_down(dim, length(dim));
+            shift(dim, length(dim));
         }
 
         void shift_up(unsigned dim)
         {
-            shift_up(dim, length(dim));
+            shift(dim, -length(dim));
         }
 
         pointer data()

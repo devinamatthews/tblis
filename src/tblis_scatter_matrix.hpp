@@ -345,7 +345,7 @@ class const_scatter_matrix_view
     template <typename T_> friend class scatter_matrix_slice;
 
     public:
-        typedef unsigned idx_type;
+        typedef ssize_t idx_type;
         typedef size_t size_type;
         typedef ptrdiff_t stride_type;
         typedef const stride_type* scatter_type;
@@ -459,7 +459,7 @@ class const_scatter_matrix_view
             scatter_[1] = cscat;
         }
 
-        void shift_down(unsigned dim, idx_type n)
+        void shift(unsigned dim, idx_type n)
         {
             assert(dim < 2);
 
@@ -473,52 +473,31 @@ class const_scatter_matrix_view
             }
         }
 
-        void shift_up(unsigned dim, idx_type n)
-        {
-            assert(dim < 2);
-
-            if (stride_[dim] == 0)
-            {
-                scatter_[dim] -= n;
-            }
-            else
-            {
-                data_ -= n*stride_[dim];
-            }
-        }
-
         void shift_down(unsigned dim)
         {
-            shift_down(dim, len_[dim]);
+            shift(dim, len_[dim]);
         }
 
         void shift_up(unsigned dim)
         {
-            shift_up(dim, len_[dim]);
+            shift(dim, -len_[dim]);
         }
 
-        const_scatter_matrix_view<T> shifted_down(unsigned dim, idx_type n) const
+        const_scatter_matrix_view<T> shifted(unsigned dim, idx_type n) const
         {
             const_scatter_matrix_view<T> r(*this);
-            r.shift_down(dim, n);
-            return r;
-        }
-
-        const_scatter_matrix_view<T> shifted_up(unsigned dim, idx_type n) const
-        {
-            const_scatter_matrix_view<T> r(*this);
-            r.shift_up(dim, n);
+            r.shift(dim, n);
             return r;
         }
 
         const_scatter_matrix_view<T> shifted_down(unsigned dim) const
         {
-            return shifted_down(dim, len_[dim]);
+            return shifted(dim, len_[dim]);
         }
 
         const_scatter_matrix_view<T> shifted_up(unsigned dim) const
         {
-            return shifted_up(dim, len_[dim]);
+            return shifted(dim, -len_[dim]);
         }
 
         template <typename U>
@@ -769,17 +748,13 @@ class scatter_matrix_view : protected const_scatter_matrix_view<T>
             return *this;
         }
 
+        using base::shift;
         using base::shift_down;
         using base::shift_up;
 
-        scatter_matrix_view<T> shifted_down(unsigned dim, idx_type n) const
+        scatter_matrix_view<T> shifted(unsigned dim, idx_type n) const
         {
-            return base::shifted_down(dim, n);
-        }
-
-        scatter_matrix_view<T> shifted_up(unsigned dim, idx_type n) const
-        {
-            return base::shifted_up(dim, n);
+            return base::shifted(dim, n);
         }
 
         scatter_matrix_view<T> shifted_down(unsigned dim) const

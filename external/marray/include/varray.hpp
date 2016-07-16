@@ -34,7 +34,7 @@ namespace MArray
         template <typename T_, typename Allocator_> friend class varray;
 
         public:
-            typedef unsigned idx_type;
+            typedef ssize_t idx_type;
             typedef size_t size_type;
             typedef ptrdiff_t stride_type;
             typedef T value_type;
@@ -53,6 +53,12 @@ namespace MArray
 
         public:
             static std::vector<stride_type> default_strides(const std::vector<idx_type>& len, Layout layout=DEFAULT)
+            {
+                return default_strides<idx_type>(len, layout);
+            }
+
+            template <typename U>
+            static std::vector<stride_type> default_strides(const std::vector<U>& len, Layout layout=DEFAULT)
             {
                 std::vector<stride_type> stride(len.size());
 
@@ -112,7 +118,19 @@ namespace MArray
                 reset(len, ptr, layout);
             }
 
+            template <typename U>
+            const_varray_view(const std::vector<U>& len, const_pointer ptr, Layout layout=DEFAULT)
+            {
+                reset(len, ptr, layout);
+            }
+
             const_varray_view(const std::vector<idx_type>& len, const_pointer ptr, const std::vector<stride_type>& stride)
+            {
+                reset(len, ptr, stride);
+            }
+
+            template <typename U, typename V>
+            const_varray_view(const std::vector<U>& len, const_pointer ptr, const std::vector<V>& stride)
             {
                 reset(len, ptr, stride);
             }
@@ -159,10 +177,22 @@ namespace MArray
 
             void reset(const std::vector<idx_type>& len, const_pointer ptr, Layout layout = DEFAULT)
             {
+                reset<idx_type>(len, ptr, layout);
+            }
+
+            template <typename U>
+            void reset(const std::vector<U>& len, const_pointer ptr, Layout layout = DEFAULT)
+            {
                 reset(len, ptr, default_strides(len, layout));
             }
 
             void reset(const std::vector<idx_type>& len, const_pointer ptr, const std::vector<stride_type>& stride)
+            {
+                reset<idx_type, stride_type>(len, ptr, stride);
+            }
+
+            template <typename U, typename V>
+            void reset(const std::vector<U>& len, const_pointer ptr, const std::vector<V>& stride)
             {
                 assert(len.size() == stride.size());
                 data_ = const_cast<pointer>(ptr);
@@ -171,55 +201,47 @@ namespace MArray
                 ndim_ = len.size();
             }
 
-            void shift_down(unsigned dim, idx_type n)
+            void shift(unsigned dim, idx_type n)
             {
                 assert(dim < ndim_);
                 data_ += n*stride_[dim];
             }
 
-            void shift_up(unsigned dim, idx_type n)
-            {
-                assert(dim < ndim_);
-                data_ -= n*stride_[dim];
-            }
-
             void shift_down(unsigned dim)
             {
-                shift_down(dim, len_[dim]);
+                shift(dim, len_[dim]);
             }
 
             void shift_up(unsigned dim)
             {
-                shift_up(dim, len_[dim]);
+                shift(dim, -len_[dim]);
             }
 
-            const_varray_view<T> shifted_down(unsigned dim, idx_type n) const
+            const_varray_view<T> shifted(unsigned dim, idx_type n) const
             {
                 assert(dim < ndim_);
                 const_varray_view<T> r(*this);
-                r.shift_down(dim, n);
-                return r;
-            }
-
-            const_varray_view<T> shifted_up(unsigned dim, idx_type n) const
-            {
-                assert(dim < ndim_);
-                const_varray_view<T> r(*this);
-                r.shift_up(dim, n);
+                r.shift(dim, n);
                 return r;
             }
 
             const_varray_view<T> shifted_down(unsigned dim) const
             {
-                return shifted_down(dim, len_[dim]);
+                return shifted(dim, len_[dim]);
             }
 
             const_varray_view<T> shifted_up(unsigned dim) const
             {
-                return shifted_up(dim, len_[dim]);
+                return shifted(dim, -len_[dim]);
             }
 
             void permute(const std::vector<unsigned>& perm)
+            {
+                permute<unsigned>(perm);
+            }
+
+            template <typename U>
+            void permute(const std::vector<U>& perm)
             {
                 assert(perm.size() == ndim_);
 
@@ -241,12 +263,24 @@ namespace MArray
 
             const_varray_view<T> permuted(const std::vector<unsigned>& perm) const
             {
+                return permuted<unsigned>(perm);
+            }
+
+            template <typename U>
+            const_varray_view<T> permuted(const std::vector<U>& perm) const
+            {
                 const_varray_view<T> r(*this);
                 r.permute(perm);
                 return r;
             }
 
             void lower(const std::vector<unsigned>& split)
+            {
+                lower<unsigned>(split);
+            }
+
+            template <typename U>
+            void lower(const std::vector<U>& split)
             {
                 assert(split.size() < ndim_);
 
@@ -294,6 +328,12 @@ namespace MArray
             }
 
             const_varray_view<T> lowered(const std::vector<unsigned>& split) const
+            {
+                return lowered<unsigned>(split);
+            }
+
+            template <typename U>
+            const_varray_view<T> lowered(const std::vector<U>& split) const
             {
                 const_varray_view<T> r(*this);
                 r.lower(split);
@@ -467,7 +507,19 @@ namespace MArray
                 reset(len, ptr, layout);
             }
 
+            template <typename U>
+            varray_view(const std::vector<U>& len, pointer ptr, Layout layout=DEFAULT)
+            {
+                reset(len, ptr, layout);
+            }
+
             varray_view(const std::vector<idx_type>& len, pointer ptr, const std::vector<stride_type>& stride)
+            {
+                reset(len, ptr, stride);
+            }
+
+            template <typename U, typename V>
+            varray_view(const std::vector<U>& len, pointer ptr, const std::vector<V>& stride)
             {
                 reset(len, ptr, stride);
             }
@@ -498,7 +550,19 @@ namespace MArray
                 base::reset(len, ptr, layout);
             }
 
+            template <typename U>
+            void reset(const std::vector<U>& len, pointer ptr, Layout layout = DEFAULT)
+            {
+                base::reset(len, ptr, layout);
+            }
+
             void reset(const std::vector<idx_type>& len, pointer ptr, const std::vector<stride_type>& stride)
+            {
+                base::reset(len, ptr, stride);
+            }
+
+            template <typename U, typename V>
+            void reset(const std::vector<U>& len, pointer ptr, const std::vector<V>& stride)
             {
                 base::reset(len, ptr, stride);
             }
@@ -530,17 +594,13 @@ namespace MArray
                 return *this;
             }
 
+            using base::shift;
             using base::shift_down;
             using base::shift_up;
 
-            varray_view<T> shifted_down(unsigned dim, idx_type n) const
+            varray_view<T> shifted(unsigned dim, idx_type n) const
             {
-                return base::shifted_down(dim, n);
-            }
-
-            varray_view<T> shifted_up(unsigned dim, idx_type n) const
-            {
-                return base::shifted_up(dim, n);
+                return base::shifted(dim, n);
             }
 
             varray_view<T> shifted_down(unsigned dim) const
@@ -560,6 +620,12 @@ namespace MArray
                 return base::permuted(perm);
             }
 
+            template <typename U>
+            varray_view<T> permuted(const std::vector<U>& perm) const
+            {
+                return base::permuted(perm);
+            }
+
             using base::lower;
 
             varray_view<T> lowered(const std::vector<unsigned>& split) const
@@ -567,7 +633,13 @@ namespace MArray
                 return base::lowered(split);
             }
 
-            void rotate_dim(unsigned dim, stride_type shift)
+            template <typename U>
+            varray_view<T> lowered(const std::vector<U>& split) const
+            {
+                return base::lowered(split);
+            }
+
+            void rotate_dim(unsigned dim, idx_type shift)
             {
                 assert(dim < ndim_);
 
@@ -621,7 +693,13 @@ namespace MArray
                 }
             }
 
-            void rotate(const std::vector<stride_type>& shift)
+            void rotate(const std::vector<idx_type>& shift)
+            {
+                rotate<idx_type>(shift);
+            }
+
+            template <typename U>
+            void rotate(const std::vector<U>& shift)
             {
                 for (unsigned dim = 0;dim < ndim_;dim++)
                 {
@@ -757,7 +835,19 @@ namespace MArray
                 reset(len, val, layout);
             }
 
+            template <typename U>
+            explicit varray(const std::vector<U>& len, const T& val=T(), Layout layout=DEFAULT)
+            {
+                reset(len, val, layout);
+            }
+
             varray(const std::vector<idx_type>& len, uninitialized_t u, Layout layout=DEFAULT)
+            {
+                reset(len, u, layout);
+            }
+
+            template <typename U>
+            varray(const std::vector<U>& len, uninitialized_t u, Layout layout=DEFAULT)
             {
                 reset(len, u, layout);
             }
@@ -843,11 +933,23 @@ namespace MArray
 
             void reset(const std::vector<idx_type>& len, const T& val=T(), Layout layout=DEFAULT)
             {
+                reset<idx_type>(len, val, layout);
+            }
+
+            template <typename U>
+            void reset(const std::vector<U>& len, const T& val=T(), Layout layout=DEFAULT)
+            {
                 reset(len, uninitialized, layout);
                 std::uninitialized_fill_n(data_, size_, val);
             }
 
             void reset(const std::vector<idx_type>& len, uninitialized_t u, Layout layout=DEFAULT)
+            {
+                reset<idx_type>(len, uninitialized, layout);
+            }
+
+            template <typename U>
+            void reset(const std::vector<U>& len, uninitialized_t u, Layout layout=DEFAULT)
             {
                 size_ = std::accumulate(len.begin(), len.end(), size_t(1), std::multiplies<size_t>());
                 layout_ = layout;
@@ -856,6 +958,12 @@ namespace MArray
             }
 
             void resize(const std::vector<idx_type>& len, const T& val=T())
+            {
+                resize<idx_type>(len, val);
+            }
+
+            template <typename U>
+            void resize(const std::vector<U>& len, const T& val=T())
             {
                 varray a(std::move(*this));
                 reset(len, val, layout_);
@@ -919,7 +1027,19 @@ namespace MArray
                 return base::permuted(perm);
             }
 
+            template <typename U>
+            varray_view<T> permuted(const std::vector<U>& perm)
+            {
+                return base::permuted(perm);
+            }
+
             const_varray_view<T> permuted(const std::vector<unsigned>& perm) const
+            {
+                return base::permuted(perm);
+            }
+
+            template <typename U>
+            const_varray_view<T> permuted(const std::vector<U>& perm) const
             {
                 return base::permuted(perm);
             }
@@ -931,7 +1051,19 @@ namespace MArray
                 return base::lowered(split);
             }
 
+            template <typename U>
+            varray_view<T> lowered(const std::vector<U>& split)
+            {
+                return base::lowered(split);
+            }
+
             const_varray_view<T> lowered(const std::vector<unsigned>& split) const
+            {
+                return base::lowered(split);
+            }
+
+            template <typename U>
+            const_varray_view<T> lowered(const std::vector<U>& split) const
             {
                 return base::lowered(split);
             }

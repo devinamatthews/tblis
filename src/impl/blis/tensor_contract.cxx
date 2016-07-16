@@ -23,17 +23,17 @@ void BlockScatter(ThreadCommunicator& comm, tensor_matrix<T>& A, stride_type* rs
     std::tie(first, last, std::ignore) = comm.distribute_over_threads(m, MR);
 
     A.length(0, last-first);
-    A.shift_down(0, first);
+    A.shift(0, first);
     A.template fill_block_scatter<MR>(0, rs+first/MR, rscat+first);
-    A.shift_up(0, first);
+    A.shift(0, -first);
     A.length(0, m);
 
     std::tie(first, last, std::ignore) = comm.distribute_over_threads(n, NR);
 
     A.length(1, last-first);
-    A.shift_down(1, first);
+    A.shift(1, first);
     A.template fill_block_scatter<NR>(1, cs+first/NR, cscat+first);
-    A.shift_up(1, first);
+    A.shift(1, -first);
     A.length(1, n);
 
     comm.barrier();

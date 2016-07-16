@@ -10,7 +10,7 @@ template <typename T>
 class tensor_matrix
 {
     public:
-        typedef unsigned idx_type;
+        typedef ssize_t idx_type;
         typedef size_t size_type;
         typedef ptrdiff_t stride_type;
         typedef const stride_type* scatter_type;
@@ -179,26 +179,20 @@ class tensor_matrix
             return m;
         }
 
-        void shift_down(unsigned dim, idx_type n)
+        void shift(unsigned dim, idx_type n)
         {
             assert(dim < 2);
             offset_[dim] += n;
         }
 
-        void shift_up(unsigned dim, idx_type n)
-        {
-            assert(dim < 2);
-            offset_[dim] -= n;
-        }
-
         void shift_down(unsigned dim)
         {
-            shift_down(dim, len_[dim]);
+            shift(dim, len_[dim]);
         }
 
         void shift_up(unsigned dim)
         {
-            shift_up(dim, len_[dim]);
+            shift(dim, -len_[dim]);
         }
 
         pointer data()

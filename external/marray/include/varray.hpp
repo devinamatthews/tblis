@@ -47,7 +47,6 @@ namespace MArray
             pointer data_ = nullptr;
             std::vector<idx_type> len_;
             std::vector<stride_type> stride_;
-            unsigned ndim_ = 0;
 
             const_varray_view& operator=(const const_varray_view& other) = delete;
 
@@ -145,7 +144,6 @@ namespace MArray
                 data_ = nullptr;
                 len_.clear();
                 stride_.clear();
-                ndim_ = 0;
             }
 
             void reset(const const_varray_view<T>& other)
@@ -153,7 +151,6 @@ namespace MArray
                 data_ = other.data_;
                 len_ = other.len_;
                 stride_ = other.stride_;
-                ndim_ = other.ndim_;
             }
 
             void reset(const varray_view<T>& other)
@@ -173,7 +170,6 @@ namespace MArray
                 data_ = other.data_;
                 len_ = std::move(other.len_);
                 stride_ = std::move(other.stride_);
-                ndim_ = other.ndim_;
             }
 
             void reset(varray_view<T>&& other)
@@ -207,12 +203,11 @@ namespace MArray
                 data_ = const_cast<pointer>(ptr);
                 len_ = len;
                 stride_ = stride;
-                ndim_ = len.size();
             }
 
             void shift(unsigned dim, idx_type n)
             {
-                assert(dim < ndim_);
+                assert(dim < dimension());
                 data_ += n*stride_[dim];
             }
 
@@ -228,7 +223,7 @@ namespace MArray
 
             const_varray_view<T> shifted(unsigned dim, idx_type n) const
             {
-                assert(dim < ndim_);
+                assert(dim < dimension());
                 const_varray_view<T> r(*this);
                 r.shift(dim, n);
                 return r;
@@ -253,18 +248,18 @@ namespace MArray
             detail::enable_if_integral_t<U>
             permute(const std::vector<U>& perm)
             {
-                assert(perm.size() == ndim_);
+                assert(perm.size() == dimension());
 
-                std::vector<idx_type> len = ndim_;
-                std::vector<stride_type> stride = ndim_;
+                std::vector<idx_type> len(dimension());
+                std::vector<stride_type> stride(dimension());
 
-                for (unsigned i = 0;i < ndim_;i++)
+                for (unsigned i = 0;i < dimension();i++)
                 {
-                    assert(0 <= perm[i] && perm[i] < ndim_);
+                    assert(0 <= perm[i] && perm[i] < dimension());
                     for (unsigned j = 0;j < i;j++) assert(perm[i] != perm[j]);
                 }
 
-                for (unsigned i = 0;i < ndim_;i++)
+                for (unsigned i = 0;i < dimension();i++)
                 {
                     len_[i] = len[perm[i]];
                     stride_[i] = stride[perm[i]];
@@ -294,12 +289,12 @@ namespace MArray
             detail::enable_if_integral_t<U>
             lower(const std::vector<U>& split)
             {
-                assert(split.size() < ndim_);
+                assert(split.size() < dimension());
 
                 unsigned newdim = split.size()+1;
                 for (unsigned i = 0;i < newdim-1;i++)
                 {
-                    assert(split[i] <= ndim_);
+                    assert(split[i] <= dimension());
                     if (i != 0) assert(split[i-1] <= split[i]);
                 }
 
@@ -309,7 +304,7 @@ namespace MArray
                 for (unsigned i = 0;i < newdim;i++)
                 {
                     int begin = (i == 0 ? 0 : split[i-1]);
-                    int end = (i == newdim-1 ? ndim_-1 : split[i]-1);
+                    int end = (i == newdim-1 ? dimension()-1 : split[i]-1);
                     if (begin > end) continue;
 
                     if (stride[begin] < stride[end])
@@ -336,7 +331,6 @@ namespace MArray
 
                 len_.resize(newdim);
                 stride_.resize(newdim);
-                ndim_ = newdim;
             }
 
             const_varray_view<T> lowered(const std::vector<unsigned>& split) const
@@ -355,30 +349,30 @@ namespace MArray
 
             const_reference front() const
             {
-                assert(ndim_ == 1);
+                assert(dimension() == 1);
                 assert(len_[0] > 0);
                 return data_[0];
             }
 
             const_varray_view<T> front(unsigned dim) const
             {
-                assert(dim < ndim_);
+                assert(dim < dimension());
                 assert(len_[dim] > 0);
 
-                std::vector<idx_type> len(ndim_-1);
-                std::vector<stride_type> stride(ndim_-1);
+                std::vector<idx_type> len(dimension()-1);
+                std::vector<stride_type> stride(dimension()-1);
 
                 std::copy_n(len_.begin(), dim, len.begin());
-                std::copy_n(len_.begin()+dim+1, ndim_-dim-1, len.begin()+dim);
+                std::copy_n(len_.begin()+dim+1, dimension()-dim-1, len.begin()+dim);
                 std::copy_n(stride_.begin(), dim, stride.begin());
-                std::copy_n(stride_.begin()+dim+1, ndim_-dim-1, stride.begin()+dim);
+                std::copy_n(stride_.begin()+dim+1, dimension()-dim-1, stride.begin()+dim);
 
                 return {len, data_, stride};
             }
 
             const_reference back() const
             {
-                assert(ndim_ == 1);
+                assert(dimension() == 1);
                 assert(len_[0] > 0);
                 return data_[(len_[0]-1)*stride_[0]];
             }
@@ -420,13 +414,13 @@ namespace MArray
 
             idx_type length(unsigned dim) const
             {
-                assert(dim < ndim_);
+                assert(dim < dimension());
                 return len_[dim];
             }
 
             idx_type length(unsigned dim, idx_type len)
             {
-                assert(dim < ndim_);
+                assert(dim < dimension());
                 std::swap(len, len_[dim]);
                 return len;
             }
@@ -438,13 +432,13 @@ namespace MArray
 
             stride_type stride(unsigned dim) const
             {
-                assert(dim < ndim_);
+                assert(dim < dimension());
                 return stride_[dim];
             }
 
             stride_type stride(unsigned dim, stride_type stride)
             {
-                assert(dim < ndim_);
+                assert(dim < dimension());
                 std::swap(stride, stride_[dim]);
                 return stride;
             }
@@ -456,7 +450,7 @@ namespace MArray
 
             unsigned dimension() const
             {
-                return ndim_;
+                return len_.size();
             }
             
             void swap(const_varray_view& other)
@@ -465,7 +459,6 @@ namespace MArray
                 swap(data_,   other.data_);
                 swap(len_,    other.len_);
                 swap(stride_, other.stride_);
-                swap(ndim_,   other.ndim_);
             }
 
             friend void swap(const_varray_view& a, const_varray_view& b)
@@ -498,7 +491,6 @@ namespace MArray
             using base::data_;
             using base::len_;
             using base::stride_;
-            using base::ndim_;
 
         public:
             using base::default_strides;
@@ -664,7 +656,7 @@ namespace MArray
 
             void rotate_dim(unsigned dim, idx_type shift)
             {
-                assert(dim < ndim_);
+                assert(dim < dimension());
 
                 idx_type n = len_[dim];
                 stride_type s = stride_[dim];
@@ -674,14 +666,14 @@ namespace MArray
 
                 if (shift == 0) return;
 
-                std::vector<idx_type> sublen(ndim_-1);
-                std::vector<stride_type> substride(ndim_-1);
+                std::vector<idx_type> sublen(dimension()-1);
+                std::vector<stride_type> substride(dimension()-1);
 
                 std::copy_n(len_.begin(), dim, sublen.begin());
-                std::copy_n(len_.begin()+dim+1, ndim_-dim-1, sublen.begin()+dim);
+                std::copy_n(len_.begin()+dim+1, dimension()-dim-1, sublen.begin()+dim);
 
                 std::copy_n(stride_.begin(), dim, substride.begin());
-                std::copy_n(stride_.begin()+dim+1, ndim_-dim-1, substride.begin()+dim);
+                std::copy_n(stride_.begin()+dim+1, dimension()-dim-1, substride.begin()+dim);
 
                 pointer p = data_;
                 auto it = make_iterator(sublen, substride);
@@ -725,7 +717,8 @@ namespace MArray
             detail::enable_if_integral_t<U>
             rotate(const std::vector<U>& shift)
             {
-                for (unsigned dim = 0;dim < ndim_;dim++)
+                assert(shift.size() == dimension());
+                for (unsigned dim = 0;dim < dimension();dim++)
                 {
                     rotate_dim(dim, shift[dim]);
                 }
@@ -819,7 +812,6 @@ namespace MArray
             using base::data_;
             using base::len_;
             using base::stride_;
-            using base::ndim_;
             size_t size_ = 0;
             Layout layout_ = DEFAULT;
 
@@ -1004,7 +996,7 @@ namespace MArray
                  * It is OK to change the geometry of 'a' even if it is not
                  * a view since it is about to go out of scope.
                  */
-                for (unsigned i = 0;i < ndim_;i++)
+                for (unsigned i = 0;i < dimension();i++)
                 {
                     a.len_[i] = b.len_[i] = std::min(a.len_[i], b.len_[i]);
                 }
@@ -1021,10 +1013,10 @@ namespace MArray
 
             void push_back(unsigned dim, const varray_view<T>& x)
             {
-                assert(x.ndim_+1 == ndim_);
-                assert(dim < ndim_);
+                assert(x.ndim_+1 == dimension());
+                assert(dim < dimension());
 
-                for (unsigned i = 0, j = 0;i < ndim_;i++)
+                for (unsigned i = 0, j = 0;i < dimension();i++)
                 {
                     assert(i == dim || len_[i] == x.len_[j++]);
                 }
@@ -1043,7 +1035,7 @@ namespace MArray
 
             void pop_back(unsigned dim)
             {
-                assert(dim < ndim_);
+                assert(dim < dimension());
                 assert(base::len_[dim] > 0);
 
                 std::vector<idx_type> len = len_;

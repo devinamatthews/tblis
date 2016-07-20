@@ -4,7 +4,7 @@ namespace tblis
 {
 
 template <typename T>
-void tblis_normfv_ref(ThreadCommunicator& comm,
+void tblis_normfv_ref(thread_communicator& comm,
                       idx_type n, const T* restrict A, stride_type inc_A, T& restrict norm)
 {
     norm = T();
@@ -56,7 +56,7 @@ void tblis_normfv(idx_type n, const T* A, stride_type inc_A, T& norm)
 {
     parallelize
     (
-        [&](ThreadCommunicator& comm)
+        [&](thread_communicator& comm)
         {
             tblis_normfv_ref(comm, n, A, inc_A, norm);
         }
@@ -72,7 +72,7 @@ T tblis_normfv(idx_type n, const T* A, stride_type inc_A)
 }
 
 #define INSTANTIATE_FOR_TYPE(T) \
-template void tblis_normfv_ref(ThreadCommunicator& comm, idx_type n, const T* A, stride_type inc_A, T& norm); \
+template void tblis_normfv_ref(thread_communicator& comm, idx_type n, const T* A, stride_type inc_A, T& norm); \
 template void tblis_normfv(idx_type n, const T* A, stride_type inc_A, T& norm); \
 template    T tblis_normfv(idx_type n, const T* A, stride_type inc_A); \
 template void tblis_normfv(const_row_view<T> A, T& norm); \

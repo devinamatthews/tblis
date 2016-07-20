@@ -465,45 +465,55 @@ namespace detail
     }
 }
 
+inline void diagonal(unsigned& ndim, std::vector<idx_type>& len,
+                     std::vector<stride_type>& stride, std::string& idx)
+{
+    std::vector<unsigned> inds = MArray::range(ndim);
+    stl_ext::sort(inds, detail::sort_by_idx(idx));
+
+    unsigned ndim_old = ndim;
+    std::string idx_old = idx;
+    std::vector<idx_type> len_old = len;
+    std::vector<stride_type> stride_old = stride;
+
+    ndim = 0;
+    for (unsigned i = 0;i < ndim_old;i++)
+    {
+        if (len_old[inds[i]] == 1)
+        {
+            //do nothing
+        }
+        else if (i == 0 || idx_old[inds[i]] != idx_old[inds[i-1]])
+        {
+            idx[ndim] = idx_old[inds[i]];
+            len[ndim] = len_old[inds[i]];
+            stride[ndim] = stride_old[inds[i]];
+            ndim++;
+        }
+        else
+        {
+            assert(len[ndim-1] == len_old[inds[i]]);
+            stride[ndim-1] += stride_old[inds[i]];
+        }
+    }
+
+    len.resize(ndim);
+    stride.resize(ndim);
+    idx.resize(ndim);
+}
+
 template <typename T>
 void diagonal(const_tensor_view<T>& AD, std::string& idx_AD)
 {
     assert(AD.dimension() == idx_AD.size());
 
-    unsigned ndim_A = AD.dimension();
-    std::vector<unsigned> inds_A = MArray::range(ndim_A);
-    stl_ext::sort(inds_A, detail::sort_by_idx(idx_AD));
+    unsigned ndim_AD = AD.dimension();
+    std::vector<idx_type> len_AD = AD.lengths();
+    std::vector<stride_type> stride_AD = AD.strides();
 
-    std::string idx = idx_AD;
-    std::vector<idx_type> len(ndim_A);
-    std::vector<stride_type> stride(ndim_A);
+    diagonal(ndim_AD, len_AD, stride_AD, idx_AD);
 
-    unsigned ndim_AD = 0;
-    for (unsigned i = 0;i < ndim_A;i++)
-    {
-        if (AD.length(inds_A[i]) == 1)
-        {
-            //do nothing
-        }
-        else if (i == 0 || idx[inds_A[i]] != idx[inds_A[i-1]])
-        {
-            idx_AD[ndim_AD] = idx[inds_A[i]];
-            len[ndim_AD] = AD.length(inds_A[i]);
-            stride[ndim_AD] = AD.stride(inds_A[i]);
-            ndim_AD++;
-        }
-        else
-        {
-            assert(AD.length(ndim_AD) == AD.length(inds_A[i]));
-            stride[ndim_AD] += AD.stride(inds_A[i]);
-        }
-    }
-
-    idx_AD.resize(ndim_AD);
-    len.resize(ndim_AD);
-    stride.resize(ndim_AD);
-
-    AD.reset(len, AD.data(), stride);
+    AD.reset(len_AD, AD.data(), stride_AD);
 }
 
 template <typename T>
@@ -856,15 +866,17 @@ void fold(const_tensor_view<T>& AF, std::string& idx_AF,
          reinterpret_cast<const_tensor_view<T>&>(BF), idx_BF);
 }
 
+/*
+template <typename TensorA, typename TensorB, typename TensorC>
+void fold(TensorA& AF, std::string& idx_AF,
+          TensorB& BF, std::string& idx_BF,
+          TensorC& CF, std::string& idx_CF)
+*/
 template <typename T>
 void fold(const_tensor_view<T>& AF, std::string& idx_AF,
           const_tensor_view<T>& BF, std::string& idx_BF,
                 tensor_view<T>& CF, std::string& idx_CF)
 {
-    assert(AF.dimension() == idx_AF.size());
-    assert(BF.dimension() == idx_BF.size());
-    assert(CF.dimension() == idx_CF.size());
-
     using stl_ext::intersection;
     using stl_ext::exclusion;
     using stl_ext::select_from;
@@ -909,6 +921,44 @@ void fold(const_tensor_view<T>& AF, std::string& idx_AF,
     fold( len_AC, {                &stride_A_AC,  &stride_C_AC},     idx_AC);
     fold( len_BC, {                &stride_B_BC,  &stride_C_BC},     idx_BC);
     fold(len_ABC, {&stride_A_ABC, &stride_B_ABC, &stride_C_ABC},    idx_ABC);
+
+    /*
+    unsigned idx = 0;
+    for (auto l : len_A) AF.length(idx++, l);
+    for (auto l : len_AB) AF.length(idx++, l);
+    for (auto l : len_AC) AF.length(idx++, l);
+    for (auto l : len_ABC) AF.length(idx++, l);
+
+    idx = 0;
+    for (auto l : len_B) BF.length(idx++, l);
+    for (auto l : len_AB) BF.length(idx++, l);
+    for (auto l : len_BC) BF.length(idx++, l);
+    for (auto l : len_ABC) BF.length(idx++, l);
+
+    idx = 0;
+    for (auto l : len_C) CF.length(idx++, l);
+    for (auto l : len_AC) CF.length(idx++, l);
+    for (auto l : len_BC) CF.length(idx++, l);
+    for (auto l : len_ABC) CF.length(idx++, l);
+
+    idx = 0;
+    for (auto s : stride_A_A) AF.stride(idx++, s);
+    for (auto s : stride_A_AB) AF.stride(idx++, s);
+    for (auto s : stride_A_AC) AF.stride(idx++, s);
+    for (auto s : stride_A_ABC) AF.stride(idx++, s);
+
+    idx = 0;
+    for (auto s : stride_B_B) BF.stride(idx++, s);
+    for (auto s : stride_B_AB) BF.stride(idx++, s);
+    for (auto s : stride_B_BC) BF.stride(idx++, s);
+    for (auto s : stride_B_ABC) BF.stride(idx++, s);
+
+    idx = 0;
+    for (auto s : stride_C_C) CF.stride(idx++, s);
+    for (auto s : stride_C_AC) CF.stride(idx++, s);
+    for (auto s : stride_C_BC) CF.stride(idx++, s);
+    for (auto s : stride_C_ABC) CF.stride(idx++, s);
+    */
 
     AF.reset(len_A+len_AB+len_AC+len_ABC, AF.data(), stride_A_A+stride_A_AB+stride_A_AC+stride_A_ABC);
     BF.reset(len_B+len_AB+len_BC+len_ABC, BF.data(), stride_B_B+stride_B_AB+stride_B_BC+stride_B_ABC);

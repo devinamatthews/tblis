@@ -6,6 +6,7 @@
 namespace tblis
 {
 
+    /*
 namespace detail
 {
     template <int I, int J=0>
@@ -32,56 +33,92 @@ namespace detail
         }
     };
 }
+*/
 
-template <typename Config, int IC, int JC, int KC, int IR, int JR, int KR,
-          typename Child, typename... Children>
+struct gemm_thread_config
+{
+    gemm_thread_config(int jc_nt, int ic_nt, int jr_nt, int ir_nt)
+    : jc_nt(jc_nt), ic_nt(ic_nt), jr_nt(jr_nt), ir_nt(ir_nt) {}
+
+    int jc_nt = 1;
+    int ic_nt = 1;
+    int jr_nt = 1;
+    int ir_nt = 1;
+};
+
+template <typename Config>
+gemm_thread_config make_gemm_thread_config(int nthread, idx_type m, idx_type n, idx_type k)
+{
+    int ic_nt, jc_nt;
+    partition_2x2(nthread, m*2, n, ic_nt, jc_nt);
+
+    int jr_nt;
+    for (jr_nt = 3;jr_nt > 1;jr_nt--)
+    {
+        if (jc_nt%jr_nt == 0)
+        {
+            jc_nt /= jr_nt;
+            break;
+        }
+    }
+
+    return {jc_nt, ic_nt, jr_nt, 1};
+}
+
+template <typename Config, typename Child, typename... Children>
 struct GEMM
 {
     template <typename T>
     struct run
     {
-        typename Child::template run<T, Children...> child;
-
-        template <int I>
-        auto step() -> decltype(detail::get_child<I>()(child))
+        template <typename MatrixA, typename MatrixB, typename MatrixC>
+        void operator()(thread_communicator& comm, T alpha, MatrixA A, MatrixB B, T beta, MatrixC C)
         {
-            return detail::get_child<I>()(child);
+            constexpr bool row_major = Config::template gemm_row_major<T>::value;
+
+            assert(A.length(0) == C.length(0));
+            assert(A.length(1) == B.length(0));
+            assert(B.length(1) == C.length(1));
+
+            typename Child::template run<T, Children...> child;
+
+            if (C.stride(!row_major) == 1)
+            {
+                A.transpose();
+                B.transpose();
+                C.transpose();
+                child(make_gemm_thread_config<Config>(
+                    comm.num_threads(), C.length(0), C.length(1), B.length(1)),
+                    comm, alpha, B, A, beta, C);
+            }
+            else
+            {
+                child(make_gemm_thread_config<Config>(
+                    comm.num_threads(), C.length(0), C.length(1), A.length(1)),
+                    comm, alpha, A, B, beta, C);
+            }
         }
 
         template <typename MatrixA, typename MatrixB, typename MatrixC>
         void operator()(T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
         {
-            idx_type jc_way = envtol("BLIS_JC_NT", 1);
-            idx_type ic_way = envtol("BLIS_IC_NT", 1);
-            idx_type jr_way = envtol("BLIS_JR_NT", 1);
-            idx_type ir_way = envtol("BLIS_IR_NT", 1);
-            idx_type nthread = jc_way*ic_way*jr_way*ir_way;
-
-            step<IC>().distribute = ic_way;
-            step<JC>().distribute = jc_way;
-            step<KC>().distribute = 1; //kc_way
-            step<IR>().distribute = ir_way;
-            step<JR>().distribute = jr_way;
-
             parallelize
             (
-                [&](ThreadCommunicator& comm)
+                [&](thread_communicator& comm)
                 {
-                    // Capturing these by value (and declaring the lambda
-                    // mutable) apparently prevents the implicit definition of
-                    // a const reference copy ctor which causes problems later
-                    auto A_(A);
-                    auto B_(B);
-                    auto C_(C);
-                    auto child_(child);
-                    child_(comm, alpha, A_, B_, beta, C_);
-                    comm.barrier();
+                    operator()(comm, alpha, A, B, beta, C);
                 },
-                nthread, Config::tree_barrier_arity
+                0, Config::tree_barrier_arity
             );
         }
     };
 };
+
+template <typename T, typename Config=TBLIS_DEFAULT_CONFIG>
+void tblis_gemm(thread_communicator& comm,
+                T alpha, const_matrix_view<T> A,
+                         const_matrix_view<T> B,
+                T  beta,       matrix_view<T> C);
 
 template <typename T, typename Config=TBLIS_DEFAULT_CONFIG>
 void tblis_gemm(T alpha, const_matrix_view<T> A,

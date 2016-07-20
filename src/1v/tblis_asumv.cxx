@@ -4,7 +4,7 @@ namespace tblis
 {
 
 template <typename T>
-void tblis_asumv_ref(ThreadCommunicator& comm,
+void tblis_asumv_ref(thread_communicator& comm,
                      idx_type n, const T* restrict A, stride_type inc_A, T& restrict sum)
 {
     sum = T();
@@ -56,7 +56,7 @@ void tblis_asumv(idx_type n, const T* A, stride_type inc_A, T& sum)
 {
     parallelize
     (
-        [&](ThreadCommunicator& comm)
+        [&](thread_communicator& comm)
         {
             tblis_asumv_ref(comm, n, A, inc_A, sum);
         }
@@ -72,7 +72,7 @@ T tblis_asumv(idx_type n, const T* A, stride_type inc_A)
 }
 
 #define INSTANTIATE_FOR_TYPE(T) \
-template void tblis_asumv_ref(ThreadCommunicator& comm, idx_type n, const T* A, stride_type inc_A, T& sum); \
+template void tblis_asumv_ref(thread_communicator& comm, idx_type n, const T* A, stride_type inc_A, T& sum); \
 template void tblis_asumv(idx_type n, const T* A, stride_type inc_A, T& sum); \
 template    T tblis_asumv(idx_type n, const T* A, stride_type inc_A); \
 template void tblis_asumv(const_row_view<T> A, T& sum); \

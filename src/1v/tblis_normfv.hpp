@@ -6,7 +6,7 @@
 namespace tblis
 {
 
-template <typename T> void tblis_normfv_ref(ThreadCommunicator& comm, idx_type n, const T* A, stride_type inc_A, T& norm);
+template <typename T> void tblis_normfv_ref(thread_communicator& comm, idx_type n, const T* A, stride_type inc_A, T& norm);
 
 template <typename T> void tblis_normfv(idx_type n, const T* A, stride_type inc_A, T& norm);
 

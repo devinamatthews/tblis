@@ -166,6 +166,16 @@ class tensor_matrix
             iterator_[1] = MArray::viterator<>(len_n_, stride_n_);
         }
 
+        void transpose()
+        {
+            using std::swap;
+            swap(len_[0], len_[1]);
+            swap(offset_[0], offset_[1]);
+            swap(leading_len_[0], leading_len_[1]);
+            swap(leading_stride_[0], leading_stride_[1]);
+            swap(iterator_[0], iterator_[1]);
+        }
+
         idx_type length(unsigned dim) const
         {
             assert(dim < 2);
@@ -177,6 +187,12 @@ class tensor_matrix
             assert(dim < 2);
             std::swap(m, len_[dim]);
             return m;
+        }
+
+        stride_type stride(unsigned dim) const
+        {
+            assert(dim < 2);
+            return leading_stride_[dim];
         }
 
         void shift(unsigned dim, idx_type n)
@@ -203,6 +219,13 @@ class tensor_matrix
         const_pointer data() const
         {
             return data_;
+        }
+
+        pointer data(pointer ptr)
+        {
+            using std::swap;
+            swap(ptr, data_);
+            return ptr;
         }
 
         void fill_scatter(unsigned dim, stride_type* scatter)

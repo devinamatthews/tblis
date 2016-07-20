@@ -525,7 +525,6 @@ T select_from(const T& v, const U& s, const U& match)
 
     for (auto& m : match)
     {
-        bool found = false;
         for (size_t i = 0;i < s.size();i++)
         {
             if (s[i] == m)

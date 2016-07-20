@@ -4,7 +4,7 @@ namespace tblis
 {
 
 template <typename T>
-void tblis_xpbyv_ref(ThreadCommunicator& comm,
+void tblis_xpbyv_ref(thread_communicator& comm,
                      bool conj_A, idx_type n,
                               const T* restrict A, stride_type inc_A,
                      T  beta,       T* restrict B, stride_type inc_B)
@@ -82,7 +82,7 @@ void tblis_xpbyv(bool conj_A, idx_type n,
     {
         parallelize
         (
-            [&](ThreadCommunicator& comm)
+            [&](thread_communicator& comm)
             {
                 tblis_xpbyv_ref(comm, conj_A, n, A, inc_A, beta, B, inc_B);
             }
@@ -91,7 +91,7 @@ void tblis_xpbyv(bool conj_A, idx_type n,
 }
 
 #define INSTANTIATE_FOR_TYPE(T) \
-template void tblis_xpbyv_ref(ThreadCommunicator& comm, bool conj_A, idx_type n, const T* A, stride_type inc_A, T beta, T* B, stride_type inc_B); \
+template void tblis_xpbyv_ref(thread_communicator& comm, bool conj_A, idx_type n, const T* A, stride_type inc_A, T beta, T* B, stride_type inc_B); \
 template void tblis_xpbyv(bool conj_A, idx_type n, const T* A, stride_type inc_A, T beta, T* B, stride_type inc_B); \
 template void tblis_xpbyv(const_row_view<T> A, T beta, row_view<T> B);
 #include "tblis_instantiate_for_types.hpp"

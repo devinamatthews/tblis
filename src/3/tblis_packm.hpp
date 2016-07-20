@@ -254,7 +254,7 @@ void PackMicroPanel(idx_type m, idx_type k,
 template <typename T, idx_type MR, idx_type KR, bool Trans>
 struct PackRowPanel
 {
-    void operator()(ThreadCommunicator& comm, matrix_view<T>& A, matrix_view<T>& Ap) const
+    void operator()(thread_communicator& comm, matrix_view<T>& A, matrix_view<T>& Ap) const
     {
         //printf("before: %.15f\n", (double)real(tblis_normfm(A)));
 
@@ -288,7 +288,7 @@ struct PackRowPanel
         //printf("after: %.15f\n", (double)real(tblis_normfm(Ap)));
     }
 
-    void operator()(ThreadCommunicator& comm, const_scatter_matrix_view<T>& A, matrix_view<T>& Ap) const
+    void operator()(thread_communicator& comm, const_scatter_matrix_view<T>& A, matrix_view<T>& Ap) const
     {
         idx_type m_a = A.length( Trans);
         idx_type k_a = A.length(!Trans);
@@ -331,7 +331,7 @@ struct PackRowPanel
         }
     }
 
-    void operator()(ThreadCommunicator& comm, block_scatter_matrix<T,(Trans?KR:MR),(Trans?MR:KR)> A, matrix_view<T>& Ap) const
+    void operator()(thread_communicator& comm, block_scatter_matrix<T,(Trans?KR:MR),(Trans?MR:KR)> A, matrix_view<T>& Ap) const
     {
         idx_type m_a = A.length( Trans);
         idx_type k_a = A.length(!Trans);
@@ -388,12 +388,12 @@ template <typename Pack>
 struct PackAndRun<Pack, matrix_constants::MAT_A>
 {
     template <typename Run, typename T, typename MatrixA, typename MatrixB, typename MatrixC, typename MatrixP>
-    PackAndRun(Run& run, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C, MatrixP& P)
+    PackAndRun(Run& run, const gemm_thread_config& cfg, thread_communicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C, MatrixP& P)
     {
-        comm.barrier();
         Pack()(comm, A, P);
         comm.barrier();
-        run(comm, alpha, P, B, beta, C);
+        run(cfg, comm, alpha, P, B, beta, C);
+        comm.barrier();
     }
 };
 
@@ -401,12 +401,12 @@ template <typename Pack>
 struct PackAndRun<Pack, matrix_constants::MAT_B>
 {
     template <typename Run, typename T, typename MatrixA, typename MatrixB, typename MatrixC, typename MatrixP>
-    PackAndRun(Run& run, ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C, MatrixP& P)
+    PackAndRun(Run& run, const gemm_thread_config& cfg, thread_communicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C, MatrixP& P)
     {
-        comm.barrier();
         Pack()(comm, B, P);
         comm.barrier();
-        run(comm, alpha, A, P, beta, C);
+        run(cfg, comm, alpha, A, P, beta, C);
+        comm.barrier();
     }
 };
 
@@ -427,7 +427,7 @@ struct Pack
         T* pack_ptr = NULL;
 
         template <typename MatrixA, typename MatrixB, typename MatrixC>
-        void operator()(ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
+        void operator()(const gemm_thread_config& cfg, thread_communicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
         {
             using namespace matrix_constants;
 
@@ -471,7 +471,7 @@ struct Pack
             assert(P.stride(1) == Trans ? n_p :   1);
 
             typedef PackRowPanel<T,MR,NR,Trans> Pack;
-            PackAndRun<Pack,Mat>(child, comm, alpha, A, B, beta, C, P);
+            PackAndRun<Pack,Mat>(child, cfg, comm, alpha, A, B, beta, C, P);
         }
     };
 };

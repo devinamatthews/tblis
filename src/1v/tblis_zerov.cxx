@@ -4,7 +4,7 @@ namespace tblis
 {
 
 template <typename T>
-void tblis_zerov_ref(ThreadCommunicator& comm, idx_type n, T* A, stride_type inc_A)
+void tblis_zerov_ref(thread_communicator& comm, idx_type n, T* A, stride_type inc_A)
 {
     if (n == 0) return;
 
@@ -40,7 +40,7 @@ void tblis_zerov(idx_type n, T* A, stride_type inc_A)
 {
     parallelize
     (
-        [&](ThreadCommunicator& comm)
+        [&](thread_communicator& comm)
         {
             tblis_zerov_ref(comm, n, A, inc_A);
         }
@@ -48,7 +48,7 @@ void tblis_zerov(idx_type n, T* A, stride_type inc_A)
 }
 
 #define INSTANTIATE_FOR_TYPE(T) \
-template void tblis_zerov_ref(ThreadCommunicator& comm, idx_type n, T* A, stride_type inc_A); \
+template void tblis_zerov_ref(thread_communicator& comm, idx_type n, T* A, stride_type inc_A); \
 template void tblis_zerov(idx_type n, T* A, stride_type inc_A); \
 template void tblis_zerov(row_view<T> A);
 #include "tblis_instantiate_for_types.hpp"

@@ -39,6 +39,7 @@ lib_libtblis_la_SOURCES = \
 	\
 	src/impl/tensor_impl.cxx \
 	\
+	src/tblis_matrify.cxx \
 	src/tblis_mutex.cxx \
 	src/tblis.cxx
 	

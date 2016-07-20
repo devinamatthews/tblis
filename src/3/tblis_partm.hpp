@@ -6,7 +6,7 @@
 namespace tblis
 {
 
-template <template <typename> class MT, int Dim>
+template <template <typename> class MT, int Dim, int ParDim>
 struct Partition
 {
     template <typename T, typename Child, typename... Children>
@@ -14,22 +14,20 @@ struct Partition
     {
         run() {}
 
-        run(const run& other)
-        : child(other.child), distribute(other.distribute) {}
+        run(const run& other) : child(other.child) {}
 
         typename Child::template run<T, Children...> child;
-        ThreadCommunicator subcomm;
-        int distribute = 1;
+        thread_communicator subcomm;
         bool ganged = false;
 
-        static stride_type stride(const const_matrix_view<T>& m, unsigned dim) { return m.stride(dim); }
-        static stride_type stride(const matrix_view<T>& m, unsigned dim) { return m.stride(dim); }
-        static stride_type stride(const matrix<T>& m, unsigned dim) { return m.stride(dim); }
-        template <typename Matrix>
-        static stride_type stride(const Matrix& m, unsigned dim) { return 0; }
+        //static stride_type stride(const const_matrix_view<T>& m, unsigned dim) { return m.stride(dim); }
+        //static stride_type stride(const matrix_view<T>& m, unsigned dim) { return m.stride(dim); }
+        //static stride_type stride(const matrix<T>& m, unsigned dim) { return m.stride(dim); }
+        //template <typename Matrix>
+        //static stride_type stride(const Matrix& m, unsigned dim) { return 0; }
 
         template <typename MatrixA, typename MatrixB, typename MatrixC>
-        void operator()(ThreadCommunicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
+        void operator()(const gemm_thread_config& cfg, thread_communicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
         {
             using namespace matrix_constants;
             using namespace std::placeholders;
@@ -58,11 +56,15 @@ struct Partition
             idx_type m_u = (Dim == DIM_M ? A.length(0) : Dim == DIM_N ? B.length(1) : A.length(1));
             idx_type m_v = (Dim == DIM_M ? C.length(0) : Dim == DIM_N ? C.length(1) : B.length(0));
 
-            //assert(distribute <= comm.num_threads());
-
             idx_type m_first = 0;
             idx_type m_last = std::min(m_u, m_v);
             idx_type m_max = m_last;
+
+            int distribute = std::min(comm.num_threads(),
+                (ParDim == JC_NT ? cfg.jc_nt :
+                 ParDim == IC_NT ? cfg.ic_nt :
+                 ParDim == JR_NT ? cfg.jr_nt :
+                 ParDim == IR_NT ? cfg.ir_nt : 1));
 
             if (distribute > 1)
             {
@@ -82,7 +84,7 @@ struct Partition
                 //              m_u, m_v, m_first, m_last);
             }
 
-            ThreadCommunicator& child_comm = (distribute > 1 ? subcomm : comm);
+            thread_communicator& child_comm = (distribute > 1 ? subcomm : comm);
 
             //printf_locked("part %d [%d/%d:%d/%d] %d %d %d:%d\n", Dim,
             //              child_comm.thread_num(), child_comm.num_threads(),
@@ -96,22 +98,18 @@ struct Partition
             length(m_last-m_first, m_last-m_first);
             shift(m_first);
 
-            int count = 0;
             idx_type m_loc = 0;
             idx_type m_off = m_first;
 
-            /*
             if ((m_last-m_first)%M_def <= (M_max-M_def))
             {
                 m_loc = std::min(m_last-m_off, M_max);
                 length(m_loc, m_loc);
-                child(child_comm, alpha, A, B, beta, C);
+                child(cfg, child_comm, alpha, A, B, beta, C);
                 shift(m_loc);
                 if (Dim == DIM_K) beta = 1.0;
                 m_off += m_loc;
-                count++;
             }
-            */
 
             //printf("range: %d %d : %d\n", m_first, m_last, M_def);
 
@@ -120,12 +118,12 @@ struct Partition
                 m_loc = std::min(m_last-m_off, M_def);
                 //printf("%d %d\n", m_off, m_loc);
                 length(m_loc, m_loc);
-                child(child_comm, alpha, A, B, beta, C);
+                child(cfg, child_comm, alpha, A, B, beta, C);
                 shift(m_loc);
                 if (Dim == DIM_K) beta = 1.0;
                 m_off += m_loc;
-                count++;
 
+                /*
                 if (Dim == DIM_M)
                 {
                     if (stride(A, 0)) assert(A.data() == a_ptr+m_off*stride(A, 0));
@@ -141,19 +139,8 @@ struct Partition
                     if (stride(A, 1)) assert(A.data() == a_ptr+m_off*stride(A, 1));
                     if (stride(B, 0)) assert(B.data() == b_ptr+m_off*stride(B, 0));
                 }
+                */
             }
-
-            /*
-            idx_type n_this = (m_last-m_first+M_def-1)/M_def - (((m_last-m_first)%M_def) <= M_max-M_def);
-            idx_type n_max = (m_max-m_first+M_def-1)/M_def - (((m_max-m_first)%M_def) <= M_max-M_def);
-            assert(count == n_this);
-
-            length(0, 0);
-            for (;n_this < n_max;n_this++)
-            {
-                child(child_comm, alpha, A, B, beta, C);
-            }
-            */
 
             shift(-m_last);
             length(m_u, m_v);
@@ -169,14 +156,20 @@ struct Partition
     };
 };
 
-template <template <typename> class MT>
-using PartitionM = Partition<MT, matrix_constants::DIM_M>;
+template <typename Config>
+using PartitionMC = Partition<Config::template MC, matrix_constants::DIM_M, matrix_constants::IC_NT>;
 
-template <template <typename> class NT>
-using PartitionN = Partition<NT, matrix_constants::DIM_N>;
+template <typename Config>
+using PartitionMR = Partition<Config::template MR, matrix_constants::DIM_M, matrix_constants::IR_NT>;
 
-template <template <typename> class KT>
-using PartitionK = Partition<KT, matrix_constants::DIM_K>;
+template <typename Config>
+using PartitionNC = Partition<Config::template NC, matrix_constants::DIM_N, matrix_constants::JC_NT>;
+
+template <typename Config>
+using PartitionNR = Partition<Config::template NR, matrix_constants::DIM_N, matrix_constants::JR_NT>;
+
+template <typename Config>
+using PartitionKC = Partition<Config::template KC, matrix_constants::DIM_K, matrix_constants::NONE>;
 
 }
 

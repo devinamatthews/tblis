@@ -8,59 +8,6 @@ namespace tblis
 namespace impl
 {
 
-struct prime_factorization
-{
-    int n;
-    int sqrt_n;
-    int f;
-
-    prime_factorization(int n)
-    : n(abs(n)), sqrt_n(sqrt(abs(n))), f(2) {}
-
-    int next()
-    {
-        for (;f <= sqrt_n;f++)
-        {
-            if (n%f == 0)
-            {
-                n /= f;
-                return f;
-            }
-        }
-
-        if (n != 1)
-        {
-            int tmp = n;
-            n = 1;
-            return tmp;
-        }
-
-        return 1;
-    }
-};
-
-void partition_2x2(int num_threads, long work1, long work2, int& nt1, int& nt2)
-{
-    prime_factorization pf(num_threads);
-
-    nt1 = nt2 = 1;
-
-    int f;
-    while ((f = pf.next()) != 1)
-    {
-        if (work1 > work2)
-        {
-            work1 /= f;
-            nt1 *= f;
-        }
-        else
-        {
-            work2 /= f;
-            nt2 *= f;
-        }
-    }
-}
-
 template <typename T>
 int tensor_transpose_reference(T alpha, const const_tensor_view<T>& A, const std::string& idx_A,
                                T  beta, const       tensor_view<T>& B, const std::string& idx_B)
@@ -108,7 +55,7 @@ int tensor_transpose_reference(T alpha, const const_tensor_view<T>& A, const std
 
     parallelize
     (
-        [&](ThreadCommunicator& comm)
+        [&](thread_communicator& comm)
         {
             viterator<2> iter_AB(len, strides_Ar, strides_Br);
 
@@ -118,7 +65,7 @@ int tensor_transpose_reference(T alpha, const const_tensor_view<T>& A, const std
             int nt_outer, nt_inner;
             partition_2x2(nt, n, len0, nt_outer, nt_inner);
 
-            ThreadCommunicator subcomm = comm.gang_evenly(nt_outer);
+            thread_communicator subcomm = comm.gang_evenly(nt_outer);
 
             idx_type n_min, n_max;
             std::tie(n_min, n_max, std::ignore) =

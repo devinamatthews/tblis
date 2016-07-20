@@ -22,13 +22,13 @@ namespace detail
     template <typename Body> void* run_thread(void* raw_data);
 }
 
-class ThreadContext
+class thread_context
 {
-    friend class ThreadCommunicator;
+    friend class thread_communicator;
     template <typename Body> friend void detail::parallelize(Body& body, int nthread, int arity);
 
     public:
-        ThreadContext(int nthread, int arity=0)
+        thread_context(int nthread, int arity=0)
         : _barrier(nthread, arity), _nthread(nthread) {}
 
         void barrier(int tid)
@@ -75,22 +75,22 @@ class ThreadContext
         int _nthread;
 };
 
-class ThreadCommunicator
+class thread_communicator
 {
     template <typename Body> friend void detail::parallelize(Body& body, int nthread, int arity);
     template <typename Body> friend void* detail::run_thread(void* raw_data);
 
     public:
-        ThreadCommunicator()
+        thread_communicator()
         : _context(), _nthread(1), _tid(0), _gid(0) {}
 
-        ThreadCommunicator(const ThreadCommunicator&) = delete;
+        thread_communicator(const thread_communicator&) = delete;
 
-        ThreadCommunicator(ThreadCommunicator&&) = default;
+        thread_communicator(thread_communicator&&) = default;
 
-        ThreadCommunicator& operator=(const ThreadCommunicator&) = delete;
+        thread_communicator& operator=(const thread_communicator&) = delete;
 
-        ThreadCommunicator& operator=(ThreadCommunicator&&) = default;
+        thread_communicator& operator=(thread_communicator&&) = default;
 
         bool master() const
         {
@@ -166,9 +166,9 @@ class ThreadCommunicator
             barrier();
         }
 
-        ThreadCommunicator gang_evenly(int n)
+        thread_communicator gang_evenly(int n)
         {
-            if (n >= _nthread) return ThreadCommunicator(_tid);
+            if (n >= _nthread) return thread_communicator(_tid);
 
             int block = (n*_tid)/_nthread;
             int block_first = (block*_nthread)/n;
@@ -179,9 +179,9 @@ class ThreadCommunicator
             return gang(n, block, new_tid, new_nthread);
         }
 
-        ThreadCommunicator gang_block_cyclic(int n, int bs)
+        thread_communicator gang_block_cyclic(int n, int bs)
         {
-            if (n >= _nthread) return ThreadCommunicator(_tid);
+            if (n >= _nthread) return thread_communicator(_tid);
 
             int block = (_tid/bs)%n;
             int nsubblock_tot = _nthread/bs;
@@ -192,9 +192,9 @@ class ThreadCommunicator
             return gang(n, block, new_tid, new_nthread);
         }
 
-        ThreadCommunicator gang_blocked(int n)
+        thread_communicator gang_blocked(int n)
         {
-            if (n >= _nthread) return ThreadCommunicator(_tid);
+            if (n >= _nthread) return thread_communicator(_tid);
 
             int bs = (_nthread+n-1)/n;
             int block = _tid/bs;
@@ -204,9 +204,9 @@ class ThreadCommunicator
             return gang(n, block, new_tid, new_nthread);
         }
 
-        ThreadCommunicator gang_cyclic(int n)
+        thread_communicator gang_cyclic(int n)
         {
-            if (n >= _nthread) return ThreadCommunicator(_tid);
+            if (n >= _nthread) return thread_communicator(_tid);
 
             int block = _tid%n;
             int new_tid = _tid/n;
@@ -226,18 +226,18 @@ class ThreadCommunicator
         }
 
     protected:
-        ThreadCommunicator(int gid)
+        thread_communicator(int gid)
         : _nthread(1), _tid(0), _gid(gid) {}
 
-        ThreadCommunicator(const std::shared_ptr<ThreadContext>& context, int tid, int gid)
+        thread_communicator(const std::shared_ptr<thread_context>& context, int tid, int gid)
         : _context(context), _nthread(context->num_threads()), _tid(tid), _gid(gid) {}
 
-        ThreadCommunicator gang(int n, int block, int new_tid, int new_nthread)
+        thread_communicator gang(int n, int block, int new_tid, int new_nthread)
         {
-            ThreadCommunicator new_comm;
+            thread_communicator new_comm;
 
-            std::shared_ptr<ThreadContext>* contexts;
-            std::vector<std::shared_ptr<ThreadContext>> contexts_root;
+            std::shared_ptr<thread_context>* contexts;
+            std::vector<std::shared_ptr<thread_context>> contexts_root;
             if (master())
             {
                 contexts_root.resize(n);
@@ -247,13 +247,13 @@ class ThreadCommunicator
 
             if (new_tid == 0 && new_nthread > 1)
             {
-                contexts[block] = std::make_shared<ThreadContext>(new_nthread, _context->_barrier.arity());
+                contexts[block] = std::make_shared<thread_context>(new_nthread, _context->_barrier.arity());
             }
 
             barrier();
 
             if (new_nthread > 1)
-                new_comm = ThreadCommunicator(contexts[block], new_tid, block);
+                new_comm = thread_communicator(contexts[block], new_tid, block);
 
             barrier();
 
@@ -271,7 +271,7 @@ class ThreadCommunicator
                           (( elem   *ng)/nelem)*granularity+max_size);
         }
 
-        std::shared_ptr<ThreadContext> _context;
+        std::shared_ptr<thread_context> _context;
         int _nthread;
         int _tid;
         int _gid;
@@ -285,11 +285,11 @@ namespace detail
 template <typename Body>
 void parallelize(Body& body, int nthread, int arity)
 {
-    std::shared_ptr<ThreadContext> context = std::make_shared<ThreadContext>(nthread, arity);
+    std::shared_ptr<thread_context> context = std::make_shared<thread_context>(nthread, arity);
 
     #pragma omp parallel num_threads(nthread)
     {
-        ThreadCommunicator comm(context, omp_get_thread_num(), 0);
+        thread_communicator comm(context, omp_get_thread_num(), 0);
         Body body_copy(body);
         body_copy(comm);
     }
@@ -301,11 +301,11 @@ template <typename Body>
 struct thread_data
 {
     Body& body;
-    const std::shared_ptr<ThreadContext>& context;
+    const std::shared_ptr<thread_context>& context;
     int tid;
 
     thread_data(Body& body,
-                const std::shared_ptr<ThreadContext>& context,
+                const std::shared_ptr<thread_context>& context,
                 int tid)
     : body(body), context(context), tid(tid) {}
 };
@@ -314,7 +314,7 @@ template <typename Body>
 void* run_thread(void* raw_data)
 {
     thread_data<Body>& data = *static_cast<thread_data<Body>*>(raw_data);
-    ThreadCommunicator comm(data.context, data.tid, 0);
+    thread_communicator comm(data.context, data.tid, 0);
     Body body_copy(data.body);
     body_copy(comm);
     return NULL;
@@ -326,8 +326,8 @@ void parallelize(Body& body, int nthread, int arity)
     std::vector<pthread_t> threads; threads.reserve(nthread);
     std::vector<detail::thread_data<Body>> data; data.reserve(nthread);
 
-    std::shared_ptr<ThreadContext> context = std::make_shared<ThreadContext>(nthread, arity);
-    ThreadCommunicator comm(context, 0, 0);
+    std::shared_ptr<thread_context> context = std::make_shared<thread_context>(nthread, arity);
+    thread_communicator comm(context, 0, 0);
 
     for (int i = 1;i < nthread;i++)
     {
@@ -355,15 +355,15 @@ void parallelize(Body& body, int nthread, int arity)
 {
     std::vector<std::thread> threads; threads.reserve(nthread);
 
-    std::shared_ptr<ThreadContext> context = std::make_shared<ThreadContext>(nthread, arity);
-    ThreadCommunicator comm(context, 0, 0);
+    std::shared_ptr<thread_context> context = std::make_shared<thread_context>(nthread, arity);
+    thread_communicator comm(context, 0, 0);
 
     for (int i = 1;i < nthread;i++)
     {
         threads.emplace_back(
         [=,&context]() mutable
         {
-            ThreadCommunicator comm(context, i, 0);
+            thread_communicator comm(context, i, 0);
             body(comm);
         });
     }
@@ -378,7 +378,7 @@ void parallelize(Body& body, int nthread, int arity)
 template <typename Body>
 void parallelize(Body& body, int nthread, int arity)
 {
-    ThreadCommunicator comm;
+    thread_communicator comm;
     body(comm);
 }
 
@@ -391,10 +391,7 @@ void parallelize(Body body, int nthread=0, int arity=0)
 {
     if (nthread == 0)
     {
-        nthread = envtol("BLIS_JC_NT", 1)*
-                  envtol("BLIS_IC_NT", 1)*
-                  envtol("BLIS_JR_NT", 1)*
-                  envtol("BLIS_IR_NT", 1);
+        nthread = envtol("OMP_NUM_THREADS", 1);
     }
 
     if (nthread > 1)
@@ -403,8 +400,61 @@ void parallelize(Body body, int nthread=0, int arity=0)
     }
     else
     {
-        ThreadCommunicator comm;
+        thread_communicator comm;
         body(comm);
+    }
+}
+
+struct prime_factorization
+{
+    int n;
+    int sqrt_n;
+    int f;
+
+    prime_factorization(int n)
+    : n(abs(n)), sqrt_n(sqrt(abs(n))), f(2) {}
+
+    int next()
+    {
+        for (;f <= sqrt_n;f++)
+        {
+            if (n%f == 0)
+            {
+                n /= f;
+                return f;
+            }
+        }
+
+        if (n != 1)
+        {
+            int tmp = n;
+            n = 1;
+            return tmp;
+        }
+
+        return 1;
+    }
+};
+
+inline void partition_2x2(int num_threads, long work1, long work2, int& nt1, int& nt2)
+{
+    prime_factorization pf(num_threads);
+
+    nt1 = nt2 = 1;
+
+    int f;
+    while ((f = pf.next()) != 1)
+    {
+        if (work1 > work2)
+        {
+            work1 /= f;
+            nt1 *= f;
+        }
+        else
+        {
+            work2 /= f;
+            nt2 *= f;
+        }
     }
 }
 

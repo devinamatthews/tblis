@@ -4,7 +4,7 @@ namespace tblis
 {
 
 template <typename T>
-void tblis_normfm_ref(ThreadCommunicator& comm,
+void tblis_normfm_ref(thread_communicator& comm,
                       idx_type m, idx_type n,
                       const T* restrict A,
                       stride_type rs_A, stride_type cs_A,
@@ -29,7 +29,7 @@ void tblis_normfm_ref(ThreadCommunicator& comm,
 }
 
 template <typename T>
-void tblis_normfm_ref(ThreadCommunicator& comm,
+void tblis_normfm_ref(thread_communicator& comm,
                       idx_type m, idx_type n,
                       const T* restrict A,
                       const stride_type* restrict rscat_A, stride_type cs_A,
@@ -54,7 +54,7 @@ void tblis_normfm_ref(ThreadCommunicator& comm,
 }
 
 template <typename T>
-void tblis_normfm_ref(ThreadCommunicator& comm,
+void tblis_normfm_ref(thread_communicator& comm,
                       idx_type m, idx_type n,
                       const T* restrict A,
                       stride_type rs_A, const stride_type* restrict cscat_A,
@@ -79,7 +79,7 @@ void tblis_normfm_ref(ThreadCommunicator& comm,
 }
 
 template <typename T>
-void tblis_normfm_ref(ThreadCommunicator& comm,
+void tblis_normfm_ref(thread_communicator& comm,
                       idx_type m, idx_type n,
                       const T* restrict A,
                       const stride_type* restrict rscat_A, const stride_type* restrict cscat_A,
@@ -174,7 +174,7 @@ void tblis_normfm(idx_type m, idx_type n,
 {
     parallelize
     (
-        [&](ThreadCommunicator& comm)
+        [&](thread_communicator& comm)
         {
             tblis_normfm_ref(comm, m, n, A, rs_A, cs_A, norm);
         }
@@ -189,7 +189,7 @@ void tblis_normfm(idx_type m, idx_type n,
 {
     parallelize
     (
-        [&](ThreadCommunicator& comm)
+        [&](thread_communicator& comm)
         {
             tblis_normfm_ref(comm, m, n, A, rscat_A, cs_A, norm);
         }
@@ -204,7 +204,7 @@ void tblis_normfm(idx_type m, idx_type n,
 {
     parallelize
     (
-        [&](ThreadCommunicator& comm)
+        [&](thread_communicator& comm)
         {
             tblis_normfm_ref(comm, m, n, A, rs_A, cscat_A, norm);
         }
@@ -219,7 +219,7 @@ void tblis_normfm(idx_type m, idx_type n,
 {
     parallelize
     (
-        [&](ThreadCommunicator& comm)
+        [&](thread_communicator& comm)
         {
             tblis_normfm_ref(comm, m, n, A, rscat_A, cscat_A, norm);
         }
@@ -267,10 +267,10 @@ T tblis_normfm(idx_type m, idx_type n,
 }
 
 #define INSTANTIATE_FOR_TYPE(T) \
-template void tblis_normfm_ref(ThreadCommunicator& comm, idx_type m, idx_type n, const T* A,       stride_type     rs_A,       stride_type     cs_A, T& norm); \
-template void tblis_normfm_ref(ThreadCommunicator& comm, idx_type m, idx_type n, const T* A, const stride_type* rscat_A,       stride_type     cs_A, T& norm); \
-template void tblis_normfm_ref(ThreadCommunicator& comm, idx_type m, idx_type n, const T* A,       stride_type     rs_A, const stride_type* cscat_A, T& norm); \
-template void tblis_normfm_ref(ThreadCommunicator& comm, idx_type m, idx_type n, const T* A, const stride_type* rscat_A, const stride_type* cscat_A, T& norm); \
+template void tblis_normfm_ref(thread_communicator& comm, idx_type m, idx_type n, const T* A,       stride_type     rs_A,       stride_type     cs_A, T& norm); \
+template void tblis_normfm_ref(thread_communicator& comm, idx_type m, idx_type n, const T* A, const stride_type* rscat_A,       stride_type     cs_A, T& norm); \
+template void tblis_normfm_ref(thread_communicator& comm, idx_type m, idx_type n, const T* A,       stride_type     rs_A, const stride_type* cscat_A, T& norm); \
+template void tblis_normfm_ref(thread_communicator& comm, idx_type m, idx_type n, const T* A, const stride_type* rscat_A, const stride_type* cscat_A, T& norm); \
 template void tblis_normfm(        const_matrix_view<T> A, T& norm); \
 template void tblis_normfm(const_scatter_matrix_view<T> A, T& norm); \
 template    T tblis_normfm(        const_matrix_view<T> A); \

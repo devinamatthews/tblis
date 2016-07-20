@@ -7,7 +7,7 @@ namespace tblis
 {
 
 template <typename T>
-void tblis_dotv_ref(ThreadCommunicator& comm,
+void tblis_dotv_ref(thread_communicator& comm,
                     bool conj_A, bool conj_B, idx_type n,
                     const T* A, stride_type inc_A,
                     const T* B, stride_type inc_B, T& dot);

@@ -135,6 +135,9 @@ using MArray::COLUMN_MAJOR;
 using MArray::ROW_MAJOR;
 using MArray::DEFAULT;
 
+using MArray::uninitialized_t;
+using MArray::uninitialized;
+
 using MArray::make_array;
 using MArray::make_vector;
 
@@ -209,6 +212,7 @@ namespace matrix_constants
 {
     enum {MAT_A, MAT_B, MAT_C};
     enum {DIM_M, DIM_N, DIM_K};
+    enum {NONE, JC_NT, IC_NT, JR_NT, IR_NT};
 }
 
 template <typename... Args> struct has_member_helper;

@@ -362,7 +362,7 @@ am_lib_libtblis_la_OBJECTS = src/1m/tblis_normfm.lo \
 	src/impl/reference/tensor_trace.lo \
 	src/impl/reference/tensor_transpose.lo \
 	src/impl/reference/tensor_weight.lo src/impl/tensor_impl.lo \
-	src/tblis_mutex.lo src/tblis.lo
+	src/tblis_matrify.lo src/tblis_mutex.lo src/tblis.lo
 lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
 @ENABLE_BLAS_TRUE@am__EXEEXT_1 = bin/bench$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
@@ -685,6 +685,7 @@ lib_libtblis_la_SOURCES = \
 	\
 	src/impl/tensor_impl.cxx \
 	\
+	src/tblis_matrify.cxx \
 	src/tblis_mutex.cxx \
 	src/tblis.cxx
 
@@ -1230,6 +1231,8 @@ src/$(am__dirstamp):
 src/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/$(DEPDIR)
 	@: > src/$(DEPDIR)/$(am__dirstamp)
+src/tblis_matrify.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/tblis_mutex.lo: src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/tblis.lo: src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 
@@ -1360,6 +1363,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/tblis.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/tblis_matrify.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/tblis_mutex.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/1m/$(DEPDIR)/tblis_normfm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/tblis_addv.Plo@am__quote@

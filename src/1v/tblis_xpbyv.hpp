@@ -7,7 +7,7 @@ namespace tblis
 {
 
 template <typename T>
-void tblis_xpbyv_ref(ThreadCommunicator& comm,
+void tblis_xpbyv_ref(thread_communicator& comm,
                      bool conj_A, idx_type n,
                              const T* A, stride_type inc_A,
                      T beta,       T* B, stride_type inc_B);

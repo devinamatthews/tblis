@@ -7,28 +7,28 @@ namespace tblis
 {
 
 template <typename T>
-void tblis_normfm_ref(ThreadCommunicator& comm,
+void tblis_normfm_ref(thread_communicator& comm,
                       idx_type m, idx_type n,
                       const T* A,
                       stride_type rs_A, stride_type cs_A,
                       T& norm);
 
 template <typename T>
-void tblis_normfm_ref(ThreadCommunicator& comm,
+void tblis_normfm_ref(thread_communicator& comm,
                       idx_type m, idx_type n,
                       const T* A,
                       const stride_type* rscat_A, stride_type cs_A,
                       T& norm);
 
 template <typename T>
-void tblis_normfm_ref(ThreadCommunicator& comm,
+void tblis_normfm_ref(thread_communicator& comm,
                       idx_type m, idx_type n,
                       const T* A,
                       stride_type rs_A, const stride_type* cscat_A,
                       T& norm);
 
 template <typename T>
-void tblis_normfm_ref(ThreadCommunicator& comm,
+void tblis_normfm_ref(thread_communicator& comm,
                       idx_type m, idx_type n,
                       const T* A,
                       const stride_type* rscat_A, const stride_type* cscat_A,

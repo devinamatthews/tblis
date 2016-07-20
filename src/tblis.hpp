@@ -48,6 +48,7 @@ extern "C"
 #include "tblis_scatter_matrix.hpp"
 #include "tblis_block_scatter_matrix.hpp"
 #include "tblis_tensor_matrix.hpp"
+#include "tblis_batched_tensor.hpp"
 
 #include "1v/tblis_addv.hpp"
 #include "1v/tblis_asumv.hpp"
@@ -65,9 +66,12 @@ extern "C"
 
 #include "1m/tblis_normfm.hpp"
 
+#include "3/tblis_gemm.hpp"
 #include "3/tblis_partm.hpp"
 #include "3/tblis_packm.hpp"
 #include "3/tblis_gemm_ukr.hpp"
-#include "3/tblis_gemm.hpp"
+
+#include "tblis_matrify.hpp"
+#include "tblis_batched_tensor_contract.hpp"
 
 #endif

@@ -234,12 +234,12 @@ void contract(T alpha, const_batched_tensor_view<T> A, const std::string& idx_A,
         auto loc = batch_idx_AB.find(batch_idx_A[i]);
         if (loc != std::string::npos)
         {
-            batch_stride_A_AB[i_AB++] = stride_AB[loc-batch_idx_AB.begin()];
+            batch_stride_A_AB[i_AB++] = stride_AB[loc];
         }
         else
         {
             loc = batch_idx_AC.find(batch_idx_A[i]);
-            batch_stride_A_AC[i_AC++] = stride_AC[loc-batch_idx_AC.begin()];
+            batch_stride_A_AC[i_AC++] = stride_AC[loc];
         }
     }
 
@@ -248,12 +248,12 @@ void contract(T alpha, const_batched_tensor_view<T> A, const std::string& idx_A,
         auto loc = batch_idx_AB.find(batch_idx_B[i]);
         if (loc != std::string::npos)
         {
-            batch_stride_B_AB[i_AB++] = stride_AB[loc-batch_idx_AB.begin()];
+            batch_stride_B_AB[i_AB++] = stride_AB[loc];
         }
         else
         {
             loc = batch_idx_BC.find(batch_idx_B[i]);
-            batch_stride_B_BC[i_BC++] = stride_BC[loc-batch_idx_BC.begin()];
+            batch_stride_B_BC[i_BC++] = stride_BC[loc];
         }
     }
 
@@ -262,12 +262,12 @@ void contract(T alpha, const_batched_tensor_view<T> A, const std::string& idx_A,
         auto loc = batch_idx_AC.find(batch_idx_C[i]);
         if (loc != std::string::npos)
         {
-            batch_stride_C_AC[i_AC++] = stride_AC[loc-batch_idx_AC.begin()];
+            batch_stride_C_AC[i_AC++] = stride_AC[loc];
         }
         else
         {
             loc = batch_idx_BC.find(batch_idx_C[i]);
-            batch_stride_C_BC[i_BC++] = stride_BC[loc-batch_idx_BC.begin()];
+            batch_stride_C_BC[i_BC++] = stride_BC[loc];
         }
     }
 

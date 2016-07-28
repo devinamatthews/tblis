@@ -12,8 +12,6 @@
 #include "tblis.hpp"
 
 using namespace std;
-using namespace stl_ext;
-using namespace MArray;
 using namespace tblis;
 using namespace tblis::impl;
 using namespace tblis::util;
@@ -173,7 +171,7 @@ void RandomMatrix(size_t N, idx_type m_min, idx_type n_min, matrix<T>& t)
     t.reset({m, n});
 
     T* data = t.data();
-    miterator<2> it(t.lengths(), t.strides());
+    MArray::miterator<2> it(t.lengths(), t.strides());
     while (it.next(data)) *data = RandomUnit<T>();
 }
 
@@ -211,7 +209,7 @@ void RandomTensor(size_t N, unsigned d, vector<idx_type> len_min, tensor<T>& t)
     t.reset(len);
 
     T* data = t.data();
-    viterator<> it(t.lengths(), t.strides());
+    MArray::viterator<> it(t.lengths(), t.strides());
     while (it.next(data)) *data = RandomUnit<T>();
 }
 
@@ -1427,7 +1425,7 @@ void TestDot(size_t N)
 
     tensor_transpose(T(1.0), A, idx_A, T(0.0), B, idx_B);
     T* data = B.data();
-    viterator<> it(B.lengths(), B.strides());
+    MArray::viterator<> it(B.lengths(), B.strides());
     while (it.next(data)) *data = stl_ext::conj(*data);
     tensor_reduce(REDUCE_NORM_2, A, idx_A, ref_val);
     tensor_dot(A, idx_A, B, idx_B, calc_val);
@@ -1664,8 +1662,6 @@ int main(int argc, char **argv)
     int R = 10;
     time_t seed = time(NULL);
 
-    tblis_init();
-
     struct option opts[] = {{"size", required_argument, NULL, 'n'},
                             {"rep",  required_argument, NULL, 'r'},
                             {"seed", required_argument, NULL, 's'},
@@ -1703,8 +1699,6 @@ int main(int argc, char **argv)
     Test<  double>(N, R);
     //Test<scomplex>(N, R);
     //Test<dcomplex>(N, R);
-
-    tblis_finalize();
 
     return 0;
 }

@@ -26,6 +26,12 @@ topdir="\"`(cd $srcdir && pwd)`\""
 AC_DEFINE_UNQUOTED([TOPDIR], [$topdir], [The top source directory.])
 
 #
+# Check for memkind
+#
+AC_CHECK_HEADERS([hbwmalloc.h memkind.h])
+AC_SEARCH_LIBS([hbw_malloc], [memkind])
+
+#
 # Determine threading options
 #
 
@@ -160,6 +166,8 @@ AM_CONDITIONAL(ENABLE_MIC, [echo $configs | grep -q mic])
 AM_CONDITIONAL(ENABLE_PILEDRIVER, [echo $configs | grep -q piledriver])
 AM_CONDITIONAL(ENABLE_POWER7, [echo $configs | grep -q power7])
 AM_CONDITIONAL(ENABLE_SANDYBRIDGE, [echo $configs | grep -q sandybridge])
+
+AM_CONDITIONAL(IS_OSX, [test `uname -s` = Darwin])
 
 vendor_string=`$CC --version 2>/dev/null`
 if test x"$vendor_string" = x; then

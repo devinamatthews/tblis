@@ -274,10 +274,16 @@ lib_libhaswell_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 @ENABLE_HASWELL_TRUE@am_lib_libhaswell_la_rpath =
 lib_libknl_la_LIBADD =
 am__lib_libknl_la_SOURCES_DIST =  \
+	src/external/blis/config/knl/kernels/1m/bli_packm_opt_24x8.c \
 	src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c \
+	src/external/blis/config/knl/kernels/3/bli_dgemm_opt_24x8.c \
+	src/external/blis/config/knl/kernels/3/bli_dgemm_opt_8x24.c \
 	src/external/blis/config/knl/kernels/3/bli_dgemm_opt_30x8_att.c \
 	src/external/blis/config/knl/kernels/3/bli_sgemm_opt_30x16_att.c
-@ENABLE_KNL_TRUE@am_lib_libknl_la_OBJECTS = src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_12x16.lo \
+@ENABLE_KNL_TRUE@am_lib_libknl_la_OBJECTS = src/external/blis/config/knl/kernels/1m/lib_libknl_la-bli_packm_opt_24x8.lo \
+@ENABLE_KNL_TRUE@	src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_12x16.lo \
+@ENABLE_KNL_TRUE@	src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_24x8.lo \
+@ENABLE_KNL_TRUE@	src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_8x24.lo \
 @ENABLE_KNL_TRUE@	src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_30x8_att.lo \
 @ENABLE_KNL_TRUE@	src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_sgemm_opt_30x16_att.lo
 lib_libknl_la_OBJECTS = $(am_lib_libknl_la_OBJECTS)
@@ -362,7 +368,7 @@ am_lib_libtblis_la_OBJECTS = src/1m/tblis_normfm.lo \
 	src/impl/reference/tensor_trace.lo \
 	src/impl/reference/tensor_transpose.lo \
 	src/impl/reference/tensor_weight.lo src/impl/tensor_impl.lo \
-	src/tblis_matrify.lo src/tblis_mutex.lo src/tblis.lo
+	src/tblis_matrify.lo src/tblis_mutex.lo
 lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
 @ENABLE_BLAS_TRUE@am__EXEEXT_1 = bin/bench$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
@@ -686,8 +692,7 @@ lib_libtblis_la_SOURCES = \
 	src/impl/tensor_impl.cxx \
 	\
 	src/tblis_matrify.cxx \
-	src/tblis_mutex.cxx \
-	src/tblis.cxx
+	src/tblis_mutex.cxx
 
 noinst_LTLIBRARIES = $(am__append_1) $(am__append_3) $(am__append_5) \
 	$(am__append_7) $(am__append_9) $(am__append_11) \
@@ -730,11 +735,15 @@ lib_libtblis_la_LIBADD = $(am__append_2) $(am__append_4) \
 
 @ENABLE_HASWELL_TRUE@@ENABLE_INTEL_COMPILER_FALSE@lib_libhaswell_la_CFLAGS = -Isrc/external/blis/config/haswell -mavx2 -mfma -mfpmath=sse -march=core-avx2
 @ENABLE_HASWELL_TRUE@@ENABLE_INTEL_COMPILER_TRUE@lib_libhaswell_la_CFLAGS = -Isrc/external/blis/config/haswell -xCORE-AVX2
-@ENABLE_KNL_TRUE@lib_libknl_la_SOURCES = src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c \
+@ENABLE_KNL_TRUE@lib_libknl_la_SOURCES = src/external/blis/config/knl/kernels/1m/bli_packm_opt_24x8.c \
+@ENABLE_KNL_TRUE@					    src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c \
+@ENABLE_KNL_TRUE@					    src/external/blis/config/knl/kernels/3/bli_dgemm_opt_24x8.c \
+@ENABLE_KNL_TRUE@					    src/external/blis/config/knl/kernels/3/bli_dgemm_opt_8x24.c \
 @ENABLE_KNL_TRUE@					    src/external/blis/config/knl/kernels/3/bli_dgemm_opt_30x8_att.c \
 @ENABLE_KNL_TRUE@					    src/external/blis/config/knl/kernels/3/bli_sgemm_opt_30x16_att.c
 
-@ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@lib_libknl_la_CFLAGS = -Isrc/external/blis/config/knl -mavx512f -mavx512pf -mfpmath=sse -march=knl
+@ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_FALSE@lib_libknl_la_CFLAGS = -Isrc/external/blis/config/knl -mavx512f -mavx512pf -mfpmath=sse -march=knl
+@ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_TRUE@lib_libknl_la_CFLAGS = -Isrc/external/blis/config/knl -mavx512f -mavx512pf -mfpmath=sse -march=knl -Wa,-march=knl
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_KNL_TRUE@lib_libknl_la_CFLAGS = -Isrc/external/blis/config/knl -xMIC-AVX512
 @ENABLE_LOONGSON3A_TRUE@lib_libloongson3a_la_SOURCES = src/external/blis/config/loongson3a/kernels/3/bli_gemm_opt_d4x4.c
 @ENABLE_LOONGSON3A_TRUE@lib_libloongson3a_la_CFLAGS = -Isrc/external/blis/config/loongson3a -march=loongson3a -mtune=loongson3a
@@ -1031,6 +1040,15 @@ src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d4x12.
 
 lib/libhaswell.la: $(lib_libhaswell_la_OBJECTS) $(lib_libhaswell_la_DEPENDENCIES) $(EXTRA_lib_libhaswell_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CCLD)$(lib_libhaswell_la_LINK) $(am_lib_libhaswell_la_rpath) $(lib_libhaswell_la_OBJECTS) $(lib_libhaswell_la_LIBADD) $(LIBS)
+src/external/blis/config/knl/kernels/1m/$(am__dirstamp):
+	@$(MKDIR_P) src/external/blis/config/knl/kernels/1m
+	@: > src/external/blis/config/knl/kernels/1m/$(am__dirstamp)
+src/external/blis/config/knl/kernels/1m/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/external/blis/config/knl/kernels/1m/$(DEPDIR)
+	@: > src/external/blis/config/knl/kernels/1m/$(DEPDIR)/$(am__dirstamp)
+src/external/blis/config/knl/kernels/1m/lib_libknl_la-bli_packm_opt_24x8.lo:  \
+	src/external/blis/config/knl/kernels/1m/$(am__dirstamp) \
+	src/external/blis/config/knl/kernels/1m/$(DEPDIR)/$(am__dirstamp)
 src/external/blis/config/knl/kernels/3/$(am__dirstamp):
 	@$(MKDIR_P) src/external/blis/config/knl/kernels/3
 	@: > src/external/blis/config/knl/kernels/3/$(am__dirstamp)
@@ -1038,6 +1056,12 @@ src/external/blis/config/knl/kernels/3/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/external/blis/config/knl/kernels/3/$(DEPDIR)
 	@: > src/external/blis/config/knl/kernels/3/$(DEPDIR)/$(am__dirstamp)
 src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_12x16.lo:  \
+	src/external/blis/config/knl/kernels/3/$(am__dirstamp) \
+	src/external/blis/config/knl/kernels/3/$(DEPDIR)/$(am__dirstamp)
+src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_24x8.lo:  \
+	src/external/blis/config/knl/kernels/3/$(am__dirstamp) \
+	src/external/blis/config/knl/kernels/3/$(DEPDIR)/$(am__dirstamp)
+src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_8x24.lo:  \
 	src/external/blis/config/knl/kernels/3/$(am__dirstamp) \
 	src/external/blis/config/knl/kernels/3/$(DEPDIR)/$(am__dirstamp)
 src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_30x8_att.lo:  \
@@ -1234,7 +1258,6 @@ src/$(DEPDIR)/$(am__dirstamp):
 src/tblis_matrify.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/tblis_mutex.lo: src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-src/tblis.lo: src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 
 lib/libtblis.la: $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_DEPENDENCIES) $(EXTRA_lib_libtblis_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CXXLD)$(CXXLINK) -rpath $(libdir) $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_LIBADD) $(LIBS)
@@ -1337,6 +1360,8 @@ mostlyclean-compile:
 	-rm -f src/external/blis/config/dunnington/kernels/3/*.lo
 	-rm -f src/external/blis/config/haswell/kernels/3/*.$(OBJEXT)
 	-rm -f src/external/blis/config/haswell/kernels/3/*.lo
+	-rm -f src/external/blis/config/knl/kernels/1m/*.$(OBJEXT)
+	-rm -f src/external/blis/config/knl/kernels/1m/*.lo
 	-rm -f src/external/blis/config/knl/kernels/3/*.$(OBJEXT)
 	-rm -f src/external/blis/config/knl/kernels/3/*.lo
 	-rm -f src/external/blis/config/loongson3a/kernels/3/*.$(OBJEXT)
@@ -1362,7 +1387,6 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/tblis.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/tblis_matrify.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/tblis_mutex.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/1m/$(DEPDIR)/tblis_normfm.Plo@am__quote@
@@ -1396,8 +1420,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/haswell/kernels/3/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d4x12.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/haswell/kernels/3/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/haswell/kernels/3/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d8x6.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/knl/kernels/1m/$(DEPDIR)/lib_libknl_la-bli_packm_opt_24x8.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_12x16.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_24x8.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_30x8_att.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_8x24.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_sgemm_opt_30x16_att.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/loongson3a/kernels/3/$(DEPDIR)/lib_libloongson3a_la-bli_gemm_opt_d4x4.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/mic/kernels/3/$(DEPDIR)/lib_libmic_la-bli_dgemm_opt_30x8.Plo@am__quote@
@@ -1585,12 +1612,33 @@ src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d4x12.
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d4x12.lo `test -f 'src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d4x12.c' || echo '$(srcdir)/'`src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d4x12.c
 
+src/external/blis/config/knl/kernels/1m/lib_libknl_la-bli_packm_opt_24x8.lo: src/external/blis/config/knl/kernels/1m/bli_packm_opt_24x8.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/knl/kernels/1m/lib_libknl_la-bli_packm_opt_24x8.lo -MD -MP -MF src/external/blis/config/knl/kernels/1m/$(DEPDIR)/lib_libknl_la-bli_packm_opt_24x8.Tpo -c -o src/external/blis/config/knl/kernels/1m/lib_libknl_la-bli_packm_opt_24x8.lo `test -f 'src/external/blis/config/knl/kernels/1m/bli_packm_opt_24x8.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/1m/bli_packm_opt_24x8.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/knl/kernels/1m/$(DEPDIR)/lib_libknl_la-bli_packm_opt_24x8.Tpo src/external/blis/config/knl/kernels/1m/$(DEPDIR)/lib_libknl_la-bli_packm_opt_24x8.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/knl/kernels/1m/bli_packm_opt_24x8.c' object='src/external/blis/config/knl/kernels/1m/lib_libknl_la-bli_packm_opt_24x8.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/knl/kernels/1m/lib_libknl_la-bli_packm_opt_24x8.lo `test -f 'src/external/blis/config/knl/kernels/1m/bli_packm_opt_24x8.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/1m/bli_packm_opt_24x8.c
+
 src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_12x16.lo: src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_12x16.lo -MD -MP -MF src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_12x16.Tpo -c -o src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_12x16.lo `test -f 'src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_12x16.Tpo src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_12x16.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c' object='src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_12x16.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_12x16.lo `test -f 'src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c
+
+src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_24x8.lo: src/external/blis/config/knl/kernels/3/bli_dgemm_opt_24x8.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_24x8.lo -MD -MP -MF src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_24x8.Tpo -c -o src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_24x8.lo `test -f 'src/external/blis/config/knl/kernels/3/bli_dgemm_opt_24x8.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/3/bli_dgemm_opt_24x8.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_24x8.Tpo src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_24x8.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/knl/kernels/3/bli_dgemm_opt_24x8.c' object='src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_24x8.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_24x8.lo `test -f 'src/external/blis/config/knl/kernels/3/bli_dgemm_opt_24x8.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/3/bli_dgemm_opt_24x8.c
+
+src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_8x24.lo: src/external/blis/config/knl/kernels/3/bli_dgemm_opt_8x24.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_8x24.lo -MD -MP -MF src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_8x24.Tpo -c -o src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_8x24.lo `test -f 'src/external/blis/config/knl/kernels/3/bli_dgemm_opt_8x24.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/3/bli_dgemm_opt_8x24.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_8x24.Tpo src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_8x24.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/knl/kernels/3/bli_dgemm_opt_8x24.c' object='src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_8x24.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_8x24.lo `test -f 'src/external/blis/config/knl/kernels/3/bli_dgemm_opt_8x24.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/3/bli_dgemm_opt_8x24.c
 
 src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_30x8_att.lo: src/external/blis/config/knl/kernels/3/bli_dgemm_opt_30x8_att.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_30x8_att.lo -MD -MP -MF src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_30x8_att.Tpo -c -o src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_30x8_att.lo `test -f 'src/external/blis/config/knl/kernels/3/bli_dgemm_opt_30x8_att.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/3/bli_dgemm_opt_30x8_att.c
@@ -1692,6 +1740,7 @@ clean-libtool:
 	-rm -rf src/external/blis/config/cortex-a9/kernels/3/.libs src/external/blis/config/cortex-a9/kernels/3/_libs
 	-rm -rf src/external/blis/config/dunnington/kernels/3/.libs src/external/blis/config/dunnington/kernels/3/_libs
 	-rm -rf src/external/blis/config/haswell/kernels/3/.libs src/external/blis/config/haswell/kernels/3/_libs
+	-rm -rf src/external/blis/config/knl/kernels/1m/.libs src/external/blis/config/knl/kernels/1m/_libs
 	-rm -rf src/external/blis/config/knl/kernels/3/.libs src/external/blis/config/knl/kernels/3/_libs
 	-rm -rf src/external/blis/config/loongson3a/kernels/3/.libs src/external/blis/config/loongson3a/kernels/3/_libs
 	-rm -rf src/external/blis/config/mic/kernels/3/.libs src/external/blis/config/mic/kernels/3/_libs
@@ -1991,6 +2040,8 @@ distclean-generic:
 	-rm -f src/external/blis/config/dunnington/kernels/3/$(am__dirstamp)
 	-rm -f src/external/blis/config/haswell/kernels/3/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/external/blis/config/haswell/kernels/3/$(am__dirstamp)
+	-rm -f src/external/blis/config/knl/kernels/1m/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/external/blis/config/knl/kernels/1m/$(am__dirstamp)
 	-rm -f src/external/blis/config/knl/kernels/3/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/external/blis/config/knl/kernels/3/$(am__dirstamp)
 	-rm -f src/external/blis/config/loongson3a/kernels/3/$(DEPDIR)/$(am__dirstamp)
@@ -2024,7 +2075,7 @@ clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf src/$(DEPDIR) src/1m/$(DEPDIR) src/1v/$(DEPDIR) src/3/$(DEPDIR) src/external/blis/config/armv7a/kernels/3/$(DEPDIR) src/external/blis/config/armv8a/kernels/3/$(DEPDIR) src/external/blis/config/bgq/kernels/3/$(DEPDIR) src/external/blis/config/bulldozer/kernels/3/$(DEPDIR) src/external/blis/config/carrizo/kernels/3/$(DEPDIR) src/external/blis/config/cortex-a15/kernels/3/$(DEPDIR) src/external/blis/config/cortex-a9/kernels/3/$(DEPDIR) src/external/blis/config/dunnington/kernels/3/$(DEPDIR) src/external/blis/config/haswell/kernels/3/$(DEPDIR) src/external/blis/config/knl/kernels/3/$(DEPDIR) src/external/blis/config/loongson3a/kernels/3/$(DEPDIR) src/external/blis/config/mic/kernels/3/$(DEPDIR) src/external/blis/config/piledriver/kernels/3/$(DEPDIR) src/external/blis/config/power7/kernels/3/$(DEPDIR) src/external/blis/config/sandybridge/kernels/3/$(DEPDIR) src/impl/$(DEPDIR) src/impl/blas/$(DEPDIR) src/impl/blis/$(DEPDIR) src/impl/reference/$(DEPDIR) test/$(DEPDIR)
+	-rm -rf src/$(DEPDIR) src/1m/$(DEPDIR) src/1v/$(DEPDIR) src/3/$(DEPDIR) src/external/blis/config/armv7a/kernels/3/$(DEPDIR) src/external/blis/config/armv8a/kernels/3/$(DEPDIR) src/external/blis/config/bgq/kernels/3/$(DEPDIR) src/external/blis/config/bulldozer/kernels/3/$(DEPDIR) src/external/blis/config/carrizo/kernels/3/$(DEPDIR) src/external/blis/config/cortex-a15/kernels/3/$(DEPDIR) src/external/blis/config/cortex-a9/kernels/3/$(DEPDIR) src/external/blis/config/dunnington/kernels/3/$(DEPDIR) src/external/blis/config/haswell/kernels/3/$(DEPDIR) src/external/blis/config/knl/kernels/1m/$(DEPDIR) src/external/blis/config/knl/kernels/3/$(DEPDIR) src/external/blis/config/loongson3a/kernels/3/$(DEPDIR) src/external/blis/config/mic/kernels/3/$(DEPDIR) src/external/blis/config/piledriver/kernels/3/$(DEPDIR) src/external/blis/config/power7/kernels/3/$(DEPDIR) src/external/blis/config/sandybridge/kernels/3/$(DEPDIR) src/impl/$(DEPDIR) src/impl/blas/$(DEPDIR) src/impl/blis/$(DEPDIR) src/impl/reference/$(DEPDIR) test/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -2072,7 +2123,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf src/$(DEPDIR) src/1m/$(DEPDIR) src/1v/$(DEPDIR) src/3/$(DEPDIR) src/external/blis/config/armv7a/kernels/3/$(DEPDIR) src/external/blis/config/armv8a/kernels/3/$(DEPDIR) src/external/blis/config/bgq/kernels/3/$(DEPDIR) src/external/blis/config/bulldozer/kernels/3/$(DEPDIR) src/external/blis/config/carrizo/kernels/3/$(DEPDIR) src/external/blis/config/cortex-a15/kernels/3/$(DEPDIR) src/external/blis/config/cortex-a9/kernels/3/$(DEPDIR) src/external/blis/config/dunnington/kernels/3/$(DEPDIR) src/external/blis/config/haswell/kernels/3/$(DEPDIR) src/external/blis/config/knl/kernels/3/$(DEPDIR) src/external/blis/config/loongson3a/kernels/3/$(DEPDIR) src/external/blis/config/mic/kernels/3/$(DEPDIR) src/external/blis/config/piledriver/kernels/3/$(DEPDIR) src/external/blis/config/power7/kernels/3/$(DEPDIR) src/external/blis/config/sandybridge/kernels/3/$(DEPDIR) src/impl/$(DEPDIR) src/impl/blas/$(DEPDIR) src/impl/blis/$(DEPDIR) src/impl/reference/$(DEPDIR) test/$(DEPDIR)
+	-rm -rf src/$(DEPDIR) src/1m/$(DEPDIR) src/1v/$(DEPDIR) src/3/$(DEPDIR) src/external/blis/config/armv7a/kernels/3/$(DEPDIR) src/external/blis/config/armv8a/kernels/3/$(DEPDIR) src/external/blis/config/bgq/kernels/3/$(DEPDIR) src/external/blis/config/bulldozer/kernels/3/$(DEPDIR) src/external/blis/config/carrizo/kernels/3/$(DEPDIR) src/external/blis/config/cortex-a15/kernels/3/$(DEPDIR) src/external/blis/config/cortex-a9/kernels/3/$(DEPDIR) src/external/blis/config/dunnington/kernels/3/$(DEPDIR) src/external/blis/config/haswell/kernels/3/$(DEPDIR) src/external/blis/config/knl/kernels/1m/$(DEPDIR) src/external/blis/config/knl/kernels/3/$(DEPDIR) src/external/blis/config/loongson3a/kernels/3/$(DEPDIR) src/external/blis/config/mic/kernels/3/$(DEPDIR) src/external/blis/config/piledriver/kernels/3/$(DEPDIR) src/external/blis/config/power7/kernels/3/$(DEPDIR) src/external/blis/config/sandybridge/kernels/3/$(DEPDIR) src/impl/$(DEPDIR) src/impl/blas/$(DEPDIR) src/impl/blis/$(DEPDIR) src/impl/reference/$(DEPDIR) test/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

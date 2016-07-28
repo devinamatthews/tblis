@@ -788,7 +788,7 @@ namespace MArray
             }
     };
 
-    template <typename T, typename Allocator=aligned_allocator<T, MARRAY_BASE_ALIGNMENT>>
+    template <typename T, typename Allocator=std::allocator<T>>
     class varray : protected varray_view<T>, private Allocator
     {
         template <typename T_> friend class const_varray_view;

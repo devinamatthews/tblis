@@ -660,6 +660,8 @@ INSTANTIATE_TYPES_FOR_CONFIGS
 IMPORT_CONFIGS
 ENABLE_INTEL_COMPILER_FALSE
 ENABLE_INTEL_COMPILER_TRUE
+IS_OSX_FALSE
+IS_OSX_TRUE
 ENABLE_SANDYBRIDGE_FALSE
 ENABLE_SANDYBRIDGE_TRUE
 ENABLE_POWER7_FALSE
@@ -693,8 +695,8 @@ ENABLE_ARMV7A_TRUE
 HAVE_BLIS_FALSE
 HAVE_BLIS_TRUE
 blis_LIBS
-CXXCPP
 OPENMP_CXXFLAGS
+CXXCPP
 ENABLE_BLAS_FALSE
 ENABLE_BLAS_TRUE
 HAVE_CXX11
@@ -7559,91 +7561,9 @@ _ACEOF
 
 
 #
-# Determine threading options
+# Check for memkind
 #
-
-# Check whether --enable-threading was given.
-if test "${enable_threading+set}" = set; then :
-  enableval=$enable_threading; thread_model=$enable_threading
-else
-  thread_model=no
-fi
-
-
-if test x"$thread_model" = xyes; then
-    thread_model=auto
-fi
-
-if test x"$thread_model" = xopenmp -o x"$thread_model" = xauto; then
-
-  OPENMP_CXXFLAGS=
-  # Check whether --enable-openmp was given.
-if test "${enable_openmp+set}" = set; then :
-  enableval=$enable_openmp;
-fi
-
-  if test "$enable_openmp" != no; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $CXX option to support OpenMP" >&5
-$as_echo_n "checking for $CXX option to support OpenMP... " >&6; }
-if ${ac_cv_prog_cxx_openmp+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#ifndef _OPENMP
- choke me
-#endif
-#include <omp.h>
-int main () { return omp_get_num_threads (); }
-
-_ACEOF
-if ac_fn_cxx_try_link "$LINENO"; then :
-  ac_cv_prog_cxx_openmp='none needed'
-else
-  ac_cv_prog_cxx_openmp='unsupported'
-	  	  	  	  	  	  	                                	  	  	  	  	  	  for ac_option in -fopenmp -xopenmp -openmp -mp -omp -qsmp=omp -homp \
-                           -Popenmp --openmp; do
-	    ac_save_CXXFLAGS=$CXXFLAGS
-	    CXXFLAGS="$CXXFLAGS $ac_option"
-	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#ifndef _OPENMP
- choke me
-#endif
-#include <omp.h>
-int main () { return omp_get_num_threads (); }
-
-_ACEOF
-if ac_fn_cxx_try_link "$LINENO"; then :
-  ac_cv_prog_cxx_openmp=$ac_option
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-	    CXXFLAGS=$ac_save_CXXFLAGS
-	    if test "$ac_cv_prog_cxx_openmp" != unsupported; then
-	      break
-	    fi
-	  done
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_prog_cxx_openmp" >&5
-$as_echo "$ac_cv_prog_cxx_openmp" >&6; }
-    case $ac_cv_prog_cxx_openmp in #(
-      "none needed" | unsupported)
-	;; #(
-      *)
-	OPENMP_CXXFLAGS=$ac_cv_prog_cxx_openmp ;;
-    esac
-  fi
-
-
-    CPPFLAGS="$CPPFLAGS $OPENMP_CXXFLAGS"
-    LDFLAGS="$LDFLAGS $OPENMP_CXXFLAGS"
-    ac_ext=cpp
+ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -7914,7 +7834,170 @@ fi
 done
 
 
-ac_fn_cxx_check_header_mongrel "$LINENO" "omp.h" "ac_cv_header_omp_h" "$ac_includes_default"
+for ac_header in hbwmalloc.h memkind.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_cxx_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing hbw_malloc" >&5
+$as_echo_n "checking for library containing hbw_malloc... " >&6; }
+if ${ac_cv_search_hbw_malloc+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char hbw_malloc ();
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+return hbw_malloc ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' memkind; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_search_hbw_malloc=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_hbw_malloc+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_hbw_malloc+:} false; then :
+
+else
+  ac_cv_search_hbw_malloc=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_hbw_malloc" >&5
+$as_echo "$ac_cv_search_hbw_malloc" >&6; }
+ac_res=$ac_cv_search_hbw_malloc
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+
+#
+# Determine threading options
+#
+
+# Check whether --enable-threading was given.
+if test "${enable_threading+set}" = set; then :
+  enableval=$enable_threading; thread_model=$enable_threading
+else
+  thread_model=no
+fi
+
+
+if test x"$thread_model" = xyes; then
+    thread_model=auto
+fi
+
+if test x"$thread_model" = xopenmp -o x"$thread_model" = xauto; then
+
+  OPENMP_CXXFLAGS=
+  # Check whether --enable-openmp was given.
+if test "${enable_openmp+set}" = set; then :
+  enableval=$enable_openmp;
+fi
+
+  if test "$enable_openmp" != no; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $CXX option to support OpenMP" >&5
+$as_echo_n "checking for $CXX option to support OpenMP... " >&6; }
+if ${ac_cv_prog_cxx_openmp+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifndef _OPENMP
+ choke me
+#endif
+#include <omp.h>
+int main () { return omp_get_num_threads (); }
+
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_prog_cxx_openmp='none needed'
+else
+  ac_cv_prog_cxx_openmp='unsupported'
+	  	  	  	  	  	  	                                	  	  	  	  	  	  for ac_option in -fopenmp -xopenmp -openmp -mp -omp -qsmp=omp -homp \
+                           -Popenmp --openmp; do
+	    ac_save_CXXFLAGS=$CXXFLAGS
+	    CXXFLAGS="$CXXFLAGS $ac_option"
+	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifndef _OPENMP
+ choke me
+#endif
+#include <omp.h>
+int main () { return omp_get_num_threads (); }
+
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_prog_cxx_openmp=$ac_option
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+	    CXXFLAGS=$ac_save_CXXFLAGS
+	    if test "$ac_cv_prog_cxx_openmp" != unsupported; then
+	      break
+	    fi
+	  done
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_prog_cxx_openmp" >&5
+$as_echo "$ac_cv_prog_cxx_openmp" >&6; }
+    case $ac_cv_prog_cxx_openmp in #(
+      "none needed" | unsupported)
+	;; #(
+      *)
+	OPENMP_CXXFLAGS=$ac_cv_prog_cxx_openmp ;;
+    esac
+  fi
+
+
+    CPPFLAGS="$CPPFLAGS $OPENMP_CXXFLAGS"
+    LDFLAGS="$LDFLAGS $OPENMP_CXXFLAGS"
+    ac_fn_cxx_check_header_mongrel "$LINENO" "omp.h" "ac_cv_header_omp_h" "$ac_includes_default"
 if test "x$ac_cv_header_omp_h" = xyes; then :
   thread_model=openmp
 else
@@ -8256,6 +8339,15 @@ fi
 else
   ENABLE_SANDYBRIDGE_TRUE='#'
   ENABLE_SANDYBRIDGE_FALSE=
+fi
+
+
+ if test `uname -s` = Darwin; then
+  IS_OSX_TRUE=
+  IS_OSX_FALSE='#'
+else
+  IS_OSX_TRUE='#'
+  IS_OSX_FALSE=
 fi
 
 
@@ -22502,6 +22594,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_SANDYBRIDGE_TRUE}" && test -z "${ENABLE_SANDYBRIDGE_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_SANDYBRIDGE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${IS_OSX_TRUE}" && test -z "${IS_OSX_FALSE}"; then
+  as_fn_error $? "conditional \"IS_OSX\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_INTEL_COMPILER_TRUE}" && test -z "${ENABLE_INTEL_COMPILER_FALSE}"; then

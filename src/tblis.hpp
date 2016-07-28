@@ -11,15 +11,26 @@
 #define NDEBUG
 #endif
 
-namespace tblis
-{
+#include <cassert>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
 
-void tblis_init();
+#include <algorithm>
+#include <list>
+#include <memory>
+#include <mutex>
+#include <ostream>
+#include <random>
+#include <string>
+#include <vector>
 
-void tblis_finalize();
+#ifdef __MACH__
+#include <mach/mach_time.h>
+#endif
 
-}
-
+#include "tblis_aligned_allocator.hpp"
 #include "tblis_util.hpp"
 
 #define _DEFINED_SCOMPLEX

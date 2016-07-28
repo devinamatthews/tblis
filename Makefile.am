@@ -40,8 +40,7 @@ lib_libtblis_la_SOURCES = \
 	src/impl/tensor_impl.cxx \
 	\
 	src/tblis_matrify.cxx \
-	src/tblis_mutex.cxx \
-	src/tblis.cxx
+	src/tblis_mutex.cxx
 	
 noinst_LTLIBRARIES =
 lib_libtblis_la_LIBADD =
@@ -128,13 +127,20 @@ endif
 if ENABLE_KNL
 noinst_LTLIBRARIES += lib/libknl.la
 lib_libtblis_la_LIBADD += lib/libknl.la
-lib_libknl_la_SOURCES = src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c \
+lib_libknl_la_SOURCES = src/external/blis/config/knl/kernels/1m/bli_packm_opt_24x8.c \
+					    src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c \
+					    src/external/blis/config/knl/kernels/3/bli_dgemm_opt_24x8.c \
+					    src/external/blis/config/knl/kernels/3/bli_dgemm_opt_8x24.c \
 					    src/external/blis/config/knl/kernels/3/bli_dgemm_opt_30x8_att.c \
 					    src/external/blis/config/knl/kernels/3/bli_sgemm_opt_30x16_att.c
 if ENABLE_INTEL_COMPILER
 lib_libknl_la_CFLAGS = -Isrc/external/blis/config/knl -xMIC-AVX512
 else
+if IS_OSX
+lib_libknl_la_CFLAGS = -Isrc/external/blis/config/knl -mavx512f -mavx512pf -mfpmath=sse -march=knl -Wa,-march=knl
+else
 lib_libknl_la_CFLAGS = -Isrc/external/blis/config/knl -mavx512f -mavx512pf -mfpmath=sse -march=knl
+endif
 endif
 endif
 

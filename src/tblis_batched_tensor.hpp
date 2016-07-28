@@ -365,7 +365,7 @@ class batched_tensor_view : protected const_batched_tensor_view<T>
         }
 };
 
-template <typename T, typename Allocator=MArray::aligned_allocator<T, MARRAY_BASE_ALIGNMENT>>
+template <typename T, typename Allocator=aligned_allocator<T>>
 class batched_tensor : protected batched_tensor_view<T>, private Allocator
 {
     protected:

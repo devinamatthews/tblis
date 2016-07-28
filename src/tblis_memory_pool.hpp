@@ -3,6 +3,10 @@
 
 #include "tblis.hpp"
 
+#if TBLIS_HAVE_HBWMALLOC_H
+#include <hbwmalloc.h>
+#endif
+
 namespace tblis
 {
 
@@ -82,7 +86,14 @@ class MemoryPool
         {
             std::lock_guard<Mutex> guard(_lock);
 
-            for (auto& entry : _free_list) free(entry.first);
+            for (auto& entry : _free_list)
+            {
+#if TBLIS_HAVE_HBWMALLOC_H
+                hbw_free(entry.first);
+#else
+                free(entry.first);
+#endif
+            }
             _free_list.clear();
         }
 
@@ -118,7 +129,11 @@ class MemoryPool
 
             if (ptr == NULL)
             {
+#if TBLIS_HAVE_HBWMALLOC_H
+                int ret = hbw_posix_memalign(&ptr, alignment, size);
+#else
                 int ret = posix_memalign(&ptr, alignment, size);
+#endif
                 if (ret != 0)
                 {
                     perror("posix_memalign");

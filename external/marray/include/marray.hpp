@@ -12,16 +12,6 @@
 #include "miterator.hpp"
 #include "utility.hpp"
 
-#define VECTOR_ALIGNMENT 16
-
-#ifndef MARRAY_BASE_ALIGNMENT
-#define MARRAY_BASE_ALIGNMENT 64
-#endif
-
-#ifndef MARRAY_STRIDE_ALIGNMENT
-#define MARRAY_STRIDE_ALIGNMENT VECTOR_ALIGNMENT
-#endif
-
 #ifndef MARRAY_DEFAULT_LAYOUT
 #define MARRAY_DEFAULT_LAYOUT ROW_MAJOR
 #endif
@@ -47,44 +37,6 @@ void dgemm_(const char* transa, const char* transb,
 
 namespace MArray
 {
-    namespace detail
-    {
-        inline size_t align(size_t n, size_t alignment)
-        {
-            return ((n+alignment-1)/alignment)*alignment;
-        }
-    }
-
-    template <typename T, size_t N> struct aligned_allocator
-    {
-        typedef T value_type;
-
-        aligned_allocator() {}
-        template <typename U, size_t M> aligned_allocator(const aligned_allocator<U, M>& other) {}
-
-        T* allocate(size_t n)
-        {
-            void* ptr;
-            int ret = posix_memalign(&ptr, N, n*sizeof(T));
-            if (ret != 0) throw std::bad_alloc();
-            return (T*)ptr;
-        }
-
-        void deallocate(T* ptr, size_t n)
-        {
-            free(ptr);
-        }
-
-        template<class U>
-        struct rebind { typedef aligned_allocator<U, N> other; };
-    };
-
-    template <typename T, size_t N, typename U, size_t M>
-    bool operator==(const aligned_allocator<T, N>&, const aligned_allocator<U, M>&) { return true; }
-
-    template <typename T, size_t N, typename U, size_t M>
-    bool operator!=(const aligned_allocator<T, N>&, const aligned_allocator<U, M>&) { return false; }
-
     namespace slice
     {
         /*
@@ -2481,7 +2433,7 @@ namespace MArray
             using base::dimension;
     };
 
-    template <typename T, unsigned ndim, typename Allocator=aligned_allocator<T, MARRAY_BASE_ALIGNMENT>>
+    template <typename T, unsigned ndim, typename Allocator=std::allocator<T>>
     class marray : protected marray_view<T, ndim>, private Allocator
     {
         template <typename T_, unsigned ndim_> friend class const_marray_view;
@@ -3278,11 +3230,11 @@ namespace MArray
      */
     template <typename T> using const_row_view = const_marray_view<T, 1>;
     template <typename T> using row_view = marray_view<T, 1>;
-    template <typename T, typename Allocator=aligned_allocator<T, MARRAY_BASE_ALIGNMENT>> using row = marray<T, 1, Allocator>;
+    template <typename T, typename Allocator=std::allocator<T>> using row = marray<T, 1, Allocator>;
 
     template <typename T> using const_matrix_view = const_marray_view<T, 2>;
     template <typename T> using matrix_view = marray_view<T, 2>;
-    template <typename T, typename Allocator=aligned_allocator<T, MARRAY_BASE_ALIGNMENT>> using matrix = marray<T, 2, Allocator>;
+    template <typename T, typename Allocator=std::allocator<T>> using matrix = marray<T, 2, Allocator>;
 
     template <typename T, unsigned ndim>
     void copy(const_marray_view<T, ndim> a, marray_view<T, ndim> b)

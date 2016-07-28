@@ -24,7 +24,6 @@ using namespace std;
 using namespace tblis;
 using namespace tblis::util;
 using namespace tblis::impl;
-using namespace LAWrap;
 
 namespace tblis
 {
@@ -189,20 +188,20 @@ struct gemm_experiment
             }
             else if (Algorithm == BLAS)
             {
-                gemm('N', 'N', m, n, k,
-                     1.0, A.data(), m,
-                          B.data(), k,
-                     0.0, C.data(), m);
+                LAWrap::gemm('N', 'N', m, n, k,
+                             1.0, A.data(), m,
+                                  B.data(), k,
+                             0.0, C.data(), m);
             }
             else if (Algorithm == BLAS_COPY)
             {
-                copy(m*k, A.data(), 1, A_copy.data(), 1);
-                copy(k*n, B.data(), 1, B_copy.data(), 1);
-                gemm('N', 'N', m, n, k,
-                     1.0, A_copy.data(), m,
-                          B_copy.data(), k,
-                     0.0, C_copy.data(), m);
-                copy(m*n, C_copy.data(), 1, C.data(), 1);
+                LAWrap::copy(m*k, A.data(), 1, A_copy.data(), 1);
+                LAWrap::copy(k*n, B.data(), 1, B_copy.data(), 1);
+                LAWrap::gemm('N', 'N', m, n, k,
+                             1.0, A_copy.data(), m,
+                                  B_copy.data(), k,
+                             0.0, C_copy.data(), m);
+                LAWrap::copy(m*n, C_copy.data(), 1, C.data(), 1);
             }
         });
         double gflops = 2*m*n*k*1e-9;

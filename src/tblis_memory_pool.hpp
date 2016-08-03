@@ -123,7 +123,11 @@ class MemoryPool
                 }
                 else
                 {
+#if TBLIS_HAVE_HBWMALLOC_H
+                    hbw_free(entry.first);
+#else
                     free(entry.first);
+#endif
                 }
             }
 

@@ -52,7 +52,7 @@ gemm_thread_config make_gemm_thread_config(int nthread, idx_type m, idx_type n, 
     int ic_nt, jc_nt;
     partition_2x2(nthread, m*2, n, ic_nt, jc_nt);
 
-    int jr_nt;
+    int ir_nt = 1, jr_nt;
     for (jr_nt = 3;jr_nt > 1;jr_nt--)
     {
         if (jc_nt%jr_nt == 0)
@@ -62,7 +62,16 @@ gemm_thread_config make_gemm_thread_config(int nthread, idx_type m, idx_type n, 
         }
     }
 
-    return {jc_nt, ic_nt, jr_nt, 1};
+    int jc_nt_ev = envtol("BLIS_JC_NT", 0);
+    int ic_nt_ev = envtol("BLIS_IC_NT", 0);
+    int jr_nt_ev = envtol("BLIS_JR_NT", 0);
+    int ir_nt_ev = envtol("BLIS_IR_NT", 0);
+    if (jc_nt_ev) jc_nt = jc_nt_ev;
+    if (ic_nt_ev) ic_nt = ic_nt_ev;
+    if (jr_nt_ev) jr_nt = jr_nt_ev;
+    if (ir_nt_ev) ir_nt = ir_nt_ev;
+
+    return {jc_nt, ic_nt, jr_nt, ir_nt};
 }
 
 template <typename Config, typename Child, typename... Children>

@@ -119,8 +119,7 @@ void GenericMicroKernel(stride_type k,
                         const T* restrict alpha,
                         const T* restrict p_a, const T* restrict p_b,
                         const T* restrict beta,
-                        T* restrict p_c, stride_type rs_c, stride_type cs_c,
-                        const void* restrict auxinfo, const void* restrict cntx)
+                        T* restrict p_c, stride_type rs_c, stride_type cs_c)
 {
     T p_ab[MR*NR] __attribute__((aligned(64))) = {};
 

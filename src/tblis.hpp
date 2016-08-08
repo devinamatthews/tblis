@@ -11,11 +11,9 @@
 #define NDEBUG
 #endif
 
-#include <cassert>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
-#include <ctime>
 
 #include <algorithm>
 #include <list>
@@ -25,10 +23,6 @@
 #include <random>
 #include <string>
 #include <vector>
-
-#ifdef __MACH__
-#include <mach/mach_time.h>
-#endif
 
 #include "tblis_aligned_allocator.hpp"
 #include "tblis_util.hpp"

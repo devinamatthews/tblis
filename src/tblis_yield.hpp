@@ -1,7 +1,7 @@
 #ifndef _TBLIS_YIELD_HPP_
 #define _TBLIS_YIELD_HPP_
 
-#include "tblis.hpp"
+#include "tblis_config.hpp"
 
 #if TBLIS_ARCH_MIC
 #include <immintrin.h>

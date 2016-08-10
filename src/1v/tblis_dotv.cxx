@@ -1,4 +1,7 @@
-#include "tblis.hpp"
+#include "tblis_dotv.hpp"
+
+#include "tblis_config.hpp"
+#include "tblis_assert.hpp"
 
 namespace tblis
 {
@@ -70,7 +73,7 @@ void tblis_dotv_ref(thread_communicator& comm,
 template <typename T>
 void tblis_dotv(const_row_view<T> A, const_row_view<T> B, T& dot)
 {
-    assert(A.length() == B.length());
+    TBLIS_ASSERT(A.length() == B.length());
     tblis_dotv(false, false,
                A.length(), A.data(), A.stride(),
                            B.data(), B.stride(), dot);

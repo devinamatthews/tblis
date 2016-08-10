@@ -205,6 +205,11 @@ using enable_if_not_similar = enable_if<!is_similar<T,U>::value,V>;
 template <typename T, typename U, typename V=void>
 using enable_if_not_similar_t = typename enable_if_not_similar<T,U,V>::type;
 
+template <typename... Args> struct has_member_helper;
+template <typename... Args>
+using has_member = stl_ext::conditional_t<false,
+    has_member_helper<Args...>,void>;
+
 }
 
 #endif

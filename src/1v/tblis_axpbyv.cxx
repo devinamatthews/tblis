@@ -1,4 +1,7 @@
-#include "tblis.hpp"
+#include "tblis_axpbyv.hpp"
+
+#include "tblis_config.hpp"
+#include "tblis_assert.hpp"
 
 namespace tblis
 {
@@ -60,7 +63,7 @@ void tblis_axpbyv_ref(thread_communicator& comm,
 template <typename T>
 void tblis_axpbyv(T alpha, const_row_view<T> A, T beta, row_view<T> B)
 {
-    assert(A.length() == B.length());
+    TBLIS_ASSERT(A.length() == B.length());
     tblis_axpbyv(false, A.length(), alpha, A.data(), A.stride(),
                                      beta, B.data(), B.stride());
 }

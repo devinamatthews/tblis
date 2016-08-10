@@ -474,11 +474,22 @@ std::ostream& operator<<(std::ostream& os, const std::pair<T, U>& t)
     return os;
 }
 
-template<typename T> std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
 {
     os << "[";
     if (!v.empty()) os << v[0];
     for (size_t i = 1;i < v.size();i++) os << ", " << v[i];
+    os << "]";
+    return os;
+}
+
+template <typename T, size_t N>
+std::ostream& operator<<(std::ostream& os, const std::array<T,N>& v)
+{
+    os << "[";
+    if (N) os << v[0];
+    for (int i = 1;i < N;i++) os << ", " << v[i];
     os << "]";
     return os;
 }

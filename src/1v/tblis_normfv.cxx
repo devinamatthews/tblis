@@ -1,4 +1,6 @@
-#include "tblis.hpp"
+#include "tblis_normfv.hpp"
+
+#include "tblis_config.hpp"
 
 namespace tblis
 {

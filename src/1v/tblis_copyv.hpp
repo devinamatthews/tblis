@@ -1,7 +1,8 @@
 #ifndef _TBLIS_COPYV_HPP_
 #define _TBLIS_COPYV_HPP_
 
-#include "tblis.hpp"
+#include "tblis_marray.hpp"
+#include "tblis_thread.hpp"
 
 namespace tblis
 {

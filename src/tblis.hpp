@@ -1,29 +1,6 @@
 #ifndef _TBLIS_HPP_
 #define _TBLIS_HPP_
 
-#include "tblis_config.hpp"
-
-#if !defined(restrict) && defined(_tblis_restrict)
-#define restrict _tblis_restrict
-#endif
-
-#if !defined(NDEBUG) && !defined(TBLIS_DEBUG)
-#define NDEBUG
-#endif
-
-#include <cstdarg>
-#include <cstdio>
-#include <cstdlib>
-
-#include <algorithm>
-#include <list>
-#include <memory>
-#include <mutex>
-#include <ostream>
-#include <random>
-#include <string>
-#include <vector>
-
 #include "tblis_aligned_allocator.hpp"
 #include "tblis_util.hpp"
 
@@ -71,10 +48,10 @@ extern "C"
 
 #include "1m/tblis_normfm.hpp"
 
-#include "3/tblis_gemm.hpp"
-#include "3/tblis_partm.hpp"
-#include "3/tblis_packm.hpp"
-#include "3/tblis_gemm_ukr.hpp"
+#include "3m/tblis_gemm.hpp"
+#include "3m/tblis_partm.hpp"
+#include "3m/tblis_packm.hpp"
+#include "3m/tblis_gemm_ukr.hpp"
 
 #include "tblis_matrify.hpp"
 #include "tblis_batched_tensor_contract.hpp"

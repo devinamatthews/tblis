@@ -1,7 +1,8 @@
 #ifndef _TBLIS_ASUMV_HPP_
 #define _TBLIS_ASUMV_HPP_
 
-#include "tblis.hpp"
+#include "tblis_marray.hpp"
+#include "tblis_thread.hpp"
 
 namespace tblis
 {

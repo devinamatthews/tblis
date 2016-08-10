@@ -1,4 +1,7 @@
-#include "tblis.hpp"
+#include "tblis_copyv.hpp"
+
+#include "tblis_config.hpp"
+#include "tblis_assert.hpp"
 
 namespace tblis
 {
@@ -60,7 +63,7 @@ void tblis_copyv_ref(thread_communicator& comm,
 template <typename T>
 void tblis_copyv(const_row_view<T> A, row_view<T> B)
 {
-    assert(A.length() == B.length());
+    TBLIS_ASSERT(A.length() == B.length());
     tblis_copyv(false, A.length(), A.data(), A.stride(),
                                    B.data(), B.stride());
 }

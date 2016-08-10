@@ -1,4 +1,4 @@
-#include "tblis.hpp"
+#include "tblis_normfm.hpp"
 
 namespace tblis
 {
@@ -151,22 +151,6 @@ void tblis_normfm(const_scatter_matrix_view<T> A, T& norm)
 }
 
 template <typename T>
-T tblis_normfm(const_matrix_view<T> A)
-{
-    T norm;
-    tblis_normfm(A, norm);
-    return norm;
-}
-
-template <typename T>
-T tblis_normfm(const_scatter_matrix_view<T> A)
-{
-    T norm;
-    tblis_normfm(A, norm);
-    return norm;
-}
-
-template <typename T>
 void tblis_normfm(idx_type m, idx_type n,
                   const T* A,
                   stride_type rs_A, stride_type cs_A,
@@ -226,46 +210,6 @@ void tblis_normfm(idx_type m, idx_type n,
     );
 }
 
-template <typename T>
-T tblis_normfm(idx_type m, idx_type n,
-               const T* A,
-               stride_type rs_A, stride_type cs_A)
-{
-    T norm;
-    tblis_normfm(m, n, A, rs_A, cs_A, norm);
-    return norm;
-}
-
-template <typename T>
-T tblis_normfm(idx_type m, idx_type n,
-               const T* A,
-               const stride_type* rscat_A, stride_type cs_A)
-{
-    T norm;
-    tblis_normfm(m, n, A, rscat_A, cs_A, norm);
-    return norm;
-}
-
-template <typename T>
-T tblis_normfm(idx_type m, idx_type n,
-                  const T* A,
-                  stride_type rs_A, const stride_type* cscat_A)
-{
-    T norm;
-    tblis_normfm(m, n, A, rs_A, cscat_A, norm);
-    return norm;
-}
-
-template <typename T>
-T tblis_normfm(idx_type m, idx_type n,
-               const T* A,
-               const stride_type* rscat_A, const stride_type* cscat_A)
-{
-    T norm;
-    tblis_normfm(m, n, A, rscat_A, cscat_A, norm);
-    return norm;
-}
-
 #define INSTANTIATE_FOR_TYPE(T) \
 template void tblis_normfm_ref(thread_communicator& comm, idx_type m, idx_type n, const T* A,       stride_type     rs_A,       stride_type     cs_A, T& norm); \
 template void tblis_normfm_ref(thread_communicator& comm, idx_type m, idx_type n, const T* A, const stride_type* rscat_A,       stride_type     cs_A, T& norm); \
@@ -273,16 +217,10 @@ template void tblis_normfm_ref(thread_communicator& comm, idx_type m, idx_type n
 template void tblis_normfm_ref(thread_communicator& comm, idx_type m, idx_type n, const T* A, const stride_type* rscat_A, const stride_type* cscat_A, T& norm); \
 template void tblis_normfm(        const_matrix_view<T> A, T& norm); \
 template void tblis_normfm(const_scatter_matrix_view<T> A, T& norm); \
-template    T tblis_normfm(        const_matrix_view<T> A); \
-template    T tblis_normfm(const_scatter_matrix_view<T> A); \
 template void tblis_normfm(idx_type m, idx_type n, const T* A,       stride_type     rs_A,       stride_type     cs_A, T& norm); \
 template void tblis_normfm(idx_type m, idx_type n, const T* A, const stride_type* rscat_A,       stride_type     cs_A, T& norm); \
 template void tblis_normfm(idx_type m, idx_type n, const T* A,       stride_type     rs_A, const stride_type* cscat_A, T& norm); \
-template void tblis_normfm(idx_type m, idx_type n, const T* A, const stride_type* rscat_A, const stride_type* cscat_A, T& norm); \
-template    T tblis_normfm(idx_type m, idx_type n, const T* A,       stride_type     rs_A,       stride_type     cs_A); \
-template    T tblis_normfm(idx_type m, idx_type n, const T* A, const stride_type* rscat_A,       stride_type     cs_A); \
-template    T tblis_normfm(idx_type m, idx_type n, const T* A,       stride_type     rs_A, const stride_type* cscat_A); \
-template    T tblis_normfm(idx_type m, idx_type n, const T* A, const stride_type* rscat_A, const stride_type* cscat_A);
+template void tblis_normfm(idx_type m, idx_type n, const T* A, const stride_type* rscat_A, const stride_type* cscat_A, T& norm);
 #include "tblis_instantiate_for_types.hpp"
 
 }

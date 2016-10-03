@@ -826,7 +826,8 @@ namespace MArray
 
             static iterator _uninitialized_move_n_if(iterator first, size_type n, iterator result)
             {
-                if (std::is_nothrow_move_constructible<T>::value)
+                if (std::is_nothrow_move_constructible<T>::value ||
+                    !std::is_copy_constructible<T>::value)
                 {
                     auto it = std::make_move_iterator(first);
                     return _construct(it, it+n, result);

@@ -23,9 +23,9 @@ int tensor_contract(T alpha, const_tensor_view<T> A, std::string idx_A,
                     T  beta,       tensor_view<T> C, std::string idx_C);
 
 template <typename T>
-int tensor_contract_ref(const std::vector<idx_type>& len_AB,
-                        const std::vector<idx_type>& len_AC,
-                        const std::vector<idx_type>& len_BC,
+int tensor_contract_ref(const std::vector<len_type>& len_AB,
+                        const std::vector<len_type>& len_AC,
+                        const std::vector<len_type>& len_BC,
                         T alpha, const T* A, const std::vector<stride_type>& stride_A_AB,
                                              const std::vector<stride_type>& stride_A_AC,
                                  const T* B, const std::vector<stride_type>& stride_B_AB,
@@ -34,9 +34,9 @@ int tensor_contract_ref(const std::vector<idx_type>& len_AB,
                                              const std::vector<stride_type>& stride_C_BC);
 
 template <typename T>
-int tensor_contract_blas(const std::vector<idx_type>& len_AB,
-                         const std::vector<idx_type>& len_AC,
-                         const std::vector<idx_type>& len_BC,
+int tensor_contract_blas(const std::vector<len_type>& len_AB,
+                         const std::vector<len_type>& len_AC,
+                         const std::vector<len_type>& len_BC,
                          T alpha, const T* A, const std::vector<stride_type>& stride_A_AB,
                                               const std::vector<stride_type>& stride_A_AC,
                                   const T* B, const std::vector<stride_type>& stride_B_AB,
@@ -45,9 +45,9 @@ int tensor_contract_blas(const std::vector<idx_type>& len_AB,
                                               const std::vector<stride_type>& stride_C_BC);
 
 template <typename T>
-int tensor_contract_blis(const std::vector<idx_type>& len_AB,
-                         const std::vector<idx_type>& len_AC,
-                         const std::vector<idx_type>& len_BC,
+int tensor_contract_blis(const std::vector<len_type>& len_AB,
+                         const std::vector<len_type>& len_AC,
+                         const std::vector<len_type>& len_BC,
                          T alpha, const T* A, const std::vector<stride_type>& stride_A_AB,
                                               const std::vector<stride_type>& stride_A_AC,
                                   const T* B, const std::vector<stride_type>& stride_B_AB,

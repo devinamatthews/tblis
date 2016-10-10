@@ -1,25 +1,25 @@
 #ifndef _TBLIS_DOTV_HPP_
 #define _TBLIS_DOTV_HPP_
 
+#include "../../external/tci/src/tblis_thread.hpp"
 #include "tblis_marray.hpp"
-#include "tblis_thread.hpp"
 
 namespace tblis
 {
 
 template <typename T>
 void tblis_dotv_ref(thread_communicator& comm,
-                    bool conj_A, bool conj_B, idx_type n,
+                    bool conj_A, bool conj_B, len_type n,
                     const T* A, stride_type inc_A,
                     const T* B, stride_type inc_B, T& dot);
 
 template <typename T>
-void tblis_dotv(bool conj_A, bool conj_B, idx_type n,
+void tblis_dotv(bool conj_A, bool conj_B, len_type n,
                 const T* A, stride_type inc_A,
                 const T* B, stride_type inc_B, T& dot);
 
 template <typename T>
-T tblis_dotv(bool conj_A, bool conj_B, idx_type n,
+T tblis_dotv(bool conj_A, bool conj_B, len_type n,
              const T* A, stride_type inc_A,
              const T* B, stride_type inc_B);
 

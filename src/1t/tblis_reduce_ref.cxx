@@ -8,8 +8,8 @@ namespace tblis
 {
 
 template <typename T>
-int tensor_reduce_ref(reduce_t op, const std::vector<idx_type>& len_A,
-                      const T* restrict A, const std::vector<stride_type>& stride_A,
+int tensor_reduce_ref(reduce_t op, const std::vector<len_type>& len_A,
+                      const T* TBLIS_RESTRICT A, const std::vector<stride_type>& stride_A,
                       T& val, stride_type& idx)
 {
     MArray::viterator<> iter_A(len_A, stride_A);

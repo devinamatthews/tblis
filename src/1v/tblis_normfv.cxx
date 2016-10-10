@@ -7,7 +7,8 @@ namespace tblis
 
 template <typename T>
 void tblis_normfv_ref(thread_communicator& comm,
-                      idx_type n, const T* restrict A, stride_type inc_A, T& restrict norm)
+                      len_type n, const T* TBLIS_RESTRICT A, stride_type inc_A,
+                      T& TBLIS_RESTRICT norm)
 {
     norm = T();
 
@@ -15,12 +16,12 @@ void tblis_normfv_ref(thread_communicator& comm,
 
     T subnorm = T();
 
-    idx_type n_min, n_max;
+    len_type n_min, n_max;
     std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(n);
 
     if (inc_A == 1)
     {
-        for (idx_type i = n_min;i < n_max;i++)
+        for (len_type i = n_min;i < n_max;i++)
         {
             subnorm += norm2(A[i]);
         }
@@ -28,7 +29,7 @@ void tblis_normfv_ref(thread_communicator& comm,
     else
     {
         A += n_min*inc_A;
-        for (idx_type i = n_min;i < n_max;i++)
+        for (len_type i = n_min;i < n_max;i++)
         {
             subnorm += norm2(*A);
             A += inc_A;
@@ -54,7 +55,7 @@ T tblis_normfv(const_row_view<T> A)
 }
 
 template <typename T>
-void tblis_normfv(idx_type n, const T* A, stride_type inc_A, T& norm)
+void tblis_normfv(len_type n, const T* A, stride_type inc_A, T& norm)
 {
     parallelize
     (
@@ -66,7 +67,7 @@ void tblis_normfv(idx_type n, const T* A, stride_type inc_A, T& norm)
 }
 
 template <typename T>
-T tblis_normfv(idx_type n, const T* A, stride_type inc_A)
+T tblis_normfv(len_type n, const T* A, stride_type inc_A)
 {
     T norm;
     tblis_normfv(n, A, inc_A, norm);

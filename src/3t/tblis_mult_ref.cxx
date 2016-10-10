@@ -6,25 +6,25 @@ namespace tblis
 {
 
 template <typename T>
-int tensor_mult_ref(const std::vector<idx_type>& len_A,
-                    const std::vector<idx_type>& len_B,
-                    const std::vector<idx_type>& len_C,
-                    const std::vector<idx_type>& len_AB,
-                    const std::vector<idx_type>& len_AC,
-                    const std::vector<idx_type>& len_BC,
-                    const std::vector<idx_type>& len_ABC,
-                    T alpha, const T* restrict A, const std::vector<stride_type>& stride_A_A,
-                                                  const std::vector<stride_type>& stride_A_AB,
-                                                  const std::vector<stride_type>& stride_A_AC,
-                                                  const std::vector<stride_type>& stride_A_ABC,
-                             const T* restrict B, const std::vector<stride_type>& stride_B_B,
-                                                  const std::vector<stride_type>& stride_B_AB,
-                                                  const std::vector<stride_type>& stride_B_BC,
-                                                  const std::vector<stride_type>& stride_B_ABC,
-                    T  beta,       T* restrict C, const std::vector<stride_type>& stride_C_C,
-                                                  const std::vector<stride_type>& stride_C_AC,
-                                                  const std::vector<stride_type>& stride_C_BC,
-                                                  const std::vector<stride_type>& stride_C_ABC)
+int tensor_mult_ref(const std::vector<len_type>& len_A,
+                    const std::vector<len_type>& len_B,
+                    const std::vector<len_type>& len_C,
+                    const std::vector<len_type>& len_AB,
+                    const std::vector<len_type>& len_AC,
+                    const std::vector<len_type>& len_BC,
+                    const std::vector<len_type>& len_ABC,
+                    T alpha, const T* TBLIS_RESTRICT A, const std::vector<stride_type>& stride_A_A,
+                                                        const std::vector<stride_type>& stride_A_AB,
+                                                        const std::vector<stride_type>& stride_A_AC,
+                                                        const std::vector<stride_type>& stride_A_ABC,
+                             const T* TBLIS_RESTRICT B, const std::vector<stride_type>& stride_B_B,
+                                                        const std::vector<stride_type>& stride_B_AB,
+                                                        const std::vector<stride_type>& stride_B_BC,
+                                                        const std::vector<stride_type>& stride_B_ABC,
+                    T  beta,       T* TBLIS_RESTRICT C, const std::vector<stride_type>& stride_C_C,
+                                                        const std::vector<stride_type>& stride_C_AC,
+                                                        const std::vector<stride_type>& stride_C_BC,
+                                                        const std::vector<stride_type>& stride_C_ABC)
 {
     MArray::viterator<1> iter_A(len_A, stride_A_A);
     MArray::viterator<1> iter_B(len_B, stride_B_B);

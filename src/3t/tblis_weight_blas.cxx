@@ -8,9 +8,9 @@ namespace tblis
 {
 
 template <typename T>
-int tensor_weight_blas(const std::vector<idx_type>& len_AC,
-                       const std::vector<idx_type>& len_BC,
-                       const std::vector<idx_type>& len_ABC,
+int tensor_weight_blas(const std::vector<len_type>& len_AC,
+                       const std::vector<len_type>& len_BC,
+                       const std::vector<len_type>& len_ABC,
                        T alpha, const T* A, const std::vector<stride_type>& stride_A_AC,
                                             const std::vector<stride_type>& stride_A_ABC,
                                 const T* B, const std::vector<stride_type>& stride_B_BC,

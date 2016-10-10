@@ -88,43 +88,11 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@ENABLE_ARMV7A_TRUE@am__append_1 = lib/libarmv7a.la
-@ENABLE_ARMV7A_TRUE@am__append_2 = lib/libarmv7a.la
-@ENABLE_ARMV8A_TRUE@am__append_3 = lib/libarmv8a.la
-@ENABLE_ARMV8A_TRUE@am__append_4 = lib/libarmv8a.la
-@ENABLE_BGQ_TRUE@am__append_5 = lib/libbgq.la
-@ENABLE_BGQ_TRUE@am__append_6 = lib/libbgq.la
-@ENABLE_BULLDOZER_TRUE@am__append_7 = lib/libbulldozer.la
-@ENABLE_BULLDOZER_TRUE@am__append_8 = lib/libbulldozer.la
-@ENABLE_CARRIZO_TRUE@am__append_9 = lib/libcarrizo.la
-@ENABLE_CARRIZO_TRUE@am__append_10 = lib/libcarrizo.la
-@ENABLE_CORTEX_A15_TRUE@am__append_11 = lib/libcortex-a15.la
-@ENABLE_CORTEX_A15_TRUE@am__append_12 = lib/libcortex-a15.la
-@ENABLE_CORTEX_A9_TRUE@am__append_13 = lib/libcortex-a9.la
-@ENABLE_CORTEX_A9_TRUE@am__append_14 = lib/libcortex-a9.la
-@ENABLE_DUNNINGTON_TRUE@am__append_15 = lib/libdunnington.la
-@ENABLE_DUNNINGTON_TRUE@am__append_16 = lib/libdunnington.la
-@ENABLE_HASWELL_TRUE@am__append_17 = lib/libhaswell.la
-@ENABLE_HASWELL_TRUE@am__append_18 = lib/libhaswell.la
-@ENABLE_KNL_TRUE@am__append_19 = lib/libknl.la
-@ENABLE_KNL_TRUE@am__append_20 = lib/libknl.la
-@ENABLE_LOONGSON3A_TRUE@am__append_21 = lib/libloongson3a.la
-@ENABLE_LOONGSON3A_TRUE@am__append_22 = lib/libloongson3a.la
-@ENABLE_MIC_TRUE@am__append_23 = lib/libmic.la
-@ENABLE_MIC_TRUE@am__append_24 = lib/libmic.la
-@ENABLE_PILEDRIVER_TRUE@am__append_25 = lib/libpiledriver.la
-@ENABLE_PILEDRIVER_TRUE@am__append_26 = lib/libpiledriver.la
-@ENABLE_POWER7_TRUE@am__append_27 = lib/libpower7.la
-@ENABLE_POWER7_TRUE@am__append_28 = lib/libpower7.la
-@ENABLE_SANDYBRIDGE_TRUE@am__append_29 = lib/libsandybridge.la
-@ENABLE_SANDYBRIDGE_TRUE@am__append_30 = lib/libsandybridge.la
 bin_PROGRAMS = bin/test$(EXEEXT) $(am__EXEEXT_1)
-@ENABLE_BLAS_TRUE@am__append_31 = bin/bench
+@ENABLE_BLAS_TRUE@am__append_1 = bin/bench
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/aq_check_func_with_path.m4 \
-	$(top_srcdir)/m4/aq_with_package.m4 \
-	$(top_srcdir)/m4/ax_blas.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_blas.m4 \
 	$(top_srcdir)/m4/ax_cxx_compile_stdcxx_11.m4 \
 	$(top_srcdir)/m4/ax_prefix_config_h.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
@@ -138,9 +106,8 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES = src/tblis_import_configs.hpp \
-	src/tblis_instantiate_for_configs.hpp \
-	src/tblis_instantiate_for_types.hpp
+CONFIG_CLEAN_FILES = src/configs/tblis_instantiate_for_configs.hpp \
+	src/configs/tblis_instantiate_for_types.hpp
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -171,180 +138,8 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)"
 LTLIBRARIES = $(lib_LTLIBRARIES) $(noinst_LTLIBRARIES)
-lib_libarmv7a_la_LIBADD =
-am__lib_libarmv7a_la_SOURCES_DIST = src/external/blis/config/armv7a/kernels/3/bli_cgemm_kernel_2x2.S \
-	src/external/blis/config/armv7a/kernels/3/bli_dgemm_kernel_4x4.S \
-	src/external/blis/config/armv7a/kernels/3/bli_sgemm_kernel_4x4.S \
-	src/external/blis/config/armv7a/kernels/3/bli_zgemm_kernel_2x2.S \
-	src/external/blis/config/armv7a/kernels/3/bli_gemm_opt_4x4.c
+lib_libtblis_la_DEPENDENCIES =
 am__dirstamp = $(am__leading_dot)dirstamp
-@ENABLE_ARMV7A_TRUE@am_lib_libarmv7a_la_OBJECTS = src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_cgemm_kernel_2x2.lo \
-@ENABLE_ARMV7A_TRUE@	src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_dgemm_kernel_4x4.lo \
-@ENABLE_ARMV7A_TRUE@	src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_sgemm_kernel_4x4.lo \
-@ENABLE_ARMV7A_TRUE@	src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_zgemm_kernel_2x2.lo \
-@ENABLE_ARMV7A_TRUE@	src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_gemm_opt_4x4.lo
-lib_libarmv7a_la_OBJECTS = $(am_lib_libarmv7a_la_OBJECTS)
-AM_V_lt = $(am__v_lt_@AM_V@)
-am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
-am__v_lt_0 = --silent
-am__v_lt_1 = 
-lib_libarmv7a_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(lib_libarmv7a_la_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
-	-o $@
-@ENABLE_ARMV7A_TRUE@am_lib_libarmv7a_la_rpath =
-lib_libarmv8a_la_LIBADD =
-am__lib_libarmv8a_la_SOURCES_DIST =  \
-	src/external/blis/config/armv8a/kernels/3/bli_gemm_opt_4x4.c
-@ENABLE_ARMV8A_TRUE@am_lib_libarmv8a_la_OBJECTS = src/external/blis/config/armv8a/kernels/3/lib_libarmv8a_la-bli_gemm_opt_4x4.lo
-lib_libarmv8a_la_OBJECTS = $(am_lib_libarmv8a_la_OBJECTS)
-lib_libarmv8a_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(lib_libarmv8a_la_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
-	-o $@
-@ENABLE_ARMV8A_TRUE@am_lib_libarmv8a_la_rpath =
-lib_libbgq_la_LIBADD =
-am__lib_libbgq_la_SOURCES_DIST =  \
-	src/external/blis/config/bgq/kernels/3/bli_gemm_int_8x8.c
-@ENABLE_BGQ_TRUE@am_lib_libbgq_la_OBJECTS = src/external/blis/config/bgq/kernels/3/lib_libbgq_la-bli_gemm_int_8x8.lo
-lib_libbgq_la_OBJECTS = $(am_lib_libbgq_la_OBJECTS)
-lib_libbgq_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(lib_libbgq_la_CFLAGS) \
-	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-@ENABLE_BGQ_TRUE@am_lib_libbgq_la_rpath =
-lib_libbulldozer_la_LIBADD =
-am__lib_libbulldozer_la_SOURCES_DIST = src/external/blis/config/bulldozer/kernels/3/bli_gemm_asm_d4x6_fma4.c
-@ENABLE_BULLDOZER_TRUE@am_lib_libbulldozer_la_OBJECTS = src/external/blis/config/bulldozer/kernels/3/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.lo
-lib_libbulldozer_la_OBJECTS = $(am_lib_libbulldozer_la_OBJECTS)
-lib_libbulldozer_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(lib_libbulldozer_la_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
-@ENABLE_BULLDOZER_TRUE@am_lib_libbulldozer_la_rpath =
-lib_libcarrizo_la_LIBADD =
-am__lib_libcarrizo_la_SOURCES_DIST = src/external/blis/config/carrizo/kernels/3/bli_gemm_asm_d8x3.c
-@ENABLE_CARRIZO_TRUE@am_lib_libcarrizo_la_OBJECTS = src/external/blis/config/carrizo/kernels/3/lib_libcarrizo_la-bli_gemm_asm_d8x3.lo
-lib_libcarrizo_la_OBJECTS = $(am_lib_libcarrizo_la_OBJECTS)
-lib_libcarrizo_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(lib_libcarrizo_la_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
-	-o $@
-@ENABLE_CARRIZO_TRUE@am_lib_libcarrizo_la_rpath =
-lib_libcortex_a15_la_LIBADD =
-am__lib_libcortex_a15_la_SOURCES_DIST = src/external/blis/config/cortex-a15/kernels/3/bli_gemm_opt_4x4.c
-@ENABLE_CORTEX_A15_TRUE@am_lib_libcortex_a15_la_OBJECTS = src/external/blis/config/cortex-a15/kernels/3/lib_libcortex_a15_la-bli_gemm_opt_4x4.lo
-lib_libcortex_a15_la_OBJECTS = $(am_lib_libcortex_a15_la_OBJECTS)
-lib_libcortex_a15_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(lib_libcortex_a15_la_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
-@ENABLE_CORTEX_A15_TRUE@am_lib_libcortex_a15_la_rpath =
-lib_libcortex_a9_la_LIBADD =
-am__lib_libcortex_a9_la_SOURCES_DIST = src/external/blis/config/cortex-a9/kernels/3/bli_gemm_opt_4x4.c
-@ENABLE_CORTEX_A9_TRUE@am_lib_libcortex_a9_la_OBJECTS = src/external/blis/config/cortex-a9/kernels/3/lib_libcortex_a9_la-bli_gemm_opt_4x4.lo
-lib_libcortex_a9_la_OBJECTS = $(am_lib_libcortex_a9_la_OBJECTS)
-lib_libcortex_a9_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(lib_libcortex_a9_la_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
-@ENABLE_CORTEX_A9_TRUE@am_lib_libcortex_a9_la_rpath =
-lib_libdunnington_la_LIBADD =
-am__lib_libdunnington_la_SOURCES_DIST = src/external/blis/config/dunnington/kernels/3/bli_gemm_asm_d4x4.c
-@ENABLE_DUNNINGTON_TRUE@am_lib_libdunnington_la_OBJECTS = src/external/blis/config/dunnington/kernels/3/lib_libdunnington_la-bli_gemm_asm_d4x4.lo
-lib_libdunnington_la_OBJECTS = $(am_lib_libdunnington_la_OBJECTS)
-lib_libdunnington_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(lib_libdunnington_la_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
-@ENABLE_DUNNINGTON_TRUE@am_lib_libdunnington_la_rpath =
-lib_libhaswell_la_LIBADD =
-am__lib_libhaswell_la_SOURCES_DIST = src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d12x4.c \
-	src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d8x6.c \
-	src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d6x8.c \
-	src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d4x12.c
-@ENABLE_HASWELL_TRUE@am_lib_libhaswell_la_OBJECTS = src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d12x4.lo \
-@ENABLE_HASWELL_TRUE@	src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d8x6.lo \
-@ENABLE_HASWELL_TRUE@	src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d6x8.lo \
-@ENABLE_HASWELL_TRUE@	src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d4x12.lo
-lib_libhaswell_la_OBJECTS = $(am_lib_libhaswell_la_OBJECTS)
-lib_libhaswell_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(lib_libhaswell_la_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
-	-o $@
-@ENABLE_HASWELL_TRUE@am_lib_libhaswell_la_rpath =
-lib_libknl_la_LIBADD =
-am__lib_libknl_la_SOURCES_DIST =  \
-	src/external/blis/config/knl/kernels/1m/bli_packm_opt_24x8.c \
-	src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c \
-	src/external/blis/config/knl/kernels/3/bli_dgemm_opt_24x8.c \
-	src/external/blis/config/knl/kernels/3/bli_dgemm_opt_8x24.c \
-	src/external/blis/config/knl/kernels/3/bli_dgemm_opt_30x8_att.c \
-	src/external/blis/config/knl/kernels/3/bli_sgemm_opt_30x16_att.c
-@ENABLE_KNL_TRUE@am_lib_libknl_la_OBJECTS = src/external/blis/config/knl/kernels/1m/lib_libknl_la-bli_packm_opt_24x8.lo \
-@ENABLE_KNL_TRUE@	src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_12x16.lo \
-@ENABLE_KNL_TRUE@	src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_24x8.lo \
-@ENABLE_KNL_TRUE@	src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_8x24.lo \
-@ENABLE_KNL_TRUE@	src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_30x8_att.lo \
-@ENABLE_KNL_TRUE@	src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_sgemm_opt_30x16_att.lo
-lib_libknl_la_OBJECTS = $(am_lib_libknl_la_OBJECTS)
-lib_libknl_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(lib_libknl_la_CFLAGS) \
-	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-@ENABLE_KNL_TRUE@am_lib_libknl_la_rpath =
-lib_libloongson3a_la_LIBADD =
-am__lib_libloongson3a_la_SOURCES_DIST = src/external/blis/config/loongson3a/kernels/3/bli_gemm_opt_d4x4.c
-@ENABLE_LOONGSON3A_TRUE@am_lib_libloongson3a_la_OBJECTS = src/external/blis/config/loongson3a/kernels/3/lib_libloongson3a_la-bli_gemm_opt_d4x4.lo
-lib_libloongson3a_la_OBJECTS = $(am_lib_libloongson3a_la_OBJECTS)
-lib_libloongson3a_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(lib_libloongson3a_la_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
-@ENABLE_LOONGSON3A_TRUE@am_lib_libloongson3a_la_rpath =
-lib_libmic_la_LIBADD =
-am__lib_libmic_la_SOURCES_DIST =  \
-	src/external/blis/config/mic/kernels/3/bli_dgemm_opt_30x8.c \
-	src/external/blis/config/mic/kernels/3/bli_sgemm_opt_30x16.c
-@ENABLE_MIC_TRUE@am_lib_libmic_la_OBJECTS = src/external/blis/config/mic/kernels/3/lib_libmic_la-bli_dgemm_opt_30x8.lo \
-@ENABLE_MIC_TRUE@	src/external/blis/config/mic/kernels/3/lib_libmic_la-bli_sgemm_opt_30x16.lo
-lib_libmic_la_OBJECTS = $(am_lib_libmic_la_OBJECTS)
-lib_libmic_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(lib_libmic_la_CFLAGS) \
-	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-@ENABLE_MIC_TRUE@am_lib_libmic_la_rpath =
-lib_libpiledriver_la_LIBADD =
-am__lib_libpiledriver_la_SOURCES_DIST = src/external/blis/config/piledriver/kernels/3/bli_gemm_asm_d8x3.c
-@ENABLE_PILEDRIVER_TRUE@am_lib_libpiledriver_la_OBJECTS = src/external/blis/config/piledriver/kernels/3/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo
-lib_libpiledriver_la_OBJECTS = $(am_lib_libpiledriver_la_OBJECTS)
-lib_libpiledriver_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(lib_libpiledriver_la_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
-@ENABLE_PILEDRIVER_TRUE@am_lib_libpiledriver_la_rpath =
-lib_libpower7_la_LIBADD =
-am__lib_libpower7_la_SOURCES_DIST =  \
-	src/external/blis/config/power7/kernels/3/bli_gemm_opt_8x4.c
-@ENABLE_POWER7_TRUE@am_lib_libpower7_la_OBJECTS = src/external/blis/config/power7/kernels/3/lib_libpower7_la-bli_gemm_opt_8x4.lo
-lib_libpower7_la_OBJECTS = $(am_lib_libpower7_la_OBJECTS)
-lib_libpower7_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(lib_libpower7_la_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
-	-o $@
-@ENABLE_POWER7_TRUE@am_lib_libpower7_la_rpath =
-lib_libsandybridge_la_LIBADD =
-am__lib_libsandybridge_la_SOURCES_DIST = src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c
-@ENABLE_SANDYBRIDGE_TRUE@am_lib_libsandybridge_la_OBJECTS = src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo
-lib_libsandybridge_la_OBJECTS = $(am_lib_libsandybridge_la_OBJECTS)
-lib_libsandybridge_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(lib_libsandybridge_la_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
-@ENABLE_SANDYBRIDGE_TRUE@am_lib_libsandybridge_la_rpath =
-lib_libtblis_la_DEPENDENCIES = $(am__append_2) $(am__append_4) \
-	$(am__append_6) $(am__append_8) $(am__append_10) \
-	$(am__append_12) $(am__append_14) $(am__append_16) \
-	$(am__append_18) $(am__append_20) $(am__append_22) \
-	$(am__append_24) $(am__append_26) $(am__append_28) \
-	$(am__append_30)
 am_lib_libtblis_la_OBJECTS = src/1m/tblis_normfm.lo \
 	src/1v/tblis_addv.lo src/1v/tblis_asumv.lo \
 	src/1v/tblis_axpbyv.lo src/1v/tblis_axpyv.lo \
@@ -370,13 +165,16 @@ am_lib_libtblis_la_OBJECTS = src/1m/tblis_normfm.lo \
 	src/impl/reference/tensor_weight.lo src/impl/tensor_impl.lo \
 	src/tblis_matrify.lo src/tblis_mutex.lo
 lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
+AM_V_lt = $(am__v_lt_@AM_V@)
+am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+am__v_lt_0 = --silent
+am__v_lt_1 = 
 @ENABLE_BLAS_TRUE@am__EXEEXT_1 = bin/bench$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 am_bin_bench_OBJECTS = test/bench.$(OBJEXT)
 bin_bench_OBJECTS = $(am_bin_bench_OBJECTS)
 am__DEPENDENCIES_1 =
-bin_bench_DEPENDENCIES = lib/libtblis.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+bin_bench_DEPENDENCIES = lib/libtblis.la $(am__DEPENDENCIES_1)
 am_bin_test_OBJECTS = test/test.$(OBJEXT)
 bin_test_OBJECTS = $(am_bin_test_OBJECTS)
 bin_test_DEPENDENCIES = lib/libtblis.la
@@ -396,34 +194,6 @@ DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
-CPPASCOMPILE = $(CCAS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CCASFLAGS) $(CCASFLAGS)
-LTCPPASCOMPILE = $(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=compile $(CCAS) $(DEFS) \
-	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
-	$(AM_CCASFLAGS) $(CCASFLAGS)
-AM_V_CPPAS = $(am__v_CPPAS_@AM_V@)
-am__v_CPPAS_ = $(am__v_CPPAS_@AM_DEFAULT_V@)
-am__v_CPPAS_0 = @echo "  CPPAS   " $@;
-am__v_CPPAS_1 = 
-COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
-	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
-	$(AM_CFLAGS) $(CFLAGS)
-AM_V_CC = $(am__v_CC_@AM_V@)
-am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
-am__v_CC_0 = @echo "  CC      " $@;
-am__v_CC_1 = 
-CCLD = $(CC)
-LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-AM_V_CCLD = $(am__v_CCLD_@AM_V@)
-am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
-am__v_CCLD_0 = @echo "  CCLD    " $@;
-am__v_CCLD_1 = 
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 LTCXXCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
@@ -442,31 +212,9 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(lib_libarmv7a_la_SOURCES) $(lib_libarmv8a_la_SOURCES) \
-	$(lib_libbgq_la_SOURCES) $(lib_libbulldozer_la_SOURCES) \
-	$(lib_libcarrizo_la_SOURCES) $(lib_libcortex_a15_la_SOURCES) \
-	$(lib_libcortex_a9_la_SOURCES) $(lib_libdunnington_la_SOURCES) \
-	$(lib_libhaswell_la_SOURCES) $(lib_libknl_la_SOURCES) \
-	$(lib_libloongson3a_la_SOURCES) $(lib_libmic_la_SOURCES) \
-	$(lib_libpiledriver_la_SOURCES) $(lib_libpower7_la_SOURCES) \
-	$(lib_libsandybridge_la_SOURCES) $(lib_libtblis_la_SOURCES) \
-	$(bin_bench_SOURCES) $(bin_test_SOURCES)
-DIST_SOURCES = $(am__lib_libarmv7a_la_SOURCES_DIST) \
-	$(am__lib_libarmv8a_la_SOURCES_DIST) \
-	$(am__lib_libbgq_la_SOURCES_DIST) \
-	$(am__lib_libbulldozer_la_SOURCES_DIST) \
-	$(am__lib_libcarrizo_la_SOURCES_DIST) \
-	$(am__lib_libcortex_a15_la_SOURCES_DIST) \
-	$(am__lib_libcortex_a9_la_SOURCES_DIST) \
-	$(am__lib_libdunnington_la_SOURCES_DIST) \
-	$(am__lib_libhaswell_la_SOURCES_DIST) \
-	$(am__lib_libknl_la_SOURCES_DIST) \
-	$(am__lib_libloongson3a_la_SOURCES_DIST) \
-	$(am__lib_libmic_la_SOURCES_DIST) \
-	$(am__lib_libpiledriver_la_SOURCES_DIST) \
-	$(am__lib_libpower7_la_SOURCES_DIST) \
-	$(am__lib_libsandybridge_la_SOURCES_DIST) \
-	$(lib_libtblis_la_SOURCES) $(bin_bench_SOURCES) \
+SOURCES = $(lib_libtblis_la_SOURCES) $(bin_bench_SOURCES) \
+	$(bin_test_SOURCES)
+DIST_SOURCES = $(lib_libtblis_la_SOURCES) $(bin_bench_SOURCES) \
 	$(bin_test_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
@@ -496,11 +244,10 @@ CTAGS = ctags
 CSCOPE = cscope
 AM_RECURSIVE_TARGETS = cscope
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
-	$(top_srcdir)/src/tblis_import_configs.hpp.in \
-	$(top_srcdir)/src/tblis_instantiate_for_configs.hpp.in \
-	$(top_srcdir)/src/tblis_instantiate_for_types.hpp.in ar-lib \
-	compile config.guess config.sub depcomp install-sh ltmain.sh \
-	missing
+	$(top_srcdir)/src/configs/tblis_instantiate_for_configs.hpp.in \
+	$(top_srcdir)/src/configs/tblis_instantiate_for_types.hpp.in \
+	ar-lib compile config.guess config.sub depcomp install-sh \
+	ltmain.sh missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -610,7 +357,6 @@ am__quote = @am__quote@
 am__tar = @am__tar@
 am__untar = @am__untar@
 bindir = @bindir@
-blis_LIBS = @blis_LIBS@
 build = @build@
 build_alias = @build_alias@
 build_cpu = @build_cpu@
@@ -694,120 +440,20 @@ lib_libtblis_la_SOURCES = \
 	src/tblis_matrify.cxx \
 	src/tblis_mutex.cxx
 
-noinst_LTLIBRARIES = $(am__append_1) $(am__append_3) $(am__append_5) \
-	$(am__append_7) $(am__append_9) $(am__append_11) \
-	$(am__append_13) $(am__append_15) $(am__append_17) \
-	$(am__append_19) $(am__append_21) $(am__append_23) \
-	$(am__append_25) $(am__append_27) $(am__append_29)
-lib_libtblis_la_LIBADD = $(am__append_2) $(am__append_4) \
-	$(am__append_6) $(am__append_8) $(am__append_10) \
-	$(am__append_12) $(am__append_14) $(am__append_16) \
-	$(am__append_18) $(am__append_20) $(am__append_22) \
-	$(am__append_24) $(am__append_26) $(am__append_28) \
-	$(am__append_30)
-@ENABLE_ARMV7A_TRUE@lib_libarmv7a_la_SOURCES = src/external/blis/config/armv7a/kernels/3/bli_cgemm_kernel_2x2.S \
-@ENABLE_ARMV7A_TRUE@                           src/external/blis/config/armv7a/kernels/3/bli_dgemm_kernel_4x4.S \
-@ENABLE_ARMV7A_TRUE@                           src/external/blis/config/armv7a/kernels/3/bli_sgemm_kernel_4x4.S \
-@ENABLE_ARMV7A_TRUE@                           src/external/blis/config/armv7a/kernels/3/bli_zgemm_kernel_2x2.S \
-@ENABLE_ARMV7A_TRUE@                           src/external/blis/config/armv7a/kernels/3/bli_gemm_opt_4x4.c
-
-@ENABLE_ARMV7A_TRUE@lib_libarmv7a_la_CCASFLAGS = -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
-@ENABLE_ARMV7A_TRUE@lib_libarmv7a_la_CFLAGS = -Isrc/external/blis/config/armv7a -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
-@ENABLE_ARMV8A_TRUE@lib_libarmv8a_la_SOURCES = src/external/blis/config/armv8a/kernels/3/bli_gemm_opt_4x4.c
-@ENABLE_ARMV8A_TRUE@lib_libarmv8a_la_CFLAGS = -Isrc/external/blis/config/armv8a -march=armv8-a+fp+simd -mcpu=cortex-a57.cortex-a53
-@ENABLE_BGQ_TRUE@lib_libbgq_la_SOURCES = src/external/blis/config/bgq/kernels/3/bli_gemm_int_8x8.c
-@ENABLE_BGQ_TRUE@lib_libbgq_la_CFLAGS = -Isrc/external/blis/config/bgq -qasm=gcc -qkeyword=asm -qprefetch -qunroll=yes
-@ENABLE_BULLDOZER_TRUE@lib_libbulldozer_la_SOURCES = src/external/blis/config/bulldozer/kernels/3/bli_gemm_asm_d4x6_fma4.c
-@ENABLE_BULLDOZER_TRUE@lib_libbulldozer_la_CFLAGS = -Isrc/external/blis/config/bulldozer -mavx -mfma -march=bdver2 -mfpmath=sse
-@ENABLE_CARRIZO_TRUE@lib_libcarrizo_la_SOURCES = src/external/blis/config/carrizo/kernels/3/bli_gemm_asm_d8x3.c
-@ENABLE_CARRIZO_TRUE@lib_libcarrizo_la_CFLAGS = -Isrc/external/blis/config/carrizo -mavx -mfma -march=bdver4 -mfpmath=sse
-@ENABLE_CORTEX_A15_TRUE@lib_libcortex_a15_la_SOURCES = src/external/blis/config/cortex-a15/kernels/3/bli_gemm_opt_4x4.c
-@ENABLE_CORTEX_A15_TRUE@lib_libcortex_a15_la_CFLAGS = -Isrc/external/blis/config/cortex-a15 -mfloat-abi=hard -mfpu=neon -march=armv7-a
-@ENABLE_CORTEX_A9_TRUE@lib_libcortex_a9_la_SOURCES = src/external/blis/config/cortex-a9/kernels/3/bli_gemm_opt_4x4.c
-@ENABLE_CORTEX_A9_TRUE@lib_libcortex_a9_la_CFLAGS = -Isrc/external/blis/config/cortex-a9 -mfloat-abi=hard -mfpu=neon -march=armv7-a
-@ENABLE_DUNNINGTON_TRUE@lib_libdunnington_la_SOURCES = src/external/blis/config/dunnington/kernels/3/bli_gemm_asm_d4x4.c
-@ENABLE_DUNNINGTON_TRUE@@ENABLE_INTEL_COMPILER_FALSE@lib_libdunnington_la_CFLAGS = -Isrc/external/blis/config/dunnington -msse3 -march=corei7 -mfpmath=sse
-@ENABLE_DUNNINGTON_TRUE@@ENABLE_INTEL_COMPILER_TRUE@lib_libdunnington_la_CFLAGS = -Isrc/external/blis/config/dunnington -xSSE4.2
-@ENABLE_HASWELL_TRUE@lib_libhaswell_la_SOURCES = src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d12x4.c \
-@ENABLE_HASWELL_TRUE@						    src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d8x6.c \
-@ENABLE_HASWELL_TRUE@						    src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d6x8.c \
-@ENABLE_HASWELL_TRUE@						    src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d4x12.c
-
-@ENABLE_HASWELL_TRUE@@ENABLE_INTEL_COMPILER_FALSE@lib_libhaswell_la_CFLAGS = -Isrc/external/blis/config/haswell -mavx2 -mfma -mfpmath=sse -march=core-avx2
-@ENABLE_HASWELL_TRUE@@ENABLE_INTEL_COMPILER_TRUE@lib_libhaswell_la_CFLAGS = -Isrc/external/blis/config/haswell -xCORE-AVX2
-@ENABLE_KNL_TRUE@lib_libknl_la_SOURCES = src/external/blis/config/knl/kernels/1m/bli_packm_opt_24x8.c \
-@ENABLE_KNL_TRUE@					    src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c \
-@ENABLE_KNL_TRUE@					    src/external/blis/config/knl/kernels/3/bli_dgemm_opt_24x8.c \
-@ENABLE_KNL_TRUE@					    src/external/blis/config/knl/kernels/3/bli_dgemm_opt_8x24.c \
-@ENABLE_KNL_TRUE@					    src/external/blis/config/knl/kernels/3/bli_dgemm_opt_30x8_att.c \
-@ENABLE_KNL_TRUE@					    src/external/blis/config/knl/kernels/3/bli_sgemm_opt_30x16_att.c
-
-@ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_FALSE@lib_libknl_la_CFLAGS = -Isrc/external/blis/config/knl -mavx512f -mavx512pf -mfpmath=sse -march=knl
-@ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_TRUE@lib_libknl_la_CFLAGS = -Isrc/external/blis/config/knl -mavx512f -mavx512pf -mfpmath=sse -march=knl -Wa,-march=knl
-@ENABLE_INTEL_COMPILER_TRUE@@ENABLE_KNL_TRUE@lib_libknl_la_CFLAGS = -Isrc/external/blis/config/knl -xMIC-AVX512
-@ENABLE_LOONGSON3A_TRUE@lib_libloongson3a_la_SOURCES = src/external/blis/config/loongson3a/kernels/3/bli_gemm_opt_d4x4.c
-@ENABLE_LOONGSON3A_TRUE@lib_libloongson3a_la_CFLAGS = -Isrc/external/blis/config/loongson3a -march=loongson3a -mtune=loongson3a
-@ENABLE_MIC_TRUE@lib_libmic_la_SOURCES = src/external/blis/config/mic/kernels/3/bli_dgemm_opt_30x8.c \
-@ENABLE_MIC_TRUE@					    src/external/blis/config/mic/kernels/3/bli_sgemm_opt_30x16.c
-
-@ENABLE_MIC_TRUE@lib_libmic_la_CFLAGS = -Isrc/external/blis/config/mic -fasm-blocks
-@ENABLE_PILEDRIVER_TRUE@lib_libpiledriver_la_SOURCES = src/external/blis/config/piledriver/kernels/3/bli_gemm_asm_d8x3.c
-@ENABLE_PILEDRIVER_TRUE@lib_libpiledriver_la_CFLAGS = -Isrc/external/blis/config/piledriver -mavx -mfma -march=bdver2 -mfpmath=sse
-@ENABLE_POWER7_TRUE@lib_libpower7_la_SOURCES = src/external/blis/config/power7/kernels/3/bli_gemm_opt_8x4.c
-@ENABLE_POWER7_TRUE@lib_libpower7_la_CFLAGS = -Isrc/external/blis/config/power7 -mcpu=power7 -mtune=power7 -mvsx
-@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_SOURCES = src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c
-@ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_CFLAGS = -Isrc/external/blis/config/sandybridge -mavx -mfpmath=sse -march=corei7-avx
-@ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_CFLAGS = -Isrc/external/blis/config/sandybridge -xAVX
+noinst_LTLIBRARIES = 
+lib_libtblis_la_LIBADD = 
 bin_test_SOURCES = test/test.cxx
 bin_bench_SOURCES = test/bench.cxx
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/external/blis/frame/0 \
-              -Isrc/external/blis/frame/0/copysc -Isrc/external/blis/frame/1 \
-              -Isrc/external/blis/frame/1/kernels -Isrc/external/blis/frame/1/packv \
-              -Isrc/external/blis/frame/1/scalv -Isrc/external/blis/frame/1/unpackv \
-              -Isrc/external/blis/frame/1d -Isrc/external/blis/frame/1f \
-              -Isrc/external/blis/frame/1f/kernels -Isrc/external/blis/frame/1m \
-              -Isrc/external/blis/frame/1m/packm -Isrc/external/blis/frame/1m/packm/ukernels \
-              -Isrc/external/blis/frame/1m/scalm -Isrc/external/blis/frame/1m/unpackm \
-              -Isrc/external/blis/frame/1m/unpackm/ukernels -Isrc/external/blis/frame/2 \
-              -Isrc/external/blis/frame/2/gemv -Isrc/external/blis/frame/2/ger \
-              -Isrc/external/blis/frame/2/hemv -Isrc/external/blis/frame/2/her \
-              -Isrc/external/blis/frame/2/her2 -Isrc/external/blis/frame/2/symv \
-              -Isrc/external/blis/frame/2/syr -Isrc/external/blis/frame/2/syr2 \
-              -Isrc/external/blis/frame/2/trmv -Isrc/external/blis/frame/2/trsv \
-              -Isrc/external/blis/frame/3 -Isrc/external/blis/frame/3/gemm \
-              -Isrc/external/blis/frame/3/gemm/ind -Isrc/external/blis/frame/3/hemm \
-              -Isrc/external/blis/frame/3/her2k -Isrc/external/blis/frame/3/herk \
-              -Isrc/external/blis/frame/3/symm -Isrc/external/blis/frame/3/syr2k \
-              -Isrc/external/blis/frame/3/syrk -Isrc/external/blis/frame/3/trmm \
-              -Isrc/external/blis/frame/3/trmm3 -Isrc/external/blis/frame/3/trsm \
-              -Isrc/external/blis/frame/3/ukernels -Isrc/external/blis/frame/base \
-              -Isrc/external/blis/frame/base/check -Isrc/external/blis/frame/base/noopt \
-              -Isrc/external/blis/frame/cntl -Isrc/external/blis/frame/compat \
-              -Isrc/external/blis/frame/compat/cblas -Isrc/external/blis/frame/compat/cblas/f77_sub \
-              -Isrc/external/blis/frame/compat/cblas/src -Isrc/external/blis/frame/compat/check \
-              -Isrc/external/blis/frame/compat/f2c -Isrc/external/blis/frame/compat/f2c/util \
-              -Isrc/external/blis/frame/include -Isrc/external/blis/frame/include/level0 \
-              -Isrc/external/blis/frame/include/level0/io \
-              -Isrc/external/blis/frame/include/level0/ri \
-              -Isrc/external/blis/frame/include/level0/ri3 \
-              -Isrc/external/blis/frame/include/level0/rih \
-              -Isrc/external/blis/frame/include/level0/ro \
-              -Isrc/external/blis/frame/include/level0/rpi -Isrc/external/blis/frame/ind \
-              -Isrc/external/blis/frame/ind/cntx -Isrc/external/blis/frame/ind/include \
-              -Isrc/external/blis/frame/ind/oapi -Isrc/external/blis/frame/ind/tapi \
-              -Isrc/external/blis/frame/ind/ukernels/gemm \
-              -Isrc/external/blis/frame/ind/ukernels/trsm -Isrc/external/blis/frame/util \
-              -Isrc/external/blis/frame/thread -Isrc/external/blis
-
+AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc
 AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la
-bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS) $(FLIBS)
+bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
-.SUFFIXES: .S .c .cxx .lo .o .obj
+.SUFFIXES: .cxx .lo .o .obj
 am--refresh: Makefile
 	@:
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
@@ -856,11 +502,9 @@ $(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
-src/tblis_import_configs.hpp: $(top_builddir)/config.status $(top_srcdir)/src/tblis_import_configs.hpp.in
+src/configs/tblis_instantiate_for_configs.hpp: $(top_builddir)/config.status $(top_srcdir)/src/configs/tblis_instantiate_for_configs.hpp.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
-src/tblis_instantiate_for_configs.hpp: $(top_builddir)/config.status $(top_srcdir)/src/tblis_instantiate_for_configs.hpp.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
-src/tblis_instantiate_for_types.hpp: $(top_builddir)/config.status $(top_srcdir)/src/tblis_instantiate_for_types.hpp.in
+src/configs/tblis_instantiate_for_types.hpp: $(top_builddir)/config.status $(top_srcdir)/src/configs/tblis_instantiate_for_types.hpp.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 
 install-libLTLIBRARIES: $(lib_LTLIBRARIES)
@@ -908,233 +552,6 @@ clean-noinstLTLIBRARIES:
 	  echo rm -f $${locs}; \
 	  rm -f $${locs}; \
 	}
-src/external/blis/config/armv7a/kernels/3/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/armv7a/kernels/3
-	@: > src/external/blis/config/armv7a/kernels/3/$(am__dirstamp)
-src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/armv7a/kernels/3/$(DEPDIR)
-	@: > src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_cgemm_kernel_2x2.lo:  \
-	src/external/blis/config/armv7a/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_dgemm_kernel_4x4.lo:  \
-	src/external/blis/config/armv7a/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_sgemm_kernel_4x4.lo:  \
-	src/external/blis/config/armv7a/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_zgemm_kernel_2x2.lo:  \
-	src/external/blis/config/armv7a/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_gemm_opt_4x4.lo:  \
-	src/external/blis/config/armv7a/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/$(am__dirstamp)
-lib/$(am__dirstamp):
-	@$(MKDIR_P) lib
-	@: > lib/$(am__dirstamp)
-
-lib/libarmv7a.la: $(lib_libarmv7a_la_OBJECTS) $(lib_libarmv7a_la_DEPENDENCIES) $(EXTRA_lib_libarmv7a_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CCLD)$(lib_libarmv7a_la_LINK) $(am_lib_libarmv7a_la_rpath) $(lib_libarmv7a_la_OBJECTS) $(lib_libarmv7a_la_LIBADD) $(LIBS)
-src/external/blis/config/armv8a/kernels/3/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/armv8a/kernels/3
-	@: > src/external/blis/config/armv8a/kernels/3/$(am__dirstamp)
-src/external/blis/config/armv8a/kernels/3/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/armv8a/kernels/3/$(DEPDIR)
-	@: > src/external/blis/config/armv8a/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/armv8a/kernels/3/lib_libarmv8a_la-bli_gemm_opt_4x4.lo:  \
-	src/external/blis/config/armv8a/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/armv8a/kernels/3/$(DEPDIR)/$(am__dirstamp)
-
-lib/libarmv8a.la: $(lib_libarmv8a_la_OBJECTS) $(lib_libarmv8a_la_DEPENDENCIES) $(EXTRA_lib_libarmv8a_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CCLD)$(lib_libarmv8a_la_LINK) $(am_lib_libarmv8a_la_rpath) $(lib_libarmv8a_la_OBJECTS) $(lib_libarmv8a_la_LIBADD) $(LIBS)
-src/external/blis/config/bgq/kernels/3/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/bgq/kernels/3
-	@: > src/external/blis/config/bgq/kernels/3/$(am__dirstamp)
-src/external/blis/config/bgq/kernels/3/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/bgq/kernels/3/$(DEPDIR)
-	@: > src/external/blis/config/bgq/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/bgq/kernels/3/lib_libbgq_la-bli_gemm_int_8x8.lo:  \
-	src/external/blis/config/bgq/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/bgq/kernels/3/$(DEPDIR)/$(am__dirstamp)
-
-lib/libbgq.la: $(lib_libbgq_la_OBJECTS) $(lib_libbgq_la_DEPENDENCIES) $(EXTRA_lib_libbgq_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CCLD)$(lib_libbgq_la_LINK) $(am_lib_libbgq_la_rpath) $(lib_libbgq_la_OBJECTS) $(lib_libbgq_la_LIBADD) $(LIBS)
-src/external/blis/config/bulldozer/kernels/3/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/bulldozer/kernels/3
-	@: > src/external/blis/config/bulldozer/kernels/3/$(am__dirstamp)
-src/external/blis/config/bulldozer/kernels/3/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/bulldozer/kernels/3/$(DEPDIR)
-	@: > src/external/blis/config/bulldozer/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/bulldozer/kernels/3/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.lo:  \
-	src/external/blis/config/bulldozer/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/bulldozer/kernels/3/$(DEPDIR)/$(am__dirstamp)
-
-lib/libbulldozer.la: $(lib_libbulldozer_la_OBJECTS) $(lib_libbulldozer_la_DEPENDENCIES) $(EXTRA_lib_libbulldozer_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CCLD)$(lib_libbulldozer_la_LINK) $(am_lib_libbulldozer_la_rpath) $(lib_libbulldozer_la_OBJECTS) $(lib_libbulldozer_la_LIBADD) $(LIBS)
-src/external/blis/config/carrizo/kernels/3/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/carrizo/kernels/3
-	@: > src/external/blis/config/carrizo/kernels/3/$(am__dirstamp)
-src/external/blis/config/carrizo/kernels/3/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/carrizo/kernels/3/$(DEPDIR)
-	@: > src/external/blis/config/carrizo/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/carrizo/kernels/3/lib_libcarrizo_la-bli_gemm_asm_d8x3.lo:  \
-	src/external/blis/config/carrizo/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/carrizo/kernels/3/$(DEPDIR)/$(am__dirstamp)
-
-lib/libcarrizo.la: $(lib_libcarrizo_la_OBJECTS) $(lib_libcarrizo_la_DEPENDENCIES) $(EXTRA_lib_libcarrizo_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CCLD)$(lib_libcarrizo_la_LINK) $(am_lib_libcarrizo_la_rpath) $(lib_libcarrizo_la_OBJECTS) $(lib_libcarrizo_la_LIBADD) $(LIBS)
-src/external/blis/config/cortex-a15/kernels/3/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/cortex-a15/kernels/3
-	@: > src/external/blis/config/cortex-a15/kernels/3/$(am__dirstamp)
-src/external/blis/config/cortex-a15/kernels/3/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/cortex-a15/kernels/3/$(DEPDIR)
-	@: > src/external/blis/config/cortex-a15/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/cortex-a15/kernels/3/lib_libcortex_a15_la-bli_gemm_opt_4x4.lo:  \
-	src/external/blis/config/cortex-a15/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/cortex-a15/kernels/3/$(DEPDIR)/$(am__dirstamp)
-
-lib/libcortex-a15.la: $(lib_libcortex_a15_la_OBJECTS) $(lib_libcortex_a15_la_DEPENDENCIES) $(EXTRA_lib_libcortex_a15_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CCLD)$(lib_libcortex_a15_la_LINK) $(am_lib_libcortex_a15_la_rpath) $(lib_libcortex_a15_la_OBJECTS) $(lib_libcortex_a15_la_LIBADD) $(LIBS)
-src/external/blis/config/cortex-a9/kernels/3/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/cortex-a9/kernels/3
-	@: > src/external/blis/config/cortex-a9/kernels/3/$(am__dirstamp)
-src/external/blis/config/cortex-a9/kernels/3/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/cortex-a9/kernels/3/$(DEPDIR)
-	@: > src/external/blis/config/cortex-a9/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/cortex-a9/kernels/3/lib_libcortex_a9_la-bli_gemm_opt_4x4.lo:  \
-	src/external/blis/config/cortex-a9/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/cortex-a9/kernels/3/$(DEPDIR)/$(am__dirstamp)
-
-lib/libcortex-a9.la: $(lib_libcortex_a9_la_OBJECTS) $(lib_libcortex_a9_la_DEPENDENCIES) $(EXTRA_lib_libcortex_a9_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CCLD)$(lib_libcortex_a9_la_LINK) $(am_lib_libcortex_a9_la_rpath) $(lib_libcortex_a9_la_OBJECTS) $(lib_libcortex_a9_la_LIBADD) $(LIBS)
-src/external/blis/config/dunnington/kernels/3/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/dunnington/kernels/3
-	@: > src/external/blis/config/dunnington/kernels/3/$(am__dirstamp)
-src/external/blis/config/dunnington/kernels/3/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/dunnington/kernels/3/$(DEPDIR)
-	@: > src/external/blis/config/dunnington/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/dunnington/kernels/3/lib_libdunnington_la-bli_gemm_asm_d4x4.lo:  \
-	src/external/blis/config/dunnington/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/dunnington/kernels/3/$(DEPDIR)/$(am__dirstamp)
-
-lib/libdunnington.la: $(lib_libdunnington_la_OBJECTS) $(lib_libdunnington_la_DEPENDENCIES) $(EXTRA_lib_libdunnington_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CCLD)$(lib_libdunnington_la_LINK) $(am_lib_libdunnington_la_rpath) $(lib_libdunnington_la_OBJECTS) $(lib_libdunnington_la_LIBADD) $(LIBS)
-src/external/blis/config/haswell/kernels/3/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/haswell/kernels/3
-	@: > src/external/blis/config/haswell/kernels/3/$(am__dirstamp)
-src/external/blis/config/haswell/kernels/3/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/haswell/kernels/3/$(DEPDIR)
-	@: > src/external/blis/config/haswell/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d12x4.lo:  \
-	src/external/blis/config/haswell/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/haswell/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d8x6.lo:  \
-	src/external/blis/config/haswell/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/haswell/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d6x8.lo:  \
-	src/external/blis/config/haswell/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/haswell/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d4x12.lo:  \
-	src/external/blis/config/haswell/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/haswell/kernels/3/$(DEPDIR)/$(am__dirstamp)
-
-lib/libhaswell.la: $(lib_libhaswell_la_OBJECTS) $(lib_libhaswell_la_DEPENDENCIES) $(EXTRA_lib_libhaswell_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CCLD)$(lib_libhaswell_la_LINK) $(am_lib_libhaswell_la_rpath) $(lib_libhaswell_la_OBJECTS) $(lib_libhaswell_la_LIBADD) $(LIBS)
-src/external/blis/config/knl/kernels/1m/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/knl/kernels/1m
-	@: > src/external/blis/config/knl/kernels/1m/$(am__dirstamp)
-src/external/blis/config/knl/kernels/1m/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/knl/kernels/1m/$(DEPDIR)
-	@: > src/external/blis/config/knl/kernels/1m/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/knl/kernels/1m/lib_libknl_la-bli_packm_opt_24x8.lo:  \
-	src/external/blis/config/knl/kernels/1m/$(am__dirstamp) \
-	src/external/blis/config/knl/kernels/1m/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/knl/kernels/3/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/knl/kernels/3
-	@: > src/external/blis/config/knl/kernels/3/$(am__dirstamp)
-src/external/blis/config/knl/kernels/3/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/knl/kernels/3/$(DEPDIR)
-	@: > src/external/blis/config/knl/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_12x16.lo:  \
-	src/external/blis/config/knl/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/knl/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_24x8.lo:  \
-	src/external/blis/config/knl/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/knl/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_8x24.lo:  \
-	src/external/blis/config/knl/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/knl/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_30x8_att.lo:  \
-	src/external/blis/config/knl/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/knl/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_sgemm_opt_30x16_att.lo:  \
-	src/external/blis/config/knl/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/knl/kernels/3/$(DEPDIR)/$(am__dirstamp)
-
-lib/libknl.la: $(lib_libknl_la_OBJECTS) $(lib_libknl_la_DEPENDENCIES) $(EXTRA_lib_libknl_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CCLD)$(lib_libknl_la_LINK) $(am_lib_libknl_la_rpath) $(lib_libknl_la_OBJECTS) $(lib_libknl_la_LIBADD) $(LIBS)
-src/external/blis/config/loongson3a/kernels/3/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/loongson3a/kernels/3
-	@: > src/external/blis/config/loongson3a/kernels/3/$(am__dirstamp)
-src/external/blis/config/loongson3a/kernels/3/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/loongson3a/kernels/3/$(DEPDIR)
-	@: > src/external/blis/config/loongson3a/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/loongson3a/kernels/3/lib_libloongson3a_la-bli_gemm_opt_d4x4.lo:  \
-	src/external/blis/config/loongson3a/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/loongson3a/kernels/3/$(DEPDIR)/$(am__dirstamp)
-
-lib/libloongson3a.la: $(lib_libloongson3a_la_OBJECTS) $(lib_libloongson3a_la_DEPENDENCIES) $(EXTRA_lib_libloongson3a_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CCLD)$(lib_libloongson3a_la_LINK) $(am_lib_libloongson3a_la_rpath) $(lib_libloongson3a_la_OBJECTS) $(lib_libloongson3a_la_LIBADD) $(LIBS)
-src/external/blis/config/mic/kernels/3/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/mic/kernels/3
-	@: > src/external/blis/config/mic/kernels/3/$(am__dirstamp)
-src/external/blis/config/mic/kernels/3/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/mic/kernels/3/$(DEPDIR)
-	@: > src/external/blis/config/mic/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/mic/kernels/3/lib_libmic_la-bli_dgemm_opt_30x8.lo:  \
-	src/external/blis/config/mic/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/mic/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/mic/kernels/3/lib_libmic_la-bli_sgemm_opt_30x16.lo:  \
-	src/external/blis/config/mic/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/mic/kernels/3/$(DEPDIR)/$(am__dirstamp)
-
-lib/libmic.la: $(lib_libmic_la_OBJECTS) $(lib_libmic_la_DEPENDENCIES) $(EXTRA_lib_libmic_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CCLD)$(lib_libmic_la_LINK) $(am_lib_libmic_la_rpath) $(lib_libmic_la_OBJECTS) $(lib_libmic_la_LIBADD) $(LIBS)
-src/external/blis/config/piledriver/kernels/3/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/piledriver/kernels/3
-	@: > src/external/blis/config/piledriver/kernels/3/$(am__dirstamp)
-src/external/blis/config/piledriver/kernels/3/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/piledriver/kernels/3/$(DEPDIR)
-	@: > src/external/blis/config/piledriver/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/piledriver/kernels/3/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo:  \
-	src/external/blis/config/piledriver/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/piledriver/kernels/3/$(DEPDIR)/$(am__dirstamp)
-
-lib/libpiledriver.la: $(lib_libpiledriver_la_OBJECTS) $(lib_libpiledriver_la_DEPENDENCIES) $(EXTRA_lib_libpiledriver_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CCLD)$(lib_libpiledriver_la_LINK) $(am_lib_libpiledriver_la_rpath) $(lib_libpiledriver_la_OBJECTS) $(lib_libpiledriver_la_LIBADD) $(LIBS)
-src/external/blis/config/power7/kernels/3/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/power7/kernels/3
-	@: > src/external/blis/config/power7/kernels/3/$(am__dirstamp)
-src/external/blis/config/power7/kernels/3/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/power7/kernels/3/$(DEPDIR)
-	@: > src/external/blis/config/power7/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/power7/kernels/3/lib_libpower7_la-bli_gemm_opt_8x4.lo:  \
-	src/external/blis/config/power7/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/power7/kernels/3/$(DEPDIR)/$(am__dirstamp)
-
-lib/libpower7.la: $(lib_libpower7_la_OBJECTS) $(lib_libpower7_la_DEPENDENCIES) $(EXTRA_lib_libpower7_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CCLD)$(lib_libpower7_la_LINK) $(am_lib_libpower7_la_rpath) $(lib_libpower7_la_OBJECTS) $(lib_libpower7_la_LIBADD) $(LIBS)
-src/external/blis/config/sandybridge/kernels/3/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/sandybridge/kernels/3
-	@: > src/external/blis/config/sandybridge/kernels/3/$(am__dirstamp)
-src/external/blis/config/sandybridge/kernels/3/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/external/blis/config/sandybridge/kernels/3/$(DEPDIR)
-	@: > src/external/blis/config/sandybridge/kernels/3/$(DEPDIR)/$(am__dirstamp)
-src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo: src/external/blis/config/sandybridge/kernels/3/$(am__dirstamp) \
-	src/external/blis/config/sandybridge/kernels/3/$(DEPDIR)/$(am__dirstamp)
-
-lib/libsandybridge.la: $(lib_libsandybridge_la_OBJECTS) $(lib_libsandybridge_la_DEPENDENCIES) $(EXTRA_lib_libsandybridge_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CCLD)$(lib_libsandybridge_la_LINK) $(am_lib_libsandybridge_la_rpath) $(lib_libsandybridge_la_OBJECTS) $(lib_libsandybridge_la_LIBADD) $(LIBS)
 src/1m/$(am__dirstamp):
 	@$(MKDIR_P) src/1m
 	@: > src/1m/$(am__dirstamp)
@@ -1258,6 +675,9 @@ src/$(DEPDIR)/$(am__dirstamp):
 src/tblis_matrify.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/tblis_mutex.lo: src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+lib/$(am__dirstamp):
+	@$(MKDIR_P) lib
+	@: > lib/$(am__dirstamp)
 
 lib/libtblis.la: $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_DEPENDENCIES) $(EXTRA_lib_libtblis_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CXXLD)$(CXXLINK) -rpath $(libdir) $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_LIBADD) $(LIBS)
@@ -1342,38 +762,6 @@ mostlyclean-compile:
 	-rm -f src/1v/*.lo
 	-rm -f src/3/*.$(OBJEXT)
 	-rm -f src/3/*.lo
-	-rm -f src/external/blis/config/armv7a/kernels/3/*.$(OBJEXT)
-	-rm -f src/external/blis/config/armv7a/kernels/3/*.lo
-	-rm -f src/external/blis/config/armv8a/kernels/3/*.$(OBJEXT)
-	-rm -f src/external/blis/config/armv8a/kernels/3/*.lo
-	-rm -f src/external/blis/config/bgq/kernels/3/*.$(OBJEXT)
-	-rm -f src/external/blis/config/bgq/kernels/3/*.lo
-	-rm -f src/external/blis/config/bulldozer/kernels/3/*.$(OBJEXT)
-	-rm -f src/external/blis/config/bulldozer/kernels/3/*.lo
-	-rm -f src/external/blis/config/carrizo/kernels/3/*.$(OBJEXT)
-	-rm -f src/external/blis/config/carrizo/kernels/3/*.lo
-	-rm -f src/external/blis/config/cortex-a15/kernels/3/*.$(OBJEXT)
-	-rm -f src/external/blis/config/cortex-a15/kernels/3/*.lo
-	-rm -f src/external/blis/config/cortex-a9/kernels/3/*.$(OBJEXT)
-	-rm -f src/external/blis/config/cortex-a9/kernels/3/*.lo
-	-rm -f src/external/blis/config/dunnington/kernels/3/*.$(OBJEXT)
-	-rm -f src/external/blis/config/dunnington/kernels/3/*.lo
-	-rm -f src/external/blis/config/haswell/kernels/3/*.$(OBJEXT)
-	-rm -f src/external/blis/config/haswell/kernels/3/*.lo
-	-rm -f src/external/blis/config/knl/kernels/1m/*.$(OBJEXT)
-	-rm -f src/external/blis/config/knl/kernels/1m/*.lo
-	-rm -f src/external/blis/config/knl/kernels/3/*.$(OBJEXT)
-	-rm -f src/external/blis/config/knl/kernels/3/*.lo
-	-rm -f src/external/blis/config/loongson3a/kernels/3/*.$(OBJEXT)
-	-rm -f src/external/blis/config/loongson3a/kernels/3/*.lo
-	-rm -f src/external/blis/config/mic/kernels/3/*.$(OBJEXT)
-	-rm -f src/external/blis/config/mic/kernels/3/*.lo
-	-rm -f src/external/blis/config/piledriver/kernels/3/*.$(OBJEXT)
-	-rm -f src/external/blis/config/piledriver/kernels/3/*.lo
-	-rm -f src/external/blis/config/power7/kernels/3/*.$(OBJEXT)
-	-rm -f src/external/blis/config/power7/kernels/3/*.lo
-	-rm -f src/external/blis/config/sandybridge/kernels/3/*.$(OBJEXT)
-	-rm -f src/external/blis/config/sandybridge/kernels/3/*.lo
 	-rm -f src/impl/*.$(OBJEXT)
 	-rm -f src/impl/*.lo
 	-rm -f src/impl/blas/*.$(OBJEXT)
@@ -1404,34 +792,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/tblis_xpbyv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/tblis_zerov.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/3/$(DEPDIR)/tblis_gemm.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_cgemm_kernel_2x2.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_dgemm_kernel_4x4.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_gemm_opt_4x4.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_sgemm_kernel_4x4.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_zgemm_kernel_2x2.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/armv8a/kernels/3/$(DEPDIR)/lib_libarmv8a_la-bli_gemm_opt_4x4.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/bgq/kernels/3/$(DEPDIR)/lib_libbgq_la-bli_gemm_int_8x8.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/bulldozer/kernels/3/$(DEPDIR)/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/carrizo/kernels/3/$(DEPDIR)/lib_libcarrizo_la-bli_gemm_asm_d8x3.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/cortex-a15/kernels/3/$(DEPDIR)/lib_libcortex_a15_la-bli_gemm_opt_4x4.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/cortex-a9/kernels/3/$(DEPDIR)/lib_libcortex_a9_la-bli_gemm_opt_4x4.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/dunnington/kernels/3/$(DEPDIR)/lib_libdunnington_la-bli_gemm_asm_d4x4.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/haswell/kernels/3/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d12x4.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/haswell/kernels/3/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d4x12.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/haswell/kernels/3/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/haswell/kernels/3/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d8x6.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/knl/kernels/1m/$(DEPDIR)/lib_libknl_la-bli_packm_opt_24x8.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_12x16.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_24x8.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_30x8_att.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_8x24.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_sgemm_opt_30x16_att.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/loongson3a/kernels/3/$(DEPDIR)/lib_libloongson3a_la-bli_gemm_opt_d4x4.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/mic/kernels/3/$(DEPDIR)/lib_libmic_la-bli_dgemm_opt_30x8.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/mic/kernels/3/$(DEPDIR)/lib_libmic_la-bli_sgemm_opt_30x16.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/piledriver/kernels/3/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/power7/kernels/3/$(DEPDIR)/lib_libpower7_la-bli_gemm_opt_8x4.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/external/blis/config/sandybridge/kernels/3/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_asm_d8x4.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/impl/$(DEPDIR)/tensor_impl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/impl/blas/$(DEPDIR)/tensor_contract.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/impl/blas/$(DEPDIR)/tensor_mult.Plo@am__quote@
@@ -1451,250 +811,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/impl/reference/$(DEPDIR)/tensor_weight.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/bench.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/test.Po@am__quote@
-
-.S.o:
-@am__fastdepCCAS_TRUE@	$(AM_V_CPPAS)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
-@am__fastdepCCAS_TRUE@	$(CPPASCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepCCAS_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	DEPDIR=$(DEPDIR) $(CCASDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS@am__nodep@)$(CPPASCOMPILE) -c -o $@ $<
-
-.S.obj:
-@am__fastdepCCAS_TRUE@	$(AM_V_CPPAS)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
-@am__fastdepCCAS_TRUE@	$(CPPASCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
-@am__fastdepCCAS_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	DEPDIR=$(DEPDIR) $(CCASDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS@am__nodep@)$(CPPASCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
-
-.S.lo:
-@am__fastdepCCAS_TRUE@	$(AM_V_CPPAS)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
-@am__fastdepCCAS_TRUE@	$(LTCPPASCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepCCAS_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
-@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	DEPDIR=$(DEPDIR) $(CCASDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS@am__nodep@)$(LTCPPASCOMPILE) -c -o $@ $<
-
-src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_cgemm_kernel_2x2.lo: src/external/blis/config/armv7a/kernels/3/bli_cgemm_kernel_2x2.S
-@am__fastdepCCAS_TRUE@	$(AM_V_CPPAS)$(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CCAS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv7a_la_CCASFLAGS) $(CCASFLAGS) -MT src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_cgemm_kernel_2x2.lo -MD -MP -MF src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_cgemm_kernel_2x2.Tpo -c -o src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_cgemm_kernel_2x2.lo `test -f 'src/external/blis/config/armv7a/kernels/3/bli_cgemm_kernel_2x2.S' || echo '$(srcdir)/'`src/external/blis/config/armv7a/kernels/3/bli_cgemm_kernel_2x2.S
-@am__fastdepCCAS_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_cgemm_kernel_2x2.Tpo src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_cgemm_kernel_2x2.Plo
-@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS)source='src/external/blis/config/armv7a/kernels/3/bli_cgemm_kernel_2x2.S' object='src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_cgemm_kernel_2x2.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	DEPDIR=$(DEPDIR) $(CCASDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS@am__nodep@)$(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CCAS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv7a_la_CCASFLAGS) $(CCASFLAGS) -c -o src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_cgemm_kernel_2x2.lo `test -f 'src/external/blis/config/armv7a/kernels/3/bli_cgemm_kernel_2x2.S' || echo '$(srcdir)/'`src/external/blis/config/armv7a/kernels/3/bli_cgemm_kernel_2x2.S
-
-src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_dgemm_kernel_4x4.lo: src/external/blis/config/armv7a/kernels/3/bli_dgemm_kernel_4x4.S
-@am__fastdepCCAS_TRUE@	$(AM_V_CPPAS)$(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CCAS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv7a_la_CCASFLAGS) $(CCASFLAGS) -MT src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_dgemm_kernel_4x4.lo -MD -MP -MF src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_dgemm_kernel_4x4.Tpo -c -o src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_dgemm_kernel_4x4.lo `test -f 'src/external/blis/config/armv7a/kernels/3/bli_dgemm_kernel_4x4.S' || echo '$(srcdir)/'`src/external/blis/config/armv7a/kernels/3/bli_dgemm_kernel_4x4.S
-@am__fastdepCCAS_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_dgemm_kernel_4x4.Tpo src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_dgemm_kernel_4x4.Plo
-@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS)source='src/external/blis/config/armv7a/kernels/3/bli_dgemm_kernel_4x4.S' object='src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_dgemm_kernel_4x4.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	DEPDIR=$(DEPDIR) $(CCASDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS@am__nodep@)$(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CCAS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv7a_la_CCASFLAGS) $(CCASFLAGS) -c -o src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_dgemm_kernel_4x4.lo `test -f 'src/external/blis/config/armv7a/kernels/3/bli_dgemm_kernel_4x4.S' || echo '$(srcdir)/'`src/external/blis/config/armv7a/kernels/3/bli_dgemm_kernel_4x4.S
-
-src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_sgemm_kernel_4x4.lo: src/external/blis/config/armv7a/kernels/3/bli_sgemm_kernel_4x4.S
-@am__fastdepCCAS_TRUE@	$(AM_V_CPPAS)$(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CCAS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv7a_la_CCASFLAGS) $(CCASFLAGS) -MT src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_sgemm_kernel_4x4.lo -MD -MP -MF src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_sgemm_kernel_4x4.Tpo -c -o src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_sgemm_kernel_4x4.lo `test -f 'src/external/blis/config/armv7a/kernels/3/bli_sgemm_kernel_4x4.S' || echo '$(srcdir)/'`src/external/blis/config/armv7a/kernels/3/bli_sgemm_kernel_4x4.S
-@am__fastdepCCAS_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_sgemm_kernel_4x4.Tpo src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_sgemm_kernel_4x4.Plo
-@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS)source='src/external/blis/config/armv7a/kernels/3/bli_sgemm_kernel_4x4.S' object='src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_sgemm_kernel_4x4.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	DEPDIR=$(DEPDIR) $(CCASDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS@am__nodep@)$(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CCAS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv7a_la_CCASFLAGS) $(CCASFLAGS) -c -o src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_sgemm_kernel_4x4.lo `test -f 'src/external/blis/config/armv7a/kernels/3/bli_sgemm_kernel_4x4.S' || echo '$(srcdir)/'`src/external/blis/config/armv7a/kernels/3/bli_sgemm_kernel_4x4.S
-
-src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_zgemm_kernel_2x2.lo: src/external/blis/config/armv7a/kernels/3/bli_zgemm_kernel_2x2.S
-@am__fastdepCCAS_TRUE@	$(AM_V_CPPAS)$(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CCAS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv7a_la_CCASFLAGS) $(CCASFLAGS) -MT src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_zgemm_kernel_2x2.lo -MD -MP -MF src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_zgemm_kernel_2x2.Tpo -c -o src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_zgemm_kernel_2x2.lo `test -f 'src/external/blis/config/armv7a/kernels/3/bli_zgemm_kernel_2x2.S' || echo '$(srcdir)/'`src/external/blis/config/armv7a/kernels/3/bli_zgemm_kernel_2x2.S
-@am__fastdepCCAS_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_zgemm_kernel_2x2.Tpo src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_zgemm_kernel_2x2.Plo
-@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS)source='src/external/blis/config/armv7a/kernels/3/bli_zgemm_kernel_2x2.S' object='src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_zgemm_kernel_2x2.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCCAS_FALSE@	DEPDIR=$(DEPDIR) $(CCASDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCCAS_FALSE@	$(AM_V_CPPAS@am__nodep@)$(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CCAS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv7a_la_CCASFLAGS) $(CCASFLAGS) -c -o src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_zgemm_kernel_2x2.lo `test -f 'src/external/blis/config/armv7a/kernels/3/bli_zgemm_kernel_2x2.S' || echo '$(srcdir)/'`src/external/blis/config/armv7a/kernels/3/bli_zgemm_kernel_2x2.S
-
-.c.o:
-@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ $<
-
-.c.obj:
-@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
-@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
-
-.c.lo:
-@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
-@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
-
-src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_gemm_opt_4x4.lo: src/external/blis/config/armv7a/kernels/3/bli_gemm_opt_4x4.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv7a_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_gemm_opt_4x4.lo -MD -MP -MF src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_gemm_opt_4x4.Tpo -c -o src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_gemm_opt_4x4.lo `test -f 'src/external/blis/config/armv7a/kernels/3/bli_gemm_opt_4x4.c' || echo '$(srcdir)/'`src/external/blis/config/armv7a/kernels/3/bli_gemm_opt_4x4.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_gemm_opt_4x4.Tpo src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/lib_libarmv7a_la-bli_gemm_opt_4x4.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/armv7a/kernels/3/bli_gemm_opt_4x4.c' object='src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_gemm_opt_4x4.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv7a_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/armv7a/kernels/3/lib_libarmv7a_la-bli_gemm_opt_4x4.lo `test -f 'src/external/blis/config/armv7a/kernels/3/bli_gemm_opt_4x4.c' || echo '$(srcdir)/'`src/external/blis/config/armv7a/kernels/3/bli_gemm_opt_4x4.c
-
-src/external/blis/config/armv8a/kernels/3/lib_libarmv8a_la-bli_gemm_opt_4x4.lo: src/external/blis/config/armv8a/kernels/3/bli_gemm_opt_4x4.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv8a_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/armv8a/kernels/3/lib_libarmv8a_la-bli_gemm_opt_4x4.lo -MD -MP -MF src/external/blis/config/armv8a/kernels/3/$(DEPDIR)/lib_libarmv8a_la-bli_gemm_opt_4x4.Tpo -c -o src/external/blis/config/armv8a/kernels/3/lib_libarmv8a_la-bli_gemm_opt_4x4.lo `test -f 'src/external/blis/config/armv8a/kernels/3/bli_gemm_opt_4x4.c' || echo '$(srcdir)/'`src/external/blis/config/armv8a/kernels/3/bli_gemm_opt_4x4.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/armv8a/kernels/3/$(DEPDIR)/lib_libarmv8a_la-bli_gemm_opt_4x4.Tpo src/external/blis/config/armv8a/kernels/3/$(DEPDIR)/lib_libarmv8a_la-bli_gemm_opt_4x4.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/armv8a/kernels/3/bli_gemm_opt_4x4.c' object='src/external/blis/config/armv8a/kernels/3/lib_libarmv8a_la-bli_gemm_opt_4x4.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv8a_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/armv8a/kernels/3/lib_libarmv8a_la-bli_gemm_opt_4x4.lo `test -f 'src/external/blis/config/armv8a/kernels/3/bli_gemm_opt_4x4.c' || echo '$(srcdir)/'`src/external/blis/config/armv8a/kernels/3/bli_gemm_opt_4x4.c
-
-src/external/blis/config/bgq/kernels/3/lib_libbgq_la-bli_gemm_int_8x8.lo: src/external/blis/config/bgq/kernels/3/bli_gemm_int_8x8.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libbgq_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/bgq/kernels/3/lib_libbgq_la-bli_gemm_int_8x8.lo -MD -MP -MF src/external/blis/config/bgq/kernels/3/$(DEPDIR)/lib_libbgq_la-bli_gemm_int_8x8.Tpo -c -o src/external/blis/config/bgq/kernels/3/lib_libbgq_la-bli_gemm_int_8x8.lo `test -f 'src/external/blis/config/bgq/kernels/3/bli_gemm_int_8x8.c' || echo '$(srcdir)/'`src/external/blis/config/bgq/kernels/3/bli_gemm_int_8x8.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/bgq/kernels/3/$(DEPDIR)/lib_libbgq_la-bli_gemm_int_8x8.Tpo src/external/blis/config/bgq/kernels/3/$(DEPDIR)/lib_libbgq_la-bli_gemm_int_8x8.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/bgq/kernels/3/bli_gemm_int_8x8.c' object='src/external/blis/config/bgq/kernels/3/lib_libbgq_la-bli_gemm_int_8x8.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libbgq_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/bgq/kernels/3/lib_libbgq_la-bli_gemm_int_8x8.lo `test -f 'src/external/blis/config/bgq/kernels/3/bli_gemm_int_8x8.c' || echo '$(srcdir)/'`src/external/blis/config/bgq/kernels/3/bli_gemm_int_8x8.c
-
-src/external/blis/config/bulldozer/kernels/3/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.lo: src/external/blis/config/bulldozer/kernels/3/bli_gemm_asm_d4x6_fma4.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libbulldozer_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/bulldozer/kernels/3/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.lo -MD -MP -MF src/external/blis/config/bulldozer/kernels/3/$(DEPDIR)/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.Tpo -c -o src/external/blis/config/bulldozer/kernels/3/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.lo `test -f 'src/external/blis/config/bulldozer/kernels/3/bli_gemm_asm_d4x6_fma4.c' || echo '$(srcdir)/'`src/external/blis/config/bulldozer/kernels/3/bli_gemm_asm_d4x6_fma4.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/bulldozer/kernels/3/$(DEPDIR)/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.Tpo src/external/blis/config/bulldozer/kernels/3/$(DEPDIR)/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/bulldozer/kernels/3/bli_gemm_asm_d4x6_fma4.c' object='src/external/blis/config/bulldozer/kernels/3/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libbulldozer_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/bulldozer/kernels/3/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.lo `test -f 'src/external/blis/config/bulldozer/kernels/3/bli_gemm_asm_d4x6_fma4.c' || echo '$(srcdir)/'`src/external/blis/config/bulldozer/kernels/3/bli_gemm_asm_d4x6_fma4.c
-
-src/external/blis/config/carrizo/kernels/3/lib_libcarrizo_la-bli_gemm_asm_d8x3.lo: src/external/blis/config/carrizo/kernels/3/bli_gemm_asm_d8x3.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libcarrizo_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/carrizo/kernels/3/lib_libcarrizo_la-bli_gemm_asm_d8x3.lo -MD -MP -MF src/external/blis/config/carrizo/kernels/3/$(DEPDIR)/lib_libcarrizo_la-bli_gemm_asm_d8x3.Tpo -c -o src/external/blis/config/carrizo/kernels/3/lib_libcarrizo_la-bli_gemm_asm_d8x3.lo `test -f 'src/external/blis/config/carrizo/kernels/3/bli_gemm_asm_d8x3.c' || echo '$(srcdir)/'`src/external/blis/config/carrizo/kernels/3/bli_gemm_asm_d8x3.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/carrizo/kernels/3/$(DEPDIR)/lib_libcarrizo_la-bli_gemm_asm_d8x3.Tpo src/external/blis/config/carrizo/kernels/3/$(DEPDIR)/lib_libcarrizo_la-bli_gemm_asm_d8x3.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/carrizo/kernels/3/bli_gemm_asm_d8x3.c' object='src/external/blis/config/carrizo/kernels/3/lib_libcarrizo_la-bli_gemm_asm_d8x3.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libcarrizo_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/carrizo/kernels/3/lib_libcarrizo_la-bli_gemm_asm_d8x3.lo `test -f 'src/external/blis/config/carrizo/kernels/3/bli_gemm_asm_d8x3.c' || echo '$(srcdir)/'`src/external/blis/config/carrizo/kernels/3/bli_gemm_asm_d8x3.c
-
-src/external/blis/config/cortex-a15/kernels/3/lib_libcortex_a15_la-bli_gemm_opt_4x4.lo: src/external/blis/config/cortex-a15/kernels/3/bli_gemm_opt_4x4.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libcortex_a15_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/cortex-a15/kernels/3/lib_libcortex_a15_la-bli_gemm_opt_4x4.lo -MD -MP -MF src/external/blis/config/cortex-a15/kernels/3/$(DEPDIR)/lib_libcortex_a15_la-bli_gemm_opt_4x4.Tpo -c -o src/external/blis/config/cortex-a15/kernels/3/lib_libcortex_a15_la-bli_gemm_opt_4x4.lo `test -f 'src/external/blis/config/cortex-a15/kernels/3/bli_gemm_opt_4x4.c' || echo '$(srcdir)/'`src/external/blis/config/cortex-a15/kernels/3/bli_gemm_opt_4x4.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/cortex-a15/kernels/3/$(DEPDIR)/lib_libcortex_a15_la-bli_gemm_opt_4x4.Tpo src/external/blis/config/cortex-a15/kernels/3/$(DEPDIR)/lib_libcortex_a15_la-bli_gemm_opt_4x4.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/cortex-a15/kernels/3/bli_gemm_opt_4x4.c' object='src/external/blis/config/cortex-a15/kernels/3/lib_libcortex_a15_la-bli_gemm_opt_4x4.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libcortex_a15_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/cortex-a15/kernels/3/lib_libcortex_a15_la-bli_gemm_opt_4x4.lo `test -f 'src/external/blis/config/cortex-a15/kernels/3/bli_gemm_opt_4x4.c' || echo '$(srcdir)/'`src/external/blis/config/cortex-a15/kernels/3/bli_gemm_opt_4x4.c
-
-src/external/blis/config/cortex-a9/kernels/3/lib_libcortex_a9_la-bli_gemm_opt_4x4.lo: src/external/blis/config/cortex-a9/kernels/3/bli_gemm_opt_4x4.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libcortex_a9_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/cortex-a9/kernels/3/lib_libcortex_a9_la-bli_gemm_opt_4x4.lo -MD -MP -MF src/external/blis/config/cortex-a9/kernels/3/$(DEPDIR)/lib_libcortex_a9_la-bli_gemm_opt_4x4.Tpo -c -o src/external/blis/config/cortex-a9/kernels/3/lib_libcortex_a9_la-bli_gemm_opt_4x4.lo `test -f 'src/external/blis/config/cortex-a9/kernels/3/bli_gemm_opt_4x4.c' || echo '$(srcdir)/'`src/external/blis/config/cortex-a9/kernels/3/bli_gemm_opt_4x4.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/cortex-a9/kernels/3/$(DEPDIR)/lib_libcortex_a9_la-bli_gemm_opt_4x4.Tpo src/external/blis/config/cortex-a9/kernels/3/$(DEPDIR)/lib_libcortex_a9_la-bli_gemm_opt_4x4.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/cortex-a9/kernels/3/bli_gemm_opt_4x4.c' object='src/external/blis/config/cortex-a9/kernels/3/lib_libcortex_a9_la-bli_gemm_opt_4x4.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libcortex_a9_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/cortex-a9/kernels/3/lib_libcortex_a9_la-bli_gemm_opt_4x4.lo `test -f 'src/external/blis/config/cortex-a9/kernels/3/bli_gemm_opt_4x4.c' || echo '$(srcdir)/'`src/external/blis/config/cortex-a9/kernels/3/bli_gemm_opt_4x4.c
-
-src/external/blis/config/dunnington/kernels/3/lib_libdunnington_la-bli_gemm_asm_d4x4.lo: src/external/blis/config/dunnington/kernels/3/bli_gemm_asm_d4x4.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libdunnington_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/dunnington/kernels/3/lib_libdunnington_la-bli_gemm_asm_d4x4.lo -MD -MP -MF src/external/blis/config/dunnington/kernels/3/$(DEPDIR)/lib_libdunnington_la-bli_gemm_asm_d4x4.Tpo -c -o src/external/blis/config/dunnington/kernels/3/lib_libdunnington_la-bli_gemm_asm_d4x4.lo `test -f 'src/external/blis/config/dunnington/kernels/3/bli_gemm_asm_d4x4.c' || echo '$(srcdir)/'`src/external/blis/config/dunnington/kernels/3/bli_gemm_asm_d4x4.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/dunnington/kernels/3/$(DEPDIR)/lib_libdunnington_la-bli_gemm_asm_d4x4.Tpo src/external/blis/config/dunnington/kernels/3/$(DEPDIR)/lib_libdunnington_la-bli_gemm_asm_d4x4.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/dunnington/kernels/3/bli_gemm_asm_d4x4.c' object='src/external/blis/config/dunnington/kernels/3/lib_libdunnington_la-bli_gemm_asm_d4x4.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libdunnington_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/dunnington/kernels/3/lib_libdunnington_la-bli_gemm_asm_d4x4.lo `test -f 'src/external/blis/config/dunnington/kernels/3/bli_gemm_asm_d4x4.c' || echo '$(srcdir)/'`src/external/blis/config/dunnington/kernels/3/bli_gemm_asm_d4x4.c
-
-src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d12x4.lo: src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d12x4.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d12x4.lo -MD -MP -MF src/external/blis/config/haswell/kernels/3/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d12x4.Tpo -c -o src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d12x4.lo `test -f 'src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d12x4.c' || echo '$(srcdir)/'`src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d12x4.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/haswell/kernels/3/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d12x4.Tpo src/external/blis/config/haswell/kernels/3/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d12x4.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d12x4.c' object='src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d12x4.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d12x4.lo `test -f 'src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d12x4.c' || echo '$(srcdir)/'`src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d12x4.c
-
-src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d8x6.lo: src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d8x6.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d8x6.lo -MD -MP -MF src/external/blis/config/haswell/kernels/3/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d8x6.Tpo -c -o src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d8x6.lo `test -f 'src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d8x6.c' || echo '$(srcdir)/'`src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d8x6.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/haswell/kernels/3/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d8x6.Tpo src/external/blis/config/haswell/kernels/3/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d8x6.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d8x6.c' object='src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d8x6.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d8x6.lo `test -f 'src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d8x6.c' || echo '$(srcdir)/'`src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d8x6.c
-
-src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d6x8.lo: src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d6x8.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d6x8.lo -MD -MP -MF src/external/blis/config/haswell/kernels/3/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Tpo -c -o src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d6x8.lo `test -f 'src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d6x8.c' || echo '$(srcdir)/'`src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d6x8.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/haswell/kernels/3/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Tpo src/external/blis/config/haswell/kernels/3/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d6x8.c' object='src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d6x8.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d6x8.lo `test -f 'src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d6x8.c' || echo '$(srcdir)/'`src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d6x8.c
-
-src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d4x12.lo: src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d4x12.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d4x12.lo -MD -MP -MF src/external/blis/config/haswell/kernels/3/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d4x12.Tpo -c -o src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d4x12.lo `test -f 'src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d4x12.c' || echo '$(srcdir)/'`src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d4x12.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/haswell/kernels/3/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d4x12.Tpo src/external/blis/config/haswell/kernels/3/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d4x12.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d4x12.c' object='src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d4x12.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/haswell/kernels/3/lib_libhaswell_la-bli_gemm_asm_d4x12.lo `test -f 'src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d4x12.c' || echo '$(srcdir)/'`src/external/blis/config/haswell/kernels/3/bli_gemm_asm_d4x12.c
-
-src/external/blis/config/knl/kernels/1m/lib_libknl_la-bli_packm_opt_24x8.lo: src/external/blis/config/knl/kernels/1m/bli_packm_opt_24x8.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/knl/kernels/1m/lib_libknl_la-bli_packm_opt_24x8.lo -MD -MP -MF src/external/blis/config/knl/kernels/1m/$(DEPDIR)/lib_libknl_la-bli_packm_opt_24x8.Tpo -c -o src/external/blis/config/knl/kernels/1m/lib_libknl_la-bli_packm_opt_24x8.lo `test -f 'src/external/blis/config/knl/kernels/1m/bli_packm_opt_24x8.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/1m/bli_packm_opt_24x8.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/knl/kernels/1m/$(DEPDIR)/lib_libknl_la-bli_packm_opt_24x8.Tpo src/external/blis/config/knl/kernels/1m/$(DEPDIR)/lib_libknl_la-bli_packm_opt_24x8.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/knl/kernels/1m/bli_packm_opt_24x8.c' object='src/external/blis/config/knl/kernels/1m/lib_libknl_la-bli_packm_opt_24x8.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/knl/kernels/1m/lib_libknl_la-bli_packm_opt_24x8.lo `test -f 'src/external/blis/config/knl/kernels/1m/bli_packm_opt_24x8.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/1m/bli_packm_opt_24x8.c
-
-src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_12x16.lo: src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_12x16.lo -MD -MP -MF src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_12x16.Tpo -c -o src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_12x16.lo `test -f 'src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_12x16.Tpo src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_12x16.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c' object='src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_12x16.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_12x16.lo `test -f 'src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/3/bli_dgemm_opt_12x16.c
-
-src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_24x8.lo: src/external/blis/config/knl/kernels/3/bli_dgemm_opt_24x8.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_24x8.lo -MD -MP -MF src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_24x8.Tpo -c -o src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_24x8.lo `test -f 'src/external/blis/config/knl/kernels/3/bli_dgemm_opt_24x8.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/3/bli_dgemm_opt_24x8.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_24x8.Tpo src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_24x8.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/knl/kernels/3/bli_dgemm_opt_24x8.c' object='src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_24x8.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_24x8.lo `test -f 'src/external/blis/config/knl/kernels/3/bli_dgemm_opt_24x8.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/3/bli_dgemm_opt_24x8.c
-
-src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_8x24.lo: src/external/blis/config/knl/kernels/3/bli_dgemm_opt_8x24.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_8x24.lo -MD -MP -MF src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_8x24.Tpo -c -o src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_8x24.lo `test -f 'src/external/blis/config/knl/kernels/3/bli_dgemm_opt_8x24.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/3/bli_dgemm_opt_8x24.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_8x24.Tpo src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_8x24.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/knl/kernels/3/bli_dgemm_opt_8x24.c' object='src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_8x24.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_8x24.lo `test -f 'src/external/blis/config/knl/kernels/3/bli_dgemm_opt_8x24.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/3/bli_dgemm_opt_8x24.c
-
-src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_30x8_att.lo: src/external/blis/config/knl/kernels/3/bli_dgemm_opt_30x8_att.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_30x8_att.lo -MD -MP -MF src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_30x8_att.Tpo -c -o src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_30x8_att.lo `test -f 'src/external/blis/config/knl/kernels/3/bli_dgemm_opt_30x8_att.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/3/bli_dgemm_opt_30x8_att.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_30x8_att.Tpo src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_30x8_att.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/knl/kernels/3/bli_dgemm_opt_30x8_att.c' object='src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_30x8_att.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_dgemm_opt_30x8_att.lo `test -f 'src/external/blis/config/knl/kernels/3/bli_dgemm_opt_30x8_att.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/3/bli_dgemm_opt_30x8_att.c
-
-src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_sgemm_opt_30x16_att.lo: src/external/blis/config/knl/kernels/3/bli_sgemm_opt_30x16_att.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_sgemm_opt_30x16_att.lo -MD -MP -MF src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_sgemm_opt_30x16_att.Tpo -c -o src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_sgemm_opt_30x16_att.lo `test -f 'src/external/blis/config/knl/kernels/3/bli_sgemm_opt_30x16_att.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/3/bli_sgemm_opt_30x16_att.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_sgemm_opt_30x16_att.Tpo src/external/blis/config/knl/kernels/3/$(DEPDIR)/lib_libknl_la-bli_sgemm_opt_30x16_att.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/knl/kernels/3/bli_sgemm_opt_30x16_att.c' object='src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_sgemm_opt_30x16_att.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/knl/kernels/3/lib_libknl_la-bli_sgemm_opt_30x16_att.lo `test -f 'src/external/blis/config/knl/kernels/3/bli_sgemm_opt_30x16_att.c' || echo '$(srcdir)/'`src/external/blis/config/knl/kernels/3/bli_sgemm_opt_30x16_att.c
-
-src/external/blis/config/loongson3a/kernels/3/lib_libloongson3a_la-bli_gemm_opt_d4x4.lo: src/external/blis/config/loongson3a/kernels/3/bli_gemm_opt_d4x4.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libloongson3a_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/loongson3a/kernels/3/lib_libloongson3a_la-bli_gemm_opt_d4x4.lo -MD -MP -MF src/external/blis/config/loongson3a/kernels/3/$(DEPDIR)/lib_libloongson3a_la-bli_gemm_opt_d4x4.Tpo -c -o src/external/blis/config/loongson3a/kernels/3/lib_libloongson3a_la-bli_gemm_opt_d4x4.lo `test -f 'src/external/blis/config/loongson3a/kernels/3/bli_gemm_opt_d4x4.c' || echo '$(srcdir)/'`src/external/blis/config/loongson3a/kernels/3/bli_gemm_opt_d4x4.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/loongson3a/kernels/3/$(DEPDIR)/lib_libloongson3a_la-bli_gemm_opt_d4x4.Tpo src/external/blis/config/loongson3a/kernels/3/$(DEPDIR)/lib_libloongson3a_la-bli_gemm_opt_d4x4.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/loongson3a/kernels/3/bli_gemm_opt_d4x4.c' object='src/external/blis/config/loongson3a/kernels/3/lib_libloongson3a_la-bli_gemm_opt_d4x4.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libloongson3a_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/loongson3a/kernels/3/lib_libloongson3a_la-bli_gemm_opt_d4x4.lo `test -f 'src/external/blis/config/loongson3a/kernels/3/bli_gemm_opt_d4x4.c' || echo '$(srcdir)/'`src/external/blis/config/loongson3a/kernels/3/bli_gemm_opt_d4x4.c
-
-src/external/blis/config/mic/kernels/3/lib_libmic_la-bli_dgemm_opt_30x8.lo: src/external/blis/config/mic/kernels/3/bli_dgemm_opt_30x8.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libmic_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/mic/kernels/3/lib_libmic_la-bli_dgemm_opt_30x8.lo -MD -MP -MF src/external/blis/config/mic/kernels/3/$(DEPDIR)/lib_libmic_la-bli_dgemm_opt_30x8.Tpo -c -o src/external/blis/config/mic/kernels/3/lib_libmic_la-bli_dgemm_opt_30x8.lo `test -f 'src/external/blis/config/mic/kernels/3/bli_dgemm_opt_30x8.c' || echo '$(srcdir)/'`src/external/blis/config/mic/kernels/3/bli_dgemm_opt_30x8.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/mic/kernels/3/$(DEPDIR)/lib_libmic_la-bli_dgemm_opt_30x8.Tpo src/external/blis/config/mic/kernels/3/$(DEPDIR)/lib_libmic_la-bli_dgemm_opt_30x8.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/mic/kernels/3/bli_dgemm_opt_30x8.c' object='src/external/blis/config/mic/kernels/3/lib_libmic_la-bli_dgemm_opt_30x8.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libmic_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/mic/kernels/3/lib_libmic_la-bli_dgemm_opt_30x8.lo `test -f 'src/external/blis/config/mic/kernels/3/bli_dgemm_opt_30x8.c' || echo '$(srcdir)/'`src/external/blis/config/mic/kernels/3/bli_dgemm_opt_30x8.c
-
-src/external/blis/config/mic/kernels/3/lib_libmic_la-bli_sgemm_opt_30x16.lo: src/external/blis/config/mic/kernels/3/bli_sgemm_opt_30x16.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libmic_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/mic/kernels/3/lib_libmic_la-bli_sgemm_opt_30x16.lo -MD -MP -MF src/external/blis/config/mic/kernels/3/$(DEPDIR)/lib_libmic_la-bli_sgemm_opt_30x16.Tpo -c -o src/external/blis/config/mic/kernels/3/lib_libmic_la-bli_sgemm_opt_30x16.lo `test -f 'src/external/blis/config/mic/kernels/3/bli_sgemm_opt_30x16.c' || echo '$(srcdir)/'`src/external/blis/config/mic/kernels/3/bli_sgemm_opt_30x16.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/mic/kernels/3/$(DEPDIR)/lib_libmic_la-bli_sgemm_opt_30x16.Tpo src/external/blis/config/mic/kernels/3/$(DEPDIR)/lib_libmic_la-bli_sgemm_opt_30x16.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/mic/kernels/3/bli_sgemm_opt_30x16.c' object='src/external/blis/config/mic/kernels/3/lib_libmic_la-bli_sgemm_opt_30x16.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libmic_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/mic/kernels/3/lib_libmic_la-bli_sgemm_opt_30x16.lo `test -f 'src/external/blis/config/mic/kernels/3/bli_sgemm_opt_30x16.c' || echo '$(srcdir)/'`src/external/blis/config/mic/kernels/3/bli_sgemm_opt_30x16.c
-
-src/external/blis/config/piledriver/kernels/3/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo: src/external/blis/config/piledriver/kernels/3/bli_gemm_asm_d8x3.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libpiledriver_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/piledriver/kernels/3/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo -MD -MP -MF src/external/blis/config/piledriver/kernels/3/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Tpo -c -o src/external/blis/config/piledriver/kernels/3/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo `test -f 'src/external/blis/config/piledriver/kernels/3/bli_gemm_asm_d8x3.c' || echo '$(srcdir)/'`src/external/blis/config/piledriver/kernels/3/bli_gemm_asm_d8x3.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/piledriver/kernels/3/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Tpo src/external/blis/config/piledriver/kernels/3/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/piledriver/kernels/3/bli_gemm_asm_d8x3.c' object='src/external/blis/config/piledriver/kernels/3/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libpiledriver_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/piledriver/kernels/3/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo `test -f 'src/external/blis/config/piledriver/kernels/3/bli_gemm_asm_d8x3.c' || echo '$(srcdir)/'`src/external/blis/config/piledriver/kernels/3/bli_gemm_asm_d8x3.c
-
-src/external/blis/config/power7/kernels/3/lib_libpower7_la-bli_gemm_opt_8x4.lo: src/external/blis/config/power7/kernels/3/bli_gemm_opt_8x4.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libpower7_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/power7/kernels/3/lib_libpower7_la-bli_gemm_opt_8x4.lo -MD -MP -MF src/external/blis/config/power7/kernels/3/$(DEPDIR)/lib_libpower7_la-bli_gemm_opt_8x4.Tpo -c -o src/external/blis/config/power7/kernels/3/lib_libpower7_la-bli_gemm_opt_8x4.lo `test -f 'src/external/blis/config/power7/kernels/3/bli_gemm_opt_8x4.c' || echo '$(srcdir)/'`src/external/blis/config/power7/kernels/3/bli_gemm_opt_8x4.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/power7/kernels/3/$(DEPDIR)/lib_libpower7_la-bli_gemm_opt_8x4.Tpo src/external/blis/config/power7/kernels/3/$(DEPDIR)/lib_libpower7_la-bli_gemm_opt_8x4.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/power7/kernels/3/bli_gemm_opt_8x4.c' object='src/external/blis/config/power7/kernels/3/lib_libpower7_la-bli_gemm_opt_8x4.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libpower7_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/power7/kernels/3/lib_libpower7_la-bli_gemm_opt_8x4.lo `test -f 'src/external/blis/config/power7/kernels/3/bli_gemm_opt_8x4.c' || echo '$(srcdir)/'`src/external/blis/config/power7/kernels/3/bli_gemm_opt_8x4.c
-
-src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo: src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libsandybridge_la_CFLAGS) $(CFLAGS) -MT src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo -MD -MP -MF src/external/blis/config/sandybridge/kernels/3/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_asm_d8x4.Tpo -c -o src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo `test -f 'src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c' || echo '$(srcdir)/'`src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/external/blis/config/sandybridge/kernels/3/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_asm_d8x4.Tpo src/external/blis/config/sandybridge/kernels/3/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_asm_d8x4.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c' object='src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libsandybridge_la_CFLAGS) $(CFLAGS) -c -o src/external/blis/config/sandybridge/kernels/3/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo `test -f 'src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c' || echo '$(srcdir)/'`src/external/blis/config/sandybridge/kernels/3/bli_gemm_asm_d8x4.c
 
 .cxx.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -1731,22 +847,6 @@ clean-libtool:
 	-rm -rf src/1m/.libs src/1m/_libs
 	-rm -rf src/1v/.libs src/1v/_libs
 	-rm -rf src/3/.libs src/3/_libs
-	-rm -rf src/external/blis/config/armv7a/kernels/3/.libs src/external/blis/config/armv7a/kernels/3/_libs
-	-rm -rf src/external/blis/config/armv8a/kernels/3/.libs src/external/blis/config/armv8a/kernels/3/_libs
-	-rm -rf src/external/blis/config/bgq/kernels/3/.libs src/external/blis/config/bgq/kernels/3/_libs
-	-rm -rf src/external/blis/config/bulldozer/kernels/3/.libs src/external/blis/config/bulldozer/kernels/3/_libs
-	-rm -rf src/external/blis/config/carrizo/kernels/3/.libs src/external/blis/config/carrizo/kernels/3/_libs
-	-rm -rf src/external/blis/config/cortex-a15/kernels/3/.libs src/external/blis/config/cortex-a15/kernels/3/_libs
-	-rm -rf src/external/blis/config/cortex-a9/kernels/3/.libs src/external/blis/config/cortex-a9/kernels/3/_libs
-	-rm -rf src/external/blis/config/dunnington/kernels/3/.libs src/external/blis/config/dunnington/kernels/3/_libs
-	-rm -rf src/external/blis/config/haswell/kernels/3/.libs src/external/blis/config/haswell/kernels/3/_libs
-	-rm -rf src/external/blis/config/knl/kernels/1m/.libs src/external/blis/config/knl/kernels/1m/_libs
-	-rm -rf src/external/blis/config/knl/kernels/3/.libs src/external/blis/config/knl/kernels/3/_libs
-	-rm -rf src/external/blis/config/loongson3a/kernels/3/.libs src/external/blis/config/loongson3a/kernels/3/_libs
-	-rm -rf src/external/blis/config/mic/kernels/3/.libs src/external/blis/config/mic/kernels/3/_libs
-	-rm -rf src/external/blis/config/piledriver/kernels/3/.libs src/external/blis/config/piledriver/kernels/3/_libs
-	-rm -rf src/external/blis/config/power7/kernels/3/.libs src/external/blis/config/power7/kernels/3/_libs
-	-rm -rf src/external/blis/config/sandybridge/kernels/3/.libs src/external/blis/config/sandybridge/kernels/3/_libs
 	-rm -rf src/impl/.libs src/impl/_libs
 	-rm -rf src/impl/blas/.libs src/impl/blas/_libs
 	-rm -rf src/impl/blis/.libs src/impl/blis/_libs
@@ -2022,38 +1122,6 @@ distclean-generic:
 	-rm -f src/1v/$(am__dirstamp)
 	-rm -f src/3/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/3/$(am__dirstamp)
-	-rm -f src/external/blis/config/armv7a/kernels/3/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/external/blis/config/armv7a/kernels/3/$(am__dirstamp)
-	-rm -f src/external/blis/config/armv8a/kernels/3/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/external/blis/config/armv8a/kernels/3/$(am__dirstamp)
-	-rm -f src/external/blis/config/bgq/kernels/3/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/external/blis/config/bgq/kernels/3/$(am__dirstamp)
-	-rm -f src/external/blis/config/bulldozer/kernels/3/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/external/blis/config/bulldozer/kernels/3/$(am__dirstamp)
-	-rm -f src/external/blis/config/carrizo/kernels/3/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/external/blis/config/carrizo/kernels/3/$(am__dirstamp)
-	-rm -f src/external/blis/config/cortex-a15/kernels/3/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/external/blis/config/cortex-a15/kernels/3/$(am__dirstamp)
-	-rm -f src/external/blis/config/cortex-a9/kernels/3/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/external/blis/config/cortex-a9/kernels/3/$(am__dirstamp)
-	-rm -f src/external/blis/config/dunnington/kernels/3/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/external/blis/config/dunnington/kernels/3/$(am__dirstamp)
-	-rm -f src/external/blis/config/haswell/kernels/3/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/external/blis/config/haswell/kernels/3/$(am__dirstamp)
-	-rm -f src/external/blis/config/knl/kernels/1m/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/external/blis/config/knl/kernels/1m/$(am__dirstamp)
-	-rm -f src/external/blis/config/knl/kernels/3/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/external/blis/config/knl/kernels/3/$(am__dirstamp)
-	-rm -f src/external/blis/config/loongson3a/kernels/3/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/external/blis/config/loongson3a/kernels/3/$(am__dirstamp)
-	-rm -f src/external/blis/config/mic/kernels/3/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/external/blis/config/mic/kernels/3/$(am__dirstamp)
-	-rm -f src/external/blis/config/piledriver/kernels/3/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/external/blis/config/piledriver/kernels/3/$(am__dirstamp)
-	-rm -f src/external/blis/config/power7/kernels/3/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/external/blis/config/power7/kernels/3/$(am__dirstamp)
-	-rm -f src/external/blis/config/sandybridge/kernels/3/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/external/blis/config/sandybridge/kernels/3/$(am__dirstamp)
 	-rm -f src/impl/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/impl/$(am__dirstamp)
 	-rm -f src/impl/blas/$(DEPDIR)/$(am__dirstamp)
@@ -2075,7 +1143,7 @@ clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf src/$(DEPDIR) src/1m/$(DEPDIR) src/1v/$(DEPDIR) src/3/$(DEPDIR) src/external/blis/config/armv7a/kernels/3/$(DEPDIR) src/external/blis/config/armv8a/kernels/3/$(DEPDIR) src/external/blis/config/bgq/kernels/3/$(DEPDIR) src/external/blis/config/bulldozer/kernels/3/$(DEPDIR) src/external/blis/config/carrizo/kernels/3/$(DEPDIR) src/external/blis/config/cortex-a15/kernels/3/$(DEPDIR) src/external/blis/config/cortex-a9/kernels/3/$(DEPDIR) src/external/blis/config/dunnington/kernels/3/$(DEPDIR) src/external/blis/config/haswell/kernels/3/$(DEPDIR) src/external/blis/config/knl/kernels/1m/$(DEPDIR) src/external/blis/config/knl/kernels/3/$(DEPDIR) src/external/blis/config/loongson3a/kernels/3/$(DEPDIR) src/external/blis/config/mic/kernels/3/$(DEPDIR) src/external/blis/config/piledriver/kernels/3/$(DEPDIR) src/external/blis/config/power7/kernels/3/$(DEPDIR) src/external/blis/config/sandybridge/kernels/3/$(DEPDIR) src/impl/$(DEPDIR) src/impl/blas/$(DEPDIR) src/impl/blis/$(DEPDIR) src/impl/reference/$(DEPDIR) test/$(DEPDIR)
+	-rm -rf src/$(DEPDIR) src/1m/$(DEPDIR) src/1v/$(DEPDIR) src/3/$(DEPDIR) src/impl/$(DEPDIR) src/impl/blas/$(DEPDIR) src/impl/blis/$(DEPDIR) src/impl/reference/$(DEPDIR) test/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -2123,7 +1191,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf src/$(DEPDIR) src/1m/$(DEPDIR) src/1v/$(DEPDIR) src/3/$(DEPDIR) src/external/blis/config/armv7a/kernels/3/$(DEPDIR) src/external/blis/config/armv8a/kernels/3/$(DEPDIR) src/external/blis/config/bgq/kernels/3/$(DEPDIR) src/external/blis/config/bulldozer/kernels/3/$(DEPDIR) src/external/blis/config/carrizo/kernels/3/$(DEPDIR) src/external/blis/config/cortex-a15/kernels/3/$(DEPDIR) src/external/blis/config/cortex-a9/kernels/3/$(DEPDIR) src/external/blis/config/dunnington/kernels/3/$(DEPDIR) src/external/blis/config/haswell/kernels/3/$(DEPDIR) src/external/blis/config/knl/kernels/1m/$(DEPDIR) src/external/blis/config/knl/kernels/3/$(DEPDIR) src/external/blis/config/loongson3a/kernels/3/$(DEPDIR) src/external/blis/config/mic/kernels/3/$(DEPDIR) src/external/blis/config/piledriver/kernels/3/$(DEPDIR) src/external/blis/config/power7/kernels/3/$(DEPDIR) src/external/blis/config/sandybridge/kernels/3/$(DEPDIR) src/impl/$(DEPDIR) src/impl/blas/$(DEPDIR) src/impl/blis/$(DEPDIR) src/impl/reference/$(DEPDIR) test/$(DEPDIR)
+	-rm -rf src/$(DEPDIR) src/1m/$(DEPDIR) src/1v/$(DEPDIR) src/3/$(DEPDIR) src/impl/$(DEPDIR) src/impl/blas/$(DEPDIR) src/impl/blis/$(DEPDIR) src/impl/reference/$(DEPDIR) test/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

@@ -26,7 +26,7 @@ int tensor_dot(const_tensor_view<T> A, std::string idx_A,
                const_tensor_view<T> B, std::string idx_B, T& val);
 
 template <typename T>
-int tensor_dot_ref(const std::vector<idx_type>& len_AB,
+int tensor_dot_ref(const std::vector<len_type>& len_AB,
                    const T* A, const std::vector<stride_type>& stride_A_AB,
                    const T* B, const std::vector<stride_type>& stride_B_AB,
                    T& val);

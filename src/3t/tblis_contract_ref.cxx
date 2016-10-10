@@ -6,15 +6,15 @@ namespace tblis
 {
 
 template <typename T>
-int tensor_contract_ref(const std::vector<idx_type>& len_AB,
-                        const std::vector<idx_type>& len_AC,
-                        const std::vector<idx_type>& len_BC,
-                        T alpha, const T* restrict A, const std::vector<stride_type>& stride_A_AB,
-                                                      const std::vector<stride_type>& stride_A_AC,
-                                 const T* restrict B, const std::vector<stride_type>& stride_B_AB,
-                                                      const std::vector<stride_type>& stride_B_BC,
-                        T  beta,       T* restrict C, const std::vector<stride_type>& stride_C_AC,
-                                                      const std::vector<stride_type>& stride_C_BC)
+int tensor_contract_ref(const std::vector<len_type>& len_AB,
+                        const std::vector<len_type>& len_AC,
+                        const std::vector<len_type>& len_BC,
+                        T alpha, const T* TBLIS_RESTRICT A, const std::vector<stride_type>& stride_A_AB,
+                                                            const std::vector<stride_type>& stride_A_AC,
+                                 const T* TBLIS_RESTRICT B, const std::vector<stride_type>& stride_B_AB,
+                                                            const std::vector<stride_type>& stride_B_BC,
+                        T  beta,       T* TBLIS_RESTRICT C, const std::vector<stride_type>& stride_C_AC,
+                                                            const std::vector<stride_type>& stride_C_BC)
 {
     MArray::viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
     MArray::viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);

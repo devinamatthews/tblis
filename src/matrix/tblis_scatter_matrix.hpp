@@ -179,7 +179,7 @@ namespace detail
             template <typename I>
             const_scatter_matrix_view<T> operator[](const range_t<I>& x) const
             {
-                assert(x.front() <= x.back() && x.front() >= 0 && x.back() <= array.len_[0]);
+                TBLIS_ASSERT(x.front() <= x.back() && x.front() >= 0 && x.back() <= array.len_[0]);
 
                 if (array.stride_[0] == 0)
                 {
@@ -461,7 +461,7 @@ class const_scatter_matrix_view
 
         void shift(unsigned dim, idx_type n)
         {
-            assert(dim < 2);
+            TBLIS_ASSERT(dim < 2);
 
             if (stride_[dim] == 0)
             {
@@ -503,7 +503,7 @@ class const_scatter_matrix_view
         template <typename U>
         void permute(const std::array<U, 2>& perm)
         {
-            assert((perm[0] == 0 && perm[1] == 1) ||
+            TBLIS_ASSERT((perm[0] == 0 && perm[1] == 1) ||
                    (perm[0] == 1 && perm[1] == 0));
 
             if (perm[0] == 1)
@@ -545,14 +545,14 @@ class const_scatter_matrix_view
 
         detail::const_scatter_matrix_ref<T> operator[](idx_type i) const
         {
-            assert(i < len_[0]);
+            TBLIS_ASSERT(i < len_[0]);
             return {*this, i};
         }
 
         template <typename I>
         detail::const_scatter_matrix_slice<T> operator[](const range_t<I>& x) const
         {
-            assert(x.front() >= 0 && x.back() <= len_[0]);
+            TBLIS_ASSERT(x.front() >= 0 && x.back() <= len_[0]);
             return {*this, x};
         }
 
@@ -576,13 +576,13 @@ class const_scatter_matrix_view
 
         idx_type length(unsigned dim) const
         {
-            assert(dim < 2);
+            TBLIS_ASSERT(dim < 2);
             return len_[dim];
         }
 
         idx_type length(unsigned dim, idx_type len)
         {
-            assert(dim < 2);
+            TBLIS_ASSERT(dim < 2);
             std::swap(len, len_[dim]);
             return len;
         }
@@ -594,13 +594,13 @@ class const_scatter_matrix_view
 
         stride_type stride(unsigned dim) const
         {
-            assert(dim < 2);
+            TBLIS_ASSERT(dim < 2);
             return stride_[dim];
         }
 
         stride_type stride(unsigned dim, stride_type stride)
         {
-            assert(dim < 2);
+            TBLIS_ASSERT(dim < 2);
             std::swap(stride, stride_[dim]);
             scatter_[dim] = nullptr;
             return stride;
@@ -613,13 +613,13 @@ class const_scatter_matrix_view
 
         scatter_type scatter(unsigned dim) const
         {
-            assert(dim < 2);
+            TBLIS_ASSERT(dim < 2);
             return scatter_[dim];
         }
 
         void scatter(unsigned dim, scatter_type scatter)
         {
-            assert(dim < 2);
+            TBLIS_ASSERT(dim < 2);
             std::swap(scatter, scatter_[dim]);
             stride_[dim] = 0;
         }
@@ -789,7 +789,7 @@ class scatter_matrix_view : protected const_scatter_matrix_view<T>
 
         void rotate_dim(unsigned dim, stride_type shift) const
         {
-            assert(dim < 2);
+            TBLIS_ASSERT(dim < 2);
             abort();
             //TODO
         }
@@ -848,7 +848,7 @@ template <typename T, unsigned ndim> void copy(const_scatter_matrix_view<T> a, s
 {
     typedef typename const_scatter_matrix_view<T>::idx_type idx_type;
 
-    assert(a.lengths() == b.lengths());
+    TBLIS_ASSERT(a.lengths() == b.lengths());
 
     for (idx_type j = 0;j < a.length(1);j++)
     {

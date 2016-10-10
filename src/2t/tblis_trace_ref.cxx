@@ -8,11 +8,11 @@ namespace impl
 {
 
 template <typename T>
-int tensor_trace_ref(const std::vector<idx_type>& len_A,
-                     const std::vector<idx_type>& len_AB,
-                     T alpha, const T* restrict A, const std::vector<stride_type>& stride_A_A,
-                                                   const std::vector<stride_type>& stride_A_AB,
-                     T  beta,       T* restrict B, const std::vector<stride_type>& stride_B_AB)
+int tensor_trace_ref(const std::vector<len_type>& len_A,
+                     const std::vector<len_type>& len_AB,
+                     T alpha, const T* TBLIS_RESTRICT A, const std::vector<stride_type>& stride_A_A,
+                                                         const std::vector<stride_type>& stride_A_AB,
+                     T  beta,       T* TBLIS_RESTRICT B, const std::vector<stride_type>& stride_B_AB)
 {
     MArray::viterator<1> iter_A(len_A, stride_A_A);
     MArray::viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);

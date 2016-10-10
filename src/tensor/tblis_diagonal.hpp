@@ -11,7 +11,7 @@
 namespace tblis
 {
 
-inline void diagonal(std::vector<idx_type>& len, std::string& idx,
+inline void diagonal(std::vector<len_type>& len, std::string& idx,
                      std::vector<stride_type>& stride)
 {
     unsigned ndim = len.size();
@@ -20,7 +20,7 @@ inline void diagonal(std::vector<idx_type>& len, std::string& idx,
 
     unsigned ndim_old = ndim;
     std::string idx_old = idx;
-    std::vector<idx_type> len_old = len;
+    std::vector<len_type> len_old = len;
     std::vector<stride_type> stride_old = stride;
 
     ndim = 0;
@@ -54,7 +54,7 @@ void diagonal(const_tensor_view<T>& AD, std::string& idx_AD)
 {
     TBLIS_ASSERT(AD.dimension() == idx_AD.size());
 
-    std::vector<idx_type> len_AD = AD.lengths();
+    std::vector<len_type> len_AD = AD.lengths();
     std::vector<stride_type> stride_AD = AD.strides();
 
     diagonal(len_AD, idx_AD, stride_AD);

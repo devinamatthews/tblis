@@ -9,9 +9,9 @@ namespace tblis
 {
 
 template <typename T>
-int tensor_contract_blas(const std::vector<idx_type>& len_AB,
-                         const std::vector<idx_type>& len_AC,
-                         const std::vector<idx_type>& len_BC,
+int tensor_contract_blas(const std::vector<len_type>& len_AB,
+                         const std::vector<len_type>& len_AC,
+                         const std::vector<len_type>& len_BC,
                          T alpha, const T* A, const std::vector<stride_type>& stride_A_AB,
                                               const std::vector<stride_type>& stride_A_AC,
                                   const T* B, const std::vector<stride_type>& stride_B_AB,

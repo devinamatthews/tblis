@@ -8,9 +8,10 @@ namespace tblis
 
 template <typename T>
 void tblis_dotv_ref(thread_communicator& comm,
-                    bool conj_A, bool conj_B, idx_type n,
-                    const T* restrict A, stride_type inc_A,
-                    const T* restrict B, stride_type inc_B, T& restrict dot)
+                    bool conj_A, bool conj_B, len_type n,
+                    const T* TBLIS_RESTRICT A, stride_type inc_A,
+                    const T* TBLIS_RESTRICT B, stride_type inc_B,
+                    T& TBLIS_RESTRICT dot)
 {
     dot = T();
 
@@ -18,7 +19,7 @@ void tblis_dotv_ref(thread_communicator& comm,
 
     T subdot = T();
 
-    idx_type n_min, n_max;
+    len_type n_min, n_max;
     std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(n);
 
     conj_B = conj_A ^ conj_B;
@@ -27,14 +28,14 @@ void tblis_dotv_ref(thread_communicator& comm,
     {
         if (conj_B)
         {
-            for (idx_type i = n_min;i < n_max;i++)
+            for (len_type i = n_min;i < n_max;i++)
             {
                 subdot += A[i]*conj(B[i]);
             }
         }
         else
         {
-            for (idx_type i = n_min;i < n_max;i++)
+            for (len_type i = n_min;i < n_max;i++)
             {
                 subdot += A[i]*B[i];
             }
@@ -47,7 +48,7 @@ void tblis_dotv_ref(thread_communicator& comm,
 
         if (conj_B)
         {
-            for (idx_type i = n_min;i < n_max;i++)
+            for (len_type i = n_min;i < n_max;i++)
             {
                 subdot += (*A)*conj(*B);
                 A += inc_A;
@@ -56,7 +57,7 @@ void tblis_dotv_ref(thread_communicator& comm,
         }
         else
         {
-            for (idx_type i = n_min;i < n_max;i++)
+            for (len_type i = n_min;i < n_max;i++)
             {
                 subdot += (*A)*(*B);
                 A += inc_A;
@@ -88,7 +89,7 @@ T tblis_dotv(const_row_view<T> A, const_row_view<T> B)
 }
 
 template <typename T>
-void tblis_dotv(bool conj_A, bool conj_B, idx_type n,
+void tblis_dotv(bool conj_A, bool conj_B, len_type n,
                 const T* A, stride_type inc_A,
                 const T* B, stride_type inc_B, T& dot)
 {
@@ -102,7 +103,7 @@ void tblis_dotv(bool conj_A, bool conj_B, idx_type n,
 }
 
 template <typename T>
-T tblis_dotv(bool conj_A, bool conj_B, idx_type n,
+T tblis_dotv(bool conj_A, bool conj_B, len_type n,
              const T* A, stride_type inc_A,
              const T* B, stride_type inc_B)
 {

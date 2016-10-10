@@ -692,9 +692,6 @@ ENABLE_ARMV8A_FALSE
 ENABLE_ARMV8A_TRUE
 ENABLE_ARMV7A_FALSE
 ENABLE_ARMV7A_TRUE
-HAVE_BLIS_FALSE
-HAVE_BLIS_TRUE
-blis_LIBS
 OPENMP_CXXFLAGS
 CXXCPP
 ENABLE_BLAS_FALSE
@@ -822,7 +819,6 @@ enable_threading
 enable_openmp
 with_mutex
 with_barrier
-with_blis
 enable_config
 enable_shared
 enable_static
@@ -1513,7 +1509,6 @@ Optional Packages:
                           std_mutex, omp_lock, or spinlock [default=spinlock]
   --with-barrier=type     use a barrier of the specified type, one of pthread,
                           c++11, spin [default=spin]
-  --with-blis=<dir>       Specify the location of blis.
   --with-pic[=PKGS]       try to use only PIC/non-PIC objects [default=use
                           both]
   --with-aix-soname=aix|svr4|both
@@ -2028,81 +2023,6 @@ $as_echo "$ac_res" >&6; }
   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
 
 } # ac_fn_cxx_check_header_compile
-
-# ac_fn_cxx_check_func LINENO FUNC VAR
-# ------------------------------------
-# Tests whether FUNC exists, setting the cache variable VAR accordingly
-ac_fn_cxx_check_func ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-$as_echo_n "checking for $2... " >&6; }
-if eval \${$3+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-/* Define $2 to an innocuous variant, in case <limits.h> declares $2.
-   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
-#define $2 innocuous_$2
-
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $2 (); below.
-    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
-    <limits.h> exists even on freestanding compilers.  */
-
-#ifdef __STDC__
-# include <limits.h>
-#else
-# include <assert.h>
-#endif
-
-#undef $2
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char $2 ();
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined __stub_$2 || defined __stub___$2
-choke me
-#endif
-
-#ifdef F77_DUMMY_MAIN
-
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-
-#endif
-int
-main ()
-{
-return $2 ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_link "$LINENO"; then :
-  eval "$3=yes"
-else
-  eval "$3=no"
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_cxx_check_func
 
 # ac_fn_c_check_header_compile LINENO HEADER VAR INCLUDES
 # -------------------------------------------------------
@@ -7479,6 +7399,9 @@ _ACEOF
  esac
 
 
+
+$as_echo "#define RESTRICT _tblis_restrict" >>confdefs.h
+
  if test x"$blas_found" = xyes; then
   ENABLE_BLAS_TRUE=
   ENABLE_BLAS_FALSE='#'
@@ -8109,92 +8032,6 @@ $as_echo "#define USE_SPIN_BARRIER 1" >>confdefs.h
 else
     as_fn_error $? "Invalid barrier type specified." "$LINENO" 5
 fi
-
-#
-# Check for BLIS
-#
-
-    download=no
-    downloaded=no
-
-# Check whether --with-blis was given.
-if test "${with_blis+set}" = set; then :
-  withval=$with_blis;
-else
-  download=yes
-fi
-
-
-    pkg_dir=$with_blis
-    if test x"$pkg_dir" = xno; then
-        as_fn_error $? "blis is a required package." "$LINENO" 5
-        include_package=no
-    elif test x"$download" = xyes && test x"https://github.com/flame/blis" = x; then
-        include_package=no
-    else
-        if test x"$download" = xyes && test x"https://github.com/flame/blis" != x; then
-            pkg_dir=src/external/blis
-            if ! test -d $pkg_dir; then
-                { $as_echo "$as_me:${as_lineno-$LINENO}: downloading blis from external Git repository..." >&5
-$as_echo "$as_me: downloading blis from external Git repository..." >&6;}
-                if ! git clone -q https://github.com/flame/blis $pkg_dir; then
-                    as_fn_error $? "could not download blis repository" "$LINENO" 5
-                fi
-            fi
-            if test x"" != x && test -f $pkg_dir/configure; then
-                { $as_echo "$as_me:${as_lineno-$LINENO}: configuring blis in $pkg_dir" >&5
-$as_echo "$as_me: configuring blis in $pkg_dir" >&6;}
-                ( cd $pkg_dir && ./configure )
-                { $as_echo "$as_me:${as_lineno-$LINENO}: done configuring blis" >&5
-$as_echo "$as_me: done configuring blis" >&6;}
-            fi
-            downloaded=yes
-        fi
-
-        if test x"" != x; then
-            lib_flags=
-            for dir_path in lib lib64; do
-                as_fn_append lib_flags " -L$pkg_dir/$dir_path"
-            done
-            as_fn_append lib_flags " $libraries"
-            if test x"$downloaded" != xyes; then
-                for symbol in ; do
-                      ac_save_LIBS="$LIBS"
-  LIBS="$LIBS $lib_flags  $LAPACK_LIBS $BLAS_LIBS"
-  as_ac_var=`$as_echo "ac_cv_func_$symbol" | $as_tr_sh`
-ac_fn_cxx_check_func "$LINENO" "$symbol" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-
-else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "Could not find $symbol in $libraries.
-See \`config.log' for more details" "$LINENO" 5; }
-fi
-
-  LIBS="$ac_save_LIBS"
-
-                done
-            fi
-            blis_LIBS=$lib_flags
-
-        fi
-        include_package=yes
-    fi
-    if test x"$include_package" = xyes; then :
-
-$as_echo "#define HAVE_BLIS 1" >>confdefs.h
-
-fi
-     if test x"$include_package" = xyes; then
-  HAVE_BLIS_TRUE=
-  HAVE_BLIS_FALSE='#'
-else
-  HAVE_BLIS_TRUE='#'
-  HAVE_BLIS_FALSE=
-fi
-
-
 
 #
 # Determine configurations to build
@@ -22378,7 +22215,7 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 mkdir -p bin
 
-ac_config_files="$ac_config_files Makefile src/tblis_import_configs.hpp src/tblis_instantiate_for_configs.hpp src/tblis_instantiate_for_types.hpp"
+ac_config_files="$ac_config_files Makefile src/configs/tblis_instantiate_for_configs.hpp src/configs/tblis_instantiate_for_types.hpp"
 
 
 ac_config_commands="$ac_config_commands tblis_config.hpp"
@@ -22530,10 +22367,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_BLAS_TRUE}" && test -z "${ENABLE_BLAS_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_BLAS\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${HAVE_BLIS_TRUE}" && test -z "${HAVE_BLIS_FALSE}"; then
-  as_fn_error $? "conditional \"HAVE_BLIS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_ARMV7A_TRUE}" && test -z "${ENABLE_ARMV7A_FALSE}"; then
@@ -23669,9 +23502,8 @@ do
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "src/tblis_import_configs.hpp") CONFIG_FILES="$CONFIG_FILES src/tblis_import_configs.hpp" ;;
-    "src/tblis_instantiate_for_configs.hpp") CONFIG_FILES="$CONFIG_FILES src/tblis_instantiate_for_configs.hpp" ;;
-    "src/tblis_instantiate_for_types.hpp") CONFIG_FILES="$CONFIG_FILES src/tblis_instantiate_for_types.hpp" ;;
+    "src/configs/tblis_instantiate_for_configs.hpp") CONFIG_FILES="$CONFIG_FILES src/configs/tblis_instantiate_for_configs.hpp" ;;
+    "src/configs/tblis_instantiate_for_types.hpp") CONFIG_FILES="$CONFIG_FILES src/configs/tblis_instantiate_for_types.hpp" ;;
     "tblis_config.hpp") CONFIG_COMMANDS="$CONFIG_COMMANDS tblis_config.hpp" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
@@ -25351,3 +25183,5 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
+
+rm config.h

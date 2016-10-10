@@ -16,7 +16,7 @@ template <typename T>
 int tensor_scale(T alpha, tensor_view<T> A, std::string idx_A);
 
 template <typename T>
-int tensor_scale_ref(const std::vector<idx_type>& len_A,
+int tensor_scale_ref(const std::vector<len_type>& len_A,
                      T alpha, T* A, const std::vector<stride_type>& stride_A);
 
 }

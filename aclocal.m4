@@ -1206,8 +1206,6 @@ AC_SUBST([am__tar])
 AC_SUBST([am__untar])
 ]) # _AM_PROG_TAR
 
-m4_include([m4/aq_check_func_with_path.m4])
-m4_include([m4/aq_with_package.m4])
 m4_include([m4/ax_blas.m4])
 m4_include([m4/ax_cxx_compile_stdcxx_11.m4])
 m4_include([m4/ax_prefix_config_h.m4])

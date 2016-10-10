@@ -9,13 +9,13 @@ namespace tblis
 {
 
 template <typename T>
-int tensor_mult_blas(const std::vector<idx_type>& len_A,
-                     const std::vector<idx_type>& len_B,
-                     const std::vector<idx_type>& len_C,
-                     const std::vector<idx_type>& len_AB,
-                     const std::vector<idx_type>& len_AC,
-                     const std::vector<idx_type>& len_BC,
-                     const std::vector<idx_type>& len_ABC,
+int tensor_mult_blas(const std::vector<len_type>& len_A,
+                     const std::vector<len_type>& len_B,
+                     const std::vector<len_type>& len_C,
+                     const std::vector<len_type>& len_AB,
+                     const std::vector<len_type>& len_AC,
+                     const std::vector<len_type>& len_BC,
+                     const std::vector<len_type>& len_ABC,
                      T alpha, const T* A, const std::vector<stride_type>& stride_A_A,
                                           const std::vector<stride_type>& stride_A_AB,
                                           const std::vector<stride_type>& stride_A_AC,

@@ -13,13 +13,13 @@ namespace tblis
 template <typename T>
 void partition(const_tensor_view<T> A,
                const_tensor_view<T>& A0, const_tensor_view<T>& A1,
-               unsigned dim, idx_type off)
+               unsigned dim, len_type off)
 {
     TBLIS_ASSERT(&A0 != &A1);
     TBLIS_ASSERT(dim < A.dimension());
     TBLIS_ASSERT(off >= 0);
 
-    std::vector<idx_type> len = A.lengths();
+    std::vector<len_type> len = A.lengths();
     off = std::min(off, len[dim]);
 
     len[dim] -= off;
@@ -32,7 +32,7 @@ void partition(const_tensor_view<T> A,
 template <typename T>
 void partition(tensor_view<T> A,
                tensor_view<T>& A0, tensor_view<T>& A1,
-               unsigned dim, idx_type off)
+               unsigned dim, len_type off)
 {
     partition(A,
               reinterpret_cast<const_tensor_view<T>&>(A0),
@@ -49,7 +49,7 @@ void unpartition(const_tensor_view<T> A0, const_tensor_view<T> A1,
     TBLIS_ASSERT(detail::are_congruent_along(A0, A1, dim));
     TBLIS_ASSERT(A0.data()+A0.length(dim)*A0.stride(dim) == A1.data());
 
-    std::vector<idx_type> len = A0.lengths();
+    std::vector<len_type> len = A0.lengths();
     len[dim] += A1.length(dim);
     A.reset(len, A0.data(), A0.strides());
 }
@@ -67,15 +67,15 @@ void unpartition(tensor_view<T> A0, tensor_view<T> A1,
 template <typename T>
 void slice(const_tensor_view<T> A,
            const_tensor_view<T>& A0, const_tensor_view<T>& a1, const_tensor_view<T>& A2,
-           unsigned dim, idx_type off)
+           unsigned dim, len_type off)
 {
     TBLIS_ASSERT(&A0 != &a1);
     TBLIS_ASSERT(&A0 != &A2);
     TBLIS_ASSERT(dim < A.dimension());
     TBLIS_ASSERT(off >= 0 && off < A.length(dim));
 
-    std::vector<idx_type> len = A.lengths();
-    std::vector<idx_type> stride = A.strides();
+    std::vector<len_type> len = A.lengths();
+    std::vector<len_type> stride = A.strides();
 
     len[dim] -= off+1;
     A2.reset(len, A.data()+(off+1)*stride[dim], stride);
@@ -91,7 +91,7 @@ void slice(const_tensor_view<T> A,
 template <typename T>
 void slice(tensor_view<T> A,
            tensor_view<T>& A0, tensor_view<T>& a1, tensor_view<T>& A2,
-           unsigned dim, idx_type off)
+           unsigned dim, len_type off)
 {
     slice(A,
           reinterpret_cast<const_tensor_view<T>&>(A0),
@@ -108,8 +108,8 @@ void slice_front(const_tensor_view<T> A,
     TBLIS_ASSERT(&a0 != &A1);
     TBLIS_ASSERT(dim < A.dimension());
 
-    std::vector<idx_type> len = A.lengths();
-    std::vector<idx_type> stride = A.strides();
+    std::vector<len_type> len = A.lengths();
+    std::vector<len_type> stride = A.strides();
 
     len[dim]--;
     A1.reset(len, A.data()+stride[dim], stride);
@@ -138,8 +138,8 @@ void slice_back(const_tensor_view<T> A,
     TBLIS_ASSERT(&A0 != &a1);
     TBLIS_ASSERT(dim < A.dimension());
 
-    std::vector<idx_type> len = A.lengths();
-    std::vector<idx_type> stride = A.strides();
+    std::vector<len_type> len = A.lengths();
+    std::vector<len_type> stride = A.strides();
 
     len[dim]--;
     A0.reset(len, A.data(), stride);
@@ -173,7 +173,7 @@ void unslice(const_tensor_view<T> A0, const_tensor_view<T> a1, const_tensor_view
     TBLIS_ASSERT(a1.data() == A0.data()+A0.length(dim)*A0.stride(dim));
     TBLIS_ASSERT(A2.data() == A0.data()+(A0.length(dim)+1)*A0.stride(dim));
 
-    std::vector<idx_type> len = A0.lengths();
+    std::vector<len_type> len = A0.lengths();
     len[dim] += A2.length(dim)+1;
     A.reset(len, A0.data(), A0.strides());
 }
@@ -198,7 +198,7 @@ void unslice_front(const_tensor_view<T> a0, const_tensor_view<T> A1,
     TBLIS_ASSERT(detail::are_congruent_along(a0, A1, dim));
     TBLIS_ASSERT(A1.data() == a0.data()+A1.stride(dim));
 
-    std::vector<idx_type> len = A1.lengths();
+    std::vector<len_type> len = A1.lengths();
     len[dim]++;
     A.reset(len, a0.data(), A1.strides());
 }
@@ -223,7 +223,7 @@ void unslice_back(const_tensor_view<T> A0, const_tensor_view<T> a1,
     TBLIS_ASSERT(detail::are_congruent_along(A0, a1, dim));
     TBLIS_ASSERT(a1.data() == A0.data()+A0.length(dim)*A0.stride(dim));
 
-    std::vector<idx_type> len = A0.lengths();
+    std::vector<len_type> len = A0.lengths();
     len[dim]++;
     A.reset(len, A0.data(), A0.strides());
 }

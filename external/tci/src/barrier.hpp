@@ -15,7 +15,7 @@
 #endif
 
 #include "tblis_alignment.hpp"
-#include "tblis_yield.hpp"
+#include "yield.h"
 
 namespace tblis
 {

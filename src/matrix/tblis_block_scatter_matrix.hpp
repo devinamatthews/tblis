@@ -6,7 +6,7 @@
 namespace tblis
 {
 
-template <typename T, idx_type MB, idx_type NB>
+template <typename T, len_type MB, len_type NB>
 class block_scatter_matrix
 {
     static_assert(MB > 0, "MB must be positive");
@@ -89,7 +89,7 @@ class block_scatter_matrix
                 {
                     if (rscat[j+1]-rscat[j] != s) s = 0;
                 }
-                if (M_BLOCKED) assert(s == -1 || s == rbs[i/MB]);
+                if (M_BLOCKED) TBLIS_ASSERT(s == -1 || s == rbs[i/MB]);
             }
 
             for (idx_type i = 0;i < n;i += NB)
@@ -99,26 +99,26 @@ class block_scatter_matrix
                 {
                     if (cscat[j+1]-cscat[j] != s) s = 0;
                 }
-                if (N_BLOCKED) assert(s == -1 || s == cbs[i/NB]);
+                if (N_BLOCKED) TBLIS_ASSERT(s == -1 || s == cbs[i/NB]);
             }
         }
 
         idx_type length(unsigned dim) const
         {
-            assert(dim < 2);
+            TBLIS_ASSERT(dim < 2);
             return len_[dim];
         }
 
         idx_type length(unsigned dim, idx_type m)
         {
-            assert(dim < 2);
+            TBLIS_ASSERT(dim < 2);
             std::swap(m, len_[dim]);
             return m;
         }
 
         stride_type stride(unsigned dim) const
         {
-            assert(dim < 2);
+            TBLIS_ASSERT(dim < 2);
             if (dim == 0)
                 return (M_BLOCKED ? *block_scatter_[0] : 0);
             else
@@ -127,13 +127,19 @@ class block_scatter_matrix
 
         scatter_type scatter(unsigned dim) const
         {
-            assert(dim < 2);
+            TBLIS_ASSERT(dim < 2);
             return scatter_[dim];
+        }
+
+        scatter_type block_scatter(unsigned dim) const
+        {
+            TBLIS_ASSERT(dim < 2);
+            return block_scatter_[dim];
         }
 
         void shift(unsigned dim, idx_type n)
         {
-            assert(dim < 2);
+            TBLIS_ASSERT(dim < 2);
             scatter_[dim] += n;
             block_scatter_[dim] += ceil_div(n, (dim ? NB : MB));
         }

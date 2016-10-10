@@ -16,7 +16,7 @@
 #include <thread>
 #endif
 
-#include "tblis_barrier.hpp"
+#include "barrier.hpp"
 #include "tblis_basic_types.hpp"
 
 namespace tblis
@@ -223,12 +223,12 @@ class thread_communicator
             return gang(n, block, new_tid, new_nthread);
         }
 
-        std::tuple<idx_type,idx_type,idx_type> distribute_over_gangs(int ngang, idx_type n, idx_type granularity=1)
+        std::tuple<len_type,len_type,len_type> distribute_over_gangs(int ngang, len_type n, len_type granularity=1)
         {
             return distribute(ngang, _gid, n, granularity);
         }
 
-        std::tuple<idx_type,idx_type,idx_type> distribute_over_threads(idx_type n, idx_type granularity=1)
+        std::tuple<len_type,len_type,len_type> distribute_over_threads(len_type n, len_type granularity=1)
         {
             return distribute(_nthread, _tid, n, granularity);
         }
@@ -268,12 +268,12 @@ class thread_communicator
             return new_comm;
         }
 
-        std::tuple<idx_type,idx_type,idx_type> distribute(int nelem, int elem, idx_type n, idx_type granularity)
+        std::tuple<len_type,len_type,len_type> distribute(int nelem, int elem, len_type n, len_type granularity)
         {
-            idx_type ng = (n+granularity-1)/granularity;
-            idx_type max_size = ((ng+nelem-1)/nelem)*granularity;
+            len_type ng = (n+granularity-1)/granularity;
+            len_type max_size = ((ng+nelem-1)/nelem)*granularity;
 
-            return std::tuple<idx_type,idx_type,idx_type>
+            return std::tuple<len_type,len_type,len_type>
                 (         (( elem   *ng)/nelem)*granularity,
                  std::min((((elem+1)*ng)/nelem)*granularity, n),
                           (( elem   *ng)/nelem)*granularity+max_size);

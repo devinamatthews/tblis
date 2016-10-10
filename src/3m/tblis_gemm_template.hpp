@@ -1,11 +1,11 @@
 #ifndef _TBLIS_GEMM_TEMPLATE_HPP_
 #define _TBLIS_GEMM_TEMPLATE_HPP_
 
+#include "../../external/tci/src/tci.hpp"
 #include "tblis_config.hpp"
 #include "tblis_assert.hpp"
 #include "tblis_basic_types.hpp"
 #include "tblis_configs.hpp"
-#include "tblis_thread.hpp"
 
 namespace tblis
 {
@@ -22,7 +22,7 @@ struct gemm_thread_config
 };
 
 template <typename Config>
-gemm_thread_config make_gemm_thread_config(int nthread, idx_type m, idx_type n, idx_type k)
+gemm_thread_config make_gemm_thread_config(int nthread, len_type m, len_type n, len_type k)
 {
     int ic_nt, jc_nt;
     partition_2x2(nthread, m*2, n, ic_nt, jc_nt);

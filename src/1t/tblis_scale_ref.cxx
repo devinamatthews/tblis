@@ -6,8 +6,8 @@ namespace tblis
 {
 
 template <typename T>
-int tensor_scale_ref(const std::vector<idx_type>& len_A,
-                     T alpha, T* restrict A, const std::vector<stride_type>& stride_A)
+int tensor_scale_ref(const std::vector<len_type>& len_A,
+                     T alpha, T* TBLIS_RESTRICT A, const std::vector<stride_type>& stride_A)
 {
     MArray::viterator<> iter_A(len_A, stride_A);
 

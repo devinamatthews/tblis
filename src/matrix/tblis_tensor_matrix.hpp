@@ -141,8 +141,8 @@ class tensor_matrix
                    const std::vector<W>& stride_m,
                    const std::vector<X>& stride_n)
         {
-            assert(len_m.size() == stride_m.size());
-            assert(len_n.size() == stride_n.size());
+            TBLIS_ASSERT(len_m.size() == stride_m.size());
+            TBLIS_ASSERT(len_n.size() == stride_n.size());
 
             data_ = ptr;
             len_[0] = leading_len_[0] = (len_m.empty() ? 1 : len_m[0]);
@@ -178,26 +178,26 @@ class tensor_matrix
 
         idx_type length(unsigned dim) const
         {
-            assert(dim < 2);
+            TBLIS_ASSERT(dim < 2);
             return len_[dim];
         }
 
         idx_type length(unsigned dim, idx_type m)
         {
-            assert(dim < 2);
+            TBLIS_ASSERT(dim < 2);
             std::swap(m, len_[dim]);
             return m;
         }
 
         stride_type stride(unsigned dim) const
         {
-            assert(dim < 2);
+            TBLIS_ASSERT(dim < 2);
             return leading_stride_[dim];
         }
 
         void shift(unsigned dim, idx_type n)
         {
-            assert(dim < 2);
+            TBLIS_ASSERT(dim < 2);
             offset_[dim] += n;
         }
 
@@ -230,7 +230,7 @@ class tensor_matrix
 
         void fill_scatter(unsigned dim, stride_type* scatter)
         {
-            assert(dim < 2);
+            TBLIS_ASSERT(dim < 2);
 
             idx_type m = len_[dim];
             idx_type off_m = offset_[dim];
@@ -257,7 +257,7 @@ class tensor_matrix
         void fill_block_scatter(unsigned dim, stride_type* block_scatter, stride_type* scatter)
         {
             /*
-            assert(dim < 2);
+            TBLIS_ASSERT(dim < 2);
 
             const auto& m = len_[dim];
             const auto& off_m = offset_[dim];

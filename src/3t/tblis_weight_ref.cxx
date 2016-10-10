@@ -6,16 +6,16 @@ namespace tblis
 {
 
 template <typename T>
-int tensor_weight_ref(const std::vector<idx_type>& len_AC,
-                      const std::vector<idx_type>& len_BC,
-                      const std::vector<idx_type>& len_ABC,
-                      T alpha, const T* restrict A, const std::vector<stride_type>& stride_A_AC,
-                                                    const std::vector<stride_type>& stride_A_ABC,
-                               const T* restrict B, const std::vector<stride_type>& stride_B_BC,
-                                                    const std::vector<stride_type>& stride_B_ABC,
-                      T  beta,       T* restrict C, const std::vector<stride_type>& stride_C_AC,
-                                                    const std::vector<stride_type>& stride_C_BC,
-                                                    const std::vector<stride_type>& stride_C_ABC)
+int tensor_weight_ref(const std::vector<len_type>& len_AC,
+                      const std::vector<len_type>& len_BC,
+                      const std::vector<len_type>& len_ABC,
+                      T alpha, const T* TBLIS_RESTRICT A, const std::vector<stride_type>& stride_A_AC,
+                                                          const std::vector<stride_type>& stride_A_ABC,
+                               const T* TBLIS_RESTRICT B, const std::vector<stride_type>& stride_B_BC,
+                                                          const std::vector<stride_type>& stride_B_ABC,
+                      T  beta,       T* TBLIS_RESTRICT C, const std::vector<stride_type>& stride_C_AC,
+                                                          const std::vector<stride_type>& stride_C_BC,
+                                                          const std::vector<stride_type>& stride_C_ABC)
 {
     MArray::viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
     MArray::viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);

@@ -8,27 +8,27 @@ namespace tblis
 
 template <typename T>
 void tblis_scal2v_ref(thread_communicator& comm,
-                      bool conj_A, idx_type n,
-                      T alpha, const T* restrict A, stride_type inc_A,
-                                     T* restrict B, stride_type inc_B)
+                      bool conj_A, len_type n,
+                      T alpha, const T* TBLIS_RESTRICT A, stride_type inc_A,
+                                     T* TBLIS_RESTRICT B, stride_type inc_B)
 {
     if (n == 0) return;
 
-    idx_type n_min, n_max;
+    len_type n_min, n_max;
     std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(n);
 
     if (inc_A == 1 && inc_B == 1)
     {
         if (conj_A)
         {
-            for (idx_type i = n_min;i < n_max;i++)
+            for (len_type i = n_min;i < n_max;i++)
             {
                 B[i] = alpha*conj(A[i]);
             }
         }
         else
         {
-            for (idx_type i = n_min;i < n_max;i++)
+            for (len_type i = n_min;i < n_max;i++)
             {
                 B[i] = alpha*A[i];
             }
@@ -41,7 +41,7 @@ void tblis_scal2v_ref(thread_communicator& comm,
 
         if (conj_A)
         {
-            for (idx_type i = n_min;i < n_max;i++)
+            for (len_type i = n_min;i < n_max;i++)
             {
                 (*B) = alpha*conj(*A);
                 A += inc_A;
@@ -50,7 +50,7 @@ void tblis_scal2v_ref(thread_communicator& comm,
         }
         else
         {
-            for (idx_type i = n_min;i < n_max;i++)
+            for (len_type i = n_min;i < n_max;i++)
             {
                 (*B) = alpha*(*A);
                 A += inc_A;
@@ -69,7 +69,7 @@ void tblis_scal2v(T alpha, const_row_view<T> A, row_view<T> B)
 }
 
 template <typename T>
-void tblis_scal2v(bool conj_A, idx_type n,
+void tblis_scal2v(bool conj_A, len_type n,
                   T alpha, const T* A, stride_type inc_A,
                                  T* B, stride_type inc_B)
 {

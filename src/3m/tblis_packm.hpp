@@ -1,12 +1,12 @@
 #ifndef _TENSOR_TBLIS_PACK_HPP_
 #define _TENSOR_TBLIS_PACK_HPP_
 
+#include "../../external/tci/src/tci.hpp"
 #include "tblis_assert.hpp"
 #include "tblis_alignment.hpp"
 #include "tblis_basic_types.hpp"
 #include "tblis_configs.hpp"
 #include "tblis_memory_pool.hpp"
-#include "tblis_thread.hpp"
 
 #define TBLIS_MAX_UNROLL 8
 
@@ -19,284 +19,58 @@ namespace detail
     extern MemoryPool BuffersForB;
 }
 
-template <typename T, idx_type MR, idx_type KR>
-void PackMicroPanel(idx_type m, idx_type k,
-                    const T* restrict & p_a, stride_type rs_a, stride_type cs_a,
-                    T* restrict & p_ap)
-{
-    idx_type k_rem = remainder(k, KR);
-
-    if (m == MR)
-    {
-        if (rs_a == 1)
-        {
-            for (idx_type i = 0;i < k;i++)
-            {
-                for (idx_type mr = 0;mr < MR;mr++)
-                {
-                    p_ap[mr] = p_a[mr];
-                }
-
-                p_a += cs_a;
-                p_ap += MR;
-            }
-        }
-        else if (cs_a == 1)
-        {
-            for (idx_type mr = 0;mr < MR;mr++)
-            {
-                for (idx_type i = 0;i < k;i++)
-                {
-                    p_ap[MR*i+mr] = p_a[i+rs_a*mr];
-                }
-            }
-
-            p_a += cs_a*k;
-            p_ap += MR*k;
-        }
-        else
-        {
-            for (idx_type i = 0;i < k;i++)
-            {
-                for (idx_type mr = 0;mr < MR;mr++)
-                {
-                    p_ap[mr] = p_a[rs_a*mr];
-                }
-
-                p_a += cs_a;
-                p_ap += MR;
-            }
-        }
-    }
-    else
-    {
-        for (idx_type i = 0;i < k;i++)
-        {
-            for (idx_type mr = 0;mr < m;mr++)
-            {
-                p_ap[mr] = p_a[rs_a*mr];
-            }
-
-            for (idx_type mr = m;mr < MR;mr++)
-            {
-                p_ap[mr] = T();
-            }
-
-            p_a += cs_a;
-            p_ap += MR;
-        }
-    }
-
-    for (idx_type i = 0;i < k_rem;i++)
-    {
-        for (idx_type mr = 0;mr < MR;mr++)
-        {
-            p_ap[mr] = T();
-        }
-
-        p_ap += MR;
-    }
-
-    p_a += rs_a*m - cs_a*k;
-}
-
-template <typename T, idx_type MR, idx_type KR>
-void PackMicroPanel(idx_type m, idx_type k,
-                    const T* restrict & p_a,
-                    const stride_type* restrict & rs_a, stride_type cs_a,
-                    T* restrict & p_ap)
-{
-    idx_type k_rem = remainder(k, KR);
-
-    if (m == MR)
-    {
-        for (idx_type i = 0;i < k;i++)
-        {
-            for (idx_type mr = 0;mr < MR;mr++)
-            {
-                p_ap[mr] = p_a[rs_a[mr]];
-            }
-
-            p_a += cs_a;
-            p_ap += MR;
-        }
-    }
-    else
-    {
-        for (idx_type i = 0;i < k;i++)
-        {
-            for (idx_type mr = 0;mr < m;mr++)
-            {
-                p_ap[mr] = p_a[rs_a[mr]];
-            }
-
-            for (idx_type mr = m;mr < MR;mr++)
-            {
-                p_ap[mr] = T();
-            }
-
-            p_a += cs_a;
-            p_ap += MR;
-        }
-    }
-
-    for (idx_type i = 0;i < k_rem;i++)
-    {
-        for (idx_type mr = 0;mr < MR;mr++)
-        {
-            p_ap[mr] = T();
-        }
-
-        p_ap += MR;
-    }
-
-    p_a -= cs_a*k;
-    rs_a += m;
-}
-
-template <typename T, idx_type MR, idx_type KR>
-void PackMicroPanel(idx_type m, idx_type k,
-                    const T* restrict & p_a,
-                    stride_type rs_a, const stride_type* restrict cs_a,
-                    T* restrict & p_ap)
-{
-    idx_type k_rem = remainder(k, KR);
-
-    if (m == MR)
-    {
-        for (idx_type i = 0;i < k;i++)
-        {
-            for (idx_type mr = 0;mr < MR;mr++)
-            {
-                p_ap[mr] = p_a[cs_a[i] + rs_a*mr];
-            }
-
-            p_ap += MR;
-        }
-    }
-    else
-    {
-        for (idx_type i = 0;i < k;i++)
-        {
-            for (idx_type mr = 0;mr < m;mr++)
-            {
-                p_ap[mr] = p_a[cs_a[i] + rs_a*mr];
-            }
-
-            for (idx_type mr = m;mr < MR;mr++)
-            {
-                p_ap[mr] = T();
-            }
-
-            p_ap += MR;
-        }
-    }
-
-    for (idx_type i = 0;i < k_rem;i++)
-    {
-        for (idx_type mr = 0;mr < MR;mr++)
-        {
-            p_ap[mr] = T();
-        }
-
-        p_ap += MR;
-    }
-
-    p_a += rs_a*m;
-}
-
-template <typename T, idx_type MR, idx_type KR>
-void PackMicroPanel(idx_type m, idx_type k,
-                    const T* restrict & p_a,
-                    const stride_type* restrict & rs_a, const stride_type* restrict cs_a,
-                    T* restrict & p_ap)
-{
-    idx_type k_rem = remainder(k, KR);
-
-    if (m == MR)
-    {
-        for (idx_type i = 0;i < k;i++)
-        {
-            for (idx_type mr = 0;mr < MR;mr++)
-            {
-                p_ap[mr] = p_a[cs_a[i] + rs_a[mr]];
-            }
-
-            p_ap += MR;
-        }
-    }
-    else
-    {
-        for (idx_type i = 0;i < k;i++)
-        {
-            for (idx_type mr = 0;mr < m;mr++)
-            {
-                p_ap[mr] = p_a[cs_a[i] + rs_a[mr]];
-            }
-
-            for (idx_type mr = m;mr < MR;mr++)
-            {
-                p_ap[mr] = T();
-            }
-
-            p_ap += MR;
-        }
-    }
-
-    for (idx_type i = 0;i < k_rem;i++)
-    {
-        for (idx_type mr = 0;mr < MR;mr++)
-        {
-            p_ap[mr] = T();
-        }
-
-        p_ap += MR;
-    }
-
-    rs_a += m;
-}
-
-template <typename T, idx_type MR, idx_type KR, bool Trans>
+template <typename Config, typename T, int Mat>
 struct PackRowPanel
 {
+    static constexpr bool Trans = Mat == matrix_constants::MAT_B;
+    static constexpr len_type MR = (!Trans ? Config::template MR<T>::def
+                                           : Config::template NR<T>::def);
+    static constexpr len_type ME = (!Trans ? Config::template MR<T>::extent
+                                           : Config::template NR<T>::extent);
+    static constexpr len_type KR = Config::template KR<T>::def;
+    static constexpr pack_ukr_t<T> pack_nn_ukr = (!Trans ? Config::template pack_nn_mr<T>::value
+                                                         : Config::template pack_nn_nr<T>::value);
+    static constexpr pack_ukr_t<T> pack_sn_ukr = (!Trans ? Config::template pack_sn_mr<T>::value
+                                                         : Config::template pack_sn_nr<T>::value);
+    static constexpr pack_ukr_t<T> pack_ns_ukr = (!Trans ? Config::template pack_ns_mr<T>::value
+                                                         : Config::template pack_ns_nr<T>::value);
+    static constexpr pack_ukr_t<T> pack_ss_ukr = (!Trans ? Config::template pack_ss_mr<T>::value
+                                                         : Config::template pack_ss_nr<T>::value);
+    static constexpr pack_ukr_t<T> pack_nb_ukr = (!Trans ? Config::template pack_nb_mr<T>::value
+                                                         : Config::template pack_nb_nr<T>::value);
+    static constexpr pack_ukr_t<T> pack_sb_ukr = (!Trans ? Config::template pack_sb_mr<T>::value
+                                                         : Config::template pack_sb_nr<T>::value);
+
     void operator()(thread_communicator& comm, matrix_view<T>& A, matrix_view<T>& Ap) const
     {
-        //printf("before: %.15f\n", (double)real(tblis_normfm(A)));
-
-        idx_type m_a = A.length( Trans);
-        idx_type k_a = A.length(!Trans);
+        len_type m_a = A.length( Trans);
+        len_type k_a = A.length(!Trans);
         stride_type rs_a = A.stride( Trans);
         stride_type cs_a = A.stride(!Trans);
         const T* p_a = A.data();
         T* p_ap = Ap.data();
 
-        idx_type off_first, off_last;
+        len_type off_first, off_last;
         std::tie(off_first, off_last, std::ignore) = comm.distribute_over_threads(m_a, MR);
-        //printf_locked("pack [%d/%d] %d %d\n", comm.thread_num(), comm.num_threads(), off_first, off_last);
 
         p_a += off_first*rs_a;
         p_ap += off_first*round_up(k_a, KR);
 
-        for (idx_type off_m = off_first;off_m < off_last;off_m += MR)
+        for (len_type off_m = off_first;off_m < off_last;off_m += MR)
         {
-            //printf("%d %d : %d %ld\n", off_m, std::min(MR, off_last-off_m), MR, p_ap-Ap.data());
-            //printf("bsub: %.15f\n", (double)real(tblis_normfm(std::min(MR, off_last-off_m), k_a, p_a, rs_a, cs_a)));
-            //auto p_ap_old = p_ap;
-            PackMicroPanel<T,MR,KR>(std::min(MR, off_last-off_m), k_a,
-                                    p_a, rs_a, cs_a, p_ap);
-            //printf("asub: %.15f\n", (double)real(tblis_normfm(MR, k_a, p_ap_old, 1, MR)));
-        }
+            len_type m = std::min(MR, off_last-off_m);
 
-        //comm.barrier();
-        //printf_locked("%s[%d]: %f\n", (Trans ? "B" : "A"), comm.thread_num(), pow((double)real(tblis_normfm(Ap)),2));
-        //printf("%d %d %ld %ld\n", Ap.length(0), Ap.length(1), Ap.stride(0), Ap.stride(1));
-        //printf("after: %.15f\n", (double)real(tblis_normfm(Ap)));
+            pack_nn_ukr(m, k_a, p_a, rs_a, cs_a, p_ap);
+
+            p_a += m*rs_a;
+            p_ap += ME*k_a;
+        }
     }
 
     void operator()(thread_communicator& comm, const_scatter_matrix_view<T>& A, matrix_view<T>& Ap) const
     {
-        idx_type m_a = A.length( Trans);
-        idx_type k_a = A.length(!Trans);
+        len_type m_a = A.length( Trans);
+        len_type k_a = A.length(!Trans);
         stride_type rs_a = A.stride( Trans);
         stride_type cs_a = A.stride(!Trans);
         const stride_type* rscat_a = A.scatter( Trans);
@@ -304,45 +78,49 @@ struct PackRowPanel
         const T* p_a = A.data();
         T* p_ap = Ap.data();
 
-        idx_type off_first, off_last;
+        len_type off_first, off_last;
         std::tie(off_first, off_last, std::ignore) = comm.distribute_over_threads(m_a, MR);
 
         p_a += off_first*rs_a;
         rscat_a += off_first;
         p_ap += off_first*round_up(k_a, KR);
 
-        for (idx_type off_m = off_first;off_m < off_last;off_m += MR)
+        for (len_type off_m = off_first;off_m < off_last;off_m += MR)
         {
+            len_type m = std::min(MR, off_last-off_m);
+
             if (rs_a == 0 && cs_a == 0)
             {
-                PackMicroPanel<T,MR,KR>(std::min(MR, m_a-off_m), k_a,
-                                        p_a, rscat_a, cscat_a, p_ap);
+                pack_ss_ukr(m, k_a, p_a, rscat_a, cscat_a, p_ap);
+                rscat_a += m;
             }
             else if (rs_a == 0)
             {
-                PackMicroPanel<T,MR,KR>(std::min(MR, m_a-off_m), k_a,
-                                        p_a, rscat_a, cs_a, p_ap);
+                pack_sn_ukr(m, k_a, p_a, rscat_a, cs_a, p_ap);
+                rscat_a += m;
             }
             else if (cs_a == 0)
             {
-                PackMicroPanel<T,MR,KR>(std::min(MR, m_a-off_m), k_a,
-                                        p_a, rs_a, cscat_a, p_ap);
+                pack_ns_ukr(m, k_a, p_a, rs_a, cscat_a, p_ap);
+                p_a += m*rs_a;
             }
             else
             {
-                PackMicroPanel<T,MR,KR>(std::min(MR, m_a-off_m), k_a,
-                                        p_a, rs_a, cs_a, p_ap);
+                pack_nn_ukr(m, k_a, p_a, rs_a, cs_a, p_ap);
+                p_a += m*rs_a;
             }
+
+            p_ap += ME*k_a;
         }
     }
 
     void operator()(thread_communicator& comm, block_scatter_matrix<T,(Trans?KR:MR),(Trans?MR:KR)> A, matrix_view<T>& Ap) const
     {
-        idx_type m_a = A.length( Trans);
-        idx_type k_a = A.length(!Trans);
+        len_type m_a = A.length( Trans);
+        len_type k_a = A.length(!Trans);
         T* p_ap = Ap.data();
 
-        idx_type off_first, off_last;
+        len_type off_first, off_last;
         std::tie(off_first, off_last, std::ignore) = comm.distribute_over_threads(m_a, MR);
 
         p_ap += off_first*round_up(k_a, KR);
@@ -350,35 +128,25 @@ struct PackRowPanel
         A.length(Trans, MR);
         A.shift(Trans, off_first);
 
-        for (idx_type off_m = off_first;off_m < off_last;off_m += MR)
+        for (len_type off_m = off_first;off_m < off_last;off_m += MR)
         {
-            stride_type rs_a = A.stride( Trans);
-            stride_type cs_a = A.stride(!Trans);
-            const stride_type* rscat_a = A.scatter( Trans);
+            stride_type rs_a = A.stride(Trans);
+            const stride_type* rscat_a = A.scatter(Trans);
             const stride_type* cscat_a = A.scatter(!Trans);
+            const stride_type* cbs_a = A.block_scatter(!Trans);
             const T* p_a = A.data();
+            len_type m = std::min(MR, off_last-off_m);
 
-            if (rs_a == 0 && cs_a == 0)
+            if (rs_a == 0)
             {
-                PackMicroPanel<T,MR,KR>(std::min(MR, m_a-off_m), k_a,
-                                        p_a, rscat_a, cscat_a, p_ap);
-            }
-            else if (rs_a == 0)
-            {
-                PackMicroPanel<T,MR,KR>(std::min(MR, m_a-off_m), k_a,
-                                        p_a, rscat_a, cs_a, p_ap);
-            }
-            else if (cs_a == 0)
-            {
-                PackMicroPanel<T,MR,KR>(std::min(MR, m_a-off_m), k_a,
-                                        p_a, rs_a, cscat_a, p_ap);
+                pack_sb_ukr(m, k_a, p_a, rscat_a, cscat_a, cbs_a, p_ap);
             }
             else
             {
-                PackMicroPanel<T,MR,KR>(std::min(MR, m_a-off_m), k_a,
-                                        p_a, rs_a, cs_a, p_ap);
+                pack_nb_ukr(m, k_a, p_a, rs_a, cscat_a, cbs_a, p_ap);
             }
 
+            p_ap += ME*k_a;
             A.shift_down(Trans);
         }
 
@@ -415,7 +183,7 @@ struct PackAndRun<Pack, matrix_constants::MAT_B>
     }
 };
 
-template <typename Config, int DimM, int DimN, int Mat>
+template <typename Config, int Mat>
 struct Pack
 {
     template <typename T, template <typename> class Child, template <typename> class... Children>
@@ -436,58 +204,45 @@ struct Pack
         {
             using namespace matrix_constants;
 
-            MemoryPool& PackBuf = (Mat == MAT_A ? detail::BuffersForA
-                                                : detail::BuffersForB);
             constexpr bool Trans = (Mat == MAT_B);
+            MemoryPool& PackBuf = (!Trans ? detail::BuffersForA
+                                          : detail::BuffersForB);
+            constexpr len_type MR = (!Trans ? Config::template MR<T>::def
+                                            : Config::template NR<T>::def);
+            constexpr len_type ME = (!Trans ? Config::template MR<T>::extent
+                                            : Config::template NR<T>::extent);
 
-            using MB = typename config_traits<Config>::template BS<T,DimM>;
-            using NB = typename config_traits<Config>::template BS<T,DimN>;
-            constexpr idx_type MR = (Trans ? NB::def : MB::def);
-            constexpr idx_type NR = (Trans ? MB::def : NB::def);
-
-            idx_type m_p = (Trans ? B.length(1) : A.length(0));
-            idx_type n_p = (Trans ? B.length(0) : A.length(1));
-            m_p = round_up(m_p, MR);
-            n_p = round_up(n_p, NR);
+            len_type m_p = ceil_div(!Trans ? A.length(0) : B.length(1), MR)*ME;
+            len_type k_p =         (!Trans ? A.length(1) : B.length(0));
 
             if (pack_ptr == NULL)
             {
                 if (comm.master())
                 {
-                    pack_buffer = PackBuf.allocate<T>(m_p*n_p+std::max(m_p,n_p)*TBLIS_MAX_UNROLL);
+                    pack_buffer = PackBuf.allocate<T>(m_p*k_p+std::max(m_p,k_p)*TBLIS_MAX_UNROLL);
                     pack_ptr = pack_buffer;
                 }
 
                 comm.broadcast(pack_ptr);
             }
 
-            //printf_locked("pack_ptr %d [%d/%d:%d] %p\n", Mat,
-            //              comm.thread_num(), comm.num_threads(),
-            //              comm.gang_num(), pack_ptr);
-
-            matrix_view<T> P({Trans ? n_p : m_p,
-                              Trans ? m_p : n_p},
+            matrix_view<T> P({!Trans ? m_p : k_p,
+                              !Trans ? k_p : m_p},
                              pack_ptr,
-                             {Trans?   1 : n_p,
-                              Trans? n_p :   1});
+                             {!Trans? k_p :   1,
+                              !Trans?   1 : k_p});
 
-            TBLIS_ASSERT(P.length(0) == Trans ? n_p : m_p);
-            TBLIS_ASSERT(P.length(1) == Trans ? m_p : n_p);
-            TBLIS_ASSERT(P.data() == pack_ptr);
-            TBLIS_ASSERT(P.stride(0) == Trans ?   1 : n_p);
-            TBLIS_ASSERT(P.stride(1) == Trans ? n_p :   1);
-
-            typedef PackRowPanel<T,MR,NR,Trans> Pack;
+            typedef PackRowPanel<Config, T, Mat> Pack;
             PackAndRun<Pack,Mat>(child, cfg, comm, alpha, A, B, beta, C, P);
         }
     };
 };
 
 template <typename Config>
-using PackA = Pack<Config, matrix_constants::DIM_MR, matrix_constants::DIM_KR, matrix_constants::MAT_A>;
+using PackA = Pack<Config, matrix_constants::MAT_A>;
 
 template <typename Config>
-using PackB = Pack<Config, matrix_constants::DIM_KR, matrix_constants::DIM_NR, matrix_constants::MAT_B>;
+using PackB = Pack<Config, matrix_constants::MAT_B>;
 
 }
 

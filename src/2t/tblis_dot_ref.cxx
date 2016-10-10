@@ -6,9 +6,9 @@ namespace tblis
 {
 
 template <typename T>
-int tensor_dot_ref(const std::vector<idx_type>& len_AB,
-                   const T* restrict A, const std::vector<stride_type>& stride_A_AB,
-                   const T* restrict B, const std::vector<stride_type>& stride_B_AB,
+int tensor_dot_ref(const std::vector<len_type>& len_AB,
+                   const T* TBLIS_RESTRICT A, const std::vector<stride_type>& stride_A_AB,
+                   const T* TBLIS_RESTRICT B, const std::vector<stride_type>& stride_B_AB,
                    T& val)
 {
     MArray::viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);

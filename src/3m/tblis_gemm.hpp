@@ -1,8 +1,8 @@
 #ifndef _TBLIS_GEMM_HPP_
 #define _TBLIS_GEMM_HPP_
 
+#include "../../external/tci/src/tblis_thread.hpp"
 #include "tblis_marray.hpp"
-#include "tblis_thread.hpp"
 
 namespace tblis
 {

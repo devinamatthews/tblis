@@ -18,6 +18,7 @@ AX_CXX_COMPILE_STDCXX_11([noext])
 AC_LANG([C++])
 AC_C_RESTRICT
 
+AC_DEFINE([RESTRICT], [_tblis_restrict], [More convenient macro for restrict.])
 AM_CONDITIONAL([ENABLE_BLAS], [test x"$blas_found" = xyes])
 
 AC_SEARCH_LIBS([clock_gettime], [rt])
@@ -113,12 +114,6 @@ elif test x"$barrier_type" = xspin; then
 else
     AC_MSG_ERROR([Invalid barrier type specified.])
 fi
-
-#
-# Check for BLIS
-#
-AQ_WITH_PACKAGE([blis], [https://github.com/flame/blis],
-                [], [.], [], [])
                 
 #
 # Determine configurations to build
@@ -187,13 +182,28 @@ AM_CONDITIONAL(ENABLE_INTEL_COMPILER, [test x"$cc_vendor" = xicc])
 AH_TOP([
 #if defined(__MIC__)
 #define ARCH_MIC 1
-#elif defined(__INTEL_COMPILER) || defined(__i386__) || defined(__x86_64__) || \
-      defined(_X86_) || defined(_M_IX86) || defined(_M_X64)
-#define ARCH_INTEL 1
-#elif defined(__arm__) || defined(_M_ARM) || defined(__aarch64__)
-#define ARCH_ARM 1
-#elif defined(_ARCH_PPC) || defined(_ARCH_PPC64)
-#define ARCH_PPC 1
+#elif defined(__ia64) || defined(__itanium__) || defined(_M_IA64)
+#define ARCH_IA64 1
+#elif defined(__x86_64__) || defined(_M_X64)
+#define ARCH_X64 1
+#elif defined(__i386) || defined(_M_IX86)
+#define ARCH_X86 1
+#elif defined(__aarch64__)
+#define ARCH_ARM64 1
+#elif defined(__arm__) || defined(_M_ARM)
+#define ARCH_ARM32 1
+#elif defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__)
+#define ARCH_PPC64 1
+#elif defined(__powerpc__) || defined(__ppc__) || defined(__PPC__)
+#define ARCH_PPC32 1
+#elif defined(__bgq__)
+#define ARCH_BGQ 1
+#elif defined(__sparc)
+#define ARCH_SPARC
+#elif defined(__mips)
+#define ARCH_MIPS
+#else
+#error "Unknown architecture"
 #endif
 ])
 
@@ -232,8 +242,9 @@ LT_INIT
 mkdir -p bin
 
 AC_CONFIG_FILES([Makefile 
-                 src/tblis_import_configs.hpp
-                 src/tblis_instantiate_for_configs.hpp
-                 src/tblis_instantiate_for_types.hpp])
+                 src/configs/tblis_instantiate_for_configs.hpp
+                 src/configs/tblis_instantiate_for_types.hpp])
 AX_PREFIX_CONFIG_H([tblis_config.hpp], [TBLIS])
 AC_OUTPUT
+
+rm config.h

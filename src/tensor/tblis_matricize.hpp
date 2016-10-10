@@ -32,13 +32,13 @@ void matricize(const_tensor_view<T>  A,
             TBLIS_ASSERT(A.stride(i) == A.stride(i+1)*A.length(i+1));
     }
 
-    idx_type m = 1;
+    len_type m = 1;
     for (unsigned i = 0;i < split;i++)
     {
         m *= A.length(i);
     }
 
-    idx_type n = 1;
+    len_type n = 1;
     for (unsigned i = split;i < ndim;i++)
     {
         n *= A.length(i);

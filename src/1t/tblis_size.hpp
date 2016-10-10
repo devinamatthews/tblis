@@ -13,13 +13,13 @@ namespace tblis
  *
  ******************************************************************************/
 
-inline size_t tensor_size(const std::vector<idx_type>& len)
+inline size_t tensor_size(const std::vector<len_type>& len)
 {
     return std::accumulate(len.begin(), len.end(), size_t(1), std::multiplies<size_t>());
 }
 
 inline size_t
-tensor_storage_size(const std::vector<idx_type>& len, const std::vector<stride_type>& stride)
+tensor_storage_size(const std::vector<len_type>& len, const std::vector<stride_type>& stride)
 {
     TBLIS_ASSERT(len.size() == stride.size());
 

@@ -7,9 +7,9 @@ namespace tblis
 {
 
 template <typename T, typename Config=TBLIS_DEFAULT_CONFIG>
-int contract_int(const std::vector<idx_type>& len_M,
-                 const std::vector<idx_type>& len_N,
-                 const std::vector<idx_type>& len_K,
+int contract_int(const std::vector<len_type>& len_M,
+                 const std::vector<len_type>& len_N,
+                 const std::vector<len_type>& len_K,
                  T alpha, const const_matrix_view<const T*>& A,
                           const std::vector<stride_type>& stride_M_A,
                           const std::vector<stride_type>& stride_K_A,
@@ -20,11 +20,11 @@ int contract_int(const std::vector<idx_type>& len_M,
                           const std::vector<stride_type>& stride_M_C,
                           const std::vector<stride_type>& stride_N_C)
 {
-    idx_type batch_len_M = C.length(0);
-    idx_type batch_len_N = C.length(1);
-    idx_type batch_len_K = A.length(1);
+    len_type batch_len_M = C.length(0);
+    len_type batch_len_N = C.length(1);
+    len_type batch_len_K = A.length(1);
 
-    std::vector<idx_type> nonzero(std::max(batch_len_M, batch_len_N)+1);
+    std::vector<len_type> nonzero(std::max(batch_len_M, batch_len_N)+1);
 
     parallelize
     (
@@ -34,22 +34,22 @@ int contract_int(const std::vector<idx_type>& len_M,
             tensor_matrix<T> bt(len_K, len_N, nullptr, stride_K_B, stride_N_B);
             tensor_matrix<T> ct(len_M, len_N, nullptr, stride_M_C, stride_N_C);
 
-            idx_type dense_len_M = ct.length(0);
-            idx_type dense_len_N = ct.length(1);
-            idx_type dense_len_K = at.length(1);
+            len_type dense_len_M = ct.length(0);
+            len_type dense_len_N = ct.length(1);
+            len_type dense_len_K = at.length(1);
 
-            for (idx_type k = 0;k < batch_len_K;k++)
+            for (len_type k = 0;k < batch_len_K;k++)
             {
                 if (batch_len_M > batch_len_N)
                 {
-                    idx_type m_min, m_max;
+                    len_type m_min, m_max;
                     std::tie(m_min, m_max, std::ignore) =
                         comm.distribute_over_threads(batch_len_M);
 
-                    for (idx_type m = m_min;m < m_max;m++)
+                    for (len_type m = m_min;m < m_max;m++)
                     {
                         nonzero[m] = 0;
-                        for (idx_type n = 0;n < batch_len_N;n++)
+                        for (len_type n = 0;n < batch_len_N;n++)
                         {
                             if (A[m][k] && B[k][m] && C[m][n]) nonzero[m]++;
                         }
@@ -57,21 +57,21 @@ int contract_int(const std::vector<idx_type>& len_M,
                 }
                 else
                 {
-                    idx_type n_min, n_max;
+                    len_type n_min, n_max;
                     std::tie(n_min, n_max, std::ignore) =
                         comm.distribute_over_threads(batch_len_N);
 
-                    for (idx_type n = n_min;n < n_max;n++)
+                    for (len_type n = n_min;n < n_max;n++)
                     {
                         nonzero[n] = 0;
-                        for (idx_type m = 0;m < batch_len_M;m++)
+                        for (len_type m = 0;m < batch_len_M;m++)
                         {
                             if (A[m][k] && B[k][m] && C[m][n]) nonzero[n]++;
                         }
                     }
                 }
 
-                idx_type total = stl_ext::sum(nonzero);
+                len_type total = stl_ext::sum(nonzero);
 
                 int nt_outer, nt_inner;
                 partition_2x2(comm.num_threads(), total,
@@ -79,14 +79,14 @@ int contract_int(const std::vector<idx_type>& len_M,
 
                 thread_communicator subcomm = comm.gang_evenly(nt_outer);
 
-                idx_type mn_min, mn_max;
+                len_type mn_min, mn_max;
                 std::tie(mn_min, mn_max, std::ignore) =
                 subcomm.distribute_over_gangs(nt_outer, total);
 
                 if (batch_len_M > batch_len_N)
                 {
-                    idx_type cur = 0;
-                    for (idx_type m = 0;m < batch_len_M;m++)
+                    len_type cur = 0;
+                    for (len_type m = 0;m < batch_len_M;m++)
                     {
                         if (cur+nonzero[m]-1 < mn_min)
                         {
@@ -95,7 +95,7 @@ int contract_int(const std::vector<idx_type>& len_M,
                         }
                         else if (cur >= mn_max) break;
 
-                        for (idx_type n = 0;n < batch_len_N;n++)
+                        for (len_type n = 0;n < batch_len_N;n++)
                         {
                             if (A[m][k] && B[k][m] && C[m][n])
                             {
@@ -114,8 +114,8 @@ int contract_int(const std::vector<idx_type>& len_M,
                 }
                 else
                 {
-                    idx_type cur = 0;
-                    for (idx_type n = 0;n < batch_len_N;n++)
+                    len_type cur = 0;
+                    for (len_type n = 0;n < batch_len_N;n++)
                     {
                         if (cur+nonzero[n]-1 < mn_min)
                         {
@@ -124,7 +124,7 @@ int contract_int(const std::vector<idx_type>& len_M,
                         }
                         else if (cur >= mn_max) break;
 
-                        for (idx_type m = 0;m < batch_len_M;m++)
+                        for (len_type m = 0;m < batch_len_M;m++)
                         {
                             if (A[m][k] && B[k][m] && C[m][n])
                             {
@@ -161,9 +161,9 @@ void contract(T alpha, const_batched_tensor_view<T> A, const std::string& idx_A,
     unsigned ndim_A = A.dense_dimension();
     unsigned ndim_B = B.dense_dimension();
     unsigned ndim_C = C.dense_dimension();
-    std::vector<idx_type> len_A(A.lengths().begin(), A.lengths().begin()+ndim_A);
-    std::vector<idx_type> len_B(B.lengths().begin(), B.lengths().begin()+ndim_B);
-    std::vector<idx_type> len_C(C.lengths().begin(), C.lengths().begin()+ndim_C);
+    std::vector<len_type> len_A(A.lengths().begin(), A.lengths().begin()+ndim_A);
+    std::vector<len_type> len_B(B.lengths().begin(), B.lengths().begin()+ndim_B);
+    std::vector<len_type> len_C(C.lengths().begin(), C.lengths().begin()+ndim_C);
     std::vector<stride_type> stride_A(A.strides());
     std::vector<stride_type> stride_B(B.strides());
     std::vector<stride_type> stride_C(C.strides());
@@ -198,9 +198,9 @@ void contract(T alpha, const_batched_tensor_view<T> A, const std::string& idx_A,
     unsigned batch_ndim_A = A.batch_dimension();
     unsigned batch_ndim_B = B.batch_dimension();
     unsigned batch_ndim_C = C.batch_dimension();
-    std::vector<idx_type> batch_len_A(A.lengths().begin()+ndim_A, A.lengths().end());
-    std::vector<idx_type> batch_len_B(B.lengths().begin()+ndim_B, B.lengths().end());
-    std::vector<idx_type> batch_len_C(C.lengths().begin()+ndim_C, C.lengths().end());
+    std::vector<len_type> batch_len_A(A.lengths().begin()+ndim_A, A.lengths().end());
+    std::vector<len_type> batch_len_B(B.lengths().begin()+ndim_B, B.lengths().end());
+    std::vector<len_type> batch_len_C(C.lengths().begin()+ndim_C, C.lengths().end());
 
     auto batch_idx_AB = intersection(batch_idx_A, batch_idx_B);
     auto batch_idx_AC = intersection(batch_idx_A, batch_idx_C);
@@ -271,9 +271,9 @@ void contract(T alpha, const_batched_tensor_view<T> A, const std::string& idx_A,
         }
     }
 
-    idx_type batch_M = (batch_len_AC.empty() ? 1 : batch_len_AC.back()*stride_AC.back());
-    idx_type batch_N = (batch_len_BC.empty() ? 1 : batch_len_BC.back()*stride_BC.back());
-    idx_type batch_K = (batch_len_AB.empty() ? 1 : batch_len_AB.back()*stride_AB.back());
+    len_type batch_M = (batch_len_AC.empty() ? 1 : batch_len_AC.back()*stride_AC.back());
+    len_type batch_N = (batch_len_BC.empty() ? 1 : batch_len_BC.back()*stride_BC.back());
+    len_type batch_K = (batch_len_AB.empty() ? 1 : batch_len_AB.back()*stride_AB.back());
 
     matrix<const T*> batch_A({batch_M, batch_K}, nullptr);
     matrix<const T*> batch_B({batch_K, batch_N}, nullptr);
@@ -283,9 +283,9 @@ void contract(T alpha, const_batched_tensor_view<T> A, const std::string& idx_A,
     auto indices_B = B.batch_indices();
     auto indices_C = C.batch_indices();
 
-    for (idx_type b = 0;b < A.num_batches();b++)
+    for (len_type b = 0;b < A.num_batches();b++)
     {
-        idx_type off_M = 1, off_K = 1;
+        len_type off_M = 1, off_K = 1;
         for (unsigned i = 0;i < batch_ndim_A;i++)
         {
             off_M += indices_A[b][i]*batch_stride_A_AC[i];
@@ -294,9 +294,9 @@ void contract(T alpha, const_batched_tensor_view<T> A, const std::string& idx_A,
         batch_A[off_M][off_K] = A.batch_data(b);
     }
 
-    for (idx_type b = 0;b < B.num_batches();b++)
+    for (len_type b = 0;b < B.num_batches();b++)
     {
-        idx_type off_K = 1, off_N = 1;
+        len_type off_K = 1, off_N = 1;
         for (unsigned i = 0;i < batch_ndim_B;i++)
         {
             off_K += indices_B[b][i]*batch_stride_B_AB[i];
@@ -305,9 +305,9 @@ void contract(T alpha, const_batched_tensor_view<T> A, const std::string& idx_A,
         batch_B[off_K][off_N] = B.batch_data(b);
     }
 
-    for (idx_type b = 0;b < C.num_batches();b++)
+    for (len_type b = 0;b < C.num_batches();b++)
     {
-        idx_type off_M = 1, off_N = 1;
+        len_type off_M = 1, off_N = 1;
         for (unsigned i = 0;i < batch_ndim_C;i++)
         {
             off_M += indices_C[b][i]*batch_stride_C_AC[i];

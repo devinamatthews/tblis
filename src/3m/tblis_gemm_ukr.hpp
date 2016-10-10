@@ -8,15 +8,15 @@
 namespace tblis
 {
 
-template <typename T, idx_type MR, idx_type NR, idx_type RS, idx_type CS>
-void AccumulateMicroTile(idx_type m, idx_type n, const T* restrict p_ab,
-                         T beta, T* restrict p_c, stride_type rs_c, stride_type cs_c)
+template <typename T, len_type MR, len_type NR, len_type RS, len_type CS>
+void AccumulateMicroTile(len_type m, len_type n, const T* TBLIS_RESTRICT p_ab,
+                         T beta, T* TBLIS_RESTRICT p_c, stride_type rs_c, stride_type cs_c)
 {
     if (beta == T(0))
     {
-        for (idx_type j = 0;j < n;j++)
+        for (len_type j = 0;j < n;j++)
         {
-            for (idx_type i = 0;i < m;i++)
+            for (len_type i = 0;i < m;i++)
             {
                 p_c[i*rs_c + j*cs_c] = p_ab[i*RS + j*CS];
             }
@@ -24,9 +24,9 @@ void AccumulateMicroTile(idx_type m, idx_type n, const T* restrict p_ab,
     }
     else
     {
-        for (idx_type j = 0;j < n;j++)
+        for (len_type j = 0;j < n;j++)
         {
-            for (idx_type i = 0;i < m;i++)
+            for (len_type i = 0;i < m;i++)
             {
                 p_c[i*rs_c + j*cs_c] = p_ab[i*RS + j*CS] + beta*p_c[i*rs_c + j*cs_c];
             }
@@ -34,16 +34,16 @@ void AccumulateMicroTile(idx_type m, idx_type n, const T* restrict p_ab,
     }
 }
 
-template <typename T, idx_type MR, idx_type NR, idx_type RS, idx_type CS>
-void AccumulateMicroTile(idx_type m, idx_type n, const T* restrict p_ab,
-                         T beta, T* restrict p_c,
-                         const stride_type* restrict rs_c, stride_type cs_c)
+template <typename T, len_type MR, len_type NR, len_type RS, len_type CS>
+void AccumulateMicroTile(len_type m, len_type n, const T* TBLIS_RESTRICT p_ab,
+                         T beta, T* TBLIS_RESTRICT p_c,
+                         const stride_type* TBLIS_RESTRICT rs_c, stride_type cs_c)
 {
     if (beta == T(0))
     {
-        for (idx_type j = 0;j < n;j++)
+        for (len_type j = 0;j < n;j++)
         {
-            for (idx_type i = 0;i < m;i++)
+            for (len_type i = 0;i < m;i++)
             {
                 p_c[rs_c[i] + j*cs_c] = p_ab[i*RS + j*CS];
             }
@@ -51,9 +51,9 @@ void AccumulateMicroTile(idx_type m, idx_type n, const T* restrict p_ab,
     }
     else
     {
-        for (idx_type j = 0;j < n;j++)
+        for (len_type j = 0;j < n;j++)
         {
-            for (idx_type i = 0;i < m;i++)
+            for (len_type i = 0;i < m;i++)
             {
                 p_c[rs_c[i] + j*cs_c] = p_ab[i*RS + j*CS] + beta*p_c[rs_c[i] + j*cs_c];
             }
@@ -61,16 +61,16 @@ void AccumulateMicroTile(idx_type m, idx_type n, const T* restrict p_ab,
     }
 }
 
-template <typename T, idx_type MR, idx_type NR, idx_type RS, idx_type CS>
-void AccumulateMicroTile(idx_type m, idx_type n, const T* restrict p_ab,
-                         T beta, T* restrict p_c,
-                         stride_type rs_c, const stride_type* restrict cs_c)
+template <typename T, len_type MR, len_type NR, len_type RS, len_type CS>
+void AccumulateMicroTile(len_type m, len_type n, const T* TBLIS_RESTRICT p_ab,
+                         T beta, T* TBLIS_RESTRICT p_c,
+                         stride_type rs_c, const stride_type* TBLIS_RESTRICT cs_c)
 {
     if (beta == T(0))
     {
-        for (idx_type j = 0;j < n;j++)
+        for (len_type j = 0;j < n;j++)
         {
-            for (idx_type i = 0;i < m;i++)
+            for (len_type i = 0;i < m;i++)
             {
                 p_c[i*rs_c + cs_c[j]] = p_ab[i*RS + j*CS];
             }
@@ -78,9 +78,9 @@ void AccumulateMicroTile(idx_type m, idx_type n, const T* restrict p_ab,
     }
     else
     {
-        for (idx_type j = 0;j < n;j++)
+        for (len_type j = 0;j < n;j++)
         {
-            for (idx_type i = 0;i < m;i++)
+            for (len_type i = 0;i < m;i++)
             {
                 p_c[i*rs_c + cs_c[j]] = p_ab[i*RS + j*CS] + beta*p_c[i*rs_c + cs_c[j]];
             }
@@ -88,17 +88,17 @@ void AccumulateMicroTile(idx_type m, idx_type n, const T* restrict p_ab,
     }
 }
 
-template <typename T, idx_type MR, idx_type NR, idx_type RS, idx_type CS>
-void AccumulateMicroTile(idx_type m, idx_type n, const T* restrict p_ab,
-                         T beta, T* restrict p_c,
-                         const stride_type* restrict rs_c,
-                         const stride_type* restrict cs_c)
+template <typename T, len_type MR, len_type NR, len_type RS, len_type CS>
+void AccumulateMicroTile(len_type m, len_type n, const T* TBLIS_RESTRICT p_ab,
+                         T beta, T* TBLIS_RESTRICT p_c,
+                         const stride_type* TBLIS_RESTRICT rs_c,
+                         const stride_type* TBLIS_RESTRICT cs_c)
 {
     if (beta == T(0))
     {
-        for (idx_type j = 0;j < n;j++)
+        for (len_type j = 0;j < n;j++)
         {
-            for (idx_type i = 0;i < m;i++)
+            for (len_type i = 0;i < m;i++)
             {
                 p_c[rs_c[i] + cs_c[j]] = p_ab[i*RS + j*CS];
             }
@@ -106,48 +106,14 @@ void AccumulateMicroTile(idx_type m, idx_type n, const T* restrict p_ab,
     }
     else
     {
-        for (idx_type j = 0;j < n;j++)
+        for (len_type j = 0;j < n;j++)
         {
-            for (idx_type i = 0;i < m;i++)
+            for (len_type i = 0;i < m;i++)
             {
                 p_c[rs_c[i] + cs_c[j]] = p_ab[i*RS + j*CS] + beta*p_c[rs_c[i] + cs_c[j]];
             }
         }
     }
-}
-
-template <typename T, idx_type MR, idx_type NR>
-void GenericMicroKernel(stride_type k,
-                        const T* restrict alpha,
-                        const T* restrict p_a, const T* restrict p_b,
-                        const T* restrict beta,
-                        T* restrict p_c, stride_type rs_c, stride_type cs_c)
-{
-    T p_ab[MR*NR] __attribute__((aligned(64))) = {};
-
-    while (k --> 0)
-    {
-        for (int j = 0;j < NR;j++)
-        {
-            for (int i = 0;i < MR;i++)
-            {
-                p_ab[i + MR*j] += p_a[i] * p_b[j];
-            }
-        }
-
-        p_a += MR;
-        p_b += NR;
-    }
-
-    for (int j = 0;j < NR;j++)
-    {
-        for (int i = 0;i < MR;i++)
-        {
-            p_ab[i + MR*j] *= *alpha;
-        }
-    }
-
-    AccumulateMicroTile<T,MR,NR,1,MR>(MR, NR, p_ab, *beta, p_c, rs_c, cs_c);
 }
 
 template <typename Config>
@@ -163,12 +129,12 @@ struct MicroKernel
     template <typename T>
     struct run
     {
-        constexpr static idx_type MR = config_traits<Config>::template MR<T>::def;
-        constexpr static idx_type NR = config_traits<Config>::template NR<T>::def;
+        constexpr static len_type MR = config_traits<Config>::template MR<T>::def;
+        constexpr static len_type NR = config_traits<Config>::template NR<T>::def;
         constexpr static gemm_ukr_t<T> ukr = config_traits<Config>::template gemm_ukr<T>::value;
         constexpr static bool row_major = config_traits<Config>::template gemm_row_major<T>::value;
-        constexpr static idx_type RS = (row_major ? NR : 1);
-        constexpr static idx_type CS = (row_major ? 1 : MR);
+        constexpr static len_type RS = (row_major ? NR : 1);
+        constexpr static len_type CS = (row_major ? 1 : MR);
 
         void operator()(const gemm_thread_config& cfg, thread_communicator& comm,
                         T alpha, matrix_view<T>& A,
@@ -179,9 +145,9 @@ struct MicroKernel
             const T* p_b = B.data();
                   T* p_c = C.data();
 
-            idx_type m = C.length(0);
-            idx_type n = C.length(1);
-            idx_type k = A.length(1);
+            len_type m = C.length(0);
+            len_type n = C.length(1);
+            len_type k = A.length(1);
             stride_type rs_c = C.stride(0);
             stride_type cs_c = C.stride(1);
 
@@ -221,9 +187,9 @@ struct MicroKernel
             const T* p_b = B.data();
                   T* p_c = C.data();
 
-            idx_type m = C.length(0);
-            idx_type n = C.length(1);
-            idx_type k = A.length(1);
+            len_type m = C.length(0);
+            len_type n = C.length(1);
+            len_type k = A.length(1);
             stride_type rs_c = C.stride(0);
             stride_type cs_c = C.stride(1);
             const stride_type* rscat_c = C.scatter(0);
@@ -278,9 +244,9 @@ struct MicroKernel
             const T* p_b = B.data();
                   T* p_c = C.data();
 
-            idx_type m = C.length(0);
-            idx_type n = C.length(1);
-            idx_type k = A.length(1);
+            len_type m = C.length(0);
+            len_type n = C.length(1);
+            len_type k = A.length(1);
             stride_type rs_c = C.stride(0);
             stride_type cs_c = C.stride(1);
             const stride_type* rscat_c = C.scatter(0);

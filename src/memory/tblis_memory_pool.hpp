@@ -88,11 +88,11 @@ class MemoryPool
 
             for (auto& entry : _free_list)
             {
-#if TBLIS_HAVE_HBWMALLOC_H
+                #if TBLIS_HAVE_HBWMALLOC_H
                 hbw_free(entry.first);
-#else
+                #else
                 free(entry.first);
-#endif
+                #endif
             }
             _free_list.clear();
         }
@@ -117,27 +117,27 @@ class MemoryPool
                 if (entry.second >= size &&
                     (uintptr_t)entry.first % alignment == 0)
                 {
-                    assert(entry.first);
+                    TBLIS_ASSERT(entry.first);
                     ptr = entry.first;
                     size = entry.second;
                 }
                 else
                 {
-#if TBLIS_HAVE_HBWMALLOC_H
+                    #if TBLIS_HAVE_HBWMALLOC_H
                     hbw_free(entry.first);
-#else
+                    #else
                     free(entry.first);
-#endif
+                    #endif
                 }
             }
 
             if (ptr == NULL)
             {
-#if TBLIS_HAVE_HBWMALLOC_H
+                #if TBLIS_HAVE_HBWMALLOC_H
                 int ret = hbw_posix_memalign(&ptr, alignment, size);
-#else
+                #else
                 int ret = posix_memalign(&ptr, alignment, size);
-#endif
+                #endif
                 if (ret != 0)
                 {
                     perror("posix_memalign");
@@ -152,7 +152,7 @@ class MemoryPool
         {
             std::lock_guard<mutex> guard(_lock);
 
-            assert(ptr);
+            TBLIS_ASSERT(ptr);
             _free_list.emplace_front(ptr, size);
         }
 

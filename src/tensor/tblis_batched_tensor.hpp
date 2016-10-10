@@ -137,8 +137,8 @@ class const_batched_tensor_view
                                     std::is_integral<V>::value>
         reset(const std::vector<U>& len, const_row_view<const_pointer> ptr, const_matrix_view<idx_type> batch_idx, const std::vector<V>& stride)
         {
-            assert(len.size() == stride.size()+batch_idx.length(1));
-            assert(ptr.length() == batch_idx.length(0));
+            TBLIS_ASSERT(len.size() == stride.size()+batch_idx.length(1));
+            TBLIS_ASSERT(ptr.length() == batch_idx.length(0));
             data_.reset(ptr);
             batch_idx_.reset(batch_idx);
             len_ = len;
@@ -147,7 +147,7 @@ class const_batched_tensor_view
 
         const_tensor_view<T> operator[](idx_type batch) const
         {
-            assert(0 <= batch && batch < num_batches());
+            TBLIS_ASSERT(0 <= batch && batch < num_batches());
             return {{len_.begin(), len_.begin()+dense_dimension()},
                     data_[batch], stride_};
         }
@@ -159,7 +159,7 @@ class const_batched_tensor_view
 
         const_pointer batch_data(idx_type batch) const
         {
-            assert(0 <= batch && batch < num_batches());
+            TBLIS_ASSERT(0 <= batch && batch < num_batches());
             return data_[batch];
         }
 
@@ -170,13 +170,13 @@ class const_batched_tensor_view
 
         const_row_view<idx_type> batch_indices(idx_type batch) const
         {
-            assert(0 <= batch && batch < num_batches());
+            TBLIS_ASSERT(0 <= batch && batch < num_batches());
             return batch_idx_[batch];
         }
 
         idx_type length(unsigned dim) const
         {
-            assert(dim < dimension());
+            TBLIS_ASSERT(dim < dimension());
             return len_[dim];
         }
 
@@ -192,7 +192,7 @@ class const_batched_tensor_view
 
         stride_type stride(unsigned dim) const
         {
-            assert(dim < dense_dimension());
+            TBLIS_ASSERT(dim < dense_dimension());
             return stride_[dim];
         }
 

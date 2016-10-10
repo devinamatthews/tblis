@@ -1,29 +1,17 @@
 #ifndef _TBLIS_HPP_
 #define _TBLIS_HPP_
 
+#include "../external/tci/src/mutex.h"
+#include "../external/tci/src/tblis_barrier.hpp"
+#include "../external/tci/src/tblis_thread.hpp"
+#include "../external/tci/src/tblis_yield.hpp"
+#include "1m/tblis_matrix_reduce.hpp"
 #include "tblis_aligned_allocator.hpp"
 #include "tblis_util.hpp"
-
-#define _DEFINED_SCOMPLEX
-#define _DEFINED_DCOMPLEX
-extern "C"
-{
-//#include "bli_system.h"
-//#include "bli_config.h"
-//#include "bli_config_macro_defs.h"
-//#include "bli_type_defs.h"
-//#include "bli_macro_defs.h"
-}
-#undef _DEFINED_SCOMPLEX
-#undef _DEFINED_DCOMPLEX
 
 #include "impl/tensor_impl.hpp"
 
 #include "tblis_tensor.hpp"
-#include "tblis_yield.hpp"
-#include "tblis_mutex.hpp"
-#include "tblis_barrier.hpp"
-#include "tblis_thread.hpp"
 #include "tblis_memory_pool.hpp"
 #include "tblis_import_configs.hpp"
 
@@ -45,8 +33,6 @@ extern "C"
 #include "1v/tblis_sumv.hpp"
 #include "1v/tblis_xpbyv.hpp"
 #include "1v/tblis_zerov.hpp"
-
-#include "1m/tblis_normfm.hpp"
 
 #include "3m/tblis_gemm.hpp"
 #include "3m/tblis_partm.hpp"

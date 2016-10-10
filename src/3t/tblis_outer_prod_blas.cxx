@@ -8,8 +8,8 @@ namespace tblis
 {
 
 template <typename T>
-int tensor_outer_prod_blas(const std::vector<idx_type>& len_AC,
-                           const std::vector<idx_type>& len_BC,
+int tensor_outer_prod_blas(const std::vector<len_type>& len_AC,
+                           const std::vector<len_type>& len_BC,
                            T alpha, const T* A, const std::vector<stride_type>& stride_A_AC,
                                     const T* B, const std::vector<stride_type>& stride_B_BC,
                            T  beta,       T* C, const std::vector<stride_type>& stride_C_AC,

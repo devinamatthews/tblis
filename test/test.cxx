@@ -33,12 +33,12 @@ void gemm_ref(T alpha, const_matrix_view<T> A,
     const T* ptr_B = B.data();
           T* ptr_C = C.data();
 
-    idx_type m_A = A.length(0);
-    idx_type m_C = C.length(0);
-    idx_type n_B = B.length(1);
-    idx_type n_C = C.length(1);
-    idx_type k_A = A.length(1);
-    idx_type k_B = B.length(0);
+    len_type m_A = A.length(0);
+    len_type m_C = C.length(0);
+    len_type n_B = B.length(1);
+    len_type n_C = C.length(1);
+    len_type k_A = A.length(1);
+    len_type k_B = B.length(0);
 
     stride_type rs_A = A.stride(0);
     stride_type cs_A = A.stride(1);
@@ -47,21 +47,21 @@ void gemm_ref(T alpha, const_matrix_view<T> A,
     stride_type rs_C = C.stride(0);
     stride_type cs_C = C.stride(1);
 
-    assert(m_A == m_C);
-    assert(n_B == n_C);
-    assert(k_A == k_B);
+    TBLIS_ASSERT(m_A == m_C);
+    TBLIS_ASSERT(n_B == n_C);
+    TBLIS_ASSERT(k_A == k_B);
 
-    idx_type m = m_A;
-    idx_type n = n_B;
-    idx_type k = k_A;
+    len_type m = m_A;
+    len_type n = n_B;
+    len_type k = k_A;
 
-    for (idx_type im = 0;im < m;im++)
+    for (len_type im = 0;im < m;im++)
     {
-        for (idx_type in = 0;in < n;in++)
+        for (len_type in = 0;in < n;in++)
         {
             T tmp = T();
 
-            for (idx_type ik = 0;ik < k;ik++)
+            for (len_type ik = 0;ik < k;ik++)
             {
                 tmp += ptr_A[im*rs_A + ik*cs_A]*ptr_B[ik*rs_B + in*cs_B];
             }
@@ -80,7 +80,7 @@ void gemm_ref(T alpha, const_matrix_view<T> A,
 
 string permutation(string from, string to)
 {
-    assert(from.size() == to.size());
+    TBLIS_ASSERT(from.size() == to.size());
 
     string p = from;
 
@@ -161,12 +161,12 @@ template <> const string& TypeName<dcomplex>()
  * initialized from the interior of the unit circle.
  */
 template <typename T>
-void RandomMatrix(size_t N, idx_type m_min, idx_type n_min, matrix<T>& t)
+void RandomMatrix(size_t N, len_type m_min, len_type n_min, matrix<T>& t)
 {
-    vector<idx_type> len = RandomProductConstrainedSequence<idx_type>(2, N, {m_min, n_min});
+    vector<len_type> len = RandomProductConstrainedSequence<len_type>(2, N, {m_min, n_min});
 
-    idx_type m = (m_min > 0 ? m_min : RandomInteger(1, len[0]));
-    idx_type n = (n_min > 0 ? n_min : RandomInteger(1, len[1]));
+    len_type m = (m_min > 0 ? m_min : RandomInteger(1, len[0]));
+    len_type n = (n_min > 0 ? n_min : RandomInteger(1, len[1]));
 
     t.reset({m, n});
 
@@ -196,11 +196,11 @@ void RandomMatrix(size_t N, matrix<T>& t)
  * initialized from the interior of the unit circle.
  */
 template <typename T>
-void RandomTensor(size_t N, unsigned d, vector<idx_type> len_min, tensor<T>& t)
+void RandomTensor(size_t N, unsigned d, vector<len_type> len_min, tensor<T>& t)
 {
-    vector<idx_type> len_max = RandomProductConstrainedSequence<idx_type>(d, N, len_min);
+    vector<len_type> len_max = RandomProductConstrainedSequence<len_type>(d, N, len_min);
 
-    vector<idx_type> len(d);
+    vector<len_type> len(d);
     for (unsigned i = 0;i < d;i++)
     {
         len[i] = (len_min[i] > 0 ? len_min[i] : RandomInteger(1, len_max[i]));
@@ -223,7 +223,7 @@ void RandomTensor(size_t N, unsigned d, vector<idx_type> len_min, tensor<T>& t)
 template <typename T>
 void RandomTensor(size_t N, unsigned d, tensor<T>& t)
 {
-    RandomTensor(N, d, vector<idx_type>(d), t);
+    RandomTensor(N, d, vector<len_type>(d), t);
 }
 
 /*
@@ -319,7 +319,7 @@ void RandomTensors(size_t N,
 
     RandomTensor(N, ndim_A, A);
 
-    vector<idx_type> min_B(ndim_B);
+    vector<len_type> min_B(ndim_B);
     for (unsigned i = 0;i < ndim_B;i++)
     {
         for (unsigned j = 0;j < ndim_A;j++)
@@ -515,7 +515,7 @@ void RandomTensors(size_t N,
     {
         RandomTensor(N, ndim_A, A);
 
-        vector<idx_type> min_B(ndim_B);
+        vector<len_type> min_B(ndim_B);
         for (unsigned i = 0;i < ndim_B;i++)
         {
             for (unsigned j = 0;j < ndim_A;j++)
@@ -527,7 +527,7 @@ void RandomTensors(size_t N,
         RandomTensor(N, ndim_B, min_B, B);
 
         stride_type siz = 1;
-        vector<idx_type> min_C(ndim_C);
+        vector<len_type> min_C(ndim_C);
         for (unsigned i = 0;i < ndim_C;i++)
         {
             for (unsigned j = 0;j < ndim_A;j++)
@@ -749,9 +749,9 @@ void RandomGEMM(size_t N, matrix<T>& A,
                           matrix<T>& B,
                           matrix<T>& C)
 {
-    idx_type m = RandomInteger(1, (idx_type)sqrt(N));
-    idx_type n = RandomInteger(1, (idx_type)sqrt(N));
-    idx_type k = RandomInteger(1, (idx_type)sqrt(N));
+    len_type m = RandomInteger(1, (len_type)sqrt(N));
+    len_type n = RandomInteger(1, (len_type)sqrt(N));
+    len_type k = RandomInteger(1, (len_type)sqrt(N));
 
     //m += (MR<T>::value-1)-(m-1)%MR<T>::value;
     //n += (NR<T>::value-1)-(n-1)%NR<T>::value;
@@ -780,8 +780,8 @@ void RandomGEMV(size_t N, matrix<T>& A,
                           matrix<T>& B,
                           matrix<T>& C)
 {
-    idx_type m = RandomInteger(1, (idx_type)sqrt(N));
-    idx_type k = RandomInteger(1, (idx_type)sqrt(N));
+    len_type m = RandomInteger(1, (len_type)sqrt(N));
+    len_type k = RandomInteger(1, (len_type)sqrt(N));
 
     RandomMatrix(N, m, k, A);
     RandomMatrix(N, k, 1, B);
@@ -798,8 +798,8 @@ void RandomGER(size_t N, matrix<T>& A,
                          matrix<T>& B,
                          matrix<T>& C)
 {
-    idx_type m = RandomInteger(1, (idx_type)sqrt(N));
-    idx_type n = RandomInteger(1, (idx_type)sqrt(N));
+    len_type m = RandomInteger(1, (len_type)sqrt(N));
+    len_type n = RandomInteger(1, (len_type)sqrt(N));
 
     RandomMatrix(N, m, 1, A);
     RandomMatrix(N, 1, n, B);
@@ -1474,7 +1474,7 @@ void TestTranspose(size_t N)
 
     B.reset(A);
     idx_B = idx_A;
-    vector<idx_type> len_C(ndim);
+    vector<len_type> len_C(ndim);
     do
     {
         for (unsigned i = 0;i < ndim;i++)

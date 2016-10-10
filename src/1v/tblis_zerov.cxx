@@ -6,16 +6,16 @@ namespace tblis
 {
 
 template <typename T>
-void tblis_zerov_ref(thread_communicator& comm, idx_type n, T* A, stride_type inc_A)
+void tblis_zerov_ref(thread_communicator& comm, len_type n, T* A, stride_type inc_A)
 {
     if (n == 0) return;
 
-    idx_type n_min, n_max;
+    len_type n_min, n_max;
     std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(n);
 
     if (inc_A == 1)
     {
-        for (idx_type i = n_min;i < n_max;i++)
+        for (len_type i = n_min;i < n_max;i++)
         {
             A[i] = T();
         }
@@ -23,7 +23,7 @@ void tblis_zerov_ref(thread_communicator& comm, idx_type n, T* A, stride_type in
     else
     {
         A += n_min*inc_A;
-        for (idx_type i = n_min;i < n_max;i++)
+        for (len_type i = n_min;i < n_max;i++)
         {
             (*A) = T();
             A += inc_A;
@@ -38,7 +38,7 @@ void tblis_zerov(row_view<T> A)
 }
 
 template <typename T>
-void tblis_zerov(idx_type n, T* A, stride_type inc_A)
+void tblis_zerov(len_type n, T* A, stride_type inc_A)
 {
     parallelize
     (

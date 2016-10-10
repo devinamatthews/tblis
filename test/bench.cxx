@@ -61,10 +61,10 @@ range_t<stride_type> parse_range(const string& s)
 }
 
 template <typename Kernel, typename... Args>
-double run_kernel(idx_type R, const Kernel& kernel, Args&&... args)
+double run_kernel(len_type R, const Kernel& kernel, Args&&... args)
 {
     double bias = numeric_limits<double>::max();
-    for (idx_type r = 0;r < R;r++)
+    for (len_type r = 0;r < R;r++)
     {
         double t0 = tic();
         double t1 = tic();
@@ -72,7 +72,7 @@ double run_kernel(idx_type R, const Kernel& kernel, Args&&... args)
     }
 
     double dt = numeric_limits<double>::max();
-    for (idx_type r = 0;r < R;r++)
+    for (len_type r = 0;r < R;r++)
     {
         double t0 = tic();
         kernel(std::forward<Args>(args)...);
@@ -87,11 +87,11 @@ template <typename Experiment>
 void iterate_over_ranges_helper(const Experiment& experiment,
                                 const map<char,range_t<stride_type>>& ranges,
                                 map<char,range_t<stride_type>>::const_iterator range,
-                                map<char,idx_type>& values)
+                                map<char,len_type>& values)
 {
     if (range == ranges.end())
     {
-        idx_type var = 0;
+        len_type var = 0;
 
         for (auto& r : ranges)
         {
@@ -127,7 +127,7 @@ template <typename Experiment>
 void iterate_over_ranges(const Experiment& experiment,
                          const map<char,range_t<stride_type>>& ranges)
 {
-    map<char,idx_type> values;
+    map<char,len_type> values;
     iterate_over_ranges_helper(experiment, ranges, ranges.begin(), values);
 }
 
@@ -148,9 +148,9 @@ template <> struct type_char<dcomplex> { static constexpr char value = 'z'; };
 template <typename T, algo_t Algorithm>
 struct gemm_experiment
 {
-    idx_type R;
+    len_type R;
 
-    gemm_experiment(idx_type R,
+    gemm_experiment(len_type R,
                     const range_t<stride_type>& m_range,
                     const range_t<stride_type>& n_range,
                     const range_t<stride_type>& k_range)
@@ -159,7 +159,7 @@ struct gemm_experiment
         iterate_over_ranges(*this, {{'m', m_range}, {'n', n_range}, {'k', k_range}});
     }
 
-    void operator()(const map<char,idx_type>& values) const
+    void operator()(const map<char,len_type>& values) const
     {
         stride_type m = values.at('m');
         stride_type n = values.at('n');
@@ -218,9 +218,9 @@ struct gemm_experiment
 template <typename T, algo_t Implementation, int N=3>
 struct random_contraction
 {
-    idx_type R;
+    len_type R;
 
-    random_contraction(idx_type R,
+    random_contraction(len_type R,
                     const range_t<stride_type>& m_range,
                     const range_t<stride_type>& n_range,
                     const range_t<stride_type>& k_range)
@@ -229,26 +229,26 @@ struct random_contraction
         iterate_over_ranges(*this, {{'m', m_range}, {'n', n_range}, {'k', k_range}});
     }
 
-    void operator()(const map<char,idx_type>& values) const
+    void operator()(const map<char,len_type>& values) const
     {
-        idx_type m = values.at('m');
-        idx_type n = values.at('n');
-        idx_type k = values.at('k');
+        len_type m = values.at('m');
+        len_type n = values.at('n');
+        len_type k = values.at('k');
 
         for (int i = 0;i < N;i++)
         {
-            vector<idx_type> len_m = RandomProductConstrainedSequence<idx_type, ROUND_NEAREST>(RandomInteger(1, 3), m);
-            vector<idx_type> len_n = RandomProductConstrainedSequence<idx_type, ROUND_NEAREST>(RandomInteger(1, 3), n);
-            vector<idx_type> len_k = RandomProductConstrainedSequence<idx_type, ROUND_NEAREST>(RandomInteger(1, 3), k);
+            vector<len_type> len_m = RandomProductConstrainedSequence<len_type, ROUND_NEAREST>(RandomInteger(1, 3), m);
+            vector<len_type> len_n = RandomProductConstrainedSequence<len_type, ROUND_NEAREST>(RandomInteger(1, 3), n);
+            vector<len_type> len_k = RandomProductConstrainedSequence<len_type, ROUND_NEAREST>(RandomInteger(1, 3), k);
 
             string idx_A, idx_B, idx_C;
-            vector<idx_type> len_A, len_B, len_C;
+            vector<len_type> len_A, len_B, len_C;
             char idx = 'a';
 
-            map<char,idx_type> lengths;
+            map<char,len_type> lengths;
 
             stride_type tm = 1;
-            for (idx_type len : len_m)
+            for (len_type len : len_m)
             {
                 idx_A.push_back(idx);
                 len_A.push_back(len);
@@ -260,7 +260,7 @@ struct random_contraction
             }
 
             stride_type tn = 1;
-            for (idx_type len : len_n)
+            for (len_type len : len_n)
             {
                 idx_B.push_back(idx);
                 len_B.push_back(len);
@@ -272,7 +272,7 @@ struct random_contraction
             }
 
             stride_type tk = 1;
-            for (idx_type len : len_k)
+            for (len_type len : len_k)
             {
                 idx_A.push_back(idx);
                 len_A.push_back(len);
@@ -320,19 +320,19 @@ struct random_contraction
 template <typename T, algo_t Implementation>
 struct regular_contraction
 {
-    idx_type R;
+    len_type R;
     string idx_A, idx_B, idx_C;
 
-    regular_contraction(idx_type R, const string& idx_A, const string& idx_B, const string& idx_C,
+    regular_contraction(len_type R, const string& idx_A, const string& idx_B, const string& idx_C,
                         const map<char,range_t<stride_type>>& ranges)
     : R(R), idx_A(idx_A), idx_B(idx_B), idx_C(idx_C)
     {
         iterate_over_ranges(*this, ranges);
     }
 
-    void operator()(const map<char,idx_type>& lengths) const
+    void operator()(const map<char,len_type>& lengths) const
     {
-        vector<idx_type> len_A, len_B, len_C;
+        vector<len_type> len_A, len_B, len_C;
 
         stride_type ntot = 1;
         for (auto& p : lengths) ntot *= p.second;

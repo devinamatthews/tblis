@@ -15,13 +15,13 @@ namespace detail
     extern MemoryPool BuffersForScatter;
 }
 
-template <typename T, idx_type MR, idx_type NR>
+template <typename T, len_type MR, len_type NR>
 void BlockScatter(thread_communicator& comm, tensor_matrix<T>& A, stride_type* rs, stride_type* cs, stride_type* rscat, stride_type* cscat)
 {
-    idx_type m = A.length(0);
-    idx_type n = A.length(1);
+    len_type m = A.length(0);
+    len_type n = A.length(1);
 
-    idx_type first, last;
+    len_type first, last;
     std::tie(first, last, std::ignore) = comm.distribute_over_threads(m, MR);
 
     A.length(0, last-first);
@@ -41,9 +41,9 @@ void BlockScatter(thread_communicator& comm, tensor_matrix<T>& A, stride_type* r
     comm.barrier();
 }
 
-template <idx_type MR, idx_type NR, int Mat> struct MatrifyAndRun;
+template <len_type MR, len_type NR, int Mat> struct MatrifyAndRun;
 
-template <idx_type MR, idx_type NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT_A>
+template <len_type MR, len_type NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT_A>
 {
     template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
     MatrifyAndRun(Parent& parent, const gemm_thread_config& cfg, thread_communicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
@@ -57,7 +57,7 @@ template <idx_type MR, idx_type NR> struct MatrifyAndRun<MR, NR, matrix_constant
     }
 };
 
-template <idx_type MR, idx_type NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT_B>
+template <len_type MR, len_type NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT_B>
 {
     template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
     MatrifyAndRun(Parent& parent, const gemm_thread_config& cfg, thread_communicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
@@ -71,7 +71,7 @@ template <idx_type MR, idx_type NR> struct MatrifyAndRun<MR, NR, matrix_constant
     }
 };
 
-template <idx_type MR, idx_type NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT_C>
+template <len_type MR, len_type NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT_C>
 {
     template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
     MatrifyAndRun(Parent& parent, const gemm_thread_config& cfg, thread_communicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
@@ -112,11 +112,11 @@ struct Matrify
 
             using MB = typename config_traits<Config>::template BS<T,DimM>;
             using NB = typename config_traits<Config>::template BS<T,DimN>;
-            constexpr idx_type MR = MB::def;
-            constexpr idx_type NR = NB::def;
+            constexpr len_type MR = MB::def;
+            constexpr len_type NR = NB::def;
 
-            idx_type m = (Mat == MAT_A ? A.length(0) : Mat == MAT_B ? B.length(0) : C.length(0));
-            idx_type n = (Mat == MAT_A ? A.length(1) : Mat == MAT_B ? B.length(1) : C.length(1));
+            len_type m = (Mat == MAT_A ? A.length(0) : Mat == MAT_B ? B.length(0) : C.length(0));
+            len_type n = (Mat == MAT_A ? A.length(1) : Mat == MAT_B ? B.length(1) : C.length(1));
 
             if (rscat == NULL)
             {
@@ -168,11 +168,11 @@ struct MatrifyAndPack
 
             using MB = typename config_traits<Config>::template BS<T,DimM>;
             using NB = typename config_traits<Config>::template BS<T,DimN>;
-            constexpr idx_type MR = MB::def;
-            constexpr idx_type NR = NB::def;
+            constexpr len_type MR = MB::def;
+            constexpr len_type NR = NB::def;
 
-            idx_type m = (Mat == MAT_A ? A.length(0) : Mat == MAT_B ? B.length(0) : C.length(0));
-            idx_type n = (Mat == MAT_A ? A.length(1) : Mat == MAT_B ? B.length(1) : C.length(1));
+            len_type m = (Mat == MAT_A ? A.length(0) : Mat == MAT_B ? B.length(0) : C.length(0));
+            len_type n = (Mat == MAT_A ? A.length(1) : Mat == MAT_B ? B.length(1) : C.length(1));
             m = round_up(m, MR);
             n = round_up(n, NR);
 
@@ -185,7 +185,7 @@ struct MatrifyAndPack
             {
                 if (comm.master())
                 {
-                    idx_type scatter_size = size_as_type<stride_type,T>(2*m + 2*n);
+                    len_type scatter_size = size_as_type<stride_type,T>(2*m + 2*n);
                     pack_buffer = PackBuf.allocate<T>(m*n + std::max(m,n)*TBLIS_MAX_UNROLL + scatter_size);
                     pack_ptr = pack_buffer;
                 }

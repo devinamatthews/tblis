@@ -110,9 +110,9 @@ bool are_congruent_along(const const_tensor_view<T>& A,
     return true;
 }
 
-inline bool are_compatible(const std::vector<idx_type>& len_A,
+inline bool are_compatible(const std::vector<len_type>& len_A,
                            const std::vector<stride_type>& stride_A,
-                           const std::vector<idx_type>& len_B,
+                           const std::vector<len_type>& len_B,
                            const std::vector<stride_type>& stride_B)
 {
     TBLIS_ASSERT(len_A.size() == stride_A.size());
@@ -154,7 +154,7 @@ int check_tensor_indices(const const_tensor_view<T>& A, const std::string& idx_A
 {
     using stl_ext::sort;
 
-    std::vector<std::pair<char,idx_type> > idx_len;
+    std::vector<std::pair<char,len_type> > idx_len;
     idx_len.reserve(A.dimension());
 
     TBLIS_ASSERT(idx_A.size() == A.dimension());
@@ -191,7 +191,7 @@ int check_tensor_indices(const const_tensor_view<T>& A, std::string idx_A,
     using stl_ext::intersection;
     using stl_ext::exclusion;
 
-    std::vector<std::pair<char,idx_type>> idx_len;
+    std::vector<std::pair<char,len_type>> idx_len;
     idx_len.reserve(A.dimension()+
                     B.dimension());
 
@@ -253,7 +253,7 @@ int check_tensor_indices(const const_tensor_view<T>& A, std::string idx_A,
     using stl_ext::intersection;
     using stl_ext::exclusion;
 
-    std::vector<std::pair<char,idx_type>> idx_len;
+    std::vector<std::pair<char,len_type>> idx_len;
     idx_len.reserve(A.dimension()+
                     B.dimension()+
                     C.dimension());
@@ -395,14 +395,14 @@ template <typename... Args>
 using check_template_types_t = typename check_template_types<Args...>::type;
 
 template <typename Len>
-stl_ext::enable_if_t<std::is_pointer<Len>::value,std::vector<idx_type>>
+stl_ext::enable_if_t<std::is_pointer<Len>::value,std::vector<len_type>>
 make_len(unsigned ndim, const Len& x)
 {
     return {x, x+ndim};
 }
 
 template <typename Len>
-stl_ext::enable_if_t<!std::is_pointer<Len>::value,std::vector<idx_type>>
+stl_ext::enable_if_t<!std::is_pointer<Len>::value,std::vector<len_type>>
 make_len(unsigned ndim, const Len& x)
 {
     TBLIS_ASSERT(x.size() == ndim);

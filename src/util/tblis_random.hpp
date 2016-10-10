@@ -1,10 +1,10 @@
 #ifndef _TBLIS_RANDOM_HPP_
 #define _TBLIS_RANDOM_HPP_
 
-#include <cassert>
 #include <random>
 
 #include "tblis_basic_types.hpp"
+#include "tblis_assert.hpp"
 
 namespace tblis
 {
@@ -108,12 +108,12 @@ int random_weighted_choice(const Weights& w)
     using T = Weights::value_type;
 
     int n = w.size();
-    assert(n > 0);
+    TBLIS_ASSERT(n > 0);
 
     T s = 0;
     for (int i = 0;i < n;i++)
     {
-        assert(w[i] >= 0);
+        TBLIS_ASSERT(w[i] >= 0);
         s += w[i];
     }
 
@@ -134,15 +134,15 @@ int random_weighted_choice(const Weights& w)
 template <typename T>
 std::vector<T> random_sum_constrained_sequence(int n, T s, const std::vector<T>& mn)
 {
-    assert(n > 0);
-    assert(s >= 0);
-    assert(mn.size() == n);
+    TBLIS_ASSERT(n > 0);
+    TBLIS_ASSERT(s >= 0);
+    TBLIS_ASSERT(mn.size() == n);
 
     for (int i = 0;i < n;i++)
     {
-        assert(mn[i] >= 0);
+        TBLIS_ASSERT(mn[i] >= 0);
         s -= mn[i];
-        assert(s >= 0);
+        TBLIS_ASSERT(s >= 0);
     }
 
     std::vector<T> p(n+1);
@@ -172,7 +172,7 @@ std::vector<T> random_sum_constrained_sequence(int n, T s, const std::vector<T>&
 template <typename T>
 std::vector<T> random_sum_constrained_sequence(int n, T s)
 {
-    assert(n > 0);
+    TBLIS_ASSERT(n > 0);
     return random_sum_constrained_sequence(n, s, std::vector<T>(n));
 }
 
@@ -184,9 +184,9 @@ template <typename T>
 enable_if_floating_point_t<T,std::vector<T>>
 random_product_constrained_sequence(int n, T p, const std::vector<T>& mn)
 {
-    assert(n >  0);
-    assert(p >= 1);
-    assert(mn.size() == n);
+    TBLIS_ASSERT(n >  0);
+    TBLIS_ASSERT(p >= 1);
+    TBLIS_ASSERT(mn.size() == n);
 
     std::vector<T> log_mn(n);
     for (int i = 0;i < n;i++)
@@ -208,7 +208,7 @@ template <typename T>
 enable_if_floating_point_t<T,std::vector<T>>
 random_product_constrained_sequence(int n, T p)
 {
-    assert(n > 0);
+    TBLIS_ASSERT(n > 0);
     return random_product_constrained_sequence(n, p, std::vector<T>(n, 1.0));
 }
 
@@ -222,9 +222,9 @@ template <typename T, rounding_mode Mode=ROUND_DOWN>
 enable_if_integral_t<T,std::vector<T>>
 random_product_constrained_sequence(int n, T p, const std::vector<T>& mn)
 {
-    assert(n >  0);
-    assert(p >= 1);
-    assert(mn.size() == n);
+    TBLIS_ASSERT(n >  0);
+    TBLIS_ASSERT(p >= 1);
+    TBLIS_ASSERT(mn.size() == n);
 
     std::vector<double> mnd(n);
     for (int i = 0;i < n;i++)
@@ -257,7 +257,7 @@ template <typename T, rounding_mode Mode=ROUND_DOWN>
 enable_if_integral_t<T,std::vector<T>>
 random_product_constrained_sequence(int n, T p)
 {
-    assert(n > 0);
+    TBLIS_ASSERT(n > 0);
     return random_product_constrained_sequence<T, Mode>(n, p, std::vector<T>(n, T(1)));
 }
 

@@ -23,9 +23,9 @@ int tensor_weight(T alpha, const_tensor_view<T> A, std::string idx_A,
                   T  beta,       tensor_view<T> C, std::string idx_C);
 
 template <typename T>
-int tensor_weight_ref(const std::vector<idx_type>& len_AC,
-                      const std::vector<idx_type>& len_BC,
-                      const std::vector<idx_type>& len_ABC,
+int tensor_weight_ref(const std::vector<len_type>& len_AC,
+                      const std::vector<len_type>& len_BC,
+                      const std::vector<len_type>& len_ABC,
                       T alpha, const T* A, const std::vector<stride_type>& stride_A_AC,
                                            const std::vector<stride_type>& stride_A_ABC,
                                const T* B, const std::vector<stride_type>& stride_B_BC,
@@ -35,9 +35,9 @@ int tensor_weight_ref(const std::vector<idx_type>& len_AC,
                                            const std::vector<stride_type>& stride_C_ABC);
 
 template <typename T>
-int tensor_weight_blas(const std::vector<idx_type>& len_AC,
-                       const std::vector<idx_type>& len_BC,
-                       const std::vector<idx_type>& len_ABC,
+int tensor_weight_blas(const std::vector<len_type>& len_AC,
+                       const std::vector<len_type>& len_BC,
+                       const std::vector<len_type>& len_ABC,
                        T alpha, const T* A, const std::vector<stride_type>& stride_A_AC,
                                             const std::vector<stride_type>& stride_A_ABC,
                                 const T* B, const std::vector<stride_type>& stride_B_BC,

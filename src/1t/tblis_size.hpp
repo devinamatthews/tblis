@@ -1,8 +1,8 @@
 #ifndef _TBLIS_SIZE_HPP_
 #define _TBLIS_SIZE_HPP_
 
-#include "tblis_assert.hpp"
-#include "tblis_basic_types.hpp"
+#include "../util/assert.h"
+#include "../util/basic_types.h"
 
 namespace tblis
 {

@@ -2,10 +2,10 @@
 #define _TBLIS_GEMM_TEMPLATE_HPP_
 
 #include "../../external/tci/src/tci.hpp"
-#include "tblis_config.hpp"
-#include "tblis_assert.hpp"
-#include "tblis_basic_types.hpp"
-#include "tblis_configs.hpp"
+#include "../../tblis_config.h"
+#include "../configs/configs.hpp.in"
+#include "../util/assert.h"
+#include "../util/basic_types.h"
 
 namespace tblis
 {

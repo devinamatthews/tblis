@@ -93,6 +93,7 @@ bin_PROGRAMS = bin/test$(EXEEXT) $(am__EXEEXT_1)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_blas.m4 \
+	$(top_srcdir)/m4/ax_check_define.m4 \
 	$(top_srcdir)/m4/ax_cxx_compile_stdcxx_11.m4 \
 	$(top_srcdir)/m4/ax_prefix_config_h.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
@@ -106,8 +107,9 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES = src/configs/tblis_instantiate_for_configs.hpp \
-	src/configs/tblis_instantiate_for_types.hpp
+CONFIG_CLEAN_FILES = src/configs/foreach_type.h \
+	src/configs/foreach_config.h \
+	src/configs/foreach_config_and_type.h src/configs/configs.hpp
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -244,10 +246,11 @@ CTAGS = ctags
 CSCOPE = cscope
 AM_RECURSIVE_TARGETS = cscope
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
-	$(top_srcdir)/src/configs/tblis_instantiate_for_configs.hpp.in \
-	$(top_srcdir)/src/configs/tblis_instantiate_for_types.hpp.in \
-	ar-lib compile config.guess config.sub depcomp install-sh \
-	ltmain.sh missing
+	$(top_srcdir)/src/configs/configs.hpp.in \
+	$(top_srcdir)/src/configs/foreach_config.h.in \
+	$(top_srcdir)/src/configs/foreach_config_and_type.h.in \
+	$(top_srcdir)/src/configs/foreach_type.h.in ar-lib compile \
+	config.guess config.sub depcomp install-sh ltmain.sh missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -325,7 +328,6 @@ NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
-OPENMP_CXXFLAGS = @OPENMP_CXXFLAGS@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
@@ -391,6 +393,7 @@ psdir = @psdir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
+subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
@@ -502,9 +505,13 @@ $(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
-src/configs/tblis_instantiate_for_configs.hpp: $(top_builddir)/config.status $(top_srcdir)/src/configs/tblis_instantiate_for_configs.hpp.in
+src/configs/foreach_type.h: $(top_builddir)/config.status $(top_srcdir)/src/configs/foreach_type.h.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
-src/configs/tblis_instantiate_for_types.hpp: $(top_builddir)/config.status $(top_srcdir)/src/configs/tblis_instantiate_for_types.hpp.in
+src/configs/foreach_config.h: $(top_builddir)/config.status $(top_srcdir)/src/configs/foreach_config.h.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+src/configs/foreach_config_and_type.h: $(top_builddir)/config.status $(top_srcdir)/src/configs/foreach_config_and_type.h.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+src/configs/configs.hpp: $(top_builddir)/config.status $(top_srcdir)/src/configs/configs.hpp.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 
 install-libLTLIBRARIES: $(lib_LTLIBRARIES)

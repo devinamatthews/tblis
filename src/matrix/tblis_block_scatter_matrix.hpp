@@ -1,7 +1,7 @@
 #ifndef _TBLIS_BLOCK_SCATTER_MATRIX_HPP_
 #define _TBLIS_BLOCK_SCATTER_MATRIX_HPP_
 
-#include "tblis.hpp"
+#include "../tblis.h"
 
 namespace tblis
 {

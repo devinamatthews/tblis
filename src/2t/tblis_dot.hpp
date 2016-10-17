@@ -1,7 +1,7 @@
 #ifndef _TBLIS_DOT_HPP_
 #define _TBLIS_DOT_HPP_
 
-#include "tblis_marray.hpp"
+#include "../util/marray.hpp"
 
 namespace tblis
 {

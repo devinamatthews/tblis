@@ -1,36 +1,5 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-
-#if defined(__MIC__)
-#define ARCH_MIC 1
-#elif defined(__ia64) || defined(__itanium__) || defined(_M_IA64)
-#define ARCH_IA64 1
-#elif defined(__x86_64__) || defined(_M_X64)
-#define ARCH_X64 1
-#elif defined(__i386) || defined(_M_IX86)
-#define ARCH_X86 1
-#elif defined(__aarch64__)
-#define ARCH_ARM64 1
-#elif defined(__arm__) || defined(_M_ARM)
-#define ARCH_ARM32 1
-#elif defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__)
-#define ARCH_PPC64 1
-#elif defined(__powerpc__) || defined(__ppc__) || defined(__PPC__)
-#define ARCH_PPC32 1
-#elif defined(__bgq__)
-#define ARCH_BGQ 1
-#elif defined(__sparc)
-#define ARCH_SPARC
-#elif defined(__mips)
-#define ARCH_MIPS
-#else
-#error "Unknown architecture"
-#endif
-
-
-/* Default configuration. */
-#undef DEFAULT_CONFIG
-
 /* Define to dummy `main' function (if any) required to link to the Fortran
    libraries. */
 #undef F77_DUMMY_MAIN
@@ -112,42 +81,6 @@
 
 /* The top source directory. */
 #undef TOPDIR
-
-/* Use a thread barrier based on C++11 condition variables */
-#undef USE_CXX11_BARRIER
-
-/* Use C++11 std::mutex for locking */
-#undef USE_CXX11_MUTEX
-
-/* Use a spin-lock based on C++11 atomics */
-#undef USE_CXX11_SPINLOCK
-
-/* Use C++11 std::thread */
-#undef USE_CXX11_THREADS
-
-/* Use omp_lock for locking */
-#undef USE_OMP_LOCK
-
-/* Use OpenMP for threading */
-#undef USE_OPENMP_THREADS
-
-/* Use OSSpinLock for locking */
-#undef USE_OSX_SPINLOCK
-
-/* Use pthread_barrier for thread barriers */
-#undef USE_PTHREAD_BARRIER
-
-/* Use pthread_mutex for locking */
-#undef USE_PTHREAD_MUTEX
-
-/* Use pthread_spinlock for locking */
-#undef USE_PTHREAD_SPINLOCK
-
-/* Use pthreads for threading */
-#undef USE_PTHREAD_THREADS
-
-/* Use a spin-loop based barrier */
-#undef USE_SPIN_BARRIER
 
 /* Version number of package */
 #undef VERSION

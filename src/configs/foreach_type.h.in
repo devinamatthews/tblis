@@ -1,0 +1,3 @@
+@FOREACH_TYPE@
+
+#undef FOREACH_TYPE

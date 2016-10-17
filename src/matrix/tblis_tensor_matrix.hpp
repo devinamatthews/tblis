@@ -1,7 +1,7 @@
 #ifndef _TBLIS_TENSOR_MATRIX_HPP_
 #define _TBLIS_TENSOR_MATRIX_HPP_
 
-#include "tblis.hpp"
+#include "../tblis.h"
 
 namespace tblis
 {

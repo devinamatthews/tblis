@@ -12,7 +12,7 @@
 #include <set>
 #include <map>
 
-#include "tblis.hpp"
+#include "../src/tblis.h"
 
 using tblis::scomplex;
 using tblis::dcomplex;

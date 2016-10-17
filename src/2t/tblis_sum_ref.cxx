@@ -1,6 +1,6 @@
+#include "../../tblis_config.h"
 #include "tblis_sum.hpp"
 
-#include "tblis_config.hpp"
 
 namespace tblis
 {

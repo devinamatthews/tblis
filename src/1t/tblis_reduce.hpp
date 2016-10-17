@@ -1,7 +1,7 @@
 #ifndef _TBLIS_REDUCE_HPP_
 #define _TBLIS_REDUCE_HPP_
 
-#include "tblis_marray.hpp"
+#include "../util/marray.hpp"
 
 namespace tblis
 {

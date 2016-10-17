@@ -1,8 +1,8 @@
+#include "../../tblis_config.h"
 #include "tblis_transpose.hpp"
 
 #include "external/stl_ext/include/algorithm.hpp"
 
-#include "tblis_config.hpp"
 #include "tblis_tensor_detail.hpp"
 
 namespace tblis

@@ -1,5 +1,6 @@
 .cproject
 .project
+.settings
 autom4te.cache
 bin
 *.a

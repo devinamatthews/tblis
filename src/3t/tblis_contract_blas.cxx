@@ -1,6 +1,6 @@
+#include "../../tblis_config.h"
 #include "tblis_contract.hpp"
 
-#include "tblis_config.hpp"
 #include "tblis_gemm.hpp"
 #include "tblis_matricize.hpp"
 #include "tblis_transpose.hpp"

@@ -1,7 +1,7 @@
 #include "tblis_weight.hpp"
 
-#include "tblis_config.hpp"
-#include "tblis_assert.hpp"
+#include "../../tblis_config.h"
+#include "../util/assert.h"
 #include "tblis_diagonal.hpp"
 #include "tblis_fold.hpp"
 

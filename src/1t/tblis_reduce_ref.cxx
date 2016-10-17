@@ -2,7 +2,7 @@
 
 #include <limits>
 
-#include "tblis_config.hpp"
+#include "../../tblis_config.h"
 
 namespace tblis
 {

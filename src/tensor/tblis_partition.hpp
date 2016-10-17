@@ -3,9 +3,9 @@
 
 #include <vector>
 
-#include "tblis_assert.hpp"
-#include "tblis_basic_types.hpp"
-#include "tblis_marray.hpp"
+#include "../util/assert.h"
+#include "../util/basic_types.h"
+#include "../util/marray.hpp"
 
 namespace tblis
 {

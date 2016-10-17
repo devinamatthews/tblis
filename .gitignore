@@ -15,10 +15,9 @@ lib
 autom4te.cache
 /config.h
 /tblis_config.hpp
-/src/tblis_instantiate_for_configs.hpp
-/src/tblis_instantiate_for_types.hpp
-/src/tblis_import_configs.hpp
-/src/external
+/src/foreach_config.hpp
+/src/foreach_type.hpp
+/src/foreach_config_and_type.hpp
 *~
 config.log
 config.status
@@ -26,3 +25,4 @@ stamp-h1
 .dirstamp
 libtool
 Makefile
+tblis_config.h

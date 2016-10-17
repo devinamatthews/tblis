@@ -2,9 +2,9 @@
 #define _TENSOR_TBLIS_PARTITION_HPP_
 
 #include "../../external/tci/src/tblis_thread.hpp"
-#include "tblis_assert.hpp"
-#include "tblis_basic_types.hpp"
-#include "tblis_configs.hpp"
+#include "../configs/configs.hpp.in"
+#include "../util/assert.h"
+#include "../util/basic_types.h"
 
 namespace tblis
 {

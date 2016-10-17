@@ -1,12 +1,14 @@
 #ifndef _TENSOR_TBLIS_PACK_HPP_
 #define _TENSOR_TBLIS_PACK_HPP_
 
-#include "../../external/tci/src/tci.hpp"
-#include "tblis_assert.hpp"
-#include "tblis_alignment.hpp"
-#include "tblis_basic_types.hpp"
-#include "tblis_configs.hpp"
-#include "tblis_memory_pool.hpp"
+#include "../configs/configs.hpp.in"
+#include "../memory/alignment.hpp"
+#include "../memory/memory_pool.hpp"
+#include "util/thread.h"
+#include "util/assert.h"
+#include "util/basic_types.h"
+#include "util/marray.hpp"
+
 
 #define TBLIS_MAX_UNROLL 8
 
@@ -28,20 +30,20 @@ struct PackRowPanel
     static constexpr len_type ME = (!Trans ? Config::template MR<T>::extent
                                            : Config::template NR<T>::extent);
     static constexpr len_type KR = Config::template KR<T>::def;
-    static constexpr pack_ukr_t<T> pack_nn_ukr = (!Trans ? Config::template pack_nn_mr<T>::value
-                                                         : Config::template pack_nn_nr<T>::value);
-    static constexpr pack_ukr_t<T> pack_sn_ukr = (!Trans ? Config::template pack_sn_mr<T>::value
-                                                         : Config::template pack_sn_nr<T>::value);
-    static constexpr pack_ukr_t<T> pack_ns_ukr = (!Trans ? Config::template pack_ns_mr<T>::value
-                                                         : Config::template pack_ns_nr<T>::value);
-    static constexpr pack_ukr_t<T> pack_ss_ukr = (!Trans ? Config::template pack_ss_mr<T>::value
-                                                         : Config::template pack_ss_nr<T>::value);
-    static constexpr pack_ukr_t<T> pack_nb_ukr = (!Trans ? Config::template pack_nb_mr<T>::value
-                                                         : Config::template pack_nb_nr<T>::value);
-    static constexpr pack_ukr_t<T> pack_sb_ukr = (!Trans ? Config::template pack_sb_mr<T>::value
-                                                         : Config::template pack_sb_nr<T>::value);
+    static constexpr pack_nn_ukr_t<T> pack_nn_ukr = (!Trans ? Config::template pack_nn_mr<T>::value
+                                                            : Config::template pack_nn_nr<T>::value);
+    static constexpr pack_sn_ukr_t<T> pack_sn_ukr = (!Trans ? Config::template pack_sn_mr<T>::value
+                                                            : Config::template pack_sn_nr<T>::value);
+    static constexpr pack_ns_ukr_t<T> pack_ns_ukr = (!Trans ? Config::template pack_ns_mr<T>::value
+                                                            : Config::template pack_ns_nr<T>::value);
+    static constexpr pack_ss_ukr_t<T> pack_ss_ukr = (!Trans ? Config::template pack_ss_mr<T>::value
+                                                            : Config::template pack_ss_nr<T>::value);
+    static constexpr pack_nb_ukr_t<T> pack_nb_ukr = (!Trans ? Config::template pack_nb_mr<T>::value
+                                                            : Config::template pack_nb_nr<T>::value);
+    static constexpr pack_sb_ukr_t<T> pack_sb_ukr = (!Trans ? Config::template pack_sb_mr<T>::value
+                                                            : Config::template pack_sb_nr<T>::value);
 
-    void operator()(thread_communicator& comm, matrix_view<T>& A, matrix_view<T>& Ap) const
+    void operator()(communicator& comm, matrix_view<T>& A, matrix_view<T>& Ap) const
     {
         len_type m_a = A.length( Trans);
         len_type k_a = A.length(!Trans);

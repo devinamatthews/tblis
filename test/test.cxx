@@ -9,7 +9,7 @@
 #include <sstream>
 #include <iomanip>
 
-#include "tblis.hpp"
+#include "../src/tblis.h"
 
 using namespace std;
 using namespace tblis;

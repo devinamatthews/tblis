@@ -2,7 +2,7 @@
 #define _TBLIS_NORMFV_HPP_
 
 #include "../../external/tci/src/tblis_thread.hpp"
-#include "tblis_marray.hpp"
+#include "../util/marray.hpp"
 
 namespace tblis
 {

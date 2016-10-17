@@ -1,7 +1,7 @@
 #ifndef _TBLIS_BATCHED_TENSOR_CONTRACT_HPP_
 #define _TBLIS_BATCHED_TENSOR_CONTRACT_HPP_
 
-#include "tblis.hpp"
+#include "../tblis.h"
 
 namespace tblis
 {

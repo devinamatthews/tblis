@@ -2,7 +2,7 @@
 #define _TBLIS_DOTV_HPP_
 
 #include "../../external/tci/src/tblis_thread.hpp"
-#include "tblis_marray.hpp"
+#include "../util/marray.hpp"
 
 namespace tblis
 {

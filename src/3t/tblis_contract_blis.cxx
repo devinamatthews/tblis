@@ -1,6 +1,6 @@
+#include "../../tblis_config.h"
 #include "tblis_contract.hpp"
 
-#include "tblis_config.hpp"
 #include "tblis_gemm_template.hpp"
 #include "tblis_matrify.hpp"
 #include "tblis_tensor_detail.hpp"

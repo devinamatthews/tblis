@@ -1,9 +1,9 @@
 #ifndef _TBLIS_MATRIFY_HPP_
 #define _TBLIS_MATRIFY_HPP_
 
-#include "tblis_config.hpp"
+#include "../../tblis_config.h"
+#include "../util/marray.hpp"
 #include "tblis_configs.hpp"
-#include "tblis_marray.hpp"
 #include "tblis_packm.hpp"
 #include "tblis_tensor_matrix.hpp"
 

@@ -1,9 +1,9 @@
 #ifndef _TBLIS_GEMM_UKR_HPP_
 #define _TBLIS_GEMM_UKR_HPP_
 
-#include "tblis_config.hpp"
-#include "tblis_basic_types.hpp"
-#include "tblis_configs.hpp"
+#include "../../tblis_config.h"
+#include "../configs/configs.hpp.in"
+#include "../util/basic_types.h"
 
 namespace tblis
 {

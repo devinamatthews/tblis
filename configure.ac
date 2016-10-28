@@ -7,13 +7,13 @@ AC_CONFIG_MACRO_DIR([m4])
 
 AC_CONFIG_HEADERS(config.h)
 
-AC_PROG_CC([gcc clang icc])
+AC_PROG_CC([icc gcc clang])
 AC_PROG_CC_C99
 AM_PROG_AS
 AC_PROG_EGREP
 AC_PROG_AWK
 AX_BLAS([blas_found=yes])
-AC_PROG_CXX([g++ clang++ icpc])
+AC_PROG_CXX([icpc g++ clang++])
 AX_CXX_COMPILE_STDCXX_11([noext])
 AC_LANG([C++])
 AC_C_RESTRICT
@@ -29,28 +29,101 @@ AC_DEFINE_UNQUOTED([TOPDIR], [$topdir], [The top source directory.])
 #
 # Check for memkind
 #
+
 AC_CHECK_HEADERS([hbwmalloc.h memkind.h])
 AC_SEARCH_LIBS([hbw_malloc], [memkind])
+
+#
+# Check for hwloc
+#
+
+AC_CHECK_HEADERS([hwloc.h])
+AC_SEARCH_LIBS([hwloc_topology_init], [hwloc])
+
+#
+# Check for lscpu
+#
+
+AC_CHECK_PROGS([LSCPU], [lscpu], [:])
+if test "x$LSCPU" != "x:"; then
+    AC_DEFINE([HAVE_LSCPU], [1], [Define if the system has the lscpu command.])
+fi
+
+#
+# Check for sysctl
+#
+
+AC_CHECK_FUNCS([sysctl sysctlbyname])
+
+#
+# Check for sysconf
+#
+
+AC_CHECK_FUNCS([sysconf])
+AX_CHECK_DEFINE([unistd.h], [_SC_NPROCESSORS_CONF],
+                [AC_DEFINE([HAVE__SC_NPROCESSORS_CONF], [1],
+                           [sysconf(_SC_NPROCESSORS_CONF) is valid.])])
+AX_CHECK_DEFINE([unistd.h], [_SC_NPROCESSORS_ONLN],
+                [AC_DEFINE([HAVE__SC_NPROCESSORS_ONLN], [1],
+                           [sysconf(_SC_NPROCESSORS_ONLN) is valid.])])
+                           
+#
+# Determine basic types
+#
+
+AC_ARG_WITH([length-type], AS_HELP_STRING([--with-length-type@<:@=type@:>@],
+    [use 'type' for the default index length type @<:@default=ptrdiff_t@:>@]),
+    [len_type=$with_length_type], [len_type=ptrdiff_t])
+    
+AC_CHECK_TYPE([$len_type],,
+              [AC_MSG_ERROR([$len_type must be a standard ISO C type])])
+AX_CHECK_SIGN([$len_type],,
+              [AC_MSG_ERROR([$len_type must be signed])])
+AC_MSG_CHECKING([for index length type])
+AC_MSG_RESULT([$len_type])
+AC_DEFINE_UNQUOTED([LEN_TYPE], [$len_type], [len_type])
+
+AC_ARG_WITH([stride-type], AS_HELP_STRING([--with-stride-type@<:@=type@:>@],
+    [use 'type' for the default index stride type @<:@default=ptrdiff_t@:>@]),
+    [stride_type=$with_stride_type], [stride_type=ptrdiff_t])
+    
+AC_CHECK_TYPE([$stride_type],,
+              [AC_MSG_ERROR([$stride_type must be a standard ISO C type])])
+AX_CHECK_SIGN([$stride_type],,
+              [AC_MSG_ERROR([$stride_type must be signed])])
+AC_MSG_CHECKING([for index stride type])
+AC_MSG_RESULT([$stride_type])
+AC_DEFINE_UNQUOTED([STRIDE_TYPE], [$stride_type], [stride_type])
+
+AC_ARG_WITH([label-type], AS_HELP_STRING([--with-label-type@<:@=type@:>@],
+    [use 'type' for the default index label type @<:@default=char@:>@]),
+    [label_type=$with_label_type], [label_type=char])
+    
+AC_CHECK_TYPE([$label_type],,
+              [AC_MSG_ERROR([$label_type must be a standard ISO C type])])
+AC_MSG_CHECKING([for index label type])
+AC_MSG_RESULT([$label_type])
+AC_DEFINE_UNQUOTED([LABEL_TYPE], [$label_type], [label_type])
                 
 #
 # Determine configurations to build
 #
 
 AC_ARG_ENABLE([config],
-[  --enable-config=...     a comma-separated list of configurations
+[  --enable-config=...    a comma-separated list of configurations
                           @<:@default=auto@:>@
   
                           possible values are:
                           
-                          armv7a, armv8a, bgq, bulldozer, carrizo, cortex-a15,
-                          cortex-a9, dunnington, haswell, knl, loongson3a, mic,
+                          armv7a, armv8a, bgq, bulldozer, excavator, cortex-a15,
+                          cortex-a9, core2, haswell, knl, loongson3a, mic,
                           piledriver, power7, reference, sandybridge, auto
 
                           the following meta-configurations are also available:
  
-                          intel = dunnington,sandybridge,haswell,knl
+                          intel = core2,sandybridge,haswell,knl
                           arm = armv7a,armv8a,cortex-a9,cortex-a15
-                          amd = bulldozer,piledriver,carrizo
+                          amd = bulldozer,piledriver,excavator
                           x86 = intel,amd],
               [], [enable_config=auto])
                              
@@ -79,9 +152,9 @@ if echo $enable_config | grep -qv reference; then
 fi
 
 configs=`echo $enable_config | sed 's/x86/intel,amd/' \
-                             | sed 's/intel/dunnington,sandybridge,haswell,knl/' \
+                             | sed 's/intel/core2,sandybridge,haswell,knl/' \
                              | sed 's/arm/armv7a,armv8a,cortex-a9,cortex-a15/' \
-                             | sed 's/amd/bulldozer,piledriver,carrizo/' \
+                             | sed 's/amd/bulldozer,piledriver,excavator/' \
                              | sed 's/,/ /g'`
                              
 AC_MSG_CHECKING([enabled configurations])
@@ -91,10 +164,10 @@ AM_CONDITIONAL(ENABLE_ARMV7A, [echo $configs | grep -q armv7a])
 AM_CONDITIONAL(ENABLE_ARMV8A, [echo $configs | grep -q armv8a])
 AM_CONDITIONAL(ENABLE_BGQ, [echo $configs | grep -q bgq])
 AM_CONDITIONAL(ENABLE_BULLDOZER, [echo $configs | grep -q bulldozer])
-AM_CONDITIONAL(ENABLE_CARRIZO, [echo $configs | grep -q carrizo])
+AM_CONDITIONAL(ENABLE_EXCAVATOR, [echo $configs | grep -q excavator])
 AM_CONDITIONAL(ENABLE_CORTEX_A15, [echo $configs | grep -q cortex-a15])
 AM_CONDITIONAL(ENABLE_CORTEX_A9, [echo $configs | grep -q cortex-a9])
-AM_CONDITIONAL(ENABLE_DUNNINGTON, [echo $configs | grep -q dunnington])
+AM_CONDITIONAL(ENABLE_CORE2, [echo $configs | grep -q core2])
 AM_CONDITIONAL(ENABLE_HASWELL, [echo $configs | grep -q haswell])
 AM_CONDITIONAL(ENABLE_KNL, [echo $configs | grep -q knl])
 AM_CONDITIONAL(ENABLE_LOONGSON3A, [echo $configs | grep -q loongson3a])
@@ -117,6 +190,8 @@ if test x"$cc_vendor" = x; then
 fi
 
 AM_CONDITIONAL(ENABLE_INTEL_COMPILER, [test x"$cc_vendor" = xicc])
+
+AM_CONDITIONAL(IS_OSX, [test `uname -s` = Darwin])
 
 include_configs=""
 for config in $configs; do
@@ -169,5 +244,3 @@ AC_CONFIG_FILES([Makefile
 AX_PREFIX_CONFIG_H([tblis_config.h], [TBLIS])
 AC_CONFIG_SUBDIRS([external/tci])
 AC_OUTPUT
-
-rm config.h

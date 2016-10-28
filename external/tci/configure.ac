@@ -22,7 +22,7 @@ AC_ARG_ENABLE([barrier], AS_HELP_STRING([--enable-barrier=type],
     spin_barrier @<:@default=auto@:>@]),
     [barrier_type=$enable_barrier], [barrier_type=auto])
 
-AC_ARG_ENABLE([thread_model], AS_HELP_STRING([--enable-thread-model@<:@=model@:>@],
+AC_ARG_ENABLE([thread-model], AS_HELP_STRING([--enable-thread-model@<:@=model@:>@],
     [enable threading with the specified model, one of none, auto, \
     openmp, pthreads @<:@default=auto@:>@]),
     [thread_model=$enable_thread_model], [thread_model=auto])

@@ -3,14 +3,11 @@
 namespace tblis
 {
 
-static int check()
+TBLIS_CONFIG_CHECK(reference, check)
 {
     return 0;
 }
 
-TBLIS_CONFIG_CHECK(reference_config, check);
-
-#define TBLIS_CONFIG_NAME reference_config
-#include "configs/instantiate_default_kernels.hpp"
+TBLIS_CONFIG_INSTANTIATE(reference);
 
 }

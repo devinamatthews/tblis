@@ -19,8 +19,14 @@
 /* Define to 1 if you have the <hbwmalloc.h> header file. */
 #undef HAVE_HBWMALLOC_H
 
+/* Define to 1 if you have the <hwloc.h> header file. */
+#undef HAVE_HWLOC_H
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* Define if the system has the lscpu command. */
+#undef HAVE_LSCPU
 
 /* Define to 1 if you have the <memkind.h> header file. */
 #undef HAVE_MEMKIND_H
@@ -40,6 +46,15 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
+/* Define to 1 if you have the `sysconf' function. */
+#undef HAVE_SYSCONF
+
+/* Define to 1 if you have the `sysctl' function. */
+#undef HAVE_SYSCTL
+
+/* Define to 1 if you have the `sysctlbyname' function. */
+#undef HAVE_SYSCTLBYNAME
+
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
@@ -48,6 +63,18 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* sysconf(_SC_NPROCESSORS_CONF) is valid. */
+#undef HAVE__SC_NPROCESSORS_CONF
+
+/* sysconf(_SC_NPROCESSORS_ONLN) is valid. */
+#undef HAVE__SC_NPROCESSORS_ONLN
+
+/* label_type */
+#undef LABEL_TYPE
+
+/* len_type */
+#undef LEN_TYPE
 
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
@@ -78,6 +105,9 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
+
+/* stride_type */
+#undef STRIDE_TYPE
 
 /* The top source directory. */
 #undef TOPDIR

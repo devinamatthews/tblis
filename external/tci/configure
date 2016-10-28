@@ -4150,7 +4150,7 @@ else
 fi
 
 
-# Check whether --enable-thread_model was given.
+# Check whether --enable-thread-model was given.
 if test "${enable_thread_model+set}" = set; then :
   enableval=$enable_thread_model; thread_model=$enable_thread_model
 else

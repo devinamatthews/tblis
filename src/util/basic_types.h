@@ -3,18 +3,35 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <sys/types.h>
 
 #include "tblis_config.h"
 
+#include "assert.h"
+
 #ifdef __cplusplus
+
+#include <string>
+
+#include "memory/aligned_allocator.hpp"
+
 #include "external/stl_ext/include/complex.hpp"
+
+#define MARRAY_DEFAULT_LAYOUT COLUMN_MAJOR
+#include "external/marray/include/varray.hpp"
+#include "external/marray/include/marray.hpp"
+
 #else
+
 #include <complex.h>
+
 #endif
 
 #ifdef __cplusplus
 namespace tblis {
 #endif
+
+typedef struct tblis_config_s tblis_config;
 
 typedef enum
 {
@@ -38,9 +55,9 @@ typedef enum
     TYPE_DCOMPLEX = 3
 } type_t;
 
-//TODO configure these
-typedef ssize_t len_type;
-typedef ptrdiff_t stride_type;
+typedef TBLIS_LEN_TYPE len_type;
+typedef TBLIS_STRIDE_TYPE stride_type;
+typedef TBLIS_LABEL_TYPE label_type;
 
 #ifdef __cplusplus
 
@@ -53,7 +70,10 @@ template <> struct type_tag<  double> { static constexpr type_t value =   TYPE_D
 template <> struct type_tag<scomplex> { static constexpr type_t value = TYPE_SCOMPLEX; };
 template <> struct type_tag<dcomplex> { static constexpr type_t value = TYPE_DCOMPLEX; };
 
-struct single_t;
+struct single_t
+{
+    constexpr single_t() {}
+};
 constexpr single_t single;
 
 using stl_ext::enable_if_t;
@@ -67,6 +87,62 @@ using stl_ext::real_type_t;
 using stl_ext::complex_type_t;
 using stl_ext::enable_if_complex_t;
 using stl_ext::norm2;
+using stl_ext::is_complex;
+
+template <typename T>
+T conj(bool conjugate, T val)
+{
+    return (conjugate ? conj(val) : val);
+}
+
+template <typename T>
+using const_tensor_view = MArray::const_varray_view<T>;
+
+template <typename T>
+using tensor_view = MArray::varray_view<T>;
+
+template <typename T, typename Allocator=aligned_allocator<T,64>>
+using tensor = MArray::varray<T, Allocator>;
+
+using MArray::const_marray_view;
+using MArray::marray_view;
+
+template <typename T, unsigned ndim, typename Allocator=aligned_allocator<T>>
+using marray = MArray::marray<T, ndim, Allocator>;
+
+using MArray::const_matrix_view;
+using MArray::matrix_view;
+
+template <typename T, typename Allocator=aligned_allocator<T>>
+using matrix = MArray::matrix<T, Allocator>;
+
+using MArray::const_row_view;
+using MArray::row_view;
+
+template <typename T, typename Allocator=aligned_allocator<T>>
+using row = MArray::row<T, Allocator>;
+
+using MArray::Layout;
+using MArray::COLUMN_MAJOR;
+using MArray::ROW_MAJOR;
+using MArray::DEFAULT;
+
+using MArray::uninitialized_t;
+using MArray::uninitialized;
+
+using MArray::make_array;
+using MArray::make_vector;
+
+using MArray::range_t;
+using MArray::range;
+
+namespace matrix_constants
+{
+    enum {MAT_A, MAT_B, MAT_C};
+    enum {DIM_MR=0x0, DIM_NR=0x2, DIM_KR=0x4,
+          DIM_MC=0x1, DIM_NC=0x3, DIM_KC=0x5,
+          DIM_M=DIM_MR, DIM_N=DIM_NR, DIM_K=DIM_KR};
+}
 
 #else
 
@@ -74,6 +150,212 @@ typedef complex float scomplex;
 typedef complex double dcomplex;
 
 #endif
+
+typedef struct tblis_scalar
+{
+    type_t type;
+    char data[16] __attribute__((__aligned__(8)));
+
+#ifdef __cplusplus
+
+    template <typename T>
+    tblis_scalar(T value)
+    : type(type_tag<T>::value)
+    {
+        *(T*)data = value;
+    }
+
+    template <typename T>
+    T& get()
+    {
+        TBLIS_ASSERT(type_tag<T>::value == type);
+        return *(T*)data;
+    }
+
+    template <typename T>
+    const T& get() const
+    {
+        TBLIS_ASSERT(type_tag<T>::value == type);
+        return *(T*)data;
+    }
+
+#endif
+
+} tblis_scalar;
+
+typedef struct tblis_vector
+{
+    type_t type;
+    int conj;
+    char scalar[16] __attribute__((__aligned__(8)));
+    void* data;
+    len_type n;
+    stride_type inc;
+
+#ifdef __cplusplus
+
+    template <typename T>
+    tblis_vector(const_row_view<T> view)
+    : type(type_tag<T>::value), conj(false), data((void*)view.data()),
+      n(view.length()), inc(view.stride())
+    {
+        *(T*)scalar = T(1);
+    }
+
+    template <typename T>
+    tblis_vector(T alpha, const_row_view<T> view)
+    : type(type_tag<T>::value), conj(false), data((void*)view.data()),
+      n(view.length()), inc(view.stride())
+    {
+        *(T*)scalar = alpha;
+    }
+
+    template <typename T>
+    T& alpha()
+    {
+        TBLIS_ASSERT(type_tag<T>::value == type);
+        return *(T*)scalar;
+    }
+
+    template <typename T>
+    const T& alpha() const
+    {
+        TBLIS_ASSERT(type_tag<T>::value == type);
+        return *(T*)scalar;
+    }
+
+    void swap(tblis_vector& other)
+    {
+        using std::swap;
+        swap(type, other.type);
+        swap(conj, other.conj);
+        swap(scalar, other.scalar);
+        swap(data, other.data);
+        swap(n, other.n);
+        swap(inc, other.inc);
+    }
+
+#endif
+
+} tblis_vector;
+
+typedef struct tblis_matrix
+{
+    type_t type;
+    int conj;
+    char scalar[16] __attribute__((__aligned__(8)));
+    void* data;
+    len_type m, n;
+    stride_type rs, cs;
+
+#ifdef __cplusplus
+
+    template <typename T>
+    tblis_matrix(const_matrix_view<T> view)
+    : type(type_tag<T>::value), conj(false), data((void*)view.data()),
+      m(view.length(0)), n(view.length(1)), rs(view.stride(0)), cs(view.stride(1))
+    {
+        *(T*)scalar = T(1);
+    }
+
+    template <typename T>
+    tblis_matrix(T alpha, const_matrix_view<T> view)
+    : type(type_tag<T>::value), conj(false), data((void*)view.data()),
+      m(view.length(0)), n(view.length(1)), rs(view.stride(0)), cs(view.stride(1))
+    {
+        *(T*)scalar = alpha;
+    }
+
+    template <typename T>
+    T& alpha()
+    {
+        TBLIS_ASSERT(type_tag<T>::value == type);
+        return *(T*)scalar;
+    }
+
+    template <typename T>
+    const T& alpha() const
+    {
+        TBLIS_ASSERT(type_tag<T>::value == type);
+        return *(T*)scalar;
+    }
+
+    void swap(tblis_matrix& other)
+    {
+        using std::swap;
+        swap(type, other.type);
+        swap(conj, other.conj);
+        swap(scalar, other.scalar);
+        swap(data, other.data);
+        swap(m, other.m);
+        swap(n, other.n);
+        swap(rs, other.rs);
+        swap(cs, other.cs);
+    }
+
+#endif
+
+} tblis_matrix;
+
+typedef struct tblis_tensor
+{
+    type_t type;
+    int conj;
+    char scalar[16] __attribute__((__aligned__(8)));
+    void* data;
+    int ndim;
+    len_type* len;
+    stride_type* stride;
+
+#ifdef __cplusplus
+
+    template <typename T>
+    tblis_tensor(const const_tensor_view<T>& view)
+    : type(type_tag<T>::value), conj(false), data((void*)view.data()),
+      ndim(view.dimension()), len(view.lengths().data()),
+      stride(view.strides().data())
+    {
+        *(T*)scalar = T(1);
+    }
+
+    template <typename T>
+    tblis_tensor(T alpha, const const_tensor_view<T>& view)
+    : type(type_tag<T>::value), conj(false), data((void*)view.data()),
+      ndim(view.dimension()), len(view.lengths().data()),
+      stride(view.strides().data())
+    {
+        *(T*)scalar = alpha;
+    }
+
+    template <typename T>
+    T& alpha()
+    {
+        TBLIS_ASSERT(type_tag<T>::value == type);
+        return *(T*)scalar;
+    }
+
+    template <typename T>
+    const T& alpha() const
+    {
+        TBLIS_ASSERT(type_tag<T>::value == type);
+        return *(T*)scalar;
+    }
+
+    void swap(tblis_tensor& other)
+    {
+        using std::swap;
+        swap(type, other.type);
+        swap(conj, other.conj);
+        swap(scalar, other.scalar);
+        swap(data, other.data);
+        swap(ndim, other.ndim);
+        swap(len, other.len);
+        swap(stride, other.stride);
+    }
+
+#endif
+
+} tblis_tensor;
 
 #ifdef __cplusplus
 }

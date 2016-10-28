@@ -265,17 +265,17 @@ namespace MArray
             typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
             explicit short_vector(const Allocator& alloc = Allocator())
-            : _size(0), _alloc(alloc) {}
+            : _size(0), _alloc(alloc, _local_data()) {}
 
             short_vector(size_type count, const T& value,
                          const Allocator& alloc = Allocator())
-            : _size(0), _alloc(alloc)
+            : _size(0), _alloc(alloc, _local_data())
             {
                 assign(count, value);
             }
 
             explicit short_vector(size_type count)
-            : _size(0), _alloc(Allocator())
+            : _size(0), _alloc(Allocator(), _local_data())
             {
                 assign(count, T());
             }
@@ -283,25 +283,26 @@ namespace MArray
             template <typename Iterator>
             short_vector(Iterator first, Iterator last,
                          const Allocator& alloc = Allocator())
-            : _size(0), _alloc(alloc)
+            : _size(0), _alloc(alloc, _local_data())
             {
                 assign(first, last);
             }
 
             short_vector(const short_vector& other)
-            : _size(0), _alloc(_alloc_traits::select_on_container_copy_construction(other._alloc))
+            : _size(0), _alloc(_alloc_traits::select_on_container_copy_construction(other._alloc),
+                               _local_data())
             {
                 assign(other.begin(), other.end());
             }
 
             short_vector(const short_vector& other, const Allocator& alloc)
-            : _size(0), _alloc(alloc)
+            : _size(0), _alloc(alloc, _local_data())
             {
                 assign(other.begin(), other.end());
             }
 
             short_vector(short_vector&& other)
-            : _size(other._size), _alloc(std::move(other._alloc))
+            : _size(other._size), _alloc(std::move(other._alloc), _local_data())
             {
                 if (other._is_local())
                 {
@@ -318,7 +319,7 @@ namespace MArray
             }
 
             short_vector(short_vector&& other, const Allocator& alloc)
-            : _size(other._size), _alloc(alloc)
+            : _size(other._size), _alloc(alloc, _local_data())
             {
                 if (other._is_local() || alloc != other._alloc)
                 {
@@ -337,7 +338,7 @@ namespace MArray
 
             short_vector(std::initializer_list<T> init,
                          const Allocator& alloc = Allocator())
-            : _size(0), _alloc(alloc)
+            : _size(0), _alloc(alloc, _local_data())
             {
                 assign(init.begin(), init.end());
             }
@@ -778,7 +779,7 @@ namespace MArray
             }
 
             template <typename Iterator>
-            static void _destroy(iterator first, iterator last)
+            void _destroy(iterator first, iterator last)
             {
                 if (first == last) return;
                 for (--last;last != first;--last)
@@ -786,7 +787,7 @@ namespace MArray
             }
 
             template <typename Iterator>
-            static iterator _construct(Iterator first, Iterator last, iterator result)
+            iterator _construct(Iterator first, Iterator last, iterator result)
             {
                 iterator cur = result;
 
@@ -805,7 +806,7 @@ namespace MArray
             }
 
             template <typename... Args>
-            static iterator _construct_n(iterator result, size_type n, Args&&... args)
+            iterator _construct_n(iterator result, size_type n, Args&&... args)
             {
                 iterator last = result+n;
                 iterator cur = result;
@@ -813,7 +814,7 @@ namespace MArray
                 try
                 {
                     for (;cur != last;++cur)
-                        _alloc_traits::construct(_alloc, cur, std::forward<Args>(args)...));
+                        _alloc_traits::construct(_alloc, cur, std::forward<Args>(args)...);
                 }
                 catch (...)
                 {
@@ -824,7 +825,7 @@ namespace MArray
                 return result;
             }
 
-            static iterator _uninitialized_move_n_if(iterator first, size_type n, iterator result)
+            iterator _uninitialized_move_n_if(iterator first, size_type n, iterator result)
             {
                 if (std::is_nothrow_move_constructible<T>::value ||
                     !std::is_copy_constructible<T>::value)
@@ -949,14 +950,14 @@ namespace MArray
             size_type _size;
             struct _data_s : public Allocator
             {
-                _data_s(Allocator alloc, pointer begin=_local_data())
-                : Allocator(alloc), _data(begin) {}
+                _data_s(Allocator alloc, pointer data)
+                : Allocator(alloc), _data(data) {}
 
-                _data_s(const _data_s& other)
-                : Allocator(other), _data(_local_data()) {}
+                _data_s(const _data_s& other, pointer data)
+                : Allocator(other), _data(data) {}
 
-                _data_s(_data_s&& other)
-                : Allocator(std::move(other)), _data(_local_data()) {}
+                _data_s(_data_s&& other, pointer data)
+                : Allocator(std::move(other)), _data(data) {}
 
                 _data_s& operator=(const _data_s& other)
                 {
@@ -972,6 +973,7 @@ namespace MArray
 
                 pointer _data;
             } _alloc;
+
             union
             {
                 std::array<T,N> _fixed;

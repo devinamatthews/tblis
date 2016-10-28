@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+static tci_comm_t _tci_single = {NULL, 1, 0, 1, 0};
+const tci_comm_t* const tci_single = &_tci_single;
+
 int tci_comm_init_single(tci_comm_t* comm)
 {
     comm->context = NULL;
@@ -14,22 +17,15 @@ int tci_comm_init_single(tci_comm_t* comm)
 }
 
 int tci_comm_init(tci_comm_t* comm, tci_context_t* context,
-                  int tid, int ngang, int gid)
+                  int nthread, int tid, int ngang, int gid)
 {
     comm->context = context;
+    comm->nthread = nthread;
     comm->tid = tid;
     comm->ngang = ngang;
     comm->gid = gid;
 
-    if (context)
-    {
-        tci_context_attach(comm->context);
-        comm->nthread = context->barrier.nthread;
-    }
-    else
-    {
-        comm->nthread = 1;
-    }
+    if (context) tci_context_attach(comm->context);
 
     return 0;
 }
@@ -53,13 +49,13 @@ int tci_comm_is_master(const tci_comm_t* comm)
 
 int tci_comm_barrier(tci_comm_t* comm)
 {
-    if (comm->nthread == 1) return 0;
+    if (!comm->context) return 0;
     return tci_context_barrier(comm->context, comm->tid);
 }
 
 int tci_comm_bcast(tci_comm_t* comm, void** object, int root)
 {
-    if (comm->nthread == 1) return 0;
+    if (!comm->context) return 0;
 
     if (comm->tid == root)
     {
@@ -73,7 +69,7 @@ int tci_comm_bcast(tci_comm_t* comm, void** object, int root)
 
 int tci_comm_bcast_nowait(tci_comm_t* comm, void** object, int root)
 {
-    if (comm->nthread == 1) return 0;
+    if (!comm->context) return 0;
 
     if (comm->tid == root)
     {
@@ -85,100 +81,105 @@ int tci_comm_bcast_nowait(tci_comm_t* comm, void** object, int root)
     }
 }
 
-int tci_comm_gang(tci_comm_t* parent, tci_comm_t* child, int n, int block,
-                  int new_tid, int new_nthread)
+int tci_comm_gang(tci_comm_t* parent, tci_comm_t* child,
+                  int type, int n, int bs)
 {
-    tci_context_t* contexts_buf[n];
-    tci_context_t** contexts = &contexts_buf[0];
+    int nt = parent->nthread;
+    int tid = parent->tid;
 
-    memset(contexts_buf, 0, sizeof(contexts_buf));
-    tci_comm_bcast_nowait(parent, (void**)&contexts, 0);
+    if (n == 1) return tci_comm_init(child, parent->context, 1, 0, nt, tid);
+    if (n >= nt) return tci_comm_init(child, NULL, 1, 0, nt, tid);
 
-    if (new_tid == 0 && new_nthread > 1)
+    int new_tid = 0;
+    int new_nthread = 0;
+    int block = 0;
+
+    switch (type & ~TCI_NO_CONTEXT)
     {
-        tci_context_init(&contexts[block], new_nthread,
-                         parent->context->barrier.group_size);
+        case TCI_EVENLY:
+        {
+            block = (n*tid)/nt;
+            int block_first = (block*nt)/n;
+            int block_last = ((block+1)*nt)/n;
+            new_tid = tid-block_first;
+            new_nthread = block_last-block_first;
+        }
+        break;
+        case TCI_CYCLIC:
+        {
+            block = tid%n;
+            new_tid = tid/n;
+            new_nthread = (nt-block+n-1)/n;
+        }
+        break;
+        case TCI_BLOCK_CYCLIC:
+        {
+            block = (tid/bs)%n;
+            int nsubblock_tot = nt/bs;
+            int nsubblock = nsubblock_tot/n;
+            new_tid = ((tid/bs)/n)*bs + (tid%bs);
+            new_nthread = nsubblock*bs +
+                TCI_MIN(bs, nt-nsubblock*n*bs-block*bs);
+        }
+        break;
+        case TCI_BLOCKED:
+        {
+            int bs = (nt+n-1)/n;
+            block = tid/bs;
+            new_tid = tid-block*bs;
+            new_nthread = TCI_MIN(bs, nt-block*bs);
+        }
+        break;
     }
 
-    tci_comm_barrier(parent);
+    if (!parent->context || (type & TCI_NO_CONTEXT))
+    {
+        tci_comm_init(child, NULL, new_nthread, new_tid, n, block);
+    }
+    else
+    {
+        tci_context_t* contexts_buf[n];
+        tci_context_t** contexts = &contexts_buf[0];
 
-    tci_comm_init(child, contexts[block], new_tid, n, block);
+        memset(contexts_buf, 0, sizeof(contexts_buf));
+        tci_comm_bcast_nowait(parent, (void**)&contexts, 0);
 
-    tci_comm_barrier(parent);
+        if (new_tid == 0 && new_nthread > 1)
+        {
+            tci_context_init(&contexts[block], new_nthread,
+                             parent->context->barrier.group_size);
+        }
+
+        tci_comm_barrier(parent);
+
+        tci_comm_init(child, contexts[block], new_nthread, new_tid, n, block);
+
+        tci_comm_barrier(parent);
+    }
 
     return 0;
-}
-
-int tci_comm_gang_evenly(tci_comm_t* parent, tci_comm_t* child, int n)
-{
-    int nt = parent->nthread;
-    int tid = parent->tid;
-
-    if (n >= nt) return tci_comm_init(child, NULL, 0, nt, tid);
-
-    int block = (n*tid)/nt;
-    int block_first = (block*nt)/n;
-    int block_last = ((block+1)*nt)/n;
-    int new_tid = tid-block_first;
-    int new_nthread = block_last-block_first;
-
-    return tci_comm_gang(parent, child, n, block, new_tid, new_nthread);
-}
-
-int tci_comm_gang_block_cyclic(tci_comm_t* parent, tci_comm_t* child, int n, int bs)
-{
-    int nt = parent->nthread;
-    int tid = parent->tid;
-
-    if (n >= nt) return tci_comm_init(child, NULL, 0, nt, tid);
-
-    int block = (tid/bs)%n;
-    int nsubblock_tot = nt/bs;
-    int nsubblock = nsubblock_tot/n;
-    int new_tid = ((tid/bs)/n)*bs + (tid%bs);
-    int new_nthread = nsubblock*bs + TCI_MIN(bs, nt-nsubblock*n*bs-block*bs);
-
-    return tci_comm_gang(parent, child, n, block, new_tid, new_nthread);
-}
-
-int tci_comm_gang_blocked(tci_comm_t* parent, tci_comm_t* child, int n)
-{
-    int nt = parent->nthread;
-    int tid = parent->tid;
-
-    if (n >= nt) return tci_comm_init(child, NULL, 0, nt, tid);
-
-    int bs = (nt+n-1)/n;
-    int block = tid/bs;
-    int new_tid = tid-block*bs;
-    int new_nthread = TCI_MIN(bs, nt-block*bs);
-
-    return tci_comm_gang(parent, child, n, block, new_tid, new_nthread);
-}
-
-int tci_comm_gang_cyclic(tci_comm_t* parent, tci_comm_t* child, int n)
-{
-    int nt = parent->nthread;
-    int tid = parent->tid;
-
-    if (n >= nt) return tci_comm_init(child, NULL, 0, nt, tid);
-
-    int block = tid%n;
-    int new_tid = tid/n;
-    int new_nthread = (nt-block+n-1)/n;
-
-    return tci_comm_gang(parent, child, n, block, new_tid, new_nthread);
 }
 
 void tci_distribute(int n, int idx, int64_t range, int64_t granularity,
                     int64_t* first, int64_t* last, int64_t* max)
 {
-    int64_t ngrain = (range+granularity-1)/granularity;
-    int64_t max_size = ((ngrain+n-1)/n)*granularity;
+    if (n == 1)
+    {
+        if (first) *first = 0;
+        if ( last)  *last = range;
+        if (  max)   *max = range;
+    }
+    else
+    {
+        int64_t ngrain = (range+granularity-1)/granularity;
+        int64_t first_grain = (idx*ngrain)/n;
+        int64_t last_grain = ((idx+1)*ngrain)/n;
+        int64_t max_grain = (ngrain+n-1)/n;
 
-    if (first) *first =         (( idx   *ngrain)/n)*granularity;
-    if ( last)  *last = TCI_MIN((((idx+1)*ngrain)/n)*granularity, range);
-    if (  max)   *max =         (( idx   *ngrain)/n)*granularity+max_size;
+        if (first) *first = first_grain*granularity;
+        if ( last)  *last = TCI_MIN(last_grain*granularity, range);
+        if (  max)   *max = (first_grain+max_grain)*granularity;
+    }
 }
 
 void tci_comm_distribute_over_gangs(tci_comm_t* comm, int64_t range,

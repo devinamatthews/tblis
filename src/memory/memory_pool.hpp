@@ -19,7 +19,6 @@ namespace tblis
 class MemoryPool
 {
     public:
-        template <typename T>
         class Block
         {
             friend class MemoryPool;
@@ -46,9 +45,11 @@ class MemoryPool
                     return *this;
                 }
 
-                operator T*() { return _ptr; }
+                template <typename T=void>
+                T* get() { return (T*)_ptr; }
 
-                operator const T*() const { return _ptr; }
+                template <typename T=void>
+                const T* get() const { return (const T*)_ptr; }
 
                 friend void swap(Block& a, Block& b)
                 {
@@ -59,16 +60,13 @@ class MemoryPool
                 }
 
             protected:
-                Block(MemoryPool* pool, size_t num, size_t alignment)
-                : _pool(pool), _size(num*sizeof(T))
-                {
-                    alignment = std::max(alignment, std::alignment_of<T>::value);
-                    _ptr = (T*)_pool->acquire(_size, alignment);
-                }
+                Block(MemoryPool* pool, size_t size, size_t alignment)
+                : _pool(pool), _size(size),
+                  _ptr(pool->acquire(size, alignment)) {}
 
-                MemoryPool* _pool = NULL;
+                MemoryPool* _pool = nullptr;
                 size_t _size = 0;
-                T* _ptr = NULL;
+                void* _ptr = nullptr;
         };
 
         MemoryPool(size_t min_alignment=1) : _align(min_alignment) {};
@@ -83,9 +81,10 @@ class MemoryPool
         MemoryPool& operator=(const MemoryPool&) = delete;
 
         template <typename T>
-        Block<T> allocate(size_t num, size_t alignment=1)
+        Block allocate(size_t num, size_t alignment=1)
         {
-            return Block<T>(this, num, alignment);
+            return Block(this, num*sizeof(T),
+                         std::max(alignment, std::alignment_of<T>::value));
         }
 
         void flush()

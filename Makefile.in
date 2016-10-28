@@ -14,7 +14,6 @@
 
 @SET_MAKE@
 
-
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
     false; \
@@ -88,12 +87,33 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = bin/test$(EXEEXT) $(am__EXEEXT_1)
-@ENABLE_BLAS_TRUE@am__append_1 = bin/bench
+
+#
+# AMD architectures
+#
+@ENABLE_BULLDOZER_TRUE@am__append_1 = lib/libbulldozer.la
+@ENABLE_BULLDOZER_TRUE@am__append_2 = lib/libbulldozer.la
+@ENABLE_PILEDRIVER_TRUE@am__append_3 = lib/libpiledriver.la
+@ENABLE_PILEDRIVER_TRUE@am__append_4 = lib/libpiledriver.la
+@ENABLE_EXCAVATOR_TRUE@am__append_5 = lib/libexcavator.la
+@ENABLE_EXCAVATOR_TRUE@am__append_6 = lib/libexcavator.la
+
+#
+# Intel architectures
+#
+@ENABLE_CORE2_TRUE@am__append_7 = lib/libcore2.la
+@ENABLE_CORE2_TRUE@am__append_8 = lib/libcore2.la
+@ENABLE_SANDYBRIDGE_TRUE@am__append_9 = lib/libsandybridge.la
+@ENABLE_SANDYBRIDGE_TRUE@am__append_10 = lib/libsandybridge.la
+@ENABLE_HASWELL_TRUE@am__append_11 = lib/libhaswell.la
+@ENABLE_HASWELL_TRUE@am__append_12 = lib/libhaswell.la
+@ENABLE_KNL_TRUE@am__append_13 = lib/libknl.la
+@ENABLE_KNL_TRUE@am__append_14 = lib/libknl.la
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_blas.m4 \
 	$(top_srcdir)/m4/ax_check_define.m4 \
+	$(top_srcdir)/m4/ax_check_sign.m4 \
 	$(top_srcdir)/m4/ax_cxx_compile_stdcxx_11.m4 \
 	$(top_srcdir)/m4/ax_prefix_config_h.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
@@ -109,7 +129,8 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES = src/configs/foreach_type.h \
 	src/configs/foreach_config.h \
-	src/configs/foreach_config_and_type.h src/configs/configs.hpp
+	src/configs/foreach_config_and_type.h \
+	src/configs/include_configs.hpp
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -138,48 +159,132 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)"
+am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES) $(noinst_LTLIBRARIES)
-lib_libtblis_la_DEPENDENCIES =
+lib_libbulldozer_la_LIBADD =
+am__lib_libbulldozer_la_SOURCES_DIST =  \
+	src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c \
+	src/configs/bulldozer/config.cxx
 am__dirstamp = $(am__leading_dot)dirstamp
-am_lib_libtblis_la_OBJECTS = src/1m/tblis_normfm.lo \
-	src/1v/tblis_addv.lo src/1v/tblis_asumv.lo \
-	src/1v/tblis_axpbyv.lo src/1v/tblis_axpyv.lo \
-	src/1v/tblis_copyv.lo src/1v/tblis_dotv.lo \
-	src/1v/tblis_normfv.lo src/1v/tblis_scal2v.lo \
-	src/1v/tblis_scalv.lo src/1v/tblis_setv.lo \
-	src/1v/tblis_sumv.lo src/1v/tblis_xpbyv.lo \
-	src/1v/tblis_zerov.lo src/3/tblis_gemm.lo \
-	src/impl/blas/tensor_contract.lo src/impl/blas/tensor_mult.lo \
-	src/impl/blas/tensor_outer_prod.lo \
-	src/impl/blas/tensor_weight.lo \
-	src/impl/blis/tensor_contract.lo \
-	src/impl/reference/tensor_contract.lo \
-	src/impl/reference/tensor_dot.lo \
-	src/impl/reference/tensor_mult.lo \
-	src/impl/reference/tensor_outer_prod.lo \
-	src/impl/reference/tensor_reduce.lo \
-	src/impl/reference/tensor_replicate.lo \
-	src/impl/reference/tensor_scale.lo \
-	src/impl/reference/tensor_sum.lo \
-	src/impl/reference/tensor_trace.lo \
-	src/impl/reference/tensor_transpose.lo \
-	src/impl/reference/tensor_weight.lo src/impl/tensor_impl.lo \
-	src/tblis_matrify.lo src/tblis_mutex.lo
-lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
+@ENABLE_BULLDOZER_TRUE@am_lib_libbulldozer_la_OBJECTS = src/configs/bulldozer/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.lo \
+@ENABLE_BULLDOZER_TRUE@	src/configs/bulldozer/lib_libbulldozer_la-config.lo
+lib_libbulldozer_la_OBJECTS = $(am_lib_libbulldozer_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-@ENABLE_BLAS_TRUE@am__EXEEXT_1 = bin/bench$(EXEEXT)
-PROGRAMS = $(bin_PROGRAMS)
-am_bin_bench_OBJECTS = test/bench.$(OBJEXT)
-bin_bench_OBJECTS = $(am_bin_bench_OBJECTS)
-am__DEPENDENCIES_1 =
-bin_bench_DEPENDENCIES = lib/libtblis.la $(am__DEPENDENCIES_1)
-am_bin_test_OBJECTS = test/test.$(OBJEXT)
-bin_test_OBJECTS = $(am_bin_test_OBJECTS)
-bin_test_DEPENDENCIES = lib/libtblis.la
+lib_libbulldozer_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(lib_libbulldozer_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
+@ENABLE_BULLDOZER_TRUE@am_lib_libbulldozer_la_rpath =
+lib_libcore2_la_LIBADD =
+am__lib_libcore2_la_SOURCES_DIST =  \
+	src/configs/core2/bli_gemm_asm_d4x4.c \
+	src/configs/core2/config.cxx
+@ENABLE_CORE2_TRUE@am_lib_libcore2_la_OBJECTS = src/configs/core2/lib_libcore2_la-bli_gemm_asm_d4x4.lo \
+@ENABLE_CORE2_TRUE@	src/configs/core2/lib_libcore2_la-config.lo
+lib_libcore2_la_OBJECTS = $(am_lib_libcore2_la_OBJECTS)
+lib_libcore2_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(lib_libcore2_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
+@ENABLE_CORE2_TRUE@am_lib_libcore2_la_rpath =
+lib_libexcavator_la_LIBADD =
+am__lib_libexcavator_la_SOURCES_DIST =  \
+	src/configs/excavator/bli_gemm_asm_d8x3.c \
+	src/configs/excavator/config.cxx
+@ENABLE_EXCAVATOR_TRUE@@ENABLE_PILEDRIVER_FALSE@am_lib_libexcavator_la_OBJECTS = src/configs/excavator/lib_libexcavator_la-bli_gemm_asm_d8x3.lo \
+@ENABLE_EXCAVATOR_TRUE@@ENABLE_PILEDRIVER_FALSE@	src/configs/excavator/lib_libexcavator_la-config.lo
+@ENABLE_EXCAVATOR_TRUE@@ENABLE_PILEDRIVER_TRUE@am_lib_libexcavator_la_OBJECTS = src/configs/excavator/lib_libexcavator_la-config.lo
+lib_libexcavator_la_OBJECTS = $(am_lib_libexcavator_la_OBJECTS)
+lib_libexcavator_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(lib_libexcavator_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
+@ENABLE_EXCAVATOR_TRUE@am_lib_libexcavator_la_rpath =
+lib_libhaswell_la_LIBADD =
+am__lib_libhaswell_la_SOURCES_DIST =  \
+	src/configs/haswell/bli_gemm_asm_d12x4.c \
+	src/configs/haswell/bli_gemm_asm_d8x6.c \
+	src/configs/haswell/bli_gemm_asm_d6x8.c \
+	src/configs/haswell/bli_gemm_asm_d4x12.c \
+	src/configs/haswell/config.cxx
+@ENABLE_HASWELL_TRUE@am_lib_libhaswell_la_OBJECTS = src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d12x4.lo \
+@ENABLE_HASWELL_TRUE@	src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d8x6.lo \
+@ENABLE_HASWELL_TRUE@	src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d6x8.lo \
+@ENABLE_HASWELL_TRUE@	src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d4x12.lo \
+@ENABLE_HASWELL_TRUE@	src/configs/haswell/lib_libhaswell_la-config.lo
+lib_libhaswell_la_OBJECTS = $(am_lib_libhaswell_la_OBJECTS)
+lib_libhaswell_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(lib_libhaswell_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
+@ENABLE_HASWELL_TRUE@am_lib_libhaswell_la_rpath =
+lib_libknl_la_LIBADD =
+am__lib_libknl_la_SOURCES_DIST = src/configs/knl/bli_packm_opt_24x8.c \
+	src/configs/knl/bli_dgemm_opt_12x16.c \
+	src/configs/knl/bli_dgemm_opt_24x8.c \
+	src/configs/knl/bli_dgemm_opt_30x8.c \
+	src/configs/knl/bli_dgemm_opt_8x24.c \
+	src/configs/knl/bli_dgemm_opt_30x8_knc.c \
+	src/configs/knl/bli_sgemm_opt_30x16_knc.c \
+	src/configs/knl/config.cxx
+@ENABLE_KNL_TRUE@am_lib_libknl_la_OBJECTS = src/configs/knl/lib_libknl_la-bli_packm_opt_24x8.lo \
+@ENABLE_KNL_TRUE@	src/configs/knl/lib_libknl_la-bli_dgemm_opt_12x16.lo \
+@ENABLE_KNL_TRUE@	src/configs/knl/lib_libknl_la-bli_dgemm_opt_24x8.lo \
+@ENABLE_KNL_TRUE@	src/configs/knl/lib_libknl_la-bli_dgemm_opt_30x8.lo \
+@ENABLE_KNL_TRUE@	src/configs/knl/lib_libknl_la-bli_dgemm_opt_8x24.lo \
+@ENABLE_KNL_TRUE@	src/configs/knl/lib_libknl_la-bli_dgemm_opt_30x8_knc.lo \
+@ENABLE_KNL_TRUE@	src/configs/knl/lib_libknl_la-bli_sgemm_opt_30x16_knc.lo \
+@ENABLE_KNL_TRUE@	src/configs/knl/lib_libknl_la-config.lo
+lib_libknl_la_OBJECTS = $(am_lib_libknl_la_OBJECTS)
+lib_libknl_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(lib_libknl_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
+	-o $@
+@ENABLE_KNL_TRUE@am_lib_libknl_la_rpath =
+lib_libpiledriver_la_LIBADD =
+am__lib_libpiledriver_la_SOURCES_DIST =  \
+	src/configs/piledriver/bli_gemm_asm_d8x3.c \
+	src/configs/piledriver/config.cxx
+@ENABLE_PILEDRIVER_TRUE@am_lib_libpiledriver_la_OBJECTS = src/configs/piledriver/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo \
+@ENABLE_PILEDRIVER_TRUE@	src/configs/piledriver/lib_libpiledriver_la-config.lo
+lib_libpiledriver_la_OBJECTS = $(am_lib_libpiledriver_la_OBJECTS)
+lib_libpiledriver_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(lib_libpiledriver_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
+@ENABLE_PILEDRIVER_TRUE@am_lib_libpiledriver_la_rpath =
+lib_libreference_la_LIBADD =
+am_lib_libreference_la_OBJECTS =  \
+	src/configs/reference/lib_libreference_la-config.lo
+lib_libreference_la_OBJECTS = $(am_lib_libreference_la_OBJECTS)
+lib_libreference_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(lib_libreference_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
+lib_libsandybridge_la_LIBADD =
+am__lib_libsandybridge_la_SOURCES_DIST =  \
+	src/configs/sandybridge/bli_gemm_asm_d8x4.c \
+	src/configs/sandybridge/config.cxx
+@ENABLE_SANDYBRIDGE_TRUE@am_lib_libsandybridge_la_OBJECTS = src/configs/sandybridge/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo \
+@ENABLE_SANDYBRIDGE_TRUE@	src/configs/sandybridge/lib_libsandybridge_la-config.lo
+lib_libsandybridge_la_OBJECTS = $(am_lib_libsandybridge_la_OBJECTS)
+lib_libsandybridge_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(lib_libsandybridge_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
+@ENABLE_SANDYBRIDGE_TRUE@am_lib_libsandybridge_la_rpath =
+lib_libtblis_la_DEPENDENCIES = external/tci/lib/libtci.la \
+	lib/libreference.la $(am__append_2) $(am__append_4) \
+	$(am__append_6) $(am__append_8) $(am__append_10) \
+	$(am__append_12) $(am__append_14)
+am_lib_libtblis_la_OBJECTS = src/1v/add.lo src/1v/dot.lo \
+	src/1v/reduce.lo src/1v/scale.lo src/1v/set.lo \
+	src/1m/reduce.lo src/3m/mult.lo src/configs/configs.lo \
+	src/util/cpuid.lo src/util/random.lo src/util/thread.lo
+lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -196,6 +301,24 @@ DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
+AM_V_CC = $(am__v_CC_@AM_V@)
+am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
+am__v_CC_0 = @echo "  CC      " $@;
+am__v_CC_1 = 
+CCLD = $(CC)
+LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CCLD = $(am__v_CCLD_@AM_V@)
+am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
+am__v_CCLD_0 = @echo "  CCLD    " $@;
+am__v_CCLD_1 = 
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 LTCXXCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
@@ -214,15 +337,41 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(lib_libtblis_la_SOURCES) $(bin_bench_SOURCES) \
-	$(bin_test_SOURCES)
-DIST_SOURCES = $(lib_libtblis_la_SOURCES) $(bin_bench_SOURCES) \
-	$(bin_test_SOURCES)
+SOURCES = $(lib_libbulldozer_la_SOURCES) $(lib_libcore2_la_SOURCES) \
+	$(lib_libexcavator_la_SOURCES) $(lib_libhaswell_la_SOURCES) \
+	$(lib_libknl_la_SOURCES) $(lib_libpiledriver_la_SOURCES) \
+	$(lib_libreference_la_SOURCES) \
+	$(lib_libsandybridge_la_SOURCES) $(lib_libtblis_la_SOURCES)
+DIST_SOURCES = $(am__lib_libbulldozer_la_SOURCES_DIST) \
+	$(am__lib_libcore2_la_SOURCES_DIST) \
+	$(am__lib_libexcavator_la_SOURCES_DIST) \
+	$(am__lib_libhaswell_la_SOURCES_DIST) \
+	$(am__lib_libknl_la_SOURCES_DIST) \
+	$(am__lib_libpiledriver_la_SOURCES_DIST) \
+	$(lib_libreference_la_SOURCES) \
+	$(am__lib_libsandybridge_la_SOURCES_DIST) \
+	$(lib_libtblis_la_SOURCES)
+RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
+	ctags-recursive dvi-recursive html-recursive info-recursive \
+	install-data-recursive install-dvi-recursive \
+	install-exec-recursive install-html-recursive \
+	install-info-recursive install-pdf-recursive \
+	install-ps-recursive install-recursive installcheck-recursive \
+	installdirs-recursive pdf-recursive ps-recursive \
+	tags-recursive uninstall-recursive
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
+RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
+  distclean-recursive maintainer-clean-recursive
+am__recursive_targets = \
+  $(RECURSIVE_TARGETS) \
+  $(RECURSIVE_CLEAN_TARGETS) \
+  $(am__extra_recursive_targets)
+AM_RECURSIVE_TARGETS = $(am__recursive_targets:-recursive=) TAGS CTAGS \
+	cscope distdir dist dist-all distcheck
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) \
 	$(LISP)config.h.in
 # Read a list of newline-separated strings from the standard input,
@@ -244,13 +393,14 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
-AM_RECURSIVE_TARGETS = cscope
+DIST_SUBDIRS = $(SUBDIRS)
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
-	$(top_srcdir)/src/configs/configs.hpp.in \
 	$(top_srcdir)/src/configs/foreach_config.h.in \
 	$(top_srcdir)/src/configs/foreach_config_and_type.h.in \
-	$(top_srcdir)/src/configs/foreach_type.h.in ar-lib compile \
-	config.guess config.sub depcomp install-sh ltmain.sh missing
+	$(top_srcdir)/src/configs/foreach_type.h.in \
+	$(top_srcdir)/src/configs/include_configs.hpp.in ar-lib \
+	compile config.guess config.sub depcomp install-sh ltmain.sh \
+	missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -261,6 +411,31 @@ am__remove_distdir = \
       || { sleep 5 && rm -rf "$(distdir)"; }; \
   else :; fi
 am__post_remove_distdir = $(am__remove_distdir)
+am__relativize = \
+  dir0=`pwd`; \
+  sed_first='s,^\([^/]*\)/.*$$,\1,'; \
+  sed_rest='s,^[^/]*/*,,'; \
+  sed_last='s,^.*/\([^/]*\)$$,\1,'; \
+  sed_butlast='s,/*[^/]*$$,,'; \
+  while test -n "$$dir1"; do \
+    first=`echo "$$dir1" | sed -e "$$sed_first"`; \
+    if test "$$first" != "."; then \
+      if test "$$first" = ".."; then \
+        dir2=`echo "$$dir0" | sed -e "$$sed_last"`/"$$dir2"; \
+        dir0=`echo "$$dir0" | sed -e "$$sed_butlast"`; \
+      else \
+        first2=`echo "$$dir2" | sed -e "$$sed_first"`; \
+        if test "$$first2" = "$$first"; then \
+          dir2=`echo "$$dir2" | sed -e "$$sed_rest"`; \
+        else \
+          dir2="../$$dir2"; \
+        fi; \
+        dir0="$$dir0"/"$$first"; \
+      fi; \
+    fi; \
+    dir1=`echo "$$dir1" | sed -e "$$sed_rest"`; \
+  done; \
+  reldir="$$dir2"
 DIST_ARCHIVES = $(distdir).tar.gz
 GZIP_ENV = --best
 DIST_TARGETS = dist-gzip
@@ -268,6 +443,87 @@ distuninstallcheck_listfiles = find . -type f -print
 am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
   | sed 's|^\./|$(prefix)/|' | grep -v '$(infodir)/dir$$'
 distcleancheck_listfiles = find . -type f -print
+
+#if ENABLE_MIC
+#noinst_LTLIBRARIES += lib/libmic.la
+#lib_libtblis_la_LIBADD += lib/libmic.la
+#lib_libmic_la_SOURCES = src/external/blis/config/mic/kernels/3/bli_dgemm_opt_30x8.c \
+#					    src/external/blis/config/mic/kernels/3/bli_sgemm_opt_30x16.c
+#lib_libmic_la_CFLAGS = -Isrc/external/blis/config/mic -fasm-blocks
+#endif
+
+#
+# ARM architectures
+# 
+
+#if ENABLE_ARMV7A
+#noinst_LTLIBRARIES += lib/libarmv7a.la
+#lib_libtblis_la_LIBADD += lib/libarmv7a.la
+#lib_libarmv7a_la_SOURCES = src/external/blis/config/armv7a/kernels/3/bli_cgemm_kernel_2x2.S \
+#                           src/external/blis/config/armv7a/kernels/3/bli_dgemm_kernel_4x4.S \
+#                           src/external/blis/config/armv7a/kernels/3/bli_sgemm_kernel_4x4.S \
+#                           src/external/blis/config/armv7a/kernels/3/bli_zgemm_kernel_2x2.S \
+#                           src/external/blis/config/armv7a/kernels/3/bli_gemm_opt_4x4.c
+#lib_libarmv7a_la_CCASFLAGS = -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
+#lib_libarmv7a_la_CFLAGS = -Isrc/external/blis/config/armv7a -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
+#endif
+#
+#if ENABLE_ARMV8A
+#noinst_LTLIBRARIES += lib/libarmv8a.la
+#lib_libtblis_la_LIBADD += lib/libarmv8a.la
+#lib_libarmv8a_la_SOURCES = src/external/blis/config/armv8a/kernels/3/bli_gemm_opt_4x4.c
+#lib_libarmv8a_la_CFLAGS = -Isrc/external/blis/config/armv8a -march=armv8-a+fp+simd -mcpu=cortex-a57.cortex-a53
+#endif
+#
+#if ENABLE_CORTEX_A15
+#noinst_LTLIBRARIES += lib/libcortex-a15.la
+#lib_libtblis_la_LIBADD += lib/libcortex-a15.la
+#lib_libcortex_a15_la_SOURCES = src/external/blis/config/cortex-a15/kernels/3/bli_gemm_opt_4x4.c
+#lib_libcortex_a15_la_CFLAGS = -Isrc/external/blis/config/cortex-a15 -mfloat-abi=hard -mfpu=neon -march=armv7-a
+#endif
+#
+#if ENABLE_CORTEX_A9
+#noinst_LTLIBRARIES += lib/libcortex-a9.la
+#lib_libtblis_la_LIBADD += lib/libcortex-a9.la
+#lib_libcortex_a9_la_SOURCES = src/external/blis/config/cortex-a9/kernels/3/bli_gemm_opt_4x4.c
+#lib_libcortex_a9_la_CFLAGS = -Isrc/external/blis/config/cortex-a9 -mfloat-abi=hard -mfpu=neon -march=armv7-a
+#endif
+
+#
+# IBM architectures
+#
+
+#if ENABLE_POWER7
+#noinst_LTLIBRARIES += lib/libpower7.la
+#lib_libtblis_la_LIBADD += lib/libpower7.la
+#lib_libpower7_la_SOURCES = src/external/blis/config/power7/kernels/3/bli_gemm_opt_8x4.c
+#lib_libpower7_la_CFLAGS = -Isrc/external/blis/config/power7 -mcpu=power7 -mtune=power7 -mvsx
+#endif
+#
+#if ENABLE_BGQ
+#noinst_LTLIBRARIES += lib/libbgq.la
+#lib_libtblis_la_LIBADD += lib/libbgq.la
+#lib_libbgq_la_SOURCES = src/external/blis/config/bgq/kernels/3/bli_gemm_int_8x8.c
+#lib_libbgq_la_CFLAGS = -Isrc/external/blis/config/bgq -qasm=gcc -qkeyword=asm -qprefetch -qunroll=yes
+#endif
+
+#
+# MIPS architectures
+#
+
+#if ENABLE_LOONGSON3A
+#noinst_LTLIBRARIES += lib/libloongson3a.la
+#lib_libtblis_la_LIBADD += lib/libloongson3a.la
+#lib_libloongson3a_la_SOURCES = src/external/blis/config/loongson3a/kernels/3/bli_gemm_opt_d4x4.c
+#lib_libloongson3a_la_CFLAGS = -Isrc/external/blis/config/loongson3a -march=loongson3a -mtune=loongson3a
+#endif
+
+#bin_PROGRAMS = bin/test
+#if ENABLE_BLAS
+#bin_PROGRAMS += bin/bench
+#endif
+#bin_test_SOURCES = test/test.cxx
+#bin_bench_SOURCES = test/bench.cxx
 VPATH = @srcdir@ $(srcdir)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
@@ -318,6 +574,7 @@ LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
+LSCPU = @LSCPU@
 LTLIBOBJS = @LTLIBOBJS@
 LT_SYS_LIBRARY_PATH = @LT_SYS_LIBRARY_PATH@
 MAINT = @MAINT@
@@ -401,62 +658,99 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = lib/libtblis.la
 lib_libtblis_la_SOURCES = \
-    src/1m/tblis_normfm.cxx \
+	\
+    src/1v/add.cxx \
+    src/1v/dot.cxx \
+    src/1v/reduce.cxx \
+    src/1v/scale.cxx \
+    src/1v/set.cxx \
     \
-    src/1v/tblis_addv.cxx \
-    src/1v/tblis_asumv.cxx \
-    src/1v/tblis_axpbyv.cxx \
-    src/1v/tblis_axpyv.cxx \
-    src/1v/tblis_copyv.cxx \
-    src/1v/tblis_dotv.cxx \
-    src/1v/tblis_normfv.cxx \
-    src/1v/tblis_scal2v.cxx \
-    src/1v/tblis_scalv.cxx \
-    src/1v/tblis_setv.cxx \
-    src/1v/tblis_sumv.cxx \
-    src/1v/tblis_xpbyv.cxx \
-    src/1v/tblis_zerov.cxx \
+    src/1m/reduce.cxx \
     \
-    src/3/tblis_gemm.cxx \
-	\
-	src/impl/blas/tensor_contract.cxx \
-	src/impl/blas/tensor_mult.cxx \
-	src/impl/blas/tensor_outer_prod.cxx \
-	src/impl/blas/tensor_weight.cxx \
-	\
-	src/impl/blis/tensor_contract.cxx \
-	\
-	src/impl/reference/tensor_contract.cxx \
-	src/impl/reference/tensor_dot.cxx \
-	src/impl/reference/tensor_mult.cxx \
-	src/impl/reference/tensor_outer_prod.cxx \
-	src/impl/reference/tensor_reduce.cxx \
-	src/impl/reference/tensor_replicate.cxx \
-	src/impl/reference/tensor_scale.cxx \
-	src/impl/reference/tensor_sum.cxx \
-	src/impl/reference/tensor_trace.cxx \
-	src/impl/reference/tensor_transpose.cxx \
-	src/impl/reference/tensor_weight.cxx \
-	\
-	src/impl/tensor_impl.cxx \
-	\
-	src/tblis_matrify.cxx \
-	src/tblis_mutex.cxx
+    src/3m/mult.cxx \
+    \
+    src/configs/configs.cxx \
+    \
+    src/util/cpuid.cxx \
+    src/util/random.cxx \
+    src/util/thread.cxx
 
-noinst_LTLIBRARIES = 
-lib_libtblis_la_LIBADD = 
-bin_test_SOURCES = test/test.cxx
-bin_bench_SOURCES = test/bench.cxx
+noinst_LTLIBRARIES = lib/libreference.la $(am__append_1) \
+	$(am__append_3) $(am__append_5) $(am__append_7) \
+	$(am__append_9) $(am__append_11) $(am__append_13)
+lib_libtblis_la_LIBADD = external/tci/lib/libtci.la \
+	lib/libreference.la $(am__append_2) $(am__append_4) \
+	$(am__append_6) $(am__append_8) $(am__append_10) \
+	$(am__append_12) $(am__append_14)
+lib_libreference_la_SOURCES = src/configs/reference/config.cxx
+lib_libreference_la_CFLAGS = -Ofast
+lib_libreference_la_CXXFLAGS = -Ofast
+@ENABLE_BULLDOZER_TRUE@lib_libbulldozer_la_SOURCES = src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c \
+@ENABLE_BULLDOZER_TRUE@					         src/configs/bulldozer/config.cxx
+
+@ENABLE_BULLDOZER_TRUE@lib_libbulldozer_la_CFLAGS = -Ofast -mavx -mfma4 -march=bdver1 -mfpmath=sse
+@ENABLE_BULLDOZER_TRUE@lib_libbulldozer_la_CXXFLAGS = -Ofast -mavx -mfma4 -march=bdver1 -mfpmath=sse
+@ENABLE_PILEDRIVER_TRUE@lib_libpiledriver_la_SOURCES = src/configs/piledriver/bli_gemm_asm_d8x3.c \
+@ENABLE_PILEDRIVER_TRUE@					           src/configs/piledriver/config.cxx
+
+@ENABLE_PILEDRIVER_TRUE@lib_libpiledriver_la_CFLAGS = -Ofast -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse
+@ENABLE_PILEDRIVER_TRUE@lib_libpiledriver_la_CXXFLAGS = -Ofast -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse
+@ENABLE_EXCAVATOR_TRUE@@ENABLE_PILEDRIVER_FALSE@lib_libexcavator_la_SOURCES = src/configs/excavator/bli_gemm_asm_d8x3.c \
+@ENABLE_EXCAVATOR_TRUE@@ENABLE_PILEDRIVER_FALSE@					          src/configs/excavator/config.cxx
+
+@ENABLE_EXCAVATOR_TRUE@@ENABLE_PILEDRIVER_TRUE@lib_libexcavator_la_SOURCES = src/configs/excavator/config.cxx
+@ENABLE_EXCAVATOR_TRUE@lib_libexcavator_la_CFLAGS = -Ofast -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
+@ENABLE_EXCAVATOR_TRUE@lib_libexcavator_la_CXXFLAGS = -Ofast -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
+@ENABLE_CORE2_TRUE@lib_libcore2_la_SOURCES = src/configs/core2/bli_gemm_asm_d4x4.c \
+@ENABLE_CORE2_TRUE@					     src/configs/core2/config.cxx
+
+@ENABLE_CORE2_TRUE@@ENABLE_INTEL_COMPILER_FALSE@lib_libcore2_la_CFLAGS = -Ofast -msse3 -mssse3 -march=core2 -mfpmath=sse
+@ENABLE_CORE2_TRUE@@ENABLE_INTEL_COMPILER_TRUE@lib_libcore2_la_CFLAGS = -O3 -xSSSE3
+@ENABLE_CORE2_TRUE@@ENABLE_INTEL_COMPILER_FALSE@lib_libcore2_la_CXXFLAGS = -Ofast -msse3 -mssse3 -march=core2 -mfpmath=sse
+@ENABLE_CORE2_TRUE@@ENABLE_INTEL_COMPILER_TRUE@lib_libcore2_la_CXXFLAGS = -O3 -xSSSE3
+@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_SOURCES = src/configs/sandybridge/bli_gemm_asm_d8x4.c \
+@ENABLE_SANDYBRIDGE_TRUE@					           src/configs/sandybridge/config.cxx
+
+@ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_CFLAGS = -Ofast -mavx -march=corei7-avx -mfpmath=sse
+@ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_CFLAGS = -O3 -xAVX
+@ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_CXXFLAGS = -Ofast -mavx -march=corei7-avx -mfpmath=sse
+@ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_CXXFLAGS = -O3 -xAVX
+@ENABLE_HASWELL_TRUE@lib_libhaswell_la_SOURCES = src/configs/haswell/bli_gemm_asm_d12x4.c \
+@ENABLE_HASWELL_TRUE@						   src/configs/haswell/bli_gemm_asm_d8x6.c \
+@ENABLE_HASWELL_TRUE@						   src/configs/haswell/bli_gemm_asm_d6x8.c \
+@ENABLE_HASWELL_TRUE@						   src/configs/haswell/bli_gemm_asm_d4x12.c \
+@ENABLE_HASWELL_TRUE@					       src/configs/haswell/config.cxx
+
+@ENABLE_HASWELL_TRUE@@ENABLE_INTEL_COMPILER_FALSE@lib_libhaswell_la_CFLAGS = -Ofast -mavx -mavx2 -mfma -march=core-avx2 -mfpmath=sse
+@ENABLE_HASWELL_TRUE@@ENABLE_INTEL_COMPILER_TRUE@lib_libhaswell_la_CFLAGS = -O3 -xCORE-AVX2
+@ENABLE_HASWELL_TRUE@@ENABLE_INTEL_COMPILER_FALSE@lib_libhaswell_la_CXXFLAGS = -Ofast -mavx -mavx2 -mfma -march=core-avx2 -mfpmath=sse
+@ENABLE_HASWELL_TRUE@@ENABLE_INTEL_COMPILER_TRUE@lib_libhaswell_la_CXXFLAGS = -O3 -xCORE-AVX2
+@ENABLE_KNL_TRUE@lib_libknl_la_SOURCES = src/configs/knl/bli_packm_opt_24x8.c \
+@ENABLE_KNL_TRUE@					   src/configs/knl/bli_dgemm_opt_12x16.c \
+@ENABLE_KNL_TRUE@					   src/configs/knl/bli_dgemm_opt_24x8.c \
+@ENABLE_KNL_TRUE@					   src/configs/knl/bli_dgemm_opt_30x8.c \
+@ENABLE_KNL_TRUE@					   src/configs/knl/bli_dgemm_opt_8x24.c \
+@ENABLE_KNL_TRUE@					   src/configs/knl/bli_dgemm_opt_30x8_knc.c \
+@ENABLE_KNL_TRUE@					   src/configs/knl/bli_sgemm_opt_30x16_knc.c \
+@ENABLE_KNL_TRUE@					   src/configs/knl/config.cxx
+
+@ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_FALSE@lib_libknl_la_CFLAGS = -Ofast -mavx512f -mavx512pf -march=knl -mfpmath=sse
+@ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_TRUE@lib_libknl_la_CFLAGS = -Ofast -mavx512f -mavx512pf -march=knl -mfpmath=sse -Wa,-march=knl
+@ENABLE_INTEL_COMPILER_TRUE@@ENABLE_KNL_TRUE@lib_libknl_la_CFLAGS = -O3 -xMIC-AVX512
+@ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_FALSE@lib_libknl_la_CXXFLAGS = -Ofast -mavx512f -mavx512pf -march=knl -mfpmath=sse
+@ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_TRUE@lib_libknl_la_CXXFLAGS = -Ofast -mavx512f -mavx512pf -march=knl -mfpmath=sse -Wa,-march=knl
+@ENABLE_INTEL_COMPILER_TRUE@@ENABLE_KNL_TRUE@lib_libknl_la_CXXFLAGS = -O3 -xMIC-AVX512
+SUBDIRS = external/tci
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc
+AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Iexternal/tci/src
 AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la
 bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 all: config.h
-	$(MAKE) $(AM_MAKEFLAGS) all-am
+	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
 .SUFFIXES:
-.SUFFIXES: .cxx .lo .o .obj
+.SUFFIXES: .c .cxx .lo .o .obj
 am--refresh: Makefile
 	@:
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
@@ -511,7 +805,7 @@ src/configs/foreach_config.h: $(top_builddir)/config.status $(top_srcdir)/src/co
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 src/configs/foreach_config_and_type.h: $(top_builddir)/config.status $(top_srcdir)/src/configs/foreach_config_and_type.h.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
-src/configs/configs.hpp: $(top_builddir)/config.status $(top_srcdir)/src/configs/configs.hpp.in
+src/configs/include_configs.hpp: $(top_builddir)/config.status $(top_srcdir)/src/configs/include_configs.hpp.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 
 install-libLTLIBRARIES: $(lib_LTLIBRARIES)
@@ -559,265 +853,409 @@ clean-noinstLTLIBRARIES:
 	  echo rm -f $${locs}; \
 	  rm -f $${locs}; \
 	}
-src/1m/$(am__dirstamp):
-	@$(MKDIR_P) src/1m
-	@: > src/1m/$(am__dirstamp)
-src/1m/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/1m/$(DEPDIR)
-	@: > src/1m/$(DEPDIR)/$(am__dirstamp)
-src/1m/tblis_normfm.lo: src/1m/$(am__dirstamp) \
-	src/1m/$(DEPDIR)/$(am__dirstamp)
+src/configs/bulldozer/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/bulldozer
+	@: > src/configs/bulldozer/$(am__dirstamp)
+src/configs/bulldozer/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/bulldozer/$(DEPDIR)
+	@: > src/configs/bulldozer/$(DEPDIR)/$(am__dirstamp)
+src/configs/bulldozer/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.lo:  \
+	src/configs/bulldozer/$(am__dirstamp) \
+	src/configs/bulldozer/$(DEPDIR)/$(am__dirstamp)
+src/configs/bulldozer/lib_libbulldozer_la-config.lo:  \
+	src/configs/bulldozer/$(am__dirstamp) \
+	src/configs/bulldozer/$(DEPDIR)/$(am__dirstamp)
+lib/$(am__dirstamp):
+	@$(MKDIR_P) lib
+	@: > lib/$(am__dirstamp)
+
+lib/libbulldozer.la: $(lib_libbulldozer_la_OBJECTS) $(lib_libbulldozer_la_DEPENDENCIES) $(EXTRA_lib_libbulldozer_la_DEPENDENCIES) lib/$(am__dirstamp)
+	$(AM_V_CXXLD)$(lib_libbulldozer_la_LINK) $(am_lib_libbulldozer_la_rpath) $(lib_libbulldozer_la_OBJECTS) $(lib_libbulldozer_la_LIBADD) $(LIBS)
+src/configs/core2/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/core2
+	@: > src/configs/core2/$(am__dirstamp)
+src/configs/core2/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/core2/$(DEPDIR)
+	@: > src/configs/core2/$(DEPDIR)/$(am__dirstamp)
+src/configs/core2/lib_libcore2_la-bli_gemm_asm_d4x4.lo:  \
+	src/configs/core2/$(am__dirstamp) \
+	src/configs/core2/$(DEPDIR)/$(am__dirstamp)
+src/configs/core2/lib_libcore2_la-config.lo:  \
+	src/configs/core2/$(am__dirstamp) \
+	src/configs/core2/$(DEPDIR)/$(am__dirstamp)
+
+lib/libcore2.la: $(lib_libcore2_la_OBJECTS) $(lib_libcore2_la_DEPENDENCIES) $(EXTRA_lib_libcore2_la_DEPENDENCIES) lib/$(am__dirstamp)
+	$(AM_V_CXXLD)$(lib_libcore2_la_LINK) $(am_lib_libcore2_la_rpath) $(lib_libcore2_la_OBJECTS) $(lib_libcore2_la_LIBADD) $(LIBS)
+src/configs/excavator/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/excavator
+	@: > src/configs/excavator/$(am__dirstamp)
+src/configs/excavator/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/excavator/$(DEPDIR)
+	@: > src/configs/excavator/$(DEPDIR)/$(am__dirstamp)
+src/configs/excavator/lib_libexcavator_la-bli_gemm_asm_d8x3.lo:  \
+	src/configs/excavator/$(am__dirstamp) \
+	src/configs/excavator/$(DEPDIR)/$(am__dirstamp)
+src/configs/excavator/lib_libexcavator_la-config.lo:  \
+	src/configs/excavator/$(am__dirstamp) \
+	src/configs/excavator/$(DEPDIR)/$(am__dirstamp)
+
+lib/libexcavator.la: $(lib_libexcavator_la_OBJECTS) $(lib_libexcavator_la_DEPENDENCIES) $(EXTRA_lib_libexcavator_la_DEPENDENCIES) lib/$(am__dirstamp)
+	$(AM_V_CXXLD)$(lib_libexcavator_la_LINK) $(am_lib_libexcavator_la_rpath) $(lib_libexcavator_la_OBJECTS) $(lib_libexcavator_la_LIBADD) $(LIBS)
+src/configs/haswell/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/haswell
+	@: > src/configs/haswell/$(am__dirstamp)
+src/configs/haswell/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/haswell/$(DEPDIR)
+	@: > src/configs/haswell/$(DEPDIR)/$(am__dirstamp)
+src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d12x4.lo:  \
+	src/configs/haswell/$(am__dirstamp) \
+	src/configs/haswell/$(DEPDIR)/$(am__dirstamp)
+src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d8x6.lo:  \
+	src/configs/haswell/$(am__dirstamp) \
+	src/configs/haswell/$(DEPDIR)/$(am__dirstamp)
+src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d6x8.lo:  \
+	src/configs/haswell/$(am__dirstamp) \
+	src/configs/haswell/$(DEPDIR)/$(am__dirstamp)
+src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d4x12.lo:  \
+	src/configs/haswell/$(am__dirstamp) \
+	src/configs/haswell/$(DEPDIR)/$(am__dirstamp)
+src/configs/haswell/lib_libhaswell_la-config.lo:  \
+	src/configs/haswell/$(am__dirstamp) \
+	src/configs/haswell/$(DEPDIR)/$(am__dirstamp)
+
+lib/libhaswell.la: $(lib_libhaswell_la_OBJECTS) $(lib_libhaswell_la_DEPENDENCIES) $(EXTRA_lib_libhaswell_la_DEPENDENCIES) lib/$(am__dirstamp)
+	$(AM_V_CXXLD)$(lib_libhaswell_la_LINK) $(am_lib_libhaswell_la_rpath) $(lib_libhaswell_la_OBJECTS) $(lib_libhaswell_la_LIBADD) $(LIBS)
+src/configs/knl/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/knl
+	@: > src/configs/knl/$(am__dirstamp)
+src/configs/knl/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/knl/$(DEPDIR)
+	@: > src/configs/knl/$(DEPDIR)/$(am__dirstamp)
+src/configs/knl/lib_libknl_la-bli_packm_opt_24x8.lo:  \
+	src/configs/knl/$(am__dirstamp) \
+	src/configs/knl/$(DEPDIR)/$(am__dirstamp)
+src/configs/knl/lib_libknl_la-bli_dgemm_opt_12x16.lo:  \
+	src/configs/knl/$(am__dirstamp) \
+	src/configs/knl/$(DEPDIR)/$(am__dirstamp)
+src/configs/knl/lib_libknl_la-bli_dgemm_opt_24x8.lo:  \
+	src/configs/knl/$(am__dirstamp) \
+	src/configs/knl/$(DEPDIR)/$(am__dirstamp)
+src/configs/knl/lib_libknl_la-bli_dgemm_opt_30x8.lo:  \
+	src/configs/knl/$(am__dirstamp) \
+	src/configs/knl/$(DEPDIR)/$(am__dirstamp)
+src/configs/knl/lib_libknl_la-bli_dgemm_opt_8x24.lo:  \
+	src/configs/knl/$(am__dirstamp) \
+	src/configs/knl/$(DEPDIR)/$(am__dirstamp)
+src/configs/knl/lib_libknl_la-bli_dgemm_opt_30x8_knc.lo:  \
+	src/configs/knl/$(am__dirstamp) \
+	src/configs/knl/$(DEPDIR)/$(am__dirstamp)
+src/configs/knl/lib_libknl_la-bli_sgemm_opt_30x16_knc.lo:  \
+	src/configs/knl/$(am__dirstamp) \
+	src/configs/knl/$(DEPDIR)/$(am__dirstamp)
+src/configs/knl/lib_libknl_la-config.lo:  \
+	src/configs/knl/$(am__dirstamp) \
+	src/configs/knl/$(DEPDIR)/$(am__dirstamp)
+
+lib/libknl.la: $(lib_libknl_la_OBJECTS) $(lib_libknl_la_DEPENDENCIES) $(EXTRA_lib_libknl_la_DEPENDENCIES) lib/$(am__dirstamp)
+	$(AM_V_CXXLD)$(lib_libknl_la_LINK) $(am_lib_libknl_la_rpath) $(lib_libknl_la_OBJECTS) $(lib_libknl_la_LIBADD) $(LIBS)
+src/configs/piledriver/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/piledriver
+	@: > src/configs/piledriver/$(am__dirstamp)
+src/configs/piledriver/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/piledriver/$(DEPDIR)
+	@: > src/configs/piledriver/$(DEPDIR)/$(am__dirstamp)
+src/configs/piledriver/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo:  \
+	src/configs/piledriver/$(am__dirstamp) \
+	src/configs/piledriver/$(DEPDIR)/$(am__dirstamp)
+src/configs/piledriver/lib_libpiledriver_la-config.lo:  \
+	src/configs/piledriver/$(am__dirstamp) \
+	src/configs/piledriver/$(DEPDIR)/$(am__dirstamp)
+
+lib/libpiledriver.la: $(lib_libpiledriver_la_OBJECTS) $(lib_libpiledriver_la_DEPENDENCIES) $(EXTRA_lib_libpiledriver_la_DEPENDENCIES) lib/$(am__dirstamp)
+	$(AM_V_CXXLD)$(lib_libpiledriver_la_LINK) $(am_lib_libpiledriver_la_rpath) $(lib_libpiledriver_la_OBJECTS) $(lib_libpiledriver_la_LIBADD) $(LIBS)
+src/configs/reference/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/reference
+	@: > src/configs/reference/$(am__dirstamp)
+src/configs/reference/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/reference/$(DEPDIR)
+	@: > src/configs/reference/$(DEPDIR)/$(am__dirstamp)
+src/configs/reference/lib_libreference_la-config.lo:  \
+	src/configs/reference/$(am__dirstamp) \
+	src/configs/reference/$(DEPDIR)/$(am__dirstamp)
+
+lib/libreference.la: $(lib_libreference_la_OBJECTS) $(lib_libreference_la_DEPENDENCIES) $(EXTRA_lib_libreference_la_DEPENDENCIES) lib/$(am__dirstamp)
+	$(AM_V_CXXLD)$(lib_libreference_la_LINK)  $(lib_libreference_la_OBJECTS) $(lib_libreference_la_LIBADD) $(LIBS)
+src/configs/sandybridge/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/sandybridge
+	@: > src/configs/sandybridge/$(am__dirstamp)
+src/configs/sandybridge/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/sandybridge/$(DEPDIR)
+	@: > src/configs/sandybridge/$(DEPDIR)/$(am__dirstamp)
+src/configs/sandybridge/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo:  \
+	src/configs/sandybridge/$(am__dirstamp) \
+	src/configs/sandybridge/$(DEPDIR)/$(am__dirstamp)
+src/configs/sandybridge/lib_libsandybridge_la-config.lo:  \
+	src/configs/sandybridge/$(am__dirstamp) \
+	src/configs/sandybridge/$(DEPDIR)/$(am__dirstamp)
+
+lib/libsandybridge.la: $(lib_libsandybridge_la_OBJECTS) $(lib_libsandybridge_la_DEPENDENCIES) $(EXTRA_lib_libsandybridge_la_DEPENDENCIES) lib/$(am__dirstamp)
+	$(AM_V_CXXLD)$(lib_libsandybridge_la_LINK) $(am_lib_libsandybridge_la_rpath) $(lib_libsandybridge_la_OBJECTS) $(lib_libsandybridge_la_LIBADD) $(LIBS)
 src/1v/$(am__dirstamp):
 	@$(MKDIR_P) src/1v
 	@: > src/1v/$(am__dirstamp)
 src/1v/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/1v/$(DEPDIR)
 	@: > src/1v/$(DEPDIR)/$(am__dirstamp)
-src/1v/tblis_addv.lo: src/1v/$(am__dirstamp) \
+src/1v/add.lo: src/1v/$(am__dirstamp) src/1v/$(DEPDIR)/$(am__dirstamp)
+src/1v/dot.lo: src/1v/$(am__dirstamp) src/1v/$(DEPDIR)/$(am__dirstamp)
+src/1v/reduce.lo: src/1v/$(am__dirstamp) \
 	src/1v/$(DEPDIR)/$(am__dirstamp)
-src/1v/tblis_asumv.lo: src/1v/$(am__dirstamp) \
+src/1v/scale.lo: src/1v/$(am__dirstamp) \
 	src/1v/$(DEPDIR)/$(am__dirstamp)
-src/1v/tblis_axpbyv.lo: src/1v/$(am__dirstamp) \
-	src/1v/$(DEPDIR)/$(am__dirstamp)
-src/1v/tblis_axpyv.lo: src/1v/$(am__dirstamp) \
-	src/1v/$(DEPDIR)/$(am__dirstamp)
-src/1v/tblis_copyv.lo: src/1v/$(am__dirstamp) \
-	src/1v/$(DEPDIR)/$(am__dirstamp)
-src/1v/tblis_dotv.lo: src/1v/$(am__dirstamp) \
-	src/1v/$(DEPDIR)/$(am__dirstamp)
-src/1v/tblis_normfv.lo: src/1v/$(am__dirstamp) \
-	src/1v/$(DEPDIR)/$(am__dirstamp)
-src/1v/tblis_scal2v.lo: src/1v/$(am__dirstamp) \
-	src/1v/$(DEPDIR)/$(am__dirstamp)
-src/1v/tblis_scalv.lo: src/1v/$(am__dirstamp) \
-	src/1v/$(DEPDIR)/$(am__dirstamp)
-src/1v/tblis_setv.lo: src/1v/$(am__dirstamp) \
-	src/1v/$(DEPDIR)/$(am__dirstamp)
-src/1v/tblis_sumv.lo: src/1v/$(am__dirstamp) \
-	src/1v/$(DEPDIR)/$(am__dirstamp)
-src/1v/tblis_xpbyv.lo: src/1v/$(am__dirstamp) \
-	src/1v/$(DEPDIR)/$(am__dirstamp)
-src/1v/tblis_zerov.lo: src/1v/$(am__dirstamp) \
-	src/1v/$(DEPDIR)/$(am__dirstamp)
-src/3/$(am__dirstamp):
-	@$(MKDIR_P) src/3
-	@: > src/3/$(am__dirstamp)
-src/3/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/3/$(DEPDIR)
-	@: > src/3/$(DEPDIR)/$(am__dirstamp)
-src/3/tblis_gemm.lo: src/3/$(am__dirstamp) \
-	src/3/$(DEPDIR)/$(am__dirstamp)
-src/impl/blas/$(am__dirstamp):
-	@$(MKDIR_P) src/impl/blas
-	@: > src/impl/blas/$(am__dirstamp)
-src/impl/blas/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/impl/blas/$(DEPDIR)
-	@: > src/impl/blas/$(DEPDIR)/$(am__dirstamp)
-src/impl/blas/tensor_contract.lo: src/impl/blas/$(am__dirstamp) \
-	src/impl/blas/$(DEPDIR)/$(am__dirstamp)
-src/impl/blas/tensor_mult.lo: src/impl/blas/$(am__dirstamp) \
-	src/impl/blas/$(DEPDIR)/$(am__dirstamp)
-src/impl/blas/tensor_outer_prod.lo: src/impl/blas/$(am__dirstamp) \
-	src/impl/blas/$(DEPDIR)/$(am__dirstamp)
-src/impl/blas/tensor_weight.lo: src/impl/blas/$(am__dirstamp) \
-	src/impl/blas/$(DEPDIR)/$(am__dirstamp)
-src/impl/blis/$(am__dirstamp):
-	@$(MKDIR_P) src/impl/blis
-	@: > src/impl/blis/$(am__dirstamp)
-src/impl/blis/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/impl/blis/$(DEPDIR)
-	@: > src/impl/blis/$(DEPDIR)/$(am__dirstamp)
-src/impl/blis/tensor_contract.lo: src/impl/blis/$(am__dirstamp) \
-	src/impl/blis/$(DEPDIR)/$(am__dirstamp)
-src/impl/reference/$(am__dirstamp):
-	@$(MKDIR_P) src/impl/reference
-	@: > src/impl/reference/$(am__dirstamp)
-src/impl/reference/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/impl/reference/$(DEPDIR)
-	@: > src/impl/reference/$(DEPDIR)/$(am__dirstamp)
-src/impl/reference/tensor_contract.lo:  \
-	src/impl/reference/$(am__dirstamp) \
-	src/impl/reference/$(DEPDIR)/$(am__dirstamp)
-src/impl/reference/tensor_dot.lo: src/impl/reference/$(am__dirstamp) \
-	src/impl/reference/$(DEPDIR)/$(am__dirstamp)
-src/impl/reference/tensor_mult.lo: src/impl/reference/$(am__dirstamp) \
-	src/impl/reference/$(DEPDIR)/$(am__dirstamp)
-src/impl/reference/tensor_outer_prod.lo:  \
-	src/impl/reference/$(am__dirstamp) \
-	src/impl/reference/$(DEPDIR)/$(am__dirstamp)
-src/impl/reference/tensor_reduce.lo:  \
-	src/impl/reference/$(am__dirstamp) \
-	src/impl/reference/$(DEPDIR)/$(am__dirstamp)
-src/impl/reference/tensor_replicate.lo:  \
-	src/impl/reference/$(am__dirstamp) \
-	src/impl/reference/$(DEPDIR)/$(am__dirstamp)
-src/impl/reference/tensor_scale.lo:  \
-	src/impl/reference/$(am__dirstamp) \
-	src/impl/reference/$(DEPDIR)/$(am__dirstamp)
-src/impl/reference/tensor_sum.lo: src/impl/reference/$(am__dirstamp) \
-	src/impl/reference/$(DEPDIR)/$(am__dirstamp)
-src/impl/reference/tensor_trace.lo:  \
-	src/impl/reference/$(am__dirstamp) \
-	src/impl/reference/$(DEPDIR)/$(am__dirstamp)
-src/impl/reference/tensor_transpose.lo:  \
-	src/impl/reference/$(am__dirstamp) \
-	src/impl/reference/$(DEPDIR)/$(am__dirstamp)
-src/impl/reference/tensor_weight.lo:  \
-	src/impl/reference/$(am__dirstamp) \
-	src/impl/reference/$(DEPDIR)/$(am__dirstamp)
-src/impl/$(am__dirstamp):
-	@$(MKDIR_P) src/impl
-	@: > src/impl/$(am__dirstamp)
-src/impl/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/impl/$(DEPDIR)
-	@: > src/impl/$(DEPDIR)/$(am__dirstamp)
-src/impl/tensor_impl.lo: src/impl/$(am__dirstamp) \
-	src/impl/$(DEPDIR)/$(am__dirstamp)
-src/$(am__dirstamp):
-	@$(MKDIR_P) src
-	@: > src/$(am__dirstamp)
-src/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/$(DEPDIR)
-	@: > src/$(DEPDIR)/$(am__dirstamp)
-src/tblis_matrify.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/tblis_mutex.lo: src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-lib/$(am__dirstamp):
-	@$(MKDIR_P) lib
-	@: > lib/$(am__dirstamp)
+src/1v/set.lo: src/1v/$(am__dirstamp) src/1v/$(DEPDIR)/$(am__dirstamp)
+src/1m/$(am__dirstamp):
+	@$(MKDIR_P) src/1m
+	@: > src/1m/$(am__dirstamp)
+src/1m/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/1m/$(DEPDIR)
+	@: > src/1m/$(DEPDIR)/$(am__dirstamp)
+src/1m/reduce.lo: src/1m/$(am__dirstamp) \
+	src/1m/$(DEPDIR)/$(am__dirstamp)
+src/3m/$(am__dirstamp):
+	@$(MKDIR_P) src/3m
+	@: > src/3m/$(am__dirstamp)
+src/3m/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/3m/$(DEPDIR)
+	@: > src/3m/$(DEPDIR)/$(am__dirstamp)
+src/3m/mult.lo: src/3m/$(am__dirstamp) \
+	src/3m/$(DEPDIR)/$(am__dirstamp)
+src/configs/$(am__dirstamp):
+	@$(MKDIR_P) src/configs
+	@: > src/configs/$(am__dirstamp)
+src/configs/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/$(DEPDIR)
+	@: > src/configs/$(DEPDIR)/$(am__dirstamp)
+src/configs/configs.lo: src/configs/$(am__dirstamp) \
+	src/configs/$(DEPDIR)/$(am__dirstamp)
+src/util/$(am__dirstamp):
+	@$(MKDIR_P) src/util
+	@: > src/util/$(am__dirstamp)
+src/util/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/util/$(DEPDIR)
+	@: > src/util/$(DEPDIR)/$(am__dirstamp)
+src/util/cpuid.lo: src/util/$(am__dirstamp) \
+	src/util/$(DEPDIR)/$(am__dirstamp)
+src/util/random.lo: src/util/$(am__dirstamp) \
+	src/util/$(DEPDIR)/$(am__dirstamp)
+src/util/thread.lo: src/util/$(am__dirstamp) \
+	src/util/$(DEPDIR)/$(am__dirstamp)
 
 lib/libtblis.la: $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_DEPENDENCIES) $(EXTRA_lib_libtblis_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CXXLD)$(CXXLINK) -rpath $(libdir) $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_LIBADD) $(LIBS)
-install-binPROGRAMS: $(bin_PROGRAMS)
-	@$(NORMAL_INSTALL)
-	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
-	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(bindir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(bindir)" || exit 1; \
-	fi; \
-	for p in $$list; do echo "$$p $$p"; done | \
-	sed 's/$(EXEEXT)$$//' | \
-	while read p p1; do if test -f $$p \
-	 || test -f $$p1 \
-	  ; then echo "$$p"; echo "$$p"; else :; fi; \
-	done | \
-	sed -e 'p;s,.*/,,;n;h' \
-	    -e 's|.*|.|' \
-	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
-	sed 'N;N;N;s,\n, ,g' | \
-	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
-	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
-	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
-	    else { print "f", $$3 "/" $$4, $$1; } } \
-	  END { for (d in files) print "f", d, files[d] }' | \
-	while read type dir files; do \
-	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
-	    test -z "$$files" || { \
-	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(bindir)$$dir'"; \
-	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
-	    } \
-	; done
-
-uninstall-binPROGRAMS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
-	files=`for p in $$list; do echo "$$p"; done | \
-	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
-	      -e 's/$$/$(EXEEXT)/' \
-	`; \
-	test -n "$$list" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(bindir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(bindir)" && rm -f $$files
-
-clean-binPROGRAMS:
-	@list='$(bin_PROGRAMS)'; test -n "$$list" || exit 0; \
-	echo " rm -f" $$list; \
-	rm -f $$list || exit $$?; \
-	test -n "$(EXEEXT)" || exit 0; \
-	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
-	echo " rm -f" $$list; \
-	rm -f $$list
-test/$(am__dirstamp):
-	@$(MKDIR_P) test
-	@: > test/$(am__dirstamp)
-test/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) test/$(DEPDIR)
-	@: > test/$(DEPDIR)/$(am__dirstamp)
-test/bench.$(OBJEXT): test/$(am__dirstamp) \
-	test/$(DEPDIR)/$(am__dirstamp)
-bin/$(am__dirstamp):
-	@$(MKDIR_P) bin
-	@: > bin/$(am__dirstamp)
-
-bin/bench$(EXEEXT): $(bin_bench_OBJECTS) $(bin_bench_DEPENDENCIES) $(EXTRA_bin_bench_DEPENDENCIES) bin/$(am__dirstamp)
-	@rm -f bin/bench$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(bin_bench_OBJECTS) $(bin_bench_LDADD) $(LIBS)
-test/test.$(OBJEXT): test/$(am__dirstamp) \
-	test/$(DEPDIR)/$(am__dirstamp)
-
-bin/test$(EXEEXT): $(bin_test_OBJECTS) $(bin_test_DEPENDENCIES) $(EXTRA_bin_test_DEPENDENCIES) bin/$(am__dirstamp)
-	@rm -f bin/test$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(bin_test_OBJECTS) $(bin_test_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
-	-rm -f src/*.$(OBJEXT)
-	-rm -f src/*.lo
 	-rm -f src/1m/*.$(OBJEXT)
 	-rm -f src/1m/*.lo
 	-rm -f src/1v/*.$(OBJEXT)
 	-rm -f src/1v/*.lo
-	-rm -f src/3/*.$(OBJEXT)
-	-rm -f src/3/*.lo
-	-rm -f src/impl/*.$(OBJEXT)
-	-rm -f src/impl/*.lo
-	-rm -f src/impl/blas/*.$(OBJEXT)
-	-rm -f src/impl/blas/*.lo
-	-rm -f src/impl/blis/*.$(OBJEXT)
-	-rm -f src/impl/blis/*.lo
-	-rm -f src/impl/reference/*.$(OBJEXT)
-	-rm -f src/impl/reference/*.lo
-	-rm -f test/*.$(OBJEXT)
+	-rm -f src/3m/*.$(OBJEXT)
+	-rm -f src/3m/*.lo
+	-rm -f src/configs/*.$(OBJEXT)
+	-rm -f src/configs/*.lo
+	-rm -f src/configs/bulldozer/*.$(OBJEXT)
+	-rm -f src/configs/bulldozer/*.lo
+	-rm -f src/configs/core2/*.$(OBJEXT)
+	-rm -f src/configs/core2/*.lo
+	-rm -f src/configs/excavator/*.$(OBJEXT)
+	-rm -f src/configs/excavator/*.lo
+	-rm -f src/configs/haswell/*.$(OBJEXT)
+	-rm -f src/configs/haswell/*.lo
+	-rm -f src/configs/knl/*.$(OBJEXT)
+	-rm -f src/configs/knl/*.lo
+	-rm -f src/configs/piledriver/*.$(OBJEXT)
+	-rm -f src/configs/piledriver/*.lo
+	-rm -f src/configs/reference/*.$(OBJEXT)
+	-rm -f src/configs/reference/*.lo
+	-rm -f src/configs/sandybridge/*.$(OBJEXT)
+	-rm -f src/configs/sandybridge/*.lo
+	-rm -f src/util/*.$(OBJEXT)
+	-rm -f src/util/*.lo
 
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/tblis_matrify.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/tblis_mutex.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1m/$(DEPDIR)/tblis_normfm.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/tblis_addv.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/tblis_asumv.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/tblis_axpbyv.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/tblis_axpyv.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/tblis_copyv.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/tblis_dotv.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/tblis_normfv.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/tblis_scal2v.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/tblis_scalv.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/tblis_setv.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/tblis_sumv.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/tblis_xpbyv.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/tblis_zerov.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/3/$(DEPDIR)/tblis_gemm.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/impl/$(DEPDIR)/tensor_impl.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/impl/blas/$(DEPDIR)/tensor_contract.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/impl/blas/$(DEPDIR)/tensor_mult.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/impl/blas/$(DEPDIR)/tensor_outer_prod.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/impl/blas/$(DEPDIR)/tensor_weight.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/impl/blis/$(DEPDIR)/tensor_contract.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/impl/reference/$(DEPDIR)/tensor_contract.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/impl/reference/$(DEPDIR)/tensor_dot.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/impl/reference/$(DEPDIR)/tensor_mult.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/impl/reference/$(DEPDIR)/tensor_outer_prod.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/impl/reference/$(DEPDIR)/tensor_reduce.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/impl/reference/$(DEPDIR)/tensor_replicate.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/impl/reference/$(DEPDIR)/tensor_scale.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/impl/reference/$(DEPDIR)/tensor_sum.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/impl/reference/$(DEPDIR)/tensor_trace.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/impl/reference/$(DEPDIR)/tensor_transpose.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/impl/reference/$(DEPDIR)/tensor_weight.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/bench.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/1m/$(DEPDIR)/reduce.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/add.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/dot.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/reduce.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/scale.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/set.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/3m/$(DEPDIR)/mult.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/$(DEPDIR)/configs.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/core2/$(DEPDIR)/lib_libcore2_la-bli_gemm_asm_d4x4.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/core2/$(DEPDIR)/lib_libcore2_la-config.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-bli_gemm_asm_d8x3.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d12x4.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d4x12.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d8x6.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_12x16.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_24x8.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_30x8.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_30x8_knc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_8x24.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_packm_opt_24x8.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_sgemm_opt_30x16_knc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-config.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/reference/$(DEPDIR)/lib_libreference_la-config.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_asm_d8x4.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/cpuid.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/random.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/thread.Plo@am__quote@
+
+.c.o:
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ $<
+
+.c.obj:
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+.c.lo:
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+
+src/configs/bulldozer/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.lo: src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libbulldozer_la_CFLAGS) $(CFLAGS) -MT src/configs/bulldozer/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.lo -MD -MP -MF src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.Tpo -c -o src/configs/bulldozer/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.lo `test -f 'src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c' || echo '$(srcdir)/'`src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.Tpo src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c' object='src/configs/bulldozer/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libbulldozer_la_CFLAGS) $(CFLAGS) -c -o src/configs/bulldozer/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.lo `test -f 'src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c' || echo '$(srcdir)/'`src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c
+
+src/configs/core2/lib_libcore2_la-bli_gemm_asm_d4x4.lo: src/configs/core2/bli_gemm_asm_d4x4.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libcore2_la_CFLAGS) $(CFLAGS) -MT src/configs/core2/lib_libcore2_la-bli_gemm_asm_d4x4.lo -MD -MP -MF src/configs/core2/$(DEPDIR)/lib_libcore2_la-bli_gemm_asm_d4x4.Tpo -c -o src/configs/core2/lib_libcore2_la-bli_gemm_asm_d4x4.lo `test -f 'src/configs/core2/bli_gemm_asm_d4x4.c' || echo '$(srcdir)/'`src/configs/core2/bli_gemm_asm_d4x4.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/core2/$(DEPDIR)/lib_libcore2_la-bli_gemm_asm_d4x4.Tpo src/configs/core2/$(DEPDIR)/lib_libcore2_la-bli_gemm_asm_d4x4.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/core2/bli_gemm_asm_d4x4.c' object='src/configs/core2/lib_libcore2_la-bli_gemm_asm_d4x4.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libcore2_la_CFLAGS) $(CFLAGS) -c -o src/configs/core2/lib_libcore2_la-bli_gemm_asm_d4x4.lo `test -f 'src/configs/core2/bli_gemm_asm_d4x4.c' || echo '$(srcdir)/'`src/configs/core2/bli_gemm_asm_d4x4.c
+
+src/configs/excavator/lib_libexcavator_la-bli_gemm_asm_d8x3.lo: src/configs/excavator/bli_gemm_asm_d8x3.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libexcavator_la_CFLAGS) $(CFLAGS) -MT src/configs/excavator/lib_libexcavator_la-bli_gemm_asm_d8x3.lo -MD -MP -MF src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-bli_gemm_asm_d8x3.Tpo -c -o src/configs/excavator/lib_libexcavator_la-bli_gemm_asm_d8x3.lo `test -f 'src/configs/excavator/bli_gemm_asm_d8x3.c' || echo '$(srcdir)/'`src/configs/excavator/bli_gemm_asm_d8x3.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-bli_gemm_asm_d8x3.Tpo src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-bli_gemm_asm_d8x3.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/excavator/bli_gemm_asm_d8x3.c' object='src/configs/excavator/lib_libexcavator_la-bli_gemm_asm_d8x3.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libexcavator_la_CFLAGS) $(CFLAGS) -c -o src/configs/excavator/lib_libexcavator_la-bli_gemm_asm_d8x3.lo `test -f 'src/configs/excavator/bli_gemm_asm_d8x3.c' || echo '$(srcdir)/'`src/configs/excavator/bli_gemm_asm_d8x3.c
+
+src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d12x4.lo: src/configs/haswell/bli_gemm_asm_d12x4.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CFLAGS) $(CFLAGS) -MT src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d12x4.lo -MD -MP -MF src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d12x4.Tpo -c -o src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d12x4.lo `test -f 'src/configs/haswell/bli_gemm_asm_d12x4.c' || echo '$(srcdir)/'`src/configs/haswell/bli_gemm_asm_d12x4.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d12x4.Tpo src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d12x4.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/haswell/bli_gemm_asm_d12x4.c' object='src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d12x4.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CFLAGS) $(CFLAGS) -c -o src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d12x4.lo `test -f 'src/configs/haswell/bli_gemm_asm_d12x4.c' || echo '$(srcdir)/'`src/configs/haswell/bli_gemm_asm_d12x4.c
+
+src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d8x6.lo: src/configs/haswell/bli_gemm_asm_d8x6.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CFLAGS) $(CFLAGS) -MT src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d8x6.lo -MD -MP -MF src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d8x6.Tpo -c -o src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d8x6.lo `test -f 'src/configs/haswell/bli_gemm_asm_d8x6.c' || echo '$(srcdir)/'`src/configs/haswell/bli_gemm_asm_d8x6.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d8x6.Tpo src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d8x6.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/haswell/bli_gemm_asm_d8x6.c' object='src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d8x6.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CFLAGS) $(CFLAGS) -c -o src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d8x6.lo `test -f 'src/configs/haswell/bli_gemm_asm_d8x6.c' || echo '$(srcdir)/'`src/configs/haswell/bli_gemm_asm_d8x6.c
+
+src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d6x8.lo: src/configs/haswell/bli_gemm_asm_d6x8.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CFLAGS) $(CFLAGS) -MT src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d6x8.lo -MD -MP -MF src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Tpo -c -o src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d6x8.lo `test -f 'src/configs/haswell/bli_gemm_asm_d6x8.c' || echo '$(srcdir)/'`src/configs/haswell/bli_gemm_asm_d6x8.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Tpo src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/haswell/bli_gemm_asm_d6x8.c' object='src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d6x8.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CFLAGS) $(CFLAGS) -c -o src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d6x8.lo `test -f 'src/configs/haswell/bli_gemm_asm_d6x8.c' || echo '$(srcdir)/'`src/configs/haswell/bli_gemm_asm_d6x8.c
+
+src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d4x12.lo: src/configs/haswell/bli_gemm_asm_d4x12.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CFLAGS) $(CFLAGS) -MT src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d4x12.lo -MD -MP -MF src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d4x12.Tpo -c -o src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d4x12.lo `test -f 'src/configs/haswell/bli_gemm_asm_d4x12.c' || echo '$(srcdir)/'`src/configs/haswell/bli_gemm_asm_d4x12.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d4x12.Tpo src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d4x12.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/haswell/bli_gemm_asm_d4x12.c' object='src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d4x12.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CFLAGS) $(CFLAGS) -c -o src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d4x12.lo `test -f 'src/configs/haswell/bli_gemm_asm_d4x12.c' || echo '$(srcdir)/'`src/configs/haswell/bli_gemm_asm_d4x12.c
+
+src/configs/knl/lib_libknl_la-bli_packm_opt_24x8.lo: src/configs/knl/bli_packm_opt_24x8.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -MT src/configs/knl/lib_libknl_la-bli_packm_opt_24x8.lo -MD -MP -MF src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_packm_opt_24x8.Tpo -c -o src/configs/knl/lib_libknl_la-bli_packm_opt_24x8.lo `test -f 'src/configs/knl/bli_packm_opt_24x8.c' || echo '$(srcdir)/'`src/configs/knl/bli_packm_opt_24x8.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_packm_opt_24x8.Tpo src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_packm_opt_24x8.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/knl/bli_packm_opt_24x8.c' object='src/configs/knl/lib_libknl_la-bli_packm_opt_24x8.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -c -o src/configs/knl/lib_libknl_la-bli_packm_opt_24x8.lo `test -f 'src/configs/knl/bli_packm_opt_24x8.c' || echo '$(srcdir)/'`src/configs/knl/bli_packm_opt_24x8.c
+
+src/configs/knl/lib_libknl_la-bli_dgemm_opt_12x16.lo: src/configs/knl/bli_dgemm_opt_12x16.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -MT src/configs/knl/lib_libknl_la-bli_dgemm_opt_12x16.lo -MD -MP -MF src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_12x16.Tpo -c -o src/configs/knl/lib_libknl_la-bli_dgemm_opt_12x16.lo `test -f 'src/configs/knl/bli_dgemm_opt_12x16.c' || echo '$(srcdir)/'`src/configs/knl/bli_dgemm_opt_12x16.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_12x16.Tpo src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_12x16.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/knl/bli_dgemm_opt_12x16.c' object='src/configs/knl/lib_libknl_la-bli_dgemm_opt_12x16.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -c -o src/configs/knl/lib_libknl_la-bli_dgemm_opt_12x16.lo `test -f 'src/configs/knl/bli_dgemm_opt_12x16.c' || echo '$(srcdir)/'`src/configs/knl/bli_dgemm_opt_12x16.c
+
+src/configs/knl/lib_libknl_la-bli_dgemm_opt_24x8.lo: src/configs/knl/bli_dgemm_opt_24x8.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -MT src/configs/knl/lib_libknl_la-bli_dgemm_opt_24x8.lo -MD -MP -MF src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_24x8.Tpo -c -o src/configs/knl/lib_libknl_la-bli_dgemm_opt_24x8.lo `test -f 'src/configs/knl/bli_dgemm_opt_24x8.c' || echo '$(srcdir)/'`src/configs/knl/bli_dgemm_opt_24x8.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_24x8.Tpo src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_24x8.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/knl/bli_dgemm_opt_24x8.c' object='src/configs/knl/lib_libknl_la-bli_dgemm_opt_24x8.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -c -o src/configs/knl/lib_libknl_la-bli_dgemm_opt_24x8.lo `test -f 'src/configs/knl/bli_dgemm_opt_24x8.c' || echo '$(srcdir)/'`src/configs/knl/bli_dgemm_opt_24x8.c
+
+src/configs/knl/lib_libknl_la-bli_dgemm_opt_30x8.lo: src/configs/knl/bli_dgemm_opt_30x8.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -MT src/configs/knl/lib_libknl_la-bli_dgemm_opt_30x8.lo -MD -MP -MF src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_30x8.Tpo -c -o src/configs/knl/lib_libknl_la-bli_dgemm_opt_30x8.lo `test -f 'src/configs/knl/bli_dgemm_opt_30x8.c' || echo '$(srcdir)/'`src/configs/knl/bli_dgemm_opt_30x8.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_30x8.Tpo src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_30x8.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/knl/bli_dgemm_opt_30x8.c' object='src/configs/knl/lib_libknl_la-bli_dgemm_opt_30x8.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -c -o src/configs/knl/lib_libknl_la-bli_dgemm_opt_30x8.lo `test -f 'src/configs/knl/bli_dgemm_opt_30x8.c' || echo '$(srcdir)/'`src/configs/knl/bli_dgemm_opt_30x8.c
+
+src/configs/knl/lib_libknl_la-bli_dgemm_opt_8x24.lo: src/configs/knl/bli_dgemm_opt_8x24.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -MT src/configs/knl/lib_libknl_la-bli_dgemm_opt_8x24.lo -MD -MP -MF src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_8x24.Tpo -c -o src/configs/knl/lib_libknl_la-bli_dgemm_opt_8x24.lo `test -f 'src/configs/knl/bli_dgemm_opt_8x24.c' || echo '$(srcdir)/'`src/configs/knl/bli_dgemm_opt_8x24.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_8x24.Tpo src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_8x24.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/knl/bli_dgemm_opt_8x24.c' object='src/configs/knl/lib_libknl_la-bli_dgemm_opt_8x24.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -c -o src/configs/knl/lib_libknl_la-bli_dgemm_opt_8x24.lo `test -f 'src/configs/knl/bli_dgemm_opt_8x24.c' || echo '$(srcdir)/'`src/configs/knl/bli_dgemm_opt_8x24.c
+
+src/configs/knl/lib_libknl_la-bli_dgemm_opt_30x8_knc.lo: src/configs/knl/bli_dgemm_opt_30x8_knc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -MT src/configs/knl/lib_libknl_la-bli_dgemm_opt_30x8_knc.lo -MD -MP -MF src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_30x8_knc.Tpo -c -o src/configs/knl/lib_libknl_la-bli_dgemm_opt_30x8_knc.lo `test -f 'src/configs/knl/bli_dgemm_opt_30x8_knc.c' || echo '$(srcdir)/'`src/configs/knl/bli_dgemm_opt_30x8_knc.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_30x8_knc.Tpo src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_30x8_knc.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/knl/bli_dgemm_opt_30x8_knc.c' object='src/configs/knl/lib_libknl_la-bli_dgemm_opt_30x8_knc.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -c -o src/configs/knl/lib_libknl_la-bli_dgemm_opt_30x8_knc.lo `test -f 'src/configs/knl/bli_dgemm_opt_30x8_knc.c' || echo '$(srcdir)/'`src/configs/knl/bli_dgemm_opt_30x8_knc.c
+
+src/configs/knl/lib_libknl_la-bli_sgemm_opt_30x16_knc.lo: src/configs/knl/bli_sgemm_opt_30x16_knc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -MT src/configs/knl/lib_libknl_la-bli_sgemm_opt_30x16_knc.lo -MD -MP -MF src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_sgemm_opt_30x16_knc.Tpo -c -o src/configs/knl/lib_libknl_la-bli_sgemm_opt_30x16_knc.lo `test -f 'src/configs/knl/bli_sgemm_opt_30x16_knc.c' || echo '$(srcdir)/'`src/configs/knl/bli_sgemm_opt_30x16_knc.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_sgemm_opt_30x16_knc.Tpo src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_sgemm_opt_30x16_knc.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/knl/bli_sgemm_opt_30x16_knc.c' object='src/configs/knl/lib_libknl_la-bli_sgemm_opt_30x16_knc.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -c -o src/configs/knl/lib_libknl_la-bli_sgemm_opt_30x16_knc.lo `test -f 'src/configs/knl/bli_sgemm_opt_30x16_knc.c' || echo '$(srcdir)/'`src/configs/knl/bli_sgemm_opt_30x16_knc.c
+
+src/configs/piledriver/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo: src/configs/piledriver/bli_gemm_asm_d8x3.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libpiledriver_la_CFLAGS) $(CFLAGS) -MT src/configs/piledriver/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo -MD -MP -MF src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Tpo -c -o src/configs/piledriver/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo `test -f 'src/configs/piledriver/bli_gemm_asm_d8x3.c' || echo '$(srcdir)/'`src/configs/piledriver/bli_gemm_asm_d8x3.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Tpo src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/piledriver/bli_gemm_asm_d8x3.c' object='src/configs/piledriver/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libpiledriver_la_CFLAGS) $(CFLAGS) -c -o src/configs/piledriver/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo `test -f 'src/configs/piledriver/bli_gemm_asm_d8x3.c' || echo '$(srcdir)/'`src/configs/piledriver/bli_gemm_asm_d8x3.c
+
+src/configs/sandybridge/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo: src/configs/sandybridge/bli_gemm_asm_d8x4.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libsandybridge_la_CFLAGS) $(CFLAGS) -MT src/configs/sandybridge/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo -MD -MP -MF src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_asm_d8x4.Tpo -c -o src/configs/sandybridge/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo `test -f 'src/configs/sandybridge/bli_gemm_asm_d8x4.c' || echo '$(srcdir)/'`src/configs/sandybridge/bli_gemm_asm_d8x4.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_asm_d8x4.Tpo src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_asm_d8x4.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/sandybridge/bli_gemm_asm_d8x4.c' object='src/configs/sandybridge/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libsandybridge_la_CFLAGS) $(CFLAGS) -c -o src/configs/sandybridge/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo `test -f 'src/configs/sandybridge/bli_gemm_asm_d8x4.c' || echo '$(srcdir)/'`src/configs/sandybridge/bli_gemm_asm_d8x4.c
 
 .cxx.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -843,33 +1281,140 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
 
+src/configs/bulldozer/lib_libbulldozer_la-config.lo: src/configs/bulldozer/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libbulldozer_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/bulldozer/lib_libbulldozer_la-config.lo -MD -MP -MF src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config.Tpo -c -o src/configs/bulldozer/lib_libbulldozer_la-config.lo `test -f 'src/configs/bulldozer/config.cxx' || echo '$(srcdir)/'`src/configs/bulldozer/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config.Tpo src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/bulldozer/config.cxx' object='src/configs/bulldozer/lib_libbulldozer_la-config.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libbulldozer_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/bulldozer/lib_libbulldozer_la-config.lo `test -f 'src/configs/bulldozer/config.cxx' || echo '$(srcdir)/'`src/configs/bulldozer/config.cxx
+
+src/configs/core2/lib_libcore2_la-config.lo: src/configs/core2/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libcore2_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/core2/lib_libcore2_la-config.lo -MD -MP -MF src/configs/core2/$(DEPDIR)/lib_libcore2_la-config.Tpo -c -o src/configs/core2/lib_libcore2_la-config.lo `test -f 'src/configs/core2/config.cxx' || echo '$(srcdir)/'`src/configs/core2/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/core2/$(DEPDIR)/lib_libcore2_la-config.Tpo src/configs/core2/$(DEPDIR)/lib_libcore2_la-config.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/core2/config.cxx' object='src/configs/core2/lib_libcore2_la-config.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libcore2_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/core2/lib_libcore2_la-config.lo `test -f 'src/configs/core2/config.cxx' || echo '$(srcdir)/'`src/configs/core2/config.cxx
+
+src/configs/excavator/lib_libexcavator_la-config.lo: src/configs/excavator/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libexcavator_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/excavator/lib_libexcavator_la-config.lo -MD -MP -MF src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config.Tpo -c -o src/configs/excavator/lib_libexcavator_la-config.lo `test -f 'src/configs/excavator/config.cxx' || echo '$(srcdir)/'`src/configs/excavator/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config.Tpo src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/excavator/config.cxx' object='src/configs/excavator/lib_libexcavator_la-config.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libexcavator_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/excavator/lib_libexcavator_la-config.lo `test -f 'src/configs/excavator/config.cxx' || echo '$(srcdir)/'`src/configs/excavator/config.cxx
+
+src/configs/haswell/lib_libhaswell_la-config.lo: src/configs/haswell/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/haswell/lib_libhaswell_la-config.lo -MD -MP -MF src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config.Tpo -c -o src/configs/haswell/lib_libhaswell_la-config.lo `test -f 'src/configs/haswell/config.cxx' || echo '$(srcdir)/'`src/configs/haswell/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config.Tpo src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/haswell/config.cxx' object='src/configs/haswell/lib_libhaswell_la-config.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/haswell/lib_libhaswell_la-config.lo `test -f 'src/configs/haswell/config.cxx' || echo '$(srcdir)/'`src/configs/haswell/config.cxx
+
+src/configs/knl/lib_libknl_la-config.lo: src/configs/knl/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/knl/lib_libknl_la-config.lo -MD -MP -MF src/configs/knl/$(DEPDIR)/lib_libknl_la-config.Tpo -c -o src/configs/knl/lib_libknl_la-config.lo `test -f 'src/configs/knl/config.cxx' || echo '$(srcdir)/'`src/configs/knl/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/knl/$(DEPDIR)/lib_libknl_la-config.Tpo src/configs/knl/$(DEPDIR)/lib_libknl_la-config.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/knl/config.cxx' object='src/configs/knl/lib_libknl_la-config.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/knl/lib_libknl_la-config.lo `test -f 'src/configs/knl/config.cxx' || echo '$(srcdir)/'`src/configs/knl/config.cxx
+
+src/configs/piledriver/lib_libpiledriver_la-config.lo: src/configs/piledriver/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libpiledriver_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/piledriver/lib_libpiledriver_la-config.lo -MD -MP -MF src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config.Tpo -c -o src/configs/piledriver/lib_libpiledriver_la-config.lo `test -f 'src/configs/piledriver/config.cxx' || echo '$(srcdir)/'`src/configs/piledriver/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config.Tpo src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/piledriver/config.cxx' object='src/configs/piledriver/lib_libpiledriver_la-config.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libpiledriver_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/piledriver/lib_libpiledriver_la-config.lo `test -f 'src/configs/piledriver/config.cxx' || echo '$(srcdir)/'`src/configs/piledriver/config.cxx
+
+src/configs/reference/lib_libreference_la-config.lo: src/configs/reference/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libreference_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/reference/lib_libreference_la-config.lo -MD -MP -MF src/configs/reference/$(DEPDIR)/lib_libreference_la-config.Tpo -c -o src/configs/reference/lib_libreference_la-config.lo `test -f 'src/configs/reference/config.cxx' || echo '$(srcdir)/'`src/configs/reference/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/reference/$(DEPDIR)/lib_libreference_la-config.Tpo src/configs/reference/$(DEPDIR)/lib_libreference_la-config.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/reference/config.cxx' object='src/configs/reference/lib_libreference_la-config.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libreference_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/reference/lib_libreference_la-config.lo `test -f 'src/configs/reference/config.cxx' || echo '$(srcdir)/'`src/configs/reference/config.cxx
+
+src/configs/sandybridge/lib_libsandybridge_la-config.lo: src/configs/sandybridge/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libsandybridge_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/sandybridge/lib_libsandybridge_la-config.lo -MD -MP -MF src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config.Tpo -c -o src/configs/sandybridge/lib_libsandybridge_la-config.lo `test -f 'src/configs/sandybridge/config.cxx' || echo '$(srcdir)/'`src/configs/sandybridge/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config.Tpo src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/sandybridge/config.cxx' object='src/configs/sandybridge/lib_libsandybridge_la-config.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libsandybridge_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/sandybridge/lib_libsandybridge_la-config.lo `test -f 'src/configs/sandybridge/config.cxx' || echo '$(srcdir)/'`src/configs/sandybridge/config.cxx
+
 mostlyclean-libtool:
 	-rm -f *.lo
 
 clean-libtool:
 	-rm -rf .libs _libs
-	-rm -rf bin/.libs bin/_libs
 	-rm -rf lib/.libs lib/_libs
-	-rm -rf src/.libs src/_libs
 	-rm -rf src/1m/.libs src/1m/_libs
 	-rm -rf src/1v/.libs src/1v/_libs
-	-rm -rf src/3/.libs src/3/_libs
-	-rm -rf src/impl/.libs src/impl/_libs
-	-rm -rf src/impl/blas/.libs src/impl/blas/_libs
-	-rm -rf src/impl/blis/.libs src/impl/blis/_libs
-	-rm -rf src/impl/reference/.libs src/impl/reference/_libs
+	-rm -rf src/3m/.libs src/3m/_libs
+	-rm -rf src/configs/.libs src/configs/_libs
+	-rm -rf src/configs/bulldozer/.libs src/configs/bulldozer/_libs
+	-rm -rf src/configs/core2/.libs src/configs/core2/_libs
+	-rm -rf src/configs/excavator/.libs src/configs/excavator/_libs
+	-rm -rf src/configs/haswell/.libs src/configs/haswell/_libs
+	-rm -rf src/configs/knl/.libs src/configs/knl/_libs
+	-rm -rf src/configs/piledriver/.libs src/configs/piledriver/_libs
+	-rm -rf src/configs/reference/.libs src/configs/reference/_libs
+	-rm -rf src/configs/sandybridge/.libs src/configs/sandybridge/_libs
+	-rm -rf src/util/.libs src/util/_libs
 
 distclean-libtool:
 	-rm -f libtool config.lt
 
+# This directory's subdirectories are mostly independent; you can cd
+# into them and run 'make' without going through this Makefile.
+# To change the values of 'make' variables: instead of editing Makefiles,
+# (1) if the variable is set in 'config.status', edit 'config.status'
+#     (which will cause the Makefiles to be regenerated when you run 'make');
+# (2) otherwise, pass the desired values on the 'make' command line.
+$(am__recursive_targets):
+	@fail=; \
+	if $(am__make_keepgoing); then \
+	  failcom='fail=yes'; \
+	else \
+	  failcom='exit 1'; \
+	fi; \
+	dot_seen=no; \
+	target=`echo $@ | sed s/-recursive//`; \
+	case "$@" in \
+	  distclean-* | maintainer-clean-*) list='$(DIST_SUBDIRS)' ;; \
+	  *) list='$(SUBDIRS)' ;; \
+	esac; \
+	for subdir in $$list; do \
+	  echo "Making $$target in $$subdir"; \
+	  if test "$$subdir" = "."; then \
+	    dot_seen=yes; \
+	    local_target="$$target-am"; \
+	  else \
+	    local_target="$$target"; \
+	  fi; \
+	  ($(am__cd) $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
+	  || eval $$failcom; \
+	done; \
+	if test "$$dot_seen" = "no"; then \
+	  $(MAKE) $(AM_MAKEFLAGS) "$$target-am" || exit 1; \
+	fi; test -z "$$fail"
+
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
-tags: tags-am
+tags: tags-recursive
 TAGS: tags
 
 tags-am: $(TAGS_DEPENDENCIES) $(am__tagged_files)
 	set x; \
 	here=`pwd`; \
+	if ($(ETAGS) --etags-include --version) >/dev/null 2>&1; then \
+	  include_option=--etags-include; \
+	  empty_fix=.; \
+	else \
+	  include_option=--include; \
+	  empty_fix=; \
+	fi; \
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  if test "$$subdir" = .; then :; else \
+	    test ! -f $$subdir/TAGS || \
+	      set "$$@" "$$include_option=$$here/$$subdir/TAGS"; \
+	  fi; \
+	done; \
 	$(am__define_uniq_tagged_files); \
 	shift; \
 	if test -z "$(ETAGS_ARGS)$$*$$unique"; then :; else \
@@ -882,7 +1427,7 @@ tags-am: $(TAGS_DEPENDENCIES) $(am__tagged_files)
 	      $$unique; \
 	  fi; \
 	fi
-ctags: ctags-am
+ctags: ctags-recursive
 
 CTAGS: ctags
 ctags-am: $(TAGS_DEPENDENCIES) $(am__tagged_files)
@@ -901,7 +1446,7 @@ cscope: cscope.files
 clean-cscope:
 	-rm -f cscope.files
 cscope.files: clean-cscope cscopelist
-cscopelist: cscopelist-am
+cscopelist: cscopelist-recursive
 
 cscopelist-am: $(am__tagged_files)
 	list='$(am__tagged_files)'; \
@@ -951,6 +1496,31 @@ distdir: $(DISTFILES)
 	    test -f "$(distdir)/$$file" \
 	    || cp -p $$d/$$file "$(distdir)/$$file" \
 	    || exit 1; \
+	  fi; \
+	done
+	@list='$(DIST_SUBDIRS)'; for subdir in $$list; do \
+	  if test "$$subdir" = .; then :; else \
+	    $(am__make_dryrun) \
+	      || test -d "$(distdir)/$$subdir" \
+	      || $(MKDIR_P) "$(distdir)/$$subdir" \
+	      || exit 1; \
+	    dir1=$$subdir; dir2="$(distdir)/$$subdir"; \
+	    $(am__relativize); \
+	    new_distdir=$$reldir; \
+	    dir1=$$subdir; dir2="$(top_distdir)"; \
+	    $(am__relativize); \
+	    new_top_distdir=$$reldir; \
+	    echo " (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) top_distdir="$$new_top_distdir" distdir="$$new_distdir" \\"; \
+	    echo "     am__remove_distdir=: am__skip_length_check=: am__skip_mode_fix=: distdir)"; \
+	    ($(am__cd) $$subdir && \
+	      $(MAKE) $(AM_MAKEFLAGS) \
+	        top_distdir="$$new_top_distdir" \
+	        distdir="$$new_distdir" \
+		am__remove_distdir=: \
+		am__skip_length_check=: \
+		am__skip_mode_fix=: \
+	        distdir) \
+	      || exit 1; \
 	  fi; \
 	done
 	-test -n "$(am__skip_mode_fix)" \
@@ -1085,23 +1655,22 @@ distcleancheck: distclean
 	       $(distcleancheck_listfiles) ; \
 	       exit 1; } >&2
 check-am: all-am
-check: check-am
-all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) config.h
-install-binPROGRAMS: install-libLTLIBRARIES
-
-installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)"; do \
+check: check-recursive
+all-am: Makefile $(LTLIBRARIES) config.h
+installdirs: installdirs-recursive
+installdirs-am:
+	for dir in "$(DESTDIR)$(libdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
-install: install-am
-install-exec: install-exec-am
-install-data: install-data-am
-uninstall: uninstall-am
+install: install-recursive
+install-exec: install-exec-recursive
+install-data: install-data-recursive
+uninstall: uninstall-recursive
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 
-installcheck: installcheck-am
+installcheck: installcheck-recursive
 install-strip:
 	if test -z '$(STRIP)'; then \
 	  $(MAKE) $(AM_MAKEFLAGS) INSTALL_PROGRAM="$(INSTALL_STRIP_PROGRAM)" \
@@ -1119,124 +1688,130 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
-	-rm -f bin/$(am__dirstamp)
 	-rm -f lib/$(am__dirstamp)
-	-rm -f src/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/$(am__dirstamp)
 	-rm -f src/1m/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/1m/$(am__dirstamp)
 	-rm -f src/1v/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/1v/$(am__dirstamp)
-	-rm -f src/3/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/3/$(am__dirstamp)
-	-rm -f src/impl/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/impl/$(am__dirstamp)
-	-rm -f src/impl/blas/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/impl/blas/$(am__dirstamp)
-	-rm -f src/impl/blis/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/impl/blis/$(am__dirstamp)
-	-rm -f src/impl/reference/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/impl/reference/$(am__dirstamp)
-	-rm -f test/$(DEPDIR)/$(am__dirstamp)
-	-rm -f test/$(am__dirstamp)
+	-rm -f src/3m/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/3m/$(am__dirstamp)
+	-rm -f src/configs/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/configs/$(am__dirstamp)
+	-rm -f src/configs/bulldozer/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/configs/bulldozer/$(am__dirstamp)
+	-rm -f src/configs/core2/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/configs/core2/$(am__dirstamp)
+	-rm -f src/configs/excavator/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/configs/excavator/$(am__dirstamp)
+	-rm -f src/configs/haswell/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/configs/haswell/$(am__dirstamp)
+	-rm -f src/configs/knl/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/configs/knl/$(am__dirstamp)
+	-rm -f src/configs/piledriver/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/configs/piledriver/$(am__dirstamp)
+	-rm -f src/configs/reference/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/configs/reference/$(am__dirstamp)
+	-rm -f src/configs/sandybridge/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/configs/sandybridge/$(am__dirstamp)
+	-rm -f src/util/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/util/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-clean: clean-am
+clean: clean-recursive
 
-clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
-	clean-libtool clean-noinstLTLIBRARIES mostlyclean-am
+clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
+	clean-noinstLTLIBRARIES mostlyclean-am
 
-distclean: distclean-am
+distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf src/$(DEPDIR) src/1m/$(DEPDIR) src/1v/$(DEPDIR) src/3/$(DEPDIR) src/impl/$(DEPDIR) src/impl/blas/$(DEPDIR) src/impl/blis/$(DEPDIR) src/impl/reference/$(DEPDIR) test/$(DEPDIR)
+	-rm -rf src/1m/$(DEPDIR) src/1v/$(DEPDIR) src/3m/$(DEPDIR) src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/util/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
 
-dvi: dvi-am
+dvi: dvi-recursive
 
 dvi-am:
 
-html: html-am
+html: html-recursive
 
 html-am:
 
-info: info-am
+info: info-recursive
 
 info-am:
 
 install-data-am:
 
-install-dvi: install-dvi-am
+install-dvi: install-dvi-recursive
 
 install-dvi-am:
 
-install-exec-am: install-binPROGRAMS install-libLTLIBRARIES
+install-exec-am: install-libLTLIBRARIES
 
-install-html: install-html-am
+install-html: install-html-recursive
 
 install-html-am:
 
-install-info: install-info-am
+install-info: install-info-recursive
 
 install-info-am:
 
 install-man:
 
-install-pdf: install-pdf-am
+install-pdf: install-pdf-recursive
 
 install-pdf-am:
 
-install-ps: install-ps-am
+install-ps: install-ps-recursive
 
 install-ps-am:
 
 installcheck-am:
 
-maintainer-clean: maintainer-clean-am
+maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf src/$(DEPDIR) src/1m/$(DEPDIR) src/1v/$(DEPDIR) src/3/$(DEPDIR) src/impl/$(DEPDIR) src/impl/blas/$(DEPDIR) src/impl/blis/$(DEPDIR) src/impl/reference/$(DEPDIR) test/$(DEPDIR)
+	-rm -rf src/1m/$(DEPDIR) src/1v/$(DEPDIR) src/3m/$(DEPDIR) src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/util/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
-mostlyclean: mostlyclean-am
+mostlyclean: mostlyclean-recursive
 
 mostlyclean-am: mostlyclean-compile mostlyclean-generic \
 	mostlyclean-libtool
 
-pdf: pdf-am
+pdf: pdf-recursive
 
 pdf-am:
 
-ps: ps-am
+ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-libLTLIBRARIES
+uninstall-am: uninstall-libLTLIBRARIES
 
-.MAKE: all install-am install-strip
+.MAKE: $(am__recursive_targets) all install-am install-strip
 
-.PHONY: CTAGS GTAGS TAGS all all-am am--refresh check check-am clean \
-	clean-binPROGRAMS clean-cscope clean-generic \
+.PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am \
+	am--refresh check check-am clean clean-cscope clean-generic \
 	clean-libLTLIBRARIES clean-libtool clean-noinstLTLIBRARIES \
 	cscope cscopelist-am ctags ctags-am dist dist-all dist-bzip2 \
 	dist-gzip dist-lzip dist-shar dist-tarZ dist-xz dist-zip \
 	distcheck distclean distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags distcleancheck \
 	distdir distuninstallcheck dvi dvi-am html html-am info \
-	info-am install install-am install-binPROGRAMS install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-libLTLIBRARIES install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
+	info-am install install-am install-data install-data-am \
+	install-dvi install-dvi-am install-exec install-exec-am \
+	install-html install-html-am install-info install-info-am \
+	install-libLTLIBRARIES install-man install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs installdirs-am maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-libLTLIBRARIES
+	tags tags-am uninstall uninstall-am uninstall-libLTLIBRARIES
 
 .PRECIOUS: Makefile
 

@@ -6,7 +6,7 @@
 
 #ifdef __cplusplus
 
-#include "util/marray.hpp"
+#include <utility>
 
 namespace tblis
 {
@@ -16,75 +16,66 @@ extern "C"
 
 #endif
 
-void tblis_matrix_reduce(len_type m, len_type n,
-                         const void* A, type_t type_A,
-                         stride_type rs_A, stride_type cs_A,
-                         void* norm, type_t type_norm);
-
-void tblis_matrix_reduce_single(len_type m, len_type n,
-                                const void* A, type_t type_A,
-                                stride_type rs_A, stride_type cs_A,
-                                void* norm, type_t type_norm);
-
-void tblis_matrix_reduce_coll(tci_comm_t* comm,
-                              len_type m, len_type n,
-                              const void* A, type_t type_A,
-                              stride_type rs_A, stride_type cs_A,
-                              void* norm, type_t type_norm);
+void tblis_matrix_reduce(const tblis_comm* comm, const tblis_config* cfg,
+                         reduce_t op, const tblis_matrix* A,
+                         tblis_scalar* result, len_type* idx);
 
 #ifdef __cplusplus
 
 }
 
-template <typename T, typename U>
-void reduce(const_matrix_view<T> A, U& norm)
+template <typename T>
+void reduce(reduce_t op, const_matrix_view<T> A, T& result, len_type& idx)
 {
-    tblis_matrix_reduce(A.length(0), A.length(1),
-                        A.data(), type_tag<T>::value,
-                        A.stride(0), A.stride(1),
-                        &norm, type_tag<U>::value);
+    tblis_matrix A_s(A);
+    tblis_scalar result_s(result);
+
+    tblis_matrix_reduce(nullptr, nullptr, op, &A_s, &result_s, &idx);
 }
 
-template <typename T, typename U>
-void reduce(single_t s, const_matrix_view<T> A, U& norm)
+template <typename T>
+void reduce(single_t s, reduce_t op, const_matrix_view<T> A,
+            T& result, len_type& idx)
 {
-    tblis_matrix_reduce_single(A.length(0), A.length(1),
-                               A.data(), type_tag<T>::value,
-                               A.stride(0), A.stride(1),
-                               &norm, type_tag<U>::value);
+    tblis_matrix A_s(A);
+    tblis_scalar result_s(result);
+
+    tblis_matrix_reduce(tblis_single, nullptr, op, &A_s, &result_s, &idx);
 }
 
-template <typename T, typename U>
-void reduce(communicator& comm, const_matrix_view<T> A, U& norm)
+template <typename T>
+void reduce(const communicator& comm, reduce_t op, const_matrix_view<T> A,
+            T& result, len_type& idx)
 {
-    tblis_matrix_reduce_coll(comm, A.length(0), A.length(1),
-                             A.data(), type_tag<T>::value,
-                             A.stride(0), A.stride(1),
-                             &norm, type_tag<U>::value);
+    tblis_matrix A_s(A);
+    tblis_scalar result_s(result);
+
+    tblis_matrix_reduce(comm, nullptr, op, &A_s, &result_s, &idx);
 }
 
-template <typename T, typename U=T>
-U reduce(const_matrix_view<T> A)
+template <typename T>
+std::pair<T,len_type> reduce(reduce_t op, const_matrix_view<T> A)
 {
-    U norm;
-    reduce(A, norm);
-    return norm;
+    std::pair<T,len_type> result;
+    reduce(op, A, result.first, result.second);
+    return result;
 }
 
-template <typename T, typename U=T>
-U reduce(single_t s, const_matrix_view<T> A)
+template <typename T>
+std::pair<T,len_type> reduce(single_t s, reduce_t op, const_matrix_view<T> A)
 {
-    U norm;
-    reduce(s, A, norm);
-    return norm;
+    std::pair<T,len_type> result;
+    reduce(s, op, A, result.first, result.second);
+    return result;
 }
 
-template <typename T, typename U=T>
-U reduce(communicator& comm, const_matrix_view<T> A)
+template <typename T>
+std::pair<T,len_type> reduce(const communicator& comm, reduce_t op,
+                             const_matrix_view<T> A)
 {
-    U norm;
-    reduce(comm, A, norm);
-    return norm;
+    std::pair<T,len_type> result;
+    reduce(comm, op, A, result.first, result.second);
+    return result;
 }
 
 }

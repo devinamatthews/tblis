@@ -111,7 +111,7 @@ class viterator
                 assert(_pos[i] >= 0 && _pos[i] < _len[i]);
             }
 
-            detail::set_offsets(_pos, _strides, off...);
+            detail::move_offsets(_pos, _strides, off...);
 
             _first = true;
         }

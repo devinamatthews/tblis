@@ -20,7 +20,7 @@ int tci_parallelize_int(tci_thread_func_t func, void* payload, int nthread, int 
     #pragma omp parallel num_threads(nthread)
     {
         tci_comm_t comm;
-        tci_comm_init(&comm, context, omp_get_thread_num(), 1, 0);
+        tci_comm_init(&comm, context, nthread, omp_get_thread_num(), 1, 0);
         func(&comm, payload);
         #pragma omp barrier
         tci_comm_destroy(&comm);
@@ -97,21 +97,8 @@ int tci_parallelize_int(tci_thread_func_t func, void* payload, int nthread, int 
 
 #endif
 
-int tci_get_env(const char* env, int fallback)
-{
-    const char* str = getenv(env);
-    //TODO: error handling for strtol
-    if (str) return strtol(str, NULL, 10);
-    return fallback;
-}
-
 int tci_parallelize(tci_thread_func_t func, void* payload, int nthread, int arity)
 {
-    if (nthread == 0)
-    {
-        nthread = tci_get_env("OMP_NUM_THREADS", 1);
-    }
-
     if (nthread > 1)
     {
         return tci_parallelize_int(func, payload, nthread, arity);

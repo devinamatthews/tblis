@@ -661,6 +661,8 @@ FOREACH_TYPE
 FOREACH_CONFIG_AND_TYPE
 FOREACH_CONFIG
 INCLUDE_CONFIGS
+IS_OSX_FALSE
+IS_OSX_TRUE
 ENABLE_INTEL_COMPILER_FALSE
 ENABLE_INTEL_COMPILER_TRUE
 ENABLE_SANDYBRIDGE_FALSE
@@ -677,14 +679,14 @@ ENABLE_KNL_FALSE
 ENABLE_KNL_TRUE
 ENABLE_HASWELL_FALSE
 ENABLE_HASWELL_TRUE
-ENABLE_DUNNINGTON_FALSE
-ENABLE_DUNNINGTON_TRUE
+ENABLE_CORE2_FALSE
+ENABLE_CORE2_TRUE
 ENABLE_CORTEX_A9_FALSE
 ENABLE_CORTEX_A9_TRUE
 ENABLE_CORTEX_A15_FALSE
 ENABLE_CORTEX_A15_TRUE
-ENABLE_CARRIZO_FALSE
-ENABLE_CARRIZO_TRUE
+ENABLE_EXCAVATOR_FALSE
+ENABLE_EXCAVATOR_TRUE
 ENABLE_BULLDOZER_FALSE
 ENABLE_BULLDOZER_TRUE
 ENABLE_BGQ_FALSE
@@ -693,6 +695,7 @@ ENABLE_ARMV8A_FALSE
 ENABLE_ARMV8A_TRUE
 ENABLE_ARMV7A_FALSE
 ENABLE_ARMV7A_TRUE
+LSCPU
 CXXCPP
 ENABLE_BLAS_FALSE
 ENABLE_BLAS_TRUE
@@ -815,6 +818,9 @@ enable_silent_rules
 enable_maintainer_mode
 enable_dependency_tracking
 with_blas
+with_length_type
+with_stride_type
+with_label_type
 enable_config
 enable_shared
 enable_static
@@ -1469,20 +1475,20 @@ Optional Features:
                           do not reject slow dependency extractors
   --disable-dependency-tracking
                           speeds up one-time build
-  --enable-config=...     a comma-separated list of configurations
+  --enable-config=...    a comma-separated list of configurations
                           [default=auto]
 
                           possible values are:
 
-                          armv7a, armv8a, bgq, bulldozer, carrizo, cortex-a15,
-                          cortex-a9, dunnington, haswell, knl, loongson3a, mic,
+                          armv7a, armv8a, bgq, bulldozer, excavator, cortex-a15,
+                          cortex-a9, core2, haswell, knl, loongson3a, mic,
                           piledriver, power7, reference, sandybridge, auto
 
                           the following meta-configurations are also available:
 
-                          intel = dunnington,sandybridge,haswell,knl
+                          intel = core2,sandybridge,haswell,knl
                           arm = armv7a,armv8a,cortex-a9,cortex-a15
-                          amd = bulldozer,piledriver,carrizo
+                          amd = bulldozer,piledriver,excavator
                           x86 = intel,amd
   --enable-shared[=PKGS]  build shared libraries [default=yes]
   --enable-static[=PKGS]  build static libraries [default=yes]
@@ -1494,6 +1500,15 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-blas=<lib>       use BLAS library <lib>
+  --with-length-type[=type]
+                          use 'type' for the default index length type
+                          [default=ptrdiff_t]
+  --with-stride-type[=type]
+                          use 'type' for the default index stride type
+                          [default=ptrdiff_t]
+  --with-label-type[=type]
+                          use 'type' for the default index label type
+                          [default=char]
   --with-pic[=PKGS]       try to use only PIC/non-PIC objects [default=use
                           both]
   --with-aix-soname=aix|svr4|both
@@ -2008,6 +2023,151 @@ $as_echo "$ac_res" >&6; }
   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
 
 } # ac_fn_cxx_check_header_compile
+
+# ac_fn_cxx_check_func LINENO FUNC VAR
+# ------------------------------------
+# Tests whether FUNC exists, setting the cache variable VAR accordingly
+ac_fn_cxx_check_func ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
+$as_echo_n "checking for $2... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+/* Define $2 to an innocuous variant, in case <limits.h> declares $2.
+   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+#define $2 innocuous_$2
+
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char $2 (); below.
+    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+    <limits.h> exists even on freestanding compilers.  */
+
+#ifdef __STDC__
+# include <limits.h>
+#else
+# include <assert.h>
+#endif
+
+#undef $2
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char $2 ();
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined __stub_$2 || defined __stub___$2
+choke me
+#endif
+
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+return $2 ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  eval "$3=yes"
+else
+  eval "$3=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_cxx_check_func
+
+# ac_fn_cxx_check_type LINENO TYPE VAR INCLUDES
+# ---------------------------------------------
+# Tests whether TYPE exists after having included INCLUDES, setting cache
+# variable VAR accordingly.
+ac_fn_cxx_check_type ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
+$as_echo_n "checking for $2... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  eval "$3=no"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+if (sizeof ($2))
+	 return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+if (sizeof (($2)))
+	    return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+
+else
+  eval "$3=yes"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_cxx_check_type
 
 # ac_fn_c_check_header_compile LINENO HEADER VAR INCLUDES
 # -------------------------------------------------------
@@ -3194,7 +3354,7 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 if test -n "$ac_tool_prefix"; then
-  for ac_prog in gcc clang icc
+  for ac_prog in icc gcc clang
   do
     # Extract the first word of "$ac_tool_prefix$ac_prog", so it can be a program name with args.
 set dummy $ac_tool_prefix$ac_prog; ac_word=$2
@@ -3238,7 +3398,7 @@ fi
 fi
 if test -z "$CC"; then
   ac_ct_CC=$CC
-  for ac_prog in gcc clang icc
+  for ac_prog in icc gcc clang
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -6745,7 +6905,7 @@ if test -z "$CXX"; then
     CXX=$CCC
   else
     if test -n "$ac_tool_prefix"; then
-  for ac_prog in g++ clang++ icpc
+  for ac_prog in icpc g++ clang++
   do
     # Extract the first word of "$ac_tool_prefix$ac_prog", so it can be a program name with args.
 set dummy $ac_tool_prefix$ac_prog; ac_word=$2
@@ -6789,7 +6949,7 @@ fi
 fi
 if test -z "$CXX"; then
   ac_ct_CXX=$CXX
-  for ac_prog in g++ clang++ icpc
+  for ac_prog in icpc g++ clang++
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -7471,6 +7631,7 @@ _ACEOF
 #
 # Check for memkind
 #
+
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -7818,6 +7979,436 @@ if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 fi
+
+
+#
+# Check for hwloc
+#
+
+for ac_header in hwloc.h
+do :
+  ac_fn_cxx_check_header_mongrel "$LINENO" "hwloc.h" "ac_cv_header_hwloc_h" "$ac_includes_default"
+if test "x$ac_cv_header_hwloc_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_HWLOC_H 1
+_ACEOF
+
+fi
+
+done
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing hwloc_topology_init" >&5
+$as_echo_n "checking for library containing hwloc_topology_init... " >&6; }
+if ${ac_cv_search_hwloc_topology_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char hwloc_topology_init ();
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+return hwloc_topology_init ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' hwloc; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_search_hwloc_topology_init=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_hwloc_topology_init+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_hwloc_topology_init+:} false; then :
+
+else
+  ac_cv_search_hwloc_topology_init=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_hwloc_topology_init" >&5
+$as_echo "$ac_cv_search_hwloc_topology_init" >&6; }
+ac_res=$ac_cv_search_hwloc_topology_init
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+
+#
+# Check for lscpu
+#
+
+for ac_prog in lscpu
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_LSCPU+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$LSCPU"; then
+  ac_cv_prog_LSCPU="$LSCPU" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_LSCPU="$ac_prog"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+LSCPU=$ac_cv_prog_LSCPU
+if test -n "$LSCPU"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $LSCPU" >&5
+$as_echo "$LSCPU" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$LSCPU" && break
+done
+test -n "$LSCPU" || LSCPU=":"
+
+if test "x$LSCPU" != "x:"; then
+
+$as_echo "#define HAVE_LSCPU 1" >>confdefs.h
+
+fi
+
+#
+# Check for sysctl
+#
+
+for ac_func in sysctl sysctlbyname
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_cxx_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+
+#
+# Check for sysconf
+#
+
+for ac_func in sysconf
+do :
+  ac_fn_cxx_check_func "$LINENO" "sysconf" "ac_cv_func_sysconf"
+if test "x$ac_cv_func_sysconf" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SYSCONF 1
+_ACEOF
+
+fi
+done
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for _SC_NPROCESSORS_CONF defined in unistd.h" >&5
+$as_echo_n "checking for _SC_NPROCESSORS_CONF defined in unistd.h... " >&6; }
+if ${ac_cv_defined__SC_NPROCESSORS_CONF_unistd_h+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <unistd.h>
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+
+  #ifdef _SC_NPROCESSORS_CONF
+  int ok;
+  #else
+  choke me
+  #endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ac_cv_defined__SC_NPROCESSORS_CONF_unistd_h=yes
+else
+  ac_cv_defined__SC_NPROCESSORS_CONF_unistd_h=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined__SC_NPROCESSORS_CONF_unistd_h" >&5
+$as_echo "$ac_cv_defined__SC_NPROCESSORS_CONF_unistd_h" >&6; }
+if test $ac_cv_defined__SC_NPROCESSORS_CONF_unistd_h != "no"; then :
+
+$as_echo "#define HAVE__SC_NPROCESSORS_CONF 1" >>confdefs.h
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for _SC_NPROCESSORS_ONLN defined in unistd.h" >&5
+$as_echo_n "checking for _SC_NPROCESSORS_ONLN defined in unistd.h... " >&6; }
+if ${ac_cv_defined__SC_NPROCESSORS_ONLN_unistd_h+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <unistd.h>
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+
+  #ifdef _SC_NPROCESSORS_ONLN
+  int ok;
+  #else
+  choke me
+  #endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ac_cv_defined__SC_NPROCESSORS_ONLN_unistd_h=yes
+else
+  ac_cv_defined__SC_NPROCESSORS_ONLN_unistd_h=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined__SC_NPROCESSORS_ONLN_unistd_h" >&5
+$as_echo "$ac_cv_defined__SC_NPROCESSORS_ONLN_unistd_h" >&6; }
+if test $ac_cv_defined__SC_NPROCESSORS_ONLN_unistd_h != "no"; then :
+
+$as_echo "#define HAVE__SC_NPROCESSORS_ONLN 1" >>confdefs.h
+
+fi
+
+#
+# Determine basic types
+#
+
+
+# Check whether --with-length-type was given.
+if test "${with_length_type+set}" = set; then :
+  withval=$with_length_type; len_type=$with_length_type
+else
+  len_type=ptrdiff_t
+fi
+
+
+as_ac_Type=`$as_echo "ac_cv_type_$len_type" | $as_tr_sh`
+ac_fn_cxx_check_type "$LINENO" "$len_type" "$as_ac_Type" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Type"\" = x"yes"; then :
+
+else
+  as_fn_error $? "$len_type must be a standard ISO C type" "$LINENO" 5
+fi
+
+
+as_ac_Type=`$as_echo "ax_cv_decl_${typename}_signed" | $as_tr_sh`
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $len_type is signed" >&5
+$as_echo_n "checking whether $len_type is signed... " >&6; }
+if eval \${$as_ac_Type+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$ac_includes_default
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+int foo [ 1 - 2 * !((($len_type) -1) < 0) ];
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  eval "$as_ac_Type=yes"
+else
+  eval "$as_ac_Type=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+eval ac_res=\$$as_ac_Type
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if test `eval 'as_val=${'$as_ac_Type'};$as_echo "$as_val"'` = yes; then :
+
+else
+  as_fn_error $? "$len_type must be signed" "$LINENO" 5
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for index length type" >&5
+$as_echo_n "checking for index length type... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $len_type" >&5
+$as_echo "$len_type" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define LEN_TYPE $len_type
+_ACEOF
+
+
+
+# Check whether --with-stride-type was given.
+if test "${with_stride_type+set}" = set; then :
+  withval=$with_stride_type; stride_type=$with_stride_type
+else
+  stride_type=ptrdiff_t
+fi
+
+
+as_ac_Type=`$as_echo "ac_cv_type_$stride_type" | $as_tr_sh`
+ac_fn_cxx_check_type "$LINENO" "$stride_type" "$as_ac_Type" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Type"\" = x"yes"; then :
+
+else
+  as_fn_error $? "$stride_type must be a standard ISO C type" "$LINENO" 5
+fi
+
+
+as_ac_Type=`$as_echo "ax_cv_decl_${typename}_signed" | $as_tr_sh`
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $stride_type is signed" >&5
+$as_echo_n "checking whether $stride_type is signed... " >&6; }
+if eval \${$as_ac_Type+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$ac_includes_default
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+int foo [ 1 - 2 * !((($stride_type) -1) < 0) ];
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  eval "$as_ac_Type=yes"
+else
+  eval "$as_ac_Type=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+eval ac_res=\$$as_ac_Type
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if test `eval 'as_val=${'$as_ac_Type'};$as_echo "$as_val"'` = yes; then :
+
+else
+  as_fn_error $? "$stride_type must be signed" "$LINENO" 5
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for index stride type" >&5
+$as_echo_n "checking for index stride type... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $stride_type" >&5
+$as_echo "$stride_type" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define STRIDE_TYPE $stride_type
+_ACEOF
+
+
+
+# Check whether --with-label-type was given.
+if test "${with_label_type+set}" = set; then :
+  withval=$with_label_type; label_type=$with_label_type
+else
+  label_type=char
+fi
+
+
+as_ac_Type=`$as_echo "ac_cv_type_$label_type" | $as_tr_sh`
+ac_fn_cxx_check_type "$LINENO" "$label_type" "$as_ac_Type" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Type"\" = x"yes"; then :
+
+else
+  as_fn_error $? "$label_type must be a standard ISO C type" "$LINENO" 5
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for index label type" >&5
+$as_echo_n "checking for index label type... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $label_type" >&5
+$as_echo "$label_type" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define LABEL_TYPE $label_type
+_ACEOF
 
 
 #
@@ -8529,9 +9120,9 @@ if echo $enable_config | grep -qv reference; then
 fi
 
 configs=`echo $enable_config | sed 's/x86/intel,amd/' \
-                             | sed 's/intel/dunnington,sandybridge,haswell,knl/' \
+                             | sed 's/intel/core2,sandybridge,haswell,knl/' \
                              | sed 's/arm/armv7a,armv8a,cortex-a9,cortex-a15/' \
-                             | sed 's/amd/bulldozer,piledriver,carrizo/' \
+                             | sed 's/amd/bulldozer,piledriver,excavator/' \
                              | sed 's/,/ /g'`
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking enabled configurations" >&5
@@ -8571,12 +9162,12 @@ else
   ENABLE_BULLDOZER_FALSE=
 fi
 
- if echo $configs | grep -q carrizo; then
-  ENABLE_CARRIZO_TRUE=
-  ENABLE_CARRIZO_FALSE='#'
+ if echo $configs | grep -q excavator; then
+  ENABLE_EXCAVATOR_TRUE=
+  ENABLE_EXCAVATOR_FALSE='#'
 else
-  ENABLE_CARRIZO_TRUE='#'
-  ENABLE_CARRIZO_FALSE=
+  ENABLE_EXCAVATOR_TRUE='#'
+  ENABLE_EXCAVATOR_FALSE=
 fi
 
  if echo $configs | grep -q cortex-a15; then
@@ -8595,12 +9186,12 @@ else
   ENABLE_CORTEX_A9_FALSE=
 fi
 
- if echo $configs | grep -q dunnington; then
-  ENABLE_DUNNINGTON_TRUE=
-  ENABLE_DUNNINGTON_FALSE='#'
+ if echo $configs | grep -q core2; then
+  ENABLE_CORE2_TRUE=
+  ENABLE_CORE2_FALSE='#'
 else
-  ENABLE_DUNNINGTON_TRUE='#'
-  ENABLE_DUNNINGTON_FALSE=
+  ENABLE_CORE2_TRUE='#'
+  ENABLE_CORE2_FALSE=
 fi
 
  if echo $configs | grep -q haswell; then
@@ -8679,6 +9270,15 @@ fi
 else
   ENABLE_INTEL_COMPILER_TRUE='#'
   ENABLE_INTEL_COMPILER_FALSE=
+fi
+
+
+ if test `uname -s` = Darwin; then
+  IS_OSX_TRUE=
+  IS_OSX_FALSE='#'
+else
+  IS_OSX_TRUE='#'
+  IS_OSX_FALSE=
 fi
 
 
@@ -22695,7 +23295,7 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 mkdir -p bin
 
-ac_config_files="$ac_config_files Makefile src/configs/foreach_type.h src/configs/foreach_config.h src/configs/foreach_config_and_type.h src/configs/configs.hpp"
+ac_config_files="$ac_config_files Makefile src/configs/foreach_type.h src/configs/foreach_config.h src/configs/foreach_config_and_type.h src/configs/include_configs.hpp"
 
 
 ac_config_commands="$ac_config_commands tblis_config.h"
@@ -22869,8 +23469,8 @@ if test -z "${ENABLE_BULLDOZER_TRUE}" && test -z "${ENABLE_BULLDOZER_FALSE}"; th
   as_fn_error $? "conditional \"ENABLE_BULLDOZER\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${ENABLE_CARRIZO_TRUE}" && test -z "${ENABLE_CARRIZO_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_CARRIZO\" was never defined.
+if test -z "${ENABLE_EXCAVATOR_TRUE}" && test -z "${ENABLE_EXCAVATOR_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_EXCAVATOR\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_CORTEX_A15_TRUE}" && test -z "${ENABLE_CORTEX_A15_FALSE}"; then
@@ -22881,8 +23481,8 @@ if test -z "${ENABLE_CORTEX_A9_TRUE}" && test -z "${ENABLE_CORTEX_A9_FALSE}"; th
   as_fn_error $? "conditional \"ENABLE_CORTEX_A9\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${ENABLE_DUNNINGTON_TRUE}" && test -z "${ENABLE_DUNNINGTON_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_DUNNINGTON\" was never defined.
+if test -z "${ENABLE_CORE2_TRUE}" && test -z "${ENABLE_CORE2_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_CORE2\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_HASWELL_TRUE}" && test -z "${ENABLE_HASWELL_FALSE}"; then
@@ -22915,6 +23515,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_INTEL_COMPILER_TRUE}" && test -z "${ENABLE_INTEL_COMPILER_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_INTEL_COMPILER\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${IS_OSX_TRUE}" && test -z "${IS_OSX_FALSE}"; then
+  as_fn_error $? "conditional \"IS_OSX\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
@@ -23985,7 +24589,7 @@ do
     "src/configs/foreach_type.h") CONFIG_FILES="$CONFIG_FILES src/configs/foreach_type.h" ;;
     "src/configs/foreach_config.h") CONFIG_FILES="$CONFIG_FILES src/configs/foreach_config.h" ;;
     "src/configs/foreach_config_and_type.h") CONFIG_FILES="$CONFIG_FILES src/configs/foreach_config_and_type.h" ;;
-    "src/configs/configs.hpp") CONFIG_FILES="$CONFIG_FILES src/configs/configs.hpp" ;;
+    "src/configs/include_configs.hpp") CONFIG_FILES="$CONFIG_FILES src/configs/include_configs.hpp" ;;
     "tblis_config.h") CONFIG_COMMANDS="$CONFIG_COMMANDS tblis_config.h" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
@@ -25810,5 +26414,3 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-
-rm config.h

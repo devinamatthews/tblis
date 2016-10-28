@@ -3,6 +3,11 @@
 
 #include "tblis_config.h"
 
+#include <stdlib.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+
 #define TBLIS_STRINGIZE_(...) #__VA_ARGS__
 #define TBLIS_STRINGIZE(...) TBLIS_STRINGIZE_(__VA_ARGS__)
 #define TBLIS_CONCAT_(x,y) x##y

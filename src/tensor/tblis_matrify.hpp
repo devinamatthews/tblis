@@ -2,10 +2,10 @@
 #define _TBLIS_MATRIFY_HPP_
 
 #include "../../tblis_config.h"
+#include "../3m/packm.hpp"
+#include "../matrix/tensor_matrix.hpp"
 #include "../util/marray.hpp"
 #include "tblis_configs.hpp"
-#include "tblis_packm.hpp"
-#include "tblis_tensor_matrix.hpp"
 
 namespace tblis
 {

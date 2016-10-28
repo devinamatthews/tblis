@@ -216,14 +216,25 @@ typedef struct
     int gid;
 } tci_comm_t;
 
+typedef enum
+{
+    TCI_EVENLY         = (1<<1),
+    TCI_CYCLIC         = (2<<1),
+    TCI_BLOCK_CYCLIC   = (3<<1),
+    TCI_BLOCKED        = (4<<1),
+    TCI_NO_CONTEXT     =    0x1
+} tci_gang_t;
+
+extern const tci_comm_t* const tci_single;
+
 int tci_comm_init_single(tci_comm_t* comm);
 
 int tci_comm_init(tci_comm_t* comm, tci_context_t* context,
-                  int tid, int ngang, int gid);
+                  int nthread, int tid, int ngang, int gid);
 
 int tci_comm_destroy(tci_comm_t* comm);
 
-bool tci_comm_is_master(const tci_comm_t* comm);
+int tci_comm_is_master(const tci_comm_t* comm);
 
 int tci_comm_barrier(tci_comm_t* comm);
 
@@ -231,13 +242,8 @@ int tci_comm_bcast(tci_comm_t* comm, void** object, int root);
 
 int tci_comm_bcast_nowait(tci_comm_t* comm, void** object, int root);
 
-int tci_comm_gang_evenly(tci_comm_t* parent, tci_comm_t* child, int n);
-
-int tci_comm_gang_block_cyclic(tci_comm_t* parent, tci_comm_t* child, int n, int bs);
-
-int tci_comm_gang_blocked(tci_comm_t* parent, tci_comm_t* child, int n);
-
-int tci_comm_gang_cyclic(tci_comm_t* parent, tci_comm_t* child, int n);
+int tci_comm_gang(tci_comm_t* parent, tci_comm_t* child,
+                  int type, int n, int bs);
 
 void tci_comm_distribute_over_gangs(tci_comm_t* comm, int64_t range,
                                     int64_t granularity, int64_t* first,
@@ -262,8 +268,6 @@ void tci_comm_distribute_over_threads_2d(tci_comm_t* comm, int64_t range_m,
                                          int64_t* max_n);
 
 typedef void (*tci_thread_func_t)(tci_comm_t*, void*);
-
-int tci_get_env(const char* env, int fallback);
 
 int tci_parallelize(tci_thread_func_t func, void* payload, int nthread, int arity);
 
@@ -396,30 +400,38 @@ class communicator
     public:
         communicator()
         {
-            tci_comm_init_single(&_comm);
+            tci_comm_init_single(*this);
         }
 
         ~communicator()
         {
-            tci_comm_destroy(&_comm);
+            tci_comm_destroy(*this);
         }
 
         communicator(const communicator&) = delete;
 
-        communicator(communicator&&) = default;
+        communicator(communicator&& other)
+        : _comm(other._comm)
+        {
+            other._comm.context = nullptr;
+        }
 
         communicator& operator=(const communicator&) = delete;
 
-        communicator& operator=(communicator&&) = default;
+        communicator& operator=(communicator&& other)
+        {
+            std::swap(_comm, other._comm);
+            return *this;
+        }
 
         bool master() const
         {
-            return tci_comm_is_master(&_comm);
+            return tci_comm_is_master(*this);
         }
 
-        void barrier()
+        void barrier() const
         {
-            int ret = tci_comm_barrier(&_comm);
+            int ret = tci_comm_barrier(*this);
             if (ret != 0) throw std::system_error(ret, std::system_category());
         }
 
@@ -444,73 +456,49 @@ class communicator
         }
 
         template <typename T>
-        void broadcast(T*& object, int root=0)
+        void broadcast(T*& object, int root=0) const
         {
-            tci_comm_bcast(&_comm, (void**)&object, root);
+            tci_comm_bcast(*this, (void**)&object, root);
         }
 
         template <typename T>
-        void broadcast_nowait(T*& object, int root=0)
+        void broadcast_nowait(T*& object, int root=0) const
         {
-            tci_comm_bcast_nowait(&_comm, (void**)&object, root);
+            tci_comm_bcast_nowait(*this, (void**)&object, root);
         }
 
-        communicator gang_evenly(int n)
+        communicator gang(int type, int n, int bs=0) const
         {
             communicator child;
-            int ret = tci_comm_gang_evenly(&_comm, &child._comm, n);
-            if (ret != 0) throw std::system_error(ret, std::system_category());
-            return child;
-        }
-
-        communicator gang_block_cyclic(int n, int bs)
-        {
-            communicator child;
-            int ret = tci_comm_gang_block_cyclic(&_comm, &child._comm, n, bs);
-            if (ret != 0) throw std::system_error(ret, std::system_category());
-            return child;
-        }
-
-        communicator gang_blocked(int n)
-        {
-            communicator child;
-            int ret = tci_comm_gang_blocked(&_comm, &child._comm, n);
-            if (ret != 0) throw std::system_error(ret, std::system_category());
-            return child;
-        }
-
-        communicator gang_cyclic(int n)
-        {
-            communicator child;
-            int ret = tci_comm_gang_cyclic(&_comm, &child._comm, n);
+            int ret = tci_comm_gang(*this, &child._comm, type, n, bs);
             if (ret != 0) throw std::system_error(ret, std::system_category());
             return child;
         }
 
         std::tuple<int64_t,int64_t,int64_t>
-        distribute_over_gangs(int64_t range, int64_t granularity=1)
+        distribute_over_gangs(int64_t range, int64_t granularity=1) const
         {
             int64_t first, last, max;
-            tci_comm_distribute_over_gangs(&_comm, range, granularity,
+            tci_comm_distribute_over_gangs(*this, range, granularity,
                                            &first, &last, &max);
             return {first, last, max};
         }
 
         std::tuple<int64_t,int64_t,int64_t>
-        distribute_over_threads(int64_t range, int64_t granularity=1)
+        distribute_over_threads(int64_t range, int64_t granularity=1) const
         {
             int64_t first, last, max;
-            tci_comm_distribute_over_threads(&_comm, range, granularity,
+            tci_comm_distribute_over_threads(*this, range, granularity,
                                              &first, &last, &max);
             return {first, last, max};
         }
 
         std::tuple<int64_t,int64_t,int64_t,int64_t,int64_t,int64_t>
         distribute_over_gangs_2d(int64_t range_m, int64_t range_n,
-                                 int64_t granularity_m=1, int64_t granularity_n=1)
+                                 int64_t granularity_m=1, int64_t granularity_n=1) const
         {
             int64_t first_m, last_m, max_m, first_n, last_n, max_n;
-            tci_comm_distribute_over_gangs_2d(&_comm, range_m, range_n,
+            tci_comm_distribute_over_gangs_2d(*this, range_m, range_n,
                                               granularity_m, granularity_n,
                                               &first_m, &last_m, &max_m,
                                               &first_n, &last_n, &max_n);
@@ -519,19 +507,17 @@ class communicator
 
         std::tuple<int64_t,int64_t,int64_t,int64_t,int64_t,int64_t>
         distribute_over_threads_2d(int64_t range_m, int64_t range_n,
-                                   int64_t granularity_m=1, int64_t granularity_n=1)
+                                   int64_t granularity_m=1, int64_t granularity_n=1) const
         {
             int64_t first_m, last_m, max_m, first_n, last_n, max_n;
-            tci_comm_distribute_over_threads_2d(&_comm, range_m, range_n,
+            tci_comm_distribute_over_threads_2d(*this, range_m, range_n,
                                                 granularity_m, granularity_n,
                                                 &first_m, &last_m, &max_m,
                                                 &first_n, &last_n, &max_n);
             return {first_m, last_m, max_m, first_n, last_n, max_n};
         }
         
-        operator tci_comm_t*() { return &_comm; }
-        
-        operator const tci_comm_t*() const { return &_comm; }
+        operator tci_comm_t*() const { return const_cast<tci_comm_t*>(&_comm); }
 
     protected:
         tci_comm_t _comm;
@@ -543,15 +529,14 @@ namespace detail
 template <typename Body>
 void body_wrapper(tci_comm_t* comm, void* data)
 {
-    const Body& body = *static_cast<Body*>(data);
-    Body body_copy(body);
-    body_copy(*reinterpret_cast<communicator*>(comm));
+    Body& body = *static_cast<Body*>(data);
+    body(*reinterpret_cast<communicator*>(comm));
 }
 
 }
 
 template <typename Body>
-void parallelize(const Body& body, int nthread=0, int arity=0)
+void parallelize(Body&& body, int nthread, int arity=0)
 {
     // The first line is necessary to trigger template instantiation
     tci_thread_func_t func = detail::body_wrapper<Body>;
@@ -576,7 +561,8 @@ class prime_factorization
         tci_prime_factors_t _factors;
 };
 
-std::pair<int,int> partition_2x2(int nthreads, int64_t work1, int64_t work2)
+inline std::pair<int,int>
+partition_2x2(int nthreads, int64_t work1, int64_t work2)
 {
     int nt1, nt2;
     tci_partition_2x2(nthreads, work1, work2, &nt1, &nt2);

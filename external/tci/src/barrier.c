@@ -74,7 +74,7 @@ int tci_barrier_init(tci_barrier_t* barrier, int nthread, int group_size)
     barrier->group_size = group_size;
     barrier->is_tree = (group_size > 1 && group_size < nthread);
 
-    if (barrier->is_tree)
+    if (!barrier->is_tree)
     {
         return tci_barrier_node_init(&barrier->barrier.single, NULL, nthread);
     }

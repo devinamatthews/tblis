@@ -1,9 +1,9 @@
 #include "../../tblis_config.h"
+#include "../tensor/tensor.hpp"
 #include "tblis_contract.hpp"
 
 #include "tblis_gemm_template.hpp"
 #include "tblis_matrify.hpp"
-#include "tblis_tensor_detail.hpp"
 
 namespace tblis
 {

@@ -1208,6 +1208,7 @@ AC_SUBST([am__untar])
 
 m4_include([m4/ax_blas.m4])
 m4_include([m4/ax_check_define.m4])
+m4_include([m4/ax_check_sign.m4])
 m4_include([m4/ax_cxx_compile_stdcxx_11.m4])
 m4_include([m4/ax_prefix_config_h.m4])
 m4_include([m4/libtool.m4])

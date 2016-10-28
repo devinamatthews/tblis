@@ -1,6 +1,6 @@
+#include "../3m/mult.h"
 #include "tblis_outer_prod.hpp"
 
-#include "tblis_gemm.hpp"
 #include "tblis_matricize.hpp"
 #include "tblis_transpose.hpp"
 

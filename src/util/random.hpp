@@ -55,7 +55,7 @@ enable_if_integral_t<T,T> random_number(T mn, T mx)
 template <typename T>
 enable_if_integral_t<T,T> random_number(T mx)
 {
-    return random_integer<T>(0, mx);
+    return random_number<T>(0, mx);
 }
 
 /*
@@ -105,7 +105,7 @@ bool random_choice()
 template <typename Weights>
 int random_weighted_choice(const Weights& w)
 {
-    using T = Weights::value_type;
+    using T = typename Weights::value_type;
 
     int n = w.size();
     TBLIS_ASSERT(n > 0);

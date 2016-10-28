@@ -1,7 +1,6 @@
 #include "reduce.h"
 
 #include "configs/configs.hpp"
-#include "util/assert.h"
 
 namespace tblis
 {
@@ -9,59 +8,74 @@ namespace tblis
 extern "C"
 {
 
-void tblis_matrix_reduce(len_type m, len_type n,
-                         const void* A, type_t type_A,
-                         stride_type rs_A, stride_type cs_A,
-                         void* norm, type_t type_norm)
+void tblis_matrix_reduce_int(const communicator& comm, const config& cfg,
+                             reduce_t op, const tblis_matrix& A,
+                             tblis_scalar& result, len_type& idx)
 {
-    parallelize
-    (
-        [=](communicator& comm)
+    TBLIS_ASSERT(A.type == result.type);
+
+    TBLIS_WITH_TYPE_AS(A.type, T,
+    {
+        typedef std::numeric_limits<real_type_t<T>> limits;
+
+        switch (op)
         {
-            tblis_matrix_reduce_coll(comm, m, n, A, type_A, rs_A, cs_A,
-                                     norm, type_norm);
+            case REDUCE_SUM:
+            case REDUCE_SUM_ABS:
+            case REDUCE_MAX_ABS:
+            case REDUCE_NORM_2:
+                result.get<T>() = T();
+                break;
+            case REDUCE_MAX:
+                result.get<T>() = limits::min();
+                break;
+            case REDUCE_MIN:
+            case REDUCE_MIN_ABS:
+                result.get<T>() = limits::max();
+                break;
         }
-    );
+
+        idx = -1;
+
+        if (A.rs < A.cs)
+        {
+            for (len_type j = 0;j < A.n;j++)
+            {
+                int old_idx = idx;
+                idx = -1;
+
+                cfg.reduce_ukr.call<T>(comm, op, A.m,
+                    (const T*)A.data + j*A.cs, A.rs, result.get<T>(), idx);
+
+                if (idx != -1) idx += j*A.cs;
+                else idx = old_idx;
+            }
+        }
+        else
+        {
+            for (len_type i = 0;i < A.m;i++)
+            {
+                int old_idx = idx;
+                idx = -1;
+
+                cfg.reduce_ukr.call<T>(comm, op, A.n,
+                    (const T*)A.data + i*A.rs, A.cs, result.get<T>(), idx);
+
+                if (idx != -1) idx += i*A.rs;
+                else idx = old_idx;
+            }
+        }
+
+        reduce(comm, op, result.get<T>(), idx);
+    })
 }
 
-void tblis_matrix_reduce_single(len_type m, len_type n,
-                                const void* A, type_t type_A,
-                                stride_type rs_A, stride_type cs_A,
-                                void* norm, type_t type_norm)
+void tblis_matrix_reduce(const tblis_comm* comm, const tblis_config* cfg,
+                         reduce_t op, const tblis_matrix* A,
+                         tblis_scalar* result, len_type* idx)
 {
-    communicator comm;
-    tblis_matrix_reduce_coll(comm, m, n, A, type_A, rs_A, cs_A,
-                             norm, type_norm);
-}
-
-void tblis_matrix_reduce_coll(tci_comm_t* comm,
-                              len_type m, len_type n,
-                              const void* A, type_t type_A,
-                              stride_type rs_A, stride_type cs_A,
-                              void* norm, type_t type_norm)
-{
-    TBLIS_ASSERT(type_A == type_norm);
-
-    if (type_A == TYPE_SINGLE)
-    {
-        //TODO
-    }
-    else if (type_A == TYPE_DOUBLE)
-    {
-        //TODO
-    }
-    else if (type_A == TYPE_SCOMPLEX)
-    {
-        //TODO
-    }
-    else if (type_A == TYPE_DCOMPLEX)
-    {
-        //TODO
-    }
-    else
-    {
-        TBLIS_ASSERT(0);
-    }
+    parallelize_if(tblis_matrix_reduce_int, comm, get_config(cfg),
+                   op, *A, *result, *idx);
 }
 
 }

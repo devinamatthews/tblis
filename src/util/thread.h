@@ -28,6 +28,31 @@ namespace tblis
 using namespace tci;
 
 template <typename T>
+void reduce_init(reduce_t op, T& value, len_type& idx)
+{
+    typedef std::numeric_limits<real_type_t<T>> limits;
+
+    switch (op)
+    {
+        case REDUCE_SUM:
+        case REDUCE_SUM_ABS:
+        case REDUCE_MAX_ABS:
+        case REDUCE_NORM_2:
+            value = T();
+            break;
+        case REDUCE_MAX:
+            value = limits::min();
+            break;
+        case REDUCE_MIN:
+        case REDUCE_MIN_ABS:
+            value = limits::max();
+            break;
+    }
+
+    idx = -1;
+}
+
+template <typename T>
 void reduce(const communicator& comm, reduce_t op, T& value, len_type& idx)
 {
     if (comm.num_threads() == 1) return;

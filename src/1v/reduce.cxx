@@ -11,31 +11,15 @@ void reduce_int(const communicator& comm, const config& cfg,
 {
     TBLIS_ASSERT(A.type == result.type);
 
+    len_type n_min, n_max;
+    std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(A.n);
+
     TBLIS_WITH_TYPE_AS(A.type, T,
     {
-        typedef std::numeric_limits<real_type_t<T>> limits;
+        reduce_init(op, result.get<T>(), idx);
 
-        switch (op)
-        {
-            case REDUCE_SUM:
-            case REDUCE_SUM_ABS:
-            case REDUCE_MAX_ABS:
-            case REDUCE_NORM_2:
-                result.get<T>() = T();
-                break;
-            case REDUCE_MAX:
-                result.get<T>() = limits::min();
-                break;
-            case REDUCE_MIN:
-            case REDUCE_MIN_ABS:
-                result.get<T>() = limits::max();
-                break;
-        }
-
-        idx = -1;
-
-        cfg.reduce_ukr.call<T>(comm, op, A.n,
-            (const T*)A.data, A.inc, result.get<T>(), idx);
+        cfg.reduce_ukr.call<T>(op, n_max-n_min,
+            (const T*)A.data + n_min*A.inc, A.inc, result.get<T>(), idx);
 
         reduce(comm, op, result.get<T>(), idx);
     })

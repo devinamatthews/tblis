@@ -10,19 +10,13 @@ namespace tblis
 
 template <typename T>
 using reduce_ukr_t =
-    void (*)(const communicator& comm, reduce_t op, len_type n,
+    void (*)(reduce_t op, len_type n,
              const T* A, stride_type inc_A, T& value, len_type& idx);
 
 template <typename T>
-void reduce_ukr_def(const communicator& comm, reduce_t op, len_type n,
+void reduce_ukr_def(reduce_t op, len_type n,
                     const T* A, stride_type inc_A, T& value, len_type& idx)
 {
-    len_type first, last;
-    std::tie(first, last, std::ignore) = comm.distribute_over_threads(n);
-
-    A += first*inc_A;
-    n = last-first;
-
     if (op == REDUCE_SUM)
     {
         TBLIS_SPECIAL_CASE(inc_A == 1,
@@ -46,7 +40,7 @@ void reduce_ukr_def(const communicator& comm, reduce_t op, len_type n,
                 if (A[i*inc_A] > value)
                 {
                     value = A[i*inc_A];
-                    idx = (first+i)*inc_A;
+                    idx = i*inc_A;
                 }
             }
         })
@@ -60,7 +54,7 @@ void reduce_ukr_def(const communicator& comm, reduce_t op, len_type n,
                 if (std::abs(A[i*inc_A]) > value)
                 {
                     value = std::abs(A[i*inc_A]);
-                    idx = (first+i)*inc_A;
+                    idx = i*inc_A;
                 }
             }
         })
@@ -74,7 +68,7 @@ void reduce_ukr_def(const communicator& comm, reduce_t op, len_type n,
                 if (A[i*inc_A] < value)
                 {
                     value = A[i*inc_A];
-                    idx = (first+i)*inc_A;
+                    idx = i*inc_A;
                 }
             }
         })
@@ -88,7 +82,7 @@ void reduce_ukr_def(const communicator& comm, reduce_t op, len_type n,
                 if (std::abs(A[i*inc_A]) < value)
                 {
                     value = std::abs(A[i*inc_A]);
-                    idx = (first+i)*inc_A;
+                    idx = i*inc_A;
                 }
             }
         })

@@ -22,16 +22,10 @@ using tblis::dcomplex;
 
 using namespace std;
 using namespace tblis;
-using namespace tblis::util;
 using namespace tblis::impl;
 
 namespace tblis
 {
-namespace util
-{
-mt19937 engine;
-}
-}
 
 range_t<stride_type> parse_range(const string& s)
 {

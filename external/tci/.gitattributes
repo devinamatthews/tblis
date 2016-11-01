@@ -1,0 +1,14 @@
+ltmain.sh linguist-vendored
+compile linguist-vendored
+config.guess linguist-vendored
+depcomp linguist-vendored
+install-sh linguist-vendored
+missing linguist-vendored
+aclocal.m4 linguist-vendored
+m4/libtool.m4 linguist-vendored
+m4/ltoptions.m4 linguist-vendored
+m4/ltsugar.m4 linguist-vendored
+m4/ltversion.m4 linguist-vendored
+m4/lt~obsolete.m4 linguist-vendored
+Makefile.in linguist-vendored
+src/tci.h.in linguist-language=C

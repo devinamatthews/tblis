@@ -14,38 +14,24 @@ void tblis_matrix_reduce_int(const communicator& comm, const config& cfg,
 {
     TBLIS_ASSERT(A.type == result.type);
 
+    len_type m_min, m_max, n_min, n_max;
+    std::tie(m_min, m_max, std::ignore,
+             n_min, n_max, std::ignore) =
+        comm.distribute_over_threads_2d(A.m, A.n);
+
     TBLIS_WITH_TYPE_AS(A.type, T,
     {
-        typedef std::numeric_limits<real_type_t<T>> limits;
-
-        switch (op)
-        {
-            case REDUCE_SUM:
-            case REDUCE_SUM_ABS:
-            case REDUCE_MAX_ABS:
-            case REDUCE_NORM_2:
-                result.get<T>() = T();
-                break;
-            case REDUCE_MAX:
-                result.get<T>() = limits::min();
-                break;
-            case REDUCE_MIN:
-            case REDUCE_MIN_ABS:
-                result.get<T>() = limits::max();
-                break;
-        }
-
-        idx = -1;
+        reduce_init(op, result.get<T>(), idx);
 
         if (A.rs < A.cs)
         {
-            for (len_type j = 0;j < A.n;j++)
+            for (len_type j = n_min;j < n_max;j++)
             {
                 int old_idx = idx;
                 idx = -1;
 
-                cfg.reduce_ukr.call<T>(comm, op, A.m,
-                    (const T*)A.data + j*A.cs, A.rs, result.get<T>(), idx);
+                cfg.reduce_ukr.call<T>(op, m_max-m_min,
+                    (const T*)A.data+ m_min*A.rs + j*A.cs, A.rs, result.get<T>(), idx);
 
                 if (idx != -1) idx += j*A.cs;
                 else idx = old_idx;
@@ -53,13 +39,13 @@ void tblis_matrix_reduce_int(const communicator& comm, const config& cfg,
         }
         else
         {
-            for (len_type i = 0;i < A.m;i++)
+            for (len_type i = m_min;i < m_max;i++)
             {
                 int old_idx = idx;
                 idx = -1;
 
-                cfg.reduce_ukr.call<T>(comm, op, A.n,
-                    (const T*)A.data + i*A.rs, A.cs, result.get<T>(), idx);
+                cfg.reduce_ukr.call<T>(op, n_max-n_min,
+                    (const T*)A.data+ i*A.rs + n_min*A.cs, A.cs, result.get<T>(), idx);
 
                 if (idx != -1) idx += i*A.rs;
                 else idx = old_idx;

@@ -1,11 +1,10 @@
-#ifndef _TBLIS_MATRIFY_HPP_
-#define _TBLIS_MATRIFY_HPP_
+#ifndef _TBLIS_NODES_MATRIFY_HPP_
+#define _TBLIS_NODES_MATRIFY_HPP_
 
-#include "../../tblis_config.h"
-#include "../3m/packm.hpp"
-#include "../matrix/tensor_matrix.hpp"
-#include "../util/marray.hpp"
-#include "tblis_configs.hpp"
+#include "util/basic_types.h"
+#include "util/thread.h"
+
+#include "configs/configs.hpp"
 
 namespace tblis
 {
@@ -16,7 +15,7 @@ namespace detail
 }
 
 template <typename T, len_type MR, len_type NR>
-void BlockScatter(thread_communicator& comm, tensor_matrix<T>& A, stride_type* rs, stride_type* cs, stride_type* rscat, stride_type* cscat)
+void BlockScatter(const communicator& comm, tensor_matrix<T>& A, stride_type* rs, stride_type* cs, stride_type* rscat, stride_type* cscat)
 {
     len_type m = A.length(0);
     len_type n = A.length(1);
@@ -46,7 +45,7 @@ template <len_type MR, len_type NR, int Mat> struct MatrifyAndRun;
 template <len_type MR, len_type NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT_A>
 {
     template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
-    MatrifyAndRun(Parent& parent, const gemm_thread_config& cfg, thread_communicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
+    MatrifyAndRun(Parent& parent, const gemm_thread_config& cfg, const communicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         //BlockScatter<T,MR,NR>(comm, A, parent.rs, parent.cs, parent.rscat, parent.cscat);
         A.template fill_block_scatter<MR>(0, parent.rs, parent.rscat);
@@ -60,7 +59,7 @@ template <len_type MR, len_type NR> struct MatrifyAndRun<MR, NR, matrix_constant
 template <len_type MR, len_type NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT_B>
 {
     template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
-    MatrifyAndRun(Parent& parent, const gemm_thread_config& cfg, thread_communicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
+    MatrifyAndRun(Parent& parent, const gemm_thread_config& cfg, const communicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         //BlockScatter<T,MR,NR>(comm, B, parent.rs, parent.cs, parent.rscat, parent.cscat);
         B.template fill_block_scatter<MR>(0, parent.rs, parent.rscat);
@@ -74,7 +73,7 @@ template <len_type MR, len_type NR> struct MatrifyAndRun<MR, NR, matrix_constant
 template <len_type MR, len_type NR> struct MatrifyAndRun<MR, NR, matrix_constants::MAT_C>
 {
     template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
-    MatrifyAndRun(Parent& parent, const gemm_thread_config& cfg, thread_communicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
+    MatrifyAndRun(Parent& parent, const gemm_thread_config& cfg, const communicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         //BlockScatter<T,MR,NR>(comm, C, parent.rs, parent.cs, parent.rscat, parent.cscat);
         C.template fill_block_scatter<MR>(0, parent.rs, parent.rscat);
@@ -85,40 +84,34 @@ template <len_type MR, len_type NR> struct MatrifyAndRun<MR, NR, matrix_constant
     }
 };
 
-template <typename Config, int DimM, int DimN, int Mat>
+template <int Mat, MemoryPool& Pool, typename Child>
 struct Matrify
 {
-    template <typename T, template <typename> class Child, template <typename> class... Children>
     struct run
     {
-        typename Child<Config>::template run<T, Children...> child;
+        Child child;
+        MemoryPool::Block scat_buffer;
+        stride_type* rscat = nullptr;
+        stride_type* cscat = nullptr;
+        stride_type* rs = nullptr;
+        stride_type* cs = nullptr;
 
-        run() {}
-
-        run(const run& other)
-        : child(other.child), rscat(other.rscat), cscat(other.cscat),
-          rs(other.rs), cs(other.cs) {}
-
-        MemoryPool::Block<stride_type> scat_buffer;
-        stride_type* rscat = NULL;
-        stride_type* cscat = NULL;
-        stride_type* rs = NULL;
-        stride_type* cs = NULL;
-
-        template <typename MatrixA, typename MatrixB, typename MatrixC>
-        void operator()(const gemm_thread_config& cfg, thread_communicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
+        template <typename T, typename MatrixA, typename MatrixB, typename MatrixC>
+        void operator()(const communicator& comm, const config& cfg,
+                        T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
         {
             using namespace matrix_constants;
 
-            using MB = typename config_traits<Config>::template BS<T,DimM>;
-            using NB = typename config_traits<Config>::template BS<T,DimN>;
-            constexpr len_type MR = MB::def;
-            constexpr len_type NR = NB::def;
+            const len_type MR = (Mat == MAT_A ? cfg.gemm_mr.def<T>() :
+                                 Mat == MAT_B ? cfg.gemm_kr.def<T>()
+                                        : cfg.gemm_nr.def<T>());
+            const len_type ME = (!Trans ? cfg.gemm_mr.extent<T>()
+                                        : cfg.gemm_nr.extent<T>());
 
             len_type m = (Mat == MAT_A ? A.length(0) : Mat == MAT_B ? B.length(0) : C.length(0));
             len_type n = (Mat == MAT_A ? A.length(1) : Mat == MAT_B ? B.length(1) : C.length(1));
 
-            if (rscat == NULL)
+            if (rscat == nullptr)
             {
                 if (comm.master())
                 {
@@ -147,10 +140,9 @@ using MatrifyB = Matrify<Config, matrix_constants::DIM_KR, matrix_constants::DIM
 template <typename Config>
 using MatrifyC = Matrify<Config, matrix_constants::DIM_MR, matrix_constants::DIM_NR, matrix_constants::MAT_C>;
 
-template <typename Config, int DimM, int DimN, int Mat>
+template <int Mat, MemoryPool& Pool, typename Child>
 struct MatrifyAndPack
 {
-    template <typename T, template <typename> class... Children>
     struct run : Matrify<Config, DimM, DimN, Mat>::template run<T, Pack<Config, DimM, DimN, Mat>, Children...>
     {
         typedef typename Matrify<Config, DimM, DimN, Mat>::template run<T, Pack<Config, DimM, DimN, Mat>, Children...> Sib;
@@ -161,8 +153,9 @@ struct MatrifyAndPack
         using Sib::rs;
         using Sib::cs;
 
-        template <typename MatrixA, typename MatrixB, typename MatrixC>
-        void operator()(const gemm_thread_config& cfg, thread_communicator& comm, T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
+        template <typename T, typename MatrixA, typename MatrixB, typename MatrixC>
+        void operator()(const communicator& comm, const config& cfg,
+                        T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
         {
             using namespace matrix_constants;
 
@@ -181,7 +174,7 @@ struct MatrifyAndPack
             auto& pack_buffer = child.pack_buffer;
             T*& pack_ptr = child.pack_ptr;
 
-            if (pack_ptr == NULL)
+            if (!pack_ptr)
             {
                 if (comm.master())
                 {

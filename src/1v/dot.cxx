@@ -13,13 +13,16 @@ void dot_int(const communicator& comm, const config& cfg,
     TBLIS_ASSERT(A.type == B.type);
     TBLIS_ASSERT(A.type == result.type);
 
+    len_type n_min, n_max;
+    std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(A.n);
+
     TBLIS_WITH_TYPE_AS(A.type, T,
     {
         result.get<T>() = T();
 
-        cfg.dot_ukr.call<T>(comm, A.n,
-            A.conj, (const T*)A.data, A.inc,
-            B.conj, (const T*)B.data, B.inc, result.get<T>());
+        cfg.dot_ukr.call<T>(n_max-n_min,
+            A.conj, (const T*)A.data + n_min*A.inc, A.inc,
+            B.conj, (const T*)B.data + n_min*B.inc, B.inc, result.get<T>());
 
         len_type dummy;
         reduce(comm, REDUCE_SUM, result.get<T>(), dummy);

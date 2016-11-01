@@ -8,13 +8,19 @@ namespace tblis
 void scale_int(const communicator& comm, const config& cfg,
                tblis_vector& A)
 {
+    len_type n_min, n_max;
+    std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(A.n);
+
     TBLIS_WITH_TYPE_AS(A.type, T,
     {
-        cfg.scale_ukr.call<T>(comm, A.n,
-            A.alpha<T>(), A.conj, (T*)A.data, A.inc);
+        cfg.scale_ukr.call<T>(n_max-n_min,
+            A.alpha<T>(), A.conj, (T*)A.data + n_min*A.inc, A.inc);
 
-        A.alpha<T>() = T(1);
-        A.conj = false;
+        if (comm.master())
+        {
+            A.alpha<T>() = T(1);
+            A.conj = false;
+        }
     })
 }
 

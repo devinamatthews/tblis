@@ -10,13 +10,19 @@ void set_int(const communicator& comm, const config& cfg,
 {
     TBLIS_ASSERT(alpha.type == A.type);
 
+    len_type n_min, n_max;
+    std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(A.n);
+
     TBLIS_WITH_TYPE_AS(A.type, T,
     {
-        cfg.set_ukr.call<T>(comm, A.n,
-            alpha.get<T>(), (T*)A.data, A.inc);
+        cfg.set_ukr.call<T>(n_max-n_min,
+            alpha.get<T>(), (T*)A.data + n_min*A.inc, A.inc);
 
-        A.alpha<T>() = T(1);
-        A.conj = false;
+        if (comm.master())
+        {
+            A.alpha<T>() = T(1);
+            A.conj = false;
+        }
     })
 }
 

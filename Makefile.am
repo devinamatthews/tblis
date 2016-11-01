@@ -8,6 +8,12 @@ lib_libtblis_la_SOURCES = \
     src/1v/set.cxx \
     \
     src/1m/reduce.cxx \
+	\
+    src/1t/add.cxx \
+    src/1t/dot.cxx \
+    src/1t/reduce.cxx \
+    src/1t/scale.cxx \
+    src/1t/set.cxx \
     \
     src/3m/mult.cxx \
     \

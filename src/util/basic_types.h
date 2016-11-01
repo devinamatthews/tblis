@@ -107,19 +107,19 @@ using tensor = MArray::varray<T, Allocator>;
 using MArray::const_marray_view;
 using MArray::marray_view;
 
-template <typename T, unsigned ndim, typename Allocator=aligned_allocator<T>>
+template <typename T, unsigned ndim, typename Allocator=aligned_allocator<T,64>>
 using marray = MArray::marray<T, ndim, Allocator>;
 
 using MArray::const_matrix_view;
 using MArray::matrix_view;
 
-template <typename T, typename Allocator=aligned_allocator<T>>
+template <typename T, typename Allocator=aligned_allocator<T,64>>
 using matrix = MArray::matrix<T, Allocator>;
 
 using MArray::const_row_view;
 using MArray::row_view;
 
-template <typename T, typename Allocator=aligned_allocator<T>>
+template <typename T, typename Allocator=aligned_allocator<T,64>>
 using row = MArray::row<T, Allocator>;
 
 using MArray::Layout;
@@ -139,9 +139,7 @@ using MArray::range;
 namespace matrix_constants
 {
     enum {MAT_A, MAT_B, MAT_C};
-    enum {DIM_MR=0x0, DIM_NR=0x2, DIM_KR=0x4,
-          DIM_MC=0x1, DIM_NC=0x3, DIM_KC=0x5,
-          DIM_M=DIM_MR, DIM_N=DIM_NR, DIM_K=DIM_KR};
+    enum {DIM_M, DIM_N, DIM_K};
 }
 
 #else

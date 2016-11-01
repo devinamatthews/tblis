@@ -1,5 +1,5 @@
-#ifndef _TBLIS_3M_GEMM_UKR_HPP_
-#define _TBLIS_3M_GEMM_UKR_HPP_
+#ifndef _TBLIS_NODES_GEMM_UKR_HPP_
+#define _TBLIS_NODES_GEMM_UKR_HPP_
 
 #include "util/basic_types.h"
 #include "util/thread.h"
@@ -121,11 +121,6 @@ struct gemm_micro_kernel
             accum_utile(m, n, p_ab, rs_ab, cs_ab,
                         beta, p_c, rs_c, cs_c);
         }
-
-        //printf_locked("%p %f -- %d %d %d %ld %ld %f %f %p %p %f %f\n", p_c, pow((double)real(tblis_normfm(m, n, p_c, rs_c, cs_c)),2),
-        //              m, n, k, rs_c, cs_c, (double)real(alpha), (double)real(beta),
-        //              p_a, p_b, pow((double)real(tblis_normfv(MR*k, p_a, 1)),2),
-        //              pow((double)real(tblis_normfv(NR*k, p_b, 1)),2));
     }
 
     template <typename T>

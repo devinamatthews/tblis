@@ -10,19 +10,13 @@ namespace tblis
 
 template <typename T>
 using scale_ukr_t =
-    void (*)(const communicator& comm, len_type n,
+    void (*)(len_type n,
              T alpha, bool conj_A, T* A, stride_type inc_A);
 
 template <typename T>
-void scale_ukr_def(const communicator& comm, len_type n,
+void scale_ukr_def(len_type n,
                    T alpha, bool conj_A, T* A, stride_type inc_A)
 {
-    len_type first, last;
-    std::tie(first, last, std::ignore) = comm.distribute_over_threads(n);
-
-    A += first*inc_A;
-    n = last-first;
-
     TBLIS_SPECIAL_CASE(alpha == T(1),
     TBLIS_SPECIAL_CASE(is_complex<T>::value && conj_A,
     TBLIS_SPECIAL_CASE(inc_A == 1,

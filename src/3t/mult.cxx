@@ -11,8 +11,7 @@ namespace tblis
 
 namespace
 {
-    MemoryPool BuffersForA(4096);
-    MemoryPool BuffersForB(4096);
+    MemoryPool BuffersForScatter(4096);
 }
 
 struct gemm_thread_config

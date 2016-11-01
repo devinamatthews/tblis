@@ -57,7 +57,7 @@ void dot_int(const communicator& comm, const config& cfg,
     len_type n = stl_ext::prod(len_AB);
 
     len_type n_min, n_max;
-    std::tie(n_min, n_max, std::ignore) = comm.distribute_over_gangs(n);
+    std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(n);
 
     TBLIS_WITH_TYPE_AS(A.type, T,
     {
@@ -66,8 +66,8 @@ void dot_int(const communicator& comm, const config& cfg,
         bool conj_A = A.conj;
         bool conj_B = (conj_A ? !B.conj : B.conj);
 
-        const T* TBLIS_RESTRICT A_ = A.data;
-              T* TBLIS_RESTRICT B_ = B.data;
+        const T* TBLIS_RESTRICT A_ = (const T*)A.data;
+        const T* TBLIS_RESTRICT B_ = (const T*)B.data;
 
         iter_AB.position(n_min, A_, B_);
 

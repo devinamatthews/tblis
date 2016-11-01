@@ -10,22 +10,15 @@ namespace tblis
 
 template <typename T>
 using copy_ukr_t =
-    void (*)(const communicator& comm, len_type n,
+    void (*)(len_type n,
              T alpha, bool conj_A, const T* A, stride_type inc_A,
                                          T* B, stride_type inc_B);
 
 template <typename T>
-void copy_ukr_def(const communicator& comm, len_type n,
+void copy_ukr_def(len_type n,
                   T alpha, bool conj_A, const T* TBLIS_RESTRICT A, stride_type inc_A,
                                               T* TBLIS_RESTRICT B, stride_type inc_B)
 {
-    len_type first, last;
-    std::tie(first, last, std::ignore) = comm.distribute_over_threads(n);
-
-    A += first*inc_A;
-    B += first*inc_B;
-    n = last-first;
-
     TBLIS_SPECIAL_CASE(alpha == T(1),
     TBLIS_SPECIAL_CASE(is_complex<T>::value && conj_A,
     TBLIS_SPECIAL_CASE(inc_A == 1 && inc_B == 1,

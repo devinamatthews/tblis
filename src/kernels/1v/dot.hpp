@@ -10,22 +10,15 @@ namespace tblis
 
 template <typename T>
 using dot_ukr_t =
-    void (*)(const communicator& comm, len_type n,
+    void (*)(len_type n,
              bool conj_A, const T* A, stride_type inc_A,
              bool conj_B, const T* B, stride_type inc_B, T& value);
 
 template <typename T>
-void dot_ukr_def(const communicator& comm, len_type n,
+void dot_ukr_def(len_type n,
                  bool conj_A, const T* TBLIS_RESTRICT A, stride_type inc_A,
                  bool conj_B, const T* TBLIS_RESTRICT B, stride_type inc_B, T& value)
 {
-    len_type first, last;
-    std::tie(first, last, std::ignore) = comm.distribute_over_threads(n);
-
-    A += first*inc_A;
-    B += first*inc_B;
-    n = last-first;
-
     if (conj_A)
     {
         value = conj(value);

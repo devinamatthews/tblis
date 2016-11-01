@@ -1,5 +1,5 @@
-#ifndef _TBLIS_3M_PACKM_HPP_
-#define _TBLIS_3M_PACKM_HPP_
+#ifndef _TBLIS_NODES_PACKM_HPP_
+#define _TBLIS_NODES_PACKM_HPP_
 
 #include "util/thread.h"
 #include "util/basic_types.h"

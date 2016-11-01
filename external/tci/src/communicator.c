@@ -130,6 +130,7 @@ int tci_comm_gang(tci_comm_t* parent, tci_comm_t* child,
             new_nthread = TCI_MIN(bs, nt-block*bs);
         }
         break;
+        default: return EINVAL;
     }
 
     if (!parent->context || (type & TCI_NO_CONTEXT))

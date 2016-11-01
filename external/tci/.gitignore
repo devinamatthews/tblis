@@ -10,3 +10,4 @@ libtool
 src/tci.h
 .git.bak
 autom4te.cache/
+.ptp-sync-folder

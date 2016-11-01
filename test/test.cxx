@@ -11,6 +11,9 @@
 
 #include "tblis.h"
 
+#include "util/random.hpp"
+#include "external/stl_ext/include/iostream.hpp"
+
 using namespace std;
 using namespace tblis;
 
@@ -73,8 +76,6 @@ void gemm_ref(T alpha, const_matrix_view<T> A,
 
 vector<unsigned> permutation(int ndim, const label_type* from, const label_type* to)
 {
-    TBLIS_ASSERT(from.size() == to.size());
-
     vector<unsigned> p(ndim);
 
     for (size_t i = 0;i < ndim;i++)
@@ -1283,9 +1284,9 @@ void test_replicate(size_t N)
     }
 
     T ref_val = reduce(REDUCE_SUM, A, idx_A).first;
-    T add_b = reduce(REDUCE_SUM, B, idx_B, add_b).first;
+    T add_b = reduce(REDUCE_SUM, B, idx_B).first;
     add(scale, A, idx_A, scale, B, idx_B);
-    T calc_val = reduce(REDUCE_SUM, B, idx_B, calc_val).first;
+    T calc_val = reduce(REDUCE_SUM, B, idx_B).first;
     passfail("SUM", scale*(sz*ref_val+add_b), calc_val);
 
     ref_val = reduce(REDUCE_NORM_1, A, idx_A).first;
@@ -1317,12 +1318,12 @@ void test_dot(size_t N)
     passfail("NRM2", ref_val*ref_val, calc_val);
 
     B = T(1);
-    ref_val = reduce(REDUCE_SUM, A, idx_A, ref_val).first;
-    calc_val = dot(A, idx_A, B, idx_B, calc_val);
+    ref_val = reduce(REDUCE_SUM, A, idx_A).first;
+    calc_val = dot(A, idx_A, B, idx_B);
     passfail("UNIT", ref_val, calc_val);
 
     B = T(0);
-    calc_val = dot(A, idx_A, B, idx_B, calc_val);
+    calc_val = dot(A, idx_A, B, idx_B);
     passfail("ZERO", T(0), calc_val);
 }
 

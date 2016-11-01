@@ -6,12 +6,9 @@
 namespace tblis
 {
 
-template <typename T, len_type MB, len_type NB>
+template <typename T>
 class block_scatter_matrix
 {
-    static_assert(MB > 0, "MB must be positive");
-    static_assert(NB > 0, "NB must be positive");
-
     public:
         typedef size_t size_type;
         typedef const stride_type* scatter_type;
@@ -26,9 +23,7 @@ class block_scatter_matrix
         std::array<len_type, 2> len_;
         std::array<scatter_type, 2> block_scatter_;
         std::array<scatter_type, 2> scatter_;
-
-        constexpr static bool M_BLOCKED = MB > 1;
-        constexpr static bool N_BLOCKED = NB > 1;
+        std::array<len_type, 2> block_size_;
 
     public:
         block_scatter_matrix()
@@ -39,10 +34,10 @@ class block_scatter_matrix
         block_scatter_matrix(const block_scatter_matrix&) = default;
 
         block_scatter_matrix(len_type m, len_type n, pointer p,
-                             scatter_type rbs, scatter_type cbs,
-                             scatter_type rscat, scatter_type cscat)
+                             scatter_type rscat, len_type MB, scatter_type rbs,
+                             scatter_type cscat, len_type NB, scatter_type cbs)
         {
-            reset(m, n, p, rbs, cbs, rscat, cscat);
+            reset(m, n, p, rscat, MB, rbs, cscat, NB, cbs);
         }
 
         block_scatter_matrix& operator=(const block_scatter_matrix&) = delete;
@@ -69,8 +64,9 @@ class block_scatter_matrix
             scatter_[1] = other.scatter_[1];
         }
 
-        void reset(len_type m, len_type n, pointer p, scatter_type rbs, scatter_type cbs,
-                   scatter_type rscat, scatter_type cscat)
+        void reset(len_type m, len_type n, pointer p,
+                   scatter_type rscat, len_type MB, scatter_type rbs,
+                   scatter_type cscat, len_type NB, scatter_type cbs)
         {
             data_ = p;
             len_[0] = m;
@@ -79,6 +75,8 @@ class block_scatter_matrix
             block_scatter_[1] = cbs;
             scatter_[0] = rscat;
             scatter_[1] = cscat;
+            block_size_[0] = MB;
+            block_size_[1] = NB;
 
             for (len_type i = 0;i < m;i += MB)
             {
@@ -87,7 +85,7 @@ class block_scatter_matrix
                 {
                     if (rscat[j+1]-rscat[j] != s) s = 0;
                 }
-                if (M_BLOCKED) TBLIS_ASSERT(s == -1 || s == rbs[i/MB]);
+                TBLIS_ASSERT(s == -1 || s == rbs[i/MB]);
             }
 
             for (len_type i = 0;i < n;i += NB)
@@ -97,8 +95,14 @@ class block_scatter_matrix
                 {
                     if (cscat[j+1]-cscat[j] != s) s = 0;
                 }
-                if (N_BLOCKED) TBLIS_ASSERT(s == -1 || s == cbs[i/NB]);
+                TBLIS_ASSERT(s == -1 || s == cbs[i/NB]);
             }
+        }
+
+        len_type block_size(unsigned dim) const
+        {
+            TBLIS_ASSERT(dim < 2);
+            return block_size_[dim];
         }
 
         len_type length(unsigned dim) const
@@ -118,9 +122,9 @@ class block_scatter_matrix
         {
             TBLIS_ASSERT(dim < 2);
             if (dim == 0)
-                return (M_BLOCKED ? *block_scatter_[0] : 0);
+                return *block_scatter_[0];
             else
-                return (N_BLOCKED ? *block_scatter_[1] : 0);
+                return *block_scatter_[1];
         }
 
         scatter_type scatter(unsigned dim) const
@@ -139,7 +143,7 @@ class block_scatter_matrix
         {
             TBLIS_ASSERT(dim < 2);
             scatter_[dim] += n;
-            block_scatter_[dim] += ceil_div(n, (dim ? NB : MB));
+            block_scatter_[dim] += ceil_div(n, block_size_[dim]);
         }
 
         void shift_down(unsigned dim)
@@ -150,6 +154,13 @@ class block_scatter_matrix
         void shift_up(unsigned dim)
         {
             shift(dim, -length(dim));
+        }
+
+        void shift_block(unsigned dim, len_type n)
+        {
+            TBLIS_ASSERT(dim < 2);
+            scatter_[dim] += n*block_size_[dim];
+            block_scatter_[dim] += n;
         }
 
         pointer data()

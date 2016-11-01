@@ -183,11 +183,11 @@ struct gemm_micro_kernel
         }
     }
 
-    template <typename T, len_type MB, len_type NB>
+    template <typename T>
     void operator()(const communicator& comm, const config& cfg,
-                    T alpha,                matrix_view<T>& A,
-                                            matrix_view<T>& B,
-                    T  beta, block_scatter_matrix<T,MB,NB>& C) const
+                    T alpha,          matrix_view<T>& A,
+                                      matrix_view<T>& B,
+                    T  beta, block_scatter_matrix<T>& C) const
     {
         const len_type MR = cfg.gemm_mr.def<T>();
         const len_type NR = cfg.gemm_nr.def<T>();
@@ -199,7 +199,8 @@ struct gemm_micro_kernel
         const T* p_b = B.data();
               T* p_c = C.data();
 
-        TBLIS_ASSERT(MB == MR && NB == NR);
+        TBLIS_ASSERT(C.block_size(0) == MR &&
+                     C.block_size(1) == NR);
 
         len_type m = C.length(0);
         len_type n = C.length(1);

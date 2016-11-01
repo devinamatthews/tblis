@@ -106,18 +106,6 @@ struct config
     blocksize gemm_nc;
     blocksize gemm_kc;
 
-    template <int Dim>
-    const blocksize& gemm_bs() const
-    {
-        using namespace matrix_constants;
-        return (Dim == DIM_MR ? gemm_mr :
-                Dim == DIM_NR ? gemm_nr :
-                Dim == DIM_KR ? gemm_kr :
-                Dim == DIM_MC ? gemm_mc :
-                Dim == DIM_NC ? gemm_nc :
-                                gemm_kc);
-    }
-
     microkernel<gemm_ukr_t> gemm_ukr;
 
     microkernel<pack_nn_ukr_t> pack_nn_mr_ukr;

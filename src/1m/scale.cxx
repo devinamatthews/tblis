@@ -20,7 +20,7 @@ void scale_int(const communicator& comm, const config& cfg,
             for (len_type j = n_min;j < n_max;j++)
             {
                 cfg.scale_ukr.call<T>(m_max-m_min,
-                    A.alpha<T>(), (T*)A.data+ m_min*A.rs + j*A.cs, A.rs);
+                    A.alpha<T>(), A.conj, (T*)A.data+ m_min*A.rs + j*A.cs, A.rs);
             }
         }
         else
@@ -28,7 +28,7 @@ void scale_int(const communicator& comm, const config& cfg,
             for (len_type i = m_min;i < m_max;i++)
             {
                 cfg.scale_ukr.call<T>(n_max-n_min,
-                    A.alpha<T>(), (T*)A.data+ i*A.rs + n_min*A.cs, A.cs);
+                    A.alpha<T>(), A.conj, (T*)A.data+ i*A.rs + n_min*A.cs, A.cs);
             }
         }
 

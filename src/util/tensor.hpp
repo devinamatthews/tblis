@@ -62,7 +62,7 @@ struct sort_by_stride_helper
 inline size_t check_sizes() { return 0; }
 
 template <typename T, typename... Ts>
-size_t check_sizes(const T&... arg, const Ts&... args)
+size_t check_sizes(const T& arg, const Ts&... args)
 {
     size_t sz = arg.size();
     if (sizeof...(Ts)) TBLIS_ASSERT(sz == check_sizes(args...));
@@ -116,14 +116,12 @@ inline bool are_compatible(const std::vector<len_type>& len_A,
                            const std::vector<stride_type>& stride_B)
 {
     TBLIS_ASSERT(len_A.size() == stride_A.size());
-    std::vector<size_t> dims_A = range(len_A.size());
-    stl_ext::sort(dims_A, detail::sort_by_stride(stride_A));
+    auto dims_A = detail::sort_by_stride(stride_A);
     auto len_Ar = stl_ext::permuted(len_A, dims_A);
     auto stride_Ar = stl_ext::permuted(stride_A, dims_A);
 
     TBLIS_ASSERT(len_B.size() == stride_B.size());
-    std::vector<size_t> dims_B = range(len_B.size());
-    stl_ext::sort(dims_B, detail::sort_by_stride(stride_B));
+    auto dims_B = detail::sort_by_stride(stride_B);
     auto len_Br = stl_ext::permuted(len_B, dims_B);
     auto stride_Br = stl_ext::permuted(stride_B, dims_B);
 
@@ -149,19 +147,19 @@ bool are_compatible(const const_tensor_view<T>& A,
                        B.lengths(), B.strides());
 }
 
-template <size_t N, typename... Strides>
+template <size_t I, size_t N, typename... Strides>
 struct swap_strides_helper
 {
     swap_strides_helper(std::tuple<Strides&...>& strides,
                         std::tuple<Strides...>& oldstrides)
     {
-        std::get<N>(strides).swap(std::get<N>(oldstrides));
-        swap_strides_helper<N+1, Strides...>(strides, oldstrides);
+        std::get<I>(strides).swap(std::get<I>(oldstrides));
+        swap_strides_helper<I+1, N, Strides...>(strides, oldstrides);
     }
 };
 
-template <typename... Strides>
-struct swap_strides_helper<sizeof...(Strides), Strides...>
+template <size_t N, typename... Strides>
+struct swap_strides_helper<N, N, Strides...>
 {
     swap_strides_helper(std::tuple<Strides&...>& strides,
                         std::tuple<Strides...>& oldstrides) {}
@@ -171,23 +169,23 @@ template <typename... Strides>
 void swap_strides(std::tuple<Strides&...>& strides,
                   std::tuple<Strides...>& oldstrides)
 {
-    swap_strides_helper<0, Strides...>(strides, oldstrides);
+    swap_strides_helper<0, sizeof...(Strides), Strides...>(strides, oldstrides);
 }
 
-template <size_t N, typename... Strides>
+template <size_t I, size_t N, typename... Strides>
 struct are_contiguous_helper
 {
     bool operator()(std::tuple<Strides...>& strides,
                     const std::vector<len_type>& lengths,
                     int i, int im1)
     {
-        return std::get<N>(strides)[i] == std::get<N>(strides)[im1]*lengths[im1] &&
-            are_contiguous_helper<N+1, Strides...>()(strides, lengths, i, im1);
+        return std::get<I>(strides)[i] == std::get<I>(strides)[im1]*lengths[im1] &&
+            are_contiguous_helper<I+1, N, Strides...>()(strides, lengths, i, im1);
     }
 };
 
-template <typename... Strides>
-struct are_contiguous_helper<sizeof...(Strides), Strides...>
+template <size_t N, typename... Strides>
+struct are_contiguous_helper<N, N, Strides...>
 {
     bool operator()(std::tuple<Strides...>& strides,
                     const std::vector<len_type>& lengths,
@@ -202,22 +200,22 @@ bool are_contiguous(std::tuple<Strides...>& strides,
                     const std::vector<len_type>& lengths,
                     int i, int im1)
 {
-    return are_contiguous_helper<0, Strides...>()(strides, lengths, i, im1);
+    return are_contiguous_helper<0, sizeof...(Strides), Strides...>()(strides, lengths, i, im1);
 }
 
-template <size_t N, typename... Strides>
+template <size_t I, size_t N, typename... Strides>
 struct push_back_strides_helper
 {
     push_back_strides_helper(std::tuple<Strides&...>& strides,
                              std::tuple<Strides...>& oldstrides, int i)
     {
-        std::get<N>(strides).push_back(std::get<N>(oldstrides)[i]);
-        push_back_strides_helper<N+1, Strides...>(strides, oldstrides, i);
+        std::get<I>(strides).push_back(std::get<I>(oldstrides)[i]);
+        push_back_strides_helper<I+1, N, Strides...>(strides, oldstrides, i);
     }
 };
 
-template <typename... Strides>
-struct push_back_strides_helper<sizeof...(Strides), Strides...>
+template <size_t N, typename... Strides>
+struct push_back_strides_helper<N, N, Strides...>
 {
     push_back_strides_helper(std::tuple<Strides&...>& strides,
                              std::tuple<Strides...>& oldstrides, int i) {}
@@ -227,10 +225,10 @@ template <typename... Strides>
 void push_back_strides(std::tuple<Strides&...>& strides,
                        std::tuple<Strides...>& oldstrides, int i)
 {
-    push_back_strides_helper<0, Strides...>(strides, oldstrides, i);
+    push_back_strides_helper<0, sizeof...(Strides), Strides...>(strides, oldstrides, i);
 }
 
-template <size_t N, typename... Strides>
+template <size_t I, size_t N, typename... Strides>
 struct are_compatible_helper
 {
     bool operator()(const std::vector<len_type>& len_A,
@@ -238,15 +236,15 @@ struct are_compatible_helper
                     const std::vector<len_type>& len_B,
                     const std::tuple<Strides&...>& stride_B)
     {
-        return are_compatible(len_A, std::get<N>(stride_A),
-                              len_B, std::get<N>(stride_B)) &&
-            are_compatible_helper<N+1, Strides...>()(len_A, stride_A,
-                                                     len_B, stride_B);
+        return are_compatible(len_A, std::get<I>(stride_A),
+                              len_B, std::get<I>(stride_B)) &&
+            are_compatible_helper<I+1, N, Strides...>()(len_A, stride_A,
+                                                        len_B, stride_B);
     }
 };
 
-template <typename... Strides>
-struct are_compatible_helper<sizeof...(Strides), Strides...>
+template <size_t N, typename... Strides>
+struct are_compatible_helper<N, N, Strides...>
 {
     bool operator()(const std::vector<len_type>& len_A,
                     const std::tuple<Strides...>& stride_A,
@@ -263,8 +261,8 @@ bool are_compatible(const std::vector<len_type>& len_A,
                     const std::vector<len_type>& len_B,
                     const std::tuple<Strides&...>& stride_B)
 {
-    return are_compatible_helper<0, Strides...>()(len_A, stride_A,
-                                                  len_B, stride_B);
+    return are_compatible_helper<0, sizeof...(Strides), Strides...>()(
+        len_A, stride_A, len_B, stride_B);
 }
 
 }
@@ -276,8 +274,7 @@ void fold(std::vector<len_type>& lengths, std::vector<label_type>& idx,
     std::tuple<Strides&...> strides(_strides...);
 
     unsigned ndim = lengths.size();
-    std::string inds = MArray::range<char>(ndim);
-    stl_ext::sort(inds, detail::sort_by_stride(std::get<0>(strides)));
+    auto inds = detail::sort_by_stride(std::get<0>(strides));
 
     std::vector<label_type> oldidx;
     std::vector<len_type> oldlengths;
@@ -301,11 +298,8 @@ void fold(std::vector<len_type>& lengths, std::vector<label_type>& idx,
         }
     }
 
-    for (size_t i = 0;i < strides.size();i++)
-    {
-        TBLIS_ASSERT(detail::are_compatible(oldlengths, oldstrides,
-                                            lengths, strides));
-    }
+    TBLIS_ASSERT(detail::are_compatible(oldlengths, oldstrides,
+                                        lengths, strides));
 }
 
 inline void diagonal(int& ndim,
@@ -336,7 +330,7 @@ inline void diagonal(int& ndim,
         }
         else if (len_in[inds[i]] != 1)
         {
-            TBLIS_ASSERT(len[ndim-1] == len_in[inds[i]]);
+            TBLIS_ASSERT(len_out[ndim-1] == len_in[inds[i]]);
             if (len_in[inds[i]] != 1)
                 stride_out[ndim-1] += stride_in[inds[i]];
         }

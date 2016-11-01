@@ -219,16 +219,16 @@ T uniqued(T v)
     return v;
 }
 
-template <typename T>
-T& rotate(T& v, typename T::iterator::diff_type n)
+template <typename T, typename I>
+T& rotate(T& v, I n)
 {
     if (n > 0)
     {
-        std::rotate(v.begin(), std::advance(v.begin(),n), v.end());
+        std::rotate(v.begin(), std::next(v.begin(), n), v.end());
     }
     else if (n < 0)
     {
-        std::rotate(v.begin(), std::advance(v.end(),n), v.end());
+        std::rotate(v.begin(), std::next(v.end(), n), v.end());
     }
     return v;
 }

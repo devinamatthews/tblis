@@ -14,6 +14,7 @@
 
 @SET_MAKE@
 
+
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
     false; \
@@ -109,6 +110,7 @@ host_triplet = @host@
 @ENABLE_HASWELL_TRUE@am__append_12 = lib/libhaswell.la
 @ENABLE_KNL_TRUE@am__append_13 = lib/libknl.la
 @ENABLE_KNL_TRUE@am__append_14 = lib/libknl.la
+bin_PROGRAMS = bin/test$(EXEEXT)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_blas.m4 \
@@ -159,7 +161,7 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(libdir)"
+am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)"
 LTLIBRARIES = $(lib_LTLIBRARIES) $(noinst_LTLIBRARIES)
 lib_libbulldozer_la_LIBADD =
 am__lib_libbulldozer_la_SOURCES_DIST =  \
@@ -281,10 +283,16 @@ lib_libtblis_la_DEPENDENCIES = external/tci/lib/libtci.la \
 	$(am__append_6) $(am__append_8) $(am__append_10) \
 	$(am__append_12) $(am__append_14)
 am_lib_libtblis_la_OBJECTS = src/1v/add.lo src/1v/dot.lo \
-	src/1v/reduce.lo src/1v/scale.lo src/1v/set.lo \
-	src/1m/reduce.lo src/3m/mult.lo src/configs/configs.lo \
+	src/1v/reduce.lo src/1v/scale.lo src/1v/set.lo src/1m/add.lo \
+	src/1m/dot.lo src/1m/reduce.lo src/1m/scale.lo src/1m/set.lo \
+	src/1t/add.lo src/1t/dot.lo src/1t/reduce.lo src/1t/scale.lo \
+	src/1t/set.lo src/3m/mult.lo src/configs/configs.lo \
 	src/util/cpuid.lo src/util/random.lo src/util/thread.lo
 lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
+PROGRAMS = $(bin_PROGRAMS)
+am_bin_test_OBJECTS = test/test.$(OBJEXT)
+bin_test_OBJECTS = $(am_bin_test_OBJECTS)
+bin_test_DEPENDENCIES = lib/libtblis.la
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -341,7 +349,8 @@ SOURCES = $(lib_libbulldozer_la_SOURCES) $(lib_libcore2_la_SOURCES) \
 	$(lib_libexcavator_la_SOURCES) $(lib_libhaswell_la_SOURCES) \
 	$(lib_libknl_la_SOURCES) $(lib_libpiledriver_la_SOURCES) \
 	$(lib_libreference_la_SOURCES) \
-	$(lib_libsandybridge_la_SOURCES) $(lib_libtblis_la_SOURCES)
+	$(lib_libsandybridge_la_SOURCES) $(lib_libtblis_la_SOURCES) \
+	$(bin_test_SOURCES)
 DIST_SOURCES = $(am__lib_libbulldozer_la_SOURCES_DIST) \
 	$(am__lib_libcore2_la_SOURCES_DIST) \
 	$(am__lib_libexcavator_la_SOURCES_DIST) \
@@ -350,7 +359,7 @@ DIST_SOURCES = $(am__lib_libbulldozer_la_SOURCES_DIST) \
 	$(am__lib_libpiledriver_la_SOURCES_DIST) \
 	$(lib_libreference_la_SOURCES) \
 	$(am__lib_libsandybridge_la_SOURCES_DIST) \
-	$(lib_libtblis_la_SOURCES)
+	$(lib_libtblis_la_SOURCES) $(bin_test_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -443,86 +452,6 @@ distuninstallcheck_listfiles = find . -type f -print
 am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
   | sed 's|^\./|$(prefix)/|' | grep -v '$(infodir)/dir$$'
 distcleancheck_listfiles = find . -type f -print
-
-#if ENABLE_MIC
-#noinst_LTLIBRARIES += lib/libmic.la
-#lib_libtblis_la_LIBADD += lib/libmic.la
-#lib_libmic_la_SOURCES = src/external/blis/config/mic/kernels/3/bli_dgemm_opt_30x8.c \
-#					    src/external/blis/config/mic/kernels/3/bli_sgemm_opt_30x16.c
-#lib_libmic_la_CFLAGS = -Isrc/external/blis/config/mic -fasm-blocks
-#endif
-
-#
-# ARM architectures
-# 
-
-#if ENABLE_ARMV7A
-#noinst_LTLIBRARIES += lib/libarmv7a.la
-#lib_libtblis_la_LIBADD += lib/libarmv7a.la
-#lib_libarmv7a_la_SOURCES = src/external/blis/config/armv7a/kernels/3/bli_cgemm_kernel_2x2.S \
-#                           src/external/blis/config/armv7a/kernels/3/bli_dgemm_kernel_4x4.S \
-#                           src/external/blis/config/armv7a/kernels/3/bli_sgemm_kernel_4x4.S \
-#                           src/external/blis/config/armv7a/kernels/3/bli_zgemm_kernel_2x2.S \
-#                           src/external/blis/config/armv7a/kernels/3/bli_gemm_opt_4x4.c
-#lib_libarmv7a_la_CCASFLAGS = -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
-#lib_libarmv7a_la_CFLAGS = -Isrc/external/blis/config/armv7a -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
-#endif
-#
-#if ENABLE_ARMV8A
-#noinst_LTLIBRARIES += lib/libarmv8a.la
-#lib_libtblis_la_LIBADD += lib/libarmv8a.la
-#lib_libarmv8a_la_SOURCES = src/external/blis/config/armv8a/kernels/3/bli_gemm_opt_4x4.c
-#lib_libarmv8a_la_CFLAGS = -Isrc/external/blis/config/armv8a -march=armv8-a+fp+simd -mcpu=cortex-a57.cortex-a53
-#endif
-#
-#if ENABLE_CORTEX_A15
-#noinst_LTLIBRARIES += lib/libcortex-a15.la
-#lib_libtblis_la_LIBADD += lib/libcortex-a15.la
-#lib_libcortex_a15_la_SOURCES = src/external/blis/config/cortex-a15/kernels/3/bli_gemm_opt_4x4.c
-#lib_libcortex_a15_la_CFLAGS = -Isrc/external/blis/config/cortex-a15 -mfloat-abi=hard -mfpu=neon -march=armv7-a
-#endif
-#
-#if ENABLE_CORTEX_A9
-#noinst_LTLIBRARIES += lib/libcortex-a9.la
-#lib_libtblis_la_LIBADD += lib/libcortex-a9.la
-#lib_libcortex_a9_la_SOURCES = src/external/blis/config/cortex-a9/kernels/3/bli_gemm_opt_4x4.c
-#lib_libcortex_a9_la_CFLAGS = -Isrc/external/blis/config/cortex-a9 -mfloat-abi=hard -mfpu=neon -march=armv7-a
-#endif
-
-#
-# IBM architectures
-#
-
-#if ENABLE_POWER7
-#noinst_LTLIBRARIES += lib/libpower7.la
-#lib_libtblis_la_LIBADD += lib/libpower7.la
-#lib_libpower7_la_SOURCES = src/external/blis/config/power7/kernels/3/bli_gemm_opt_8x4.c
-#lib_libpower7_la_CFLAGS = -Isrc/external/blis/config/power7 -mcpu=power7 -mtune=power7 -mvsx
-#endif
-#
-#if ENABLE_BGQ
-#noinst_LTLIBRARIES += lib/libbgq.la
-#lib_libtblis_la_LIBADD += lib/libbgq.la
-#lib_libbgq_la_SOURCES = src/external/blis/config/bgq/kernels/3/bli_gemm_int_8x8.c
-#lib_libbgq_la_CFLAGS = -Isrc/external/blis/config/bgq -qasm=gcc -qkeyword=asm -qprefetch -qunroll=yes
-#endif
-
-#
-# MIPS architectures
-#
-
-#if ENABLE_LOONGSON3A
-#noinst_LTLIBRARIES += lib/libloongson3a.la
-#lib_libtblis_la_LIBADD += lib/libloongson3a.la
-#lib_libloongson3a_la_SOURCES = src/external/blis/config/loongson3a/kernels/3/bli_gemm_opt_d4x4.c
-#lib_libloongson3a_la_CFLAGS = -Isrc/external/blis/config/loongson3a -march=loongson3a -mtune=loongson3a
-#endif
-
-#bin_PROGRAMS = bin/test
-#if ENABLE_BLAS
-#bin_PROGRAMS += bin/bench
-#endif
-#bin_test_SOURCES = test/test.cxx
 #bin_bench_SOURCES = test/bench.cxx
 VPATH = @srcdir@ $(srcdir)
 ACLOCAL = @ACLOCAL@
@@ -665,7 +594,17 @@ lib_libtblis_la_SOURCES = \
     src/1v/scale.cxx \
     src/1v/set.cxx \
     \
+    src/1m/add.cxx \
+    src/1m/dot.cxx \
     src/1m/reduce.cxx \
+    src/1m/scale.cxx \
+    src/1m/set.cxx \
+	\
+    src/1t/add.cxx \
+    src/1t/dot.cxx \
+    src/1t/reduce.cxx \
+    src/1t/scale.cxx \
+    src/1t/set.cxx \
     \
     src/3m/mult.cxx \
     \
@@ -740,6 +679,10 @@ lib_libreference_la_CXXFLAGS = -Ofast
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_FALSE@lib_libknl_la_CXXFLAGS = -Ofast -mavx512f -mavx512pf -march=knl -mfpmath=sse
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_TRUE@lib_libknl_la_CXXFLAGS = -Ofast -mavx512f -mavx512pf -march=knl -mfpmath=sse -Wa,-march=knl
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_KNL_TRUE@lib_libknl_la_CXXFLAGS = -O3 -xMIC-AVX512
+#if ENABLE_BLAS
+#bin_PROGRAMS += bin/bench
+#endif
+bin_test_SOURCES = test/test.cxx
 SUBDIRS = external/tci
 ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Iexternal/tci/src
@@ -1019,8 +962,26 @@ src/1m/$(am__dirstamp):
 src/1m/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/1m/$(DEPDIR)
 	@: > src/1m/$(DEPDIR)/$(am__dirstamp)
+src/1m/add.lo: src/1m/$(am__dirstamp) src/1m/$(DEPDIR)/$(am__dirstamp)
+src/1m/dot.lo: src/1m/$(am__dirstamp) src/1m/$(DEPDIR)/$(am__dirstamp)
 src/1m/reduce.lo: src/1m/$(am__dirstamp) \
 	src/1m/$(DEPDIR)/$(am__dirstamp)
+src/1m/scale.lo: src/1m/$(am__dirstamp) \
+	src/1m/$(DEPDIR)/$(am__dirstamp)
+src/1m/set.lo: src/1m/$(am__dirstamp) src/1m/$(DEPDIR)/$(am__dirstamp)
+src/1t/$(am__dirstamp):
+	@$(MKDIR_P) src/1t
+	@: > src/1t/$(am__dirstamp)
+src/1t/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/1t/$(DEPDIR)
+	@: > src/1t/$(DEPDIR)/$(am__dirstamp)
+src/1t/add.lo: src/1t/$(am__dirstamp) src/1t/$(DEPDIR)/$(am__dirstamp)
+src/1t/dot.lo: src/1t/$(am__dirstamp) src/1t/$(DEPDIR)/$(am__dirstamp)
+src/1t/reduce.lo: src/1t/$(am__dirstamp) \
+	src/1t/$(DEPDIR)/$(am__dirstamp)
+src/1t/scale.lo: src/1t/$(am__dirstamp) \
+	src/1t/$(DEPDIR)/$(am__dirstamp)
+src/1t/set.lo: src/1t/$(am__dirstamp) src/1t/$(DEPDIR)/$(am__dirstamp)
 src/3m/$(am__dirstamp):
 	@$(MKDIR_P) src/3m
 	@: > src/3m/$(am__dirstamp)
@@ -1052,11 +1013,77 @@ src/util/thread.lo: src/util/$(am__dirstamp) \
 
 lib/libtblis.la: $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_DEPENDENCIES) $(EXTRA_lib_libtblis_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CXXLD)$(CXXLINK) -rpath $(libdir) $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_LIBADD) $(LIBS)
+install-binPROGRAMS: $(bin_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(bindir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(bindir)" || exit 1; \
+	fi; \
+	for p in $$list; do echo "$$p $$p"; done | \
+	sed 's/$(EXEEXT)$$//' | \
+	while read p p1; do if test -f $$p \
+	 || test -f $$p1 \
+	  ; then echo "$$p"; echo "$$p"; else :; fi; \
+	done | \
+	sed -e 'p;s,.*/,,;n;h' \
+	    -e 's|.*|.|' \
+	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
+	sed 'N;N;N;s,\n, ,g' | \
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
+	    else { print "f", $$3 "/" $$4, $$1; } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	    test -z "$$files" || { \
+	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(bindir)$$dir'"; \
+	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
+	    } \
+	; done
+
+uninstall-binPROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
+	files=`for p in $$list; do echo "$$p"; done | \
+	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
+	      -e 's/$$/$(EXEEXT)/' \
+	`; \
+	test -n "$$list" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(bindir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(bindir)" && rm -f $$files
+
+clean-binPROGRAMS:
+	@list='$(bin_PROGRAMS)'; test -n "$$list" || exit 0; \
+	echo " rm -f" $$list; \
+	rm -f $$list || exit $$?; \
+	test -n "$(EXEEXT)" || exit 0; \
+	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
+	echo " rm -f" $$list; \
+	rm -f $$list
+test/$(am__dirstamp):
+	@$(MKDIR_P) test
+	@: > test/$(am__dirstamp)
+test/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) test/$(DEPDIR)
+	@: > test/$(DEPDIR)/$(am__dirstamp)
+test/test.$(OBJEXT): test/$(am__dirstamp) \
+	test/$(DEPDIR)/$(am__dirstamp)
+bin/$(am__dirstamp):
+	@$(MKDIR_P) bin
+	@: > bin/$(am__dirstamp)
+
+bin/test$(EXEEXT): $(bin_test_OBJECTS) $(bin_test_DEPENDENCIES) $(EXTRA_bin_test_DEPENDENCIES) bin/$(am__dirstamp)
+	@rm -f bin/test$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(bin_test_OBJECTS) $(bin_test_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f src/1m/*.$(OBJEXT)
 	-rm -f src/1m/*.lo
+	-rm -f src/1t/*.$(OBJEXT)
+	-rm -f src/1t/*.lo
 	-rm -f src/1v/*.$(OBJEXT)
 	-rm -f src/1v/*.lo
 	-rm -f src/3m/*.$(OBJEXT)
@@ -1081,11 +1108,21 @@ mostlyclean-compile:
 	-rm -f src/configs/sandybridge/*.lo
 	-rm -f src/util/*.$(OBJEXT)
 	-rm -f src/util/*.lo
+	-rm -f test/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@src/1m/$(DEPDIR)/add.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/1m/$(DEPDIR)/dot.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/1m/$(DEPDIR)/reduce.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/1m/$(DEPDIR)/scale.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/1m/$(DEPDIR)/set.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/1t/$(DEPDIR)/add.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/1t/$(DEPDIR)/dot.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/1t/$(DEPDIR)/reduce.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/1t/$(DEPDIR)/scale.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/1t/$(DEPDIR)/set.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/add.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/dot.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/reduce.Plo@am__quote@
@@ -1120,6 +1157,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/cpuid.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/random.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/thread.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/test.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -1342,8 +1380,10 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf bin/.libs bin/_libs
 	-rm -rf lib/.libs lib/_libs
 	-rm -rf src/1m/.libs src/1m/_libs
+	-rm -rf src/1t/.libs src/1t/_libs
 	-rm -rf src/1v/.libs src/1v/_libs
 	-rm -rf src/3m/.libs src/3m/_libs
 	-rm -rf src/configs/.libs src/configs/_libs
@@ -1656,10 +1696,12 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-recursive
-all-am: Makefile $(LTLIBRARIES) config.h
+all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) config.h
+install-binPROGRAMS: install-libLTLIBRARIES
+
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(libdir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-recursive
@@ -1688,9 +1730,12 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f bin/$(am__dirstamp)
 	-rm -f lib/$(am__dirstamp)
 	-rm -f src/1m/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/1m/$(am__dirstamp)
+	-rm -f src/1t/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/1t/$(am__dirstamp)
 	-rm -f src/1v/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/1v/$(am__dirstamp)
 	-rm -f src/3m/$(DEPDIR)/$(am__dirstamp)
@@ -1715,18 +1760,20 @@ distclean-generic:
 	-rm -f src/configs/sandybridge/$(am__dirstamp)
 	-rm -f src/util/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/util/$(am__dirstamp)
+	-rm -f test/$(DEPDIR)/$(am__dirstamp)
+	-rm -f test/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-recursive
 
-clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
-	clean-noinstLTLIBRARIES mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
+	clean-libtool clean-noinstLTLIBRARIES mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf src/1m/$(DEPDIR) src/1v/$(DEPDIR) src/3m/$(DEPDIR) src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/util/$(DEPDIR)
+	-rm -rf src/1m/$(DEPDIR) src/1t/$(DEPDIR) src/1v/$(DEPDIR) src/3m/$(DEPDIR) src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -1749,7 +1796,7 @@ install-dvi: install-dvi-recursive
 
 install-dvi-am:
 
-install-exec-am: install-libLTLIBRARIES
+install-exec-am: install-binPROGRAMS install-libLTLIBRARIES
 
 install-html: install-html-recursive
 
@@ -1774,7 +1821,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf src/1m/$(DEPDIR) src/1v/$(DEPDIR) src/3m/$(DEPDIR) src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/util/$(DEPDIR)
+	-rm -rf src/1m/$(DEPDIR) src/1t/$(DEPDIR) src/1v/$(DEPDIR) src/3m/$(DEPDIR) src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -1791,27 +1838,29 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-libLTLIBRARIES
+uninstall-am: uninstall-binPROGRAMS uninstall-libLTLIBRARIES
 
 .MAKE: $(am__recursive_targets) all install-am install-strip
 
 .PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am \
-	am--refresh check check-am clean clean-cscope clean-generic \
-	clean-libLTLIBRARIES clean-libtool clean-noinstLTLIBRARIES \
-	cscope cscopelist-am ctags ctags-am dist dist-all dist-bzip2 \
-	dist-gzip dist-lzip dist-shar dist-tarZ dist-xz dist-zip \
-	distcheck distclean distclean-compile distclean-generic \
-	distclean-hdr distclean-libtool distclean-tags distcleancheck \
-	distdir distuninstallcheck dvi dvi-am html html-am info \
-	info-am install install-am install-data install-data-am \
-	install-dvi install-dvi-am install-exec install-exec-am \
-	install-html install-html-am install-info install-info-am \
-	install-libLTLIBRARIES install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am uninstall-libLTLIBRARIES
+	am--refresh check check-am clean clean-binPROGRAMS \
+	clean-cscope clean-generic clean-libLTLIBRARIES clean-libtool \
+	clean-noinstLTLIBRARIES cscope cscopelist-am ctags ctags-am \
+	dist dist-all dist-bzip2 dist-gzip dist-lzip dist-shar \
+	dist-tarZ dist-xz dist-zip distcheck distclean \
+	distclean-compile distclean-generic distclean-hdr \
+	distclean-libtool distclean-tags distcleancheck distdir \
+	distuninstallcheck dvi dvi-am html html-am info info-am \
+	install install-am install-binPROGRAMS install-data \
+	install-data-am install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-libLTLIBRARIES install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs installdirs-am \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags tags-am uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-libLTLIBRARIES
 
 .PRECIOUS: Makefile
 

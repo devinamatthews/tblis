@@ -770,6 +770,7 @@ enable_dependency_tracking
 enable_mutex
 enable_barrier
 enable_thread_model
+enable_threading
 enable_openmp
 enable_shared
 enable_static
@@ -1425,6 +1426,7 @@ Optional Features:
   --enable-thread-model[=model]
                           enable threading with the specified model, one of
                           none, auto, openmp, pthreads [default=auto]
+
   --disable-openmp        do not use OpenMP
   --enable-shared[=PKGS]  build shared libraries [default=yes]
   --enable-static[=PKGS]  build static libraries [default=yes]
@@ -4156,6 +4158,13 @@ if test "${enable_thread_model+set}" = set; then :
 else
   thread_model=auto
 fi
+
+
+# Check whether --enable-threading was given.
+if test "${enable_threading+set}" = set; then :
+  enableval=$enable_threading; thread_model=$enable_threading
+fi
+
 
 if test x"$thread_model" = xno; then
     thread_model=none

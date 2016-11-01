@@ -77,44 +77,6 @@ struct blocksize_traits
     };
 };
 
-template <typename Config, int Dim> struct _gemm_bs;
-
-template <typename Config>
-struct _gemm_bs<Config, matrix_constants::DIM_MC>
-{
-    template <typename T> using type = typename Config::template gemm_mc<T>;
-};
-
-template <typename Config>
-struct _gemm_bs<Config, matrix_constants::DIM_NC>
-{
-    template <typename T> using type = typename Config::template gemm_nc<T>;
-};
-
-template <typename Config>
-struct _gemm_bs<Config, matrix_constants::DIM_KC>
-{
-    template <typename T> using type = typename Config::template gemm_kc<T>;
-};
-
-template <typename Config>
-struct _gemm_bs<Config, matrix_constants::DIM_MR>
-{
-    template <typename T> using type = typename Config::template gemm_mr<T>;
-};
-
-template <typename Config>
-struct _gemm_bs<Config, matrix_constants::DIM_NR>
-{
-    template <typename T> using type = typename Config::template gemm_nr<T>;
-};
-
-template <typename Config>
-struct _gemm_bs<Config, matrix_constants::DIM_KR>
-{
-    template <typename T> using type = typename Config::template gemm_kr<T>;
-};
-
 template <typename Config>
 struct config_traits : config
 {
@@ -158,9 +120,6 @@ struct config_traits : config
         Config::template gemm_nc, _default_gemm_nc, gemm_nr>::template type<T>;
     template <typename T> using gemm_kc = typename blocksize_traits<
         Config::template gemm_kc, _default_gemm_kc, gemm_kr>::template type<T>;
-
-    template <typename T, int Dim> using gemm_bs =
-        typename _gemm_bs<config_traits, Dim>::template type<T>;
 
     TBLIS_DEFAULT_VALUE_T(      gemm_ukr, gemm_ukr_t<T>, Config,       gemm_ukr, (&gemm_ukr_def<config_traits,T>));
     TBLIS_DEFAULT_VALUE_T(gemm_row_major,          bool, Config, gemm_row_major,                            false);

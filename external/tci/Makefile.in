@@ -359,6 +359,7 @@ lib_libtci_la_SOURCES = src/barrier.c \
 						src/parallel.c
 
 include_HEADERS = src/tci.h
+AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc
 ACLOCAL_AMFLAGS = -I m4
 all: all-am
 

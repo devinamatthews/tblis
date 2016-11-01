@@ -1,5 +1,5 @@
 #include "configs.hpp"
-#include "include_configs.hpp"
+#include "configs/include_configs.hpp"
 
 namespace tblis
 {
@@ -10,7 +10,7 @@ namespace
 enum config_t
 {
 #define FOREACH_CONFIG(config) config##_value,
-#include "foreach_config.h"
+#include "configs/foreach_config.h"
     num_configs,
     first_config = 0
 };
@@ -18,7 +18,7 @@ enum config_t
 const config* const configs[num_configs] =
 {
 #define FOREACH_CONFIG(config) &config::instance(),
-#include "foreach_config.h"
+#include "configs/foreach_config.h"
 };
 
 struct default_config

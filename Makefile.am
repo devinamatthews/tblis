@@ -7,7 +7,11 @@ lib_libtblis_la_SOURCES = \
     src/1v/scale.cxx \
     src/1v/set.cxx \
     \
+    src/1m/add.cxx \
+    src/1m/dot.cxx \
     src/1m/reduce.cxx \
+    src/1m/scale.cxx \
+    src/1m/set.cxx \
 	\
     src/1t/add.cxx \
     src/1t/dot.cxx \
@@ -215,11 +219,11 @@ endif
 #lib_libloongson3a_la_CFLAGS = -Isrc/external/blis/config/loongson3a -march=loongson3a -mtune=loongson3a
 #endif
 
-#bin_PROGRAMS = bin/test
+bin_PROGRAMS = bin/test
 #if ENABLE_BLAS
 #bin_PROGRAMS += bin/bench
 #endif
-#bin_test_SOURCES = test/test.cxx
+bin_test_SOURCES = test/test.cxx
 #bin_bench_SOURCES = test/bench.cxx
 
 VPATH += $(srcdir)

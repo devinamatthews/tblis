@@ -88,8 +88,8 @@ void add_int(const communicator& comm, const config& cfg,
                                     B.alpha<T>(), B.conj, B_, stride_B0);
             }
 
-            A.alpha<T>() = T(1);
-            A.conj = false;
+            B.alpha<T>() = T(1);
+            B.conj = false;
         })
     }
     else

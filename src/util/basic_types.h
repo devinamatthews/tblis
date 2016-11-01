@@ -308,19 +308,19 @@ typedef struct tblis_tensor
 #ifdef __cplusplus
 
     template <typename T>
-    tblis_tensor(const const_tensor_view<T>& view)
+    tblis_tensor(const_tensor_view<T> view)
     : type(type_tag<T>::value), conj(false), data((void*)view.data()),
-      ndim(view.dimension()), len(view.lengths().data()),
-      stride(view.strides().data())
+      ndim(view.dimension()), len((len_type*)view.lengths().data()),
+      stride((stride_type*)view.strides().data())
     {
         *(T*)scalar = T(1);
     }
 
     template <typename T>
-    tblis_tensor(T alpha, const const_tensor_view<T>& view)
+    tblis_tensor(T alpha, const_tensor_view<T> view)
     : type(type_tag<T>::value), conj(false), data((void*)view.data()),
-      ndim(view.dimension()), len(view.lengths().data()),
-      stride(view.strides().data())
+      ndim(view.dimension()), len((len_type*)view.lengths().data()),
+      stride((stride_type*)view.strides().data())
     {
         *(T*)scalar = alpha;
     }

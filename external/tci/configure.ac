@@ -26,6 +26,9 @@ AC_ARG_ENABLE([thread-model], AS_HELP_STRING([--enable-thread-model@<:@=model@:>
     [enable threading with the specified model, one of none, auto, \
     openmp, pthreads @<:@default=auto@:>@]),
     [thread_model=$enable_thread_model], [thread_model=auto])
+
+AC_ARG_ENABLE([threading], [], [thread_model=$enable_threading], [])
+    
 if test x"$thread_model" = xno; then
     thread_model=none
 fi

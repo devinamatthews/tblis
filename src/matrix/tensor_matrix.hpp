@@ -251,8 +251,7 @@ class tensor_matrix
             }
         }
 
-        template <len_type MR>
-        void fill_block_scatter(unsigned dim, stride_type* block_scatter, stride_type* scatter)
+        void fill_block_scatter(unsigned dim, stride_type* scatter, len_type MB, stride_type* block_scatter)
         {
             /*
             TBLIS_ASSERT(dim < 2);
@@ -292,14 +291,14 @@ class tensor_matrix
 
             len_type m = len_[dim];
 
-            for (len_type i = 0;i < m;i += MR)
+            for (len_type i = 0, b = 0;i < m;i += MB, b++)
             {
                 stride_type s = (m-i) > 1 ? scatter[i+1]-scatter[i] : 1;
-                for (len_type j = i+1;j+1 < std::min(i+MR,m);j++)
+                for (len_type j = i+1;j+1 < std::min(i+MB,m);j++)
                 {
                     if (scatter[j+1]-scatter[j] != s) s = 0;
                 }
-                block_scatter[i/MR] = s;
+                block_scatter[b] = s;
             }
         }
 };

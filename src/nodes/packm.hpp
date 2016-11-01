@@ -134,7 +134,7 @@ struct pack_row_panel
 
     template <len_type MB, len_type NB>
     void operator()(const communicator& comm, const config& cfg,
-                    block_scatter_matrix<T,MB,NB> A, matrix_view<T>& Ap) const
+                    block_scatter_matrix<T> A, matrix_view<T>& Ap) const
     {
         const len_type MR = (!Trans ? cfg.gemm_mr.def<T>()
                                     : cfg.gemm_nr.def<T>());
@@ -142,8 +142,8 @@ struct pack_row_panel
                                     : cfg.gemm_nr.extent<T>());
         const len_type KR = cfg.gemm_kr.def<T>();
 
-        TBLIS_ASSERT(MB == (!Trans ? MR : KR));
-        TBLIS_ASSERT(NB == (!Trans ? KR : MR));
+        TBLIS_ASSERT(A.block_size(0) == (!Trans ? MR : KR));
+        TBLIS_ASSERT(A.block_size(1) == (!Trans ? KR : MR));
 
         len_type m_a = A.length( Trans);
         len_type k_a = A.length(!Trans);
@@ -154,12 +154,14 @@ struct pack_row_panel
         len_type off_first, off_last;
         std::tie(off_first, off_last, std::ignore) = subcomm.distribute_over_gangs(m_a, MR);
 
-        p_ap += off_first*round_up(k_a, KR);
+        len_type off_m = off_first;
+
+        p_ap += off_m*round_up(k_a, KR);
 
         A.length(Trans, MR);
-        A.shift(Trans, off_first);
+        A.shift(Trans, off_m);
 
-        for (len_type off_m = off_first;off_m < off_last;off_m += MR)
+        while (off_m < off_last)
         {
             stride_type rs_a = A.stride(Trans);
             const stride_type* rscat_a = A.scatter(Trans);
@@ -184,10 +186,11 @@ struct pack_row_panel
             }
 
             p_ap += ME*k_a;
-            A.shift_down(Trans);
+            A.shift_block(Trans, 1);
+            off_m += MR;
         }
 
-        A.shift(Trans, off_last);
+        A.shift(Trans, -off_m);
         A.length(Trans, m_a);
     }
 };

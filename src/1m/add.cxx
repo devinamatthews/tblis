@@ -14,9 +14,9 @@ void add_int(const communicator& comm, const config& cfg,
 
     TBLIS_WITH_TYPE_AS(A.type, T,
     {
-        const bool 2D = ((A.rs < A.cs && B.rs > B.cs) ||
-                         (A.rs > A.cs && B.rs < B.cs)) &&
-                        A.alpha<T>() != T(0);
+        const bool TWOD = ((A.rs < A.cs && B.rs > B.cs) ||
+                           (A.rs > A.cs && B.rs < B.cs)) &&
+                          A.alpha<T>() != T(0);
         const bool trans = cfg.trans_row_major<T>() && B.rs < B.cs;
         const len_type MR = cfg.trans_mr.def<T>();
         const len_type NR = cfg.trans_nr.def<T>();
@@ -25,7 +25,7 @@ void add_int(const communicator& comm, const config& cfg,
          * If A is row-major and B is column-major or vice versa, use
          * the transpose microkernel.
          */
-        if (2D)
+        if (TWOD)
         {
             /*
              * Logically transpose A and B if storage of B does not match

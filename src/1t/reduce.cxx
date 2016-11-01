@@ -10,7 +10,6 @@ void reduce_int(const communicator& comm, const config& cfg,
                 reduce_t op, const tblis_tensor& A, const label_type* idx_A_,
                 tblis_scalar& result, len_type& idx)
 {
-    TBLIS_ASSERT(A.type == B.type);
     TBLIS_ASSERT(A.type == result.type);
 
     int ndim_A = A.ndim;

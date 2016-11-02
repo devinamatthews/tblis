@@ -29,8 +29,8 @@ void reduce(reduce_t op, const_row_view<T> A, T& result, len_type& idx)
 {
     tblis_vector A_s(A);
     tblis_scalar result_s(result);
-
     tblis_vector_reduce(nullptr, nullptr, op, &A_s, &result_s, &idx);
+    result = result_s.get<T>();
 }
 
 template <typename T>
@@ -39,8 +39,8 @@ void reduce(single_t s, reduce_t op, const_row_view<T> A,
 {
     tblis_vector A_s(A);
     tblis_scalar result_s(result);
-
     tblis_vector_reduce(tblis_single, nullptr, op, &A_s, &result_s, &idx);
+    result = result_s.get<T>();
 }
 
 template <typename T>
@@ -49,8 +49,8 @@ void reduce(const communicator& comm, reduce_t op, const_row_view<T> A,
 {
     tblis_vector A_s(A);
     tblis_scalar result_s(result);
-
     tblis_vector_reduce(comm, nullptr, op, &A_s, &result_s, &idx);
+    result = result_s.get<T>();
 }
 
 template <typename T>

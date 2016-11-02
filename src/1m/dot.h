@@ -28,8 +28,8 @@ void dot(const_matrix_view<T> A, const_matrix_view<T> B, T& result)
     tblis_matrix A_s(A);
     tblis_matrix B_s(B);
     tblis_scalar result_s(result);
-
     tblis_matrix_dot(nullptr, nullptr, &A_s, &B_s, &result_s);
+    result = result_s.get<T>();
 }
 
 template <typename T>
@@ -38,8 +38,8 @@ void dot(single_t s, const_matrix_view<T> A, const_matrix_view<T> B, T& result)
     tblis_matrix A_s(A);
     tblis_matrix B_s(B);
     tblis_scalar result_s(result);
-
     tblis_matrix_dot(tblis_single, nullptr, &A_s, &B_s, &result_s);
+    result = result_s.get<T>();
 }
 
 template <typename T>
@@ -48,8 +48,8 @@ void dot(const communicator& comm, const_matrix_view<T> A, const_matrix_view<T> 
     tblis_matrix A_s(A);
     tblis_matrix B_s(B);
     tblis_scalar result_s(result);
-
     tblis_matrix_dot(comm, nullptr, &A_s, &B_s, &result_s);
+    result = result_s.get<T>();
 }
 
 template <typename T>

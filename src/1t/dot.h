@@ -30,8 +30,8 @@ void dot(const_tensor_view<T> A, const label_type* idx_A,
     tblis_tensor A_s(A);
     tblis_tensor B_s(B);
     tblis_scalar result_s(result);
-
     tblis_tensor_dot(nullptr, nullptr, &A_s, idx_A, &B_s, idx_B, &result_s);
+    result = result_s.get<T>();
 }
 
 template <typename T>
@@ -41,8 +41,8 @@ void dot(single_t s, const_tensor_view<T> A, const label_type* idx_A,
     tblis_tensor A_s(A);
     tblis_tensor B_s(B);
     tblis_scalar result_s(result);
-
     tblis_tensor_dot(tblis_single, nullptr, &A_s, idx_A, &B_s, idx_B, &result_s);
+    result = result_s.get<T>();
 }
 
 template <typename T>
@@ -53,8 +53,8 @@ void dot(const communicator& comm,
     tblis_tensor A_s(A);
     tblis_tensor B_s(B);
     tblis_scalar result_s(result);
-
     tblis_tensor_dot(comm, nullptr, &A_s, idx_A, &B_s, idx_B, &result_s);
+    result = result_s.get<T>();
 }
 
 template <typename T>

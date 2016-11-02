@@ -27,8 +27,8 @@ void reduce(reduce_t op, const_tensor_view<T> A, const label_type* idx_A, T& res
 {
     tblis_tensor A_s(A);
     tblis_scalar result_s(result);
-
     tblis_tensor_reduce(nullptr, nullptr, op, &A_s, idx_A, &result_s, &idx);
+    result = result_s.get<T>();
 }
 
 template <typename T>
@@ -37,8 +37,8 @@ void reduce(single_t s, reduce_t op, const_tensor_view<T> A, const label_type* i
 {
     tblis_tensor A_s(A);
     tblis_scalar result_s(result);
-
     tblis_tensor_reduce(tblis_single, nullptr, op, &A_s, idx_A, &result_s, &idx);
+    result = result_s.get<T>();
 }
 
 template <typename T>
@@ -47,8 +47,8 @@ void reduce(const communicator& comm, reduce_t op, const_tensor_view<T> A, const
 {
     tblis_tensor A_s(A);
     tblis_scalar result_s(result);
-
     tblis_tensor_reduce(comm, nullptr, op, &A_s, idx_A, &result_s, &idx);
+    result = result_s.get<T>();
 }
 
 template <typename T>

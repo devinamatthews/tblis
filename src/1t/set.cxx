@@ -10,14 +10,26 @@ void set_int(const communicator& comm, const config& cfg,
              const tblis_scalar& alpha, tblis_tensor& A, const label_type* idx_A_)
 {
     int ndim_A = A.ndim;
-    std::vector<len_type> len_A(ndim_A);
-    std::vector<stride_type> stride_A(ndim_A);
-    std::vector<label_type> idx_A(ndim_A);
+    std::vector<len_type> len_A;
+    std::vector<stride_type> stride_A;
+    std::vector<label_type> idx_A;
     diagonal(ndim_A, A.len, A.stride, idx_A_,
-             len_A.data(), stride_A.data(), idx_A.data());
+             len_A, stride_A, idx_A);
 
     fold(len_A, idx_A, stride_A);
     ndim_A = idx_A.size();
+
+    if (ndim_A == 0)
+    {
+        TBLIS_WITH_TYPE_AS(A.type, T,
+        {
+            T* TBLIS_RESTRICT A_ = (T*)A.data;
+            *A_ = alpha.get<T>();
+            A.alpha<T>() = T(1);
+            A.conj = false;
+        })
+        return;
+    }
 
     stride_type stride0 = stride_A[0];
     len_type len0 = len_A[0];

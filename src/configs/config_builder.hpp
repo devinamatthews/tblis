@@ -53,11 +53,16 @@ struct simple_blocksize<dcomplex, S, D, C, Z>
     static std::integral_constant<type,    def> _##name##_helper(...); \
     static constexpr type name = decltype(_##name##_helper<source>((source*)0))::value;
 
-#define TBLIS_DEFAULT_VALUE_T(name, type, source, val, def) \
+/*
+ * The cast on the first overload is very important; otherwise the
+ * compiler silently chooses the default kernel because it wants a
+ * direct pointer to an extern function.
+ */
+#define TBLIS_DEFAULT_VALUE_T(name, tp, source, val, def) \
     template <typename U, typename T> \
-    static std::integral_constant<type, U::template val<T>::value> _##name##_helper(U*); \
+    static std::integral_constant<tp, (tp)U::template val<T>::value> _##name##_helper(U*); \
     template <typename U, typename T> \
-    static std::integral_constant<type,                       def> _##name##_helper(...); \
+    static std::integral_constant<tp, def> _##name##_helper(...); \
     template <typename T> \
     struct name : decltype(_##name##_helper<source, T>((source*)0)) {};
 

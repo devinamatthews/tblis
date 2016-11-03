@@ -97,7 +97,7 @@ template <typename T, typename U>
 void passfail(const string& label, stride_type ia, stride_type ib, T a, U b)
 {
     auto c = std::abs(a-b)/(std::abs((a+b)/U(2.0)+U(1e-15)));
-    bool pass = (sizeof(c) == 4 ? c < 1e-3 : c < 1e-12) && ia == ib;
+    bool pass = (sizeof(c) == 4 ? c < 1e-3 : c < 1e-11) && ia == ib;
 
     cout << label << ": ";
     if (pass)
@@ -266,7 +266,7 @@ void random_tensors(size_t N,
     }
     random_shuffle(types_B.begin(), types_B.end());
 
-    vector<label_type> idx = range<label_type>(ndim_A+ndim_B-ndim_AB);
+    vector<label_type> idx = range<label_type>('a', 'a'+ndim_A+ndim_B-ndim_AB);
     random_shuffle(idx.begin(), idx.end());
 
     unsigned c = 0;
@@ -372,7 +372,7 @@ void random_tensors(size_t N,
     random_shuffle(types_C.begin(), types_C.end());
 
     vector<label_type> idx =
-        MArray::range(ndim_A_only+ndim_B_only+ndim_C_only+
+        MArray::range<label_type>('a', 'a'+ndim_A_only+ndim_B_only+ndim_C_only+
                       ndim_AB+ndim_AC+ndim_BC+ndim_ABC);
     random_shuffle(idx.begin(), idx.end());
 
@@ -1362,7 +1362,7 @@ void test_transpose(size_t N)
     {
         for (unsigned i = 0;i < ndim;i++)
         {
-            unsigned j; for (j = 0;j < ndim && idx_A[j] != perm[i];j++) continue;
+            unsigned j; for (j = 0;j < ndim && idx_A[j] != perm[i]+'a';j++) continue;
             idx_C[i] = idx_B[j];
             len_C[i] = B.length(j);
         }
@@ -1371,7 +1371,7 @@ void test_transpose(size_t N)
         B.reset(C);
         copy(idx_C, idx_C+8, idx_B);
     }
-    while (idx_C != idx_A);
+    while (!std::equal(idx_C, idx_C+8, idx_A));
 
     calc_val = reduce(REDUCE_NORM_2, C, idx_C).first;
     passfail("CYCLE", ref_val, calc_val);
@@ -1535,7 +1535,7 @@ void test(size_t N_in_bytes, int R)
 
 int main(int argc, char **argv)
 {
-    size_t N = 1024*1024;
+    size_t N = 10*1024*1024;
     int R = 10;
     time_t seed = time(NULL);
 

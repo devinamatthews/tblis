@@ -32,6 +32,11 @@ struct partition
 
         TBLIS_ASSERT(M_ext == M_def);
 
+        //printf("partition along: %c\n", "MNK"[Dim]);
+        //printf("A before: %p %ld %ld %ld %ld\n", A.data(), A.length(0), A.length(1), A.stride(0), A.stride(1));
+        //printf("B before: %p %ld %ld %ld %ld\n", B.data(), B.length(0), B.length(1), B.stride(0), B.stride(1));
+        //printf("C before: %p %ld %ld %ld %ld\n", C.data(), C.length(0), C.length(1), C.stride(0), C.stride(1));
+
         auto length = [&](len_type m_u, len_type m_v)
         {
             (Dim == DIM_M ? A.length(0, m_u) : Dim == DIM_N ? B.length(1, m_u) : A.length(1, m_u));
@@ -68,6 +73,8 @@ struct partition
             len_type m_loc = std::min(m_last-m_off, M_cur);
             length(m_loc, m_loc);
 
+            //printf("[%ld:%ld)\n", m_off, m_off+m_loc);
+
             child(subcomm, cfg, alpha, A, B, beta, C);
             if (Dim == DIM_K) beta = 1.0;
 
@@ -78,6 +85,10 @@ struct partition
 
         shift(-m_off, -m_off);
         length(m_u, m_v);
+
+        //printf("A after: %p %ld %ld %ld %ld\n", A.data(), A.length(0), A.length(1), A.stride(0), A.stride(1));
+        //printf("B after: %p %ld %ld %ld %ld\n", B.data(), B.length(0), B.length(1), B.stride(0), B.stride(1));
+        //printf("C after: %p %ld %ld %ld %ld\n", C.data(), C.length(0), C.length(1), C.stride(0), C.stride(1));
     }
 };
 

@@ -38,26 +38,35 @@ struct pack_row_panel
         const T* p_a = A.data();
         T* p_ap = Ap.data();
 
-        communicator subcomm = comm.gang(TCI_EVENLY|TCI_NO_CONTEXT, comm.num_threads());
+        //printf("packing %c\n", "AB"[Mat]);
+        //printf("m_a/k_a/rs_a/cs_a: %ld/%ld/%ld/%ld\n", m_a, k_a, rs_a, cs_a);
+        //printf("M: %p %ld %ld %ld %ld\n", A.data(), A.length(0), A.length(1), A.stride(0), A.stride(1));
+        //printf("Mp: %p %ld %ld %ld %ld\n", Ap.data(), Ap.length(0), Ap.length(1), Ap.stride(0), Ap.stride(1));
+        //printf("norm before: %.15f\n", reduce(REDUCE_NORM_2, A).first);
 
-        len_type off_first, off_last;
-        std::tie(off_first, off_last, std::ignore) = subcomm.distribute_over_gangs(m_a, MR);
+        len_type m_first, m_last, k_first, k_last;
+        std::tie(m_first, m_last, std::ignore,
+                 k_first, k_last, std::ignore) =
+            comm.distribute_over_threads_2d(m_a, k_a, MR, KR);
 
-        p_a += off_first*rs_a;
-        p_ap += off_first*round_up(k_a, KR);
+        p_a += m_first*rs_a + k_first*cs_a;
+        p_ap += m_first*k_a + k_first*ME;
 
-        for (len_type off_m = off_first;off_m < off_last;off_m += MR)
+        for (len_type off_m = m_first;off_m < m_last;off_m += MR)
         {
-            len_type m = std::min(MR, off_last-off_m);
+            len_type m = std::min(MR, m_last-off_m);
+            len_type k = k_last-k_first;
 
             if (!Trans)
-                cfg.pack_nn_mr_ukr.call<T>(subcomm, m, k_a, p_a, rs_a, cs_a, p_ap);
+                cfg.pack_nn_mr_ukr.call<T>(m, k, p_a, rs_a, cs_a, p_ap);
             else
-                cfg.pack_nn_nr_ukr.call<T>(subcomm, m, k_a, p_a, rs_a, cs_a, p_ap);
+                cfg.pack_nn_nr_ukr.call<T>(m, k, p_a, rs_a, cs_a, p_ap);
 
             p_a += m*rs_a;
             p_ap += ME*k_a;
         }
+
+        //printf("norm after: %.15f\n", reduce(REDUCE_NORM_2, Ap).first);
     }
 
     void operator()(const communicator& comm, const config& cfg,
@@ -78,52 +87,54 @@ struct pack_row_panel
         const T* p_a = A.data();
         T* p_ap = Ap.data();
 
-        communicator subcomm = comm.gang(TCI_EVENLY|TCI_NO_CONTEXT, comm.num_threads());
+        len_type m_first, m_last, k_first, k_last;
+        std::tie(m_first, m_last, std::ignore,
+                 k_first, k_last, std::ignore) =
+            comm.distribute_over_threads_2d(m_a, k_a, MR, KR);
 
-        len_type off_first, off_last;
-        std::tie(off_first, off_last, std::ignore) = subcomm.distribute_over_gangs(m_a, MR);
+        p_a += m_first*rs_a + k_first*cs_a;
+        rscat_a += m_first;
+        cscat_a += k_first;
+        p_ap += m_first*k_a + k_first*ME;
 
-        p_a += off_first*rs_a;
-        rscat_a += off_first;
-        p_ap += off_first*round_up(k_a, KR);
-
-        for (len_type off_m = off_first;off_m < off_last;off_m += MR)
+        for (len_type off_m = m_first;off_m < m_last;off_m += MR)
         {
-            len_type m = std::min(MR, off_last-off_m);
+            len_type m = std::min(MR, m_last-off_m);
+            len_type k = k_last-k_first;
 
             if (rs_a == 0 && cs_a == 0)
             {
                 if (!Trans)
-                    cfg.pack_ss_mr_ukr.call<T>(subcomm, m, k_a, p_a, rscat_a, cscat_a, p_ap);
+                    cfg.pack_ss_mr_ukr.call<T>(m, k, p_a, rscat_a, cscat_a, p_ap);
                 else
-                    cfg.pack_ss_nr_ukr.call<T>(subcomm, m, k_a, p_a, rscat_a, cscat_a, p_ap);
+                    cfg.pack_ss_nr_ukr.call<T>(m, k, p_a, rscat_a, cscat_a, p_ap);
 
                 rscat_a += m;
             }
             else if (rs_a == 0)
             {
                 if (!Trans)
-                    cfg.pack_sn_mr_ukr.call<T>(subcomm, m, k_a, p_a, rscat_a, cs_a, p_ap);
+                    cfg.pack_sn_mr_ukr.call<T>(m, k, p_a, rscat_a, cs_a, p_ap);
                 else
-                    cfg.pack_sn_nr_ukr.call<T>(subcomm, m, k_a, p_a, rscat_a, cs_a, p_ap);
+                    cfg.pack_sn_nr_ukr.call<T>(m, k, p_a, rscat_a, cs_a, p_ap);
 
                 rscat_a += m;
             }
             else if (cs_a == 0)
             {
                 if (!Trans)
-                    cfg.pack_ns_mr_ukr.call<T>(subcomm, m, k_a, p_a, rs_a, cscat_a, p_ap);
+                    cfg.pack_ns_mr_ukr.call<T>(m, k, p_a, rs_a, cscat_a, p_ap);
                 else
-                    cfg.pack_ns_nr_ukr.call<T>(subcomm, m, k_a, p_a, rs_a, cscat_a, p_ap);
+                    cfg.pack_ns_nr_ukr.call<T>(m, k, p_a, rs_a, cscat_a, p_ap);
 
                 p_a += m*rs_a;
             }
             else
             {
                 if (!Trans)
-                    cfg.pack_nn_mr_ukr.call<T>(subcomm, m, k_a, p_a, rs_a, cs_a, p_ap);
+                    cfg.pack_nn_mr_ukr.call<T>(m, k, p_a, rs_a, cs_a, p_ap);
                 else
-                    cfg.pack_nn_nr_ukr.call<T>(subcomm, m, k_a, p_a, rs_a, cs_a, p_ap);
+                    cfg.pack_nn_nr_ukr.call<T>(m, k, p_a, rs_a, cs_a, p_ap);
 
                 p_a += m*rs_a;
             }
@@ -149,40 +160,42 @@ struct pack_row_panel
         len_type k_a = A.length(!Trans);
         T* p_ap = Ap.data();
 
-        communicator subcomm = comm.gang(TCI_EVENLY|TCI_NO_CONTEXT, comm.num_threads());
+        len_type m_first, m_last, k_first, k_last;
+        std::tie(m_first, m_last, std::ignore,
+                 k_first, k_last, std::ignore) =
+            comm.distribute_over_threads_2d(m_a, k_a, MR, KR);
 
-        len_type off_first, off_last;
-        std::tie(off_first, off_last, std::ignore) = subcomm.distribute_over_gangs(m_a, MR);
+        p_ap += m_first*k_a + k_first*ME;
 
-        len_type off_m = off_first;
-
-        p_ap += off_m*round_up(k_a, KR);
+        len_type off_m = m_first;
 
         A.length(Trans, MR);
         A.shift(Trans, off_m);
 
-        while (off_m < off_last)
+        while (off_m < m_last)
         {
             stride_type rs_a = A.stride(Trans);
             const stride_type* rscat_a = A.scatter(Trans);
             const stride_type* cscat_a = A.scatter(!Trans);
             const stride_type* cbs_a = A.block_scatter(!Trans);
             const T* p_a = A.data();
-            len_type m = std::min(MR, off_last-off_m);
+
+            len_type m = std::min(MR, m_last-off_m);
+            len_type k = k_last-k_first;
 
             if (rs_a == 0)
             {
                 if (!Trans)
-                    cfg.pack_sb_mr_ukr.call<T>(subcomm, m, k_a, p_a, rscat_a, cscat_a, cbs_a, p_ap);
+                    cfg.pack_sb_mr_ukr.call<T>(m, k, p_a, rscat_a, cscat_a, cbs_a, p_ap);
                 else
-                    cfg.pack_sb_nr_ukr.call<T>(subcomm, m, k_a, p_a, rscat_a, cscat_a, cbs_a, p_ap);
+                    cfg.pack_sb_nr_ukr.call<T>(m, k, p_a, rscat_a, cscat_a, cbs_a, p_ap);
             }
             else
             {
                 if (!Trans)
-                    cfg.pack_nb_mr_ukr.call<T>(subcomm, m, k_a, p_a, rs_a, cscat_a, cbs_a, p_ap);
+                    cfg.pack_nb_mr_ukr.call<T>(m, k, p_a, rs_a, cscat_a, cbs_a, p_ap);
                 else
-                    cfg.pack_nb_nr_ukr.call<T>(subcomm, m, k_a, p_a, rs_a, cscat_a, cbs_a, p_ap);
+                    cfg.pack_nb_nr_ukr.call<T>(m, k, p_a, rs_a, cscat_a, cbs_a, p_ap);
             }
 
             p_ap += ME*k_a;

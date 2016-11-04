@@ -4,6 +4,10 @@
 #include "util/basic_types.h"
 #include "util/thread.h"
 
+#include "matrix/tensor_matrix.hpp"
+
+#include "nodes/packm.hpp"
+
 #include "configs/configs.hpp"
 
 namespace tblis
@@ -63,7 +67,7 @@ template <> struct matrify_and_run<matrix_constants::MAT_A>
                                   parent.rscat, MB, parent.rbs,
                                   parent.cscat, NB, parent.cbs);
 
-        parent.child(cfg, comm, alpha, M, B, beta, C);
+        parent.child(comm, cfg, alpha, M, B, beta, C);
     }
 };
 
@@ -86,7 +90,7 @@ template <> struct matrify_and_run<matrix_constants::MAT_B>
                                   parent.rscat, MB, parent.rbs,
                                   parent.cscat, NB, parent.cbs);
 
-        parent.child(cfg, comm, alpha, A, M, beta, C);
+        parent.child(comm, cfg, alpha, A, M, beta, C);
     }
 };
 
@@ -109,7 +113,7 @@ template <> struct matrify_and_run<matrix_constants::MAT_C>
                                   parent.rscat, MB, parent.rbs,
                                   parent.cscat, NB, parent.cbs);
 
-        parent.child(cfg, comm, alpha, A, B, beta, M);
+        parent.child(comm, cfg, alpha, A, B, beta, M);
     }
 };
 
@@ -163,7 +167,7 @@ using matrify_c = matrify<matrix_constants::MAT_C, Pool, Child>;
 template <int Mat, MemoryPool& Pool, typename Child>
 struct matrify_and_pack : matrify<Mat, Pool, pack<Mat, Pool, Child>>
 {
-    typedef matrify<Mat, Pool, Child> Sib;
+    typedef matrify<Mat, Pool, pack<Mat, Pool, Child>> Sib;
 
     using Sib::child;
     using Sib::rscat;

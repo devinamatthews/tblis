@@ -264,64 +264,20 @@ T& intersect(T& v1, T v2)
     return v1;
 }
 
-template <typename T, typename... Ts>
+template <typename T, typename U, typename... Ts>
 enable_if_t<sizeof...(Ts),T&>
-intersect(T& v1, const T& v2, Ts&&... vs)
+intersect(T& v1, U&& v2, Ts&&... vs)
 {
-    intersect(v1, v2);
+    intersect(v1, std::forward<U>(v2));
     intersect(v1, std::forward<Ts>(vs)...);
     return v1;
 }
 
 template <typename T, typename... Ts>
-enable_if_t<sizeof...(Ts),T&>
-intersect(T& v1, T&& v2, Ts&&... vs)
+T intersection(T v1, Ts&&... vs)
 {
-    intersect(v1, std::move(v2));
     intersect(v1, std::forward<Ts>(vs)...);
     return v1;
-}
-
-template <typename T>
-T intersection(const T& v1, const T& v2)
-{
-    T v3(v1);
-    intersect(v3, v2);
-    return v3;
-}
-
-template <typename T>
-T intersection(const T& v1, T&& v2)
-{
-    T v3(v1);
-    intersect(v3, std::move(v2));
-    return v3;
-}
-
-template <typename T>
-T intersection(T&& v1, const T& v2)
-{
-    T v3(std::move(v1));
-    intersect(v3, v2);
-    return v3;
-}
-
-template <typename T>
-enable_if_not_reference_t<T,T>
-intersection(T&& v1, T&& v2)
-{
-    T v3(std::move(v1));
-    intersect(v3, std::move(v2));
-    return v3;
-}
-
-template <typename T, typename... Ts>
-enable_if_t<(sizeof...(Ts) > 1),decay_t<T>>
-intersection(T&& v1, Ts&&... vs)
-{
-    decay_t<T> v2(std::forward<T>(v1));
-    intersect(v2, std::forward<Ts>(vs)...);
-    return v2;
 }
 
 template <typename T>
@@ -355,64 +311,20 @@ T& exclude(T& v1, T v2)
     return v1;
 }
 
-template <typename T, typename... Ts>
+template <typename T, typename U, typename... Ts>
 enable_if_t<sizeof...(Ts),T&>
-exclude(T& v1, const T& v2, Ts&&... vs)
+exclude(T& v1, U&& v2, Ts&&... vs)
 {
-    exclude(v1, v2);
+    exclude(v1, std::forward<U>(v2));
     exclude(v1, std::forward<Ts>(vs)...);
     return v1;
 }
 
 template <typename T, typename... Ts>
-enable_if_t<sizeof...(Ts),T&>
-exclude(T& v1, T&& v2, Ts&&... vs)
+T exclusion(T v1, Ts&&... vs)
 {
-    exclude(v1, std::move(v2));
     exclude(v1, std::forward<Ts>(vs)...);
     return v1;
-}
-
-template <typename T>
-T exclusion(const T& v1, const T& v2)
-{
-    T v3(v1);
-    exclude(v3, v2);
-    return v3;
-}
-
-template <typename T>
-T exclusion(const T& v1, T&& v2)
-{
-    T v3(v1);
-    exclude(v3, std::move(v2));
-    return v3;
-}
-
-template <typename T>
-T exclusion(T&& v1, const T& v2)
-{
-    T v3(std::move(v1));
-    exclude(v3, v2);
-    return v3;
-}
-
-template <typename T>
-enable_if_not_reference_t<T,T>
-exclusion(T&& v1, T&& v2)
-{
-    T v3(std::move(v1));
-    exclude(v3, std::move(v2));
-    return v3;
-}
-
-template <typename T, typename... Ts>
-enable_if_t<(sizeof...(Ts) > 1),decay_t<T>>
-exclusion(T&& v1, Ts&&... vs)
-{
-    decay_t<T> v2(std::forward<T>(v1));
-    exclude(v2, std::forward<Ts>(vs)...);
-    return v2;
 }
 
 template <typename T>

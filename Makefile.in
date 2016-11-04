@@ -288,7 +288,7 @@ am_lib_libtblis_la_OBJECTS = src/iface/1v/add.lo src/iface/1v/dot.lo \
 	src/iface/1m/reduce.lo src/iface/1m/scale.lo \
 	src/iface/1m/set.lo src/iface/1t/add.lo src/iface/1t/dot.lo \
 	src/iface/1t/reduce.lo src/iface/1t/scale.lo \
-	src/iface/1t/set.lo src/iface/3m/mult.lo \
+	src/iface/1t/set.lo src/iface/3m/mult.lo src/iface/3t/mult.lo \
 	src/internal/1v/add.lo src/internal/1v/dot.lo \
 	src/internal/1v/reduce.lo src/internal/1v/scale.lo \
 	src/internal/1v/set.lo src/internal/1m/add.lo \
@@ -297,7 +297,8 @@ am_lib_libtblis_la_OBJECTS = src/iface/1v/add.lo src/iface/1v/dot.lo \
 	src/internal/1t/add.lo src/internal/1t/dot.lo \
 	src/internal/1t/reduce.lo src/internal/1t/scale.lo \
 	src/internal/1t/set.lo src/internal/3m/mult.lo \
-	src/configs/configs.lo src/util/cpuid.lo src/util/random.lo \
+	src/internal/3t/mult.lo src/configs/configs.lo \
+	src/util/cpuid.lo src/util/gemm_thread.lo src/util/random.lo \
 	src/util/thread.lo
 lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
 PROGRAMS = $(bin_PROGRAMS)
@@ -618,6 +619,8 @@ lib_libtblis_la_SOURCES = \
     src/iface/1t/set.cxx \
     \
     src/iface/3m/mult.cxx \
+    \
+    src/iface/3t/mult.cxx \
 	\
     src/internal/1v/add.cxx \
     src/internal/1v/dot.cxx \
@@ -639,9 +642,12 @@ lib_libtblis_la_SOURCES = \
     \
     src/internal/3m/mult.cxx \
     \
+    src/internal/3t/mult.cxx \
+    \
     src/configs/configs.cxx \
     \
     src/util/cpuid.cxx \
+    src/util/gemm_thread.cxx \
     src/util/random.cxx \
     src/util/thread.cxx
 
@@ -1030,6 +1036,14 @@ src/iface/3m/$(DEPDIR)/$(am__dirstamp):
 	@: > src/iface/3m/$(DEPDIR)/$(am__dirstamp)
 src/iface/3m/mult.lo: src/iface/3m/$(am__dirstamp) \
 	src/iface/3m/$(DEPDIR)/$(am__dirstamp)
+src/iface/3t/$(am__dirstamp):
+	@$(MKDIR_P) src/iface/3t
+	@: > src/iface/3t/$(am__dirstamp)
+src/iface/3t/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/iface/3t/$(DEPDIR)
+	@: > src/iface/3t/$(DEPDIR)/$(am__dirstamp)
+src/iface/3t/mult.lo: src/iface/3t/$(am__dirstamp) \
+	src/iface/3t/$(DEPDIR)/$(am__dirstamp)
 src/internal/1v/$(am__dirstamp):
 	@$(MKDIR_P) src/internal/1v
 	@: > src/internal/1v/$(am__dirstamp)
@@ -1086,6 +1100,14 @@ src/internal/3m/$(DEPDIR)/$(am__dirstamp):
 	@: > src/internal/3m/$(DEPDIR)/$(am__dirstamp)
 src/internal/3m/mult.lo: src/internal/3m/$(am__dirstamp) \
 	src/internal/3m/$(DEPDIR)/$(am__dirstamp)
+src/internal/3t/$(am__dirstamp):
+	@$(MKDIR_P) src/internal/3t
+	@: > src/internal/3t/$(am__dirstamp)
+src/internal/3t/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/internal/3t/$(DEPDIR)
+	@: > src/internal/3t/$(DEPDIR)/$(am__dirstamp)
+src/internal/3t/mult.lo: src/internal/3t/$(am__dirstamp) \
+	src/internal/3t/$(DEPDIR)/$(am__dirstamp)
 src/configs/$(am__dirstamp):
 	@$(MKDIR_P) src/configs
 	@: > src/configs/$(am__dirstamp)
@@ -1101,6 +1123,8 @@ src/util/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/util/$(DEPDIR)
 	@: > src/util/$(DEPDIR)/$(am__dirstamp)
 src/util/cpuid.lo: src/util/$(am__dirstamp) \
+	src/util/$(DEPDIR)/$(am__dirstamp)
+src/util/gemm_thread.lo: src/util/$(am__dirstamp) \
 	src/util/$(DEPDIR)/$(am__dirstamp)
 src/util/random.lo: src/util/$(am__dirstamp) \
 	src/util/$(DEPDIR)/$(am__dirstamp)
@@ -1202,6 +1226,8 @@ mostlyclean-compile:
 	-rm -f src/iface/1v/*.lo
 	-rm -f src/iface/3m/*.$(OBJEXT)
 	-rm -f src/iface/3m/*.lo
+	-rm -f src/iface/3t/*.$(OBJEXT)
+	-rm -f src/iface/3t/*.lo
 	-rm -f src/internal/1m/*.$(OBJEXT)
 	-rm -f src/internal/1m/*.lo
 	-rm -f src/internal/1t/*.$(OBJEXT)
@@ -1210,6 +1236,8 @@ mostlyclean-compile:
 	-rm -f src/internal/1v/*.lo
 	-rm -f src/internal/3m/*.$(OBJEXT)
 	-rm -f src/internal/3m/*.lo
+	-rm -f src/internal/3t/*.$(OBJEXT)
+	-rm -f src/internal/3t/*.lo
 	-rm -f src/util/*.$(OBJEXT)
 	-rm -f src/util/*.lo
 	-rm -f test/*.$(OBJEXT)
@@ -1258,6 +1286,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/iface/1v/$(DEPDIR)/scale.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/iface/1v/$(DEPDIR)/set.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/iface/3m/$(DEPDIR)/mult.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/iface/3t/$(DEPDIR)/mult.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1m/$(DEPDIR)/add.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1m/$(DEPDIR)/dot.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1m/$(DEPDIR)/reduce.Plo@am__quote@
@@ -1274,7 +1303,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1v/$(DEPDIR)/scale.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1v/$(DEPDIR)/set.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/3m/$(DEPDIR)/mult.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/3t/$(DEPDIR)/mult.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/cpuid.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/gemm_thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/random.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/test.Po@am__quote@
@@ -1515,10 +1546,12 @@ clean-libtool:
 	-rm -rf src/iface/1t/.libs src/iface/1t/_libs
 	-rm -rf src/iface/1v/.libs src/iface/1v/_libs
 	-rm -rf src/iface/3m/.libs src/iface/3m/_libs
+	-rm -rf src/iface/3t/.libs src/iface/3t/_libs
 	-rm -rf src/internal/1m/.libs src/internal/1m/_libs
 	-rm -rf src/internal/1t/.libs src/internal/1t/_libs
 	-rm -rf src/internal/1v/.libs src/internal/1v/_libs
 	-rm -rf src/internal/3m/.libs src/internal/3m/_libs
+	-rm -rf src/internal/3t/.libs src/internal/3t/_libs
 	-rm -rf src/util/.libs src/util/_libs
 
 distclean-libtool:
@@ -1882,6 +1915,8 @@ distclean-generic:
 	-rm -f src/iface/1v/$(am__dirstamp)
 	-rm -f src/iface/3m/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/iface/3m/$(am__dirstamp)
+	-rm -f src/iface/3t/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/iface/3t/$(am__dirstamp)
 	-rm -f src/internal/1m/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/internal/1m/$(am__dirstamp)
 	-rm -f src/internal/1t/$(DEPDIR)/$(am__dirstamp)
@@ -1890,6 +1925,8 @@ distclean-generic:
 	-rm -f src/internal/1v/$(am__dirstamp)
 	-rm -f src/internal/3m/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/internal/3m/$(am__dirstamp)
+	-rm -f src/internal/3t/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/internal/3t/$(am__dirstamp)
 	-rm -f src/util/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/util/$(am__dirstamp)
 	-rm -f test/$(DEPDIR)/$(am__dirstamp)
@@ -1905,7 +1942,7 @@ clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/iface/1m/$(DEPDIR) src/iface/1t/$(DEPDIR) src/iface/1v/$(DEPDIR) src/iface/3m/$(DEPDIR) src/internal/1m/$(DEPDIR) src/internal/1t/$(DEPDIR) src/internal/1v/$(DEPDIR) src/internal/3m/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
+	-rm -rf src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/iface/1m/$(DEPDIR) src/iface/1t/$(DEPDIR) src/iface/1v/$(DEPDIR) src/iface/3m/$(DEPDIR) src/iface/3t/$(DEPDIR) src/internal/1m/$(DEPDIR) src/internal/1t/$(DEPDIR) src/internal/1v/$(DEPDIR) src/internal/3m/$(DEPDIR) src/internal/3t/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -1953,7 +1990,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/iface/1m/$(DEPDIR) src/iface/1t/$(DEPDIR) src/iface/1v/$(DEPDIR) src/iface/3m/$(DEPDIR) src/internal/1m/$(DEPDIR) src/internal/1t/$(DEPDIR) src/internal/1v/$(DEPDIR) src/internal/3m/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
+	-rm -rf src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/iface/1m/$(DEPDIR) src/iface/1t/$(DEPDIR) src/iface/1v/$(DEPDIR) src/iface/3m/$(DEPDIR) src/iface/3t/$(DEPDIR) src/internal/1m/$(DEPDIR) src/internal/1t/$(DEPDIR) src/internal/1v/$(DEPDIR) src/internal/3m/$(DEPDIR) src/internal/3t/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

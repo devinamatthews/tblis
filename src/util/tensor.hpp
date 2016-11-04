@@ -6,10 +6,10 @@
 
 #include "external/stl_ext/include/algorithm.hpp"
 #include "external/stl_ext/include/type_traits.hpp"
+#include "external/stl_ext/include/vector.hpp"
 
 #include <initializer_list>
 #include <string>
-#include <vector>
 
 namespace tblis
 {

@@ -143,7 +143,6 @@ struct pack_row_panel
         }
     }
 
-    template <len_type MB, len_type NB>
     void operator()(const communicator& comm, const config& cfg,
                     block_scatter_matrix<T> A, matrix_view<T>& Ap) const
     {

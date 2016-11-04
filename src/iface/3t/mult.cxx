@@ -6,6 +6,8 @@
 #include "internal/1t/set.hpp"
 #include "internal/3t/mult.hpp"
 
+#include "external/stl_ext/include/iostream.hpp"
+
 namespace tblis
 {
 
@@ -64,15 +66,37 @@ void tblis_tensor_mult(const tblis_comm* comm, const tblis_config* cfg,
     auto stride_B_BC = stl_ext::select_from(stride_B, idx_B, idx_BC);
     auto stride_C_BC = stl_ext::select_from(stride_C, idx_C, idx_BC);
 
-    auto idx_A_only = stl_ext::exclusion(idx_A, idx_AB, idx_AC);
+    auto idx_A_only = stl_ext::exclusion(idx_A, idx_AB, idx_AC, idx_ABC);
     auto len_A_only = stl_ext::select_from(len_A, idx_A, idx_A_only);
     auto stride_A_only = stl_ext::select_from(stride_A, idx_A, idx_A_only);
-    auto idx_B_only = stl_ext::exclusion(idx_B, idx_AB, idx_BC);
+    auto idx_B_only = stl_ext::exclusion(idx_B, idx_AB, idx_BC, idx_ABC);
     auto len_B_only = stl_ext::select_from(len_B, idx_B, idx_B_only);
     auto stride_B_only = stl_ext::select_from(stride_B, idx_B, idx_B_only);
-    auto idx_C_only = stl_ext::exclusion(idx_C, idx_AC, idx_BC);
+    auto idx_C_only = stl_ext::exclusion(idx_C, idx_AC, idx_BC, idx_ABC);
     auto len_C_only = stl_ext::select_from(len_C, idx_C, idx_C_only);
     auto stride_C_only = stl_ext::select_from(stride_C, idx_C, idx_C_only);
+
+    TBLIS_ASSERT(stl_ext::intersection(idx_A_only, idx_B_only).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_A_only, idx_C_only).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_A_only, idx_AB).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_A_only, idx_AC).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_A_only, idx_BC).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_A_only, idx_ABC).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_B_only, idx_C_only).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_B_only, idx_AB).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_B_only, idx_AC).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_B_only, idx_BC).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_B_only, idx_ABC).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_C_only, idx_AB).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_C_only, idx_AC).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_C_only, idx_BC).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_C_only, idx_ABC).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_AB, idx_AC).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_AB, idx_BC).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_AB, idx_ABC).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_AC, idx_BC).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_AC, idx_ABC).empty());
+    TBLIS_ASSERT(stl_ext::intersection(idx_BC, idx_ABC).empty());
 
     fold(len_ABC, idx_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
     fold(len_AB, idx_AB, stride_A_AB, stride_B_AB);

@@ -174,6 +174,22 @@ class tensor_matrix
             swap(iterator_[0], iterator_[1]);
         }
 
+        void swap(tensor_matrix& other)
+        {
+            using std::swap;
+            swap(data_, other.data_);
+            swap(len_, other.len_);
+            swap(offset_, other.offset_);
+            swap(leading_len_, other.leading_len_);
+            swap(leading_stride_, other.leading_stride_);
+            swap(iterator_, other.iterator_);
+        }
+
+        friend void swap(tensor_matrix& a, tensor_matrix& b)
+        {
+            a.swap(b);
+        }
+
         len_type length(unsigned dim) const
         {
             TBLIS_ASSERT(dim < 2);

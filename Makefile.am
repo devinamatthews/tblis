@@ -1,25 +1,49 @@
 lib_LTLIBRARIES = lib/libtblis.la
 lib_libtblis_la_SOURCES = \
 	\
-    src/1v/add.cxx \
-    src/1v/dot.cxx \
-    src/1v/reduce.cxx \
-    src/1v/scale.cxx \
-    src/1v/set.cxx \
+    src/iface/1v/add.cxx \
+    src/iface/1v/dot.cxx \
+    src/iface/1v/reduce.cxx \
+    src/iface/1v/scale.cxx \
+    src/iface/1v/set.cxx \
     \
-    src/1m/add.cxx \
-    src/1m/dot.cxx \
-    src/1m/reduce.cxx \
-    src/1m/scale.cxx \
-    src/1m/set.cxx \
+    src/iface/1m/add.cxx \
+    src/iface/1m/dot.cxx \
+    src/iface/1m/reduce.cxx \
+    src/iface/1m/scale.cxx \
+    src/iface/1m/set.cxx \
 	\
-    src/1t/add.cxx \
-    src/1t/dot.cxx \
-    src/1t/reduce.cxx \
-    src/1t/scale.cxx \
-    src/1t/set.cxx \
+    src/iface/1t/add.cxx \
+    src/iface/1t/dot.cxx \
+    src/iface/1t/reduce.cxx \
+    src/iface/1t/scale.cxx \
+    src/iface/1t/set.cxx \
     \
-    src/3m/mult.cxx \
+    src/iface/3m/mult.cxx \
+    \
+    src/iface/3t/mult.cxx \
+	\
+    src/internal/1v/add.cxx \
+    src/internal/1v/dot.cxx \
+    src/internal/1v/reduce.cxx \
+    src/internal/1v/scale.cxx \
+    src/internal/1v/set.cxx \
+    \
+    src/internal/1m/add.cxx \
+    src/internal/1m/dot.cxx \
+    src/internal/1m/reduce.cxx \
+    src/internal/1m/scale.cxx \
+    src/internal/1m/set.cxx \
+	\
+    src/internal/1t/add.cxx \
+    src/internal/1t/dot.cxx \
+    src/internal/1t/reduce.cxx \
+    src/internal/1t/scale.cxx \
+    src/internal/1t/set.cxx \
+    \
+    src/internal/3m/mult.cxx \
+    \
+    src/internal/3t/mult.cxx \
     \
     src/configs/configs.cxx \
     \

@@ -155,6 +155,7 @@ void parallelize_if(Func f, const tblis_comm* _comm, Args&&... args)
             [&](const communicator& comm)
             {
                 f(comm, args...);
+                comm.barrier();
             },
             tblis_get_num_threads()
         );

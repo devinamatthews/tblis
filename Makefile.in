@@ -282,12 +282,23 @@ lib_libtblis_la_DEPENDENCIES = external/tci/lib/libtci.la \
 	lib/libreference.la $(am__append_2) $(am__append_4) \
 	$(am__append_6) $(am__append_8) $(am__append_10) \
 	$(am__append_12) $(am__append_14)
-am_lib_libtblis_la_OBJECTS = src/1v/add.lo src/1v/dot.lo \
-	src/1v/reduce.lo src/1v/scale.lo src/1v/set.lo src/1m/add.lo \
-	src/1m/dot.lo src/1m/reduce.lo src/1m/scale.lo src/1m/set.lo \
-	src/1t/add.lo src/1t/dot.lo src/1t/reduce.lo src/1t/scale.lo \
-	src/1t/set.lo src/3m/mult.lo src/configs/configs.lo \
-	src/util/cpuid.lo src/util/random.lo src/util/thread.lo
+am_lib_libtblis_la_OBJECTS = src/iface/1v/add.lo src/iface/1v/dot.lo \
+	src/iface/1v/reduce.lo src/iface/1v/scale.lo \
+	src/iface/1v/set.lo src/iface/1m/add.lo src/iface/1m/dot.lo \
+	src/iface/1m/reduce.lo src/iface/1m/scale.lo \
+	src/iface/1m/set.lo src/iface/1t/add.lo src/iface/1t/dot.lo \
+	src/iface/1t/reduce.lo src/iface/1t/scale.lo \
+	src/iface/1t/set.lo src/iface/3m/mult.lo \
+	src/internal/1v/add.lo src/internal/1v/dot.lo \
+	src/internal/1v/reduce.lo src/internal/1v/scale.lo \
+	src/internal/1v/set.lo src/internal/1m/add.lo \
+	src/internal/1m/dot.lo src/internal/1m/reduce.lo \
+	src/internal/1m/scale.lo src/internal/1m/set.lo \
+	src/internal/1t/add.lo src/internal/1t/dot.lo \
+	src/internal/1t/reduce.lo src/internal/1t/scale.lo \
+	src/internal/1t/set.lo src/internal/3m/mult.lo \
+	src/configs/configs.lo src/util/cpuid.lo src/util/random.lo \
+	src/util/thread.lo
 lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
 PROGRAMS = $(bin_PROGRAMS)
 am_bin_test_OBJECTS = test/test.$(OBJEXT)
@@ -588,25 +599,45 @@ top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = lib/libtblis.la
 lib_libtblis_la_SOURCES = \
 	\
-    src/1v/add.cxx \
-    src/1v/dot.cxx \
-    src/1v/reduce.cxx \
-    src/1v/scale.cxx \
-    src/1v/set.cxx \
+    src/iface/1v/add.cxx \
+    src/iface/1v/dot.cxx \
+    src/iface/1v/reduce.cxx \
+    src/iface/1v/scale.cxx \
+    src/iface/1v/set.cxx \
     \
-    src/1m/add.cxx \
-    src/1m/dot.cxx \
-    src/1m/reduce.cxx \
-    src/1m/scale.cxx \
-    src/1m/set.cxx \
+    src/iface/1m/add.cxx \
+    src/iface/1m/dot.cxx \
+    src/iface/1m/reduce.cxx \
+    src/iface/1m/scale.cxx \
+    src/iface/1m/set.cxx \
 	\
-    src/1t/add.cxx \
-    src/1t/dot.cxx \
-    src/1t/reduce.cxx \
-    src/1t/scale.cxx \
-    src/1t/set.cxx \
+    src/iface/1t/add.cxx \
+    src/iface/1t/dot.cxx \
+    src/iface/1t/reduce.cxx \
+    src/iface/1t/scale.cxx \
+    src/iface/1t/set.cxx \
     \
-    src/3m/mult.cxx \
+    src/iface/3m/mult.cxx \
+	\
+    src/internal/1v/add.cxx \
+    src/internal/1v/dot.cxx \
+    src/internal/1v/reduce.cxx \
+    src/internal/1v/scale.cxx \
+    src/internal/1v/set.cxx \
+    \
+    src/internal/1m/add.cxx \
+    src/internal/1m/dot.cxx \
+    src/internal/1m/reduce.cxx \
+    src/internal/1m/scale.cxx \
+    src/internal/1m/set.cxx \
+	\
+    src/internal/1t/add.cxx \
+    src/internal/1t/dot.cxx \
+    src/internal/1t/reduce.cxx \
+    src/internal/1t/scale.cxx \
+    src/internal/1t/set.cxx \
+    \
+    src/internal/3m/mult.cxx \
     \
     src/configs/configs.cxx \
     \
@@ -943,53 +974,118 @@ src/configs/sandybridge/lib_libsandybridge_la-config.lo:  \
 
 lib/libsandybridge.la: $(lib_libsandybridge_la_OBJECTS) $(lib_libsandybridge_la_DEPENDENCIES) $(EXTRA_lib_libsandybridge_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CXXLD)$(lib_libsandybridge_la_LINK) $(am_lib_libsandybridge_la_rpath) $(lib_libsandybridge_la_OBJECTS) $(lib_libsandybridge_la_LIBADD) $(LIBS)
-src/1v/$(am__dirstamp):
-	@$(MKDIR_P) src/1v
-	@: > src/1v/$(am__dirstamp)
-src/1v/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/1v/$(DEPDIR)
-	@: > src/1v/$(DEPDIR)/$(am__dirstamp)
-src/1v/add.lo: src/1v/$(am__dirstamp) src/1v/$(DEPDIR)/$(am__dirstamp)
-src/1v/dot.lo: src/1v/$(am__dirstamp) src/1v/$(DEPDIR)/$(am__dirstamp)
-src/1v/reduce.lo: src/1v/$(am__dirstamp) \
-	src/1v/$(DEPDIR)/$(am__dirstamp)
-src/1v/scale.lo: src/1v/$(am__dirstamp) \
-	src/1v/$(DEPDIR)/$(am__dirstamp)
-src/1v/set.lo: src/1v/$(am__dirstamp) src/1v/$(DEPDIR)/$(am__dirstamp)
-src/1m/$(am__dirstamp):
-	@$(MKDIR_P) src/1m
-	@: > src/1m/$(am__dirstamp)
-src/1m/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/1m/$(DEPDIR)
-	@: > src/1m/$(DEPDIR)/$(am__dirstamp)
-src/1m/add.lo: src/1m/$(am__dirstamp) src/1m/$(DEPDIR)/$(am__dirstamp)
-src/1m/dot.lo: src/1m/$(am__dirstamp) src/1m/$(DEPDIR)/$(am__dirstamp)
-src/1m/reduce.lo: src/1m/$(am__dirstamp) \
-	src/1m/$(DEPDIR)/$(am__dirstamp)
-src/1m/scale.lo: src/1m/$(am__dirstamp) \
-	src/1m/$(DEPDIR)/$(am__dirstamp)
-src/1m/set.lo: src/1m/$(am__dirstamp) src/1m/$(DEPDIR)/$(am__dirstamp)
-src/1t/$(am__dirstamp):
-	@$(MKDIR_P) src/1t
-	@: > src/1t/$(am__dirstamp)
-src/1t/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/1t/$(DEPDIR)
-	@: > src/1t/$(DEPDIR)/$(am__dirstamp)
-src/1t/add.lo: src/1t/$(am__dirstamp) src/1t/$(DEPDIR)/$(am__dirstamp)
-src/1t/dot.lo: src/1t/$(am__dirstamp) src/1t/$(DEPDIR)/$(am__dirstamp)
-src/1t/reduce.lo: src/1t/$(am__dirstamp) \
-	src/1t/$(DEPDIR)/$(am__dirstamp)
-src/1t/scale.lo: src/1t/$(am__dirstamp) \
-	src/1t/$(DEPDIR)/$(am__dirstamp)
-src/1t/set.lo: src/1t/$(am__dirstamp) src/1t/$(DEPDIR)/$(am__dirstamp)
-src/3m/$(am__dirstamp):
-	@$(MKDIR_P) src/3m
-	@: > src/3m/$(am__dirstamp)
-src/3m/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/3m/$(DEPDIR)
-	@: > src/3m/$(DEPDIR)/$(am__dirstamp)
-src/3m/mult.lo: src/3m/$(am__dirstamp) \
-	src/3m/$(DEPDIR)/$(am__dirstamp)
+src/iface/1v/$(am__dirstamp):
+	@$(MKDIR_P) src/iface/1v
+	@: > src/iface/1v/$(am__dirstamp)
+src/iface/1v/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/iface/1v/$(DEPDIR)
+	@: > src/iface/1v/$(DEPDIR)/$(am__dirstamp)
+src/iface/1v/add.lo: src/iface/1v/$(am__dirstamp) \
+	src/iface/1v/$(DEPDIR)/$(am__dirstamp)
+src/iface/1v/dot.lo: src/iface/1v/$(am__dirstamp) \
+	src/iface/1v/$(DEPDIR)/$(am__dirstamp)
+src/iface/1v/reduce.lo: src/iface/1v/$(am__dirstamp) \
+	src/iface/1v/$(DEPDIR)/$(am__dirstamp)
+src/iface/1v/scale.lo: src/iface/1v/$(am__dirstamp) \
+	src/iface/1v/$(DEPDIR)/$(am__dirstamp)
+src/iface/1v/set.lo: src/iface/1v/$(am__dirstamp) \
+	src/iface/1v/$(DEPDIR)/$(am__dirstamp)
+src/iface/1m/$(am__dirstamp):
+	@$(MKDIR_P) src/iface/1m
+	@: > src/iface/1m/$(am__dirstamp)
+src/iface/1m/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/iface/1m/$(DEPDIR)
+	@: > src/iface/1m/$(DEPDIR)/$(am__dirstamp)
+src/iface/1m/add.lo: src/iface/1m/$(am__dirstamp) \
+	src/iface/1m/$(DEPDIR)/$(am__dirstamp)
+src/iface/1m/dot.lo: src/iface/1m/$(am__dirstamp) \
+	src/iface/1m/$(DEPDIR)/$(am__dirstamp)
+src/iface/1m/reduce.lo: src/iface/1m/$(am__dirstamp) \
+	src/iface/1m/$(DEPDIR)/$(am__dirstamp)
+src/iface/1m/scale.lo: src/iface/1m/$(am__dirstamp) \
+	src/iface/1m/$(DEPDIR)/$(am__dirstamp)
+src/iface/1m/set.lo: src/iface/1m/$(am__dirstamp) \
+	src/iface/1m/$(DEPDIR)/$(am__dirstamp)
+src/iface/1t/$(am__dirstamp):
+	@$(MKDIR_P) src/iface/1t
+	@: > src/iface/1t/$(am__dirstamp)
+src/iface/1t/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/iface/1t/$(DEPDIR)
+	@: > src/iface/1t/$(DEPDIR)/$(am__dirstamp)
+src/iface/1t/add.lo: src/iface/1t/$(am__dirstamp) \
+	src/iface/1t/$(DEPDIR)/$(am__dirstamp)
+src/iface/1t/dot.lo: src/iface/1t/$(am__dirstamp) \
+	src/iface/1t/$(DEPDIR)/$(am__dirstamp)
+src/iface/1t/reduce.lo: src/iface/1t/$(am__dirstamp) \
+	src/iface/1t/$(DEPDIR)/$(am__dirstamp)
+src/iface/1t/scale.lo: src/iface/1t/$(am__dirstamp) \
+	src/iface/1t/$(DEPDIR)/$(am__dirstamp)
+src/iface/1t/set.lo: src/iface/1t/$(am__dirstamp) \
+	src/iface/1t/$(DEPDIR)/$(am__dirstamp)
+src/iface/3m/$(am__dirstamp):
+	@$(MKDIR_P) src/iface/3m
+	@: > src/iface/3m/$(am__dirstamp)
+src/iface/3m/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/iface/3m/$(DEPDIR)
+	@: > src/iface/3m/$(DEPDIR)/$(am__dirstamp)
+src/iface/3m/mult.lo: src/iface/3m/$(am__dirstamp) \
+	src/iface/3m/$(DEPDIR)/$(am__dirstamp)
+src/internal/1v/$(am__dirstamp):
+	@$(MKDIR_P) src/internal/1v
+	@: > src/internal/1v/$(am__dirstamp)
+src/internal/1v/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/internal/1v/$(DEPDIR)
+	@: > src/internal/1v/$(DEPDIR)/$(am__dirstamp)
+src/internal/1v/add.lo: src/internal/1v/$(am__dirstamp) \
+	src/internal/1v/$(DEPDIR)/$(am__dirstamp)
+src/internal/1v/dot.lo: src/internal/1v/$(am__dirstamp) \
+	src/internal/1v/$(DEPDIR)/$(am__dirstamp)
+src/internal/1v/reduce.lo: src/internal/1v/$(am__dirstamp) \
+	src/internal/1v/$(DEPDIR)/$(am__dirstamp)
+src/internal/1v/scale.lo: src/internal/1v/$(am__dirstamp) \
+	src/internal/1v/$(DEPDIR)/$(am__dirstamp)
+src/internal/1v/set.lo: src/internal/1v/$(am__dirstamp) \
+	src/internal/1v/$(DEPDIR)/$(am__dirstamp)
+src/internal/1m/$(am__dirstamp):
+	@$(MKDIR_P) src/internal/1m
+	@: > src/internal/1m/$(am__dirstamp)
+src/internal/1m/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/internal/1m/$(DEPDIR)
+	@: > src/internal/1m/$(DEPDIR)/$(am__dirstamp)
+src/internal/1m/add.lo: src/internal/1m/$(am__dirstamp) \
+	src/internal/1m/$(DEPDIR)/$(am__dirstamp)
+src/internal/1m/dot.lo: src/internal/1m/$(am__dirstamp) \
+	src/internal/1m/$(DEPDIR)/$(am__dirstamp)
+src/internal/1m/reduce.lo: src/internal/1m/$(am__dirstamp) \
+	src/internal/1m/$(DEPDIR)/$(am__dirstamp)
+src/internal/1m/scale.lo: src/internal/1m/$(am__dirstamp) \
+	src/internal/1m/$(DEPDIR)/$(am__dirstamp)
+src/internal/1m/set.lo: src/internal/1m/$(am__dirstamp) \
+	src/internal/1m/$(DEPDIR)/$(am__dirstamp)
+src/internal/1t/$(am__dirstamp):
+	@$(MKDIR_P) src/internal/1t
+	@: > src/internal/1t/$(am__dirstamp)
+src/internal/1t/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/internal/1t/$(DEPDIR)
+	@: > src/internal/1t/$(DEPDIR)/$(am__dirstamp)
+src/internal/1t/add.lo: src/internal/1t/$(am__dirstamp) \
+	src/internal/1t/$(DEPDIR)/$(am__dirstamp)
+src/internal/1t/dot.lo: src/internal/1t/$(am__dirstamp) \
+	src/internal/1t/$(DEPDIR)/$(am__dirstamp)
+src/internal/1t/reduce.lo: src/internal/1t/$(am__dirstamp) \
+	src/internal/1t/$(DEPDIR)/$(am__dirstamp)
+src/internal/1t/scale.lo: src/internal/1t/$(am__dirstamp) \
+	src/internal/1t/$(DEPDIR)/$(am__dirstamp)
+src/internal/1t/set.lo: src/internal/1t/$(am__dirstamp) \
+	src/internal/1t/$(DEPDIR)/$(am__dirstamp)
+src/internal/3m/$(am__dirstamp):
+	@$(MKDIR_P) src/internal/3m
+	@: > src/internal/3m/$(am__dirstamp)
+src/internal/3m/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/internal/3m/$(DEPDIR)
+	@: > src/internal/3m/$(DEPDIR)/$(am__dirstamp)
+src/internal/3m/mult.lo: src/internal/3m/$(am__dirstamp) \
+	src/internal/3m/$(DEPDIR)/$(am__dirstamp)
 src/configs/$(am__dirstamp):
 	@$(MKDIR_P) src/configs
 	@: > src/configs/$(am__dirstamp)
@@ -1080,14 +1176,6 @@ bin/test$(EXEEXT): $(bin_test_OBJECTS) $(bin_test_DEPENDENCIES) $(EXTRA_bin_test
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
-	-rm -f src/1m/*.$(OBJEXT)
-	-rm -f src/1m/*.lo
-	-rm -f src/1t/*.$(OBJEXT)
-	-rm -f src/1t/*.lo
-	-rm -f src/1v/*.$(OBJEXT)
-	-rm -f src/1v/*.lo
-	-rm -f src/3m/*.$(OBJEXT)
-	-rm -f src/3m/*.lo
 	-rm -f src/configs/*.$(OBJEXT)
 	-rm -f src/configs/*.lo
 	-rm -f src/configs/bulldozer/*.$(OBJEXT)
@@ -1106,6 +1194,22 @@ mostlyclean-compile:
 	-rm -f src/configs/reference/*.lo
 	-rm -f src/configs/sandybridge/*.$(OBJEXT)
 	-rm -f src/configs/sandybridge/*.lo
+	-rm -f src/iface/1m/*.$(OBJEXT)
+	-rm -f src/iface/1m/*.lo
+	-rm -f src/iface/1t/*.$(OBJEXT)
+	-rm -f src/iface/1t/*.lo
+	-rm -f src/iface/1v/*.$(OBJEXT)
+	-rm -f src/iface/1v/*.lo
+	-rm -f src/iface/3m/*.$(OBJEXT)
+	-rm -f src/iface/3m/*.lo
+	-rm -f src/internal/1m/*.$(OBJEXT)
+	-rm -f src/internal/1m/*.lo
+	-rm -f src/internal/1t/*.$(OBJEXT)
+	-rm -f src/internal/1t/*.lo
+	-rm -f src/internal/1v/*.$(OBJEXT)
+	-rm -f src/internal/1v/*.lo
+	-rm -f src/internal/3m/*.$(OBJEXT)
+	-rm -f src/internal/3m/*.lo
 	-rm -f src/util/*.$(OBJEXT)
 	-rm -f src/util/*.lo
 	-rm -f test/*.$(OBJEXT)
@@ -1113,22 +1217,6 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@src/1m/$(DEPDIR)/add.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1m/$(DEPDIR)/dot.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1m/$(DEPDIR)/reduce.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1m/$(DEPDIR)/scale.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1m/$(DEPDIR)/set.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1t/$(DEPDIR)/add.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1t/$(DEPDIR)/dot.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1t/$(DEPDIR)/reduce.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1t/$(DEPDIR)/scale.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1t/$(DEPDIR)/set.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/add.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/dot.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/reduce.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/scale.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/1v/$(DEPDIR)/set.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/3m/$(DEPDIR)/mult.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/$(DEPDIR)/configs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config.Plo@am__quote@
@@ -1154,6 +1242,38 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/reference/$(DEPDIR)/lib_libreference_la-config.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_asm_d8x4.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1m/$(DEPDIR)/add.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1m/$(DEPDIR)/dot.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1m/$(DEPDIR)/reduce.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1m/$(DEPDIR)/scale.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1m/$(DEPDIR)/set.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1t/$(DEPDIR)/add.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1t/$(DEPDIR)/dot.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1t/$(DEPDIR)/reduce.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1t/$(DEPDIR)/scale.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1t/$(DEPDIR)/set.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1v/$(DEPDIR)/add.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1v/$(DEPDIR)/dot.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1v/$(DEPDIR)/reduce.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1v/$(DEPDIR)/scale.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1v/$(DEPDIR)/set.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/iface/3m/$(DEPDIR)/mult.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1m/$(DEPDIR)/add.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1m/$(DEPDIR)/dot.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1m/$(DEPDIR)/reduce.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1m/$(DEPDIR)/scale.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1m/$(DEPDIR)/set.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/$(DEPDIR)/add.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/$(DEPDIR)/dot.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/$(DEPDIR)/reduce.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/$(DEPDIR)/scale.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/$(DEPDIR)/set.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1v/$(DEPDIR)/add.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1v/$(DEPDIR)/dot.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1v/$(DEPDIR)/reduce.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1v/$(DEPDIR)/scale.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1v/$(DEPDIR)/set.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/3m/$(DEPDIR)/mult.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/cpuid.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/random.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/thread.Plo@am__quote@
@@ -1382,10 +1502,6 @@ clean-libtool:
 	-rm -rf .libs _libs
 	-rm -rf bin/.libs bin/_libs
 	-rm -rf lib/.libs lib/_libs
-	-rm -rf src/1m/.libs src/1m/_libs
-	-rm -rf src/1t/.libs src/1t/_libs
-	-rm -rf src/1v/.libs src/1v/_libs
-	-rm -rf src/3m/.libs src/3m/_libs
 	-rm -rf src/configs/.libs src/configs/_libs
 	-rm -rf src/configs/bulldozer/.libs src/configs/bulldozer/_libs
 	-rm -rf src/configs/core2/.libs src/configs/core2/_libs
@@ -1395,6 +1511,14 @@ clean-libtool:
 	-rm -rf src/configs/piledriver/.libs src/configs/piledriver/_libs
 	-rm -rf src/configs/reference/.libs src/configs/reference/_libs
 	-rm -rf src/configs/sandybridge/.libs src/configs/sandybridge/_libs
+	-rm -rf src/iface/1m/.libs src/iface/1m/_libs
+	-rm -rf src/iface/1t/.libs src/iface/1t/_libs
+	-rm -rf src/iface/1v/.libs src/iface/1v/_libs
+	-rm -rf src/iface/3m/.libs src/iface/3m/_libs
+	-rm -rf src/internal/1m/.libs src/internal/1m/_libs
+	-rm -rf src/internal/1t/.libs src/internal/1t/_libs
+	-rm -rf src/internal/1v/.libs src/internal/1v/_libs
+	-rm -rf src/internal/3m/.libs src/internal/3m/_libs
 	-rm -rf src/util/.libs src/util/_libs
 
 distclean-libtool:
@@ -1732,14 +1856,6 @@ distclean-generic:
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
 	-rm -f bin/$(am__dirstamp)
 	-rm -f lib/$(am__dirstamp)
-	-rm -f src/1m/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/1m/$(am__dirstamp)
-	-rm -f src/1t/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/1t/$(am__dirstamp)
-	-rm -f src/1v/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/1v/$(am__dirstamp)
-	-rm -f src/3m/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/3m/$(am__dirstamp)
 	-rm -f src/configs/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/configs/$(am__dirstamp)
 	-rm -f src/configs/bulldozer/$(DEPDIR)/$(am__dirstamp)
@@ -1758,6 +1874,22 @@ distclean-generic:
 	-rm -f src/configs/reference/$(am__dirstamp)
 	-rm -f src/configs/sandybridge/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/configs/sandybridge/$(am__dirstamp)
+	-rm -f src/iface/1m/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/iface/1m/$(am__dirstamp)
+	-rm -f src/iface/1t/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/iface/1t/$(am__dirstamp)
+	-rm -f src/iface/1v/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/iface/1v/$(am__dirstamp)
+	-rm -f src/iface/3m/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/iface/3m/$(am__dirstamp)
+	-rm -f src/internal/1m/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/internal/1m/$(am__dirstamp)
+	-rm -f src/internal/1t/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/internal/1t/$(am__dirstamp)
+	-rm -f src/internal/1v/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/internal/1v/$(am__dirstamp)
+	-rm -f src/internal/3m/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/internal/3m/$(am__dirstamp)
 	-rm -f src/util/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/util/$(am__dirstamp)
 	-rm -f test/$(DEPDIR)/$(am__dirstamp)
@@ -1773,7 +1905,7 @@ clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf src/1m/$(DEPDIR) src/1t/$(DEPDIR) src/1v/$(DEPDIR) src/3m/$(DEPDIR) src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
+	-rm -rf src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/iface/1m/$(DEPDIR) src/iface/1t/$(DEPDIR) src/iface/1v/$(DEPDIR) src/iface/3m/$(DEPDIR) src/internal/1m/$(DEPDIR) src/internal/1t/$(DEPDIR) src/internal/1v/$(DEPDIR) src/internal/3m/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -1821,7 +1953,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf src/1m/$(DEPDIR) src/1t/$(DEPDIR) src/1v/$(DEPDIR) src/3m/$(DEPDIR) src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
+	-rm -rf src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/iface/1m/$(DEPDIR) src/iface/1t/$(DEPDIR) src/iface/1v/$(DEPDIR) src/iface/3m/$(DEPDIR) src/internal/1m/$(DEPDIR) src/internal/1t/$(DEPDIR) src/internal/1v/$(DEPDIR) src/internal/3m/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

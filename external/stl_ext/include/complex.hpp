@@ -190,7 +190,7 @@ stl_ext::enable_if_t<is_arithmetic<T>::value &&
                      is_arithmetic<U>::value,bool>
 operator<(const complex<T>& a, const complex<U>& b)
 {
-    return a.real()+a.imag() < b.real()+b.imag();
+    return a.real() < b.real();
 }
 
 template <typename T, typename U>
@@ -222,7 +222,7 @@ stl_ext::enable_if_t<is_arithmetic<T>::value &&
                      is_arithmetic<U>::value,bool>
 operator<(const complex<T>& a, U b)
 {
-    return a.real()+a.imag() < b;
+    return a.real() < b;
 }
 
 template <typename T, typename U>
@@ -254,7 +254,7 @@ stl_ext::enable_if_t<is_arithmetic<T>::value &&
                      is_arithmetic<U>::value,bool>
 operator<(T a, const complex<U>& b)
 {
-    return a < b.real()+b.imag();
+    return a < b.real();
 }
 
 template <typename T, typename U>

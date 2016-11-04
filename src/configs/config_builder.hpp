@@ -76,9 +76,15 @@ struct blocksize_traits
     {
         TBLIS_DEFAULT_VALUE(      def, len_type,      BS<T>,    def, BS_Ref<T>::def);
         TBLIS_DEFAULT_VALUE(      max, len_type,      BS<T>,    max,            def);
+        TBLIS_DEFAULT_VALUE(   extent, len_type,      BS<T>, extent,            def);
+        /*
+         * If BS_Iota == BS, then it may not have a def member type, so we need
+         * a second layer of defaulting (in this case iota will come out the
+         * same as def in the end). If BS_Iota is different then it must have a
+         * def member type or this default doesn't make sense.
+         */
         TBLIS_DEFAULT_VALUE(_iota_def, len_type, BS_Iota<T>,    def, BS_Ref<T>::def);
         TBLIS_DEFAULT_VALUE(     iota, len_type,      BS<T>,   iota,      _iota_def);
-        TBLIS_DEFAULT_VALUE(   extent, len_type,      BS<T>, extent,            def);
     };
 };
 

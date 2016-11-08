@@ -121,10 +121,7 @@ class block_scatter_matrix
         stride_type stride(unsigned dim) const
         {
             TBLIS_ASSERT(dim < 2);
-            if (dim == 0)
-                return *block_scatter_[0];
-            else
-                return *block_scatter_[1];
+            return *block_scatter_[dim];
         }
 
         scatter_type scatter(unsigned dim) const

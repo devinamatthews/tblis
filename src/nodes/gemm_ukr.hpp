@@ -14,7 +14,17 @@ void accum_utile(len_type m, len_type n,
                  const T* TBLIS_RESTRICT p_ab, stride_type rs_ab, stride_type cs_ab,
                  T beta, T* TBLIS_RESTRICT p_c, stride_type rs_c, stride_type cs_c)
 {
-    TBLIS_SPECIAL_CASE(beta == T(0),
+    if (beta == T(0))
+    {
+        for (len_type j = 0;j < n;j++)
+        {
+            for (len_type i = 0;i < m;i++)
+            {
+                p_c[i*rs_c + j*cs_c] = p_ab[i*rs_ab + j*cs_ab];
+            }
+        }
+    }
+    else
     {
         for (len_type j = 0;j < n;j++)
         {
@@ -23,7 +33,7 @@ void accum_utile(len_type m, len_type n,
                 p_c[i*rs_c + j*cs_c] = p_ab[i*rs_ab + j*cs_ab] + beta*p_c[i*rs_c + j*cs_c];
             }
         }
-    })
+    }
 }
 
 template <typename T>
@@ -32,7 +42,17 @@ void accum_utile(len_type m, len_type n,
                  T beta, T* TBLIS_RESTRICT p_c,
                  const stride_type* TBLIS_RESTRICT rs_c, stride_type cs_c)
 {
-    TBLIS_SPECIAL_CASE(beta == T(0),
+    if (beta == T(0))
+    {
+        for (len_type j = 0;j < n;j++)
+        {
+            for (len_type i = 0;i < m;i++)
+            {
+                p_c[rs_c[i] + j*cs_c] = p_ab[i*rs_ab + j*cs_ab];
+            }
+        }
+    }
+    else
     {
         for (len_type j = 0;j < n;j++)
         {
@@ -41,7 +61,7 @@ void accum_utile(len_type m, len_type n,
                 p_c[rs_c[i] + j*cs_c] = p_ab[i*rs_ab + j*cs_ab] + beta*p_c[rs_c[i] + j*cs_c];
             }
         }
-    })
+    }
 }
 
 template <typename T>
@@ -50,7 +70,17 @@ void accum_utile(len_type m, len_type n,
                  T beta, T* TBLIS_RESTRICT p_c,
                  stride_type rs_c, const stride_type* TBLIS_RESTRICT cs_c)
 {
-    TBLIS_SPECIAL_CASE(beta == T(0),
+    if (beta == T(0))
+    {
+        for (len_type j = 0;j < n;j++)
+        {
+            for (len_type i = 0;i < m;i++)
+            {
+                p_c[i*rs_c + cs_c[j]] = p_ab[i*rs_ab + j*cs_ab];
+            }
+        }
+    }
+    else
     {
         for (len_type j = 0;j < n;j++)
         {
@@ -59,7 +89,7 @@ void accum_utile(len_type m, len_type n,
                 p_c[i*rs_c + cs_c[j]] = p_ab[i*rs_ab + j*cs_ab] + beta*p_c[i*rs_c + cs_c[j]];
             }
         }
-    })
+    }
 }
 
 template <typename T>
@@ -69,7 +99,17 @@ void accum_utile(len_type m, len_type n,
                  const stride_type* TBLIS_RESTRICT rs_c,
                  const stride_type* TBLIS_RESTRICT cs_c)
 {
-    TBLIS_SPECIAL_CASE(beta == T(0),
+    if (beta == T(0))
+    {
+        for (len_type j = 0;j < n;j++)
+        {
+            for (len_type i = 0;i < m;i++)
+            {
+                p_c[rs_c[i] + cs_c[j]] = p_ab[i*rs_ab + j*cs_ab];
+            }
+        }
+    }
+    else
     {
         for (len_type j = 0;j < n;j++)
         {
@@ -78,7 +118,7 @@ void accum_utile(len_type m, len_type n,
                 p_c[rs_c[i] + cs_c[j]] = p_ab[i*rs_ab + j*cs_ab] + beta*p_c[rs_c[i] + cs_c[j]];
             }
         }
-    })
+    }
 }
 
 struct gemm_micro_kernel

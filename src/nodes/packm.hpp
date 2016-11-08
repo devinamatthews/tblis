@@ -12,6 +12,8 @@
 
 #include "configs/configs.hpp"
 
+#include "iface/1m/reduce.h"
+
 #define TBLIS_MAX_UNROLL 8
 
 namespace tblis
@@ -168,19 +170,60 @@ struct pack_row_panel
 
         len_type off_m = m_first;
 
+        printf("packing %c\n", "AB"[Mat]);
+        printf("m_a/k_a: %ld/%ld\n", m_a, k_a);
+        T nrm = T();
+        for (len_type i = 0;i < A.length(0);i++)
+        {
+            for (len_type j = 0;j < A.length(1);j++)
+            {
+                T tmp = A.data()[A.scatter(0)[i] + A.scatter(1)[j]];
+                nrm += tmp*tmp;
+            }
+        }
+        printf("norm before: %.15f\n", sqrt(nrm));
+
         A.length(Trans, MR);
         A.shift(Trans, off_m);
+
+        const stride_type* cscat_a = A.scatter(!Trans) + k_first;
+        const stride_type* cbs_a = A.block_scatter(!Trans) + k_first/KR;
 
         while (off_m < m_last)
         {
             stride_type rs_a = A.stride(Trans);
             const stride_type* rscat_a = A.scatter(Trans);
-            const stride_type* cscat_a = A.scatter(!Trans);
-            const stride_type* cbs_a = A.block_scatter(!Trans);
             const T* p_a = A.data();
+
+            printf("p_a/rs_a: %p/%ld\n", p_a, rs_a);
 
             len_type m = std::min(MR, m_last-off_m);
             len_type k = k_last-k_first;
+
+            T nrm = T();
+            if (rs_a == 0)
+            {
+                for (len_type i = 0;i < k_a;i++)
+                {
+                    for (len_type j = 0;j < m;j++)
+                    {
+                        T tmp = p_a[rscat_a[j] + cscat_a[i]];
+                        nrm += tmp*tmp;
+                    }
+                }
+            }
+            else
+            {
+                for (len_type i = 0;i < k_a;i++)
+                {
+                    for (len_type j = 0;j < m;j++)
+                    {
+                        T tmp = p_a[j*rs_a + cscat_a[i]];
+                        nrm += tmp*tmp;
+                    }
+                }
+            }
+            printf("norm before: %.15f\n", sqrt(nrm));
 
             if (rs_a == 0)
             {
@@ -197,6 +240,17 @@ struct pack_row_panel
                     cfg.pack_nb_nr_ukr.call<T>(m, k, p_a, rs_a, cscat_a, cbs_a, p_ap);
             }
 
+            nrm = T();
+            for (len_type i = 0;i < k_a;i++)
+            {
+                for (len_type j = 0;j < m;j++)
+                {
+                    T tmp = p_ap[j + i*ME];
+                    nrm += tmp*tmp;
+                }
+            }
+            printf("norm after: %.15f\n", sqrt(nrm));
+
             p_ap += ME*k_a;
             A.shift_block(Trans, 1);
             off_m += MR;
@@ -204,6 +258,8 @@ struct pack_row_panel
 
         A.shift(Trans, -off_m);
         A.length(Trans, m_a);
+
+        printf("norm after: %.15f\n", reduce(REDUCE_NORM_2, Ap).first);
     }
 };
 

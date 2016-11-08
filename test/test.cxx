@@ -1,9 +1,5 @@
-#include <cstdlib>
 #include <algorithm>
 #include <limits>
-#include <stdint.h>
-#include <iostream>
-#include <random>
 #include <numeric>
 #include <getopt.h>
 #include <sstream>
@@ -11,11 +7,13 @@
 
 #include "tblis.h"
 
+#include "internal/3t/mult.hpp"
 #include "util/random.hpp"
 #include "external/stl_ext/include/iostream.hpp"
 
 using namespace std;
 using namespace tblis;
+using namespace tblis::internal;
 
 template <typename T>
 void gemm_ref(T alpha, const_matrix_view<T> A,
@@ -97,7 +95,7 @@ template <typename T, typename U>
 void passfail(const string& label, stride_type ia, stride_type ib, T a, U b)
 {
     auto c = std::abs(a-b)/(std::abs((a+b)/U(2.0)+U(1e-15)));
-    bool pass = (sizeof(c) == 4 ? c < 1e-3 : c < 1e-12) && ia == ib;
+    bool pass = (sizeof(c) == 4 ? c < 1e-3 : c < 1e-11) && ia == ib;
 
     cout << label << ": ";
     if (pass)
@@ -244,8 +242,8 @@ template <typename T>
 void random_tensors(size_t N,
                    unsigned ndim_A_only, unsigned ndim_B_only,
                    unsigned ndim_AB,
-                   tensor<T>& A, label_type* idx_A,
-                   tensor<T>& B, label_type* idx_B)
+                   tensor<T>& A, std::vector<label_type>& idx_A,
+                   tensor<T>& B, std::vector<label_type>& idx_B)
 {
     unsigned ndim_A = ndim_A_only+ndim_AB;
     unsigned ndim_B = ndim_B_only+ndim_AB;
@@ -266,7 +264,7 @@ void random_tensors(size_t N,
     }
     random_shuffle(types_B.begin(), types_B.end());
 
-    vector<label_type> idx = range<label_type>(ndim_A+ndim_B-ndim_AB);
+    vector<label_type> idx = range<label_type>('a', 'a'+ndim_A+ndim_B-ndim_AB);
     random_shuffle(idx.begin(), idx.end());
 
     unsigned c = 0;
@@ -279,6 +277,7 @@ void random_tensors(size_t N,
     vector<label_type> idx_AB(ndim_AB);
     for (unsigned i = 0;i < ndim_AB;i++) idx_AB[i] = idx[c++];
 
+    idx_A.resize(ndim_A);
     for (unsigned i = 0;i < ndim_A;i++)
     {
         switch (types_A[i].first)
@@ -289,6 +288,7 @@ void random_tensors(size_t N,
         }
     }
 
+    idx_B.resize(ndim_B);
     for (unsigned i = 0;i < ndim_B;i++)
     {
         switch (types_B[i].first)
@@ -333,9 +333,9 @@ void random_tensors(size_t N,
                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_C_only,
                    unsigned ndim_AB, unsigned ndim_AC, unsigned ndim_BC,
                    unsigned ndim_ABC,
-                   tensor<T>& A, label_type* idx_A,
-                   tensor<T>& B, label_type* idx_B,
-                   tensor<T>& C, label_type* idx_C)
+                   tensor<T>& A, std::vector<label_type>& idx_A,
+                   tensor<T>& B, std::vector<label_type>& idx_B,
+                   tensor<T>& C, std::vector<label_type>& idx_C)
 {
     unsigned ndim_A = ndim_A_only+ndim_AB+ndim_AC+ndim_ABC;
     unsigned ndim_B = ndim_B_only+ndim_AB+ndim_BC+ndim_ABC;
@@ -372,7 +372,7 @@ void random_tensors(size_t N,
     random_shuffle(types_C.begin(), types_C.end());
 
     vector<label_type> idx =
-        MArray::range(ndim_A_only+ndim_B_only+ndim_C_only+
+        MArray::range<label_type>('a', 'a'+ndim_A_only+ndim_B_only+ndim_C_only+
                       ndim_AB+ndim_AC+ndim_BC+ndim_ABC);
     random_shuffle(idx.begin(), idx.end());
 
@@ -398,6 +398,7 @@ void random_tensors(size_t N,
     vector<label_type> idx_ABC(ndim_ABC);
     for (unsigned i = 0;i < ndim_ABC;i++) idx_ABC[i] = idx[c++];
 
+    idx_A.resize(ndim_A);
     for (unsigned i = 0;i < ndim_A;i++)
     {
         switch (types_A[i].first)
@@ -410,6 +411,7 @@ void random_tensors(size_t N,
         }
     }
 
+    idx_B.resize(ndim_B);
     for (unsigned i = 0;i < ndim_B;i++)
     {
         switch (types_B[i].first)
@@ -422,6 +424,7 @@ void random_tensors(size_t N,
         }
     }
 
+    idx_C.resize(ndim_C);
     for (unsigned i = 0;i < ndim_C;i++)
     {
         switch (types_C[i].first)
@@ -583,8 +586,8 @@ void random_tensors(size_t N,
  * uniformly.
  */
 template <typename T>
-void random_add(size_t N, tensor<T>& A, label_type* idx_A,
-                         tensor<T>& B, label_type* idx_B)
+void random_add(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
+                          tensor<T>& B, std::vector<label_type>& idx_B)
 {
     unsigned ndim_A = random_number(1,8);
     unsigned ndim_B = random_number(1,8);
@@ -594,10 +597,10 @@ void random_add(size_t N, tensor<T>& A, label_type* idx_A,
     unsigned ndim_B_only = ndim_B-ndim_AB;
 
     random_tensors(N,
-                  ndim_A_only, ndim_B_only,
-                  ndim_AB,
-                  A, idx_A,
-                  B, idx_B);
+                   ndim_A_only, ndim_B_only,
+                   ndim_AB,
+                   A, idx_A,
+                   B, idx_B);
 }
 
 /*
@@ -606,8 +609,8 @@ void random_add(size_t N, tensor<T>& A, label_type* idx_A,
  * uniformly.
  */
 template <typename T>
-void random_trace(size_t N, tensor<T>& A, label_type* idx_A,
-                           tensor<T>& B, label_type* idx_B)
+void random_trace(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
+                            tensor<T>& B, std::vector<label_type>& idx_B)
 {
     unsigned ndim_A = random_number(1,8);
     unsigned ndim_B = random_number(1,8);
@@ -627,8 +630,8 @@ void random_trace(size_t N, tensor<T>& A, label_type* idx_A,
  * uniformly.
  */
 template <typename T>
-void random_replicate(size_t N, tensor<T>& A, label_type* idx_A,
-                               tensor<T>& B, label_type* idx_B)
+void random_replicate(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
+                                tensor<T>& B, std::vector<label_type>& idx_B)
 {
     unsigned ndim_A = random_number(1,8);
     unsigned ndim_B = random_number(1,8);
@@ -636,10 +639,10 @@ void random_replicate(size_t N, tensor<T>& A, label_type* idx_A,
     if (ndim_B < ndim_A) swap(ndim_A, ndim_B);
 
     random_tensors(N,
-                  0, ndim_B-ndim_A,
-                  ndim_A,
-                  A, idx_A,
-                  B, idx_B);
+                   0, ndim_B-ndim_A,
+                   ndim_A,
+                   A, idx_A,
+                   B, idx_B);
 }
 
 /*
@@ -648,8 +651,8 @@ void random_replicate(size_t N, tensor<T>& A, label_type* idx_A,
  * uniformly.
  */
 template <typename T>
-void random_transpose(size_t N, tensor<T>& A, label_type* idx_A,
-                                tensor<T>& B, label_type* idx_B)
+void random_transpose(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
+                                tensor<T>& B, std::vector<label_type>& idx_B)
 {
     unsigned ndim_A = random_number(1,8);
 
@@ -666,8 +669,8 @@ void random_transpose(size_t N, tensor<T>& A, label_type* idx_A,
  * uniformly.
  */
 template <typename T>
-void random_dot(size_t N, tensor<T>& A, label_type* idx_A,
-                         tensor<T>& B, label_type* idx_B)
+void random_dot(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
+                          tensor<T>& B, std::vector<label_type>& idx_B)
 {
     unsigned ndim_A = random_number(1,8);
 
@@ -684,9 +687,9 @@ void random_dot(size_t N, tensor<T>& A, label_type* idx_A,
  * uniformly.
  */
 template <typename T>
-void random_mult(size_t N, tensor<T>& A, label_type* idx_A,
-                          tensor<T>& B, label_type* idx_B,
-                          tensor<T>& C, label_type* idx_C)
+void random_mult(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
+                           tensor<T>& B, std::vector<label_type>& idx_B,
+                           tensor<T>& C, std::vector<label_type>& idx_C)
 {
     int ndim_A, ndim_B, ndim_C;
     int ndim_A_only, ndim_B_only, ndim_C_only;
@@ -732,8 +735,8 @@ void random_mult(size_t N, tensor<T>& A, label_type* idx_A,
  */
 template <typename T>
 void random_gemm(size_t N, matrix<T>& A,
-                          matrix<T>& B,
-                          matrix<T>& C)
+                           matrix<T>& B,
+                           matrix<T>& C)
 {
     len_type m = random_number<len_type>(1, sqrt(N));
     len_type n = random_number<len_type>(1, sqrt(N));
@@ -763,8 +766,8 @@ void random_gemm(size_t N, matrix<T>& A,
  */
 template <typename T>
 void random_gemv(size_t N, matrix<T>& A,
-                          matrix<T>& B,
-                          matrix<T>& C)
+                           matrix<T>& B,
+                           matrix<T>& C)
 {
     len_type m = random_number<len_type>(1, sqrt(N));
     len_type k = random_number<len_type>(1, sqrt(N));
@@ -781,8 +784,8 @@ void random_gemv(size_t N, matrix<T>& A,
  */
 template <typename T>
 void random_ger(size_t N, matrix<T>& A,
-                         matrix<T>& B,
-                         matrix<T>& C)
+                          matrix<T>& B,
+                          matrix<T>& C)
 {
     len_type m = random_number<len_type>(1, sqrt(N));
     len_type n = random_number<len_type>(1, sqrt(N));
@@ -798,9 +801,9 @@ void random_ger(size_t N, matrix<T>& A,
  * uniformly.
  */
 template <typename T>
-void random_contract(size_t N, tensor<T>& A, label_type* idx_A,
-                              tensor<T>& B, label_type* idx_B,
-                              tensor<T>& C, label_type* idx_C)
+void random_contract(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
+                              tensor<T>& B, std::vector<label_type>& idx_B,
+                              tensor<T>& C, std::vector<label_type>& idx_C)
 {
     int ndim_A, ndim_B, ndim_C;
     int ndim_AB, ndim_AC, ndim_BC;
@@ -833,9 +836,9 @@ void random_contract(size_t N, tensor<T>& A, label_type* idx_A,
  * uniformly.
  */
 template <typename T>
-void random_weight(size_t N, tensor<T>& A, label_type* idx_A,
-                            tensor<T>& B, label_type* idx_B,
-                            tensor<T>& C, label_type* idx_C)
+void random_weight(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
+                            tensor<T>& B, std::vector<label_type>& idx_B,
+                            tensor<T>& C, std::vector<label_type>& idx_C)
 {
     int ndim_A, ndim_B, ndim_C;
     int ndim_AC, ndim_BC;
@@ -868,9 +871,9 @@ void random_weight(size_t N, tensor<T>& A, label_type* idx_A,
  * uniformly.
  */
 template <typename T>
-void random_outer_prod(size_t N, tensor<T>& A, label_type* idx_A,
-                                 tensor<T>& B, label_type* idx_B,
-                                 tensor<T>& C, label_type* idx_C)
+void random_outer_prod(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
+                                 tensor<T>& B, std::vector<label_type>& idx_B,
+                                 tensor<T>& C, std::vector<label_type>& idx_C)
 {
     unsigned ndim_A, ndim_B, ndim_C;
     do
@@ -932,121 +935,40 @@ void test_tblis(size_t N)
     }
 }
 
-#if 0
-
 template <typename T>
 void test_mult(size_t N)
 {
     tensor<T> A, B, C, D;
-    label_type idx_A[8], idx_B[8], idx_C[8];
+    std::vector<label_type> idx_A, idx_B, idx_C;
 
-    T ref_val, calc_val, scale;
-    scale = 10.0*random_unit<T>();
+    T scale = 10.0*random_unit<T>();
 
     cout << endl;
     cout << "Testing mult (" << type_name<T>() << "):" << endl;
-
-    random_contract(N, A, idx_A, B, idx_B, C, idx_C);
-
-    cout << endl;
-    cout << "len_A    = " << A.lengths() << endl;
-    cout << "stride_A = " << A.strides() << endl;
-    cout << "idx_A    = " << vector<label_type>(idx_A, idx_A+A.dimension()) << endl;
-    cout << "len_B    = " << B.lengths() << endl;
-    cout << "stride_B = " << B.strides() << endl;
-    cout << "idx_B    = " << vector<label_type>(idx_B, idx_B+B.dimension()) << endl;
-    cout << "len_C    = " << C.lengths() << endl;
-    cout << "stride_C = " << C.strides() << endl;
-    cout << "idx_C    = " << idx_C << endl;
-    cout << endl;
-
-    impl_type = BLAS_BASED;
-    D.reset(C);
-    contract(scale, A, idx_A, B, idx_B, scale, D, idx_C);
-    reduce(REDUCE_NORM_2, D, idx_C, ref_val);
-
-    impl_type = REFERENCE;
-    D.reset(C);
-    mult(scale, A, idx_A, B, idx_B, scale, D, idx_C);
-    reduce(REDUCE_NORM_2, D, idx_C, calc_val);
-
-    passfail("CONTRACT", ref_val, calc_val);
-
-    random_weight(N, A, idx_A, B, idx_B, C, idx_C);
-
-    cout << endl;
-    cout << "len_A    = " << A.lengths() << endl;
-    cout << "stride_A = " << A.strides() << endl;
-    cout << "idx_A    = " << vector<label_type>(idx_A, idx_A+A.dimension()) << endl;
-    cout << "len_B    = " << B.lengths() << endl;
-    cout << "stride_B = " << B.strides() << endl;
-    cout << "idx_B    = " << vector<label_type>(idx_B, idx_B+B.dimension()) << endl;
-    cout << "len_C    = " << C.lengths() << endl;
-    cout << "stride_C = " << C.strides() << endl;
-    cout << "idx_C    = " << idx_C << endl;
-    cout << endl;
-
-    impl_type = BLAS_BASED;
-    D.reset(C);
-    weight(scale, A, idx_A, B, idx_B, scale, D, idx_C);
-    reduce(REDUCE_NORM_2, D, idx_C, ref_val);
-
-    impl_type = REFERENCE;
-    D.reset(C);
-    mult(scale, A, idx_A, B, idx_B, scale, D, idx_C);
-    reduce(REDUCE_NORM_2, D, idx_C, calc_val);
-
-    passfail("WEIGHT", ref_val, calc_val);
-
-    RandomOuterProd(N, A, idx_A, B, idx_B, C, idx_C);
-
-    cout << endl;
-    cout << "len_A    = " << A.lengths() << endl;
-    cout << "stride_A = " << A.strides() << endl;
-    cout << "idx_A    = " << vector<label_type>(idx_A, idx_A+A.dimension()) << endl;
-    cout << "len_B    = " << B.lengths() << endl;
-    cout << "stride_B = " << B.strides() << endl;
-    cout << "idx_B    = " << vector<label_type>(idx_B, idx_B+B.dimension()) << endl;
-    cout << "len_C    = " << C.lengths() << endl;
-    cout << "stride_C = " << C.strides() << endl;
-    cout << "idx_C    = " << idx_C << endl;
-    cout << endl;
-
-    impl_type = BLAS_BASED;
-    D.reset(C);
-    outer_prod(scale, A, idx_A, B, idx_B, scale, D, idx_C);
-    reduce(REDUCE_NORM_2, D, idx_C, ref_val);
-
-    impl_type = REFERENCE;
-    D.reset(C);
-    mult(scale, A, idx_A, B, idx_B, scale, D, idx_C);
-    reduce(REDUCE_NORM_2, D, idx_C, calc_val);
-
-    passfail("OUTER_PROD", ref_val, calc_val);
 
     random_mult(N, A, idx_A, B, idx_B, C, idx_C);
 
     cout << endl;
     cout << "len_A    = " << A.lengths() << endl;
     cout << "stride_A = " << A.strides() << endl;
-    cout << "idx_A    = " << vector<label_type>(idx_A, idx_A+A.dimension()) << endl;
+    cout << "idx_A    = " << idx_A << endl;
     cout << "len_B    = " << B.lengths() << endl;
     cout << "stride_B = " << B.strides() << endl;
-    cout << "idx_B    = " << vector<label_type>(idx_B, idx_B+B.dimension()) << endl;
+    cout << "idx_B    = " << idx_B << endl;
     cout << "len_C    = " << C.lengths() << endl;
     cout << "stride_C = " << C.strides() << endl;
     cout << "idx_C    = " << idx_C << endl;
     cout << endl;
 
-    impl_type = BLAS_BASED;
+    impl = BLAS_BASED;
     D.reset(C);
-    mult(scale, A, idx_A, B, idx_B, scale, D, idx_C);
-    reduce(REDUCE_NORM_2, D, idx_C, ref_val);
+    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
+    T ref_val = reduce(REDUCE_NORM_2, D, idx_C.data()).first;
 
-    impl_type = REFERENCE;
+    impl = REFERENCE;
     D.reset(C);
-    mult(scale, A, idx_A, B, idx_B, scale, D, idx_C);
-    reduce(REDUCE_NORM_2, D, idx_C, calc_val);
+    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
+    T calc_val = reduce(REDUCE_NORM_2, D, idx_C.data()).first;
 
     passfail("BLAS", ref_val, calc_val);
 }
@@ -1055,57 +977,50 @@ template <typename T>
 void test_contract(size_t N)
 {
     tensor<T> A, B, C, D;
-    label_type idx_A[8], idx_B[8], idx_C[8];
+    std::vector<label_type> idx_A, idx_B, idx_C;
 
     random_contract(N, A, idx_A, B, idx_B, C, idx_C);
 
-    T ref_val, calc_val, scale;
-    scale = 10.0*random_unit<T>();
-
-    //if (idx_C != "ghdfeba") return;
+    T scale = 10.0*random_unit<T>();
 
     cout << endl;
     cout << "Testing contract (" << type_name<T>() << "):" << endl;
     cout << "len_A    = " << A.lengths() << endl;
     cout << "stride_A = " << A.strides() << endl;
-    cout << "idx_A    = " << vector<label_type>(idx_A, idx_A+A.dimension()) << endl;
+    cout << "idx_A    = " << idx_A << endl;
     cout << "len_B    = " << B.lengths() << endl;
     cout << "stride_B = " << B.strides() << endl;
-    cout << "idx_B    = " << vector<label_type>(idx_B, idx_B+B.dimension()) << endl;
+    cout << "idx_B    = " << idx_B << endl;
     cout << "len_C    = " << C.lengths() << endl;
     cout << "stride_C = " << C.strides() << endl;
     cout << "idx_C    = " << idx_C << endl;
     cout << endl;
 
-    impl_type = REFERENCE;
+    impl = REFERENCE;
     D.reset(C);
-    contract(scale, A, idx_A, B, idx_B, scale, D, idx_C);
-    reduce(REDUCE_NORM_2, D, idx_C, ref_val);
+    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
+    T ref_val = reduce(REDUCE_NORM_2, D, idx_C.data()).first;
 
-    impl_type = BLAS_BASED;
+    impl = BLAS_BASED;
     D.reset(C);
-    contract(scale, A, idx_A, B, idx_B, scale, D, idx_C);
-    impl_type = REFERENCE;
-    reduce(REDUCE_NORM_2, D, idx_C, calc_val);
+    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
+    T calc_val = reduce(REDUCE_NORM_2, D, idx_C.data()).first;
 
     passfail("BLAS", ref_val, calc_val);
 
-    impl_type = BLIS_BASED;
+    impl = BLIS_BASED;
     D.reset(C);
-    contract(scale, A, idx_A, B, idx_B, scale, D, idx_C);
-    impl_type = REFERENCE;
-    reduce(REDUCE_NORM_2, D, idx_C, calc_val);
+    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
+    calc_val = reduce(REDUCE_NORM_2, D, idx_C.data()).first;
 
     passfail("BLIS", ref_val, calc_val);
-
-    //if (idx_C == "ghdfeba") exit(0);
 }
 
 template <typename T>
 void test_weight(size_t N)
 {
     tensor<T> A, B, C, D;
-    label_type idx_A[8], idx_B[8], idx_C[8];
+    std::vector<label_type> idx_A, idx_B, idx_C;
 
     random_weight(N, A, idx_A, B, idx_B, C, idx_C);
 
@@ -1113,27 +1028,26 @@ void test_weight(size_t N)
     cout << "Testing weight (" << type_name<T>() << "):" << endl;
     cout << "len_A    = " << A.lengths() << endl;
     cout << "stride_A = " << A.strides() << endl;
-    cout << "idx_A    = " << vector<label_type>(idx_A, idx_A+A.dimension()) << endl;
+    cout << "idx_A    = " << idx_A << endl;
     cout << "len_B    = " << B.lengths() << endl;
     cout << "stride_B = " << B.strides() << endl;
-    cout << "idx_B    = " << vector<label_type>(idx_B, idx_B+B.dimension()) << endl;
+    cout << "idx_B    = " << idx_B << endl;
     cout << "len_C    = " << C.lengths() << endl;
     cout << "stride_C = " << C.strides() << endl;
     cout << "idx_C    = " << idx_C << endl;
     cout << endl;
 
-    T ref_val, calc_val, scale;
-    scale = 10.0*random_unit<T>();
+    T scale = 10.0*random_unit<T>();
 
-    impl_type = BLAS_BASED;
+    impl = BLAS_BASED;
     D.reset(C);
-    weight(scale, A, idx_A, B, idx_B, scale, D, idx_C);
-    reduce(REDUCE_NORM_2, D, idx_C, ref_val);
+    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
+    T ref_val = reduce(REDUCE_NORM_2, D, idx_C.data()).first;
 
-    impl_type = REFERENCE;
+    impl = REFERENCE;
     D.reset(C);
-    weight(scale, A, idx_A, B, idx_B, scale, D, idx_C);
-    reduce(REDUCE_NORM_2, D, idx_C, calc_val);
+    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
+    T calc_val = reduce(REDUCE_NORM_2, D, idx_C.data()).first;
 
     passfail("BLAS", ref_val, calc_val);
 }
@@ -1142,46 +1056,43 @@ template <typename T>
 void test_outer_prod(size_t N)
 {
     tensor<T> A, B, C, D;
-    label_type idx_A[8], idx_B[8], idx_C[8];
+    std::vector<label_type> idx_A, idx_B, idx_C;
 
-    RandomOuterProd(N, A, idx_A, B, idx_B, C, idx_C);
+    random_outer_prod(N, A, idx_A, B, idx_B, C, idx_C);
 
     cout << endl;
     cout << "Testing outer prod (" << type_name<T>() << "):" << endl;
     cout << "len_A    = " << A.lengths() << endl;
     cout << "stride_A = " << A.strides() << endl;
-    cout << "idx_A    = " << vector<label_type>(idx_A, idx_A+A.dimension()) << endl;
+    cout << "idx_A    = " << idx_A << endl;
     cout << "len_B    = " << B.lengths() << endl;
     cout << "stride_B = " << B.strides() << endl;
-    cout << "idx_B    = " << vector<label_type>(idx_B, idx_B+B.dimension()) << endl;
+    cout << "idx_B    = " << idx_B << endl;
     cout << "len_C    = " << C.lengths() << endl;
     cout << "stride_C = " << C.strides() << endl;
     cout << "idx_C    = " << idx_C << endl;
     cout << endl;
 
-    T ref_val, calc_val, scale;
-    scale = 10.0*random_unit<T>();
+    T scale = 10.0*random_unit<T>();
 
-    impl_type = BLAS_BASED;
+    impl = BLAS_BASED;
     D.reset(C);
-    outer_prod(scale, A, idx_A, B, idx_B, scale, D, idx_C);
-    reduce(REDUCE_NORM_2, D, idx_C, ref_val);
+    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
+    T ref_val = reduce(REDUCE_NORM_2, D, idx_C.data()).first;
 
-    impl_type = REFERENCE;
+    impl = REFERENCE;
     D.reset(C);
-    outer_prod(scale, A, idx_A, B, idx_B, scale, D, idx_C);
-    reduce(REDUCE_NORM_2, D, idx_C, calc_val);
+    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
+    T calc_val = reduce(REDUCE_NORM_2, D, idx_C.data()).first;
 
     passfail("BLAS", ref_val, calc_val);
 }
-
-#endif
 
 template <typename T>
 void test_add(size_t N)
 {
     tensor<T> A, B, C;
-    label_type idx_A[8], idx_B[8];
+    std::vector<label_type> idx_A, idx_B;
 
     T scale = 10.0*random_unit<T>();
 
@@ -1193,10 +1104,10 @@ void test_add(size_t N)
     cout << endl;
     cout << "len_A    = " << A.lengths() << endl;
     cout << "stride_A = " << A.strides() << endl;
-    cout << "idx_A    = " << vector<label_type>(idx_A, idx_A+A.dimension()) << endl;
+    cout << "idx_A    = " << idx_A << endl;
     cout << "len_B    = " << B.lengths() << endl;
     cout << "stride_B = " << B.strides() << endl;
-    cout << "idx_B    = " << vector<label_type>(idx_B, idx_B+B.dimension()) << endl;
+    cout << "idx_B    = " << idx_B << endl;
     cout << endl;
 
     stride_type sz = 1;
@@ -1214,10 +1125,10 @@ void test_add(size_t N)
         if (!found) sz *= B.length(i);
     }
 
-    T ref_val = reduce(REDUCE_SUM, A, idx_A).first;
-    T add_b = reduce(REDUCE_SUM, B, idx_B).first;
-    add(scale, A, idx_A, scale, B, idx_B);
-    T calc_val = reduce(REDUCE_SUM, B, idx_B).first;
+    T ref_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
+    T add_b = reduce(REDUCE_SUM, B, idx_B.data()).first;
+    add(scale, A, idx_A.data(), scale, B, idx_B.data());
+    T calc_val = reduce(REDUCE_SUM, B, idx_B.data()).first;
     passfail("SUM", scale*(sz*ref_val+add_b), calc_val);
 }
 
@@ -1225,7 +1136,7 @@ template <typename T>
 void test_trace(size_t N)
 {
     tensor<T> A, B;
-    label_type idx_A[8], idx_B[8];
+    std::vector<label_type> idx_A, idx_B;
 
     random_trace(N, A, idx_A, B, idx_B);
 
@@ -1233,18 +1144,18 @@ void test_trace(size_t N)
     cout << "Testing trace (" << type_name<T>() << "):" << endl;
     cout << "len_A    = " << A.lengths() << endl;
     cout << "stride_A = " << A.strides() << endl;
-    cout << "idx_A    = " << vector<label_type>(idx_A, idx_A+A.dimension()) << endl;
+    cout << "idx_A    = " << idx_A << endl;
     cout << "len_B    = " << B.lengths() << endl;
     cout << "stride_B = " << B.strides() << endl;
-    cout << "idx_B    = " << vector<label_type>(idx_B, idx_B+B.dimension()) << endl;
+    cout << "idx_B    = " << idx_B << endl;
     cout << endl;
 
     T scale = 10.0*random_unit<T>();
 
-    T ref_val = reduce(REDUCE_SUM, A, idx_A).first;
-    T add_b = reduce(REDUCE_SUM, B, idx_B).first;
-    add(scale, A, idx_A, scale, B, idx_B);
-    T calc_val = reduce(REDUCE_SUM, B, idx_B).first;
+    T ref_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
+    T add_b = reduce(REDUCE_SUM, B, idx_B.data()).first;
+    add(scale, A, idx_A.data(), scale, B, idx_B.data());
+    T calc_val = reduce(REDUCE_SUM, B, idx_B.data()).first;
     passfail("SUM", scale*(ref_val+add_b), calc_val);
 }
 
@@ -1252,7 +1163,7 @@ template <typename T>
 void test_replicate(size_t N)
 {
     tensor<T> A, B;
-    label_type idx_A[8], idx_B[8];
+    std::vector<label_type> idx_A, idx_B;
 
     random_replicate(N, A, idx_A, B, idx_B);
 
@@ -1260,10 +1171,10 @@ void test_replicate(size_t N)
     cout << "Testing replicate (" << type_name<T>() << "):" << endl;
     cout << "len_A    = " << A.lengths() << endl;
     cout << "stride_A = " << A.strides() << endl;
-    cout << "idx_A    = " << vector<label_type>(idx_A, idx_A+A.dimension()) << endl;
+    cout << "idx_A    = " << idx_A << endl;
     cout << "len_B    = " << B.lengths() << endl;
     cout << "stride_B = " << B.strides() << endl;
-    cout << "idx_B    = " << vector<label_type>(idx_B, idx_B+B.dimension()) << endl;
+    cout << "idx_B    = " << idx_B << endl;
     cout << endl;
 
     T scale = 10.0*random_unit<T>();
@@ -1283,15 +1194,15 @@ void test_replicate(size_t N)
         if (!found) sz *= B.length(i);
     }
 
-    T ref_val = reduce(REDUCE_SUM, A, idx_A).first;
-    T add_b = reduce(REDUCE_SUM, B, idx_B).first;
-    add(scale, A, idx_A, scale, B, idx_B);
-    T calc_val = reduce(REDUCE_SUM, B, idx_B).first;
+    T ref_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
+    T add_b = reduce(REDUCE_SUM, B, idx_B.data()).first;
+    add(scale, A, idx_A.data(), scale, B, idx_B.data());
+    T calc_val = reduce(REDUCE_SUM, B, idx_B.data()).first;
     passfail("SUM", scale*(sz*ref_val+add_b), calc_val);
 
-    ref_val = reduce(REDUCE_NORM_1, A, idx_A).first;
-    add(scale, A, idx_A, T(0.0), B, idx_B);
-    calc_val = reduce(REDUCE_NORM_1, B, idx_B).first;
+    ref_val = reduce(REDUCE_NORM_1, A, idx_A.data()).first;
+    add(scale, A, idx_A.data(), T(0.0), B, idx_B.data());
+    calc_val = reduce(REDUCE_NORM_1, B, idx_B.data()).first;
     passfail("NRM1", sz*T(std::abs(scale))*ref_val, calc_val);
 }
 
@@ -1299,7 +1210,7 @@ template <typename T>
 void test_dot(size_t N)
 {
     tensor<T> A, B;
-    label_type idx_A[8], idx_B[8];
+    std::vector<label_type> idx_A, idx_B;
 
     random_dot(N, A, idx_A, B, idx_B);
 
@@ -1309,21 +1220,21 @@ void test_dot(size_t N)
     cout << "stride = " << A.strides() << endl;
     cout << endl;
 
-    add(T(1.0), A, idx_A, T(0.0), B, idx_B);
+    add(T(1.0), A, idx_A.data(), T(0.0), B, idx_B.data());
     T* data = B.data();
     MArray::viterator<> it(B.lengths(), B.strides());
     while (it.next(data)) *data = stl_ext::conj(*data);
-    T ref_val = reduce(REDUCE_NORM_2, A, idx_A).first;
-    T calc_val = dot(A, idx_A, B, idx_B);
+    T ref_val = reduce(REDUCE_NORM_2, A, idx_A.data()).first;
+    T calc_val = dot(A, idx_A.data(), B, idx_B.data());
     passfail("NRM2", ref_val*ref_val, calc_val);
 
     B = T(1);
-    ref_val = reduce(REDUCE_SUM, A, idx_A).first;
-    calc_val = dot(A, idx_A, B, idx_B);
+    ref_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
+    calc_val = dot(A, idx_A.data(), B, idx_B.data());
     passfail("UNIT", ref_val, calc_val);
 
     B = T(0);
-    calc_val = dot(A, idx_A, B, idx_B);
+    calc_val = dot(A, idx_A.data(), B, idx_B.data());
     passfail("ZERO", T(0), calc_val);
 }
 
@@ -1331,12 +1242,12 @@ template <typename T>
 void test_transpose(size_t N)
 {
     tensor<T> A, B, C;
-    label_type idx_A[8], idx_B[8];
+    std::vector<label_type> idx_A, idx_B;
 
     random_transpose(N, A, idx_A, B, idx_B);
 
     unsigned ndim = A.dimension();
-    vector<unsigned> perm = permutation(ndim, idx_A, idx_B);
+    vector<unsigned> perm = permutation(ndim, idx_A.data(), idx_B.data());
 
     cout << endl;
     cout << "Testing transpose (" << type_name<T>() << "):" << endl;
@@ -1348,32 +1259,32 @@ void test_transpose(size_t N)
     T scale = 10.0*random_unit<T>();
 
     C.reset(A);
-    T ref_val = reduce(REDUCE_NORM_2, A, idx_A).first;
-    add(T(1), A, idx_A, T(0), B, idx_B);
-    add(scale, B, idx_B, scale, C, idx_A);
-    T calc_val = reduce(REDUCE_NORM_2, C, idx_A).first;
+    T ref_val = reduce(REDUCE_NORM_2, A, idx_A.data()).first;
+    add(T(1), A, idx_A.data(), T(0), B, idx_B.data());
+    add(scale, B, idx_B.data(), scale, C, idx_A.data());
+    T calc_val = reduce(REDUCE_NORM_2, C, idx_A.data()).first;
     passfail("INVERSE", T(2.0*std::abs(scale))*ref_val, calc_val);
 
     B.reset(A);
-    copy(idx_A, idx_A+8, idx_B);
-    label_type idx_C[8];
+    idx_B = idx_A;
+    vector<label_type> idx_C(ndim);
     vector<len_type> len_C(ndim);
     do
     {
         for (unsigned i = 0;i < ndim;i++)
         {
-            unsigned j; for (j = 0;j < ndim && idx_A[j] != perm[i];j++) continue;
+            unsigned j; for (j = 0;j < ndim && idx_A[j] != perm[i]+'a';j++) continue;
             idx_C[i] = idx_B[j];
             len_C[i] = B.length(j);
         }
         C.reset(len_C);
-        add(T(1), B, idx_B, T(0), C, idx_C);
+        add(T(1), B, idx_B.data(), T(0), C, idx_C.data());
         B.reset(C);
-        copy(idx_C, idx_C+8, idx_B);
+        idx_B = idx_C;
     }
     while (idx_C != idx_A);
 
-    calc_val = reduce(REDUCE_NORM_2, C, idx_C).first;
+    calc_val = reduce(REDUCE_NORM_2, C, idx_C.data()).first;
     passfail("CYCLE", ref_val, calc_val);
 }
 
@@ -1381,9 +1292,9 @@ template <typename T>
 void test_scale(size_t N)
 {
     tensor<T> A;
-    label_type idx_A[8] = {0,1,2,3,4,5,6,7};
 
     random_tensor(N, A);
+    std::vector<label_type> idx_A = range<label_type>('a', 'a'+A.dimension());
 
     cout << endl;
     cout << "Testing scale (" << type_name<T>() << "):" << endl;
@@ -1391,19 +1302,19 @@ void test_scale(size_t N)
     cout << "stride = " << A.strides() << endl;
     cout << endl;
 
-    T ref_val = reduce(REDUCE_SUM, A, idx_A).first;
+    T ref_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
 
     T scale = 10.0*random_unit<T>();
-    tblis::scale(scale, A, idx_A);
-    T calc_val = reduce(REDUCE_SUM, A, idx_A).first;
+    tblis::scale(scale, A, idx_A.data());
+    T calc_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
     passfail("RANDOM", ref_val*scale, calc_val);
 
-    tblis::scale(T(1.0), A, idx_A);
-    calc_val = reduce(REDUCE_SUM, A, idx_A).first;
+    tblis::scale(T(1.0), A, idx_A.data());
+    calc_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
     passfail("UNIT", ref_val*scale, calc_val);
 
-    tblis::scale(T(0.0), A, idx_A);
-    calc_val = reduce(REDUCE_SUM, A, idx_A).first;
+    tblis::scale(T(0.0), A, idx_A.data());
+    calc_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
     passfail("ZERO", T(0), calc_val);
 }
 
@@ -1411,10 +1322,10 @@ template <typename T>
 void test_reduce(size_t N)
 {
     tensor<T> A;
-    label_type idx_A[8] = {0,1,2,3,4,5,6,7};
 
     random_tensor(N, A);
     size_t NA = A.stride(A.dimension()-1)*A.length(A.dimension()-1);
+    std::vector<label_type> idx_A = range<label_type>('a', 'a'+A.dimension());
 
     cout << endl;
     cout << "Testing reduction (" << type_name<T>() << "):" << endl;
@@ -1427,7 +1338,7 @@ void test_reduce(size_t N)
 
     T* data = A.data();
 
-    reduce(REDUCE_SUM, A, idx_A, ref_val, ref_idx);
+    reduce(REDUCE_SUM, A, idx_A.data(), ref_val, ref_idx);
     blas_val = 0;
     for (size_t i = 0;i < NA;i++)
     {
@@ -1435,7 +1346,7 @@ void test_reduce(size_t N)
     }
     passfail("REDUCE_SUM", ref_val, blas_val);
 
-    reduce(REDUCE_SUM_ABS, A, idx_A, ref_val, ref_idx);
+    reduce(REDUCE_SUM_ABS, A, idx_A.data(), ref_val, ref_idx);
     blas_val = 0;
     for (size_t i = 0;i < NA;i++)
     {
@@ -1443,7 +1354,7 @@ void test_reduce(size_t N)
     }
     passfail("REDUCE_SUM_ABS", ref_val, blas_val);
 
-    reduce(REDUCE_MAX, A, idx_A, ref_val, ref_idx);
+    reduce(REDUCE_MAX, A, idx_A.data(), ref_val, ref_idx);
     blas_val = data[0];
     blas_idx = 0;
     for (size_t i = 0;i < NA;i++)
@@ -1456,7 +1367,7 @@ void test_reduce(size_t N)
     }
     passfail("REDUCE_MAX", ref_idx, blas_idx, ref_val, blas_val);
 
-    reduce(REDUCE_MAX_ABS, A, idx_A, ref_val, ref_idx);
+    reduce(REDUCE_MAX_ABS, A, idx_A.data(), ref_val, ref_idx);
     blas_val = std::abs(data[0]);
     blas_idx = 0;
     for (size_t i = 0;i < NA;i++)
@@ -1470,7 +1381,7 @@ void test_reduce(size_t N)
     passfail("REDUCE_MAX_ABS", ref_idx, blas_idx, ref_val, blas_val);
 
     /*
-    reduce(REDUCE_MIN, A, idx_A, ref_val, ref_idx);
+    reduce(REDUCE_MIN, A, idx_A.data(), ref_val, ref_idx);
     set(data[0], blas_val);
     blas_idx = 0;
     for (size_t i = 0;i < NA;i++)
@@ -1483,7 +1394,7 @@ void test_reduce(size_t N)
     }
     passfail("REDUCE_MIN", ref_idx, blas_idx, ref_val, blas_val);
 
-    reduce(REDUCE_MIN_ABS, A, idx_A, ref_val, ref_idx);
+    reduce(REDUCE_MIN_ABS, A, idx_A.data(), ref_val, ref_idx);
     set(std::abs(data[0]), blas_val);
     blas_idx = 0;
     for (size_t i = 0;i < NA;i++)
@@ -1497,7 +1408,7 @@ void test_reduce(size_t N)
     passfail("REDUCE_MIN_ABS", ref_idx, blas_idx, ref_val, std::abs(blas_val));
     */
 
-    reduce(REDUCE_NORM_2, A, idx_A, ref_val, ref_idx);
+    reduce(REDUCE_NORM_2, A, idx_A.data(), ref_val, ref_idx);
     blas_val = 0;
     for (size_t i = 0;i < NA;i++)
     {
@@ -1507,7 +1418,7 @@ void test_reduce(size_t N)
     passfail("REDUCE_NORM_2", ref_val, blas_val);
 
     A = T(1);
-    reduce(REDUCE_SUM, A, idx_A, ref_val, ref_idx);
+    reduce(REDUCE_SUM, A, idx_A.data(), ref_val, ref_idx);
     blas_val = 1;
     for (int i = 0;i < A.dimension();i++) blas_val *= A.length(i);
     passfail("COUNT", ref_val, blas_val);
@@ -1527,10 +1438,10 @@ void test(size_t N_in_bytes, int R)
     for (int i = 0;i < R;i++) test_replicate<T>(N);
     for (int i = 0;i < R;i++) test_trace<T>(N);
     for (int i = 0;i < R;i++) test_add<T>(N);
-    //for (int i = 0;i < R;i++) test_outer_prod<T>(N);
-    //for (int i = 0;i < R;i++) test_weight<T>(N);
-    //for (int i = 0;i < R;i++) test_contract<T>(N);
-    //for (int i = 0;i < R;i++) test_mult<T>(N);
+    for (int i = 0;i < R;i++) test_outer_prod<T>(N);
+    for (int i = 0;i < R;i++) test_weight<T>(N);
+    for (int i = 0;i < R;i++) test_contract<T>(N);
+    for (int i = 0;i < R;i++) test_mult<T>(N);
 }
 
 int main(int argc, char **argv)

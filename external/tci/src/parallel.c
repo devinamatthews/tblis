@@ -181,13 +181,33 @@ int tci_next_prime_factor(tci_prime_factors_t* factors)
     return 1;
 }
 
+/*
+ * Assumes base > 0 and power >= 0.
+ */
+static int ipow(int base, int power)
+{
+    int p = 1;
+
+    for (int mask = 0x1;mask <= power;mask <<= 1)
+    {
+        if (power&mask) p *= base;
+        base *= base;
+    }
+
+    return p;
+}
+
 void tci_partition_2x2(int nthread, int64_t work1, int64_t work2, int* nt1, int* nt2)
 {
+    *nt1 = (work1 >= work2 ? nthread : 1);
+    *nt2 = (work1 <  work2 ? nthread : 1);
+
+    if (nthread < 4) return;
+
     tci_prime_factors_t factors;
     tci_prime_factorization(nthread, &factors);
 
-    *nt1 = 1;
-    *nt2 = 1;
+    #if 1
 
     int f;
     while ((f = tci_next_prime_factor(&factors)) > 1)
@@ -203,4 +223,68 @@ void tci_partition_2x2(int nthread, int64_t work1, int64_t work2, int* nt1, int*
             *nt2 *= f;
         }
     }
+
+    #else
+
+    /*
+     * Eight prime factors handles all numbers up to 223092870
+     */
+    int fact[8];
+    int mult[8];
+
+    int nfact = 1;
+    fact[0] = tci_next_prime_factor(&factors);
+    mult[0] = 1;
+
+    int f;
+    while ((f = tci_next_prime_factor(&factors)) > 1)
+    {
+        if (f == fact[nfact-1])
+        {
+            mult[nfact-1]++;
+        }
+        else
+        {
+            nfact++;
+            fact[nfact-1] = f;
+            mult[nfact-1] = 1;
+        }
+    }
+
+    int ntake[8] = {0};
+    int64_t min_diff = INT64_MAX;
+
+    bool done = false;
+    while (!done)
+    {
+        int x = 1;
+        int y = 1;
+
+        for (int i = 0;i < nfact;i++)
+        {
+            x *= ipow(fact[i], ntake[i]);
+            y *= ipow(fact[i], mult[i]-ntake[i]);
+        }
+
+        int64_t diff = llabs(x*work2 - y*work1);
+        if (diff < min_diff)
+        {
+            min_diff = diff;
+            *nt1 = x;
+            *nt2 = y;
+        }
+
+        for (int i = 0;i < nfact;i++)
+        {
+            if (++ntake[i] > mult[i])
+            {
+                ntake[i] = 0;
+                if (i == nfact-1) done = true;
+                else continue;
+            }
+            break;
+        }
+    }
+
+    #endif
 }

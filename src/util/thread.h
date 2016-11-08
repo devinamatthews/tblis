@@ -55,7 +55,11 @@ void reduce_init(reduce_t op, T& value, len_type& idx)
 template <typename T>
 void reduce(const communicator& comm, reduce_t op, T& value, len_type& idx)
 {
-    if (comm.num_threads() == 1) return;
+    if (comm.num_threads() == 1)
+    {
+        if (op == REDUCE_NORM_2) value = sqrt(value);
+        return;
+    }
 
     std::pair<T,len_type>* vals;
     std::vector<std::pair<T,len_type>> val_buffer;
@@ -125,7 +129,7 @@ void reduce(const communicator& comm, reduce_t op, T& value, len_type& idx)
             {
                 vals[0].first += vals[i].first;
             }
-            vals[0].first = sqrt(vals[0].first);
+            vals[0].first = std::sqrt(vals[0].first);
         }
     }
 
@@ -151,6 +155,7 @@ void parallelize_if(Func f, const tblis_comm* _comm, Args&&... args)
             [&](const communicator& comm)
             {
                 f(comm, args...);
+                comm.barrier();
             },
             tblis_get_num_threads()
         );

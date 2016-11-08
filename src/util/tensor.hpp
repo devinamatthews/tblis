@@ -6,10 +6,10 @@
 
 #include "external/stl_ext/include/algorithm.hpp"
 #include "external/stl_ext/include/type_traits.hpp"
+#include "external/stl_ext/include/vector.hpp"
 
 #include <initializer_list>
 #include <string>
-#include <vector>
 
 namespace tblis
 {
@@ -306,10 +306,14 @@ inline void diagonal(int& ndim,
                      const len_type* len_in,
                      const stride_type* stride_in,
                      const label_type* idx_in,
-                     len_type* len_out,
-                     stride_type* stride_out,
-                     label_type* idx_out)
+                     std::vector<len_type>& len_out,
+                     std::vector<stride_type>& stride_out,
+                     std::vector<label_type>& idx_out)
 {
+    len_out.reserve(ndim);
+    stride_out.reserve(ndim);
+    idx_out.reserve(ndim);
+
     std::string inds = MArray::range<char>(ndim);
     stl_ext::sort(inds, detail::sort_by_idx(idx_in));
 
@@ -322,9 +326,9 @@ inline void diagonal(int& ndim,
         {
             if (len_in[inds[i]] != 1)
             {
-                len_out[ndim] = len_in[inds[i]];
-                stride_out[ndim] = stride_in[inds[i]];
-                idx_out[ndim] = idx_in[inds[i]];
+                len_out.push_back(len_in[inds[i]]);
+                stride_out.push_back(stride_in[inds[i]]);
+                idx_out.push_back(idx_in[inds[i]]);
                 ndim++;
             }
         }

@@ -53,11 +53,16 @@ struct simple_blocksize<dcomplex, S, D, C, Z>
     static std::integral_constant<type,    def> _##name##_helper(...); \
     static constexpr type name = decltype(_##name##_helper<source>((source*)0))::value;
 
-#define TBLIS_DEFAULT_VALUE_T(name, type, source, val, def) \
+/*
+ * The cast on the first overload is very important; otherwise the
+ * compiler silently chooses the default kernel because it wants a
+ * direct pointer to an extern function.
+ */
+#define TBLIS_DEFAULT_VALUE_T(name, tp, source, val, def) \
     template <typename U, typename T> \
-    static std::integral_constant<type, U::template val<T>::value> _##name##_helper(U*); \
+    static std::integral_constant<tp, (tp)U::template val<T>::value> _##name##_helper(U*); \
     template <typename U, typename T> \
-    static std::integral_constant<type,                       def> _##name##_helper(...); \
+    static std::integral_constant<tp, def> _##name##_helper(...); \
     template <typename T> \
     struct name : decltype(_##name##_helper<source, T>((source*)0)) {};
 
@@ -71,9 +76,15 @@ struct blocksize_traits
     {
         TBLIS_DEFAULT_VALUE(      def, len_type,      BS<T>,    def, BS_Ref<T>::def);
         TBLIS_DEFAULT_VALUE(      max, len_type,      BS<T>,    max,            def);
+        TBLIS_DEFAULT_VALUE(   extent, len_type,      BS<T>, extent,            def);
+        /*
+         * If BS_Iota == BS, then it may not have a def member type, so we need
+         * a second layer of defaulting (in this case iota will come out the
+         * same as def in the end). If BS_Iota is different then it must have a
+         * def member type or this default doesn't make sense.
+         */
         TBLIS_DEFAULT_VALUE(_iota_def, len_type, BS_Iota<T>,    def, BS_Ref<T>::def);
         TBLIS_DEFAULT_VALUE(     iota, len_type,      BS<T>,   iota,      _iota_def);
-        TBLIS_DEFAULT_VALUE(   extent, len_type,      BS<T>, extent,            def);
     };
 };
 

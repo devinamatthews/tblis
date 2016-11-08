@@ -1,6 +1,7 @@
 #ifndef _TBLIS_BASIC_TYPES_H_
 #define _TBLIS_BASIC_TYPES_H_
 
+#include <string.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <sys/types.h>

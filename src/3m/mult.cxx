@@ -109,7 +109,7 @@ void mult_int(const communicator& comm, const config& cfg,
 
     int nt = comm.num_threads();
     len_type m = C.m;
-    len_type n = C.m;
+    len_type n = C.n;
     len_type k = A.n;
 
     TBLIS_WITH_TYPE_AS(A.type, T,

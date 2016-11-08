@@ -63,6 +63,7 @@
 #define TCI_MAX(x,y) ((x)>=(y)?(x):(y))
 
 #include <stdint.h>
+#include <errno.h>
 
 #ifdef __cplusplus
 #define TCI_INLINE inline
@@ -481,7 +482,7 @@ class communicator
             int64_t first, last, max;
             tci_comm_distribute_over_gangs(*this, range, granularity,
                                            &first, &last, &max);
-            return {first, last, max};
+            return std::make_tuple(first, last, max);
         }
 
         std::tuple<int64_t,int64_t,int64_t>
@@ -490,7 +491,7 @@ class communicator
             int64_t first, last, max;
             tci_comm_distribute_over_threads(*this, range, granularity,
                                              &first, &last, &max);
-            return {first, last, max};
+            return std::make_tuple(first, last, max);
         }
 
         std::tuple<int64_t,int64_t,int64_t,int64_t,int64_t,int64_t>
@@ -502,7 +503,7 @@ class communicator
                                               granularity_m, granularity_n,
                                               &first_m, &last_m, &max_m,
                                               &first_n, &last_n, &max_n);
-            return {first_m, last_m, max_m, first_n, last_n, max_n};
+            return std::make_tuple(first_m, last_m, max_m, first_n, last_n, max_n);
         }
 
         std::tuple<int64_t,int64_t,int64_t,int64_t,int64_t,int64_t>
@@ -514,7 +515,7 @@ class communicator
                                                 granularity_m, granularity_n,
                                                 &first_m, &last_m, &max_m,
                                                 &first_n, &last_n, &max_n);
-            return {first_m, last_m, max_m, first_n, last_n, max_n};
+            return std::make_tuple(first_m, last_m, max_m, first_n, last_n, max_n);
         }
         
         operator tci_comm_t*() const { return const_cast<tci_comm_t*>(&_comm); }
@@ -566,7 +567,7 @@ partition_2x2(int nthreads, int64_t work1, int64_t work2)
 {
     int nt1, nt2;
     tci_partition_2x2(nthreads, work1, work2, &nt1, &nt2);
-    return {nt1, nt2};
+    return std::make_pair(nt1, nt2);
 }
 
 }

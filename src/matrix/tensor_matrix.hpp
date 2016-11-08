@@ -253,7 +253,7 @@ class tensor_matrix
             auto& it = iterator_[dim];
 
             len_type p0 = off_m%m0;
-            stride_type off = p0*s0;
+            stride_type off = 0;
             it.position(off_m/m0, off);
 
             for (len_type idx = 0;it.next(off);)

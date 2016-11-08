@@ -172,16 +172,16 @@ struct pack_row_panel
 
         printf("packing %c\n", "AB"[Mat]);
         printf("m_a/k_a: %ld/%ld\n", m_a, k_a);
-        T nrm = T();
+        T nrm0 = T();
         for (len_type i = 0;i < A.length(0);i++)
         {
             for (len_type j = 0;j < A.length(1);j++)
             {
-                T tmp = A.data()[A.scatter(0)[i] + A.scatter(1)[j]];
-                nrm += tmp*tmp;
+                T tmp = A.raw_data()[A.scatter(0)[i] + A.scatter(1)[j]];
+                nrm0 += tmp*tmp;
             }
         }
-        printf("norm before: %.15f\n", sqrt(nrm));
+        printf("norm before: %.15f\n", sqrt(nrm0));
 
         A.length(Trans, MR);
         A.shift(Trans, off_m);
@@ -189,18 +189,20 @@ struct pack_row_panel
         const stride_type* cscat_a = A.scatter(!Trans) + k_first;
         const stride_type* cbs_a = A.block_scatter(!Trans) + k_first/KR;
 
+        T nrm4 = T();
         while (off_m < m_last)
         {
             stride_type rs_a = A.stride(Trans);
             const stride_type* rscat_a = A.scatter(Trans);
             const T* p_a = A.data();
+            if (cbs_a[0]) p_a -= cscat_a[0];
 
-            printf("p_a/rs_a: %p/%ld\n", p_a, rs_a);
+            //printf("p_a/rs_a: %p/%ld\n", p_a, rs_a);
 
             len_type m = std::min(MR, m_last-off_m);
             len_type k = k_last-k_first;
 
-            T nrm = T();
+            T nrm1 = T();
             if (rs_a == 0)
             {
                 for (len_type i = 0;i < k_a;i++)
@@ -208,7 +210,7 @@ struct pack_row_panel
                     for (len_type j = 0;j < m;j++)
                     {
                         T tmp = p_a[rscat_a[j] + cscat_a[i]];
-                        nrm += tmp*tmp;
+                        nrm1 += tmp*tmp;
                     }
                 }
             }
@@ -219,11 +221,11 @@ struct pack_row_panel
                     for (len_type j = 0;j < m;j++)
                     {
                         T tmp = p_a[j*rs_a + cscat_a[i]];
-                        nrm += tmp*tmp;
+                        nrm1 += tmp*tmp;
                     }
                 }
             }
-            printf("norm before: %.15f\n", sqrt(nrm));
+            //printf("norm before: %.15f\n", sqrt(nrm1));
 
             if (rs_a == 0)
             {
@@ -240,16 +242,20 @@ struct pack_row_panel
                     cfg.pack_nb_nr_ukr.call<T>(m, k, p_a, rs_a, cscat_a, cbs_a, p_ap);
             }
 
-            nrm = T();
+            T nrm2 = T();
             for (len_type i = 0;i < k_a;i++)
             {
                 for (len_type j = 0;j < m;j++)
                 {
                     T tmp = p_ap[j + i*ME];
-                    nrm += tmp*tmp;
+                    nrm2 += tmp*tmp;
                 }
             }
-            printf("norm after: %.15f\n", sqrt(nrm));
+            //printf("norm after: %.15f\n", sqrt(nrm2));
+            
+            if (std::abs(nrm2-nrm1) > 1e-12) abort();
+
+            nrm4 += nrm2;
 
             p_ap += ME*k_a;
             A.shift_block(Trans, 1);
@@ -258,8 +264,13 @@ struct pack_row_panel
 
         A.shift(Trans, -off_m);
         A.length(Trans, m_a);
+        
+        T nrm3 = reduce(REDUCE_NORM_2, Ap).first;
+        nrm3 *= nrm3;
 
-        printf("norm after: %.15f\n", reduce(REDUCE_NORM_2, Ap).first);
+        printf("norm after: %.15f\n", sqrt(nrm3));
+        printf("???: %.15f\n", sqrt(nrm4));
+        if (std::abs(nrm3-nrm0) > 1e-12) abort();
     }
 };
 

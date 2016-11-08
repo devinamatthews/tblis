@@ -149,6 +149,7 @@ if ENABLE_KNL
 noinst_LTLIBRARIES += lib/libknl.la
 lib_libtblis_la_LIBADD += lib/libknl.la
 lib_libknl_la_SOURCES = src/configs/knl/bli_packm_opt_24x8.c \
+					   src/configs/knl/bli_packm_opt_30x8.c \
 					   src/configs/knl/bli_dgemm_opt_12x16.c \
 					   src/configs/knl/bli_dgemm_opt_24x8.c \
 					   src/configs/knl/bli_dgemm_opt_30x8.c \

@@ -170,6 +170,10 @@ class block_scatter_matrix
         {
             return const_cast<block_scatter_matrix&>(*this).data();
         }
+
+        pointer raw_data() { return data_; }
+
+        const_pointer raw_data() const { return data_; }
 };
 
 }

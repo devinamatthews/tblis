@@ -6,8 +6,6 @@
 #include "internal/1t/set.hpp"
 #include "internal/3t/mult.hpp"
 
-#include "external/stl_ext/include/iostream.hpp"
-
 namespace tblis
 {
 

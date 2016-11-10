@@ -15,6 +15,7 @@
 @SET_MAKE@
 
 
+
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
     false; \
@@ -110,7 +111,7 @@ host_triplet = @host@
 @ENABLE_HASWELL_TRUE@am__append_12 = lib/libhaswell.la
 @ENABLE_KNL_TRUE@am__append_13 = lib/libknl.la
 @ENABLE_KNL_TRUE@am__append_14 = lib/libknl.la
-bin_PROGRAMS = bin/test$(EXEEXT) $(am__EXEEXT_1)
+noinst_PROGRAMS = bin/test$(EXEEXT) $(am__EXEEXT_1)
 @ENABLE_BLAS_TRUE@am__append_15 = bin/bench
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -125,7 +126,12 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_blas.m4 \
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
-	$(am__configure_deps) $(am__DIST_COMMON)
+	$(am__configure_deps) $(iface1minclude_HEADERS) \
+	$(iface1tinclude_HEADERS) $(iface1vinclude_HEADERS) \
+	$(iface3minclude_HEADERS) $(iface3tinclude_HEADERS) \
+	$(marrayinclude_HEADERS) $(memoryinclude_HEADERS) \
+	$(pkginclude_HEADERS) $(stl_extinclude_HEADERS) \
+	$(utilinclude_HEADERS) $(am__DIST_COMMON)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
@@ -162,7 +168,15 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)"
+am__installdirs = "$(DESTDIR)$(libdir)" \
+	"$(DESTDIR)$(iface1mincludedir)" \
+	"$(DESTDIR)$(iface1tincludedir)" \
+	"$(DESTDIR)$(iface1vincludedir)" \
+	"$(DESTDIR)$(iface3mincludedir)" \
+	"$(DESTDIR)$(iface3tincludedir)" \
+	"$(DESTDIR)$(marrayincludedir)" \
+	"$(DESTDIR)$(memoryincludedir)" "$(DESTDIR)$(pkgincludedir)" \
+	"$(DESTDIR)$(stl_extincludedir)" "$(DESTDIR)$(utilincludedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES) $(noinst_LTLIBRARIES)
 lib_libbulldozer_la_LIBADD =
 am__lib_libbulldozer_la_SOURCES_DIST =  \
@@ -305,7 +319,7 @@ am_lib_libtblis_la_OBJECTS = src/iface/1v/add.lo src/iface/1v/dot.lo \
 	src/util/thread.lo
 lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
 @ENABLE_BLAS_TRUE@am__EXEEXT_1 = bin/bench$(EXEEXT)
-PROGRAMS = $(bin_PROGRAMS)
+PROGRAMS = $(noinst_PROGRAMS)
 am_bin_bench_OBJECTS = test/bench.$(OBJEXT)
 bin_bench_OBJECTS = $(am_bin_bench_OBJECTS)
 am__DEPENDENCIES_1 =
@@ -394,6 +408,11 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
+HEADERS = $(iface1minclude_HEADERS) $(iface1tinclude_HEADERS) \
+	$(iface1vinclude_HEADERS) $(iface3minclude_HEADERS) \
+	$(iface3tinclude_HEADERS) $(marrayinclude_HEADERS) \
+	$(memoryinclude_HEADERS) $(pkginclude_HEADERS) \
+	$(stl_extinclude_HEADERS) $(utilinclude_HEADERS)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 am__recursive_targets = \
@@ -659,6 +678,84 @@ lib_libtblis_la_SOURCES = \
     src/util/random.cxx \
     src/util/thread.cxx
 
+pkginclude_HEADERS = src/tblis.h src/tblis_config.h
+utilincludedir = $(pkgincludedir)/util
+utilinclude_HEADERS = \
+	\
+	src/util/assert.h \
+	src/util/basic_types.h \
+	src/util/thread.h
+
+memoryincludedir = $(pkgincludedir)/memory
+memoryinclude_HEADERS = \
+	\
+	src/memory/aligned_allocator.hpp \
+	src/memory/stack_allocator.hpp
+
+iface1vincludedir = $(pkgincludedir)/iface/1v
+iface1vinclude_HEADERS = \
+	\
+	src/iface/1v/add.h \
+	src/iface/1v/dot.h \
+	src/iface/1v/reduce.h \
+	src/iface/1v/scale.h \
+	src/iface/1v/set.h
+
+iface1mincludedir = $(pkgincludedir)/iface/1m
+iface1minclude_HEADERS = \
+	\
+	src/iface/1m/add.h \
+	src/iface/1m/dot.h \
+	src/iface/1m/reduce.h \
+	src/iface/1m/scale.h \
+	src/iface/1m/set.h
+
+iface1tincludedir = $(pkgincludedir)/iface/1t
+iface1tinclude_HEADERS = \
+	\
+	src/iface/1t/add.h \
+	src/iface/1t/dot.h \
+	src/iface/1t/reduce.h \
+	src/iface/1t/scale.h \
+	src/iface/1t/set.h
+
+iface3mincludedir = $(pkgincludedir)/iface/3m
+iface3minclude_HEADERS = \
+	\
+	src/iface/3m/mult.h
+
+iface3tincludedir = $(pkgincludedir)/iface/3t
+iface3tinclude_HEADERS = \
+	\
+	src/iface/3t/mult.h
+
+marrayincludedir = $(pkgincludedir)/external/marray/include
+marrayinclude_HEADERS = \
+	\
+	src/external/marray/include/marray.hpp \
+	src/external/marray/include/miterator.hpp \
+	src/external/marray/include/varray.hpp \
+	src/external/marray/include/viterator.hpp \
+	src/external/marray/include/utility.hpp
+
+stl_extincludedir = $(pkgincludedir)/external/stl_ext/include
+stl_extinclude_HEADERS = \
+	\
+	src/external/stl_ext/include/algorithm.hpp \
+	src/external/stl_ext/include/any.hpp \
+	src/external/stl_ext/include/bounded_vector.hpp \
+	src/external/stl_ext/include/complex.hpp \
+	src/external/stl_ext/include/cosort.hpp \
+	src/external/stl_ext/include/fill_iterator.hpp \
+	src/external/stl_ext/include/global_ptr.hpp \
+	src/external/stl_ext/include/iostream.hpp \
+	src/external/stl_ext/include/ptr_list.hpp \
+	src/external/stl_ext/include/ptr_vector.hpp \
+	src/external/stl_ext/include/string.hpp \
+	src/external/stl_ext/include/type_traits.hpp \
+	src/external/stl_ext/include/vector.hpp \
+	src/external/stl_ext/include/zip.hpp
+
 noinst_LTLIBRARIES = lib/libreference.la $(am__append_1) \
 	$(am__append_3) $(am__append_5) $(am__append_7) \
 	$(am__append_9) $(am__append_11) $(am__append_13)
@@ -727,9 +824,9 @@ lib_libreference_la_CXXFLAGS = -O3
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_KNL_TRUE@lib_libknl_la_CXXFLAGS = -O3 -xMIC-AVX512
 bin_test_SOURCES = test/test.cxx
 bin_bench_SOURCES = test/bench.cxx
-SUBDIRS = external/tci
+SUBDIRS = src/external/tci
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Iexternal/tci/src
+AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/external/tci/src
 AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la
 bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
@@ -1143,49 +1240,9 @@ src/util/thread.lo: src/util/$(am__dirstamp) \
 
 lib/libtblis.la: $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_DEPENDENCIES) $(EXTRA_lib_libtblis_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CXXLD)$(CXXLINK) -rpath $(libdir) $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_LIBADD) $(LIBS)
-install-binPROGRAMS: $(bin_PROGRAMS)
-	@$(NORMAL_INSTALL)
-	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
-	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(bindir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(bindir)" || exit 1; \
-	fi; \
-	for p in $$list; do echo "$$p $$p"; done | \
-	sed 's/$(EXEEXT)$$//' | \
-	while read p p1; do if test -f $$p \
-	 || test -f $$p1 \
-	  ; then echo "$$p"; echo "$$p"; else :; fi; \
-	done | \
-	sed -e 'p;s,.*/,,;n;h' \
-	    -e 's|.*|.|' \
-	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
-	sed 'N;N;N;s,\n, ,g' | \
-	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
-	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
-	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
-	    else { print "f", $$3 "/" $$4, $$1; } } \
-	  END { for (d in files) print "f", d, files[d] }' | \
-	while read type dir files; do \
-	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
-	    test -z "$$files" || { \
-	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(bindir)$$dir'"; \
-	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
-	    } \
-	; done
 
-uninstall-binPROGRAMS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
-	files=`for p in $$list; do echo "$$p"; done | \
-	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
-	      -e 's/$$/$(EXEEXT)/' \
-	`; \
-	test -n "$$list" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(bindir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(bindir)" && rm -f $$files
-
-clean-binPROGRAMS:
-	@list='$(bin_PROGRAMS)'; test -n "$$list" || exit 0; \
+clean-noinstPROGRAMS:
+	@list='$(noinst_PROGRAMS)'; test -n "$$list" || exit 0; \
 	echo " rm -f" $$list; \
 	rm -f $$list || exit $$?; \
 	test -n "$(EXEEXT)" || exit 0; \
@@ -1581,6 +1638,216 @@ clean-libtool:
 
 distclean-libtool:
 	-rm -f libtool config.lt
+install-iface1mincludeHEADERS: $(iface1minclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	@list='$(iface1minclude_HEADERS)'; test -n "$(iface1mincludedir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(iface1mincludedir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(iface1mincludedir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(iface1mincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(iface1mincludedir)" || exit $$?; \
+	done
+
+uninstall-iface1mincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(iface1minclude_HEADERS)'; test -n "$(iface1mincludedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(iface1mincludedir)'; $(am__uninstall_files_from_dir)
+install-iface1tincludeHEADERS: $(iface1tinclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	@list='$(iface1tinclude_HEADERS)'; test -n "$(iface1tincludedir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(iface1tincludedir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(iface1tincludedir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(iface1tincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(iface1tincludedir)" || exit $$?; \
+	done
+
+uninstall-iface1tincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(iface1tinclude_HEADERS)'; test -n "$(iface1tincludedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(iface1tincludedir)'; $(am__uninstall_files_from_dir)
+install-iface1vincludeHEADERS: $(iface1vinclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	@list='$(iface1vinclude_HEADERS)'; test -n "$(iface1vincludedir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(iface1vincludedir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(iface1vincludedir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(iface1vincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(iface1vincludedir)" || exit $$?; \
+	done
+
+uninstall-iface1vincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(iface1vinclude_HEADERS)'; test -n "$(iface1vincludedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(iface1vincludedir)'; $(am__uninstall_files_from_dir)
+install-iface3mincludeHEADERS: $(iface3minclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	@list='$(iface3minclude_HEADERS)'; test -n "$(iface3mincludedir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(iface3mincludedir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(iface3mincludedir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(iface3mincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(iface3mincludedir)" || exit $$?; \
+	done
+
+uninstall-iface3mincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(iface3minclude_HEADERS)'; test -n "$(iface3mincludedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(iface3mincludedir)'; $(am__uninstall_files_from_dir)
+install-iface3tincludeHEADERS: $(iface3tinclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	@list='$(iface3tinclude_HEADERS)'; test -n "$(iface3tincludedir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(iface3tincludedir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(iface3tincludedir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(iface3tincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(iface3tincludedir)" || exit $$?; \
+	done
+
+uninstall-iface3tincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(iface3tinclude_HEADERS)'; test -n "$(iface3tincludedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(iface3tincludedir)'; $(am__uninstall_files_from_dir)
+install-marrayincludeHEADERS: $(marrayinclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	@list='$(marrayinclude_HEADERS)'; test -n "$(marrayincludedir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(marrayincludedir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(marrayincludedir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(marrayincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(marrayincludedir)" || exit $$?; \
+	done
+
+uninstall-marrayincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(marrayinclude_HEADERS)'; test -n "$(marrayincludedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(marrayincludedir)'; $(am__uninstall_files_from_dir)
+install-memoryincludeHEADERS: $(memoryinclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	@list='$(memoryinclude_HEADERS)'; test -n "$(memoryincludedir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(memoryincludedir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(memoryincludedir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(memoryincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(memoryincludedir)" || exit $$?; \
+	done
+
+uninstall-memoryincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(memoryinclude_HEADERS)'; test -n "$(memoryincludedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(memoryincludedir)'; $(am__uninstall_files_from_dir)
+install-pkgincludeHEADERS: $(pkginclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	@list='$(pkginclude_HEADERS)'; test -n "$(pkgincludedir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(pkgincludedir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(pkgincludedir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(pkgincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(pkgincludedir)" || exit $$?; \
+	done
+
+uninstall-pkgincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(pkginclude_HEADERS)'; test -n "$(pkgincludedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(pkgincludedir)'; $(am__uninstall_files_from_dir)
+install-stl_extincludeHEADERS: $(stl_extinclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	@list='$(stl_extinclude_HEADERS)'; test -n "$(stl_extincludedir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(stl_extincludedir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(stl_extincludedir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(stl_extincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(stl_extincludedir)" || exit $$?; \
+	done
+
+uninstall-stl_extincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(stl_extinclude_HEADERS)'; test -n "$(stl_extincludedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(stl_extincludedir)'; $(am__uninstall_files_from_dir)
+install-utilincludeHEADERS: $(utilinclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	@list='$(utilinclude_HEADERS)'; test -n "$(utilincludedir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(utilincludedir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(utilincludedir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(utilincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(utilincludedir)" || exit $$?; \
+	done
+
+uninstall-utilincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(utilinclude_HEADERS)'; test -n "$(utilincludedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(utilincludedir)'; $(am__uninstall_files_from_dir)
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run 'make' without going through this Makefile.
@@ -1878,12 +2145,10 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-recursive
-all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) config.h
-install-binPROGRAMS: install-libLTLIBRARIES
-
+all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(HEADERS) config.h
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(iface1mincludedir)" "$(DESTDIR)$(iface1tincludedir)" "$(DESTDIR)$(iface1vincludedir)" "$(DESTDIR)$(iface3mincludedir)" "$(DESTDIR)$(iface3tincludedir)" "$(DESTDIR)$(marrayincludedir)" "$(DESTDIR)$(memoryincludedir)" "$(DESTDIR)$(pkgincludedir)" "$(DESTDIR)$(stl_extincludedir)" "$(DESTDIR)$(utilincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-recursive
@@ -1962,8 +2227,8 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-recursive
 
-clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
-	clean-libtool clean-noinstLTLIBRARIES mostlyclean-am
+clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
+	clean-noinstLTLIBRARIES clean-noinstPROGRAMS mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
@@ -1984,13 +2249,18 @@ info: info-recursive
 
 info-am:
 
-install-data-am:
+install-data-am: install-iface1mincludeHEADERS \
+	install-iface1tincludeHEADERS install-iface1vincludeHEADERS \
+	install-iface3mincludeHEADERS install-iface3tincludeHEADERS \
+	install-marrayincludeHEADERS install-memoryincludeHEADERS \
+	install-pkgincludeHEADERS install-stl_extincludeHEADERS \
+	install-utilincludeHEADERS
 
 install-dvi: install-dvi-recursive
 
 install-dvi-am:
 
-install-exec-am: install-binPROGRAMS install-libLTLIBRARIES
+install-exec-am: install-libLTLIBRARIES
 
 install-html: install-html-recursive
 
@@ -2032,29 +2302,48 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-libLTLIBRARIES
+uninstall-am: uninstall-iface1mincludeHEADERS \
+	uninstall-iface1tincludeHEADERS \
+	uninstall-iface1vincludeHEADERS \
+	uninstall-iface3mincludeHEADERS \
+	uninstall-iface3tincludeHEADERS uninstall-libLTLIBRARIES \
+	uninstall-marrayincludeHEADERS uninstall-memoryincludeHEADERS \
+	uninstall-pkgincludeHEADERS uninstall-stl_extincludeHEADERS \
+	uninstall-utilincludeHEADERS
 
 .MAKE: $(am__recursive_targets) all install-am install-strip
 
 .PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am \
-	am--refresh check check-am clean clean-binPROGRAMS \
-	clean-cscope clean-generic clean-libLTLIBRARIES clean-libtool \
-	clean-noinstLTLIBRARIES cscope cscopelist-am ctags ctags-am \
-	dist dist-all dist-bzip2 dist-gzip dist-lzip dist-shar \
-	dist-tarZ dist-xz dist-zip distcheck distclean \
-	distclean-compile distclean-generic distclean-hdr \
-	distclean-libtool distclean-tags distcleancheck distdir \
-	distuninstallcheck dvi dvi-am html html-am info info-am \
-	install install-am install-binPROGRAMS install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-libLTLIBRARIES install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs installdirs-am \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags tags-am uninstall uninstall-am \
-	uninstall-binPROGRAMS uninstall-libLTLIBRARIES
+	am--refresh check check-am clean clean-cscope clean-generic \
+	clean-libLTLIBRARIES clean-libtool clean-noinstLTLIBRARIES \
+	clean-noinstPROGRAMS cscope cscopelist-am ctags ctags-am dist \
+	dist-all dist-bzip2 dist-gzip dist-lzip dist-shar dist-tarZ \
+	dist-xz dist-zip distcheck distclean distclean-compile \
+	distclean-generic distclean-hdr distclean-libtool \
+	distclean-tags distcleancheck distdir distuninstallcheck dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-iface1mincludeHEADERS install-iface1tincludeHEADERS \
+	install-iface1vincludeHEADERS install-iface3mincludeHEADERS \
+	install-iface3tincludeHEADERS install-info install-info-am \
+	install-libLTLIBRARIES install-man \
+	install-marrayincludeHEADERS install-memoryincludeHEADERS \
+	install-pdf install-pdf-am install-pkgincludeHEADERS \
+	install-ps install-ps-am install-stl_extincludeHEADERS \
+	install-strip install-utilincludeHEADERS installcheck \
+	installcheck-am installdirs installdirs-am maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags tags-am uninstall uninstall-am \
+	uninstall-iface1mincludeHEADERS \
+	uninstall-iface1tincludeHEADERS \
+	uninstall-iface1vincludeHEADERS \
+	uninstall-iface3mincludeHEADERS \
+	uninstall-iface3tincludeHEADERS uninstall-libLTLIBRARIES \
+	uninstall-marrayincludeHEADERS uninstall-memoryincludeHEADERS \
+	uninstall-pkgincludeHEADERS uninstall-stl_extincludeHEADERS \
+	uninstall-utilincludeHEADERS
 
 .PRECIOUS: Makefile
 

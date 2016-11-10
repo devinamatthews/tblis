@@ -5,7 +5,7 @@
 #include "basic_types.h"
 
 typedef tci_comm_t tblis_comm;
-static const tblis_comm* const tblis_single = tci_single;
+extern const tblis_comm* const tblis_single;
 
 #ifdef __cplusplus
 extern "C"

@@ -1,8 +1,8 @@
 #ifndef _TBLIS_IFACE_1V_SET_H_
 #define _TBLIS_IFACE_1V_SET_H_
 
-#include "util/thread.h"
-#include "util/basic_types.h"
+#include "../../util/thread.h"
+#include "../../util/basic_types.h"
 
 #ifdef __cplusplus
 

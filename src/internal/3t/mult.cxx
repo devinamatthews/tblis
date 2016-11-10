@@ -10,8 +10,6 @@
 #include "internal/1t/add.hpp"
 #include "internal/3m/mult.hpp"
 
-#include "external/stl_ext/include/iostream.hpp"
-
 namespace tblis
 {
 namespace internal

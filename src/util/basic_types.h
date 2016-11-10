@@ -6,7 +6,7 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-#include "tblis_config.h"
+#include "../tblis_config.h"
 
 #include "assert.h"
 
@@ -14,13 +14,13 @@
 
 #include <string>
 
-#include "memory/aligned_allocator.hpp"
+#include "../memory/aligned_allocator.hpp"
 
-#include "external/stl_ext/include/complex.hpp"
+#include "../external/stl_ext/include/complex.hpp"
 
 #define MARRAY_DEFAULT_LAYOUT COLUMN_MAJOR
-#include "external/marray/include/varray.hpp"
-#include "external/marray/include/marray.hpp"
+#include "../external/marray/include/varray.hpp"
+#include "../external/marray/include/marray.hpp"
 
 #else
 

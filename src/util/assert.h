@@ -1,7 +1,7 @@
 #ifndef _TBLIS_ASSERT_HPP_
 #define _TBLIS_ASSERT_HPP_
 
-#include "tblis_config.h"
+#include "../tblis_config.h"
 
 #include <stdlib.h>
 #include <stdarg.h>

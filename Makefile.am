@@ -51,6 +51,85 @@ lib_libtblis_la_SOURCES = \
     src/util/gemm_thread.cxx \
     src/util/random.cxx \
     src/util/thread.cxx
+    
+pkginclude_HEADERS = src/tblis.h src/tblis_config.h
+
+utilincludedir = $(pkgincludedir)/util
+utilinclude_HEADERS = \
+	\
+	src/util/assert.h \
+	src/util/basic_types.h \
+	src/util/thread.h
+
+memoryincludedir = $(pkgincludedir)/memory
+memoryinclude_HEADERS = \
+	\
+	src/memory/aligned_allocator.hpp \
+	src/memory/stack_allocator.hpp
+
+iface1vincludedir = $(pkgincludedir)/iface/1v
+iface1vinclude_HEADERS = \
+	\
+	src/iface/1v/add.h \
+	src/iface/1v/dot.h \
+	src/iface/1v/reduce.h \
+	src/iface/1v/scale.h \
+	src/iface/1v/set.h
+
+iface1mincludedir = $(pkgincludedir)/iface/1m
+iface1minclude_HEADERS = \
+	\
+	src/iface/1m/add.h \
+	src/iface/1m/dot.h \
+	src/iface/1m/reduce.h \
+	src/iface/1m/scale.h \
+	src/iface/1m/set.h
+
+iface1tincludedir = $(pkgincludedir)/iface/1t
+iface1tinclude_HEADERS = \
+	\
+	src/iface/1t/add.h \
+	src/iface/1t/dot.h \
+	src/iface/1t/reduce.h \
+	src/iface/1t/scale.h \
+	src/iface/1t/set.h
+
+iface3mincludedir = $(pkgincludedir)/iface/3m
+iface3minclude_HEADERS = \
+	\
+	src/iface/3m/mult.h
+
+iface3tincludedir = $(pkgincludedir)/iface/3t
+iface3tinclude_HEADERS = \
+	\
+	src/iface/3t/mult.h
+	
+marrayincludedir = $(pkgincludedir)/external/marray/include
+marrayinclude_HEADERS = \
+	\
+	src/external/marray/include/marray.hpp \
+	src/external/marray/include/miterator.hpp \
+	src/external/marray/include/varray.hpp \
+	src/external/marray/include/viterator.hpp \
+	src/external/marray/include/utility.hpp
+	
+stl_extincludedir = $(pkgincludedir)/external/stl_ext/include
+stl_extinclude_HEADERS = \
+	\
+	src/external/stl_ext/include/algorithm.hpp \
+	src/external/stl_ext/include/any.hpp \
+	src/external/stl_ext/include/bounded_vector.hpp \
+	src/external/stl_ext/include/complex.hpp \
+	src/external/stl_ext/include/cosort.hpp \
+	src/external/stl_ext/include/fill_iterator.hpp \
+	src/external/stl_ext/include/global_ptr.hpp \
+	src/external/stl_ext/include/iostream.hpp \
+	src/external/stl_ext/include/ptr_list.hpp \
+	src/external/stl_ext/include/ptr_vector.hpp \
+	src/external/stl_ext/include/string.hpp \
+	src/external/stl_ext/include/type_traits.hpp \
+	src/external/stl_ext/include/vector.hpp \
+	src/external/stl_ext/include/zip.hpp
 	
 noinst_LTLIBRARIES =
 lib_libtblis_la_LIBADD = external/tci/lib/libtci.la
@@ -245,18 +324,18 @@ endif
 #lib_libloongson3a_la_CFLAGS = -Isrc/external/blis/config/loongson3a -march=loongson3a -mtune=loongson3a
 #endif
 
-bin_PROGRAMS = bin/test
+noinst_PROGRAMS = bin/test
 if ENABLE_BLAS
-bin_PROGRAMS += bin/bench
+noinst_PROGRAMS += bin/bench
 endif
 bin_test_SOURCES = test/test.cxx
 bin_bench_SOURCES = test/bench.cxx
 
 VPATH += $(srcdir)
 
-SUBDIRS = external/tci
+SUBDIRS = src/external/tci
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Iexternal/tci/src
+AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/external/tci/src
 AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la
 bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)

@@ -244,6 +244,6 @@ AC_CONFIG_FILES([Makefile
                  src/configs/foreach_config.h
                  src/configs/foreach_config_and_type.h
                  src/configs/include_configs.hpp])
-AX_PREFIX_CONFIG_H([tblis_config.h], [TBLIS])
-AC_CONFIG_SUBDIRS([external/tci])
+AX_PREFIX_CONFIG_H([src/tblis_config.h], [TBLIS])
+AC_CONFIG_SUBDIRS([src/external/tci])
 AC_OUTPUT

@@ -1,8 +1,8 @@
 #ifndef _TBLIS_IFACE_1M_REDUCE_H_
 #define _TBLIS_IFACE_1M_REDUCE_H_
 
-#include "util/basic_types.h"
-#include "util/thread.h"
+#include "../../util/basic_types.h"
+#include "../../util/thread.h"
 
 #ifdef __cplusplus
 

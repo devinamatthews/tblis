@@ -15,6 +15,8 @@
 #include <hwloc.h>
 #endif
 
+const tblis_comm* const tblis_single = tci_single;
+
 namespace
 {
 

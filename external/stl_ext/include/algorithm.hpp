@@ -417,17 +417,17 @@ translated(T s, U&& from, U&& to)
 }
 
 template <typename T, typename U>
-void permute(T& v, const U& p)
-{
-    v = permuted(v, p);
-}
-
-template <typename T, typename U>
 T permuted(const T& v, const U& p)
 {
     T v2; v2.reserve(v.size());
     for (size_t i = 0;i < v.size();i++) v2.push_back(v[p[i]]);
     return v2;
+}
+
+template <typename T, typename U>
+void permute(T& v, const U& p)
+{
+    v = permuted(v, p);
 }
 
 template <typename T, typename U>

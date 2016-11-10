@@ -7,6 +7,9 @@ AC_CONFIG_MACRO_DIR([m4])
 
 AC_CONFIG_HEADERS(config.h)
 
+: ${CFLAGS="-O3"}
+: ${CXXFLAGS="-O3"}
+
 AC_PROG_CC([icc gcc clang])
 AC_PROG_CC_C99
 AM_PROG_AS

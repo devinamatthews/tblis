@@ -467,17 +467,6 @@ void weight_blas(const communicator& comm, const config& cfg,
 
     MArray::viterator<3> it(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
 
-    auto A0 = A;
-    auto B0 = B;
-    auto C0 = C;
-
-    len_type na = stl_ext::prod(ar.lengths()+len_ABC);
-    len_type nb = stl_ext::prod(br.lengths()+len_ABC);
-    len_type nc = stl_ext::prod(cr.lengths()+len_ABC);
-    std::cout << (ar.lengths()+len_ABC) << " " << na << std::endl;
-    std::cout << (br.lengths()+len_ABC) << " " << nb << std::endl;
-    std::cout << (cr.lengths()+len_ABC) << " " << nc << std::endl;
-
     while (it.next(A, B, C))
     {
         add(comm, cfg, {}, {}, ar.lengths(),
@@ -575,14 +564,6 @@ void mult(const communicator& comm, const config& cfg,
           const std::vector<stride_type>& stride_C_ABC)
 {
     TBLIS_ASSERT(!conj_A && !conj_B && !conj_C);
-
-    std::cout << "A: " << len_A << std::endl;
-    std::cout << "B: " << len_B << std::endl;
-    std::cout << "C: " << len_C << std::endl;
-    std::cout << "AB: " << len_AB << std::endl;
-    std::cout << "AC: " << len_AC << std::endl;
-    std::cout << "BC: " << len_BC << std::endl;
-    std::cout << "ABC: " << len_ABC << std::endl;
 
     if (len_A.empty() && len_B.empty() && len_C.empty() &&
         (len_AB.empty() || len_ABC.empty()))

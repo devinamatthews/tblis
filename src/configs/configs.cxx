@@ -33,14 +33,12 @@ struct default_config
         {
             TBLIS_ASSERT(configs[cfg]->check);
             int cur_prio = configs[cfg]->check();
-            printf("%s: %d\n", configs[cfg]->name, cur_prio);
             if (cur_prio > priority)
             {
                 priority = cur_prio;
                 value = configs[cfg];
             }
         }
-        printf("using %s\n", value->name);
     }
 };
 

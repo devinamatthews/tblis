@@ -58,8 +58,8 @@ lib_libtblis_la_LIBADD = external/tci/lib/libtci.la
 noinst_LTLIBRARIES += lib/libreference.la
 lib_libtblis_la_LIBADD += lib/libreference.la
 lib_libreference_la_SOURCES = src/configs/reference/config.cxx
-lib_libreference_la_CFLAGS = -Ofast
-lib_libreference_la_CXXFLAGS = -Ofast
+lib_libreference_la_CFLAGS = -O3
+lib_libreference_la_CXXFLAGS = -O3
 
 #
 # AMD architectures
@@ -70,8 +70,8 @@ noinst_LTLIBRARIES += lib/libbulldozer.la
 lib_libtblis_la_LIBADD += lib/libbulldozer.la
 lib_libbulldozer_la_SOURCES = src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c \
 					         src/configs/bulldozer/config.cxx
-lib_libbulldozer_la_CFLAGS = -Ofast -mavx -mfma4 -march=bdver1 -mfpmath=sse
-lib_libbulldozer_la_CXXFLAGS = -Ofast -mavx -mfma4 -march=bdver1 -mfpmath=sse
+lib_libbulldozer_la_CFLAGS = -O3 -mavx -mfma4 -march=bdver1 -mfpmath=sse
+lib_libbulldozer_la_CXXFLAGS = -O3 -mavx -mfma4 -march=bdver1 -mfpmath=sse
 endif
 
 if ENABLE_PILEDRIVER
@@ -79,8 +79,8 @@ noinst_LTLIBRARIES += lib/libpiledriver.la
 lib_libtblis_la_LIBADD += lib/libpiledriver.la
 lib_libpiledriver_la_SOURCES = src/configs/piledriver/bli_gemm_asm_d8x3.c \
 					           src/configs/piledriver/config.cxx
-lib_libpiledriver_la_CFLAGS = -Ofast -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse
-lib_libpiledriver_la_CXXFLAGS = -Ofast -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse
+lib_libpiledriver_la_CFLAGS = -O3 -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse
+lib_libpiledriver_la_CXXFLAGS = -O3 -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse
 endif
 
 if ENABLE_EXCAVATOR
@@ -92,8 +92,8 @@ lib_libexcavator_la_SOURCES = src/configs/excavator/bli_gemm_asm_d8x3.c \
 else
 lib_libexcavator_la_SOURCES = src/configs/excavator/config.cxx
 endif
-lib_libexcavator_la_CFLAGS = -Ofast -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
-lib_libexcavator_la_CXXFLAGS = -Ofast -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
+lib_libexcavator_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
+lib_libexcavator_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
 endif
 
 #
@@ -109,8 +109,8 @@ if ENABLE_INTEL_COMPILER
 lib_libcore2_la_CFLAGS = -O3 -xSSSE3
 lib_libcore2_la_CXXFLAGS = -O3 -xSSSE3
 else
-lib_libcore2_la_CFLAGS = -Ofast -msse3 -mssse3 -march=core2 -mfpmath=sse
-lib_libcore2_la_CXXFLAGS = -Ofast -msse3 -mssse3 -march=core2 -mfpmath=sse
+lib_libcore2_la_CFLAGS = -O3 -msse3 -mssse3 -march=core2 -mfpmath=sse
+lib_libcore2_la_CXXFLAGS = -O3 -msse3 -mssse3 -march=core2 -mfpmath=sse
 endif
 endif
 
@@ -123,8 +123,8 @@ if ENABLE_INTEL_COMPILER
 lib_libsandybridge_la_CFLAGS = -O3 -xAVX
 lib_libsandybridge_la_CXXFLAGS = -O3 -xAVX
 else
-lib_libsandybridge_la_CFLAGS = -Ofast -mavx -march=corei7-avx -mfpmath=sse
-lib_libsandybridge_la_CXXFLAGS = -Ofast -mavx -march=corei7-avx -mfpmath=sse
+lib_libsandybridge_la_CFLAGS = -O3 -mavx -march=corei7-avx -mfpmath=sse
+lib_libsandybridge_la_CXXFLAGS = -O3 -mavx -march=corei7-avx -mfpmath=sse
 endif
 endif
 
@@ -140,8 +140,8 @@ if ENABLE_INTEL_COMPILER
 lib_libhaswell_la_CFLAGS = -O3 -xCORE-AVX2
 lib_libhaswell_la_CXXFLAGS = -O3 -xCORE-AVX2
 else
-lib_libhaswell_la_CFLAGS = -Ofast -mavx -mavx2 -mfma -march=core-avx2 -mfpmath=sse
-lib_libhaswell_la_CXXFLAGS = -Ofast -mavx -mavx2 -mfma -march=core-avx2 -mfpmath=sse
+lib_libhaswell_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=core-avx2 -mfpmath=sse
+lib_libhaswell_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=core-avx2 -mfpmath=sse
 endif
 endif
 
@@ -162,11 +162,11 @@ lib_libknl_la_CFLAGS = -O3 -xMIC-AVX512
 lib_libknl_la_CXXFLAGS = -O3 -xMIC-AVX512
 else
 if IS_OSX
-lib_libknl_la_CFLAGS = -Ofast -mavx512f -mavx512pf -march=knl -mfpmath=sse -Wa,-march=knl
-lib_libknl_la_CXXFLAGS = -Ofast -mavx512f -mavx512pf -march=knl -mfpmath=sse -Wa,-march=knl
+lib_libknl_la_CFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse -Wa,-march=knl
+lib_libknl_la_CXXFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse -Wa,-march=knl
 else
-lib_libknl_la_CFLAGS = -Ofast -mavx512f -mavx512pf -march=knl -mfpmath=sse
-lib_libknl_la_CXXFLAGS = -Ofast -mavx512f -mavx512pf -march=knl -mfpmath=sse
+lib_libknl_la_CFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse
+lib_libknl_la_CXXFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse
 endif
 endif
 endif
@@ -246,11 +246,11 @@ endif
 #endif
 
 bin_PROGRAMS = bin/test
-#if ENABLE_BLAS
-#bin_PROGRAMS += bin/bench
-#endif
+if ENABLE_BLAS
+bin_PROGRAMS += bin/bench
+endif
 bin_test_SOURCES = test/test.cxx
-#bin_bench_SOURCES = test/bench.cxx
+bin_bench_SOURCES = test/bench.cxx
 
 VPATH += $(srcdir)
 

@@ -2,7 +2,7 @@
 
 namespace tblis
 {
-namespace
+namespace internal
 {
 
 template <typename T>

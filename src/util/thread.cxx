@@ -75,8 +75,6 @@ struct thread_configuration
 
             #endif
         }
-
-        printf("using %d threads\n", num_threads);
     }
 };
 

@@ -1446,7 +1446,7 @@ void test(size_t N_in_bytes, int R)
 
 int main(int argc, char **argv)
 {
-    size_t N = 1024*1024;
+    size_t N = 10*1024*1024;
     int R = 10;
     time_t seed = time(NULL);
 

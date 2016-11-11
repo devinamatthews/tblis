@@ -5,7 +5,7 @@ AM_MAINTAINER_MODE([disable])
 
 AC_CONFIG_MACRO_DIR([m4])
 
-AC_PROG_CC
+AC_PROG_CC([icc gcc clang])
 AC_PROG_CC_C99
 
 #

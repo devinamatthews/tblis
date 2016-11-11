@@ -132,7 +132,7 @@ stl_extinclude_HEADERS = \
 	src/external/stl_ext/include/zip.hpp
 	
 noinst_LTLIBRARIES =
-lib_libtblis_la_LIBADD = external/tci/lib/libtci.la
+lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la
 
 noinst_LTLIBRARIES += lib/libreference.la
 lib_libtblis_la_LIBADD += lib/libreference.la
@@ -335,7 +335,7 @@ VPATH += $(srcdir)
 
 SUBDIRS = src/external/tci
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/external/tci/src
+AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/util -Isrc/external/tci/src
 AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la
 bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)

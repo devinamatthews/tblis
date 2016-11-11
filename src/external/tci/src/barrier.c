@@ -1,5 +1,7 @@
 #include "tci.h"
 
+#include <stdlib.h>
+
 #if TCI_USE_PTHREAD_BARRIER
 
 int tci_barrier_node_init(tci_barrier_node_t* barrier,

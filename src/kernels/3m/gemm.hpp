@@ -327,12 +327,12 @@ void pack_nb_ukr_def(len_type m, len_type k,
             {
                 for (len_type mr = 0;mr < m;mr++)
                 {
-                    p_ap[mr + ME*p] = p_a[rs_a*mr + cscat_a[kr]];
+                    p_ap[mr + ME*kr] = p_a[rs_a*mr + cscat_a[kr]];
                 }
 
                 for (len_type mr = m;mr < MR;mr++)
                 {
-                    p_ap[mr + ME*p] = T();
+                    p_ap[mr + ME*kr] = T();
                 }
             }
         }

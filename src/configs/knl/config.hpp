@@ -8,12 +8,12 @@ extern "C" tblis::gemm_ukr_func<double> bli_dgemm_opt_30x8_knc;
 extern "C" tblis::gemm_ukr_func<double> bli_dgemm_opt_30x8;
 extern "C" tblis::gemm_ukr_func<double> bli_dgemm_opt_24x8;
 
-extern "C" tblis::pack_nn_ukr_func<double> bli_dpackm_30xk_opt;
-extern "C" tblis::pack_nn_ukr_func<double> bli_dpackm_24xk_opt;
-extern "C" tblis::pack_nn_ukr_func<double> bli_dpackm_8xk_opt;
-
 namespace tblis
 {
+
+extern pack_nn_ukr_func<double> knl_packm_30xk;
+extern pack_nn_ukr_func<double> knl_packm_24xk;
+extern pack_nn_ukr_func<double> knl_packm_8xk;
 
 TBLIS_CONFIG(knl_d30x8_knc);
 
@@ -42,8 +42,8 @@ TBLIS_CONFIG_BS_DEF       (knl_d30x8, double, gemm, nc, 14400);
 TBLIS_CONFIG_BS_DEF_EXTENT(knl_d30x8, double, gemm, mr, 30, 32);
 TBLIS_CONFIG_BS_DEF       (knl_d30x8, double, gemm, nr, 8);
 TBLIS_CONFIG_ROW_MAJOR    (knl_d30x8, double, gemm);
-TBLIS_CONFIG_UKR          (knl_d30x8, double, pack_nn_mr, bli_dpackm_30xk_opt);
-TBLIS_CONFIG_UKR          (knl_d30x8, double, pack_nn_nr, bli_dpackm_8xk_opt);
+TBLIS_CONFIG_UKR          (knl_d30x8, double, pack_nn_mr, knl_packm_30xk);
+TBLIS_CONFIG_UKR          (knl_d30x8, double, pack_nn_nr, knl_packm_8xk);
 TBLIS_CONFIG_BS_DEF       (knl_d30x8, double, gemm, kr, 8);
 
 TBLIS_CONFIG(knl_d24x8);
@@ -55,8 +55,8 @@ TBLIS_CONFIG_BS_DEF    (knl_d24x8, double, gemm, nc, 14400);
 TBLIS_CONFIG_BS_DEF    (knl_d24x8, double, gemm, mr, 24);
 TBLIS_CONFIG_BS_DEF    (knl_d24x8, double, gemm, nr, 8);
 TBLIS_CONFIG_ROW_MAJOR (knl_d24x8, double, gemm);
-TBLIS_CONFIG_UKR       (knl_d24x8, double, pack_nn_mr, bli_dpackm_24xk_opt);
-TBLIS_CONFIG_UKR       (knl_d24x8, double, pack_nn_nr, bli_dpackm_8xk_opt);
+TBLIS_CONFIG_UKR       (knl_d24x8, double, pack_nn_mr, knl_packm_24xk);
+TBLIS_CONFIG_UKR       (knl_d24x8, double, pack_nn_nr, knl_packm_8xk);
 TBLIS_CONFIG_BS_DEF    (knl_d24x8, double, gemm, kr, 8);
 
 typedef knl_d24x8_config knl_config;

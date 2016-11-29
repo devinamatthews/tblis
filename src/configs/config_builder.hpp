@@ -66,71 +66,70 @@ struct simple_blocksize<dcomplex, S, D, C, Z>
     template <typename T> \
     struct name : decltype(_##name##_helper<source, T>((source*)0)) {};
 
-template <template <typename> class BS,
-          template <typename> class BS_Ref,
-          template <typename> class BS_Iota=BS>
+template <typename BS,
+          typename BS_Ref,
+          typename BS_Iota=BS>
 struct blocksize_traits
 {
-    template <typename T>
     struct type
     {
-        TBLIS_DEFAULT_VALUE(      def, len_type,      BS<T>,    def, BS_Ref<T>::def);
-        TBLIS_DEFAULT_VALUE(      max, len_type,      BS<T>,    max,            def);
-        TBLIS_DEFAULT_VALUE(   extent, len_type,      BS<T>, extent,            def);
+        TBLIS_DEFAULT_VALUE(      def, len_type,      BS,    def, BS_Ref::def);
+        TBLIS_DEFAULT_VALUE(      max, len_type,      BS,    max,         def);
+        TBLIS_DEFAULT_VALUE(   extent, len_type,      BS, extent,         def);
         /*
          * If BS_Iota == BS, then it may not have a def member type, so we need
          * a second layer of defaulting (in this case iota will come out the
          * same as def in the end). If BS_Iota is different then it must have a
          * def member type or this default doesn't make sense.
          */
-        TBLIS_DEFAULT_VALUE(_iota_def, len_type, BS_Iota<T>,    def, BS_Ref<T>::def);
-        TBLIS_DEFAULT_VALUE(     iota, len_type,      BS<T>,   iota,      _iota_def);
+        TBLIS_DEFAULT_VALUE(_iota_def, len_type, BS_Iota,    def, BS_Ref::def);
+        TBLIS_DEFAULT_VALUE(     iota, len_type,      BS,   iota,   _iota_def);
     };
 };
 
 template <typename Config>
 struct config_traits : config
 {
-    TBLIS_DEFAULT_VALUE_T(   add_ukr,    add_ukr_t<T>, Config,    add_ukr,    add_ukr_def<T>);
+    TBLIS_DEFAULT_VALUE_T(   add_ukr,    add_ukr_t<T>, Config,    add_ukr,    &add_ukr_def<T>);
     TBLIS_DEFAULT_VALUE_T(  copy_ukr,   copy_ukr_t<T>, Config,   copy_ukr,   &copy_ukr_def<T>);
     TBLIS_DEFAULT_VALUE_T(   dot_ukr,    dot_ukr_t<T>, Config,    dot_ukr,    &dot_ukr_def<T>);
     TBLIS_DEFAULT_VALUE_T(reduce_ukr, reduce_ukr_t<T>, Config, reduce_ukr, &reduce_ukr_def<T>);
     TBLIS_DEFAULT_VALUE_T( scale_ukr,  scale_ukr_t<T>, Config,  scale_ukr,  &scale_ukr_def<T>);
     TBLIS_DEFAULT_VALUE_T(   set_ukr,    set_ukr_t<T>, Config,    set_ukr,    &set_ukr_def<T>);
 
-    template <typename T> using _default_trans_mr = simple_blocksize<T, 8, 4, 4, 4>;
-    template <typename T> using _default_trans_nr = simple_blocksize<T, 4, 4, 4, 2>;
+    template <typename T> struct _default_trans_mr : simple_blocksize<T, 8, 4, 4, 4> {};
+    template <typename T> struct _default_trans_nr : simple_blocksize<T, 4, 4, 4, 2> {};
 
-    template <typename T> using trans_mr = typename blocksize_traits<
-        Config::template trans_mr, _default_trans_mr>::template type<T>;
-    template <typename T> using trans_nr = typename blocksize_traits<
-        Config::template trans_nr, _default_trans_nr>::template type<T>;
+    template <typename T> struct trans_mr : blocksize_traits<
+        typename Config::template trans_mr<T>, _default_trans_mr<T>>::type {};
+    template <typename T> struct trans_nr : blocksize_traits<
+        typename Config::template trans_nr<T>, _default_trans_nr<T>>::type {};
 
     TBLIS_DEFAULT_VALUE_T(  trans_add_ukr,  trans_add_ukr_t<T>, Config,   trans_add_ukr,  (&trans_add_ukr_def<config_traits,T>));
     TBLIS_DEFAULT_VALUE_T( trans_copy_ukr, trans_copy_ukr_t<T>, Config,  trans_copy_ukr, (&trans_copy_ukr_def<config_traits,T>));
     TBLIS_DEFAULT_VALUE_T(trans_row_major,                bool, Config, trans_row_major,                                  false);
 
-    template <typename T> using _default_gemm_mr = simple_blocksize<T, 8, 4, 4, 2>;
-    template <typename T> using _default_gemm_nr = simple_blocksize<T, 4, 4, 2, 2>;
-    template <typename T> using _default_gemm_kr = simple_blocksize<T, 4, 2, 2, 1>;
+    template <typename T> struct _default_gemm_mr : simple_blocksize<T, 8, 4, 4, 2> {};
+    template <typename T> struct _default_gemm_nr : simple_blocksize<T, 4, 4, 2, 2> {};
+    template <typename T> struct _default_gemm_kr : simple_blocksize<T, 4, 2, 2, 1> {};
 
-    template <typename T> using gemm_mr = typename blocksize_traits<
-        Config::template gemm_mr, _default_gemm_mr>::template type<T>;
-    template <typename T> using gemm_nr = typename blocksize_traits<
-        Config::template gemm_nr, _default_gemm_nr>::template type<T>;
-    template <typename T> using gemm_kr = typename blocksize_traits<
-        Config::template gemm_kr, _default_gemm_kr>::template type<T>;
+    template <typename T> struct gemm_mr : blocksize_traits<
+        typename Config::template gemm_mr<T>, _default_gemm_mr<T>>::type {};
+    template <typename T> struct gemm_nr : blocksize_traits<
+        typename Config::template gemm_nr<T>, _default_gemm_nr<T>>::type {};
+    template <typename T> struct gemm_kr : blocksize_traits<
+        typename Config::template gemm_kr<T>, _default_gemm_kr<T>>::type {};
 
-    template <typename T> using _default_gemm_mc = simple_blocksize<T,  512,  256,  256,  128>;
-    template <typename T> using _default_gemm_nc = simple_blocksize<T, 4096, 4096, 4096, 4096>;
-    template <typename T> using _default_gemm_kc = simple_blocksize<T,  256,  256,  256,  256>;
+    template <typename T> struct _default_gemm_mc : simple_blocksize<T,  512,  256,  256,  128> {};
+    template <typename T> struct _default_gemm_nc : simple_blocksize<T, 4096, 4096, 4096, 4096> {};
+    template <typename T> struct _default_gemm_kc : simple_blocksize<T,  256,  256,  256,  256> {};
 
-    template <typename T> using gemm_mc = typename blocksize_traits<
-        Config::template gemm_mc, _default_gemm_mc, gemm_mr>::template type<T>;
-    template <typename T> using gemm_nc = typename blocksize_traits<
-        Config::template gemm_nc, _default_gemm_nc, gemm_nr>::template type<T>;
-    template <typename T> using gemm_kc = typename blocksize_traits<
-        Config::template gemm_kc, _default_gemm_kc, gemm_kr>::template type<T>;
+    template <typename T> struct gemm_mc : blocksize_traits<
+        typename Config::template gemm_mc<T>, _default_gemm_mc<T>, gemm_mr<T>>::type {};
+    template <typename T> struct gemm_nc : blocksize_traits<
+        typename Config::template gemm_nc<T>, _default_gemm_nc<T>, gemm_nr<T>>::type {};
+    template <typename T> struct gemm_kc : blocksize_traits<
+        typename Config::template gemm_kc<T>, _default_gemm_kc<T>, gemm_kr<T>>::type {};
 
     TBLIS_DEFAULT_VALUE_T(      gemm_ukr, gemm_ukr_t<T>, Config,       gemm_ukr, (&gemm_ukr_def<config_traits,T>));
     TBLIS_DEFAULT_VALUE_T(gemm_row_major,          bool, Config, gemm_row_major,                            false);
@@ -206,7 +205,7 @@ struct cfg##_config_ \
     \
     static const config& instance() { return cfg##_config_instance; } \
 }; \
-using cfg##_config = config_traits<cfg##_config_>;
+typedef config_traits<cfg##_config_> cfg##_config;
 
 #define TBLIS_CONFIG_X_1(config, X, T, type1, name1, value1) \
 template <> struct config##_config_::X<T> \

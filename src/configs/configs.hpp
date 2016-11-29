@@ -60,10 +60,9 @@ struct microkernel
            (void(*)(void))ukr<scomplex>::value, (void(*)(void))ukr<dcomplex>::value} {}
 
     template <typename T, typename... Args>
-    auto call(Args&&... args) const
-    -> decltype(((ukr_t<T>)_ukr[type_idx<T>::value])(std::forward<Args>(args)...))
+    void call(Args&&... args) const
     {
-        return ((ukr_t<T>)_ukr[type_idx<T>::value])(std::forward<Args>(args)...);
+        ((ukr_t<T>)_ukr[type_idx<T>::value])(std::forward<Args>(args)...);
     }
 };
 

@@ -19,6 +19,8 @@
 #include "../external/stl_ext/include/complex.hpp"
 
 #define MARRAY_DEFAULT_LAYOUT COLUMN_MAJOR
+#undef assert
+#define assert TBLIS_ASSERT
 #include "../external/marray/include/varray.hpp"
 #include "../external/marray/include/marray.hpp"
 

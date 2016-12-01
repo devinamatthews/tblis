@@ -16,7 +16,12 @@ template <typename T, size_t N=8> struct aligned_allocator
     typedef T value_type;
 
     aligned_allocator() {}
-    template <typename U, size_t M> aligned_allocator(const aligned_allocator<U, M>& other) {}
+
+    template <typename U, size_t M>
+    aligned_allocator(const aligned_allocator<U, M>& other)
+    {
+        (void)other;
+    }
 
     T* allocate(size_t n)
     {
@@ -27,11 +32,12 @@ template <typename T, size_t N=8> struct aligned_allocator
         int ret = posix_memalign(&ptr, N, n*sizeof(T));
 #endif
         if (ret != 0) throw std::bad_alloc();
-        return (T*)ptr;
+        return static_cast<T*>(ptr);
     }
 
     void deallocate(T* ptr, size_t n)
     {
+        (void)n;
 #if TBLIS_HAVE_HBWMALLOC_H
         hbw_free(ptr);
 #else

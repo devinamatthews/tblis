@@ -24,19 +24,19 @@ void tblis_vector_add(const tblis_comm* comm, const tblis_config* cfg,
             if (B->alpha<T>() == T(0))
             {
                 parallelize_if(internal::set<T>, comm, get_config(cfg), A->n,
-                               T(0), (T*)B->data, B->inc);
+                               T(0), static_cast<T*>(B->data), B->inc);
             }
             else
             {
                 parallelize_if(internal::scale<T>, comm, get_config(cfg), A->n,
-                               B->alpha<T>(), B->conj, (T*)B->data, B->inc);
+                               B->alpha<T>(), B->conj, static_cast<T*>(B->data), B->inc);
             }
         }
         else
         {
             parallelize_if(internal::add<T>, comm, get_config(cfg), A->n,
-                           A->alpha<T>(), A->conj, (const T*)A->data, A->inc,
-                           B->alpha<T>(), B->conj,       (T*)B->data, B->inc);
+                           A->alpha<T>(), A->conj, static_cast<const T*>(A->data), A->inc,
+                           B->alpha<T>(), B->conj,       static_cast<T*>(B->data), B->inc);
         }
 
         B->alpha<T>() = T(1);

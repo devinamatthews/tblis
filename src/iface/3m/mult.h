@@ -34,7 +34,7 @@ void mult(T alpha, const_matrix_view<T> A, const_matrix_view<T> B,
 }
 
 template <typename T>
-void mult(single_t s,
+void mult(single_t,
           T alpha, const_matrix_view<T> A, const_matrix_view<T> B,
           T beta, matrix_view<T> C)
 {

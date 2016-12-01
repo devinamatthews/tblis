@@ -2,7 +2,8 @@
 
 #include <stdlib.h>
 
-int tci_context_init(tci_context_t** context, int nthread, int group_size)
+int tci_context_init(tci_context_t** context,
+                     unsigned nthread, unsigned group_size)
 {
     *context = (tci_context_t*)malloc(sizeof(tci_context_t));
     if (!*context) return ENOMEM;
@@ -28,37 +29,39 @@ int tci_context_detach(tci_context_t* context)
     return 0;
 }
 
-int tci_context_barrier(tci_context_t* context, int tid)
+int tci_context_barrier(tci_context_t* context, unsigned tid)
 {
     return tci_barrier_wait(&context->barrier, tid);
 }
 
-int tci_context_send(tci_context_t* context, int tid, void* object)
+int tci_context_send(tci_context_t* context, unsigned tid, void* object)
 {
     context->buffer = object;
     int ret = tci_context_barrier(context, tid);
-    if (!ret) return ret;
+    if (ret != 0) return ret;
     return tci_context_barrier(context, tid);
 }
 
-int tci_context_send_nowait(tci_context_t* context, int tid, void* object)
+int tci_context_send_nowait(tci_context_t* context,
+                            unsigned tid, void* object)
 {
     context->buffer = object;
     return tci_context_barrier(context, tid);
 }
 
-int tci_context_receive(tci_context_t* context, int tid, void** object)
+int tci_context_receive(tci_context_t* context, unsigned tid, void** object)
 {
     int ret = tci_context_barrier(context, tid);
-    if (!ret) return ret;
+    if (ret != 0) return ret;
     *object = context->buffer;
     return tci_context_barrier(context, tid);
 }
 
-int tci_context_receive_nowait(tci_context_t* context, int tid, void** object)
+int tci_context_receive_nowait(tci_context_t* context,
+                               unsigned tid, void** object)
 {
     int ret = tci_context_barrier(context, tid);
-    if (!ret) return ret;
+    if (ret != 0) return ret;
     *object = context->buffer;
     return 0;
 }

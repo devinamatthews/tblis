@@ -31,7 +31,7 @@ void set(T alpha, row_view<T> A)
 }
 
 template <typename T>
-void set(single_t s, T alpha, row_view<T> A)
+void set(single_t, T alpha, row_view<T> A)
 {
     tblis_scalar alpha_s(alpha);
     tblis_vector A_s(A);

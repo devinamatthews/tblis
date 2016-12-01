@@ -52,7 +52,7 @@ struct partition
         len_type m_u = (Dim == DIM_M ? A.length(0) : Dim == DIM_N ? B.length(1) : A.length(1));
         len_type m_v = (Dim == DIM_M ? C.length(0) : Dim == DIM_N ? C.length(1) : B.length(0));
 
-        if (!ganged)
+        if (!ganged && distribute > 1)
         {
             subcomm = comm.gang(TCI_EVENLY, distribute);
             ganged = true;

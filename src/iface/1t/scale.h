@@ -30,7 +30,7 @@ void scale(T alpha, tensor_view<T> A, const label_type* idx_A)
 }
 
 template <typename T>
-void scale(single_t s, T alpha, tensor_view<T> A, const label_type* idx_A)
+void scale(single_t, T alpha, tensor_view<T> A, const label_type* idx_A)
 {
     tblis_tensor A_s(alpha, A);
 

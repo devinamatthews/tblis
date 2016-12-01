@@ -13,14 +13,15 @@ void dot(const communicator& comm, const config& cfg, len_type n,
     len_type n_min, n_max;
     std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(n);
 
-    result = T();
+    T local_result = T();
 
     cfg.dot_ukr.call<T>(n_max-n_min,
                         conj_A, A + n_min*inc_A, inc_A,
-                        conj_B, B + n_min*inc_B, inc_B, result);
+                        conj_B, B + n_min*inc_B, inc_B, local_result);
 
     len_type dummy;
-    reduce(comm, REDUCE_SUM, result, dummy);
+    reduce(comm, REDUCE_SUM, local_result, dummy);
+    result = local_result;
 }
 
 #define FOREACH_TYPE(T) \

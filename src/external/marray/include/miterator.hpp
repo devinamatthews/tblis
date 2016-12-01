@@ -140,7 +140,7 @@ namespace detail
     struct inc_offsets_helper<ndim, N, N, Offset>
     {
         template <typename stride_type>
-        inc_offsets_helper(int i,
+        inc_offsets_helper(unsigned i,
                            Offset& off0,
                            const std::array<std::array<stride_type,ndim>,N>& strides)
         {
@@ -148,7 +148,7 @@ namespace detail
         }
 
         template <typename stride_type>
-        inc_offsets_helper(int i,
+        inc_offsets_helper(unsigned i,
                            Offset& off0,
                            const std::array<std::vector<stride_type>,N>& strides)
         {

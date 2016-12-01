@@ -30,7 +30,7 @@ void scale(T alpha, row_view<T> A)
 }
 
 template <typename T>
-void scale(single_t s, T alpha, row_view<T> A)
+void scale(single_t, T alpha, row_view<T> A)
 {
     tblis_vector A_s(alpha, A);
 

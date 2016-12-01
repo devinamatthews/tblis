@@ -46,7 +46,7 @@ struct pack_row_panel
             comm.distribute_over_threads_2d(m_a, k_a, MR, KR);
 
         p_a += m_first*rs_a + k_first*cs_a;
-        p_ap += m_first*k_a + k_first*ME;
+        p_ap += (m_first/MR)*ME*k_a + k_first*ME;
 
         for (len_type off_m = m_first;off_m < m_last;off_m += MR)
         {
@@ -268,7 +268,7 @@ struct pack
 
         matrix_view<T> P({!Trans ? m_p : k_p,
                           !Trans ? k_p : m_p},
-                         (T*)pack_ptr,
+                         static_cast<T*>(pack_ptr),
                          {!Trans? k_p :   1,
                           !Trans?   1 : k_p});
 

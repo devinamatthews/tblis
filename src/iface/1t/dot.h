@@ -35,7 +35,7 @@ void dot(const_tensor_view<T> A, const label_type* idx_A,
 }
 
 template <typename T>
-void dot(single_t s, const_tensor_view<T> A, const label_type* idx_A,
+void dot(single_t, const_tensor_view<T> A, const label_type* idx_A,
                      const_tensor_view<T> B, const label_type* idx_B, T& result)
 {
     tblis_tensor A_s(A);
@@ -67,11 +67,11 @@ T dot(const_tensor_view<T> A, const label_type* idx_A,
 }
 
 template <typename T>
-T dot(single_t s, const_tensor_view<T> A, const label_type* idx_A,
+T dot(single_t, const_tensor_view<T> A, const label_type* idx_A,
                   const_tensor_view<T> B, const label_type* idx_B)
 {
     T result;
-    dot(s, A, idx_A, B, idx_B, result);
+    dot(single, A, idx_A, B, idx_B, result);
     return result;
 }
 

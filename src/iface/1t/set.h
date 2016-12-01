@@ -31,7 +31,7 @@ void set(T alpha, tensor_view<T> A, const label_type* idx_A)
 }
 
 template <typename T>
-void set(single_t s, T alpha, tensor_view<T> A, const label_type* idx_A)
+void set(single_t, T alpha, tensor_view<T> A, const label_type* idx_A)
 {
     tblis_scalar alpha_s(alpha);
     tblis_tensor A_s(A);

@@ -18,11 +18,12 @@ enum {FEATURE_MASK_SSE3     = (1u<< 0), //CPUID[EAX=1]:ECX[0]
       FEATURE_MASK_AVX512DQ = (1u<<17), //CPUID[EAX=7,ECX=0]:EBX[17]
       FEATURE_MASK_XGETBV   = (1u<<26)|
                               (1u<<27), //CPUID[EAX=1]:ECX[27:26]
-      XGETBV_MASK_XMM       = 0x02,     //XCR0[1]
-      XGETBV_MASK_YMM       = 0x04,     //XCR0[2]
-      XGETBV_MASK_ZMM       = 0xE0};    //XCR0[7:5]
+      XGETBV_MASK_XMM       = 0x02u,     //XCR0[1]
+      XGETBV_MASK_YMM       = 0x04u,     //XCR0[2]
+      XGETBV_MASK_ZMM       = 0xE0u};    //XCR0[7:5]
 
-void print_binary(uint32_t x)
+/*
+static void print_binary(uint32_t x)
 {
     uint32_t mask = (1u<<31);
 
@@ -37,6 +38,7 @@ void print_binary(uint32_t x)
     }
     printf("\n");
 }
+*/
 
 int get_cpu_type(int& family, int& model, int& features)
 {
@@ -44,15 +46,15 @@ int get_cpu_type(int& family, int& model, int& features)
 
     family = model = features = 0;
 
-    int cpuid_max = __get_cpuid_max(0, 0);
-    int cpuid_max_ext = __get_cpuid_max(0x80000000, 0);
+    unsigned cpuid_max = __get_cpuid_max(0, 0);
+    unsigned cpuid_max_ext = __get_cpuid_max(0x80000000u, 0);
 
     if (cpuid_max < 1) return VENDOR_UNKNOWN;
 
-    char vendor_string[13] = {};
-    __cpuid(0, eax, *(unsigned*)(&vendor_string[0]),
-                    *(unsigned*)(&vendor_string[8]),
-                    *(unsigned*)(&vendor_string[4]));
+    uint32_t vendor_string[4] = {0};
+    __cpuid(0, eax, vendor_string[0],
+                    vendor_string[2],
+                    vendor_string[1]);
 
     //printf("max cpuid leaf: %d\n", cpuid_max);
     //printf("max extended cpuid leaf: %08x\n", cpuid_max_ext);
@@ -72,9 +74,9 @@ int get_cpu_type(int& family, int& model, int& features)
         if (check_features(ebx, FEATURE_MASK_AVX512DQ)) features |= FEATURE_AVX512DQ;
     }
 
-    if (cpuid_max_ext >= 0x80000001)
+    if (cpuid_max_ext >= 0x80000001u)
     {
-        __cpuid(0x80000001, eax, ebx, ecx, edx);
+        __cpuid(0x80000001u, eax, ebx, ecx, edx);
         //printf("extended cpuid leaf 0x80000001:\n");
         //print_binary(eax);
         //print_binary(ebx);
@@ -178,9 +180,9 @@ int get_cpu_type(int& family, int& model, int& features)
     //printf("avx512pf: %d\n", check_features(features, FEATURE_AVX512PF));
     //printf("avx512dq: %d\n", check_features(features, FEATURE_AVX512DQ));
 
-    if (strcmp(vendor_string, "AuthenticAMD") == 0)
+    if (strcmp(reinterpret_cast<char*>(&vendor_string[0]), "AuthenticAMD") == 0)
         return VENDOR_AMD;
-    else if (strcmp(vendor_string, "GenuineIntel") == 0)
+    else if (strcmp(reinterpret_cast<char*>(&vendor_string[0]), "GenuineIntel") == 0)
         return VENDOR_INTEL;
     else
         return VENDOR_UNKNOWN;

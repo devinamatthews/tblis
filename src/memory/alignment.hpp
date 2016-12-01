@@ -35,8 +35,8 @@ constexpr typename std::common_type<T,U>::type floor_div(T N, U D)
 template <typename T, typename U>
 U* convert_and_align(T* x)
 {
-    uintptr_t off = ((uintptr_t)x)%alignof(U);
-    return (U*)((char*)x + (off == 0 ? 0 : alignof(U)-off));
+    uintptr_t off = (reinterpret_cast<uintptr_t>(x))%alignof(U);
+    return reinterpret_cast<U*>(reinterpret_cast<char*>(x) + (off == 0 ? 0 : alignof(U)-off));
 }
 
 template <typename T, typename U>

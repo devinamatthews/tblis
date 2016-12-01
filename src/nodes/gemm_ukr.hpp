@@ -129,6 +129,8 @@ struct gemm_micro_kernel
                              matrix_view<T>& B,
                     T  beta, matrix_view<T>& C) const
     {
+        (void)comm;
+
         const len_type MR = cfg.gemm_mr.def<T>();
         const len_type NR = cfg.gemm_nr.def<T>();
         const bool row_major = cfg.gemm_row_major<T>();
@@ -152,11 +154,11 @@ struct gemm_micro_kernel
         }
         else
         {
-            T p_ab[MR*NR] __attribute__((aligned(64)));
+            T p_ab[512] __attribute__((aligned(64)));
             static constexpr T zero = T(0);
 
             cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
-                                 &zero, (T*)p_ab, rs_ab, cs_ab);
+                                 &zero, &p_ab[0], rs_ab, cs_ab);
 
             accum_utile(m, n, p_ab, rs_ab, cs_ab,
                         beta, p_c, rs_c, cs_c);
@@ -169,6 +171,8 @@ struct gemm_micro_kernel
                                      matrix_view<T>& B,
                     T  beta, scatter_matrix_view<T>& C) const
     {
+        (void)comm;
+
         const len_type MR = cfg.gemm_mr.def<T>();
         const len_type NR = cfg.gemm_nr.def<T>();
         const bool row_major = cfg.gemm_row_major<T>();
@@ -194,11 +198,11 @@ struct gemm_micro_kernel
         }
         else
         {
-            T p_ab[MR*NR] __attribute__((aligned(64)));
+            T p_ab[512] __attribute__((aligned(64)));
             static constexpr T zero = T(0);
 
             cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
-                                 &zero, (T*)p_ab, rs_ab, cs_ab);
+                                 &zero, &p_ab[0], rs_ab, cs_ab);
 
             if (rs_c == 0 && cs_c == 0)
             {
@@ -229,6 +233,8 @@ struct gemm_micro_kernel
                                       matrix_view<T>& B,
                     T  beta, block_scatter_matrix<T>& C) const
     {
+        (void)comm;
+
         const len_type MR = cfg.gemm_mr.def<T>();
         const len_type NR = cfg.gemm_nr.def<T>();
         const bool row_major = cfg.gemm_row_major<T>();
@@ -257,11 +263,11 @@ struct gemm_micro_kernel
         }
         else
         {
-            T p_ab[MR*NR] __attribute__((aligned(64)));
+            T p_ab[512] __attribute__((aligned(64)));
             static constexpr T zero = T(0);
 
             cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
-                                 &zero, (T*)p_ab, rs_ab, cs_ab);
+                                 &zero, &p_ab[0], rs_ab, cs_ab);
 
             if (rs_c == 0 && cs_c == 0)
             {

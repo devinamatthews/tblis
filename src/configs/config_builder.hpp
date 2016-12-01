@@ -51,7 +51,7 @@ struct simple_blocksize<dcomplex, S, D, C, Z>
     static std::integral_constant<type, U::val> _##name##_helper(U*); \
     template <typename U> \
     static std::integral_constant<type,    def> _##name##_helper(...); \
-    static constexpr type name = decltype(_##name##_helper<source>((source*)0))::value;
+    static constexpr type name = decltype(_##name##_helper<source>(static_cast<source*>(nullptr)))::value;
 
 /*
  * The cast on the first overload is very important; otherwise the
@@ -60,11 +60,11 @@ struct simple_blocksize<dcomplex, S, D, C, Z>
  */
 #define TBLIS_DEFAULT_VALUE_T(name, tp, source, val, def) \
     template <typename U, typename T> \
-    static std::integral_constant<tp, (tp)U::template val<T>::value> _##name##_helper(U*); \
+    static std::integral_constant<tp, static_cast<tp>(U::template val<T>::value)> _##name##_helper(U*); \
     template <typename U, typename T> \
     static std::integral_constant<tp, def> _##name##_helper(...); \
     template <typename T> \
-    struct name : decltype(_##name##_helper<source, T>((source*)0)) {};
+    struct name : decltype(_##name##_helper<source, T>(static_cast<source*>(nullptr))) {};
 
 template <typename BS,
           typename BS_Ref,
@@ -73,29 +73,29 @@ struct blocksize_traits
 {
     struct type
     {
-        TBLIS_DEFAULT_VALUE(      def, len_type,      BS,    def, BS_Ref::def);
-        TBLIS_DEFAULT_VALUE(      max, len_type,      BS,    max,         def);
-        TBLIS_DEFAULT_VALUE(   extent, len_type,      BS, extent,         def);
+        TBLIS_DEFAULT_VALUE(      def, len_type,      BS,    def, BS_Ref::def)
+        TBLIS_DEFAULT_VALUE(      max, len_type,      BS,    max,         def)
+        TBLIS_DEFAULT_VALUE(   extent, len_type,      BS, extent,         def)
         /*
          * If BS_Iota == BS, then it may not have a def member type, so we need
          * a second layer of defaulting (in this case iota will come out the
          * same as def in the end). If BS_Iota is different then it must have a
          * def member type or this default doesn't make sense.
          */
-        TBLIS_DEFAULT_VALUE(_iota_def, len_type, BS_Iota,    def, BS_Ref::def);
-        TBLIS_DEFAULT_VALUE(     iota, len_type,      BS,   iota,   _iota_def);
+        TBLIS_DEFAULT_VALUE(_iota_def, len_type, BS_Iota,    def, BS_Ref::def)
+        TBLIS_DEFAULT_VALUE(     iota, len_type,      BS,   iota,   _iota_def)
     };
 };
 
 template <typename Config>
 struct config_traits : config
 {
-    TBLIS_DEFAULT_VALUE_T(   add_ukr,    add_ukr_t<T>, Config,    add_ukr,    &add_ukr_def<T>);
-    TBLIS_DEFAULT_VALUE_T(  copy_ukr,   copy_ukr_t<T>, Config,   copy_ukr,   &copy_ukr_def<T>);
-    TBLIS_DEFAULT_VALUE_T(   dot_ukr,    dot_ukr_t<T>, Config,    dot_ukr,    &dot_ukr_def<T>);
-    TBLIS_DEFAULT_VALUE_T(reduce_ukr, reduce_ukr_t<T>, Config, reduce_ukr, &reduce_ukr_def<T>);
-    TBLIS_DEFAULT_VALUE_T( scale_ukr,  scale_ukr_t<T>, Config,  scale_ukr,  &scale_ukr_def<T>);
-    TBLIS_DEFAULT_VALUE_T(   set_ukr,    set_ukr_t<T>, Config,    set_ukr,    &set_ukr_def<T>);
+    TBLIS_DEFAULT_VALUE_T(   add_ukr,    add_ukr_t<T>, Config,    add_ukr,    &add_ukr_def<T>)
+    TBLIS_DEFAULT_VALUE_T(  copy_ukr,   copy_ukr_t<T>, Config,   copy_ukr,   &copy_ukr_def<T>)
+    TBLIS_DEFAULT_VALUE_T(   dot_ukr,    dot_ukr_t<T>, Config,    dot_ukr,    &dot_ukr_def<T>)
+    TBLIS_DEFAULT_VALUE_T(reduce_ukr, reduce_ukr_t<T>, Config, reduce_ukr, &reduce_ukr_def<T>)
+    TBLIS_DEFAULT_VALUE_T( scale_ukr,  scale_ukr_t<T>, Config,  scale_ukr,  &scale_ukr_def<T>)
+    TBLIS_DEFAULT_VALUE_T(   set_ukr,    set_ukr_t<T>, Config,    set_ukr,    &set_ukr_def<T>)
 
     template <typename T> struct _default_trans_mr : simple_blocksize<T, 8, 4, 4, 4> {};
     template <typename T> struct _default_trans_nr : simple_blocksize<T, 4, 4, 4, 2> {};
@@ -105,9 +105,9 @@ struct config_traits : config
     template <typename T> struct trans_nr : blocksize_traits<
         typename Config::template trans_nr<T>, _default_trans_nr<T>>::type {};
 
-    TBLIS_DEFAULT_VALUE_T(  trans_add_ukr,  trans_add_ukr_t<T>, Config,   trans_add_ukr,  (&trans_add_ukr_def<config_traits,T>));
-    TBLIS_DEFAULT_VALUE_T( trans_copy_ukr, trans_copy_ukr_t<T>, Config,  trans_copy_ukr, (&trans_copy_ukr_def<config_traits,T>));
-    TBLIS_DEFAULT_VALUE_T(trans_row_major,                bool, Config, trans_row_major,                                  false);
+    TBLIS_DEFAULT_VALUE_T(  trans_add_ukr,  trans_add_ukr_t<T>, Config,   trans_add_ukr,  (&trans_add_ukr_def<config_traits,T>))
+    TBLIS_DEFAULT_VALUE_T( trans_copy_ukr, trans_copy_ukr_t<T>, Config,  trans_copy_ukr, (&trans_copy_ukr_def<config_traits,T>))
+    TBLIS_DEFAULT_VALUE_T(trans_row_major,                bool, Config, trans_row_major,                                  false)
 
     template <typename T> struct _default_gemm_mr : simple_blocksize<T, 8, 4, 4, 2> {};
     template <typename T> struct _default_gemm_nr : simple_blocksize<T, 4, 4, 2, 2> {};
@@ -131,21 +131,21 @@ struct config_traits : config
     template <typename T> struct gemm_kc : blocksize_traits<
         typename Config::template gemm_kc<T>, _default_gemm_kc<T>, gemm_kr<T>>::type {};
 
-    TBLIS_DEFAULT_VALUE_T(      gemm_ukr, gemm_ukr_t<T>, Config,       gemm_ukr, (&gemm_ukr_def<config_traits,T>));
-    TBLIS_DEFAULT_VALUE_T(gemm_row_major,          bool, Config, gemm_row_major,                            false);
+    TBLIS_DEFAULT_VALUE_T(      gemm_ukr, gemm_ukr_t<T>, Config,       gemm_ukr, (&gemm_ukr_def<config_traits,T>))
+    TBLIS_DEFAULT_VALUE_T(gemm_row_major,          bool, Config, gemm_row_major,                            false)
 
-    TBLIS_DEFAULT_VALUE_T(pack_nn_mr_ukr, pack_nn_ukr_t<T>, Config, pack_nn_mr_ukr, (pack_nn_ukr_def<config_traits,T,matrix_constants::MAT_A>));
-    TBLIS_DEFAULT_VALUE_T(pack_nn_nr_ukr, pack_nn_ukr_t<T>, Config, pack_nn_nr_ukr, (pack_nn_ukr_def<config_traits,T,matrix_constants::MAT_B>));
-    TBLIS_DEFAULT_VALUE_T(pack_sn_mr_ukr, pack_sn_ukr_t<T>, Config, pack_sn_mr_ukr, (pack_sn_ukr_def<config_traits,T,matrix_constants::MAT_A>));
-    TBLIS_DEFAULT_VALUE_T(pack_sn_nr_ukr, pack_sn_ukr_t<T>, Config, pack_sn_nr_ukr, (pack_sn_ukr_def<config_traits,T,matrix_constants::MAT_B>));
-    TBLIS_DEFAULT_VALUE_T(pack_ns_mr_ukr, pack_ns_ukr_t<T>, Config, pack_ns_mr_ukr, (pack_ns_ukr_def<config_traits,T,matrix_constants::MAT_A>));
-    TBLIS_DEFAULT_VALUE_T(pack_ns_nr_ukr, pack_ns_ukr_t<T>, Config, pack_ns_nr_ukr, (pack_ns_ukr_def<config_traits,T,matrix_constants::MAT_B>));
-    TBLIS_DEFAULT_VALUE_T(pack_ss_mr_ukr, pack_ss_ukr_t<T>, Config, pack_ss_mr_ukr, (pack_ss_ukr_def<config_traits,T,matrix_constants::MAT_A>));
-    TBLIS_DEFAULT_VALUE_T(pack_ss_nr_ukr, pack_ss_ukr_t<T>, Config, pack_ss_nr_ukr, (pack_ss_ukr_def<config_traits,T,matrix_constants::MAT_B>));
-    TBLIS_DEFAULT_VALUE_T(pack_nb_mr_ukr, pack_nb_ukr_t<T>, Config, pack_nb_mr_ukr, (pack_nb_ukr_def<config_traits,T,matrix_constants::MAT_A>));
-    TBLIS_DEFAULT_VALUE_T(pack_nb_nr_ukr, pack_nb_ukr_t<T>, Config, pack_nb_nr_ukr, (pack_nb_ukr_def<config_traits,T,matrix_constants::MAT_B>));
-    TBLIS_DEFAULT_VALUE_T(pack_sb_mr_ukr, pack_sb_ukr_t<T>, Config, pack_sb_mr_ukr, (pack_sb_ukr_def<config_traits,T,matrix_constants::MAT_A>));
-    TBLIS_DEFAULT_VALUE_T(pack_sb_nr_ukr, pack_sb_ukr_t<T>, Config, pack_sb_nr_ukr, (pack_sb_ukr_def<config_traits,T,matrix_constants::MAT_B>));
+    TBLIS_DEFAULT_VALUE_T(pack_nn_mr_ukr, pack_nn_ukr_t<T>, Config, pack_nn_mr_ukr, (pack_nn_ukr_def<config_traits,T,matrix_constants::MAT_A>))
+    TBLIS_DEFAULT_VALUE_T(pack_nn_nr_ukr, pack_nn_ukr_t<T>, Config, pack_nn_nr_ukr, (pack_nn_ukr_def<config_traits,T,matrix_constants::MAT_B>))
+    TBLIS_DEFAULT_VALUE_T(pack_sn_mr_ukr, pack_sn_ukr_t<T>, Config, pack_sn_mr_ukr, (pack_sn_ukr_def<config_traits,T,matrix_constants::MAT_A>))
+    TBLIS_DEFAULT_VALUE_T(pack_sn_nr_ukr, pack_sn_ukr_t<T>, Config, pack_sn_nr_ukr, (pack_sn_ukr_def<config_traits,T,matrix_constants::MAT_B>))
+    TBLIS_DEFAULT_VALUE_T(pack_ns_mr_ukr, pack_ns_ukr_t<T>, Config, pack_ns_mr_ukr, (pack_ns_ukr_def<config_traits,T,matrix_constants::MAT_A>))
+    TBLIS_DEFAULT_VALUE_T(pack_ns_nr_ukr, pack_ns_ukr_t<T>, Config, pack_ns_nr_ukr, (pack_ns_ukr_def<config_traits,T,matrix_constants::MAT_B>))
+    TBLIS_DEFAULT_VALUE_T(pack_ss_mr_ukr, pack_ss_ukr_t<T>, Config, pack_ss_mr_ukr, (pack_ss_ukr_def<config_traits,T,matrix_constants::MAT_A>))
+    TBLIS_DEFAULT_VALUE_T(pack_ss_nr_ukr, pack_ss_ukr_t<T>, Config, pack_ss_nr_ukr, (pack_ss_ukr_def<config_traits,T,matrix_constants::MAT_B>))
+    TBLIS_DEFAULT_VALUE_T(pack_nb_mr_ukr, pack_nb_ukr_t<T>, Config, pack_nb_mr_ukr, (pack_nb_ukr_def<config_traits,T,matrix_constants::MAT_A>))
+    TBLIS_DEFAULT_VALUE_T(pack_nb_nr_ukr, pack_nb_ukr_t<T>, Config, pack_nb_nr_ukr, (pack_nb_ukr_def<config_traits,T,matrix_constants::MAT_B>))
+    TBLIS_DEFAULT_VALUE_T(pack_sb_mr_ukr, pack_sb_ukr_t<T>, Config, pack_sb_mr_ukr, (pack_sb_ukr_def<config_traits,T,matrix_constants::MAT_A>))
+    TBLIS_DEFAULT_VALUE_T(pack_sb_nr_ukr, pack_sb_ukr_t<T>, Config, pack_sb_nr_ukr, (pack_sb_ukr_def<config_traits,T,matrix_constants::MAT_B>))
 
     static constexpr check_fn_t check = &Config::check;
 

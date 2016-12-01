@@ -18,12 +18,12 @@ void tblis_matrix_scale(const tblis_comm* comm, const tblis_config* cfg,
         if (A->alpha<T>() == T(0))
         {
             parallelize_if(internal::set<T>, comm, get_config(cfg), A->m, A->n,
-                           T(0), (T*)A->data, A->rs, A->cs);
+                           T(0), static_cast<T*>(A->data), A->rs, A->cs);
         }
         else if (A->alpha<T>() != T(1))
         {
             parallelize_if(internal::scale<T>, comm, get_config(cfg), A->m, A->n,
-                           A->alpha<T>(), A->conj, (T*)A->data, A->rs, A->cs);
+                           A->alpha<T>(), A->conj, static_cast<T*>(A->data), A->rs, A->cs);
         }
 
         A->alpha<T>() = T(1);

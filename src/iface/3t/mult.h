@@ -36,7 +36,7 @@ void mult(T alpha, const_tensor_view<T> A, const label_type* idx_A,
 }
 
 template <typename T>
-void mult(single_t s,
+void mult(single_t,
           T alpha, const_tensor_view<T> A, const label_type* idx_A,
                    const_tensor_view<T> B, const label_type* idx_B,
           T  beta,       tensor_view<T> C, const label_type* idx_C)

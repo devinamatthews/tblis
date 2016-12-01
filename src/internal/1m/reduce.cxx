@@ -22,21 +22,25 @@ void reduce(const communicator& comm, const config& cfg, reduce_t op,
     std::tie(m_min, m_max, std::ignore,
              n_min, n_max, std::ignore) = comm.distribute_over_threads_2d(m, n);
 
-    reduce_init(op, result, idx);
+    T local_result;
+    len_type local_idx;
+    reduce_init(op, local_result, local_idx);
 
     for (len_type j = n_min;j < n_max;j++)
     {
-        int old_idx = idx;
-        idx = -1;
+        auto old_idx = local_idx;
+        local_idx = -1;
 
         cfg.reduce_ukr.call<T>(op, m_max-m_min,
-                               A + m_min*rs_A + j*cs_A, rs_A, result, idx);
+                               A + m_min*rs_A + j*cs_A, rs_A, local_result, local_idx);
 
-        if (idx != -1) idx += j*cs_A;
-        else idx = old_idx;
+        if (local_idx != -1) local_idx += m_min*rs_A + j*cs_A;
+        else local_idx = old_idx;
     }
 
-    reduce(comm, op, result, idx);
+    reduce(comm, op, local_result, local_idx);
+    result = local_result;
+    idx = local_idx;
 }
 
 #define FOREACH_TYPE(T) \

@@ -18,6 +18,8 @@ void dot(const communicator& comm, const config& cfg,
                                   const std::vector<stride_type>& stride_B_AB,
          T& result)
 {
+    (void)cfg;
+
     MArray::viterator<1> iter_A(len_A, stride_A);
     MArray::viterator<1> iter_B(len_B, stride_B);
     MArray::viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
@@ -27,7 +29,7 @@ void dot(const communicator& comm, const config& cfg,
     len_type n_min, n_max;
     std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(n);
 
-    T dot = T();
+    T local_result = T();
 
     if (conj_A) conj_B = !conj_B;
 
@@ -44,15 +46,17 @@ void dot(const communicator& comm, const config& cfg,
 
         if (conj_B)
         {
-            dot += sum_A*conj(sum_B);
+            local_result += sum_A*conj(sum_B);
         }
         else
         {
-            dot += sum_A*sum_B;
+            local_result += sum_A*sum_B;
         }
     }
 
-    result = (conj_A ? conj(dot) : dot);
+    len_type dummy = 0;
+    reduce(comm, REDUCE_SUM, local_result, dummy);
+    result = (conj_A ? conj(local_result) : local_result);
 }
 
 #define FOREACH_TYPE(T) \

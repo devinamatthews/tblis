@@ -17,7 +17,7 @@ int tci_comm_init_single(tci_comm_t* comm)
 }
 
 int tci_comm_init(tci_comm_t* comm, tci_context_t* context,
-                  int nthread, int tid, int ngang, int gid)
+                  unsigned nthread, unsigned tid, unsigned ngang, unsigned gid)
 {
     comm->context = context;
     comm->nthread = nthread;
@@ -53,7 +53,7 @@ int tci_comm_barrier(tci_comm_t* comm)
     return tci_context_barrier(comm->context, comm->tid);
 }
 
-int tci_comm_bcast(tci_comm_t* comm, void** object, int root)
+int tci_comm_bcast(tci_comm_t* comm, void** object, unsigned root)
 {
     if (!comm->context) return 0;
 
@@ -67,7 +67,7 @@ int tci_comm_bcast(tci_comm_t* comm, void** object, int root)
     }
 }
 
-int tci_comm_bcast_nowait(tci_comm_t* comm, void** object, int root)
+int tci_comm_bcast_nowait(tci_comm_t* comm, void** object, unsigned root)
 {
     if (!comm->context) return 0;
 
@@ -82,25 +82,25 @@ int tci_comm_bcast_nowait(tci_comm_t* comm, void** object, int root)
 }
 
 int tci_comm_gang(tci_comm_t* parent, tci_comm_t* child,
-                  int type, int n, int bs)
+                  unsigned type, unsigned n, unsigned bs)
 {
-    int nt = parent->nthread;
-    int tid = parent->tid;
+    unsigned nt = parent->nthread;
+    unsigned tid = parent->tid;
 
-    if (n == 1) return tci_comm_init(child, parent->context, 1, 0, nt, tid);
+    if (n == 1) return tci_comm_init(child, parent->context, nt, tid, 1, 0);
     if (n >= nt) return tci_comm_init(child, NULL, 1, 0, nt, tid);
 
-    int new_tid = 0;
-    int new_nthread = 0;
-    int block = 0;
+    unsigned new_tid = 0;
+    unsigned new_nthread = 0;
+    unsigned block = 0;
 
     switch (type & ~TCI_NO_CONTEXT)
     {
         case TCI_EVENLY:
         {
             block = (n*tid)/nt;
-            int block_first = (block*nt)/n;
-            int block_last = ((block+1)*nt)/n;
+            unsigned block_first = (block*nt)/n;
+            unsigned block_last = ((block+1)*nt)/n;
             new_tid = tid-block_first;
             new_nthread = block_last-block_first;
         }
@@ -115,8 +115,8 @@ int tci_comm_gang(tci_comm_t* parent, tci_comm_t* child,
         case TCI_BLOCK_CYCLIC:
         {
             block = (tid/bs)%n;
-            int nsubblock_tot = nt/bs;
-            int nsubblock = nsubblock_tot/n;
+            unsigned nsubblock_tot = nt/bs;
+            unsigned nsubblock = nsubblock_tot/n;
             new_tid = ((tid/bs)/n)*bs + (tid%bs);
             new_nthread = nsubblock*bs +
                 TCI_MIN(bs, nt-nsubblock*n*bs-block*bs);
@@ -124,7 +124,7 @@ int tci_comm_gang(tci_comm_t* parent, tci_comm_t* child,
         break;
         case TCI_BLOCKED:
         {
-            int bs = (nt+n-1)/n;
+            bs = (nt+n-1)/n;
             block = tid/bs;
             new_tid = tid-block*bs;
             new_nthread = TCI_MIN(bs, nt-block*bs);
@@ -161,8 +161,9 @@ int tci_comm_gang(tci_comm_t* parent, tci_comm_t* child,
     return 0;
 }
 
-void tci_distribute(int n, int idx, int64_t range, int64_t granularity,
-                    int64_t* first, int64_t* last, int64_t* max)
+void tci_distribute(unsigned n, unsigned idx, uint64_t range,
+                    uint64_t granularity, uint64_t* first, uint64_t* last,
+                    uint64_t* max)
 {
     if (n == 1)
     {
@@ -172,10 +173,10 @@ void tci_distribute(int n, int idx, int64_t range, int64_t granularity,
     }
     else
     {
-        int64_t ngrain = (range+granularity-1)/granularity;
-        int64_t first_grain = (idx*ngrain)/n;
-        int64_t last_grain = ((idx+1)*ngrain)/n;
-        int64_t max_grain = (ngrain+n-1)/n;
+        uint64_t ngrain = (range+granularity-1)/granularity;
+        uint64_t first_grain = (idx*ngrain)/n;
+        uint64_t last_grain = ((idx+1)*ngrain)/n;
+        uint64_t max_grain = (ngrain+n-1)/n;
 
         if (first) *first = first_grain*granularity;
         if ( last)  *last = TCI_MIN(last_grain*granularity, range);
@@ -183,51 +184,49 @@ void tci_distribute(int n, int idx, int64_t range, int64_t granularity,
     }
 }
 
-void tci_comm_distribute_over_gangs(tci_comm_t* comm, int64_t range,
-                                    int64_t granularity, int64_t* first,
-                                    int64_t* last, int64_t* max)
+void tci_comm_distribute_over_gangs(tci_comm_t* comm, uint64_t range,
+                                    uint64_t granularity, uint64_t* first,
+                                    uint64_t* last, uint64_t* max)
 {
     tci_distribute(comm->ngang, comm->gid, range, granularity,
                    first, last, max);
 }
 
-void tci_comm_distribute_over_threads(tci_comm_t* comm, int64_t range,
-                                      int64_t granularity, int64_t* first,
-                                      int64_t* last, int64_t* max)
+void tci_comm_distribute_over_threads(tci_comm_t* comm, uint64_t range,
+                                      uint64_t granularity, uint64_t* first,
+                                      uint64_t* last, uint64_t* max)
 {
     tci_distribute(comm->nthread, comm->tid, range, granularity,
                    first, last, max);
 }
 
-void tci_comm_distribute_over_gangs_2d(tci_comm_t* comm, int64_t range_m,
-                                       int64_t range_n, int64_t granularity_m,
-                                       int64_t granularity_n, int64_t* first_m,
-                                       int64_t* last_m, int64_t* max_m,
-                                       int64_t* first_n, int64_t* last_n,
-                                       int64_t* max_n)
+void tci_comm_distribute_over_gangs_2d(tci_comm_t* comm,
+    uint64_t range_m, uint64_t range_n,
+    uint64_t granularity_m, uint64_t granularity_n,
+    uint64_t* first_m, uint64_t* last_m, uint64_t* max_m,
+    uint64_t* first_n, uint64_t* last_n, uint64_t* max_n)
 {
-    int m, n;
+    unsigned m, n;
     tci_partition_2x2(comm->ngang, range_m, range_n, &m, &n);
 
-    int idx_m = comm->gid % m;
-    int idx_n = comm->gid / m;
+    unsigned idx_m = comm->gid % m;
+    unsigned idx_n = comm->gid / m;
 
     tci_distribute(m, idx_m, range_m, granularity_m, first_m, last_m, max_m);
     tci_distribute(n, idx_n, range_n, granularity_n, first_n, last_n, max_n);
 }
 
-void tci_comm_distribute_over_threads_2d(tci_comm_t* comm, int64_t range_m,
-                                         int64_t range_n, int64_t granularity_m,
-                                         int64_t granularity_n, int64_t* first_m,
-                                         int64_t* last_m, int64_t* max_m,
-                                         int64_t* first_n, int64_t* last_n,
-                                         int64_t* max_n)
+void tci_comm_distribute_over_threads_2d(tci_comm_t* comm,
+     uint64_t range_m, uint64_t range_n,
+     uint64_t granularity_m, uint64_t granularity_n,
+     uint64_t* first_m, uint64_t* last_m, uint64_t* max_m,
+     uint64_t* first_n, uint64_t* last_n, uint64_t* max_n)
 {
-    int m, n;
+    unsigned m, n;
     tci_partition_2x2(comm->nthread, range_m, range_n, &m, &n);
 
-    int idx_m = comm->tid % m;
-    int idx_n = comm->tid / m;
+    unsigned idx_m = comm->tid % m;
+    unsigned idx_n = comm->tid / m;
 
     tci_distribute(m, idx_m, range_m, granularity_m, first_m, last_m, max_m);
     tci_distribute(n, idx_n, range_n, granularity_n, first_n, last_n, max_n);

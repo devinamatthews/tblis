@@ -15,11 +15,13 @@
 #define TBLIS_FIRST_ARG(arg,...) arg
 
 #ifdef TBLIS_DEBUG
-inline void tblis_abort_with_message(const char* cond, const char* fmt, ...)
+
+inline void __attribute__((format(printf, 2, 3),noreturn))
+tblis_abort_with_message(const char* cond, const char* fmt, ...)
 {
     if (strlen(fmt) == 0)
     {
-        fprintf(stderr, cond);
+        fprintf(stderr, "%s", cond);
     }
     else
     {
@@ -32,14 +34,13 @@ inline void tblis_abort_with_message(const char* cond, const char* fmt, ...)
     abort();
 }
 
-#define TBLIS_ASSERT(x,...) \
-if (x) {} \
-else \
-{ \
-    tblis_abort_with_message(TBLIS_STRINGIZE(x), "" __VA_ARGS__) ; \
-}
+#define TBLIS_ASSERT(x,...) ((x) ? (void)(x) : \
+    tblis_abort_with_message(TBLIS_STRINGIZE(x), "" __VA_ARGS__))
+
 #else
-#define TBLIS_ASSERT(...)
+
+#define TBLIS_ASSERT(...) {}
+
 #endif
 
 #endif

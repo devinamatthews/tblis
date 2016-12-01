@@ -22,7 +22,7 @@ namespace
 
 struct thread_configuration
 {
-    int num_threads;
+    unsigned num_threads;
 
     thread_configuration()
     : num_threads(1)
@@ -91,12 +91,12 @@ thread_configuration& get_thread_configuration()
 extern "C"
 {
 
-int tblis_get_num_threads()
+unsigned tblis_get_num_threads()
 {
     return get_thread_configuration().num_threads;
 }
 
-void tblis_set_num_threads(int num_threads)
+void tblis_set_num_threads(unsigned num_threads)
 {
     get_thread_configuration().num_threads = num_threads;
 }

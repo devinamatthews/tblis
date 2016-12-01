@@ -31,7 +31,7 @@ void add(T alpha, const_row_view<T> A, T beta, row_view<T> B)
 }
 
 template <typename T>
-void add(single_t s, T alpha, const_row_view<T> A, T beta, row_view<T> B)
+void add(single_t, T alpha, const_row_view<T> A, T beta, row_view<T> B)
 {
     tblis_vector A_s(alpha, A);
     tblis_vector B_s(beta, B);

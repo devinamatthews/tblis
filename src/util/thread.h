@@ -12,9 +12,9 @@ extern "C"
 {
 #endif
 
-int tblis_get_num_threads();
+unsigned tblis_get_num_threads();
 
-void tblis_set_num_threads(int num_threads);
+void tblis_set_num_threads(unsigned num_threads);
 
 #ifdef __cplusplus
 }
@@ -80,7 +80,7 @@ void reduce(const communicator& comm, reduce_t op, T& value, len_type& idx)
     {
         if (op == REDUCE_SUM)
         {
-            for (int i = 1;i < comm.num_threads();i++)
+            for (unsigned i = 1;i < comm.num_threads();i++)
             {
                 vals[0].first += vals[i].first;
             }
@@ -88,21 +88,21 @@ void reduce(const communicator& comm, reduce_t op, T& value, len_type& idx)
         else if (op == REDUCE_SUM_ABS)
         {
             vals[0].first = std::abs(vals[0].first);
-            for (int i = 1;i < comm.num_threads();i++)
+            for (unsigned i = 1;i < comm.num_threads();i++)
             {
                 vals[0].first += std::abs(vals[i].first);
             }
         }
         else if (op == REDUCE_MAX)
         {
-            for (int i = 1;i < comm.num_threads();i++)
+            for (unsigned i = 1;i < comm.num_threads();i++)
             {
                 if (vals[i].first > vals[0].first) vals[0] = vals[i];
             }
         }
         else if (op == REDUCE_MAX_ABS)
         {
-            for (int i = 1;i < comm.num_threads();i++)
+            for (unsigned i = 1;i < comm.num_threads();i++)
             {
                 if (std::abs(vals[i].first) >
                     std::abs(vals[0].first)) vals[0] = vals[i];
@@ -110,14 +110,14 @@ void reduce(const communicator& comm, reduce_t op, T& value, len_type& idx)
         }
         else if (op == REDUCE_MIN)
         {
-            for (int i = 1;i < comm.num_threads();i++)
+            for (unsigned i = 1;i < comm.num_threads();i++)
             {
                 if (vals[i].first < vals[0].first) vals[0] = vals[i];
             }
         }
         else if (op == REDUCE_MIN_ABS)
         {
-            for (int i = 1;i < comm.num_threads();i++)
+            for (unsigned i = 1;i < comm.num_threads();i++)
             {
                 if (std::abs(vals[i].first) <
                     std::abs(vals[0].first)) vals[0] = vals[i];
@@ -125,7 +125,7 @@ void reduce(const communicator& comm, reduce_t op, T& value, len_type& idx)
         }
         else if (op == REDUCE_NORM_2)
         {
-            for (int i = 1;i < comm.num_threads();i++)
+            for (unsigned i = 1;i < comm.num_threads();i++)
             {
                 vals[0].first += vals[i].first;
             }
@@ -146,7 +146,7 @@ void parallelize_if(Func f, const tblis_comm* _comm, Args&&... args)
 {
     if (_comm)
     {
-        f(*(communicator*)_comm, args...);
+        f(*reinterpret_cast<const communicator*>(_comm), args...);
     }
     else
     {

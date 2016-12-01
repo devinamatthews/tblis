@@ -365,10 +365,10 @@ struct random_contraction
             });
 
             printf("%e %e -- %s %c %*s %*s %*s", gflops, gflops / dt,
-                (Implementation == BLIS ? "rand_blis" : "rand_blas"),
-                type_char<T>::value, idx_A.size(), idx_A.data(),
-                idx_B.size(), idx_B.data(),
-                idx_C.size(), idx_C.data());
+                (Implementation == BLIS ? "rand_blis" : "rand_blas"), type_char<T>::value,
+                static_cast<int>(idx_A.size()), idx_A.data(),
+                static_cast<int>(idx_B.size()), idx_B.data(),
+                static_cast<int>(idx_C.size()), idx_C.data());
 
             for (auto & l : lengths) printf(" %ld", l.second);
             printf("\n");
@@ -430,10 +430,10 @@ struct regular_contraction
         });
 
         printf("%e %e -- %s %c %*s %*s %*s", gflops, gflops / dt,
-            (Implementation == BLIS ? "reg_blis" : "reg_blas"),
-            type_char<T>::value, idx_A.size(), idx_A.data(),
-            idx_B.size(), idx_B.data(),
-            idx_C.size(), idx_C.data());
+            (Implementation == BLIS ? "reg_blis" : "reg_blas"), type_char<T>::value,
+            static_cast<int>(idx_A.size()), idx_A.data(),
+            static_cast<int>(idx_B.size()), idx_B.data(),
+            static_cast<int>(idx_C.size()), idx_C.data());
 
         for (auto & l : lengths) printf(" %ld", l.second);
         printf("\n");

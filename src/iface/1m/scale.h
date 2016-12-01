@@ -30,7 +30,7 @@ void scale(T alpha, matrix_view<T> A)
 }
 
 template <typename T>
-void scale(single_t s, T alpha, matrix_view<T> A)
+void scale(single_t, T alpha, matrix_view<T> A)
 {
     tblis_matrix A_s(alpha, A);
 

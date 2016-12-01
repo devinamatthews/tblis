@@ -31,7 +31,7 @@ void add(T alpha, const_matrix_view<T> A, T beta, matrix_view<T> B)
 }
 
 template <typename T>
-void add(single_t s, T alpha, const_matrix_view<T> A, T beta, matrix_view<T> B)
+void add(single_t, T alpha, const_matrix_view<T> A, T beta, matrix_view<T> B)
 {
     tblis_matrix A_s(alpha, A);
     tblis_matrix B_s(beta, B);

@@ -11,8 +11,7 @@ enum config_t
 {
 #define FOREACH_CONFIG(config) config##_value,
 #include "configs/foreach_config.h"
-    num_configs,
-    first_config = 0
+    num_configs
 };
 
 const config* const configs[num_configs] =
@@ -29,7 +28,7 @@ struct default_config
     {
         int priority = -1;
 
-        for (int cfg = first_config;cfg < num_configs;cfg++)
+        for (int cfg = 0;cfg < num_configs;cfg++)
         {
             TBLIS_ASSERT(configs[cfg]->check);
             int cur_prio = configs[cfg]->check();
@@ -52,7 +51,7 @@ const config& get_default_config()
 
 const config& get_config(const tblis_config* cfg)
 {
-    return (cfg ? *(const config*)cfg : get_default_config());
+    return (cfg ? *reinterpret_cast<const config*>(cfg) : get_default_config());
 }
 
 }

@@ -17,7 +17,7 @@ namespace internal
 
 impl_t impl = BLIS_BASED;
 
-extern MemoryPool BuffersForA, BuffersForB;
+extern MemoryPool BuffersForA, BuffersForB, BuffersForScatter;
 MemoryPool BuffersForScatter(4096);
 
 using TensorGEMM = partition_gemm_nc<
@@ -51,9 +51,9 @@ void contract_blas(const communicator& comm, const config& cfg,
 
     matrix_view<T> am, bm, cm;
 
-    matricize<T>(ar, am, len_AC.size());
-    matricize<T>(br, bm, len_AB.size());
-    matricize<T>(cr, cm, len_AC.size());
+    matricize<T>(ar, am, static_cast<unsigned>(len_AC.size()));
+    matricize<T>(br, bm, static_cast<unsigned>(len_AB.size()));
+    matricize<T>(cr, cm, static_cast<unsigned>(len_AC.size()));
 
     add(comm, cfg, {}, {}, ar.lengths(),
         T(1), false,         A, {}, stride_A_AC+stride_A_AB,
@@ -88,6 +88,8 @@ void contract_ref(const communicator& comm, const config& cfg,
                   const std::vector<stride_type>& stride_C_AC,
                   const std::vector<stride_type>& stride_C_BC)
 {
+    (void)cfg;
+
     MArray::viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
     MArray::viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
     MArray::viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
@@ -235,9 +237,9 @@ void mult_blas(const communicator& comm, const config& cfg,
 
     matrix_view<T> am, bm, cm;
 
-    matricize<T>(ar, am, len_AC.size());
-    matricize<T>(br, bm, len_AB.size());
-    matricize<T>(cr, cm, len_AC.size());
+    matricize<T>(ar, am, static_cast<unsigned>(len_AC.size()));
+    matricize<T>(br, bm, static_cast<unsigned>(len_AB.size()));
+    matricize<T>(cr, cm, static_cast<unsigned>(len_AC.size()));
 
     MArray::viterator<3> it(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
 
@@ -287,6 +289,9 @@ void mult_ref(const communicator& comm, const config& cfg,
               const std::vector<stride_type>& stride_C_BC,
               const std::vector<stride_type>& stride_C_ABC)
 {
+    (void)cfg;
+    (void)comm;
+
     MArray::viterator<1> iter_A(len_A, stride_A_A);
     MArray::viterator<1> iter_B(len_B, stride_B_B);
     MArray::viterator<1> iter_C(len_C, stride_C_C);
@@ -359,9 +364,9 @@ void outer_prod_blas(const communicator& comm, const config& cfg,
 
     matrix_view<T> am, bm, cm;
 
-    matricize<T>(ar, am, len_AC.size());
+    matricize<T>(ar, am, static_cast<unsigned>(len_AC.size()));
     matricize<T>(br, bm, 0);
-    matricize<T>(cr, cm, len_AC.size());
+    matricize<T>(cr, cm, static_cast<unsigned>(len_AC.size()));
 
     add(comm, cfg, {}, {}, ar.lengths(),
         T(1), false,         A, {},  stride_A_AC,
@@ -393,6 +398,8 @@ void outer_prod_ref(const communicator& comm, const config& cfg,
                     const std::vector<stride_type>& stride_C_AC,
                     const std::vector<stride_type>& stride_C_BC)
 {
+    (void)cfg;
+
     MArray::viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
     MArray::viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
     len_type m = stl_ext::prod(len_AC);
@@ -459,9 +466,9 @@ void weight_blas(const communicator& comm, const config& cfg,
 
     matrix_view<T> am, bm, cm;
 
-    matricize<T>(ar, am, len_AC.size());
+    matricize<T>(ar, am, static_cast<unsigned>(len_AC.size()));
     matricize<T>(br, bm, 0);
-    matricize<T>(cr, cm, len_AC.size());
+    matricize<T>(cr, cm, static_cast<unsigned>(len_AC.size()));
 
     MArray::viterator<3> it(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
 
@@ -502,6 +509,8 @@ void weight_ref(const communicator& comm, const config& cfg,
                 const std::vector<stride_type>& stride_C_BC,
                 const std::vector<stride_type>& stride_C_ABC)
 {
+    (void)cfg;
+
     MArray::viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
     MArray::viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
     MArray::viterator<3> iter_ABC(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);

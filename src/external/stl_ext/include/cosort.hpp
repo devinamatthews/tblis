@@ -16,20 +16,20 @@ struct doublet
     T first;
     U second;
 
-    doublet(const T& first, const U& second) : first(first), second(second) {}
+    doublet(const T& first_, const U& second_) : first(first_), second(second_) {}
 
-    friend void swap(doublet& first, doublet& second)
+    friend void swap(doublet& lhs, doublet& rhs)
     {
         using std::swap;
-        swap(first.first, second.first);
-        swap(first.second, second.second);
+        swap(lhs.first, rhs.first);
+        swap(lhs.second, rhs.second);
     }
 
-    friend void swap(doublet&& first, doublet&& second)
+    friend void swap(doublet&& lhs, doublet&& rhs)
     {
         using std::swap;
-        swap(first.first, second.first);
-        swap(first.second, second.second);
+        swap(lhs.first, rhs.first);
+        swap(lhs.second, rhs.second);
     }
 
     doublet(const doublet<T&,U&>& other)
@@ -139,20 +139,20 @@ struct doublet<T&,U&>
     T& first;
     U& second;
 
-    doublet(T& first, U& second) : first(first), second(second) {}
+    doublet(T& first_, U& second_) : first(first_), second(second_) {}
 
-    friend void swap(doublet& first, doublet& second)
+    friend void swap(doublet& lhs, doublet& rhs)
     {
         using std::swap;
-        swap(first.first, second.first);
-        swap(first.second, second.second);
+        swap(lhs.first, rhs.first);
+        swap(lhs.second, rhs.second);
     }
 
-    friend void swap(doublet&& first, doublet&& second)
+    friend void swap(doublet&& lhs, doublet&& rhs)
     {
         using std::swap;
-        swap(first.first, second.first);
-        swap(first.second, second.second);
+        swap(lhs.first, rhs.first);
+        swap(lhs.second, rhs.second);
     }
 
     doublet(doublet<T&,U&>& other)
@@ -270,110 +270,110 @@ doublet<typename std::iterator_traits<T>::pointer,
 doublet<typename std::iterator_traits<T>::reference,
         typename std::iterator_traits<U>::reference>>
 {
-    T it_T;
-    U it_U;
+    T it_T_;
+    U it_U_;
 
     public:
-        coiterator(const T& it_T, const U& it_U) : it_T(it_T), it_U(it_U) {}
+        coiterator(const T& it_T, const U& it_U) : it_T_(it_T), it_U_(it_U) {}
 
         bool operator==(const coiterator& other) const
         {
-            return it_T == other.it_T;
+            return it_T_ == other.it_T_;
         }
 
         bool operator!=(const coiterator& other) const
         {
-            return it_T != other.it_T;
+            return it_T_ != other.it_T_;
         }
 
         bool operator<(const coiterator& other) const
         {
-            return it_T < other.it_T;
+            return it_T_ < other.it_T_;
         }
 
         bool operator>(const coiterator& other) const
         {
-            return it_T > other.it_T;
+            return it_T_ > other.it_T_;
         }
 
         bool operator<=(const coiterator& other) const
         {
-            return it_T <= other.it_T;
+            return it_T_ <= other.it_T_;
         }
 
         bool operator>=(const coiterator& other) const
         {
-            return it_T >= other.it_T;
+            return it_T_ >= other.it_T_;
         }
 
         typename coiterator::reference operator*()
         {
             //return typename coiterator::reference(move(*it_T),move(*it_U));
-            return typename coiterator::reference(*it_T,*it_U);
+            return typename coiterator::reference(*it_T_,*it_U_);
         }
 
         typename coiterator::reference operator[](ptrdiff_t n)
         {
             //return typename coiterator::reference(move(it_T[n]),move(it_U[n]));
-            return typename coiterator::reference(it_T[n],it_U[n]);
+            return typename coiterator::reference(it_T_[n],it_U_[n]);
         }
 
         coiterator& operator++()
         {
-            ++it_T;
-            ++it_U;
+            ++it_T_;
+            ++it_U_;
             return *this;
         }
 
         coiterator& operator--()
         {
-            --it_T;
-            --it_U;
+            --it_T_;
+            --it_U_;
             return *this;
         }
 
-        coiterator operator++(int x)
+        coiterator operator++(int)
         {
-            return coiterator(it_T++, it_U++);
+            return coiterator(it_T_++, it_U_++);
         }
 
-        coiterator operator--(int x)
+        coiterator operator--(int)
         {
-            return coiterator(it_T--, it_U--);
+            return coiterator(it_T_--, it_U_--);
         }
 
         coiterator& operator+=(ptrdiff_t n)
         {
-            it_T += n;
-            it_U += n;
+            it_T_ += n;
+            it_U_ += n;
             return *this;
         }
 
         coiterator& operator-=(ptrdiff_t n)
         {
-            it_T -= n;
-            it_U -= n;
+            it_T_ -= n;
+            it_U_ -= n;
             return *this;
         }
 
         coiterator operator+(ptrdiff_t n) const
         {
-            return coiterator(it_T+n, it_U+n);
+            return coiterator(it_T_+n, it_U_+n);
         }
 
         friend coiterator operator+(ptrdiff_t n, const coiterator& other)
         {
-            return coiterator(other.it_T+n, other.it_U+n);
+            return coiterator(other.it_T_+n, other.it_U_+n);
         }
 
         coiterator operator-(ptrdiff_t n) const
         {
-            return coiterator(it_T-n, it_U-n);
+            return coiterator(it_T_-n, it_U_-n);
         }
 
         ptrdiff_t operator-(const coiterator& other) const
         {
-            return it_T-other.it_T;
+            return it_T_-other.it_T_;
         }
 };
 
@@ -382,14 +382,14 @@ class cocomparator
 {
     typedef typename coiterator<key_iterator,val_iterator>::value_type val;
 
-    Comparator comp;
+    Comparator comp_;
 
     public:
-        cocomparator(Comparator comp) : comp(comp) {}
+        cocomparator(Comparator comp) : comp_(comp) {}
 
         bool operator()(const val& r1, const val& r2) const
         {
-            return comp(r1.first, r2.first);
+            return comp_(r1.first, r2.first);
         }
 };
 

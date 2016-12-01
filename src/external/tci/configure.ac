@@ -42,7 +42,7 @@ AC_SEARCH_LIBS([pthread_create], [pthread])
 AC_CHECK_FUNCS([pthread_spin_init pthread_mutex_init pthread_barrier_init])
 
 if test x"$ac_cv_header_pthread_h" = xyes -a \
-        x"$ac_cv_search_pthread_create" = xyes; then
+        x"$ac_cv_search_pthread_create" != xno; then
     have_pthreads=yes
 else
     have_pthreads=no

@@ -31,7 +31,7 @@ int tci_parallelize(tci_thread_func_t func, void* payload,
     {
         tci_comm_t comm;
         tci_comm_init(&comm, context,
-                      nthread, (unsigned)omp_get_thread_num(),1, 0);
+                      nthread, (unsigned)omp_get_thread_num(), 1, 0);
         func(&comm, payload);
         #pragma omp barrier
         tci_comm_destroy(&comm);
@@ -44,17 +44,17 @@ int tci_parallelize(tci_thread_func_t func, void* payload,
 
 typedef struct
 {
-    tci_thread_func_t func
+    tci_thread_func_t func;
     void* payload;
     tci_context_t* context;
-    unsigned tid;
+    unsigned nthread, tid;
 } tci_thread_data_t;
 
 void* tci_run_thread(void* raw_data)
 {
     tci_thread_data_t* data = (tci_thread_data_t*)raw_data;
     tci_comm_t comm;
-    tci_comm_init(&comm, data->context, data->tid, 1, 0);
+    tci_comm_init(&comm, data->context, data->nthread, data->tid, 1, 0);
     data->func(&comm, data->payload);
     tci_comm_destroy(&comm);
     return NULL;
@@ -84,22 +84,23 @@ int tci_parallelize(tci_thread_func_t func, void* payload,
         data[i].func = func;
         data[i].payload = payload;
         data[i].context = context;
+        data[i].nthread = nthread;
         data[i].tid = i;
 
         int ret = pthread_create(&threads[i], NULL, tci_run_thread, &data[i]);
         if (ret != 0)
         {
-            for (unsigned j = i-1;j >= 0;j--) pthread_join(&threads[j], NULL);
+            for (unsigned j = i-1;j >= 0;j--) pthread_join(threads[j], NULL);
         }
     }
 
     tci_comm_t comm0;
-    tci_comm_init(&comm0, context, 0, 1, 0);
+    tci_comm_init(&comm0, context, nthread, 0, 1, 0);
     func(&comm0, payload);
 
     for (unsigned i = 1;i < nthread;i++)
     {
-        pthread_join(&threads[i], NULL);
+        pthread_join(threads[i], NULL);
     }
 
     return tci_comm_destroy(&comm0);

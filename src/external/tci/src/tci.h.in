@@ -109,9 +109,13 @@ typedef pthread_spinlock_t tci_mutex_t;
 
 typedef int tci_mutex_t;
 
-#elif TCI_USE_PTHREAD_MUTEX
+#elif TCI_USE_OMP_LOCK
 
 typedef omp_lock_t tci_mutex_t;
+
+#elif TCI_USE_PTHREAD_MUTEX
+
+typedef pthread_mutex_t tci_mutex_t;
 
 #endif
 
@@ -127,9 +131,9 @@ int tci_mutex_unlock(tci_mutex_t* mutex);
 
 #if TCI_USE_PTHREAD_BARRIER
 
-typedef struct
+typedef struct tci_barrier_node_s
 {
-    tci_barrier_node_t* parent;
+    struct tci_barrier_node_s* parent;
     pthread_barrier_t barrier;
 } tci_barrier_node_t;
 

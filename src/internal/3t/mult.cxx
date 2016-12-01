@@ -246,36 +246,51 @@ void mult_blas(const communicator& comm, const config& cfg,
                const std::vector<stride_type>& stride_C_BC,
                const std::vector<stride_type>& stride_C_ABC)
 {
-    tensor<T> ar(len_AC+len_AB);
-    tensor<T> br(len_AB+len_BC);
-    tensor<T> cr(len_AC+len_BC);
+    tensor<T> ar, br, cr;
+    T* ptrs_local[3];
+    T** ptrs = &ptrs_local[0];
+
+    if (comm.master())
+    {
+        ar.reset(len_AC+len_AB);
+        br.reset(len_AB+len_BC);
+        cr.reset(len_AC+len_BC);
+        ptrs[0] = ar.data();
+        ptrs[1] = br.data();
+        ptrs[2] = cr.data();
+    }
+
+    comm.broadcast(ptrs);
+
+    tensor_view<T> arv(len_AC+len_AB, ptrs[0]);
+    tensor_view<T> brv(len_AB+len_BC, ptrs[1]);
+    tensor_view<T> crv(len_AC+len_BC, ptrs[2]);
 
     matrix_view<T> am, bm, cm;
-
-    matricize<T>(ar, am, static_cast<unsigned>(len_AC.size()));
-    matricize<T>(br, bm, static_cast<unsigned>(len_AB.size()));
-    matricize<T>(cr, cm, static_cast<unsigned>(len_AC.size()));
+    matricize<T>(arv, am, static_cast<unsigned>(len_AC.size()));
+    matricize<T>(brv, bm, static_cast<unsigned>(len_AB.size()));
+    matricize<T>(crv, cm, static_cast<unsigned>(len_AC.size()));
 
     MArray::viterator<3> it(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
 
     while (it.next(A, B, C))
     {
-        add(comm, cfg, len_A, {}, ar.lengths(),
-            T(1), false,         A, stride_A_A, stride_A_AC+stride_A_AB,
-            T(0), false, ar.data(),         {},            ar.strides());
+        add(comm, cfg, len_A, {}, arv.lengths(),
+            T(1), false,          A, stride_A_A, stride_A_AC+stride_A_AB,
+            T(0), false, arv.data(),         {},           arv.strides());
 
-        add(comm, cfg, len_B, {}, br.lengths(),
-            T(1), false,         B, stride_B_B, stride_B_AB+stride_B_BC,
-            T(0), false, br.data(),         {},            br.strides());
+        add(comm, cfg, len_B, {}, brv.lengths(),
+            T(1), false,          B, stride_B_B, stride_B_AB+stride_B_BC,
+            T(0), false, brv.data(),         {},           brv.strides());
 
         mult(comm, cfg, cm.length(0), cm.length(1), am.length(1),
              alpha, false, am.data(), am.stride(0), am.stride(1),
                     false, bm.data(), bm.stride(0), bm.stride(1),
               T(0), false, cm.data(), cm.stride(0), cm.stride(1));
 
-        add(comm, cfg, {}, len_C, cr.lengths(),
-            T(1), false, cr.data(),         {},             cr.strides(),
-            beta, false,         C, stride_C_C, stride_C_AC+stride_C_BC);
+        add(comm, cfg, {}, len_C, crv.lengths(),
+            T(1), false, crv.data(),         {},            crv.strides(),
+            beta, false,          C, stride_C_C, stride_C_AC+stride_C_BC);
     }
 }
 
@@ -305,7 +320,6 @@ void mult_ref(const communicator& comm, const config& cfg,
               const std::vector<stride_type>& stride_C_ABC)
 {
     (void)cfg;
-    (void)comm;
 
     MArray::viterator<1> iter_A(len_A, stride_A_A);
     MArray::viterator<1> iter_B(len_B, stride_B_B);
@@ -314,9 +328,17 @@ void mult_ref(const communicator& comm, const config& cfg,
     MArray::viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
     MArray::viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
     MArray::viterator<3> iter_ABC(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
+    len_type n = stl_ext::prod(len_ABC);
 
-    while (iter_ABC.next(A, B, C))
+    len_type n_min, n_max;
+    std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(n);
+
+    iter_ABC.position(n_min, A, B, C);
+
+    for (len_type i = n_min;i < n_max;i++)
     {
+        iter_ABC.next(A, B, C);
+
         while (iter_AC.next(A, C))
         {
             while (iter_BC.next(B, C))

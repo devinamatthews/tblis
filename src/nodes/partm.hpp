@@ -28,7 +28,7 @@ struct partition
         const len_type M_max  = M.max<T>(); // Equal to M_def for register block sizes
         const len_type M_iota = M.iota<T>(); // Equal to the corresponding register block size
         const len_type M_ext  = M.extent<T>(); // Equal to M_def for cache block sizes
-        const len_type M_over  = M_max-M_def;
+        const len_type M_over = M_max-M_def;
 
         TBLIS_ASSERT(M_ext == M_def);
 

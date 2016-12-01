@@ -90,6 +90,8 @@ void add(const communicator& comm, const config& cfg, len_type m, len_type n,
             }
         }
     }
+
+    comm.barrier();
 }
 
 #define FOREACH_TYPE(T) \

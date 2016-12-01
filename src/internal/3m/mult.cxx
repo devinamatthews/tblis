@@ -61,6 +61,8 @@ void mult(const communicator& comm, const config& cfg,
     step<6>(gemm).distribute = tc.ir_nt;
 
     gemm(comm, cfg, alpha, Av, Bv, beta, Cv);
+
+    comm.barrier();
 }
 
 #define FOREACH_TYPE(T) \

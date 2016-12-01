@@ -58,6 +58,8 @@ void dot(const communicator& comm, const config& cfg,
     reduce(comm, REDUCE_SUM, local_result, dummy);
     if (comm.master())
         result = (conj_A ? conj(local_result) : local_result);
+
+    comm.barrier();
 }
 
 #define FOREACH_TYPE(T) \

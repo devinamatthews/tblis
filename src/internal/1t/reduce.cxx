@@ -53,6 +53,7 @@ void reduce(const communicator& comm, const config& cfg, reduce_t op,
 
     auto A0 = A;
     iter_A.position(n_min, A);
+    A += m_min*stride0;
 
     for (len_type i = n_min;i < n_max;i++)
     {
@@ -73,6 +74,8 @@ void reduce(const communicator& comm, const config& cfg, reduce_t op,
         result = local_result;
         idx = local_idx;
     }
+
+    comm.barrier();
 }
 
 #define FOREACH_TYPE(T) \

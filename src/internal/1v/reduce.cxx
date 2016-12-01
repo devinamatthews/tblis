@@ -26,6 +26,8 @@ void reduce(const communicator& comm, const config& cfg, reduce_t op, len_type n
         result = local_result;
         idx = local_idx;
     }
+
+    comm.barrier();
 }
 
 #define FOREACH_TYPE(T) \

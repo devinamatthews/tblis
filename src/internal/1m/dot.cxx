@@ -35,6 +35,8 @@ void dot(const communicator& comm, const config& cfg, len_type m, len_type n,
     len_type dummy;
     reduce(comm, REDUCE_SUM, local_result, dummy);
     if (comm.master()) result = local_result;
+
+    comm.barrier();
 }
 
 #define FOREACH_TYPE(T) \

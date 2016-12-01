@@ -45,32 +45,47 @@ void contract_blas(const communicator& comm, const config& cfg,
                    const std::vector<stride_type>& stride_C_AC,
                    const std::vector<stride_type>& stride_C_BC)
 {
-    tensor<T> ar(len_AC+len_AB);
-    tensor<T> br(len_AB+len_BC);
-    tensor<T> cr(len_AC+len_BC);
+    tensor<T> ar, br, cr;
+    T* ptrs_local[3];
+    T** ptrs = &ptrs_local[0];
+
+    if (comm.master())
+    {
+        ar.reset(len_AC+len_AB);
+        br.reset(len_AB+len_BC);
+        cr.reset(len_AC+len_BC);
+        ptrs[0] = ar.data();
+        ptrs[1] = br.data();
+        ptrs[2] = cr.data();
+    }
+
+    comm.broadcast(ptrs);
+
+    tensor_view<T> arv(len_AC+len_AB, ptrs[0]);
+    tensor_view<T> brv(len_AB+len_BC, ptrs[1]);
+    tensor_view<T> crv(len_AC+len_BC, ptrs[2]);
 
     matrix_view<T> am, bm, cm;
+    matricize<T>(arv, am, static_cast<unsigned>(len_AC.size()));
+    matricize<T>(brv, bm, static_cast<unsigned>(len_AB.size()));
+    matricize<T>(crv, cm, static_cast<unsigned>(len_AC.size()));
 
-    matricize<T>(ar, am, static_cast<unsigned>(len_AC.size()));
-    matricize<T>(br, bm, static_cast<unsigned>(len_AB.size()));
-    matricize<T>(cr, cm, static_cast<unsigned>(len_AC.size()));
+    add(comm, cfg, {}, {}, arv.lengths(),
+        T(1), false,          A, {}, stride_A_AC+stride_A_AB,
+        T(0), false, arv.data(), {},           arv.strides());
 
-    add(comm, cfg, {}, {}, ar.lengths(),
-        T(1), false,         A, {}, stride_A_AC+stride_A_AB,
-        T(0), false, ar.data(), {},            ar.strides());
-
-    add(comm, cfg, {}, {}, br.lengths(),
-        T(1), false,         B, {}, stride_B_AB+stride_B_BC,
-        T(0), false, br.data(), {},            br.strides());
+    add(comm, cfg, {}, {}, brv.lengths(),
+        T(1), false,          B, {}, stride_B_AB+stride_B_BC,
+        T(0), false, brv.data(), {},           brv.strides());
 
     mult(comm, cfg, cm.length(0), cm.length(1), am.length(1),
          alpha, false, am.data(), am.stride(0), am.stride(1),
                 false, bm.data(), bm.stride(0), bm.stride(1),
           T(0), false, cm.data(), cm.stride(0), cm.stride(1));
 
-    add(comm, cfg, {}, {}, cr.lengths(),
-        T(1), false, cr.data(), {},             cr.strides(),
-        beta, false,         C, {}, stride_C_AC+stride_C_BC);
+    add(comm, cfg, {}, {}, crv.lengths(),
+        T(1), false, crv.data(), {},            crv.strides(),
+        beta, false,          C, {}, stride_C_AC+stride_C_BC);
 }
 
 template <typename T>
@@ -358,32 +373,47 @@ void outer_prod_blas(const communicator& comm, const config& cfg,
                      const std::vector<stride_type>& stride_C_AC,
                      const std::vector<stride_type>& stride_C_BC)
 {
-    tensor<T> ar(len_AC);
-    tensor<T> br(len_BC);
-    tensor<T> cr(len_AC+len_BC);
+    tensor<T> ar, br, cr;
+    T* ptrs_local[3];
+    T** ptrs = &ptrs_local[0];
+
+    if (comm.master())
+    {
+        ar.reset(len_AC);
+        br.reset(len_BC);
+        cr.reset(len_AC+len_BC);
+        ptrs[0] = ar.data();
+        ptrs[1] = br.data();
+        ptrs[2] = cr.data();
+    }
+
+    comm.broadcast(ptrs);
+
+    tensor_view<T> arv(len_AC, ptrs[0]);
+    tensor_view<T> brv(len_BC, ptrs[1]);
+    tensor_view<T> crv(len_AC+len_BC, ptrs[2]);
 
     matrix_view<T> am, bm, cm;
+    matricize<T>(arv, am, static_cast<unsigned>(len_AC.size()));
+    matricize<T>(brv, bm, 0);
+    matricize<T>(crv, cm, static_cast<unsigned>(len_AC.size()));
 
-    matricize<T>(ar, am, static_cast<unsigned>(len_AC.size()));
-    matricize<T>(br, bm, 0);
-    matricize<T>(cr, cm, static_cast<unsigned>(len_AC.size()));
+    add(comm, cfg, {}, {}, arv.lengths(),
+        T(1), false,          A, {},   stride_A_AC,
+        T(0), false, arv.data(), {}, arv.strides());
 
-    add(comm, cfg, {}, {}, ar.lengths(),
-        T(1), false,         A, {},  stride_A_AC,
-        T(0), false, ar.data(), {}, ar.strides());
-
-    add(comm, cfg, {}, {}, br.lengths(),
-        T(1), false,         B, {},  stride_B_BC,
-        T(0), false, br.data(), {}, br.strides());
+    add(comm, cfg, {}, {}, brv.lengths(),
+        T(1), false,          B, {},   stride_B_BC,
+        T(0), false, brv.data(), {}, brv.strides());
 
     mult(comm, cfg, cm.length(0), cm.length(1), am.length(1),
          alpha, false, am.data(), am.stride(0), am.stride(1),
                 false, bm.data(), bm.stride(0), bm.stride(1),
           T(0), false, cm.data(), cm.stride(0), cm.stride(1));
 
-    add(comm, cfg, {}, {}, cr.lengths(),
-        T(1), false, cr.data(), {},             cr.strides(),
-        beta, false,         C, {}, stride_C_AC+stride_C_BC);
+    add(comm, cfg, {}, {}, crv.lengths(),
+        T(1), false, crv.data(), {},            crv.strides(),
+        beta, false,          C, {}, stride_C_AC+stride_C_BC);
 }
 
 template <typename T>
@@ -460,36 +490,51 @@ void weight_blas(const communicator& comm, const config& cfg,
                  const std::vector<stride_type>& stride_C_BC,
                  const std::vector<stride_type>& stride_C_ABC)
 {
-    tensor<T> ar(len_AC);
-    tensor<T> br(len_BC);
-    tensor<T> cr(len_AC+len_BC);
+    tensor<T> ar, br, cr;
+    T* ptrs_local[3];
+    T** ptrs = &ptrs_local[0];
+
+    if (comm.master())
+    {
+        ar.reset(len_AC);
+        br.reset(len_BC);
+        cr.reset(len_AC+len_BC);
+        ptrs[0] = ar.data();
+        ptrs[1] = br.data();
+        ptrs[2] = cr.data();
+    }
+
+    comm.broadcast(ptrs);
+
+    tensor_view<T> arv(len_AC, ptrs[0]);
+    tensor_view<T> brv(len_BC, ptrs[1]);
+    tensor_view<T> crv(len_AC+len_BC, ptrs[2]);
 
     matrix_view<T> am, bm, cm;
-
-    matricize<T>(ar, am, static_cast<unsigned>(len_AC.size()));
-    matricize<T>(br, bm, 0);
-    matricize<T>(cr, cm, static_cast<unsigned>(len_AC.size()));
+    matricize<T>(arv, am, static_cast<unsigned>(len_AC.size()));
+    matricize<T>(brv, bm, 0);
+    matricize<T>(crv, cm, static_cast<unsigned>(len_AC.size()));
 
     MArray::viterator<3> it(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
 
     while (it.next(A, B, C))
     {
-        add(comm, cfg, {}, {}, ar.lengths(),
-            T(1), false,         A, {},  stride_A_AC,
-            T(0), false, ar.data(), {}, ar.strides());
+        add(comm, cfg, {}, {}, arv.lengths(),
+            T(1), false,          A, {},   stride_A_AC,
+            T(0), false, arv.data(), {}, arv.strides());
 
-        add(comm, cfg, {}, {}, br.lengths(),
-            T(1), false,         B, {},  stride_B_BC,
-            T(0), false, br.data(), {}, br.strides());
+        add(comm, cfg, {}, {}, brv.lengths(),
+            T(1), false,          B, {},   stride_B_BC,
+            T(0), false, brv.data(), {}, brv.strides());
 
         mult(comm, cfg, cm.length(0), cm.length(1), am.length(1),
              alpha, false, am.data(), am.stride(0), am.stride(1),
                     false, bm.data(), bm.stride(0), bm.stride(1),
               T(0), false, cm.data(), cm.stride(0), cm.stride(1));
 
-        add(comm, cfg, {}, {}, cr.lengths(),
-            T(1), false, cr.data(), {},             cr.strides(),
-            beta, false,         C, {}, stride_C_AC+stride_C_BC);
+        add(comm, cfg, {}, {}, crv.lengths(),
+            T(1), false, crv.data(), {},            crv.strides(),
+            beta, false,          C, {}, stride_C_AC+stride_C_BC);
     }
 }
 
@@ -662,6 +707,8 @@ void mult(const communicator& comm, const config& cfg,
                                 stride_C_BC, stride_C_ABC);
         }
     }
+
+    comm.barrier();
 }
 
 #define FOREACH_TYPE(T) \

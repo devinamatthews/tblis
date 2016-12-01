@@ -52,8 +52,9 @@ struct partition
         len_type m_u = (Dim == DIM_M ? A.length(0) : Dim == DIM_N ? B.length(1) : A.length(1));
         len_type m_v = (Dim == DIM_M ? C.length(0) : Dim == DIM_N ? C.length(1) : B.length(0));
 
-        if (!ganged && distribute > 1)
+        if (!ganged)
         {
+            //printf("distributing %d ways\n", distribute);
             subcomm = comm.gang(TCI_EVENLY, distribute);
             ganged = true;
         }
@@ -61,6 +62,11 @@ struct partition
         len_type m_first, m_last;
         std::tie(m_first, m_last, std::ignore) =
             subcomm.distribute_over_gangs(std::min(m_u, m_v), M_iota);
+
+        //printf("thread %d/%d in gang %d/%d got %ld-%ld/%ld\n",
+        //       subcomm.thread_num(), subcomm.num_threads(),
+        //       subcomm.gang_num(), subcomm.num_gangs(),
+        //       m_first, m_last, m_u);
 
         len_type m_off = m_first;
         len_type m_len = m_last-m_first;

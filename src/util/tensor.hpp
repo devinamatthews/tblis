@@ -73,7 +73,7 @@ template <typename... Strides>
 std::vector<unsigned> sort_by_stride(const Strides&... strides)
 {
     std::vector<unsigned> idx = MArray::range(static_cast<unsigned>(check_sizes(strides...)));
-    std::sort(idx.begin(), idx.end(), sort_by_stride_helper<sizeof...(Strides)>{{&strides...}});
+    std::sort(idx.begin(), idx.end(), sort_by_stride_helper<sizeof...(Strides)>{&strides...});
     return idx;
 }
 

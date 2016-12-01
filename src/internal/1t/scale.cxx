@@ -33,6 +33,7 @@ void scale(const communicator& comm, const config& cfg,
         comm.distribute_over_threads_2d(len0, n);
 
     iter_A.position(n_min, A);
+    A += m_min*stride0;
 
     for (len_type i = n_min;i < n_max;i++)
     {
@@ -40,6 +41,8 @@ void scale(const communicator& comm, const config& cfg,
         cfg.scale_ukr.call<T>(m_max-m_min,
                               alpha, conj_A, A, stride0);
     }
+
+    comm.barrier();
 }
 
 #define FOREACH_TYPE(T) \

@@ -1446,7 +1446,7 @@ void test(stride_type N_in_bytes, int R)
 
 int main(int argc, char **argv)
 {
-    stride_type N = 1024*1024;
+    stride_type N = 10*1024*1024;
     int R = 10;
     time_t seed = time(NULL);
 

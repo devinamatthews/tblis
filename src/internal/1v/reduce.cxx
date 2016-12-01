@@ -20,8 +20,12 @@ void reduce(const communicator& comm, const config& cfg, reduce_t op, len_type n
                            A + n_min*inc_A, inc_A, local_result, local_idx);
 
     reduce(comm, op, local_result, local_idx);
-    result = local_result;
-    idx = local_idx;
+
+    if (comm.master())
+    {
+        result = local_result;
+        idx = local_idx;
+    }
 }
 
 #define FOREACH_TYPE(T) \

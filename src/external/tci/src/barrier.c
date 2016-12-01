@@ -53,7 +53,7 @@ int tci_barrier_node_destroy(tci_barrier_node_t* barrier)
 
 int tci_barrier_node_wait(tci_barrier_node_t* barrier)
 {
-    const unsigned old_step = barrier->step;
+    const unsigned old_step = __sync_fetch_and_add(&barrier->step, 0);
 
     if (__sync_add_and_fetch(&barrier->nwaiting, 1) == barrier->nchildren)
     {
@@ -63,7 +63,7 @@ int tci_barrier_node_wait(tci_barrier_node_t* barrier)
     }
     else
     {
-        while (barrier->step == old_step) tci_yield();
+        while (__sync_fetch_and_add(&barrier->step, 0) == old_step) tci_yield();
     }
 
     return 0;

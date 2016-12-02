@@ -33,8 +33,8 @@ void add(T alpha, const_tensor_view<T> A, const label_type* idx_A,
 }
 
 template <typename T>
-void add(single_t s, T alpha, const_tensor_view<T> A, const label_type* idx_A,
-                     T  beta,       tensor_view<T> B, const label_type* idx_B)
+void add(single_t, T alpha, const_tensor_view<T> A, const label_type* idx_A,
+                   T  beta,       tensor_view<T> B, const label_type* idx_B)
 {
     tblis_tensor A_s(alpha, A);
     tblis_tensor B_s(beta, B);

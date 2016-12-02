@@ -2,49 +2,27 @@
 #define _TCI_H_
 
 #if defined(__MIC__)
-#ifndef TCI_ARCH_MIC
 #define TCI_ARCH_MIC 1
-#endif
 #elif defined(__ia64) || defined(__itanium__) || defined(_M_IA64)
-#ifndef TCI_ARCH_IA64
 #define TCI_ARCH_IA64 1
-#endif
 #elif defined(__x86_64__) || defined(_M_X64)
-#ifndef TCI_ARCH_X64
 #define TCI_ARCH_X64 1
-#endif
 #elif defined(__i386) || defined(_M_IX86)
-#ifndef TCI_ARCH_X86
 #define TCI_ARCH_X86 1
-#endif
 #elif defined(__aarch64__)
-#ifndef TCI_ARCH_ARM64
 #define TCI_ARCH_ARM64 1
-#endif
 #elif defined(__arm__) || defined(_M_ARM)
-#ifndef TCI_ARCH_ARM32
 #define TCI_ARCH_ARM32 1
-#endif
 #elif defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__)
-#ifndef TCI_ARCH_PPC64
 #define TCI_ARCH_PPC64 1
-#endif
 #elif defined(__powerpc__) || defined(__ppc__) || defined(__PPC__)
-#ifndef TCI_ARCH_PPC32
 #define TCI_ARCH_PPC32 1
-#endif
 #elif defined(__bgq__)
-#ifndef TCI_ARCH_BGQ
 #define TCI_ARCH_BGQ 1
-#endif
 #elif defined(__sparc)
-#ifndef TCI_ARCH_SPARC
-#define TCI_ARCH_SPARC
-#endif
+#define TCI_ARCH_SPARC 1
 #elif defined(__mips)
-#ifndef TCI_ARCH_MIPS
-#define TCI_ARCH_MIPS
-#endif
+#define TCI_ARCH_MIPS 1
 #else
 #error "Unknown architecture"
 #endif
@@ -59,8 +37,8 @@
 #define TCI_USE_PTHREAD_SPINLOCK @USE_PTHREAD_SPINLOCK@
 #define TCI_USE_SPIN_BARRIER     @USE_SPIN_BARRIER@
 
-#define TCI_MIN(x,y) ((x)<=(y)?(x):(y))
-#define TCI_MAX(x,y) ((x)>=(y)?(x):(y))
+#define TCI_MIN(x,y) ((y)<(x)?(y):(x))
+#define TCI_MAX(x,y) ((x)<(y)?(y):(x))
 
 #include <stdint.h>
 #include <errno.h>
@@ -131,9 +109,13 @@ typedef pthread_spinlock_t tci_mutex_t;
 
 typedef int tci_mutex_t;
 
-#elif TCI_USE_PTHREAD_MUTEX
+#elif TCI_USE_OMP_LOCK
 
 typedef omp_lock_t tci_mutex_t;
+
+#elif TCI_USE_PTHREAD_MUTEX
+
+typedef pthread_mutex_t tci_mutex_t;
 
 #endif
 
@@ -149,9 +131,9 @@ int tci_mutex_unlock(tci_mutex_t* mutex);
 
 #if TCI_USE_PTHREAD_BARRIER
 
-typedef struct
+typedef struct tci_barrier_node_s
 {
-    tci_barrier_node_t* parent;
+    struct tci_barrier_node_s* parent;
     pthread_barrier_t barrier;
 } tci_barrier_node_t;
 
@@ -160,12 +142,20 @@ typedef struct
 typedef struct tci_barrier_node_s
 {
     struct tci_barrier_node_s* parent;
-    int nchildren;
-    volatile int step;
-    volatile int nwaiting;
+    unsigned nchildren;
+    volatile unsigned step;
+    volatile unsigned nwaiting;
 } tci_barrier_node_t;
 
 #endif
+
+int tci_barrier_node_init(tci_barrier_node_t* barrier,
+                          tci_barrier_node_t* parent,
+                          unsigned nchildren);
+
+int tci_barrier_node_destroy(tci_barrier_node_t* barrier);
+
+int tci_barrier_node_wait(tci_barrier_node_t* barrier);
 
 typedef struct
 {
@@ -174,56 +164,62 @@ typedef struct
         tci_barrier_node_t* array;
         tci_barrier_node_t single;
     } barrier;
-    int nthread;
-    int group_size;
-    bool is_tree;
+    unsigned nthread;
+    unsigned group_size;
+    int is_tree;
 } tci_barrier_t;
 
-int tci_barrier_init(tci_barrier_t* barrier, int nthread, int group_size);
+int tci_barrier_is_tree(tci_barrier_t* barrier);
+
+int tci_barrier_init(tci_barrier_t* barrier,
+                     unsigned nthread, unsigned group_size);
 
 int tci_barrier_destroy(tci_barrier_t* barrier);
 
-int tci_barrier_wait(tci_barrier_t* barrier, int tid);
+int tci_barrier_wait(tci_barrier_t* barrier, unsigned tid);
 
 typedef struct
 {
     tci_barrier_t barrier;
     void* buffer;
-    volatile int refcount;
+    volatile unsigned refcount;
 } tci_context_t;
 
-int tci_context_init(tci_context_t** context, int nthread, int group_size);
+int tci_context_init(tci_context_t** context,
+                     unsigned nthread, unsigned group_size);
 
 int tci_context_attach(tci_context_t* context);
 
 int tci_context_detach(tci_context_t* context);
 
-int tci_context_barrier(tci_context_t* context, int tid);
+int tci_context_barrier(tci_context_t* context, unsigned tid);
 
-int tci_context_send(tci_context_t* context, int tid, void* object);
+int tci_context_send(tci_context_t* context, unsigned tid, void* object);
 
-int tci_context_send_nowait(tci_context_t* context, int tid, void* object);
+int tci_context_send_nowait(tci_context_t* context,
+                            unsigned tid,void* object);
 
-int tci_context_receive(tci_context_t* context, int tid, void** object);
+int tci_context_receive(tci_context_t* context, unsigned tid, void** object);
 
-int tci_context_receive_nowait(tci_context_t* context, int tid, void** object);
+int tci_context_receive_nowait(tci_context_t* context,
+                               unsigned tid, void** object);
 
 typedef struct
 {
     tci_context_t* context;
-    int nthread;
-    int tid;
-    int ngang;
-    int gid;
+    unsigned nthread;
+    unsigned tid;
+    unsigned ngang;
+    unsigned gid;
 } tci_comm_t;
 
 typedef enum
 {
-    TCI_EVENLY         = (1<<1),
-    TCI_CYCLIC         = (2<<1),
-    TCI_BLOCK_CYCLIC   = (3<<1),
-    TCI_BLOCKED        = (4<<1),
-    TCI_NO_CONTEXT     =    0x1
+    TCI_EVENLY         = (1u<<1),
+    TCI_CYCLIC         = (2u<<1),
+    TCI_BLOCK_CYCLIC   = (3u<<1),
+    TCI_BLOCKED        = (4u<<1),
+    TCI_NO_CONTEXT     =    0x1u
 } tci_gang_t;
 
 extern const tci_comm_t* const tci_single;
@@ -231,7 +227,7 @@ extern const tci_comm_t* const tci_single;
 int tci_comm_init_single(tci_comm_t* comm);
 
 int tci_comm_init(tci_comm_t* comm, tci_context_t* context,
-                  int nthread, int tid, int ngang, int gid);
+                  unsigned nthread, unsigned tid, unsigned ngang, unsigned gid);
 
 int tci_comm_destroy(tci_comm_t* comm);
 
@@ -239,51 +235,55 @@ int tci_comm_is_master(const tci_comm_t* comm);
 
 int tci_comm_barrier(tci_comm_t* comm);
 
-int tci_comm_bcast(tci_comm_t* comm, void** object, int root);
+int tci_comm_bcast(tci_comm_t* comm, void** object, unsigned root);
 
-int tci_comm_bcast_nowait(tci_comm_t* comm, void** object, int root);
+int tci_comm_bcast_nowait(tci_comm_t* comm, void** object, unsigned root);
 
 int tci_comm_gang(tci_comm_t* parent, tci_comm_t* child,
-                  int type, int n, int bs);
+                  unsigned type, unsigned n, unsigned bs);
 
-void tci_comm_distribute_over_gangs(tci_comm_t* comm, int64_t range,
-                                    int64_t granularity, int64_t* first,
-                                    int64_t* last, int64_t* max);
+void tci_distribute(unsigned n, unsigned idx, uint64_t range,
+                    uint64_t granularity, uint64_t* first, uint64_t* last,
+                    uint64_t* max);
 
-void tci_comm_distribute_over_threads(tci_comm_t* comm, int64_t range,
-                                     int64_t granularity, int64_t* first,
-                                     int64_t* last, int64_t* max);
+void tci_comm_distribute_over_gangs(tci_comm_t* comm, uint64_t range,
+                                    uint64_t granularity, uint64_t* first,
+                                    uint64_t* last, uint64_t* max);
 
-void tci_comm_distribute_over_gangs_2d(tci_comm_t* comm, int64_t range_m,
-                                       int64_t range_n, int64_t granularity_m,
-                                       int64_t granularity_n, int64_t* first_m,
-                                       int64_t* last_m, int64_t* max_m,
-                                       int64_t* first_n, int64_t* last_n,
-                                       int64_t* max_n);
+void tci_comm_distribute_over_threads(tci_comm_t* comm, uint64_t range,
+                                      uint64_t granularity, uint64_t* first,
+                                      uint64_t* last, uint64_t* max);
 
-void tci_comm_distribute_over_threads_2d(tci_comm_t* comm, int64_t range_m,
-                                         int64_t range_n, int64_t granularity_m,
-                                         int64_t granularity_n, int64_t* first_m,
-                                         int64_t* last_m, int64_t* max_m,
-                                         int64_t* first_n, int64_t* last_n,
-                                         int64_t* max_n);
+void tci_comm_distribute_over_gangs_2d(tci_comm_t* comm,
+    uint64_t range_m, uint64_t range_n,
+    uint64_t granularity_m, uint64_t granularity_n,
+    uint64_t* first_m, uint64_t* last_m, uint64_t* max_m,
+    uint64_t* first_n, uint64_t* last_n, uint64_t* max_n);
+
+void tci_comm_distribute_over_threads_2d(tci_comm_t* comm,
+    uint64_t range_m, uint64_t range_n,
+    uint64_t granularity_m, uint64_t granularity_n,
+    uint64_t* first_m, uint64_t* last_m, uint64_t* max_m,
+    uint64_t* first_n, uint64_t* last_n, uint64_t* max_n);
 
 typedef void (*tci_thread_func_t)(tci_comm_t*, void*);
 
-int tci_parallelize(tci_thread_func_t func, void* payload, int nthread, int arity);
+int tci_parallelize(tci_thread_func_t func, void* payload,
+                    unsigned nthread, unsigned arity);
 
 typedef struct
 {
-    int n;
-    int sqrt_n;
-    int f;
+    unsigned n;
+    unsigned sqrt_n;
+    unsigned f;
 } tci_prime_factors_t;
 
-void tci_prime_factorization(int n, tci_prime_factors_t* factors);
+void tci_prime_factorization(unsigned n, tci_prime_factors_t* factors);
 
-int tci_next_prime_factor(tci_prime_factors_t* factors);
+unsigned tci_next_prime_factor(tci_prime_factors_t* factors);
 
-void tci_partition_2x2(int nthread, int64_t work1, int64_t work2, int* nt1, int* nt2);
+void tci_partition_2x2(unsigned nthread, uint64_t work1, uint64_t work2,
+                       unsigned* nt1, unsigned* nt2);
 
 #ifdef __cplusplus
 }
@@ -352,7 +352,7 @@ class mutex
 class barrier
 {
     public:
-        barrier(int nthread, int group_size=0)
+        barrier(unsigned nthread, unsigned group_size=0)
         {
             int ret = tci_barrier_init(&_barrier, nthread, group_size);
             if (ret != 0) throw std::system_error(ret, std::system_category());
@@ -372,18 +372,18 @@ class barrier
 
         barrier& operator=(barrier&) = default;
 
-        void wait(int tid)
+        void wait(unsigned tid)
         {
             int ret = tci_barrier_wait(&_barrier, tid);
             if (ret != 0) throw std::system_error(ret, std::system_category());
         }
 
-        int num_threads() const
+        unsigned num_threads() const
         {
             return _barrier.nthread;
         }
 
-        int group_size() const
+        unsigned group_size() const
         {
             return _barrier.group_size;
         }
@@ -436,39 +436,39 @@ class communicator
             if (ret != 0) throw std::system_error(ret, std::system_category());
         }
 
-        int num_threads() const
+        unsigned num_threads() const
         {
             return _comm.nthread;
         }
 
-        int thread_num() const
+        unsigned thread_num() const
         {
             return _comm.tid;
         }
 
-        int num_gangs() const
+        unsigned num_gangs() const
         {
             return _comm.ngang;
         }
 
-        int gang_num() const
+        unsigned gang_num() const
         {
             return _comm.gid;
         }
 
         template <typename T>
-        void broadcast(T*& object, int root=0) const
+        void broadcast(T*& object, unsigned root=0) const
         {
-            tci_comm_bcast(*this, (void**)&object, root);
+            tci_comm_bcast(*this, reinterpret_cast<void**>(&object), root);
         }
 
         template <typename T>
-        void broadcast_nowait(T*& object, int root=0) const
+        void broadcast_nowait(T*& object, unsigned root=0) const
         {
-            tci_comm_bcast_nowait(*this, (void**)&object, root);
+            tci_comm_bcast_nowait(*this, reinterpret_cast<void**>(&object), root);
         }
 
-        communicator gang(int type, int n, int bs=0) const
+        communicator gang(unsigned type, unsigned n, unsigned bs=0) const
         {
             communicator child;
             int ret = tci_comm_gang(*this, &child._comm, type, n, bs);
@@ -476,46 +476,50 @@ class communicator
             return child;
         }
 
-        std::tuple<int64_t,int64_t,int64_t>
-        distribute_over_gangs(int64_t range, int64_t granularity=1) const
+        std::tuple<uint64_t,uint64_t,uint64_t>
+        distribute_over_gangs(uint64_t range, uint64_t granularity=1) const
         {
-            int64_t first, last, max;
+            uint64_t first, last, max;
             tci_comm_distribute_over_gangs(*this, range, granularity,
                                            &first, &last, &max);
             return std::make_tuple(first, last, max);
         }
 
-        std::tuple<int64_t,int64_t,int64_t>
-        distribute_over_threads(int64_t range, int64_t granularity=1) const
+        std::tuple<uint64_t,uint64_t,uint64_t>
+        distribute_over_threads(uint64_t range, uint64_t granularity=1) const
         {
-            int64_t first, last, max;
+            uint64_t first, last, max;
             tci_comm_distribute_over_threads(*this, range, granularity,
                                              &first, &last, &max);
             return std::make_tuple(first, last, max);
         }
 
-        std::tuple<int64_t,int64_t,int64_t,int64_t,int64_t,int64_t>
-        distribute_over_gangs_2d(int64_t range_m, int64_t range_n,
-                                 int64_t granularity_m=1, int64_t granularity_n=1) const
+        std::tuple<uint64_t,uint64_t,uint64_t,uint64_t,uint64_t,uint64_t>
+        distribute_over_gangs_2d(uint64_t range_m, uint64_t range_n,
+                                 uint64_t granularity_m=1,
+                                 uint64_t granularity_n=1) const
         {
-            int64_t first_m, last_m, max_m, first_n, last_n, max_n;
+            uint64_t first_m, last_m, max_m, first_n, last_n, max_n;
             tci_comm_distribute_over_gangs_2d(*this, range_m, range_n,
                                               granularity_m, granularity_n,
                                               &first_m, &last_m, &max_m,
                                               &first_n, &last_n, &max_n);
-            return std::make_tuple(first_m, last_m, max_m, first_n, last_n, max_n);
+            return std::make_tuple(first_m, last_m, max_m,
+                                   first_n, last_n, max_n);
         }
 
-        std::tuple<int64_t,int64_t,int64_t,int64_t,int64_t,int64_t>
-        distribute_over_threads_2d(int64_t range_m, int64_t range_n,
-                                   int64_t granularity_m=1, int64_t granularity_n=1) const
+        std::tuple<uint64_t,uint64_t,uint64_t,uint64_t,uint64_t,uint64_t>
+        distribute_over_threads_2d(uint64_t range_m, uint64_t range_n,
+                                   uint64_t granularity_m=1,
+                                   uint64_t granularity_n=1) const
         {
-            int64_t first_m, last_m, max_m, first_n, last_n, max_n;
+            uint64_t first_m, last_m, max_m, first_n, last_n, max_n;
             tci_comm_distribute_over_threads_2d(*this, range_m, range_n,
                                                 granularity_m, granularity_n,
                                                 &first_m, &last_m, &max_m,
                                                 &first_n, &last_n, &max_n);
-            return std::make_tuple(first_m, last_m, max_m, first_n, last_n, max_n);
+            return std::make_tuple(first_m, last_m, max_m,
+                                   first_n, last_n, max_n);
         }
         
         operator tci_comm_t*() const { return const_cast<tci_comm_t*>(&_comm); }
@@ -537,7 +541,7 @@ void body_wrapper(tci_comm_t* comm, void* data)
 }
 
 template <typename Body>
-void parallelize(Body&& body, int nthread, int arity=0)
+void parallelize(Body&& body, unsigned nthread, unsigned arity=0)
 {
     // The first line is necessary to trigger template instantiation
     tci_thread_func_t func = detail::body_wrapper<Body>;
@@ -548,12 +552,12 @@ void parallelize(Body&& body, int nthread, int arity=0)
 class prime_factorization
 {
     public:
-        prime_factorization(int n)
+        prime_factorization(unsigned n)
         {
             tci_prime_factorization(n, &_factors);
         }
 
-        int next()
+        unsigned next()
         {
             return tci_next_prime_factor(&_factors);
         }
@@ -562,10 +566,10 @@ class prime_factorization
         tci_prime_factors_t _factors;
 };
 
-inline std::pair<int,int>
-partition_2x2(int nthreads, int64_t work1, int64_t work2)
+inline std::pair<unsigned,unsigned>
+partition_2x2(unsigned nthreads, uint64_t work1, uint64_t work2)
 {
-    int nt1, nt2;
+    unsigned nt1, nt2;
     tci_partition_2x2(nthreads, work1, work2, &nt1, &nt2);
     return std::make_pair(nt1, nt2);
 }

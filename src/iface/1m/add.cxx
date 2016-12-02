@@ -25,19 +25,19 @@ void tblis_matrix_add(const tblis_comm* comm, const tblis_config* cfg,
             if (B->alpha<T>() == T(0))
             {
                 parallelize_if(internal::set<T>, comm, get_config(cfg), A->m, A->n,
-                               T(0), (T*)B->data, B->rs, B->cs);
+                               T(0), static_cast<T*>(B->data), B->rs, B->cs);
             }
             else
             {
                 parallelize_if(internal::scale<T>, comm, get_config(cfg), A->m, A->n,
-                               B->alpha<T>(), B->conj, (T*)B->data, B->rs, B->cs);
+                               B->alpha<T>(), B->conj, static_cast<T*>(B->data), B->rs, B->cs);
             }
         }
         else
         {
             parallelize_if(internal::add<T>, comm, get_config(cfg), A->m, A->n,
-                           A->alpha<T>(), A->conj, (const T*)A->data, A->rs, A->cs,
-                           B->alpha<T>(), B->conj,       (T*)B->data, B->rs, B->cs);
+                           A->alpha<T>(), A->conj, static_cast<const T*>(A->data), A->rs, A->cs,
+                           B->alpha<T>(), B->conj,       static_cast<T*>(B->data), B->rs, B->cs);
         }
 
         B->alpha<T>() = T(1);

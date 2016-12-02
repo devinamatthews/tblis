@@ -56,14 +56,15 @@ struct microkernel
     void (*_ukr[4])(void);
 
     template <template <typename> class ukr, typename T> microkernel(const ukr<T>&)
-    : _ukr{(void(*)(void))ukr<   float>::value, (void(*)(void))ukr<  double>::value,
-           (void(*)(void))ukr<scomplex>::value, (void(*)(void))ukr<dcomplex>::value} {}
+    : _ukr{reinterpret_cast<void(*)(void)>(ukr<   float>::value),
+           reinterpret_cast<void(*)(void)>(ukr<  double>::value),
+           reinterpret_cast<void(*)(void)>(ukr<scomplex>::value),
+           reinterpret_cast<void(*)(void)>(ukr<dcomplex>::value)} {}
 
     template <typename T, typename... Args>
-    auto call(Args&&... args) const
-    -> decltype(((ukr_t<T>)_ukr[type_idx<T>::value])(std::forward<Args>(args)...))
+    void call(Args&&... args) const
     {
-        return ((ukr_t<T>)_ukr[type_idx<T>::value])(std::forward<Args>(args)...);
+        reinterpret_cast<ukr_t<T>>(_ukr[type_idx<T>::value])(std::forward<Args>(args)...);
     }
 };
 
@@ -108,6 +109,8 @@ struct config
 
     microkernel<gemm_ukr_t> gemm_ukr;
 
+    bool _gemm_row_major[4];
+
     microkernel<pack_nn_ukr_t> pack_nn_mr_ukr;
     microkernel<pack_nn_ukr_t> pack_nn_nr_ukr;
     microkernel<pack_sn_ukr_t> pack_sn_mr_ukr;
@@ -120,8 +123,6 @@ struct config
     microkernel<pack_nb_ukr_t> pack_nb_nr_ukr;
     microkernel<pack_sb_ukr_t> pack_sb_mr_ukr;
     microkernel<pack_sb_ukr_t> pack_sb_nr_ukr;
-
-    bool _gemm_row_major[4];
 
     template <typename T>
     bool gemm_row_major() const { return _gemm_row_major[type_idx<T>::value]; }

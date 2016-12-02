@@ -46,10 +46,10 @@ class MemoryPool
                 }
 
                 template <typename T=void>
-                T* get() { return (T*)_ptr; }
+                T* get() { return static_cast<T*>(_ptr); }
 
                 template <typename T=void>
-                const T* get() const { return (const T*)_ptr; }
+                const T* get() const { return static_cast<const T*>(_ptr); }
 
                 friend void swap(Block& a, Block& b)
                 {
@@ -69,7 +69,7 @@ class MemoryPool
                 void* _ptr = nullptr;
         };
 
-        MemoryPool(size_t min_alignment=1) : _align(min_alignment) {};
+        MemoryPool(size_t min_alignment=1) : _align(min_alignment) {}
 
         MemoryPool(const MemoryPool&) = delete;
 
@@ -120,7 +120,7 @@ class MemoryPool
                  * Otherwise, free it and allocate a new one.
                  */
                 if (entry.second >= size &&
-                    (uintptr_t)entry.first % alignment == 0)
+                    reinterpret_cast<uintptr_t>(entry.first) % alignment == 0)
                 {
                     TBLIS_ASSERT(entry.first);
                     ptr = entry.first;

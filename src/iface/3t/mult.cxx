@@ -20,19 +20,19 @@ void tblis_tensor_mult(const tblis_comm* comm, const tblis_config* cfg,
     TBLIS_ASSERT(A->type == B->type);
     TBLIS_ASSERT(A->type == C->type);
 
-    int ndim_A = A->ndim;
+    unsigned ndim_A = A->ndim;
     std::vector<len_type> len_A;
     std::vector<stride_type> stride_A;
     std::vector<label_type> idx_A;
     diagonal(ndim_A, A->len, A->stride, idx_A_, len_A, stride_A, idx_A);
 
-    int ndim_B = B->ndim;
+    unsigned ndim_B = B->ndim;
     std::vector<len_type> len_B;
     std::vector<stride_type> stride_B;
     std::vector<label_type> idx_B;
     diagonal(ndim_B, B->len, B->stride, idx_B_, len_B, stride_B, idx_B);
 
-    int ndim_C = C->ndim;
+    unsigned ndim_C = C->ndim;
     std::vector<len_type> len_C;
     std::vector<stride_type> stride_C;
     std::vector<label_type> idx_C;
@@ -115,14 +115,14 @@ void tblis_tensor_mult(const tblis_comm* comm, const tblis_config* cfg,
             {
                 parallelize_if(internal::set<T>, comm, get_config(cfg),
                                len_C_only+len_AC+len_BC+len_ABC,
-                               T(0), (T*)C->data,
+                               T(0), static_cast<T*>(C->data),
                                stride_C_only+stride_C_AC+stride_C_BC+stride_C_ABC);
             }
             else
             {
                 parallelize_if(internal::scale<T>, comm, get_config(cfg),
                                len_C_only+len_AC+len_BC+len_ABC,
-                               beta, C->conj, (T*)C->data,
+                               beta, C->conj, static_cast<T*>(C->data),
                                stride_C_only+stride_C_AC+stride_C_BC+stride_C_ABC);
             }
         }
@@ -131,11 +131,11 @@ void tblis_tensor_mult(const tblis_comm* comm, const tblis_config* cfg,
             parallelize_if(internal::mult<T>, comm, get_config(cfg),
                            len_A_only, len_B_only, len_C_only,
                            len_AB, len_AC, len_BC, len_ABC,
-                           alpha, A->conj, (const T*)A->data,
+                           alpha, A->conj, static_cast<const T*>(A->data),
                            stride_A_only, stride_A_AB, stride_A_AC, stride_A_ABC,
-                                  B->conj, (const T*)B->data,
+                                  B->conj, static_cast<const T*>(B->data),
                            stride_B_only, stride_B_AB, stride_B_BC, stride_B_ABC,
-                            beta, C->conj,       (T*)C->data,
+                            beta, C->conj,       static_cast<T*>(C->data),
                            stride_C_only, stride_C_AC, stride_C_BC, stride_C_ABC);
         }
 

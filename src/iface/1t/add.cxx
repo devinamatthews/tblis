@@ -18,13 +18,13 @@ void tblis_tensor_add(const tblis_comm* comm, const tblis_config* cfg,
 {
     TBLIS_ASSERT(A->type == B->type);
 
-    int ndim_A = A->ndim;
+    unsigned ndim_A = A->ndim;
     std::vector<len_type> len_A;
     std::vector<stride_type> stride_A;
     std::vector<label_type> idx_A;
     diagonal(ndim_A, A->len, A->stride, idx_A_, len_A, stride_A, idx_A);
 
-    int ndim_B = B->ndim;
+    unsigned ndim_B = B->ndim;
     std::vector<len_type> len_B;
     std::vector<stride_type> stride_B;
     std::vector<label_type> idx_B;
@@ -56,21 +56,21 @@ void tblis_tensor_add(const tblis_comm* comm, const tblis_config* cfg,
             {
                 parallelize_if(internal::set<T>, comm, get_config(cfg),
                                len_B_only+len_AB,
-                               T(0), (T*)B->data, stride_B_only+stride_B_AB);
+                               T(0), static_cast<T*>(B->data), stride_B_only+stride_B_AB);
             }
             else
             {
                 parallelize_if(internal::scale<T>, comm, get_config(cfg),
                                len_B_only+len_AB,
-                               B->alpha<T>(), B->conj, (T*)B->data, stride_B_only+stride_B_AB);
+                               B->alpha<T>(), B->conj, static_cast<T*>(B->data), stride_B_only+stride_B_AB);
             }
         }
         else
         {
             parallelize_if(internal::add<T>, comm, get_config(cfg),
                            len_A_only, len_B_only, len_AB,
-                           A->alpha<T>(), A->conj, (const T*)A->data, stride_A_only, stride_A_AB,
-                           B->alpha<T>(), B->conj,       (T*)B->data, stride_B_only, stride_B_AB);
+                           A->alpha<T>(), A->conj, static_cast<const T*>(A->data), stride_A_only, stride_A_AB,
+                           B->alpha<T>(), B->conj,       static_cast<T*>(B->data), stride_B_only, stride_B_AB);
         }
 
         B->alpha<T>() = T(1);

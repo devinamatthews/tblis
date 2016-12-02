@@ -132,6 +132,7 @@ AC_ARG_ENABLE([config],
                              
 if echo $enable_config | grep -q auto; then
     enable_config=
+    using_default_configs=yes
     AC_CHECK_DEFINE([__MIC__], [enable_config=mic])
     AC_CHECK_DEFINE([__x86_64__], [enable_config=x86])
     AC_CHECK_DEFINE([_M_X64], [enable_config=x86])
@@ -159,6 +160,81 @@ configs=`echo $enable_config | sed 's/x86/intel,amd/' \
                              | sed 's/arm/armv7a,armv8a,cortex-a9,cortex-a15/' \
                              | sed 's/amd/bulldozer,piledriver,excavator/' \
                              | sed 's/,/ /g'`
+
+AC_MSG_CHECKING([compiler vendor])
+
+vendor_string=`$CC --version 2>/dev/null`
+if test x"$vendor_string" = x; then
+    vendor_string=`$CC -qversion 2>/dev/null`
+fi
+if test x"$vendor_string" = x; then
+    AC_MSG_ERROR([Unable to determine compiler vendor.])
+fi
+
+cc_vendor=`echo $vendor_string | $EGREP -o 'icc|gcc|clang|emcc|pnacl|IBM' | { read first rest ; echo $first ; }`
+if test x"$cc_vendor" = x; then
+    AC_MSG_ERROR([Unable to determine compiler vendor.])
+fi
+
+AC_MSG_RESULT([$cc_vendor])
+
+if test x"$cc_vendor" = xicc || \
+   test x"$cc_vendor" = xgcc || \
+   test x"$cc_vendor" = xclang; then
+    cc_version=`echo $vendor_string | $EGREP -o '@<:@0-9@:>@+\.@<:@0-9@:>@+\.?@<:@0-9@:>@*'`
+else
+    AC_MSG_ERROR([Unsupported compiler.])
+fi
+
+cc_major=`echo $cc_version | cut -d. -f1`
+cc_minor=`echo $cc_version | cut -d. -f2`
+cc_revision=`echo $cc_version | cut -d. -f3`
+
+AC_MSG_CHECKING([compiler version])
+if test x"$cc_revision" = x; then
+    AC_MSG_RESULT([$cc_major.$cc_minor])
+else
+    AC_MSG_RESULT([$cc_major.$cc_minor.$cc_revision])
+fi
+
+if test x"$cc_vendor" = xicc; then
+    if test $cc_major -lt 15; then
+        AC_MSG_ERROR([Unsupported compiler version.])
+    fi
+    if test $cc_major -lt 16; then
+        configs=`echo $configs | sed 's/ *knl */ /'`
+    fi
+elif test x"$cc_vendor" = xgcc; then
+    if test $cc_major -lt 4; then
+        AC_MSG_ERROR([Unsupported compiler version.])
+    fi
+    if test $cc_major -eq 4; then
+        if test $cc_minor -lt 7; then
+            AC_MSG_ERROR([Unsupported compiler version.])
+        fi
+        if test $cc_minor -lt 9; then
+            configs=`echo $configs |  sed 's/ *excavator */ /'`
+        fi
+        configs=`echo $configs | sed 's/ *knl */ /'`
+    fi
+elif test x"$cc_vendor" = xclang; then
+    if test $cc_major -lt 3; then
+        AC_MSG_ERROR([Unsupported compiler version.])
+    fi
+    if test $cc_major -eq 3; then
+        if test $cc_minor -lt 3; then
+            AC_MSG_ERROR([Unsupported compiler version.])
+        fi
+        if test $cc_minor -lt 5; then
+            configs=`echo $configs | sed 's/ *knl */ /' \
+                                   | sed 's/ *excavator */ /'`
+        fi
+    fi
+fi
+
+AM_CONDITIONAL(ENABLE_INTEL_COMPILER, [test x"$cc_vendor" = xicc])
+
+AM_CONDITIONAL(IS_OSX, [test `uname -s` = Darwin])
                              
 AC_MSG_CHECKING([enabled configurations])
 AC_MSG_RESULT([$configs])
@@ -178,23 +254,6 @@ AM_CONDITIONAL(ENABLE_MIC, [echo $configs | grep -q mic])
 AM_CONDITIONAL(ENABLE_PILEDRIVER, [echo $configs | grep -q piledriver])
 AM_CONDITIONAL(ENABLE_POWER7, [echo $configs | grep -q power7])
 AM_CONDITIONAL(ENABLE_SANDYBRIDGE, [echo $configs | grep -q sandybridge])
-
-vendor_string=`$CC --version 2>/dev/null`
-if test x"$vendor_string" = x; then
-    vendor_string=`$CC -qversion 2>/dev/null`
-fi
-if test x"$vendor_string" = x; then
-    AC_MSG_ERROR([Unable to determine compiler vendor.])
-fi
-
-cc_vendor=`echo $vendor_string | $EGREP -o 'icc|gcc|clang|emcc|pnacl|IBM' | { read first rest ; echo $first ; }`
-if test x"$cc_vendor" = x; then
-    AC_MSG_ERROR([Unable to determine compiler vendor.])
-fi
-
-AM_CONDITIONAL(ENABLE_INTEL_COMPILER, [test x"$cc_vendor" = xicc])
-
-AM_CONDITIONAL(IS_OSX, [test `uname -s` = Darwin])
 
 include_configs=""
 for config in $configs; do

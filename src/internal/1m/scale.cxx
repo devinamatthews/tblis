@@ -26,6 +26,8 @@ void scale(const communicator& comm, const config& cfg, len_type m, len_type n,
         cfg.scale_ukr.call<T>(m_max-m_min,
                               alpha, conj_A, A+ m_min*rs_A + j*cs_A, rs_A);
     }
+
+    comm.barrier();
 }
 
 #define FOREACH_TYPE(T) \

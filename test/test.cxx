@@ -72,13 +72,13 @@ void gemm_ref(T alpha, const_matrix_view<T> A,
     }
 }
 
-vector<unsigned> permutation(int ndim, const label_type* from, const label_type* to)
+static vector<unsigned> permutation(unsigned ndim, const label_type* from, const label_type* to)
 {
     vector<unsigned> p(ndim);
 
-    for (size_t i = 0;i < ndim;i++)
+    for (unsigned i = 0;i < ndim;i++)
     {
-        for (size_t j = 0;j < ndim;j++)
+        for (unsigned j = 0;j < ndim;j++)
         {
             if (from[j] == to[i])
             {
@@ -153,7 +153,7 @@ template <> const string& type_name<dcomplex>()
  * initialized from the interior of the unit circle.
  */
 template <typename T>
-void random_matrix(size_t N, len_type m_min, len_type n_min, matrix<T>& t)
+void random_matrix(stride_type N, len_type m_min, len_type n_min, matrix<T>& t)
 {
     vector<len_type> len = random_product_constrained_sequence<len_type>(2, N, {m_min, n_min});
 
@@ -175,7 +175,7 @@ void random_matrix(size_t N, len_type m_min, len_type n_min, matrix<T>& t)
  * initialized from the interior of the unit circle.
  */
 template <typename T>
-void random_matrix(size_t N, matrix<T>& t)
+void random_matrix(stride_type N, matrix<T>& t)
 {
     random_matrix(N, 0, 0, t);
 }
@@ -188,7 +188,7 @@ void random_matrix(size_t N, matrix<T>& t)
  * initialized from the interior of the unit circle.
  */
 template <typename T>
-void random_tensor(size_t N, unsigned d, vector<len_type> len_min, tensor<T>& t)
+void random_tensor(stride_type N, unsigned d, vector<len_type> len_min, tensor<T>& t)
 {
     vector<len_type> len_max = random_product_constrained_sequence<len_type>(d, N, len_min);
 
@@ -213,7 +213,7 @@ void random_tensor(size_t N, unsigned d, vector<len_type> len_min, tensor<T>& t)
  * initialized from the interior of the unit circle.
  */
 template <typename T>
-void random_tensor(size_t N, unsigned d, tensor<T>& t)
+void random_tensor(stride_type N, unsigned d, tensor<T>& t)
 {
     random_tensor(N, d, vector<len_type>(d), t);
 }
@@ -222,7 +222,7 @@ void random_tensor(size_t N, unsigned d, tensor<T>& t)
  * Creates a random tensor of 1 to 8 dimensions.
  */
 template <typename T>
-void random_tensor(size_t N, tensor<T>& t)
+void random_tensor(stride_type N, tensor<T>& t)
 {
     random_tensor(N, random_number(1,8), t);
 }
@@ -239,7 +239,7 @@ enum index_type
 };
 
 template <typename T>
-void random_tensors(size_t N,
+void random_tensors(stride_type N,
                    unsigned ndim_A_only, unsigned ndim_B_only,
                    unsigned ndim_AB,
                    tensor<T>& A, std::vector<label_type>& idx_A,
@@ -264,7 +264,7 @@ void random_tensors(size_t N,
     }
     random_shuffle(types_B.begin(), types_B.end());
 
-    vector<label_type> idx = range<label_type>('a', 'a'+ndim_A+ndim_B-ndim_AB);
+    vector<label_type> idx = range<label_type>('a', static_cast<char>('a'+ndim_A+ndim_B-ndim_AB));
     random_shuffle(idx.begin(), idx.end());
 
     unsigned c = 0;
@@ -329,13 +329,13 @@ void random_tensors(size_t N,
 }
 
 template <typename T>
-void random_tensors(size_t N,
-                   unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_C_only,
-                   unsigned ndim_AB, unsigned ndim_AC, unsigned ndim_BC,
-                   unsigned ndim_ABC,
-                   tensor<T>& A, std::vector<label_type>& idx_A,
-                   tensor<T>& B, std::vector<label_type>& idx_B,
-                   tensor<T>& C, std::vector<label_type>& idx_C)
+void random_tensors(stride_type N,
+                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_C_only,
+                    unsigned ndim_AB, unsigned ndim_AC, unsigned ndim_BC,
+                    unsigned ndim_ABC,
+                    tensor<T>& A, std::vector<label_type>& idx_A,
+                    tensor<T>& B, std::vector<label_type>& idx_B,
+                    tensor<T>& C, std::vector<label_type>& idx_C)
 {
     unsigned ndim_A = ndim_A_only+ndim_AB+ndim_AC+ndim_ABC;
     unsigned ndim_B = ndim_B_only+ndim_AB+ndim_BC+ndim_ABC;
@@ -372,8 +372,8 @@ void random_tensors(size_t N,
     random_shuffle(types_C.begin(), types_C.end());
 
     vector<label_type> idx =
-        MArray::range<label_type>('a', 'a'+ndim_A_only+ndim_B_only+ndim_C_only+
-                      ndim_AB+ndim_AC+ndim_BC+ndim_ABC);
+        MArray::range<label_type>('a', static_cast<char>('a'+ndim_A_only+ndim_B_only+ndim_C_only+
+                      ndim_AB+ndim_AC+ndim_BC+ndim_ABC));
     random_shuffle(idx.begin(), idx.end());
 
     unsigned c = 0;
@@ -586,7 +586,7 @@ void random_tensors(size_t N,
  * uniformly.
  */
 template <typename T>
-void random_add(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
+void random_add(stride_type N, tensor<T>& A, std::vector<label_type>& idx_A,
                           tensor<T>& B, std::vector<label_type>& idx_B)
 {
     unsigned ndim_A = random_number(1,8);
@@ -609,7 +609,7 @@ void random_add(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
  * uniformly.
  */
 template <typename T>
-void random_trace(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
+void random_trace(stride_type N, tensor<T>& A, std::vector<label_type>& idx_A,
                             tensor<T>& B, std::vector<label_type>& idx_B)
 {
     unsigned ndim_A = random_number(1,8);
@@ -630,7 +630,7 @@ void random_trace(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
  * uniformly.
  */
 template <typename T>
-void random_replicate(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
+void random_replicate(stride_type N, tensor<T>& A, std::vector<label_type>& idx_A,
                                 tensor<T>& B, std::vector<label_type>& idx_B)
 {
     unsigned ndim_A = random_number(1,8);
@@ -651,7 +651,7 @@ void random_replicate(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
  * uniformly.
  */
 template <typename T>
-void random_transpose(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
+void random_transpose(stride_type N, tensor<T>& A, std::vector<label_type>& idx_A,
                                 tensor<T>& B, std::vector<label_type>& idx_B)
 {
     unsigned ndim_A = random_number(1,8);
@@ -669,7 +669,7 @@ void random_transpose(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
  * uniformly.
  */
 template <typename T>
-void random_dot(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
+void random_dot(stride_type N, tensor<T>& A, std::vector<label_type>& idx_A,
                           tensor<T>& B, std::vector<label_type>& idx_B)
 {
     unsigned ndim_A = random_number(1,8);
@@ -687,7 +687,7 @@ void random_dot(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
  * uniformly.
  */
 template <typename T>
-void random_mult(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
+void random_mult(stride_type N, tensor<T>& A, std::vector<label_type>& idx_A,
                            tensor<T>& B, std::vector<label_type>& idx_B,
                            tensor<T>& C, std::vector<label_type>& idx_C)
 {
@@ -734,13 +734,13 @@ void random_mult(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
  * uniformly.
  */
 template <typename T>
-void random_gemm(size_t N, matrix<T>& A,
+void random_gemm(stride_type N, matrix<T>& A,
                            matrix<T>& B,
                            matrix<T>& C)
 {
-    len_type m = random_number<len_type>(1, sqrt(N));
-    len_type n = random_number<len_type>(1, sqrt(N));
-    len_type k = random_number<len_type>(1, sqrt(N));
+    len_type m = random_number<len_type>(1, lrint(floor(sqrt(N))));
+    len_type n = random_number<len_type>(1, lrint(floor(sqrt(N))));
+    len_type k = random_number<len_type>(1, lrint(floor(sqrt(N))));
 
     //m += (MR<T>::value-1)-(m-1)%MR<T>::value;
     //n += (NR<T>::value-1)-(n-1)%NR<T>::value;
@@ -765,12 +765,12 @@ void random_gemm(size_t N, matrix<T>& A,
  * uniformly.
  */
 template <typename T>
-void random_gemv(size_t N, matrix<T>& A,
+void random_gemv(stride_type N, matrix<T>& A,
                            matrix<T>& B,
                            matrix<T>& C)
 {
-    len_type m = random_number<len_type>(1, sqrt(N));
-    len_type k = random_number<len_type>(1, sqrt(N));
+    len_type m = random_number<len_type>(1, lrint(floor(sqrt(N))));
+    len_type k = random_number<len_type>(1, lrint(floor(sqrt(N))));
 
     random_matrix(N, m, k, A);
     random_matrix(N, k, 1, B);
@@ -783,12 +783,12 @@ void random_gemv(size_t N, matrix<T>& A,
  * uniformly.
  */
 template <typename T>
-void random_ger(size_t N, matrix<T>& A,
+void random_ger(stride_type N, matrix<T>& A,
                           matrix<T>& B,
                           matrix<T>& C)
 {
-    len_type m = random_number<len_type>(1, sqrt(N));
-    len_type n = random_number<len_type>(1, sqrt(N));
+    len_type m = random_number<len_type>(1, lrint(floor(sqrt(N))));
+    len_type n = random_number<len_type>(1, lrint(floor(sqrt(N))));
 
     random_matrix(N, m, 1, A);
     random_matrix(N, 1, n, B);
@@ -801,7 +801,7 @@ void random_ger(size_t N, matrix<T>& A,
  * uniformly.
  */
 template <typename T>
-void random_contract(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
+void random_contract(stride_type N, tensor<T>& A, std::vector<label_type>& idx_A,
                               tensor<T>& B, std::vector<label_type>& idx_B,
                               tensor<T>& C, std::vector<label_type>& idx_C)
 {
@@ -836,7 +836,7 @@ void random_contract(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
  * uniformly.
  */
 template <typename T>
-void random_weight(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
+void random_weight(stride_type N, tensor<T>& A, std::vector<label_type>& idx_A,
                             tensor<T>& B, std::vector<label_type>& idx_B,
                             tensor<T>& C, std::vector<label_type>& idx_C)
 {
@@ -871,7 +871,7 @@ void random_weight(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
  * uniformly.
  */
 template <typename T>
-void random_outer_prod(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
+void random_outer_prod(stride_type N, tensor<T>& A, std::vector<label_type>& idx_A,
                                  tensor<T>& B, std::vector<label_type>& idx_B,
                                  tensor<T>& C, std::vector<label_type>& idx_C)
 {
@@ -894,7 +894,7 @@ void random_outer_prod(size_t N, tensor<T>& A, std::vector<label_type>& idx_A,
 }
 
 template <typename T>
-void test_tblis(size_t N)
+void test_tblis(stride_type N)
 {
     matrix<T> A, B, C, D;
 
@@ -936,7 +936,7 @@ void test_tblis(size_t N)
 }
 
 template <typename T>
-void test_mult(size_t N)
+void test_mult(stride_type N)
 {
     tensor<T> A, B, C, D;
     std::vector<label_type> idx_A, idx_B, idx_C;
@@ -974,7 +974,7 @@ void test_mult(size_t N)
 }
 
 template <typename T>
-void test_contract(size_t N)
+void test_contract(stride_type N)
 {
     tensor<T> A, B, C, D;
     std::vector<label_type> idx_A, idx_B, idx_C;
@@ -1017,7 +1017,7 @@ void test_contract(size_t N)
 }
 
 template <typename T>
-void test_weight(size_t N)
+void test_weight(stride_type N)
 {
     tensor<T> A, B, C, D;
     std::vector<label_type> idx_A, idx_B, idx_C;
@@ -1053,7 +1053,7 @@ void test_weight(size_t N)
 }
 
 template <typename T>
-void test_outer_prod(size_t N)
+void test_outer_prod(stride_type N)
 {
     tensor<T> A, B, C, D;
     std::vector<label_type> idx_A, idx_B, idx_C;
@@ -1089,7 +1089,7 @@ void test_outer_prod(size_t N)
 }
 
 template <typename T>
-void test_add(size_t N)
+void test_add(stride_type N)
 {
     tensor<T> A, B, C;
     std::vector<label_type> idx_A, idx_B;
@@ -1133,7 +1133,7 @@ void test_add(size_t N)
 }
 
 template <typename T>
-void test_trace(size_t N)
+void test_trace(stride_type N)
 {
     tensor<T> A, B;
     std::vector<label_type> idx_A, idx_B;
@@ -1160,7 +1160,7 @@ void test_trace(size_t N)
 }
 
 template <typename T>
-void test_replicate(size_t N)
+void test_replicate(stride_type N)
 {
     tensor<T> A, B;
     std::vector<label_type> idx_A, idx_B;
@@ -1207,7 +1207,7 @@ void test_replicate(size_t N)
 }
 
 template <typename T>
-void test_dot(size_t N)
+void test_dot(stride_type N)
 {
     tensor<T> A, B;
     std::vector<label_type> idx_A, idx_B;
@@ -1239,7 +1239,7 @@ void test_dot(size_t N)
 }
 
 template <typename T>
-void test_transpose(size_t N)
+void test_transpose(stride_type N)
 {
     tensor<T> A, B, C;
     std::vector<label_type> idx_A, idx_B;
@@ -1273,7 +1273,7 @@ void test_transpose(size_t N)
     {
         for (unsigned i = 0;i < ndim;i++)
         {
-            unsigned j; for (j = 0;j < ndim && idx_A[j] != perm[i]+'a';j++) continue;
+            unsigned j; for (j = 0;j < ndim && idx_A[j] != static_cast<label_type>(perm[i]+'a');j++) continue;
             idx_C[i] = idx_B[j];
             len_C[i] = B.length(j);
         }
@@ -1289,12 +1289,12 @@ void test_transpose(size_t N)
 }
 
 template <typename T>
-void test_scale(size_t N)
+void test_scale(stride_type N)
 {
     tensor<T> A;
 
     random_tensor(N, A);
-    std::vector<label_type> idx_A = range<label_type>('a', 'a'+A.dimension());
+    std::vector<label_type> idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
     cout << endl;
     cout << "Testing scale (" << type_name<T>() << "):" << endl;
@@ -1319,13 +1319,13 @@ void test_scale(size_t N)
 }
 
 template <typename T>
-void test_reduce(size_t N)
+void test_reduce(stride_type N)
 {
     tensor<T> A;
 
     random_tensor(N, A);
-    size_t NA = A.stride(A.dimension()-1)*A.length(A.dimension()-1);
-    std::vector<label_type> idx_A = range<label_type>('a', 'a'+A.dimension());
+    stride_type NA = A.stride(A.dimension()-1)*A.length(A.dimension()-1);
+    std::vector<label_type> idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
     cout << endl;
     cout << "Testing reduction (" << type_name<T>() << "):" << endl;
@@ -1340,7 +1340,7 @@ void test_reduce(size_t N)
 
     reduce(REDUCE_SUM, A, idx_A.data(), ref_val, ref_idx);
     blas_val = 0;
-    for (size_t i = 0;i < NA;i++)
+    for (stride_type i = 0;i < NA;i++)
     {
         blas_val += data[i];
     }
@@ -1348,7 +1348,7 @@ void test_reduce(size_t N)
 
     reduce(REDUCE_SUM_ABS, A, idx_A.data(), ref_val, ref_idx);
     blas_val = 0;
-    for (size_t i = 0;i < NA;i++)
+    for (stride_type i = 0;i < NA;i++)
     {
         blas_val += std::abs(data[i]);
     }
@@ -1357,7 +1357,7 @@ void test_reduce(size_t N)
     reduce(REDUCE_MAX, A, idx_A.data(), ref_val, ref_idx);
     blas_val = data[0];
     blas_idx = 0;
-    for (size_t i = 0;i < NA;i++)
+    for (stride_type i = 0;i < NA;i++)
     {
         if (data[i] > blas_val)
         {
@@ -1370,7 +1370,7 @@ void test_reduce(size_t N)
     reduce(REDUCE_MAX_ABS, A, idx_A.data(), ref_val, ref_idx);
     blas_val = std::abs(data[0]);
     blas_idx = 0;
-    for (size_t i = 0;i < NA;i++)
+    for (stride_type i = 0;i < NA;i++)
     {
         if (std::abs(data[i]) > blas_val)
         {
@@ -1384,7 +1384,7 @@ void test_reduce(size_t N)
     reduce(REDUCE_MIN, A, idx_A.data(), ref_val, ref_idx);
     set(data[0], blas_val);
     blas_idx = 0;
-    for (size_t i = 0;i < NA;i++)
+    for (stride_type i = 0;i < NA;i++)
     {
         if (data[i] < blas_val)
         {
@@ -1397,7 +1397,7 @@ void test_reduce(size_t N)
     reduce(REDUCE_MIN_ABS, A, idx_A.data(), ref_val, ref_idx);
     set(std::abs(data[0]), blas_val);
     blas_idx = 0;
-    for (size_t i = 0;i < NA;i++)
+    for (stride_type i = 0;i < NA;i++)
     {
         if (std::abs(data[i]) < blas_val)
         {
@@ -1410,7 +1410,7 @@ void test_reduce(size_t N)
 
     reduce(REDUCE_NORM_2, A, idx_A.data(), ref_val, ref_idx);
     blas_val = 0;
-    for (size_t i = 0;i < NA;i++)
+    for (stride_type i = 0;i < NA;i++)
     {
         blas_val += norm2(data[i]);
     }
@@ -1420,14 +1420,14 @@ void test_reduce(size_t N)
     A = T(1);
     reduce(REDUCE_SUM, A, idx_A.data(), ref_val, ref_idx);
     blas_val = 1;
-    for (int i = 0;i < A.dimension();i++) blas_val *= A.length(i);
+    for (unsigned i = 0;i < A.dimension();i++) blas_val *= A.length(i);
     passfail("COUNT", ref_val, blas_val);
 }
 
 template <typename T>
-void test(size_t N_in_bytes, int R)
+void test(stride_type N_in_bytes, int R)
 {
-    size_t N = N_in_bytes/sizeof(T);
+    stride_type N = N_in_bytes/sizeof(T);
 
     for (int i = 0;i < R;i++) test_tblis<T>(N);
 
@@ -1446,7 +1446,7 @@ void test(size_t N_in_bytes, int R)
 
 int main(int argc, char **argv)
 {
-    size_t N = 10*1024*1024;
+    stride_type N = 10*1024*1024;
     int R = 10;
     time_t seed = time(NULL);
 
@@ -1476,7 +1476,6 @@ int main(int argc, char **argv)
                 break;
             case '?':
                 ::abort();
-                break;
         }
     }
 

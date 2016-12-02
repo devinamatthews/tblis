@@ -24,7 +24,7 @@ void tblis_matrix_reduce(const tblis_comm* comm, const tblis_config* cfg,
         }
 
         parallelize_if(internal::reduce<T>, comm, get_config(cfg), op, A->m, A->n,
-                       (const T*)A->data, A->rs, A->cs, result->get<T>(), *idx);
+                       static_cast<const T*>(A->data), A->rs, A->cs, result->get<T>(), *idx);
 
         if (A->conj)
         {

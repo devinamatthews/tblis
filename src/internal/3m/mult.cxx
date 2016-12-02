@@ -11,6 +11,7 @@ namespace tblis
 namespace internal
 {
 
+extern MemoryPool BuffersForA, BuffersForB;
 MemoryPool BuffersForA(4096);
 MemoryPool BuffersForB(4096);
 
@@ -46,20 +47,22 @@ void mult(const communicator& comm, const config& cfg,
         std::swap(rs_C, cs_C);
     }
 
-    matrix_view<T> Av({m, k}, (T*)A, {rs_A, cs_A});
-    matrix_view<T> Bv({k, n}, (T*)B, {rs_B, cs_B});
-    matrix_view<T> Cv({m, n},     C, {rs_C, cs_C});
+    matrix_view<T> Av({m, k}, const_cast<T*>(A), {rs_A, cs_A});
+    matrix_view<T> Bv({k, n}, const_cast<T*>(B), {rs_B, cs_B});
+    matrix_view<T> Cv({m, n},                C , {rs_C, cs_C});
 
     GotoGEMM gemm;
 
     int nt = comm.num_threads();
-    auto tc = make_gemm_thread_config(nt, m, n, k);
+    gemm_thread_config tc = make_gemm_thread_config(nt, m, n, k);
     step<0>(gemm).distribute = tc.jc_nt;
     step<3>(gemm).distribute = tc.ic_nt;
     step<5>(gemm).distribute = tc.jr_nt;
     step<6>(gemm).distribute = tc.ir_nt;
 
     gemm(comm, cfg, alpha, Av, Bv, beta, Cv);
+
+    comm.barrier();
 }
 
 #define FOREACH_TYPE(T) \

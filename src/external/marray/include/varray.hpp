@@ -64,11 +64,11 @@ namespace MArray
 
                 if (stride.empty()) return stride;
 
-                int ndim = len.size();
+                auto ndim = len.size();
                 if (layout == ROW_MAJOR)
                 {
                     stride[ndim-1] = 1;
-                    for (unsigned i = ndim-1;i > 0;i--)
+                    for (auto i = ndim;i --> 1;)
                     {
                         stride[i-1] = stride[i]*len[i];
                     }
@@ -303,15 +303,15 @@ namespace MArray
 
                 for (unsigned i = 0;i < newdim;i++)
                 {
-                    int begin = (i == 0 ? 0 : split[i-1]);
-                    int end = (i == newdim-1 ? dimension()-1 : split[i]-1);
+                    unsigned begin = (i == 0 ? 0 : split[i-1]);
+                    unsigned end = (i == newdim-1 ? dimension()-1 : split[i]-1);
                     if (begin > end) continue;
 
                     if (stride[begin] < stride[end])
                     {
                         len_[i] = len[end];
                         stride_[i] = stride[begin];
-                        for (unsigned j = begin;j < end;j++)
+                        for (auto j = begin;j < end;j++)
                         {
                             assert(stride[j+1] == stride[j]*len[j]);
                             len_[i] *= len[j];
@@ -321,7 +321,7 @@ namespace MArray
                     {
                         len_[i] = len[end];
                         stride_[i] = stride[end];
-                        for (unsigned j = begin;j < end;j++)
+                        for (auto j = begin;j < end;j++)
                         {
                             assert(stride[j] == stride[j+1]*len[j+1]);
                             len_[i] *= len[j];
@@ -388,7 +388,7 @@ namespace MArray
             detail::enable_if_t<detail::are_indices_or_slices<Args...>::value &&
                                 !detail::are_convertible<idx_type, Args...>::value,
                                 const_varray_view<T>>
-            operator()(Args&&... args) const
+            operator()(Args&&...) const
             {
                 //TODO
             }
@@ -396,7 +396,7 @@ namespace MArray
             template <typename... Args>
             detail::enable_if_t<detail::are_convertible<idx_type, Args...>::value,
                                 const_reference>
-            operator()(Args&&... args) const
+            operator()(Args&&...) const
             {
                 //TODO
             }
@@ -450,7 +450,7 @@ namespace MArray
 
             unsigned dimension() const
             {
-                return len_.size();
+                return static_cast<unsigned>(len_.size());
             }
             
             void swap(const_varray_view& other)
@@ -964,14 +964,14 @@ namespace MArray
                 std::uninitialized_fill_n(data_, size_, val);
             }
 
-            void reset(const std::vector<idx_type>& len, uninitialized_t u, Layout layout=DEFAULT)
+            void reset(const std::vector<idx_type>& len, uninitialized_t, Layout layout=DEFAULT)
             {
                 reset<idx_type>(len, uninitialized, layout);
             }
 
             template <typename U>
             detail::enable_if_integral_t<U>
-            reset(const std::vector<U>& len, uninitialized_t u, Layout layout=DEFAULT)
+            reset(const std::vector<U>& len, uninitialized_t, Layout layout=DEFAULT)
             {
                 size_ = std::accumulate(len.begin(), len.end(), size_t(1), std::multiplies<size_t>());
                 layout_ = layout;

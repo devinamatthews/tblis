@@ -39,9 +39,9 @@ namespace MArray
         static_assert(std::is_integral<T>::value, "The type must be integral.");
 
         protected:
-            T from;
-            T to;
-            T delta;
+            T from_;
+            T to_;
+            T delta_;
 
             typedef T value_type;
             typedef T size_type;
@@ -50,8 +50,8 @@ namespace MArray
             class iterator : std::iterator<std::random_access_iterator_tag,T>
             {
                 protected:
-                    T val;
-                    T delta;
+                    T val_;
+                    T delta_;
 
                 public:
                     using typename std::iterator<std::random_access_iterator_tag,T>::iterator_category;
@@ -60,121 +60,121 @@ namespace MArray
                     using typename std::iterator<std::random_access_iterator_tag,T>::pointer;
                     using typename std::iterator<std::random_access_iterator_tag,T>::reference;
 
-                    constexpr iterator() : val(0), delta(0) {}
+                    constexpr iterator() : val_(0), delta_(0) {}
 
-                    constexpr iterator(T val, T delta) : val(val), delta(delta) {}
+                    constexpr iterator(T val, T delta) : val_(val), delta_(delta) {}
 
                     bool operator==(const iterator& other)
                     {
-                        return val == other.val && delta == other.delta;
+                        return val_ == other.val_ && delta_ == other.delta_;
                     }
 
                     bool operator!=(const iterator& other)
                     {
-                        return val != other.val || delta != other.delta;
+                        return val_ != other.val_ || delta_ != other.delta_;
                     }
 
                     value_type operator*() const
                     {
-                        return val;
+                        return val_;
                     }
 
                     iterator& operator++()
                     {
-                        val += delta;
+                        val_ += delta_;
                         return *this;
                     }
 
-                    iterator operator++(int x)
+                    iterator operator++(int)
                     {
                         iterator old(*this);
-                        val += delta;
+                        val_ += delta_;
                         return old;
                     }
 
                     iterator& operator--()
                     {
-                        val -= delta;
+                        val_ -= delta_;
                         return *this;
                     }
 
-                    iterator operator--(int x)
+                    iterator operator--(int)
                     {
                         iterator old(*this);
-                        val -= delta;
+                        val_ -= delta_;
                         return old;
                     }
 
                     iterator& operator+=(difference_type n)
                     {
-                        val += n*delta;
+                        val_ += n*delta_;
                         return *this;
                     }
 
                     iterator operator+(difference_type n)
                     {
-                        return iterator(val+n*delta);
+                        return iterator(val_+n*delta_);
                     }
 
                     friend iterator operator+(difference_type n, const iterator& i)
                     {
-                        return iterator(i.val+n*i.delta);
+                        return iterator(i.val_+n*i.delta_);
                     }
 
                     iterator& operator-=(difference_type n)
                     {
-                        val -= n*delta;
+                        val_ -= n*delta_;
                         return *this;
                     }
 
                     iterator operator-(difference_type n)
                     {
-                        return iterator(val-n*delta);
+                        return iterator(val_-n*delta_);
                     }
 
                     difference_type operator-(const iterator& other)
                     {
-                        return val-other.val;
+                        return val_-other.val_;
                     }
 
                     bool operator<(const iterator& other)
                     {
-                        return val < other.val;
+                        return val_ < other.val_;
                     }
 
                     bool operator<=(const iterator& other)
                     {
-                        return val <= other.val;
+                        return val_ <= other.val_;
                     }
 
                     bool operator>(const iterator& other)
                     {
-                        return val > other.val;
+                        return val_ > other.val_;
                     }
 
                     bool operator>=(const iterator& other)
                     {
-                        return val >= other.val;
+                        return val_ >= other.val_;
                     }
 
                     value_type operator[](difference_type n) const
                     {
-                        return val+n*delta;
+                        return val_+n*delta_;
                     }
 
                     friend void swap(iterator& a, iterator& b)
                     {
                         using std::swap;
-                        swap(a.val, b.val);
-                        swap(a.delta, b.delta);
+                        swap(a.val_, b.val_);
+                        swap(a.delta_, b.delta_);
                     }
             };
 
             constexpr range_t()
-            : from(0), to(0), delta(0) {}
+            : from_(0), to_(0), delta_(0) {}
 
             constexpr range_t(T from, T to, T delta)
-            : from(from), to(from+((to-from+delta-1)/delta)*delta), delta(delta) {}
+            : from_(from), to_(from+((to-from+delta-1)/delta)*delta), delta_(delta) {}
 
             range_t(const range_t&) = default;
 
@@ -186,32 +186,32 @@ namespace MArray
 
             size_type size() const
             {
-                return (to-from)/delta;
+                return (to_-from_)/delta_;
             }
 
             iterator begin() const
             {
-                return iterator(from, delta);
+                return iterator(from_, delta_);
             }
 
             iterator end() const
             {
-                return iterator(to, delta);
+                return iterator(to_, delta_);
             }
 
             value_type front() const
             {
-                return from;
+                return from_;
             }
 
             value_type back() const
             {
-                return to-delta;
+                return to_-delta_;
             }
 
             value_type operator[](size_type n) const
             {
-                return from+n*delta;
+                return from_+n*delta_;
             }
 
             operator std::vector<T>() const

@@ -48,21 +48,21 @@ namespace detail
             typedef typename base::reference reference;
             typedef typename base::const_reference const_reference;
 
-            base& array;
-            stride_type idx;
+            base& array_;
+            stride_type idx_;
 
             const_scatter_matrix_ref(const const_scatter_matrix_ref& other) = default;
 
             const_scatter_matrix_ref(const base& array, len_type i)
-            : array(const_cast<base&>(static_cast<const base&>(array))),
-              idx(array.stride_[1] == 0 ? array.scatter_[1][i] : i*array.stride_[1]) {}
+            : array_(const_cast<base&>(static_cast<const base&>(array))),
+              idx_(array.stride_[1] == 0 ? array.scatter_[1][i] : i*array.stride_[1]) {}
 
             const_scatter_matrix_ref& operator=(const const_scatter_matrix_ref&) = delete;
 
         public:
             const_reference operator[](len_type i) const
             {
-                return data()[array.stride_[0] == 0 ? array.scatter_[0][i] : i*array.stride_[0]];
+                return data()[array_.stride_[0] == 0 ? array_.scatter_[0][i] : i*array_.stride_[0]];
             }
 
             const_reference operator()(len_type i) const
@@ -72,7 +72,7 @@ namespace detail
 
             const_pointer data() const
             {
-                return array.data_+idx;
+                return array_.data_+idx_;
             }
     };
 
@@ -96,9 +96,6 @@ namespace detail
             typedef typename base::const_pointer const_pointer;
             typedef typename base::reference reference;
             typedef typename base::const_reference const_reference;
-
-            using parent::array;
-            using parent::idx;
 
             scatter_matrix_ref(const parent& other)
             : parent(other) {}
@@ -153,18 +150,18 @@ namespace detail
             typedef typename base::reference reference;
             typedef typename base::const_reference const_reference;
 
-            base& array;
-            stride_type idx;
-            len_type len;
-            scatter_type cscat;
+            base& array_;
+            stride_type idx_;
+            len_type len_;
+            scatter_type cscat_;
 
             const_scatter_matrix_slice(const const_scatter_matrix_slice& other) = default;
 
             template <typename I>
             const_scatter_matrix_slice(const const_scatter_matrix_view<T>& array, const MArray::range_t<I>& r)
-            : array(const_cast<base&>(static_cast<const base&>(array))),
-              idx(array.stride_[1] == 0 ? array.scatter_[1][r.front()] : r.front()*array.stride_[1]),
-              len(r.size()), cscat(array.stride_[1] == 0 ? array.scatter_[1]+r.front() : nullptr) {}
+            : array_(const_cast<base&>(static_cast<const base&>(array))),
+              idx_(array.stride_[1] == 0 ? array.scatter_[1][r.front()] : r.front()*array.stride_[1]),
+              len_(r.size()), cscat_(array.stride_[1] == 0 ? array.scatter_[1]+r.front() : nullptr) {}
 
             const_scatter_matrix_slice& operator=(const const_scatter_matrix_slice&) = delete;
 
@@ -173,25 +170,25 @@ namespace detail
             template <typename I>
             const_scatter_matrix_view<T> operator[](const MArray::range_t<I>& x) const
             {
-                TBLIS_ASSERT(x.front() <= x.back() && x.front() >= 0 && x.back() <= array.len_[0]);
+                TBLIS_ASSERT(x.front() <= x.back() && x.front() >= 0 && x.back() <= array_.len_[0]);
 
-                if (array.stride_[0] == 0)
+                if (array_.stride_[0] == 0)
                 {
-                    if (array.stride_[1] == 0)
-                        return {x.size(), len, data()+array.scatter_[0][x.front()], array.scatter_[0]+x.front(), cscat};
+                    if (array_.stride_[1] == 0)
+                        return {x.size(), len_, data()+array_.scatter_[0][x.front()], array_.scatter_[0]+x.front(), cscat_};
                     else
-                        return {x.size(), len, data()+array.scatter_[0][x.front()], array.scatter_[0]+x.front(), array.stride_[1]};
+                        return {x.size(), len_, data()+array_.scatter_[0][x.front()], array_.scatter_[0]+x.front(), array_.stride_[1]};
                 }
                 else
                 {
-                    if (array.stride_[1] == 0)
-                        return {x.size(), len, data()+x.front()*array.stride_[0], array.stride_[0], cscat};
+                    if (array_.stride_[1] == 0)
+                        return {x.size(), len_, data()+x.front()*array_.stride_[0], array_.stride_[0], cscat_};
                     else
-                        return {x.size(), len, data()+x.front()*array.stride_[0], array.stride_[0], array.stride_[1]};
+                        return {x.size(), len_, data()+x.front()*array_.stride_[0], array_.stride_[0], array_.stride_[1]};
                 }
             }
 
-            const_scatter_matrix_view<T> operator[](MArray::slice::all_t x) const
+            const_scatter_matrix_view<T> operator[](MArray::slice::all_t) const
             {
                 return *this;
             }
@@ -209,12 +206,12 @@ namespace detail
 
             const_pointer data() const
             {
-                return array.data_+idx;
+                return array_.data_+idx_;
             }
 
             operator const_scatter_matrix_view<T>() const
             {
-                return (*this)[range(array.len_[0])];
+                return (*this)[range(array_.len_[0])];
             }
     };
 
@@ -546,7 +543,7 @@ class const_scatter_matrix_view
             return {*this, x};
         }
 
-        detail::const_scatter_matrix_slice<T> operator[](MArray::slice::all_t x) const
+        detail::const_scatter_matrix_slice<T> operator[](MArray::slice::all_t) const
         {
             return {*this, MArray::range(len_[0])};
         }
@@ -778,6 +775,7 @@ class scatter_matrix_view : protected const_scatter_matrix_view<T>
         void rotate_dim(unsigned dim, stride_type shift) const
         {
             TBLIS_ASSERT(dim < 2);
+            (void)shift;
             abort();
             //TODO
         }

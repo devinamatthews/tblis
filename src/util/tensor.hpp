@@ -21,7 +21,7 @@ struct sort_by_idx_helper
 {
     const label_type* idx;
 
-    sort_by_idx_helper(const label_type* idx) : idx(idx) {}
+    sort_by_idx_helper(const label_type* idx_) : idx(idx_) {}
 
     bool operator()(unsigned i, unsigned j) const
     {
@@ -72,8 +72,8 @@ size_t check_sizes(const T& arg, const Ts&... args)
 template <typename... Strides>
 std::vector<unsigned> sort_by_stride(const Strides&... strides)
 {
-    std::vector<unsigned> idx = MArray::range<unsigned>(check_sizes(strides...));
-    std::sort(idx.begin(), idx.end(), sort_by_stride_helper<sizeof...(Strides)>{{&strides...}});
+    std::vector<unsigned> idx = MArray::range(static_cast<unsigned>(check_sizes(strides...)));
+    std::sort(idx.begin(), idx.end(), sort_by_stride_helper<sizeof...(Strides)>{&strides...});
     return idx;
 }
 
@@ -161,8 +161,8 @@ struct swap_strides_helper
 template <size_t N, typename... Strides>
 struct swap_strides_helper<N, N, Strides...>
 {
-    swap_strides_helper(std::tuple<Strides&...>& strides,
-                        std::tuple<Strides...>& oldstrides) {}
+    swap_strides_helper(std::tuple<Strides&...>&,
+                        std::tuple<Strides...>&) {}
 };
 
 template <typename... Strides>
@@ -177,7 +177,7 @@ struct are_contiguous_helper
 {
     bool operator()(std::tuple<Strides...>& strides,
                     const std::vector<len_type>& lengths,
-                    int i, int im1)
+                    unsigned i, unsigned im1)
     {
         return std::get<I>(strides)[i] == std::get<I>(strides)[im1]*lengths[im1] &&
             are_contiguous_helper<I+1, N, Strides...>()(strides, lengths, i, im1);
@@ -187,9 +187,9 @@ struct are_contiguous_helper
 template <size_t N, typename... Strides>
 struct are_contiguous_helper<N, N, Strides...>
 {
-    bool operator()(std::tuple<Strides...>& strides,
-                    const std::vector<len_type>& lengths,
-                    int i, int im1)
+    bool operator()(std::tuple<Strides...>&,
+                    const std::vector<len_type>&,
+                    unsigned, unsigned)
     {
         return true;
     }
@@ -198,7 +198,7 @@ struct are_contiguous_helper<N, N, Strides...>
 template <typename... Strides>
 bool are_contiguous(std::tuple<Strides...>& strides,
                     const std::vector<len_type>& lengths,
-                    int i, int im1)
+                    unsigned i, unsigned im1)
 {
     return are_contiguous_helper<0, sizeof...(Strides), Strides...>()(strides, lengths, i, im1);
 }
@@ -207,7 +207,7 @@ template <size_t I, size_t N, typename... Strides>
 struct push_back_strides_helper
 {
     push_back_strides_helper(std::tuple<Strides&...>& strides,
-                             std::tuple<Strides...>& oldstrides, int i)
+                             std::tuple<Strides...>& oldstrides, unsigned i)
     {
         std::get<I>(strides).push_back(std::get<I>(oldstrides)[i]);
         push_back_strides_helper<I+1, N, Strides...>(strides, oldstrides, i);
@@ -217,13 +217,13 @@ struct push_back_strides_helper
 template <size_t N, typename... Strides>
 struct push_back_strides_helper<N, N, Strides...>
 {
-    push_back_strides_helper(std::tuple<Strides&...>& strides,
-                             std::tuple<Strides...>& oldstrides, int i) {}
+    push_back_strides_helper(std::tuple<Strides&...>&,
+                             std::tuple<Strides...>&, unsigned) {}
 };
 
 template <typename... Strides>
 void push_back_strides(std::tuple<Strides&...>& strides,
-                       std::tuple<Strides...>& oldstrides, int i)
+                       std::tuple<Strides...>& oldstrides, unsigned i)
 {
     push_back_strides_helper<0, sizeof...(Strides), Strides...>(strides, oldstrides, i);
 }
@@ -246,10 +246,10 @@ struct are_compatible_helper
 template <size_t N, typename... Strides>
 struct are_compatible_helper<N, N, Strides...>
 {
-    bool operator()(const std::vector<len_type>& len_A,
-                    const std::tuple<Strides...>& stride_A,
-                    const std::vector<len_type>& len_B,
-                    const std::tuple<Strides&...>& stride_B)
+    bool operator()(const std::vector<len_type>&,
+                    const std::tuple<Strides...>&,
+                    const std::vector<len_type>&,
+                    const std::tuple<Strides&...>&)
     {
         return true;
     }
@@ -273,7 +273,7 @@ void fold(std::vector<len_type>& lengths, std::vector<label_type>& idx,
 {
     std::tuple<Strides&...> strides(_strides...);
 
-    unsigned ndim = lengths.size();
+    auto ndim = lengths.size();
     auto inds = detail::sort_by_stride(std::get<0>(strides));
 
     std::vector<label_type> oldidx;
@@ -302,7 +302,7 @@ void fold(std::vector<len_type>& lengths, std::vector<label_type>& idx,
                                         lengths, strides));
 }
 
-inline void diagonal(int& ndim,
+inline void diagonal(unsigned& ndim,
                      const len_type* len_in,
                      const stride_type* stride_in,
                      const label_type* idx_in,
@@ -314,7 +314,7 @@ inline void diagonal(int& ndim,
     stride_out.reserve(ndim);
     idx_out.reserve(ndim);
 
-    std::string inds = MArray::range<char>(ndim);
+    std::vector<unsigned> inds = MArray::range(ndim);
     stl_ext::sort(inds, detail::sort_by_idx(idx_in));
 
     unsigned ndim_in = ndim;

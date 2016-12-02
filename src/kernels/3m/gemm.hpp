@@ -215,7 +215,6 @@ void pack_sn_ukr_def(len_type m, len_type k,
                                           : Config::template gemm_nr<T>::def);
     constexpr len_type ME = (Mat == MAT_A ? Config::template gemm_mr<T>::extent
                                           : Config::template gemm_nr<T>::extent);
-    constexpr len_type KR = Config::template gemm_kr<T>::def;
 
     for (len_type p = 0;p < k;p++)
     {
@@ -242,7 +241,6 @@ void pack_ns_ukr_def(len_type m, len_type k,
                                           : Config::template gemm_nr<T>::def);
     constexpr len_type ME = (Mat == MAT_A ? Config::template gemm_mr<T>::extent
                                           : Config::template gemm_nr<T>::extent);
-    constexpr len_type KR = Config::template gemm_kr<T>::def;
 
     for (len_type p = 0;p < k;p++)
     {
@@ -270,7 +268,6 @@ void pack_ss_ukr_def(len_type m, len_type k,
                                           : Config::template gemm_nr<T>::def);
     constexpr len_type ME = (Mat == MAT_A ? Config::template gemm_mr<T>::extent
                                           : Config::template gemm_nr<T>::extent);
-    constexpr len_type KR = Config::template gemm_kr<T>::def;
 
     for (len_type p = 0;p < k;p++)
     {
@@ -356,7 +353,8 @@ void pack_sb_ukr_def(len_type m, len_type k,
                                           : Config::template gemm_nr<T>::def);
     constexpr len_type ME = (Mat == MAT_A ? Config::template gemm_mr<T>::extent
                                           : Config::template gemm_nr<T>::extent);
-    constexpr len_type KR = Config::template gemm_kr<T>::def;
+
+    (void)cbs_a;
 
     for (len_type p = 0;p < k;p++)
     {

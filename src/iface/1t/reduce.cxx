@@ -16,7 +16,7 @@ void tblis_tensor_reduce(const tblis_comm* comm, const tblis_config* cfg,
 {
     TBLIS_ASSERT(A->type == result->type);
 
-    int ndim_A = A->ndim;
+    unsigned ndim_A = A->ndim;
     std::vector<len_type> len_A;
     std::vector<stride_type> stride_A;
     std::vector<label_type> idx_A;
@@ -33,7 +33,7 @@ void tblis_tensor_reduce(const tblis_comm* comm, const tblis_config* cfg,
         }
 
         parallelize_if(internal::reduce<T>, comm, get_config(cfg), op, len_A,
-                       (const T*)A->data, stride_A, result->get<T>(), *idx);
+                       static_cast<const T*>(A->data), stride_A, result->get<T>(), *idx);
 
         if (A->conj)
         {

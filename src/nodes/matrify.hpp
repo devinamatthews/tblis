@@ -205,7 +205,7 @@ struct matrify_and_pack : matrify<Mat, Pool, pack<Mat, Pool, Child>>
 
             comm.broadcast(pack_ptr);
 
-            rscat = convert_and_align<T,stride_type>((T*)pack_ptr + m*n);
+            rscat = convert_and_align<T,stride_type>(static_cast<T*>(pack_ptr) + m*n);
             cscat = rscat+m;
             rbs = cscat+n;
             cbs = rbs+m;

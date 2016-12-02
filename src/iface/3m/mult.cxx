@@ -35,21 +35,21 @@ void tblis_matrix_mult(const tblis_comm* comm, const tblis_config* cfg,
             if (beta == T(0))
             {
                 parallelize_if(internal::set<T>, comm, get_config(cfg), C->m, C->n,
-                               T(0), (T*)C->data, C->rs, C->cs);
+                               T(0), static_cast<T*>(C->data), C->rs, C->cs);
             }
             else
             {
                 parallelize_if(internal::scale<T>, comm, get_config(cfg), C->m, C->n,
-                               beta, C->conj, (T*)C->data, C->rs, C->cs);
+                               beta, C->conj, static_cast<T*>(C->data), C->rs, C->cs);
             }
         }
         else
         {
             parallelize_if(internal::mult<T>, comm, get_config(cfg),
                            C->m, C->n, A->n,
-                           alpha, A->conj, (const T*)A->data, A->rs, A->cs,
-                                  B->conj, (const T*)B->data, B->rs, B->cs,
-                            beta, C->conj,       (T*)C->data, C->rs, C->cs);
+                           alpha, A->conj, static_cast<const T*>(A->data), A->rs, A->cs,
+                                  B->conj, static_cast<const T*>(B->data), B->rs, B->cs,
+                            beta, C->conj,       static_cast<T*>(C->data), C->rs, C->cs);
         }
 
         C->alpha<T>() = T(1);

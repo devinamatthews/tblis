@@ -12,12 +12,22 @@ void reduce(const communicator& comm, const config& cfg, reduce_t op, len_type n
     len_type n_min, n_max;
     std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(n);
 
-    reduce_init(op, result, idx);
+    T local_result;
+    len_type local_idx;
+    reduce_init(op, local_result, local_idx);
 
     cfg.reduce_ukr.call<T>(op, n_max-n_min,
-                           A + n_min*inc_A, inc_A, result, idx);
+                           A + n_min*inc_A, inc_A, local_result, local_idx);
 
-    reduce(comm, op, result, idx);
+    reduce(comm, op, local_result, local_idx);
+
+    if (comm.master())
+    {
+        result = local_result;
+        idx = local_idx;
+    }
+
+    comm.barrier();
 }
 
 #define FOREACH_TYPE(T) \

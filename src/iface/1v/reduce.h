@@ -34,7 +34,7 @@ void reduce(reduce_t op, const_row_view<T> A, T& result, len_type& idx)
 }
 
 template <typename T>
-void reduce(single_t s, reduce_t op, const_row_view<T> A,
+void reduce(single_t, reduce_t op, const_row_view<T> A,
             T& result, len_type& idx)
 {
     tblis_vector A_s(A);
@@ -62,10 +62,10 @@ std::pair<T,len_type> reduce(reduce_t op, const_row_view<T> A)
 }
 
 template <typename T>
-std::pair<T,len_type> reduce(single_t s, reduce_t op, const_row_view<T> A)
+std::pair<T,len_type> reduce(single_t, reduce_t op, const_row_view<T> A)
 {
     std::pair<T,len_type> result;
-    reduce(s, op, A, result.first, result.second);
+    reduce(single, op, A, result.first, result.second);
     return result;
 }
 

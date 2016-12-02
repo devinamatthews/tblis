@@ -32,7 +32,7 @@ void reduce(reduce_t op, const_tensor_view<T> A, const label_type* idx_A, T& res
 }
 
 template <typename T>
-void reduce(single_t s, reduce_t op, const_tensor_view<T> A, const label_type* idx_A,
+void reduce(single_t, reduce_t op, const_tensor_view<T> A, const label_type* idx_A,
             T& result, len_type& idx)
 {
     tblis_tensor A_s(A);
@@ -60,10 +60,10 @@ std::pair<T,len_type> reduce(reduce_t op, const_tensor_view<T> A, const label_ty
 }
 
 template <typename T>
-std::pair<T,len_type> reduce(single_t s, reduce_t op, const_tensor_view<T> A, const label_type* idx_A)
+std::pair<T,len_type> reduce(single_t, reduce_t op, const_tensor_view<T> A, const label_type* idx_A)
 {
     std::pair<T,len_type> result;
-    reduce(s, op, A, idx_A, result.first, result.second);
+    reduce(single, op, A, idx_A, result.first, result.second);
     return result;
 }
 

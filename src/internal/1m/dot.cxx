@@ -23,7 +23,7 @@ void dot(const communicator& comm, const config& cfg, len_type m, len_type n,
     std::tie(m_min, m_max, std::ignore,
              n_min, n_max, std::ignore) = comm.distribute_over_threads_2d(m, n);
 
-    result = T();
+    T local_result = T();
 
     for (len_type j = n_min;j < n_max;j++)
     {
@@ -33,7 +33,10 @@ void dot(const communicator& comm, const config& cfg, len_type m, len_type n,
     }
 
     len_type dummy;
-    reduce(comm, REDUCE_SUM, result, dummy);
+    reduce(comm, REDUCE_SUM, local_result, dummy);
+    if (comm.master()) result = local_result;
+
+    comm.barrier();
 }
 
 #define FOREACH_TYPE(T) \

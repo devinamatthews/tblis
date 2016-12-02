@@ -25,6 +25,8 @@ void add(const communicator& comm, const config& cfg, len_type n,
                             alpha, conj_A, A + n_min*inc_A, inc_A,
                              beta, conj_B, B + n_min*inc_B, inc_B);
     }
+
+    comm.barrier();
 }
 
 #define FOREACH_TYPE(T) \

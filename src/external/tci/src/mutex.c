@@ -13,6 +13,7 @@ int tci_mutex_init(tci_mutex_t* mutex)
 
 int tci_mutex_destroy(tci_mutex_t* mutex)
 {
+    (void)mutex;
     return 0;
 }
 
@@ -77,6 +78,7 @@ int tci_mutex_init(tci_mutex_t* mutex)
 
 int tci_mutex_destroy(tci_mutex_t* mutex)
 {
+    (void)mutex;
     return 0;
 }
 

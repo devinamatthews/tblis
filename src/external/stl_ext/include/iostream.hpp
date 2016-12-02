@@ -46,7 +46,7 @@ struct print_tuple_helper<1, Args...>
 template <typename... Args>
 struct print_tuple_helper<0, Args...>
 {
-    print_tuple_helper(std::ostream& os, const std::tuple<Args...>& t) {}
+    print_tuple_helper(std::ostream&, const std::tuple<Args...>&) {}
 };
 
 class ios_flag_saver
@@ -71,60 +71,60 @@ struct printos_helper
     std::string fmt;
     std::tuple<Args&&...> args;
 
-    printos_helper(const std::string& fmt, Args&&... args)
-    : fmt(fmt), args(std::forward<Args>(args)...) {}
+    printos_helper(const std::string& fmt_, Args&&... args_)
+    : fmt(fmt_), args(std::forward<Args>(args_)...) {}
 
-    printos_helper(const std::string& fmt, std::tuple<Args&&...>&& args)
-    : fmt(fmt), args(std::move(args)) {}
+    printos_helper(const std::string& fmt_, std::tuple<Args&&...>&& args_)
+    : fmt(fmt_), args(std::move(args_)) {}
 };
 
 template <typename T>
 constexpr enable_if_arithmetic_t<T,bool> is_negative(const T& val) { return val < 0; }
 
 template <typename T>
-constexpr enable_if_not_arithmetic_t<T,bool> is_negative(const T& val) { return false; }
+constexpr enable_if_not_arithmetic_t<T,bool> is_negative(const T&) { return false; }
 
 template <typename T>
 constexpr enable_if_arithmetic_t<T,bool> is_nonzero(const T& val) { return val != 0; }
 
 template <typename T>
-constexpr enable_if_not_arithmetic_t<T,bool> is_nonzero(const T& val) { return false; }
+constexpr enable_if_not_arithmetic_t<T,bool> is_nonzero(const T&) { return false; }
 
 template <typename T>
 enable_if_t<is_integral<T>::value || is_pointer <T>::value>
 print_integer(std::ostream& os, const T& val, bool is_signed)
 {
     if (is_signed)
-        os << (intmax_t)val;
+        os << static_cast<intmax_t>(val);
     else
-        os << (uintmax_t)val;
+        os << static_cast<uintmax_t>(val);
 }
 
 template <typename T>
 enable_if_t<!is_integral<T>::value && !is_pointer <T>::value>
-print_integer(std::ostream& os, const T& val, bool is_signed) {}
+print_integer(std::ostream&, const T&, bool) {}
 
 template <typename T>
 enable_if_arithmetic_t<T>
 print_float(std::ostream& os, const T& val)
 {
-    os << (double)val;
+    os << static_cast<double>(val);
 }
 
 template <typename T>
 enable_if_not_arithmetic_t<T>
-print_float(std::ostream& os, const T& val) {}
+print_float(std::ostream&, const T&) {}
 
 template <typename T>
 enable_if_integral_t<T>
 print_char(std::ostream& os, const T& val)
 {
-    os << (char)val;
+    os << static_cast<char>(val);
 }
 
 template <typename T>
 enable_if_not_integral_t<T>
-print_char(std::ostream& os, const T& val) {}
+print_char(std::ostream&, const T&) {}
 
 inline size_t string_size(const char* s)
 {
@@ -168,7 +168,7 @@ template <typename T>
 enable_if_t<!is_same<decay_t<T>,char*>::value &&
             !is_same<decay_t<T>,const char*>::value &&
             !is_same<decay_t<T>,std::string>::value>
-print_string(std::ostream& os, const T& val, int width, int prec, bool left) {}
+print_string(std::ostream&, const T&, int, int, bool) {}
 
 class printf_conversion
 {
@@ -185,7 +185,7 @@ class printf_conversion
     public:
         printf_conversion(std::ostream& os, const std::string& fmt, std::string::const_iterator& i)
         : _left(false), _zero(false), _sign(false), _alt(false), _space(false),
-          _prec(-1), _width(0), _conv(0)
+          _width(0), _prec(-1), _conv(0)
         {
             std::string::const_iterator end = fmt.end();
 
@@ -247,7 +247,7 @@ class printf_conversion
             {
                 do
                 {
-                    _width = _width*10 + (int)(*i-'0');
+                    _width = _width*10 + (*i-'0');
                     if (++i == end) throw std::logic_error("Invalid conversion");
                 }
                 while (*i >= '0' && *i <= '9');
@@ -267,7 +267,7 @@ class printf_conversion
                 }
                 while (*i >= '0' && *i <= '9')
                 {
-                    _prec = _prec*10 + (int)(*i-'0');
+                    _prec = _prec*10 + (*i-'0');
                     if (++i == end) throw std::logic_error("Invalid conversion");
                 }
                 if (_prec < 0) _prec = 0;
@@ -539,8 +539,8 @@ namespace detail
         ios_flag_saver flags(os);
 
         double l = log10(fabs(p.val));
-        int d = (int)(l < 0 ? l-1+1e-15 : l);
-        if (abs(d) > 2)
+        auto d = lrint(l < 0 ? l-1 : l);
+        if (std::abs(d) > 2)
         {
             os << std::scientific << std::setprecision(p.sigfigs) << p.val;
         }
@@ -565,7 +565,7 @@ namespace detail
 template <typename T>
 detail::sigfig_printer<T> printToAccuracy(const T& value, double accuracy)
 {
-    int sigfigs = (int)(ceil(-log10(accuracy))+0.5);
+    int sigfigs = static_cast<int>(lrint(ceil(-log10(accuracy))));
     return detail::sigfig_printer<T>{value, sigfigs};
 }
 

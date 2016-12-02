@@ -18,13 +18,13 @@ void tblis_tensor_dot(const tblis_comm* comm, const tblis_config* cfg,
     TBLIS_ASSERT(A->type == B->type);
     TBLIS_ASSERT(A->type == result->type);
 
-    int ndim_A = A->ndim;
+    unsigned ndim_A = A->ndim;
     std::vector<len_type> len_A;
     std::vector<stride_type> stride_A;
     std::vector<label_type> idx_A;
     diagonal(ndim_A, A->len, A->stride, idx_A_, len_A, stride_A, idx_A);
 
-    int ndim_B = B->ndim;
+    unsigned ndim_B = B->ndim;
     std::vector<len_type> len_B;
     std::vector<stride_type> stride_B;
     std::vector<label_type> idx_B;
@@ -52,8 +52,8 @@ void tblis_tensor_dot(const tblis_comm* comm, const tblis_config* cfg,
     {
         parallelize_if(internal::dot<T>, comm, get_config(cfg),
                        len_A_only, len_B_only, len_AB,
-                       A->conj, (const T*)A->data, stride_A_only, stride_A_AB,
-                       B->conj, (const T*)B->data, stride_B_only, stride_B_AB,
+                       A->conj, static_cast<const T*>(A->data), stride_A_only, stride_A_AB,
+                       B->conj, static_cast<const T*>(B->data), stride_B_only, stride_B_AB,
                        result->get<T>());
 
         result->get<T>() *= A->alpha<T>()*B->alpha<T>();

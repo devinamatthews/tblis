@@ -69,18 +69,18 @@ namespace MArray
 
             bool operator==(Layout other)
             {
-                return type == other.type;
+                return type_ == other.type_;
             }
 
             bool operator!=(Layout other)
             {
-                return type != other.type;
+                return type_ != other.type_;
             }
 
         protected:
-            int type;
+            int type_;
 
-            constexpr explicit Layout(int type) : type(type) {}
+            constexpr explicit Layout(int type) : type_(type) {}
     };
 
     class RowMajorLayout : public Layout
@@ -328,7 +328,7 @@ namespace MArray
                       size_t Size3=sizeof...(Args3)>
             enable_if_t<Size1 != 0 && Size2 == 0 && Size3 == 0,
                         typename std::result_of<Func()>::type>
-            operator()(Func&& func, Args1&&... args1) const
+            operator()(Func&& func, Args1&&...) const
             {
                 return func();
             }
@@ -350,7 +350,7 @@ namespace MArray
                       size_t Size3=sizeof...(Args3)>
             enable_if_t<Size1 != 0 && Size2 != 0 && Size3 == 0,
                         typename std::result_of<Func(Args2&&...)>::type>
-            operator()(Func&& func, Args1&&... args1, Args2&&... args2) const
+            operator()(Func&& func, Args1&&..., Args2&&... args2) const
             {
                 return func(std::forward<Args2>(args2)...);
             }
@@ -361,7 +361,7 @@ namespace MArray
                       size_t Size3=sizeof...(Args3)>
             enable_if_t<Size1 == 0 && Size2 == 0 && Size3 != 0,
                         typename std::result_of<Func()>::type>
-            operator()(Func&& func, Args3&&... args3) const
+            operator()(Func&& func, Args3&&...) const
             {
                 return func();
             }
@@ -372,7 +372,7 @@ namespace MArray
                       size_t Size3=sizeof...(Args3)>
             enable_if_t<Size1 != 0 && Size2 == 0 && Size3 != 0,
                         typename std::result_of<Func()>::type>
-            operator()(Func&& func, Args1&&... args1, Args3&&... args3) const
+            operator()(Func&& func, Args1&&..., Args3&&...) const
             {
                 return func();
             }
@@ -383,7 +383,7 @@ namespace MArray
                       size_t Size3=sizeof...(Args3)>
             enable_if_t<Size1 == 0 && Size2 != 0 && Size3 != 0,
                         typename std::result_of<Func(Args2&&...)>::type>
-            operator()(Func&& func, Args2&&... args2, Args3&&... args3) const
+            operator()(Func&& func, Args2&&... args2, Args3&&...) const
             {
                 return func(std::forward<Args2>(args2)...);
             }
@@ -394,7 +394,7 @@ namespace MArray
                       size_t Size3=sizeof...(Args3)>
             enable_if_t<Size1 != 0 && Size2 != 0 && Size3 != 0,
                         typename std::result_of<Func(Args2&&...)>::type>
-            operator()(Func&& func, Args1&&... args1, Args2&&... args2, Args3&&... args3) const
+            operator()(Func&& func, Args1&&..., Args2&&... args2, Args3&&...) const
             {
                 return func(std::forward<Args2>(args2)...);
             }
@@ -504,7 +504,7 @@ namespace MArray
         {
             static std::array<T, sizeof...(Args)> apply(Args&&... args)
             {
-                return {{(T)std::forward<Args>(args)...}};
+                return {{static_cast<T>(std::forward<Args>(args))...}};
             }
         };
 
@@ -516,7 +516,7 @@ namespace MArray
         {
             static std::vector<T> apply(Args&&... args)
             {
-                return {{(T)std::forward<Args>(args)...}};
+                return {{static_cast<T>(std::forward<Args>(args))...}};
             }
         };
 
@@ -655,13 +655,13 @@ namespace MArray
                 typedef typename base::reference reference;
                 typedef typename base::const_reference const_reference;
 
-                base& array;
-                stride_type idx;
+                base& array_;
+                stride_type idx_;
 
                 const_marray_ref(const const_marray_ref& other) = default;
 
                 const_marray_ref(const marray_view<T, ndim>& array, stride_type idx, idx_type i)
-                : array(const_cast<base&>(array)), idx(idx+i*array.stride_[dim-2]) {}
+                : array_(const_cast<base&>(array)), idx_(idx+i*array.stride_[dim-2]) {}
 
                 const_marray_ref& operator=(const const_marray_ref&) = delete;
 
@@ -670,44 +670,44 @@ namespace MArray
                 typename std::enable_if<diff==0, const T&>::type
                 operator[](idx_type i) const
                 {
-                    return data()[i*array.stride_[0]];
+                    return data()[i*array_.stride_[0]];
                 }
 
                 template <int diff=ndim-dim>
                 typename std::enable_if<diff!=0, const_marray_ref<T, ndim, dim+1>>::type
                 operator[](idx_type i) const
                 {
-                    assert(i >= 0 && i < array.len_[dim-1]);
-                    return {array, idx, i};
+                    assert(i >= 0 && i < array_.len_[dim-1]);
+                    return {array_, idx_, i};
                 }
 
                 template <typename I, int diff=ndim-dim>
                 typename std::enable_if<diff==0, const_marray_view<T, 1>>::type
                 operator[](const range_t<I>& x) const
                 {
-                    assert(x.front() <= x.back() && x.front() >= 0 && x.back() <= array.len_[ndim-1]);
-                    return {x.size(), data()+array.stride_[ndim-1]*x.front(), array.stride_[ndim-1]};
+                    assert(x.front() <= x.back() && x.front() >= 0 && x.back() <= array_.len_[ndim-1]);
+                    return {x.size(), data()+array_.stride_[ndim-1]*x.front(), array_.stride_[ndim-1]};
                 }
 
                 template <typename I, int diff=ndim-dim>
                 typename std::enable_if<diff!=0, const_marray_slice<T, ndim, dim+1, 1>>::type
                 operator[](const range_t<I>& x) const
                 {
-                    return {array, idx, {}, {}, x};
+                    return {array_, idx_, {}, {}, x};
                 }
 
                 template <int diff=ndim-dim>
                 typename std::enable_if<diff==0, const_marray_view<T, 1>>::type
-                operator[](slice::all_t x) const
+                operator[](slice::all_t) const
                 {
                     return *this;
                 }
 
                 template <int diff=ndim-dim>
                 typename std::enable_if<diff!=0, const_marray_slice<T, ndim, dim+1, 1>>::type
-                operator[](slice::all_t x) const
+                operator[](slice::all_t) const
                 {
-                    return {array, idx, {}, {}, range(idx_type(), array.len_[dim-1])};
+                    return {array_, idx_, {}, {}, range(idx_type(), array_.len_[dim-1])};
                 }
 
                 template <typename Arg, typename=
@@ -730,15 +730,15 @@ namespace MArray
 
                 const_pointer data() const
                 {
-                    return array.data_+idx;
+                    return array_.data_+idx_;
                 }
 
                 operator const_marray_view<T, ndim-dim+1>() const
                 {
                     std::array<idx_type, ndim-dim+1> len;
                     std::array<stride_type, ndim-dim+1> stride;
-                    std::copy_n(array.len_.begin()+dim-1, ndim-dim+1, len.begin());
-                    std::copy_n(array.stride_.begin()+dim-1, ndim-dim+1, stride.begin());
+                    std::copy_n(array_.len_.begin()+dim-1, ndim-dim+1, len.begin());
+                    std::copy_n(array_.stride_.begin()+dim-1, ndim-dim+1, stride.begin());
                     return {len, data(), stride};
                 }
         };
@@ -765,9 +765,6 @@ namespace MArray
                 typedef typename base::const_pointer const_pointer;
                 typedef typename base::reference reference;
                 typedef typename base::const_reference const_reference;
-
-                using parent::array;
-                using parent::idx;
 
                 marray_ref(const parent& other)
                 : parent(other) {}
@@ -839,16 +836,16 @@ namespace MArray
 
                 template <int diff=ndim-dim>
                 typename std::enable_if<diff==0, marray_view<T, 1>>::type
-                operator[](slice::all_t x)
+                operator[](slice::all_t)
                 {
-                    return parent::operator[](x);
+                    return parent::operator[](slice::all);
                 }
 
                 template <int diff=ndim-dim>
                 typename std::enable_if<diff!=0, marray_slice<T, ndim, dim+1, 1>>::type
-                operator[](slice::all_t x)
+                operator[](slice::all_t)
                 {
-                    return parent::operator[](x);
+                    return parent::operator[](slice::all);
                 }
 
                 using parent::operator();
@@ -929,28 +926,28 @@ namespace MArray
                 typedef typename base::reference reference;
                 typedef typename base::const_reference const_reference;
 
-                base& array;
-                stride_type idx;
-                std::array<unsigned, newdim> dims;
-                std::array<idx_type, newdim> lens;
+                base& array_;
+                stride_type idx_;
+                std::array<unsigned, newdim> dims_;
+                std::array<idx_type, newdim> lens_;
 
                 const_marray_slice(const const_marray_slice& other) = default;
 
                 const_marray_slice(const marray_view<T, ndim>& array, stride_type idx,
                                    const std::array<unsigned,newdim>& dims,
                                    const std::array<idx_type,newdim>& lens, idx_type i)
-                : array(const_cast<base&>(array)), idx(idx+i*array.stride_[dim-2]), dims(dims), lens(lens) {}
+                : array_(const_cast<base&>(array)), idx_(idx+i*array.stride_[dim-2]), dims_(dims), lens_(lens) {}
 
                 template <typename I>
                 const_marray_slice(const marray_view<T, ndim>& array, stride_type idx,
                                    const std::array<unsigned,newdim-1>& dims,
                                    const std::array<idx_type,newdim-1>& lens, const range_t<I>& range_)
-                : array(const_cast<base&>(array)), idx(idx+array.stride_[dim-2]*range_.front())
+                : array_(const_cast<base&>(array)), idx_(idx+array.stride_[dim-2]*range_.front())
                 {
-                    std::copy(dims.begin(), dims.end(), this->dims.begin());
-                    this->dims.back() = dim-2;
-                    std::copy(lens.begin(), lens.end(), this->lens.begin());
-                    this->lens.back() = range_.size();
+                    std::copy(dims.begin(), dims.end(), dims_.begin());
+                    dims_.back() = dim-2;
+                    std::copy(lens.begin(), lens.end(), lens_.begin());
+                    lens_.back() = range_.size();
                 }
 
                 const_marray_slice& operator=(const const_marray_slice&) = delete;
@@ -960,60 +957,60 @@ namespace MArray
                 typename std::enable_if<diff==0, const_marray_view<T, newdim>>::type
                 operator[](idx_type i) const
                 {
-                    assert(i >= 0 && i < array.len_[ndim-1]);
+                    assert(i >= 0 && i < array_.len_[ndim-1]);
                     std::array<stride_type, newdim> strides;
-                    for (unsigned i = 0;i < newdim;i++)
+                    for (unsigned j = 0;j < newdim;j++)
                     {
-                        strides[i] = array.stride_[dims[i]];
+                        strides[j] = array_.stride_[dims_[j]];
                     }
-                    return {lens, data()+i*array.stride_[ndim-1], strides};
+                    return {lens_, data()+i*array_.stride_[ndim-1], strides};
                 }
 
                 template <int diff=ndim-dim>
                 typename std::enable_if<diff!=0, const_marray_slice<T, ndim, dim+1, newdim>>::type
                 operator[](idx_type i) const
                 {
-                    assert(i >= 0 && i < array.len_[dim-1]);
-                    return {array, idx, dims, lens, i};
+                    assert(i >= 0 && i < array_.len_[dim-1]);
+                    return {array_, idx_, dims_, lens_, i};
                 }
 
                 template <typename I, int diff=ndim-dim>
                 typename std::enable_if<diff==0, const_marray_view<T, newdim+1>>::type
                 operator[](const range_t<I>& x) const
                 {
-                    assert(x.front() <= x.back() && x.front() >= 0 && x.back() <= array.len_[ndim-1]);
+                    assert(x.front() <= x.back() && x.front() >= 0 && x.back() <= array_.len_[ndim-1]);
                     std::array<idx_type, newdim+1> newlens;
                     std::array<stride_type, newdim+1> strides;
                     for (unsigned i = 0;i < newdim;i++)
                     {
-                        newlens[i] = lens[i];
-                        strides[i] = array.stride_[dims[i]];
+                        newlens[i] = lens_[i];
+                        strides[i] = array_.stride_[dims_[i]];
                     }
                     newlens[newdim] = x.size();
-                    strides[newdim] = array.stride_[ndim-1];
-                    return {newlens, data()+array.stride_[ndim-1]*x.front(), strides};
+                    strides[newdim] = array_.stride_[ndim-1];
+                    return {newlens, data()+array_.stride_[ndim-1]*x.front(), strides};
                 }
 
                 template <typename I, int diff=ndim-dim>
                 typename std::enable_if<diff!=0, const_marray_slice<T, ndim, dim+1, newdim+1>>::type
                 operator[](const range_t<I>& x) const
                 {
-                    assert(x.front() <= x.back() && x.front() >= 0 && x.back() <= array.len_[dim-1]);
-                    return {array, idx, dims, lens, x};
+                    assert(x.front() <= x.back() && x.front() >= 0 && x.back() <= array_.len_[dim-1]);
+                    return {array_, idx_, dims_, lens_, x};
                 }
 
                 template <int diff=ndim-dim>
                 typename std::enable_if<diff==0, const_marray_view<T, newdim+1>>::type
-                operator[](slice::all_t x) const
+                operator[](slice::all_t) const
                 {
                     return *this;
                 }
 
                 template <int diff=ndim-dim>
                 typename std::enable_if<diff!=0, const_marray_slice<T, ndim, dim+1, newdim+1>>::type
-                operator[](slice::all_t x) const
+                operator[](slice::all_t) const
                 {
-                    return {array, idx, dims, lens, range(idx_type(), array.len_[dim-1])};
+                    return {array_, idx_, dims_, lens_, range(idx_type(), array_.len_[dim-1])};
                 }
 
                 template <typename Arg, typename=
@@ -1036,7 +1033,7 @@ namespace MArray
 
                 const_pointer data() const
                 {
-                    return array.data_+idx;
+                    return array_.data_+idx_;
                 }
 
                 operator const_marray_view<T, ndim+newdim-dim+1>() const
@@ -1045,11 +1042,11 @@ namespace MArray
                     std::array<stride_type, ndim+newdim-dim+1> stride;
                     for (unsigned i = 0;i < newdim;i++)
                     {
-                        len[i] = lens[i];
-                        stride[i] = array.stride_[dims[i]];
+                        len[i] = lens_[i];
+                        stride[i] = array_.stride_[dims_[i]];
                     }
-                    std::copy_n(array.len_.begin()+dim-1, ndim-dim+1, len.begin()+newdim);
-                    std::copy_n(array.stride_.begin()+dim-1, ndim-dim+1, stride.begin()+newdim);
+                    std::copy_n(array_.len_.begin()+dim-1, ndim-dim+1, len.begin()+newdim);
+                    std::copy_n(array_.stride_.begin()+dim-1, ndim-dim+1, stride.begin()+newdim);
                     return {len, data(), stride};
                 }
         };
@@ -1076,11 +1073,6 @@ namespace MArray
                 typedef typename base::const_pointer const_pointer;
                 typedef typename base::reference reference;
                 typedef typename base::const_reference const_reference;
-
-                using parent::array;
-                using parent::idx;
-                using parent::dims;
-                using parent::lens;
 
                 marray_slice(const parent& other)
                 : parent(other) {}
@@ -1168,16 +1160,16 @@ namespace MArray
 
                 template <int diff=ndim-dim>
                 typename std::enable_if<diff==0, marray_view<T, newdim+1>>::type
-                operator[](slice::all_t x)
+                operator[](slice::all_t)
                 {
-                    return {parent::operator[](x)};
+                    return {parent::operator[](slice::all)};
                 }
 
                 template <int diff=ndim-dim>
                 typename std::enable_if<diff!=0, marray_slice<T, ndim, dim+1, newdim+1>>::type
-                operator[](slice::all_t x)
+                operator[](slice::all_t)
                 {
-                    return parent::operator[](x);
+                    return parent::operator[](slice::all);
                 }
 
                 using parent::operator();
@@ -1721,7 +1713,7 @@ namespace MArray
                     {
                         newlen[i] = len_[end];
                         newstride[i] = stride_[begin];
-                        for (unsigned j = begin;j < end;j++)
+                        for (int j = begin;j < end;j++)
                         {
                             assert(stride_[j+1] == stride_[j]*len_[j]);
                             newlen[i] *= len_[j];
@@ -1731,7 +1723,7 @@ namespace MArray
                     {
                         newlen[i] = len_[end];
                         newstride[i] = stride_[end];
-                        for (unsigned j = begin;j < end;j++)
+                        for (int j = begin;j < end;j++)
                         {
                             assert(stride_[j] == stride_[j+1]*len_[j+1]);
                             newlen[i] *= len_[j];
@@ -1845,14 +1837,14 @@ namespace MArray
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_==1, const_marray_view<T, 1>>::type
-            operator[](slice::all_t x) const
+            operator[](slice::all_t) const
             {
                 return *this;
             }
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<(ndim_>1), detail::const_marray_slice<T, ndim, 2, 1>>::type
-            operator[](slice::all_t x) const
+            operator[](slice::all_t) const
             {
                 return {*this, 0, {}, {}, range(len_[0])};
             }
@@ -2387,16 +2379,16 @@ namespace MArray
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_==1, marray_view<T, 1>>::type
-            operator[](slice::all_t x) const
+            operator[](slice::all_t) const
             {
-                return base::operator[](x);
+                return base::operator[](slice::all);
             }
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<(ndim_>1), detail::marray_slice<T, ndim, 2, 1>>::type
-            operator[](slice::all_t x) const
+            operator[](slice::all_t) const
             {
-                return base::operator[](x);
+                return base::operator[](slice::all);
             }
 
             template <typename Arg, typename=
@@ -2532,16 +2524,16 @@ namespace MArray
                 reset(len, val, layout);
             }
 
-            marray(const std::array<idx_type, ndim>& len, uninitialized_t u, Layout layout=DEFAULT)
+            marray(const std::array<idx_type, ndim>& len, uninitialized_t, Layout layout=DEFAULT)
             {
-                reset(len, u, layout);
+                reset(len, uninitialized, layout);
             }
 
             template <typename U, typename=
                 detail::enable_if_integral_t<U>>
-            marray(const std::array<U, ndim>& len, uninitialized_t u, Layout layout=DEFAULT)
+            marray(const std::array<U, ndim>& len, uninitialized_t, Layout layout=DEFAULT)
             {
-                reset(len, u, layout);
+                reset(len, uninitialized, layout);
             }
 
             /*
@@ -2693,14 +2685,14 @@ namespace MArray
             }
             */
 
-            void reset(const std::array<idx_type, ndim>& len, uninitialized_t u, Layout layout=DEFAULT)
+            void reset(const std::array<idx_type, ndim>& len, uninitialized_t, Layout layout=DEFAULT)
             {
                 reset<idx_type>(len, uninitialized, layout);
             }
 
             template <typename U>
             detail::enable_if_integral_t<U>
-            reset(const std::array<U, ndim>& len, uninitialized_t u, Layout layout=DEFAULT)
+            reset(const std::array<U, ndim>& len, uninitialized_t, Layout layout=DEFAULT)
             {
                 size_ = std::accumulate(len.begin(), len.end(), size_t(1), std::multiplies<size_t>());
                 layout_ = layout;
@@ -3088,30 +3080,30 @@ namespace MArray
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_==1, marray_view<T, 1>>::type
-            operator[](slice::all_t x)
+            operator[](slice::all_t)
             {
-                return base::operator[](x);
+                return base::operator[](slice::all);
             }
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<ndim_==1, const_marray_view<T, 1>>::type
-            operator[](slice::all_t x) const
+            operator[](slice::all_t) const
             {
-                return base::operator[](x);
+                return base::operator[](slice::all);
             }
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<(ndim_>1), detail::marray_slice<T, ndim, 2, 1>>::type
-            operator[](slice::all_t x)
+            operator[](slice::all_t)
             {
-                return base::operator[](x);
+                return base::operator[](slice::all);
             }
 
             template <unsigned ndim_=ndim>
             typename std::enable_if<(ndim_>1), detail::const_marray_slice<T, ndim, 2, 1>>::type
-            operator[](slice::all_t x) const
+            operator[](slice::all_t) const
             {
-                return base::operator[](x);
+                return base::operator[](slice::all);
             }
 
             template <unsigned ndim_=ndim>
@@ -3248,25 +3240,25 @@ namespace MArray
     }
 
     template <typename T>
-    const_matrix_view<T> operator^(const const_matrix_view<T>& m, transpose_t t)
+    const_matrix_view<T> operator^(const const_matrix_view<T>& m, transpose_t)
     {
         return m.transposed();
     }
 
     template <typename T>
-    matrix_view<T> operator^(const matrix_view<T>& m, transpose_t t)
+    matrix_view<T> operator^(const matrix_view<T>& m, transpose_t)
     {
         return m.transposed();
     }
 
     template <typename T, typename Alloc>
-    const_matrix_view<T> operator^(const matrix<T, Alloc>& m, transpose_t t)
+    const_matrix_view<T> operator^(const matrix<T, Alloc>& m, transpose_t)
     {
         return m.transposed();
     }
 
     template <typename T, typename Alloc>
-    matrix_view<T> operator^(matrix<T, Alloc>& m, transpose_t t)
+    matrix_view<T> operator^(matrix<T, Alloc>& m, transpose_t)
     {
         return m.transposed();
     }

@@ -11,8 +11,18 @@
 
 #if TCI_USE_OPENMP_THREADS
 
-int tci_parallelize_int(tci_thread_func_t func, void* payload, int nthread, int arity)
+int tci_parallelize(tci_thread_func_t func, void* payload,
+                    unsigned nthread, unsigned arity)
 {
+    if (nthread <= 1)
+    {
+        tci_comm_t comm;
+        tci_comm_init_single(&comm);
+        func(&comm, payload);
+        tci_comm_destroy(&comm);
+        return 0;
+    }
+
     tci_context_t* context;
     int ret = tci_context_init(&context, nthread, arity);
     if (ret != 0) return ret;
@@ -20,7 +30,8 @@ int tci_parallelize_int(tci_thread_func_t func, void* payload, int nthread, int 
     #pragma omp parallel num_threads(nthread)
     {
         tci_comm_t comm;
-        tci_comm_init(&comm, context, nthread, omp_get_thread_num(), 1, 0);
+        tci_comm_init(&comm, context,
+                      nthread, (unsigned)omp_get_thread_num(), 1, 0);
         func(&comm, payload);
         #pragma omp barrier
         tci_comm_destroy(&comm);
@@ -33,24 +44,34 @@ int tci_parallelize_int(tci_thread_func_t func, void* payload, int nthread, int 
 
 typedef struct
 {
-    tci_thread_func_t func
+    tci_thread_func_t func;
     void* payload;
     tci_context_t* context;
-    int tid;
+    unsigned nthread, tid;
 } tci_thread_data_t;
 
 void* tci_run_thread(void* raw_data)
 {
     tci_thread_data_t* data = (tci_thread_data_t*)raw_data;
     tci_comm_t comm;
-    tci_comm_init(&comm, data->context, data->tid, 1, 0);
+    tci_comm_init(&comm, data->context, data->nthread, data->tid, 1, 0);
     data->func(&comm, data->payload);
     tci_comm_destroy(&comm);
     return NULL;
 }
 
-int tci_parallelize_int(tci_thread_func_t func, void* payload, int nthread, int arity)
+int tci_parallelize(tci_thread_func_t func, void* payload,
+                    unsigned nthread, unsigned arity)
 {
+    if (nthread <= 1)
+    {
+        tci_comm_t comm;
+        tci_comm_init_single(&comm);
+        func(&comm, payload);
+        tci_comm_destroy(&comm);
+        return 0;
+    }
+
     tci_context_t* context;
     int ret = tci_context_init(&context, nthread, arity);
     if (ret != 0) return ret;
@@ -58,27 +79,28 @@ int tci_parallelize_int(tci_thread_func_t func, void* payload, int nthread, int 
     pthread_t threads[nthread];
     tci_thread_data_t data[nthread];
 
-    for (int i = 1;i < nthread;i++)
+    for (unsigned i = 1;i < nthread;i++)
     {
         data[i].func = func;
         data[i].payload = payload;
         data[i].context = context;
+        data[i].nthread = nthread;
         data[i].tid = i;
 
         int ret = pthread_create(&threads[i], NULL, tci_run_thread, &data[i]);
         if (ret != 0)
         {
-            for (int j = i-1;j >= 0;j--) pthread_join(&threads[j], NULL);
+            for (unsigned j = i-1;j >= 0;j--) pthread_join(threads[j], NULL);
         }
     }
 
     tci_comm_t comm0;
-    tci_comm_init(&comm0, context, 0, 1, 0);
+    tci_comm_init(&comm0, context, nthread, 0, 1, 0);
     func(&comm0, payload);
 
-    for (int i = 1;i < nthread;i++)
+    for (unsigned i = 1;i < nthread;i++)
     {
-        pthread_join(&threads[i], NULL);
+        pthread_join(threads[i], NULL);
     }
 
     return tci_comm_destroy(&comm0);
@@ -86,7 +108,8 @@ int tci_parallelize_int(tci_thread_func_t func, void* payload, int nthread, int 
 
 #else
 
-int tci_parallelize_int(tci_thread_func_t func, void* payload, int nthread, int arity)
+int tci_parallelize(tci_thread_func_t func, void* payload,
+                    unsigned nthread, unsigned arity)
 {
     tci_comm_t comm;
     tci_comm_init_single(&comm);
@@ -97,30 +120,15 @@ int tci_parallelize_int(tci_thread_func_t func, void* payload, int nthread, int 
 
 #endif
 
-int tci_parallelize(tci_thread_func_t func, void* payload, int nthread, int arity)
-{
-    if (nthread > 1)
-    {
-        return tci_parallelize_int(func, payload, nthread, arity);
-    }
-    else
-    {
-        tci_comm_t comm;
-        tci_comm_init_single(&comm);
-        func(&comm, payload);
-        tci_comm_destroy(&comm);
-        return 0;
-    }
-}
-
-void tci_prime_factorization(int n, tci_prime_factors_t* factors)
+void tci_prime_factorization(unsigned n, tci_prime_factors_t* factors)
 {
     factors->n = n;
-    factors->sqrt_n = (int)sqrt(n);
+    // all this is necessary to appease the warning gods
+    factors->sqrt_n = (unsigned)lrint(floor(sqrt(n)));
     factors->f = 2;
 }
 
-int tci_next_prime_factor(tci_prime_factors_t* factors)
+unsigned tci_next_prime_factor(tci_prime_factors_t* factors)
 {
     for (;factors->f <= factors->sqrt_n;)
     {
@@ -173,13 +181,17 @@ int tci_next_prime_factor(tci_prime_factors_t* factors)
 
     if (factors->n != 1)
     {
-        int tmp = factors->n;
+        unsigned tmp = factors->n;
         factors->n = 1;
         return tmp;
     }
 
     return 1;
 }
+
+#define TCI_USE_EXPENSIVE_PARTITION 0
+
+#if TCI_USE_EXPENSIVE_PARTITION
 
 /*
  * Assumes base > 0 and power >= 0.
@@ -197,19 +209,28 @@ static int ipow(int base, int power)
     return p;
 }
 
-void tci_partition_2x2(int nthread, int64_t work1, int64_t work2, int* nt1, int* nt2)
-{
-    *nt1 = (work1 >= work2 ? nthread : 1);
-    *nt2 = (work1 <  work2 ? nthread : 1);
+#endif
 
-    if (nthread < 4) return;
+void tci_partition_2x2(unsigned nthread, uint64_t work1, uint64_t work2,
+                       unsigned* nt1, unsigned* nt2)
+{
+    *nt1 = *nt2 = 1;
+
+    if (nthread < 4)
+    {
+        if (work1 >= work2)
+            *nt1 = nthread;
+        else
+            *nt2 = nthread;
+        return;
+    }
 
     tci_prime_factors_t factors;
     tci_prime_factorization(nthread, &factors);
 
-    #if 1
+    #if !TCI_USE_EXPENSIVE_PARTITION
 
-    int f;
+    unsigned f;
     while ((f = tci_next_prime_factor(&factors)) > 1)
     {
         if (work1 > work2)

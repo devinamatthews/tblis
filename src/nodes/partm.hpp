@@ -28,7 +28,7 @@ struct partition
         const len_type M_max  = M.max<T>(); // Equal to M_def for register block sizes
         const len_type M_iota = M.iota<T>(); // Equal to the corresponding register block size
         const len_type M_ext  = M.extent<T>(); // Equal to M_def for cache block sizes
-        const len_type M_over  = M_max-M_def;
+        const len_type M_over = M_max-M_def;
 
         TBLIS_ASSERT(M_ext == M_def);
 
@@ -54,6 +54,7 @@ struct partition
 
         if (!ganged)
         {
+            //printf("distributing %d ways\n", distribute);
             subcomm = comm.gang(TCI_EVENLY, distribute);
             ganged = true;
         }
@@ -61,6 +62,11 @@ struct partition
         len_type m_first, m_last;
         std::tie(m_first, m_last, std::ignore) =
             subcomm.distribute_over_gangs(std::min(m_u, m_v), M_iota);
+
+        //printf("thread %d/%d in gang %d/%d got %ld-%ld/%ld\n",
+        //       subcomm.thread_num(), subcomm.num_threads(),
+        //       subcomm.gang_num(), subcomm.num_gangs(),
+        //       m_first, m_last, m_u);
 
         len_type m_off = m_first;
         len_type m_len = m_last-m_first;

@@ -33,7 +33,7 @@ void dot(const_matrix_view<T> A, const_matrix_view<T> B, T& result)
 }
 
 template <typename T>
-void dot(single_t s, const_matrix_view<T> A, const_matrix_view<T> B, T& result)
+void dot(single_t, const_matrix_view<T> A, const_matrix_view<T> B, T& result)
 {
     tblis_matrix A_s(A);
     tblis_matrix B_s(B);
@@ -61,10 +61,10 @@ T dot(const_matrix_view<T> A, const_matrix_view<T> B)
 }
 
 template <typename T>
-T dot(single_t s, const_matrix_view<T> A, const_matrix_view<T> B)
+T dot(single_t, const_matrix_view<T> A, const_matrix_view<T> B)
 {
     T result;
-    dot(s, A, B, result);
+    dot(single, A, B, result);
     return result;
 }
 

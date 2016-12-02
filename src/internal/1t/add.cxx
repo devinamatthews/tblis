@@ -41,6 +41,8 @@ void add(const communicator& comm, const config& cfg,
             comm.distribute_over_threads_2d(len0, n);
 
         iter_AB.position(n_min, A, B);
+        A += m_min*stride_A0;
+        B += m_min*stride_B0;
 
         if (beta == T(0))
         {
@@ -94,6 +96,8 @@ void add(const communicator& comm, const config& cfg,
             ))
         }
     }
+
+    comm.barrier();
 }
 
 #define FOREACH_TYPE(T) \

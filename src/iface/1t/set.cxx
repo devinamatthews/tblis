@@ -15,7 +15,7 @@ void tblis_tensor_set(const tblis_comm* comm, const tblis_config* cfg,
 {
     TBLIS_ASSERT(alpha->type == A->type);
 
-    int ndim_A = A->ndim;
+    unsigned ndim_A = A->ndim;
     std::vector<len_type> len_A;
     std::vector<stride_type> stride_A;
     std::vector<label_type> idx_A;
@@ -26,7 +26,7 @@ void tblis_tensor_set(const tblis_comm* comm, const tblis_config* cfg,
     TBLIS_WITH_TYPE_AS(A->type, T,
     {
         parallelize_if(internal::set<T>, comm, get_config(cfg), len_A,
-                       alpha->get<T>(), (T*)A->data, stride_A);
+                       alpha->get<T>(), static_cast<T*>(A->data), stride_A);
 
         A->alpha<T>() = T(1);
         A->conj = false;

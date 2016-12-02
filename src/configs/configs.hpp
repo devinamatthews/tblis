@@ -144,7 +144,7 @@ struct config
       trans_copy_ukr(typename Traits::template trans_copy_ukr<float>()),
 
       _trans_row_major{Traits::template trans_row_major<   float>::value,
-                       Traits::template trans_row_major<   float>::value,
+                       Traits::template trans_row_major<  double>::value,
                        Traits::template trans_row_major<scomplex>::value,
                        Traits::template trans_row_major<dcomplex>::value},
 
@@ -158,7 +158,7 @@ struct config
       gemm_ukr(typename Traits::template gemm_ukr<float>()),
 
       _gemm_row_major{Traits::template gemm_row_major<   float>::value,
-                      Traits::template gemm_row_major<   float>::value,
+                      Traits::template gemm_row_major<  double>::value,
                       Traits::template gemm_row_major<scomplex>::value,
                       Traits::template gemm_row_major<dcomplex>::value},
 

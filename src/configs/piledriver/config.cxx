@@ -4,7 +4,7 @@
 namespace tblis
 {
 
-TBLIS_CONFIG_CHECK(piledriver, check)
+int piledriver_check()
 {
     int family, model, features;
     int vendor = get_cpu_type(family, model, features);

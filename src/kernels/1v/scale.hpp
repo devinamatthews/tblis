@@ -13,7 +13,7 @@ using scale_ukr_t =
     void (*)(len_type n,
              T alpha, bool conj_A, T* A, stride_type inc_A);
 
-template <typename T>
+template <typename Config, typename T>
 void scale_ukr_def(len_type n,
                    T alpha, bool conj_A, T* A, stride_type inc_A)
 {

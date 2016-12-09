@@ -69,37 +69,7 @@ void knl_packm_8xk(len_type m, len_type k,
     }
 }
 
-TBLIS_CONFIG_CHECK(knl_d30x8_knc, check)
-{
-    int family, model, features;
-    int vendor = get_cpu_type(family, model, features);
-
-    if (vendor != VENDOR_INTEL ||
-        !check_features(features, FEATURE_AVX|
-                                  FEATURE_AVX2|
-                                  FEATURE_FMA3|
-                                  FEATURE_AVX512F|
-                                  FEATURE_AVX512PF)) return -1;
-
-    return 4;
-}
-
-TBLIS_CONFIG_CHECK(knl_d30x8, check)
-{
-    int family, model, features;
-    int vendor = get_cpu_type(family, model, features);
-
-    if (vendor != VENDOR_INTEL ||
-        !check_features(features, FEATURE_AVX|
-                                  FEATURE_AVX2|
-                                  FEATURE_FMA3|
-                                  FEATURE_AVX512F|
-                                  FEATURE_AVX512PF)) return -1;
-
-    return 4;
-}
-
-TBLIS_CONFIG_CHECK(knl_d24x8, check)
+int knl_check()
 {
     int family, model, features;
     int vendor = get_cpu_type(family, model, features);

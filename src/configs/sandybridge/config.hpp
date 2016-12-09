@@ -11,35 +11,24 @@ extern "C" tblis::gemm_ukr_func<tblis::dcomplex> bli_zgemm_asm_4x4;
 namespace tblis
 {
 
-TBLIS_CONFIG(sandybridge);
+extern int sandybridge_check();
 
-TBLIS_CONFIG_UKR   (sandybridge, float, gemm, bli_sgemm_asm_8x8);
-TBLIS_CONFIG_BS_DEF(sandybridge, float, gemm, mc, 128);
-TBLIS_CONFIG_BS_DEF(sandybridge, float, gemm, kc, 384);
-TBLIS_CONFIG_BS_DEF(sandybridge, float, gemm, nc, 4096);
-TBLIS_CONFIG_BS_DEF(sandybridge, float, gemm, mr, 8);
-TBLIS_CONFIG_BS_DEF(sandybridge, float, gemm, nr, 8);
+TBLIS_BEGIN_CONFIG(sandybridge)
 
-TBLIS_CONFIG_UKR   (sandybridge, double, gemm, bli_dgemm_asm_8x4);
-TBLIS_CONFIG_BS_DEF(sandybridge, double, gemm, mc, 96);
-TBLIS_CONFIG_BS_DEF(sandybridge, double, gemm, kc, 256);
-TBLIS_CONFIG_BS_DEF(sandybridge, double, gemm, nc, 4096);
-TBLIS_CONFIG_BS_DEF(sandybridge, double, gemm, mr, 8);
-TBLIS_CONFIG_BS_DEF(sandybridge, double, gemm, nr, 4);
+TBLIS_CONFIG_GEMM_MR(   8,    8,    8,    4)
+TBLIS_CONFIG_GEMM_NR(   8,    4,    4,    4)
+TBLIS_CONFIG_GEMM_MC( 128,   96,   96,   64)
+TBLIS_CONFIG_GEMM_NC(4096, 4096, 4096, 4096)
+TBLIS_CONFIG_GEMM_KC( 384,  256,  256,  192)
 
-TBLIS_CONFIG_UKR   (sandybridge, scomplex, gemm, bli_cgemm_asm_8x4);
-TBLIS_CONFIG_BS_DEF(sandybridge, scomplex, gemm, mc, 96);
-TBLIS_CONFIG_BS_DEF(sandybridge, scomplex, gemm, kc, 256);
-TBLIS_CONFIG_BS_DEF(sandybridge, scomplex, gemm, nc, 4096);
-TBLIS_CONFIG_BS_DEF(sandybridge, scomplex, gemm, mr, 8);
-TBLIS_CONFIG_BS_DEF(sandybridge, scomplex, gemm, nr, 4);
+TBLIS_CONFIG_GEMM_UKR(bli_sgemm_asm_8x8,
+                      bli_dgemm_asm_8x4,
+                      bli_cgemm_asm_8x4,
+                      bli_zgemm_asm_4x4)
 
-TBLIS_CONFIG_UKR   (sandybridge, dcomplex, gemm, bli_zgemm_asm_4x4);
-TBLIS_CONFIG_BS_DEF(sandybridge, dcomplex, gemm, mc, 64);
-TBLIS_CONFIG_BS_DEF(sandybridge, dcomplex, gemm, kc, 192);
-TBLIS_CONFIG_BS_DEF(sandybridge, dcomplex, gemm, nc, 4096);
-TBLIS_CONFIG_BS_DEF(sandybridge, dcomplex, gemm, mr, 4);
-TBLIS_CONFIG_BS_DEF(sandybridge, dcomplex, gemm, nr, 4);
+TBLIS_CONFIG_CHECK(sandybridge_check)
+
+TBLIS_END_CONFIG
 
 }
 

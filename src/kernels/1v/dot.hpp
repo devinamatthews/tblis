@@ -14,7 +14,7 @@ using dot_ukr_t =
              bool conj_A, const T* A, stride_type inc_A,
              bool conj_B, const T* B, stride_type inc_B, T& value);
 
-template <typename T>
+template <typename Config, typename T>
 void dot_ukr_def(len_type n,
                  bool conj_A, const T* TBLIS_RESTRICT A, stride_type inc_A,
                  bool conj_B, const T* TBLIS_RESTRICT B, stride_type inc_B, T& value)

@@ -14,7 +14,7 @@ using add_ukr_t =
              T alpha, bool conj_A, const T* A, stride_type inc_A,
              T  beta, bool conj_B,       T* B, stride_type inc_B);
 
-template <typename T>
+template <typename Config, typename T>
 void add_ukr_def(len_type n,
                  T alpha, bool conj_A, const T* TBLIS_RESTRICT A, stride_type inc_A,
                  T  beta, bool conj_B,       T* TBLIS_RESTRICT B, stride_type inc_B)

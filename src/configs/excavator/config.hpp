@@ -14,35 +14,24 @@ extern "C" tblis::gemm_ukr_func<tblis::dcomplex> bli_zgemm_asm_2x2;
 namespace tblis
 {
 
-TBLIS_CONFIG(excavator);
+extern int excavator_check();
 
-TBLIS_CONFIG_UKR   (excavator, float, gemm, bli_sgemm_asm_16x3);
-TBLIS_CONFIG_BS_DEF(excavator, float, gemm, mc, 528);
-TBLIS_CONFIG_BS_DEF(excavator, float, gemm, kc, 256);
-TBLIS_CONFIG_BS_DEF(excavator, float, gemm, nc, 8400);
-TBLIS_CONFIG_BS_DEF(excavator, float, gemm, mr, 16);
-TBLIS_CONFIG_BS_DEF(excavator, float, gemm, nr, 3);
+TBLIS_BEGIN_CONFIG(excavator)
 
-TBLIS_CONFIG_UKR   (excavator, double, gemm, bli_dgemm_asm_8x3);
-TBLIS_CONFIG_BS_DEF(excavator, double, gemm, mc, 264);
-TBLIS_CONFIG_BS_DEF(excavator, double, gemm, kc, 256);
-TBLIS_CONFIG_BS_DEF(excavator, double, gemm, nc, 8400);
-TBLIS_CONFIG_BS_DEF(excavator, double, gemm, mr, 8);
-TBLIS_CONFIG_BS_DEF(excavator, double, gemm, nr, 3);
+TBLIS_CONFIG_GEMM_MR(  16,    8,    4,    2)
+TBLIS_CONFIG_GEMM_NR(   3,    3,    2,    2)
+TBLIS_CONFIG_GEMM_MC( 528,  264,  264,  100)
+TBLIS_CONFIG_GEMM_NC(8400, 8400, 8400, 8400)
+TBLIS_CONFIG_GEMM_KC( 256,  256,  256,  320)
 
-TBLIS_CONFIG_UKR   (excavator, scomplex, gemm, bli_cgemm_asm_4x2);
-TBLIS_CONFIG_BS_DEF(excavator, scomplex, gemm, mc, 264);
-TBLIS_CONFIG_BS_DEF(excavator, scomplex, gemm, kc, 256);
-TBLIS_CONFIG_BS_DEF(excavator, scomplex, gemm, nc, 8400);
-TBLIS_CONFIG_BS_DEF(excavator, scomplex, gemm, mr, 4);
-TBLIS_CONFIG_BS_DEF(excavator, scomplex, gemm, nr, 2);
+TBLIS_CONFIG_GEMM_UKR(bli_sgemm_asm_16x3,
+                      bli_dgemm_asm_8x3,
+                      bli_cgemm_asm_4x2,
+                      bli_zgemm_asm_2x2)
 
-TBLIS_CONFIG_UKR   (excavator, dcomplex, gemm, bli_zgemm_asm_2x2);
-TBLIS_CONFIG_BS_DEF(excavator, dcomplex, gemm, mc, 100);
-TBLIS_CONFIG_BS_DEF(excavator, dcomplex, gemm, kc, 320);
-TBLIS_CONFIG_BS_DEF(excavator, dcomplex, gemm, nc, 8400);
-TBLIS_CONFIG_BS_DEF(excavator, dcomplex, gemm, mr, 2);
-TBLIS_CONFIG_BS_DEF(excavator, dcomplex, gemm, nr, 2);
+TBLIS_CONFIG_CHECK(excavator_check)
+
+TBLIS_END_CONFIG
 
 }
 

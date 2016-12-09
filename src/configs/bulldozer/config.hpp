@@ -11,35 +11,24 @@ extern "C" tblis::gemm_ukr_func<tblis::dcomplex> bli_zgemm_asm_4x4_fma4;
 namespace tblis
 {
 
-TBLIS_CONFIG(bulldozer);
+extern int bulldozer_check();
 
-TBLIS_CONFIG_UKR   (bulldozer, float, gemm, bli_sgemm_asm_8x8_fma4);
-TBLIS_CONFIG_BS_DEF(bulldozer, float, gemm, mc, 128);
-TBLIS_CONFIG_BS_DEF(bulldozer, float, gemm, kc, 384);
-TBLIS_CONFIG_BS_DEF(bulldozer, float, gemm, nc, 4096);
-TBLIS_CONFIG_BS_DEF(bulldozer, float, gemm, mr, 8);
-TBLIS_CONFIG_BS_DEF(bulldozer, float, gemm, nr, 8);
+TBLIS_BEGIN_CONFIG(bulldozer)
 
-TBLIS_CONFIG_UKR   (bulldozer, double, gemm, bli_dgemm_asm_4x6_fma4);
-TBLIS_CONFIG_BS_DEF(bulldozer, double, gemm, mc, 1080);
-TBLIS_CONFIG_BS_DEF(bulldozer, double, gemm, kc, 120);
-TBLIS_CONFIG_BS_DEF(bulldozer, double, gemm, nc, 8400);
-TBLIS_CONFIG_BS_DEF(bulldozer, double, gemm, mr, 4);
-TBLIS_CONFIG_BS_DEF(bulldozer, double, gemm, nr, 6);
+TBLIS_CONFIG_GEMM_MR(   8,    4,    8,    4)
+TBLIS_CONFIG_GEMM_NR(   8,    6,    4,    4)
+TBLIS_CONFIG_GEMM_MC( 128, 1080,   96,   64)
+TBLIS_CONFIG_GEMM_NC(4096, 8400, 4096, 4096)
+TBLIS_CONFIG_GEMM_KC( 384,  120,  256,  192)
 
-TBLIS_CONFIG_UKR   (bulldozer, scomplex, gemm, bli_cgemm_asm_8x4_fma4);
-TBLIS_CONFIG_BS_DEF(bulldozer, scomplex, gemm, mc, 96);
-TBLIS_CONFIG_BS_DEF(bulldozer, scomplex, gemm, kc, 256);
-TBLIS_CONFIG_BS_DEF(bulldozer, scomplex, gemm, nc, 4096);
-TBLIS_CONFIG_BS_DEF(bulldozer, scomplex, gemm, mr, 8);
-TBLIS_CONFIG_BS_DEF(bulldozer, scomplex, gemm, nr, 4);
+TBLIS_CONFIG_GEMM_UKR(bli_sgemm_asm_8x8_fma4,
+                      bli_dgemm_asm_4x6_fma4,
+                      bli_cgemm_asm_8x4_fma4,
+                      bli_zgemm_asm_4x4_fma4)
 
-TBLIS_CONFIG_UKR   (bulldozer, dcomplex, gemm, bli_zgemm_asm_4x4_fma4);
-TBLIS_CONFIG_BS_DEF(bulldozer, dcomplex, gemm, mc, 64);
-TBLIS_CONFIG_BS_DEF(bulldozer, dcomplex, gemm, kc, 192);
-TBLIS_CONFIG_BS_DEF(bulldozer, dcomplex, gemm, nc, 4096);
-TBLIS_CONFIG_BS_DEF(bulldozer, dcomplex, gemm, mr, 4);
-TBLIS_CONFIG_BS_DEF(bulldozer, dcomplex, gemm, nr, 4);
+TBLIS_CONFIG_CHECK(bulldozer_check)
+
+TBLIS_END_CONFIG
 
 }
 

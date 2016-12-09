@@ -13,7 +13,7 @@ using set_ukr_t =
     void (*)(len_type n,
              T alpha, T* A, stride_type inc_A);
 
-template <typename T>
+template <typename Config, typename T>
 void set_ukr_def(len_type n,
                  T alpha, T* A, stride_type inc_A)
 {

@@ -14,7 +14,7 @@ using copy_ukr_t =
              T alpha, bool conj_A, const T* A, stride_type inc_A,
                                          T* B, stride_type inc_B);
 
-template <typename T>
+template <typename Config, typename T>
 void copy_ukr_def(len_type n,
                   T alpha, bool conj_A, const T* TBLIS_RESTRICT A, stride_type inc_A,
                                               T* TBLIS_RESTRICT B, stride_type inc_B)

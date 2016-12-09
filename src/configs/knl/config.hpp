@@ -15,49 +15,72 @@ extern pack_nn_ukr_func<double> knl_packm_30xk;
 extern pack_nn_ukr_func<double> knl_packm_24xk;
 extern pack_nn_ukr_func<double> knl_packm_8xk;
 
-TBLIS_CONFIG(knl_d30x8_knc);
+extern int knl_check();
 
-TBLIS_CONFIG_UKR          (knl_d30x8_knc, float, gemm, bli_sgemm_opt_30x16_knc);
-TBLIS_CONFIG_BS_DEF_MAX   (knl_d30x8_knc, float, gemm, mc, 240, 300);
-TBLIS_CONFIG_BS_DEF_MAX   (knl_d30x8_knc, float, gemm, kc, 240, 300);
-TBLIS_CONFIG_BS_DEF       (knl_d30x8_knc, float, gemm, nc, 14400);
-TBLIS_CONFIG_BS_DEF_EXTENT(knl_d30x8_knc, float, gemm, mr, 30, 32);
-TBLIS_CONFIG_BS_DEF       (knl_d30x8_knc, float, gemm, nr, 16);
-TBLIS_CONFIG_ROW_MAJOR    (knl_d30x8_knc, float, gemm);
+TBLIS_BEGIN_CONFIG(knl_d30x8_knc)
 
-TBLIS_CONFIG_UKR          (knl_d30x8_knc, double, gemm, bli_dgemm_opt_30x8_knc);
-TBLIS_CONFIG_BS_DEF_MAX   (knl_d30x8_knc, double, gemm, mc, 120, 150);
-TBLIS_CONFIG_BS_DEF_MAX   (knl_d30x8_knc, double, gemm, kc, 240, 300);
-TBLIS_CONFIG_BS_DEF       (knl_d30x8_knc, double, gemm, nc, 14400);
-TBLIS_CONFIG_BS_DEF_EXTENT(knl_d30x8_knc, double, gemm, mr, 30, 32);
-TBLIS_CONFIG_BS_DEF       (knl_d30x8_knc, double, gemm, nr, 8);
-TBLIS_CONFIG_ROW_MAJOR    (knl_d30x8_knc, double, gemm);
+    TBLIS_CONFIG_GEMM_MR_EXTENT(   30,    30, _, _,
+                                   32,    32, _, _)
+    TBLIS_CONFIG_GEMM_NR       (   16,     8, _, _)
+    TBLIS_CONFIG_GEMM_MC_MAX   (  240,   120, _, _,
+                                  300,   150, _, _)
+    TBLIS_CONFIG_GEMM_NC       (14400, 14400, _, _)
+    TBLIS_CONFIG_GEMM_KC_MAX   (  240,   240, _, _,
+                                  300,   300, _, _)
 
-TBLIS_CONFIG(knl_d30x8);
+    TBLIS_CONFIG_GEMM_UKR(bli_sgemm_opt_30x16_knc,
+                          bli_dgemm_opt_30x8_knc,
+                          _,
+                          _)
 
-TBLIS_CONFIG_UKR          (knl_d30x8, double, gemm, bli_dgemm_opt_30x8);
-TBLIS_CONFIG_BS_DEF_MAX   (knl_d30x8, double, gemm, mc, 120, 150);
-TBLIS_CONFIG_BS_DEF_MAX   (knl_d30x8, double, gemm, kc, 240, 300);
-TBLIS_CONFIG_BS_DEF       (knl_d30x8, double, gemm, nc, 14400);
-TBLIS_CONFIG_BS_DEF_EXTENT(knl_d30x8, double, gemm, mr, 30, 32);
-TBLIS_CONFIG_BS_DEF       (knl_d30x8, double, gemm, nr, 8);
-TBLIS_CONFIG_ROW_MAJOR    (knl_d30x8, double, gemm);
-TBLIS_CONFIG_UKR          (knl_d30x8, double, pack_nn_mr, knl_packm_30xk);
-TBLIS_CONFIG_UKR          (knl_d30x8, double, pack_nn_nr, knl_packm_8xk);
-TBLIS_CONFIG_BS_DEF       (knl_d30x8, double, gemm, kr, 8);
+    TBLIS_CONFIG_GEMM_ROW_MAJOR(true, true, _, _)
 
-TBLIS_CONFIG(knl_d24x8);
+    TBLIS_CONFIG_CHECK(knl_check)
 
-TBLIS_CONFIG_UKR       (knl_d24x8, double, gemm, bli_dgemm_opt_24x8);
-TBLIS_CONFIG_BS_DEF_MAX(knl_d24x8, double, gemm, mc, 120, 150);
-TBLIS_CONFIG_BS_DEF_MAX(knl_d24x8, double, gemm, kc, 336, 420);
-TBLIS_CONFIG_BS_DEF    (knl_d24x8, double, gemm, nc, 14400);
-TBLIS_CONFIG_BS_DEF    (knl_d24x8, double, gemm, mr, 24);
-TBLIS_CONFIG_BS_DEF    (knl_d24x8, double, gemm, nr, 8);
-TBLIS_CONFIG_ROW_MAJOR (knl_d24x8, double, gemm);
-TBLIS_CONFIG_UKR       (knl_d24x8, double, pack_nn_mr, knl_packm_24xk);
-TBLIS_CONFIG_UKR       (knl_d24x8, double, pack_nn_nr, knl_packm_8xk);
-TBLIS_CONFIG_BS_DEF    (knl_d24x8, double, gemm, kr, 8);
+TBLIS_END_CONFIG
+
+TBLIS_BEGIN_CONFIG(knl_d30x8)
+
+    TBLIS_CONFIG_GEMM_MR_EXTENT(_,    30, _, _,
+                                _,    32, _, _)
+    TBLIS_CONFIG_GEMM_NR       (_,     8, _, _)
+    TBLIS_CONFIG_GEMM_MC_MAX   (_,   120, _, _,
+                                _,   150, _, _)
+    TBLIS_CONFIG_GEMM_NC       (_, 14400, _, _)
+    TBLIS_CONFIG_GEMM_KC_MAX   (_,   240, _, _,
+                                _,   300, _, _)
+
+    TBLIS_CONFIG_GEMM_UKR(_, bli_dgemm_opt_30x8, _, _)
+
+    TBLIS_CONFIG_PACK_NN_MR_UKR(_, knl_packm_30xk, _, _)
+    TBLIS_CONFIG_PACK_NN_NR_UKR(_, knl_packm_8xk , _, _)
+
+    TBLIS_CONFIG_GEMM_ROW_MAJOR(_, true, _, _)
+
+    TBLIS_CONFIG_CHECK(knl_check)
+
+TBLIS_END_CONFIG
+
+TBLIS_BEGIN_CONFIG(knl_d24x8)
+
+    TBLIS_CONFIG_GEMM_MR    (_,    24, _, _)
+    TBLIS_CONFIG_GEMM_NR    (_,     8, _, _)
+    TBLIS_CONFIG_GEMM_MC_MAX(_,   120, _, _,
+                             _,   150, _, _)
+    TBLIS_CONFIG_GEMM_NC    (_, 14400, _, _)
+    TBLIS_CONFIG_GEMM_KC_MAX(_,   336, _, _,
+                             _,   420, _, _)
+
+    TBLIS_CONFIG_GEMM_UKR(_, bli_dgemm_opt_24x8, _, _)
+
+    TBLIS_CONFIG_PACK_NN_MR_UKR(_, knl_packm_24xk, _, _)
+    TBLIS_CONFIG_PACK_NN_NR_UKR(_, knl_packm_8xk , _, _)
+
+    TBLIS_CONFIG_GEMM_ROW_MAJOR(_, true, _, _)
+
+    TBLIS_CONFIG_CHECK(knl_check)
+
+TBLIS_END_CONFIG
 
 typedef knl_d24x8_config knl_config;
 

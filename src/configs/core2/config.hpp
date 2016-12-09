@@ -11,29 +11,24 @@ extern "C" tblis::gemm_ukr_func<tblis::dcomplex> bli_zgemm_asm_2x2;
 namespace tblis
 {
 
-TBLIS_CONFIG(core2);
+extern int core2_check();
 
-TBLIS_CONFIG_UKR   (core2, float, gemm, bli_sgemm_asm_8x4);
-TBLIS_CONFIG_BS_DEF(core2, float, gemm, mc, 768);
-TBLIS_CONFIG_BS_DEF(core2, float, gemm, kc, 384);
-TBLIS_CONFIG_BS_DEF(core2, float, gemm, nc, 4096);
-TBLIS_CONFIG_BS_DEF(core2, float, gemm, mr, 8);
-TBLIS_CONFIG_BS_DEF(core2, float, gemm, nr, 4);
+TBLIS_BEGIN_CONFIG(core2)
 
-TBLIS_CONFIG_UKR   (core2, double, gemm, bli_dgemm_asm_4x4);
-TBLIS_CONFIG_BS_DEF(core2, double, gemm, mc, 384);
-TBLIS_CONFIG_BS_DEF(core2, double, gemm, kc, 384);
-TBLIS_CONFIG_BS_DEF(core2, double, gemm, nc, 4096);
-TBLIS_CONFIG_BS_DEF(core2, double, gemm, mr, 4);
-TBLIS_CONFIG_BS_DEF(core2, double, gemm, nr, 4);
+TBLIS_CONFIG_GEMM_MR(   8,    4, 4, 2)
+TBLIS_CONFIG_GEMM_NR(   4,    4, 2, 2)
+TBLIS_CONFIG_GEMM_MC( 768,  384, _, _)
+TBLIS_CONFIG_GEMM_NC(4096, 4096, _, _)
+TBLIS_CONFIG_GEMM_KC( 384,  384, _, _)
 
-TBLIS_CONFIG_UKR   (core2, scomplex, gemm, bli_cgemm_asm_4x2);
-TBLIS_CONFIG_BS_DEF(core2, scomplex, gemm, mr, 4);
-TBLIS_CONFIG_BS_DEF(core2, scomplex, gemm, nr, 2);
+TBLIS_CONFIG_GEMM_UKR(bli_sgemm_asm_8x4,
+                      bli_dgemm_asm_4x4,
+                      bli_cgemm_asm_4x2,
+                      bli_zgemm_asm_2x2)
 
-TBLIS_CONFIG_UKR   (core2, dcomplex, gemm, bli_zgemm_asm_2x2);
-TBLIS_CONFIG_BS_DEF(core2, dcomplex, gemm, mr, 2);
-TBLIS_CONFIG_BS_DEF(core2, dcomplex, gemm, nr, 2);
+TBLIS_CONFIG_CHECK(core2_check)
+
+TBLIS_END_CONFIG
 
 }
 

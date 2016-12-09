@@ -56,15 +56,15 @@ struct microkernel
     void (*_ukr[4])(void);
 
     template <template <typename> class ukr, typename T> microkernel(const ukr<T>&)
-    : _ukr{reinterpret_cast<void(*)(void)>(ukr<   float>::value),
-           reinterpret_cast<void(*)(void)>(ukr<  double>::value),
-           reinterpret_cast<void(*)(void)>(ukr<scomplex>::value),
-           reinterpret_cast<void(*)(void)>(ukr<dcomplex>::value)} {}
+    : _ukr{(void(*)(void))ukr<   float>::value,
+           (void(*)(void))ukr<  double>::value,
+           (void(*)(void))ukr<scomplex>::value,
+           (void(*)(void))ukr<dcomplex>::value} {}
 
     template <typename T, typename... Args>
     void call(Args&&... args) const
     {
-        reinterpret_cast<ukr_t<T>>(_ukr[type_idx<T>::value])(std::forward<Args>(args)...);
+        ((ukr_t<T>)_ukr[type_idx<T>::value])(std::forward<Args>(args)...);
     }
 };
 

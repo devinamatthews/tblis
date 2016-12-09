@@ -13,7 +13,7 @@ using reduce_ukr_t =
     void (*)(reduce_t op, len_type n,
              const T* A, stride_type inc_A, T& value, len_type& idx);
 
-template <typename T>
+template <typename Config, typename T>
 void reduce_ukr_def(reduce_t op, len_type n,
                     const T* A, stride_type inc_A, T& value, len_type& idx)
 {

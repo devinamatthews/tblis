@@ -181,7 +181,7 @@ AC_MSG_RESULT([$cc_vendor])
 if test x"$cc_vendor" = xicc || \
    test x"$cc_vendor" = xgcc || \
    test x"$cc_vendor" = xclang; then
-    cc_version=`echo $vendor_string | $EGREP -o '@<:@0-9@:>@+\.@<:@0-9@:>@+\.?@<:@0-9@:>@*'`
+    cc_version=`echo $vendor_string | $EGREP -o '@<:@0-9@:>@+\.@<:@0-9@:>@+\.?@<:@0-9@:>@*' | { read first rest ; echo $first ; }`
 else
     AC_MSG_ERROR([Unsupported compiler.])
 fi

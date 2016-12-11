@@ -7,6 +7,14 @@
 namespace tblis
 {
 
+#define EXTERN_GEMM_UKR(T, name) \
+extern void name(tblis::stride_type k, \
+                 const T* alpha, \
+                 const T* a, const T* b, \
+                 const T* beta, \
+                 T* c, tblis::stride_type rs_c, \
+                       tblis::stride_type cs_c);
+
 template <typename T>
 using gemm_ukr_t =
 void (*)(stride_type k,
@@ -14,9 +22,6 @@ void (*)(stride_type k,
         const T* a, const T* b,
         const T* beta,
         T* c, stride_type rs_c, stride_type cs_c);
-
-template <typename T>
-using gemm_ukr_func = typename std::remove_pointer<gemm_ukr_t<T>>::type;
 
 template <typename Config, typename T>
 void gemm_ukr_def(stride_type k,
@@ -69,14 +74,23 @@ void gemm_ukr_def(stride_type k,
     }
 }
 
+#define EXTERN_PACK_NN_UKR(T, name) \
+extern void name(tblis::len_type m, tblis::len_type k, \
+                 const T* p_a, tblis::stride_type rs_a, \
+                               tblis::stride_type cs_a, \
+                 T* p_ap);
+
 template <typename T>
 using pack_nn_ukr_t =
 void (*)(len_type m, len_type k,
          const T* p_a, stride_type rs_a, stride_type cs_a,
          T* p_ap);
 
-template <typename T>
-using pack_nn_ukr_func = typename std::remove_pointer<pack_nn_ukr_t<T>>::type;
+#define EXTERN_PACK_SN_UKR(T, name) \
+extern void name(tblis::len_type m, tblis::len_type k, \
+                 const T* p_a, const tblis::stride_type* rscat_a, \
+                               tblis::stride_type cs_a, \
+                 T* p_ap);
 
 template <typename T>
 using pack_sn_ukr_t =
@@ -84,8 +98,11 @@ void (*)(len_type m, len_type k,
          const T* p_a, const stride_type* rscat_a, stride_type cs_a,
          T* p_ap);
 
-template <typename T>
-using pack_sn_ukr_func = typename std::remove_pointer<pack_sn_ukr_t<T>>::type;
+#define EXTERN_PACK_NS_UKR(T, name) \
+extern void name(tblis::len_type m, tblis::len_type k, \
+                 const T* p_a, tblis::stride_type rs_a, \
+                               const tblis::stride_type* cscat_a, \
+                 T* p_ap);
 
 template <typename T>
 using pack_ns_ukr_t =
@@ -93,8 +110,11 @@ void (*)(len_type m, len_type k,
          const T* p_a, stride_type rs_a, const stride_type* cscat_a,
          T* p_ap);
 
-template <typename T>
-using pack_ns_ukr_func = typename std::remove_pointer<pack_ns_ukr_t<T>>::type;
+#define EXTERN_PACK_SS_UKR(T, name) \
+extern void name(tblis::len_type m, tblis::len_type k, \
+                 const T* p_a, const tblis::stride_type* rscat_a, \
+                               const tblis::stride_type* cscat_a, \
+                 T* p_ap);
 
 template <typename T>
 using pack_ss_ukr_t =
@@ -102,8 +122,12 @@ void (*)(len_type m, len_type k,
          const T* p_a, const stride_type* rscat_a, const stride_type* cscat_a,
          T* p_ap);
 
-template <typename T>
-using pack_ss_ukr_func = typename std::remove_pointer<pack_ss_ukr_t<T>>::type;
+#define EXTERN_PACK_NB_UKR(T, name) \
+extern void name(tblis::len_type m, tblis::len_type k, \
+                 const T* p_a, tblis::stride_type rs_a, \
+                               const tblis::stride_type* cscat_a, \
+                               const tblis::stride_type* cbs_a, \
+                 T* p_ap);
 
 template <typename T>
 using pack_nb_ukr_t =
@@ -112,8 +136,12 @@ void (*)(len_type m, len_type k,
          const stride_type* cbs_a,
          T* p_ap);
 
-template <typename T>
-using pack_nb_ukr_func = typename std::remove_pointer<pack_nb_ukr_t<T>>::type;
+#define EXTERN_PACK_SB_UKR(T, name) \
+extern void name(tblis::len_type m, tblis::len_type k, \
+                 const T* p_a, const tblis::stride_type* rscat_a, \
+                               const tblis::stride_type* cscat_a, \
+                               const tblis::stride_type* cbs_a, \
+                 T* p_ap);
 
 template <typename T>
 using pack_sb_ukr_t =
@@ -121,9 +149,6 @@ void (*)(len_type m, len_type k,
          const T* p_a, const stride_type* rscat_a, const stride_type* cscat_a,
          const stride_type* cbs_a,
          T* p_ap);
-
-template <typename T>
-using pack_sb_ukr_func = typename std::remove_pointer<pack_sb_ukr_t<T>>::type;
 
 template <typename Config, typename T, int Mat>
 void pack_nn_ukr_def(len_type m, len_type k,

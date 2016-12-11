@@ -3,14 +3,20 @@
 
 #include "configs/config_builder.hpp"
 
-extern "C" tblis::gemm_ukr_func< float> bli_sgemm_asm_24x4;
-extern "C" tblis::gemm_ukr_func<double> bli_dgemm_asm_12x4;
-extern "C" tblis::gemm_ukr_func< float> bli_sgemm_asm_4x24;
-extern "C" tblis::gemm_ukr_func<double> bli_dgemm_asm_4x12;
-extern "C" tblis::gemm_ukr_func< float> bli_sgemm_asm_16x6;
-extern "C" tblis::gemm_ukr_func<double> bli_dgemm_asm_8x6;
-extern "C" tblis::gemm_ukr_func< float> bli_sgemm_asm_6x16;
-extern "C" tblis::gemm_ukr_func<double> bli_dgemm_asm_6x8;
+extern "C"
+{
+
+EXTERN_GEMM_UKR( float, bli_sgemm_asm_24x4);
+EXTERN_GEMM_UKR( float, bli_sgemm_asm_16x6);
+EXTERN_GEMM_UKR( float, bli_sgemm_asm_6x16);
+EXTERN_GEMM_UKR( float, bli_sgemm_asm_4x24);
+
+EXTERN_GEMM_UKR(double, bli_dgemm_asm_12x4);
+EXTERN_GEMM_UKR(double, bli_dgemm_asm_8x6);
+EXTERN_GEMM_UKR(double, bli_dgemm_asm_6x8);
+EXTERN_GEMM_UKR(double, bli_dgemm_asm_4x12);
+
+}
 
 namespace tblis
 {

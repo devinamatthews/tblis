@@ -7,8 +7,8 @@
 #define TBLIS_HAS_COMMA_HELPER(_0,_1,_2,...) _2
 #define TBLIS_HAS_COMMA(...) TBLIS_HAS_COMMA_HELPER(__VA_ARGS__,1,0)
 #define TBLIS_COMMA_IF_EMPTY() ,
-#define TBLIS_COMMA_IF_EMPTY_() ,
-#define TBLIS_IS_EMPTY(x) TBLIS_HAS_COMMA(TBLIS_PASTE(TBLIS_COMMA_IF_EMPTY,x)())
+#define _TBLIS_COMMA_IF_EMPTY() ,
+#define TBLIS_IS_EMPTY(x) TBLIS_HAS_COMMA(TBLIS_PASTE(x,TBLIS_COMMA_IF_EMPTY)())
 #define TBLIS_GET_VALUE_OR_DEFAULT_CASE_0(value,default) value
 #define TBLIS_GET_VALUE_OR_DEFAULT_CASE_1(value,default) default
 #define TBLIS_GET_VALUE_OR_DEFAULT_CASE(value,default,case) \
@@ -102,25 +102,25 @@ config cfg##_config_instance = config(cfg##_config());
     TBLIS_CONFIG_BOOL(gemm_row_major, S,D,C,Z, false,false,false,false)
 
 #define TBLIS_CONFIG_UKR(name, type, S,D,C,Z, def_ker) \
-    template <typename T> struct name : static_microkernel<T, type, \
-        TBLIS_GET_VALUE_OR_DEFAULT(S,def_ker<   float>), \
-        TBLIS_GET_VALUE_OR_DEFAULT(D,def_ker<  double>), \
-        TBLIS_GET_VALUE_OR_DEFAULT(C,def_ker<scomplex>), \
-        TBLIS_GET_VALUE_OR_DEFAULT(Z,def_ker<dcomplex>)> {};
+    template <typename T> struct name : static_microkernel<T, \
+        type<   float>, TBLIS_GET_VALUE_OR_DEFAULT(S,def_ker<   float>), \
+        type<  double>, TBLIS_GET_VALUE_OR_DEFAULT(D,def_ker<  double>), \
+        type<scomplex>, TBLIS_GET_VALUE_OR_DEFAULT(C,def_ker<scomplex>), \
+        type<dcomplex>, TBLIS_GET_VALUE_OR_DEFAULT(Z,def_ker<dcomplex>)> {};
 
 #define TBLIS_CONFIG_UKR2(config, name, type, S,D,C,Z, def_ker) \
-    template <typename T> struct name : static_microkernel<T, type, \
-        TBLIS_GET_VALUE_OR_DEFAULT(S,(def_ker<config,   float>)), \
-        TBLIS_GET_VALUE_OR_DEFAULT(D,(def_ker<config,  double>)), \
-        TBLIS_GET_VALUE_OR_DEFAULT(C,(def_ker<config,scomplex>)), \
-        TBLIS_GET_VALUE_OR_DEFAULT(Z,(def_ker<config,dcomplex>))> {};
+    template <typename T> struct name : static_microkernel<T, \
+        type<   float>, TBLIS_GET_VALUE_OR_DEFAULT(S,(def_ker<config,   float>)), \
+        type<  double>, TBLIS_GET_VALUE_OR_DEFAULT(D,(def_ker<config,  double>)), \
+        type<scomplex>, TBLIS_GET_VALUE_OR_DEFAULT(C,(def_ker<config,scomplex>)), \
+        type<dcomplex>, TBLIS_GET_VALUE_OR_DEFAULT(Z,(def_ker<config,dcomplex>))> {};
 
 #define TBLIS_CONFIG_UKR3(config, mat, name, type, S,D,C,Z, def_ker) \
-    template <typename T> struct name : static_microkernel<T, type, \
-        TBLIS_GET_VALUE_OR_DEFAULT(S,(def_ker<config,   float,mat>)), \
-        TBLIS_GET_VALUE_OR_DEFAULT(D,(def_ker<config,  double,mat>)), \
-        TBLIS_GET_VALUE_OR_DEFAULT(C,(def_ker<config,scomplex,mat>)), \
-        TBLIS_GET_VALUE_OR_DEFAULT(Z,(def_ker<config,dcomplex,mat>))> {};
+    template <typename T> struct name : static_microkernel<T, \
+        type<   float>, TBLIS_GET_VALUE_OR_DEFAULT(S,(def_ker<config,   float,mat>)), \
+        type<  double>, TBLIS_GET_VALUE_OR_DEFAULT(D,(def_ker<config,  double,mat>)), \
+        type<scomplex>, TBLIS_GET_VALUE_OR_DEFAULT(C,(def_ker<config,scomplex,mat>)), \
+        type<dcomplex>, TBLIS_GET_VALUE_OR_DEFAULT(Z,(def_ker<config,dcomplex,mat>))> {};
 
 #define TBLIS_CONFIG_TRANS_ADD_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, trans_add_ukr, trans_add_ukr_t, S,D,C,Z, trans_add_ukr_def)
@@ -214,41 +214,47 @@ struct cache_blocksize
                                                                       ZM;
 };
 
-template <typename T, template <typename> class kernel,
-          kernel<   float> S, kernel<  double> D,
-          kernel<scomplex> C, kernel<dcomplex> Z>
+template <typename T,
+          typename skernel, skernel S,
+          typename dkernel, dkernel D,
+          typename ckernel, ckernel C,
+          typename zkernel, zkernel Z>
 struct static_microkernel;
 
-template <template <typename> class kernel,
-          kernel<   float> S, kernel<  double> D,
-          kernel<scomplex> C, kernel<dcomplex> Z>
-struct static_microkernel<float, kernel, S, D, C, Z>
+template <typename skernel, skernel S,
+          typename dkernel, dkernel D,
+          typename ckernel, ckernel C,
+          typename zkernel, zkernel Z>
+struct static_microkernel<float, skernel, S, dkernel, D, ckernel, C, zkernel, Z>
 {
-    static constexpr kernel<float> value = S;
+    static constexpr skernel value = S;
 };
 
-template <template <typename> class kernel,
-          kernel<   float> S, kernel<  double> D,
-          kernel<scomplex> C, kernel<dcomplex> Z>
-struct static_microkernel<double, kernel, S, D, C, Z>
+template <typename skernel, skernel S,
+          typename dkernel, dkernel D,
+          typename ckernel, ckernel C,
+          typename zkernel, zkernel Z>
+struct static_microkernel<double, skernel, S, dkernel, D, ckernel, C, zkernel, Z>
 {
-    static constexpr kernel<double> value = D;
+    static constexpr dkernel value = D;
 };
 
-template <template <typename> class kernel,
-          kernel<   float> S, kernel<  double> D,
-          kernel<scomplex> C, kernel<dcomplex> Z>
-struct static_microkernel<scomplex, kernel, S, D, C, Z>
+template <typename skernel, skernel S,
+          typename dkernel, dkernel D,
+          typename ckernel, ckernel C,
+          typename zkernel, zkernel Z>
+struct static_microkernel<scomplex, skernel, S, dkernel, D, ckernel, C, zkernel, Z>
 {
-    static constexpr kernel<scomplex> value = C;
+    static constexpr ckernel value = C;
 };
 
-template <template <typename> class kernel,
-          kernel<   float> S, kernel<  double> D,
-          kernel<scomplex> C, kernel<dcomplex> Z>
-struct static_microkernel<dcomplex, kernel, S, D, C, Z>
+template <typename skernel, skernel S,
+          typename dkernel, dkernel D,
+          typename ckernel, ckernel C,
+          typename zkernel, zkernel Z>
+struct static_microkernel<dcomplex, skernel, S, dkernel, D, ckernel, C, zkernel, Z>
 {
-    static constexpr kernel<dcomplex> value = Z;
+    static constexpr zkernel value = Z;
 };
 
 template <typename Config>

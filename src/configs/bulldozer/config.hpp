@@ -3,10 +3,15 @@
 
 #include "configs/config_builder.hpp"
 
-extern "C" tblis::gemm_ukr_func<          float> bli_sgemm_asm_8x8_fma4;
-extern "C" tblis::gemm_ukr_func<         double> bli_dgemm_asm_4x6_fma4;
-extern "C" tblis::gemm_ukr_func<tblis::scomplex> bli_cgemm_asm_8x4_fma4;
-extern "C" tblis::gemm_ukr_func<tblis::dcomplex> bli_zgemm_asm_4x4_fma4;
+extern "C"
+{
+
+EXTERN_GEMM_UKR(          float, bli_sgemm_asm_8x8_fma4);
+EXTERN_GEMM_UKR(         double, bli_dgemm_asm_4x6_fma4);
+EXTERN_GEMM_UKR(tblis::scomplex, bli_cgemm_asm_8x4_fma4);
+EXTERN_GEMM_UKR(tblis::dcomplex, bli_zgemm_asm_4x4_fma4);
+
+}
 
 namespace tblis
 {

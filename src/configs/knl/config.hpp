@@ -3,17 +3,22 @@
 
 #include "configs/config_builder.hpp"
 
-extern "C" tblis::gemm_ukr_func< float> bli_sgemm_opt_30x16_knc;
-extern "C" tblis::gemm_ukr_func<double> bli_dgemm_opt_30x8_knc;
-extern "C" tblis::gemm_ukr_func<double> bli_dgemm_opt_30x8;
-extern "C" tblis::gemm_ukr_func<double> bli_dgemm_opt_24x8;
+extern "C"
+{
+
+EXTERN_GEMM_UKR( float, bli_sgemm_opt_30x16_knc);
+EXTERN_GEMM_UKR(double, bli_dgemm_opt_30x8_knc);
+EXTERN_GEMM_UKR(double, bli_dgemm_opt_30x8);
+EXTERN_GEMM_UKR(double, bli_dgemm_opt_24x8);
+
+}
 
 namespace tblis
 {
 
-extern pack_nn_ukr_func<double> knl_packm_30xk;
-extern pack_nn_ukr_func<double> knl_packm_24xk;
-extern pack_nn_ukr_func<double> knl_packm_8xk;
+EXTERN_PACK_NN_UKR(double, knl_packm_30xk);
+EXTERN_PACK_NN_UKR(double, knl_packm_24xk);
+EXTERN_PACK_NN_UKR(double, knl_packm_8xk);
 
 extern int knl_check();
 

@@ -221,6 +221,26 @@ void contract_blis(const communicator& comm, const config& cfg,
     gemm(comm, cfg, alpha, at, bt, beta, ct);
 }
 
+#define INSTANTIATE_CONTRACT_BLIS(T) \
+template void contract_blis(const communicator& comm, const config& cfg, \
+                            const std::vector<len_type>& len_AB, \
+                            const std::vector<len_type>& len_AC, \
+                            const std::vector<len_type>& len_BC, \
+                            T alpha, const T* A, \
+                            const std::vector<stride_type>& stride_A_AB, \
+                            const std::vector<stride_type>& stride_A_AC, \
+                                     const T* B, \
+                            const std::vector<stride_type>& stride_B_AB, \
+                            const std::vector<stride_type>& stride_B_BC, \
+                            T  beta,       T* C, \
+                            const std::vector<stride_type>& stride_C_AC, \
+                            const std::vector<stride_type>& stride_C_BC);
+
+INSTANTIATE_CONTRACT_BLIS(float);
+INSTANTIATE_CONTRACT_BLIS(double);
+INSTANTIATE_CONTRACT_BLIS(scomplex);
+INSTANTIATE_CONTRACT_BLIS(dcomplex);
+
 template <typename T>
 void mult_blas(const communicator& comm, const config& cfg,
                const std::vector<len_type>& len_A,

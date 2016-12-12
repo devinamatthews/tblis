@@ -152,6 +152,41 @@ auto apply(const T<U>& v, const Functor& f) -> T<decltype(f(std::declval<U>()))>
     return v2;
 }
 
+template <class InputIt, class OutputIt, class T>
+OutputIt prefix_sum(InputIt first, InputIt last, OutputIt d_first, T init)
+{
+    if (first == last) return d_first;
+
+    typename std::iterator_traits<InputIt>::value_type sum = init;
+    *d_first = sum;
+
+    while (++first != last)
+    {
+       sum = sum + *first;
+       *++d_first = sum;
+    }
+
+    return ++d_first;
+}
+
+template <class InputIt, class OutputIt, class T, class BinaryOperation>
+OutputIt prefix_sum(InputIt first, InputIt last, OutputIt d_first, T init,
+                    BinaryOperation op)
+{
+    if (first == last) return d_first;
+
+    typename std::iterator_traits<InputIt>::value_type sum = init;
+    *d_first = sum;
+
+    while (++first != last)
+    {
+       sum = op(sum, *first);
+       *++d_first = sum;
+    }
+
+    return ++d_first;
+}
+
 template <typename T>
 typename T::value_type sum(const T& v)
 {

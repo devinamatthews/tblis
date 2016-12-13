@@ -159,6 +159,8 @@ typedef struct tblis_scalar
 
 #ifdef __cplusplus
 
+    tblis_scalar() {}
+
     template <typename T>
     tblis_scalar(T value)
     : type(type_tag<T>::value)
@@ -194,6 +196,8 @@ typedef struct tblis_vector
     stride_type inc;
 
 #ifdef __cplusplus
+
+    tblis_vector() {}
 
     template <typename T>
     tblis_vector(const_row_view<T> view)
@@ -250,6 +254,8 @@ typedef struct tblis_matrix
     stride_type rs, cs;
 
 #ifdef __cplusplus
+
+    tblis_matrix() {}
 
     template <typename T>
     tblis_matrix(const_matrix_view<T> view)
@@ -309,6 +315,8 @@ typedef struct tblis_tensor
     stride_type* stride;
 
 #ifdef __cplusplus
+
+    tblis_tensor() {}
 
     template <typename T>
     tblis_tensor(const_tensor_view<T>& view)

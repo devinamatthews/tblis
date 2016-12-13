@@ -230,15 +230,12 @@ class const_batched_tensor_view
 };
 
 template <typename T>
-class batched_tensor_view : protected const_batched_tensor_view<T>
+class batched_tensor_view : public const_batched_tensor_view<T>
 {
     protected:
         typedef const_batched_tensor_view<T> base;
 
     public:
-        typedef typename base::len_type len_type;
-        typedef typename base::size_type size_type;
-        typedef typename base::stride_type stride_type;
         typedef typename base::value_type value_type;
         typedef typename base::pointer pointer;
         typedef typename base::const_pointer const_pointer;
@@ -364,15 +361,12 @@ class batched_tensor_view : protected const_batched_tensor_view<T>
 };
 
 template <typename T, typename Allocator=aligned_allocator<T,64>>
-class batched_tensor : protected batched_tensor_view<T>, private Allocator
+class batched_tensor : public batched_tensor_view<T>, private Allocator
 {
     protected:
         typedef batched_tensor_view<T> base;
 
     public:
-        typedef typename base::len_type len_type;
-        typedef typename base::size_type size_type;
-        typedef typename base::stride_type stride_type;
         typedef typename base::value_type value_type;
         typedef typename base::pointer pointer;
         typedef typename base::const_pointer const_pointer;
@@ -384,12 +378,40 @@ class batched_tensor : protected batched_tensor_view<T>, private Allocator
         using base::batch_idx_;
         using base::len_;
         using base::stride_;
-        row<T> data_alloc_;
+        row<T> data_ptr_;
+        row<const_pointer> data_alloc_;
         matrix<len_type> batch_idx_alloc_;
-        size_t size_ = 0;
+        len_type size_ = 0;
         Layout layout_ = DEFAULT;
 
         batched_tensor& operator=(const batched_tensor& other) = delete;
+
+        std::vector<stride_type> default_strides(const std::vector<len_type>& len, Layout layout=DEFAULT)
+        {
+            std::vector<stride_type> stride(len.size());
+
+            if (stride.empty()) return stride;
+
+            auto ndim = len.size();
+            if (layout == ROW_MAJOR)
+            {
+                stride[ndim-1] = 1;
+                for (auto i = ndim;i --> 1;)
+                {
+                    stride[i-1] = stride[i]*len[i];
+                }
+            }
+            else
+            {
+                stride[0] = 1;
+                for (unsigned i = 1;i < ndim;i++)
+                {
+                    stride[i] = stride[i-1]*len[i-1];
+                }
+            }
+
+            return stride;
+        }
 
     public:
         batched_tensor() {}
@@ -508,8 +530,7 @@ class batched_tensor : protected batched_tensor_view<T>, private Allocator
         reset(const std::vector<U>& len, const_matrix_view<len_type> batch_idx, const T& val=T(), Layout layout=DEFAULT)
         {
             reset(len, batch_idx, uninitialized, layout);
-            for (len_type batch = 0;batch < num_batches();batch++)
-                std::uninitialized_fill_n(data_[batch], size_, val);
+            std::uninitialized_fill_n(data_ptr_.data(), size_*num_batches(), val);
         }
 
         void reset(const std::vector<len_type>& len, const_matrix_view<len_type> batch_idx, uninitialized_t u, Layout layout=DEFAULT)
@@ -525,17 +546,18 @@ class batched_tensor : protected batched_tensor_view<T>, private Allocator
             batch_idx_.reset(batch_idx_alloc_);
 
             len_ = len;
-            stride_ = default_strides({len.begin(), len.end()-batch_dimension()}, layout);
+            stride_ = default_strides({len.begin(), len.end()-batched_dimension()}, layout);
 
-            size_ = std::accumulate(len.begin(), len.end()-batch_dimension(), size_t(1), std::multiplies<size_t>());
+            size_ = std::accumulate(len.begin(), len.end()-batched_dimension(), size_t(1), std::multiplies<size_t>());
             layout_ = layout;
 
-            data_alloc_.reset({size_*num_batches()}, uninitialized);
-            data_.reset({num_batches()}, uninitialized);
+            data_ptr_.reset({size_*num_batches()}, uninitialized);
+            data_alloc_.reset({num_batches()}, uninitialized);
+            data_.reset(data_alloc_);
 
             for (len_type b = 0;b < num_batches();b++)
             {
-                data_[b] = data_alloc_.data() + b*size_;
+                data_alloc_[b] = data_ptr_.data() + b*size_;
             }
         }
 

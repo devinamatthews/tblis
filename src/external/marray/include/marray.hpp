@@ -645,7 +645,7 @@ namespace MArray
             template <typename T_, unsigned ndim_, unsigned dim_, unsigned newdim_> friend class marray_slice;
 
             protected:
-                typedef marray_view<T, ndim> base;
+                typedef const_marray_view<T, ndim> base;
 
                 typedef typename base::stride_type stride_type;
                 typedef typename base::idx_type idx_type;
@@ -660,7 +660,7 @@ namespace MArray
 
                 const_marray_ref(const const_marray_ref& other) = default;
 
-                const_marray_ref(const marray_view<T, ndim>& array, stride_type idx, idx_type i)
+                const_marray_ref(const const_marray_view<T, ndim>& array, stride_type idx, idx_type i)
                 : array_(const_cast<base&>(array)), idx_(idx+i*array.stride_[dim-2]) {}
 
                 const_marray_ref& operator=(const const_marray_ref&) = delete;
@@ -670,7 +670,7 @@ namespace MArray
                 typename std::enable_if<diff==0, const T&>::type
                 operator[](idx_type i) const
                 {
-                    return data()[i*array_.stride_[0]];
+                    return data()[i*array_.stride_[dim-1]];
                 }
 
                 template <int diff=ndim-dim>

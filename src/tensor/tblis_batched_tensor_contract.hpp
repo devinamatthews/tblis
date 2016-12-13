@@ -9,13 +9,17 @@
 
 #include "tblis_batched_tensor.hpp"
 
+#include "../external/stl_ext/include/iostream.hpp"
+
+extern std::atomic<long> flops;
+
 namespace tblis
 {
 
 namespace internal
 {
 
-extern template <typename T>
+template <typename T>
 void contract_blis(const communicator& comm, const config& cfg,
                    const std::vector<len_type>& len_AB,
                    const std::vector<len_type>& len_AC,
@@ -219,6 +223,18 @@ int contract_batch_ref(T alpha, const_batched_tensor_view<T> A, const label_type
     tensor_C.stride = stride_C.data();
     tensor_C.type = type_tag<T>::value;
 
+    auto dense_idx_AB = stl_ext::intersection(dense_idx_A, dense_idx_B);
+    auto dense_idx_AC = stl_ext::intersection(dense_idx_A, dense_idx_C);
+    auto dense_idx_BC = stl_ext::intersection(dense_idx_B, dense_idx_C);
+    auto dense_len_AB = stl_ext::select_from(len_A, dense_idx_A, dense_idx_AB);
+    auto dense_len_AC = stl_ext::select_from(len_A, dense_idx_A, dense_idx_AC);
+    auto dense_len_BC = stl_ext::select_from(len_B, dense_idx_B, dense_idx_BC);
+
+    len_type dense_M = stl_ext::prod(dense_len_AC);
+    len_type dense_N = stl_ext::prod(dense_len_BC);
+
+    auto local_flops = 2*stl_ext::prod(dense_len_AB)*dense_M*dense_N;
+
 #define OUTER_THREADING 1
 
 #if OUTER_THREADING
@@ -236,14 +252,15 @@ int contract_batch_ref(T alpha, const_batched_tensor_view<T> A, const label_type
 
         for (unsigned batch_A = 0;batch_A < A.num_batches();batch_A++)
         {
+
             bool ok = true;
             for (unsigned i = 0;ok && i < batch_ndim_C;i++)
             {
                 for (unsigned j = 0;ok && j < batch_ndim_A;j++)
                 {
-                    if (idx_C[ndim_C+i] == idx_A[ndim_A+j] &&
-                        C.batch_indices(batch_C)[i] !=
-                        A.batch_indices(batch_A)[j]) ok = false;
+                    if (batch_idx_C[i] == batch_idx_A[j] &&
+                        C.batch_indices()[batch_C][i] !=
+                        A.batch_indices()[batch_A][j]) ok = false;
                 }
             }
             if (!ok) continue;
@@ -266,18 +283,18 @@ int contract_batch_ref(T alpha, const_batched_tensor_view<T> A, const label_type
                 {
                     for (unsigned j = 0;ok && j < batch_ndim_B;j++)
                     {
-                        if (idx_C[ndim_C+i] == idx_B[ndim_B+j] &&
-                            C.batch_indices(batch_C)[i] !=
-                            B.batch_indices(batch_B)[j]) ok = false;
+                        if (batch_idx_C[i] == batch_idx_B[j] &&
+                            C.batch_indices()[batch_C][i] !=
+                            B.batch_indices()[batch_B][j]) ok = false;
                     }
                 }
                 for (unsigned i = 0;ok && i < batch_ndim_A;i++)
                 {
                     for (unsigned j = 0;ok && j < batch_ndim_B;j++)
                     {
-                        if (idx_A[ndim_A+i] == idx_B[ndim_B+j] &&
-                            A.batch_indices(batch_A)[i] !=
-                            B.batch_indices(batch_B)[j]) ok = false;
+                        if (batch_idx_A[i] == batch_idx_B[j] &&
+                            A.batch_indices()[batch_A][i] !=
+                            B.batch_indices()[batch_B][j]) ok = false;
                     }
                 }
                 if (!ok) continue;
@@ -307,6 +324,9 @@ int contract_batch_ref(T alpha, const_batched_tensor_view<T> A, const label_type
                 tensor_C.alpha<T>() = local_beta;
                 local_beta = T(1);
 
+                flops += local_flops;
+                //printf("%d %d %d\n", batch_A, batch_B, batch_C);
+
                 tblis_tensor_mult(
 #if OUTER_THREADING
                                   tblis_single,
@@ -314,9 +334,9 @@ int contract_batch_ref(T alpha, const_batched_tensor_view<T> A, const label_type
                                   nullptr,
 #endif
                                   nullptr,
-                                  tensor_A, dense_idx_A.data(),
-                                  tensor_B, dense_idx_B.data(),
-                                  tensor_C, dense_idx_C.data());
+                                  &tensor_A, dense_idx_A.data(),
+                                  &tensor_B, dense_idx_B.data(),
+                                  &tensor_C, dense_idx_C.data());
             }
         }
     }
@@ -394,10 +414,6 @@ int contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* id
     auto dense_stride_B_BC = select_from(dense_stride_B, dense_idx_B, dense_idx_BC);
     auto dense_stride_C_BC = select_from(dense_stride_C, dense_idx_C, dense_idx_BC);
 
-    fold(dense_len_AB, dense_idx_AB, dense_stride_A_AB, dense_stride_B_AB);
-    fold(dense_len_AC, dense_idx_AC, dense_stride_A_AC, dense_stride_C_AC);
-    fold(dense_len_BC, dense_idx_BC, dense_stride_B_BC, dense_stride_C_BC);
-
     auto batch_idx_AB = exclusion(intersection(idx_A, idx_B), dense_idx_AB);
     auto batch_idx_AC = exclusion(intersection(idx_A, idx_C), dense_idx_AC);
     auto batch_idx_BC = exclusion(intersection(idx_B, idx_C), dense_idx_BC);
@@ -419,9 +435,9 @@ int contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* id
     stl_ext::prefix_sum(batch_len_BC.begin(), batch_len_BC.end(),
                         off_stride_BC.begin(), 1, std::multiplies<stride_type>());
 
-    len_type batch_M = (batch_len_AC.empty() ? 1 : batch_len_AC.back()*off_stride_AC.back());
-    len_type batch_N = (batch_len_BC.empty() ? 1 : batch_len_BC.back()*off_stride_BC.back());
-    len_type batch_K = (batch_len_AB.empty() ? 1 : batch_len_AB.back()*off_stride_AB.back());
+    len_type batch_M = stl_ext::prod(batch_len_AC);
+    len_type batch_N = stl_ext::prod(batch_len_BC);
+    len_type batch_K = stl_ext::prod(batch_len_AB);
 
     auto mixed_len_A_AB = select_from(dense_len_A, dense_idx_A, batch_idx_AB);
     auto mixed_len_B_AB = select_from(dense_len_B, dense_idx_B, batch_idx_AB);
@@ -524,6 +540,10 @@ int contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* id
         }
     }
 
+    fold(dense_len_AB, dense_idx_AB, dense_stride_A_AB, dense_stride_B_AB);
+    fold(dense_len_AC, dense_idx_AC, dense_stride_A_AC, dense_stride_C_AC);
+    fold(dense_len_BC, dense_idx_BC, dense_stride_B_BC, dense_stride_C_BC);
+
     /*
      * TODO: sort indices, pair up, and constraint batch_M, etc.?
      */
@@ -532,6 +552,8 @@ int contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* id
 
     len_type dense_M = stl_ext::prod(dense_len_AC);
     len_type dense_N = stl_ext::prod(dense_len_BC);
+
+    auto local_flops = 2*stl_ext::prod(dense_len_AB)*dense_M*dense_N;
 
     matrix<T> batch_beta({batch_M, batch_N}, beta);
 
@@ -600,23 +622,25 @@ int contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* id
 
                         for (len_type n = 0;n < batch_N;n++)
                         {
-                            if (batch_A[m][k] && batch_B[k][m] && batch_C[m][n])
+                            if (batch_A[m][k] && batch_B[k][n] && batch_C[m][n])
                             {
                                 cur++;
                                 if (cur > mn_max) break;
                                 if (cur <= mn_min) continue;
 
-                                contract_blis(subcomm, get_default_config(),
-                                              dense_len_AB, dense_len_AC, dense_len_BC,
-                                                         alpha, batch_A[m][k],
-                                                                dense_stride_A_AB,
-                                                                dense_stride_A_AC,
-                                                                batch_B[k][n],
-                                                                dense_stride_B_AB,
-                                                                dense_stride_B_BC,
-                                              batch_beta[m][n], batch_C[m][n],
-                                                                dense_stride_C_AC,
-                                                                dense_stride_C_BC);
+                                flops += local_flops;
+
+                                internal::contract_blis(subcomm, get_default_config(),
+                                      dense_len_AB, dense_len_AC, dense_len_BC,
+                                                 alpha, batch_A[m][k],
+                                                        dense_stride_A_AB,
+                                                        dense_stride_A_AC,
+                                                        batch_B[k][n],
+                                                        dense_stride_B_AB,
+                                                        dense_stride_B_BC,
+                                      batch_beta[m][n], batch_C[m][n],
+                                                        dense_stride_C_AC,
+                                                        dense_stride_C_BC);
 
                                 batch_beta[m][n] = T(1);
                             }
@@ -637,23 +661,25 @@ int contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* id
 
                         for (len_type m = 0;m < batch_M;m++)
                         {
-                            if (batch_A[m][k] && batch_B[k][m] && batch_C[m][n])
+                            if (batch_A[m][k] && batch_B[k][n] && batch_C[m][n])
                             {
                                 cur++;
                                 if (cur > mn_max) break;
                                 if (cur <= mn_min) continue;
 
-                                contract_blis(subcomm, get_default_config(),
-                                              dense_len_AB, dense_len_AC, dense_len_BC,
-                                                         alpha, batch_A[m][k],
-                                                                dense_stride_A_AB,
-                                                                dense_stride_A_AC,
-                                                                batch_B[k][n],
-                                                                dense_stride_B_AB,
-                                                                dense_stride_B_BC,
-                                              batch_beta[m][n], batch_C[m][n],
-                                                                dense_stride_C_AC,
-                                                                dense_stride_C_BC);
+                                flops += local_flops;
+
+                                internal::contract_blis(subcomm, get_default_config(),
+                                      dense_len_AB, dense_len_AC, dense_len_BC,
+                                                 alpha, batch_A[m][k],
+                                                        dense_stride_A_AB,
+                                                        dense_stride_A_AC,
+                                                        batch_B[k][n],
+                                                        dense_stride_B_AB,
+                                                        dense_stride_B_BC,
+                                      batch_beta[m][n], batch_C[m][n],
+                                                        dense_stride_C_AC,
+                                                        dense_stride_C_BC);
 
                                 batch_beta[m][n] = T(1);
                             }

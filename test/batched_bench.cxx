@@ -53,7 +53,7 @@ std::atomic<long> flops;
 
 int main(int argc, char** argv)
 {
-    int R = 10;
+    int R = 5;
     time_t seed = time(nullptr);
 
     struct option opts[] = {{"rep", required_argument, NULL, 'r'},
@@ -142,9 +142,26 @@ int main(int argc, char** argv)
         if (i == o-1) assert(off == Wa_idx.length(0));
     }
 
+    matrix<len_type> Wb_idx({o*o*o, 3}, 0, ROW_MAJOR);
+    for (len_type i = 0, off = 0;i < o;i++)
+    {
+        for (len_type j = 0;j < o;j++)
+        {
+            for (len_type k = 0;k < o;k++)
+            {
+                Wb_idx[off][0] = i;
+                Wb_idx[off][1] = j;
+                Wb_idx[off][2] = k;
+                off++;
+            }
+        }
+        if (i == o-1) assert(off == Wb_idx.length(0));
+    }
+
     batched_tensor<double> T4({v,v,v,v,o,o,o,o}, T4_idx);
     batched_tensor<double> T3({  v,v,v,  o,o,o}, T3_idx);
     batched_tensor<double> Wa({  v,v,v,  o,o,o}, Wa_idx);
+    //batched_tensor<double> Wb({  v,v,v,  o,o,o}, Wb_idx);
 
     flops = 0;
 

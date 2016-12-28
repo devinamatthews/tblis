@@ -235,10 +235,10 @@ int contract_batch_ref(T alpha, const_batched_tensor_view<T> A, const label_type
 
     auto local_flops = 2*stl_ext::prod(dense_len_AB)*dense_M*dense_N;
 
-#define OUTER_THREADING 0
+#define OUTER_THREADING 1
 
 #if OUTER_THREADING
-#pragma omp parallel for schedule(cyclic), firstprivate(tensor_A, tensor_B, tensor_C)
+#pragma omp parallel for schedule(static,1), firstprivate(tensor_A, tensor_B, tensor_C)
 #endif
     for (unsigned batch_C = 0;batch_C < C.num_batches();batch_C++)
     {
@@ -640,9 +640,13 @@ int contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* id
 
                 len_type total = stl_ext::sum(nonzero);
 
+                #define INOUT_RATIO 50000
+
                 int nt_outer, nt_inner;
                 std::tie(nt_outer, nt_inner) =
-                    partition_2x2(comm.num_threads(), total, dense_M*dense_N);
+                    partition_2x2(comm.num_threads(), INOUT_RATIO*total, dense_M*dense_N);
+
+                //if (comm.master()) printf("%ld:%ld -> %d:%d\n", INOUT_RATIO*total, dense_M*dense_N, nt_outer, nt_inner);
 
                 communicator subcomm = comm.gang(TCI_EVENLY, nt_outer);
 

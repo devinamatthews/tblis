@@ -51,6 +51,27 @@ double run_kernel(len_type R, const Kernel& kernel, Args&&...args)
 
 std::atomic<long> flops;
 
+template <typename T>
+double diff(const batched_tensor<T>& A, const batched_tensor<T>& B)
+{
+    double d = 0.0;
+
+    std::vector<len_type> dense_len(A.lengths());
+    dense_len.resize(A.dense_dimension());
+
+    for (len_type i = 0;i < A.num_batches();i++)
+    {
+        const T* a = A.batch_data(i);
+        const T* b = B.batch_data(i);
+
+        stride_type off = 0;
+        MArray::viterator<> it(dense_len, A.strides());
+        while (it.next(off)) d += norm2(a[off]-b[off]);
+    }
+
+    return sqrt(d);
+}
+
 int main(int argc, char** argv)
 {
     int R = 5;
@@ -84,7 +105,7 @@ int main(int argc, char** argv)
     cout << "Using mt19937 with seed " << seed << endl;
     rand_engine.seed(seed);
 
-    len_type v = 30;
+    len_type v = 10;
     len_type o = 4;
 
     matrix<len_type> T4_idx({o*(o+1)*(o+2)*(o+3)/24 - o*o, 4}, 0, ROW_MAJOR);
@@ -163,14 +184,40 @@ int main(int argc, char** argv)
     batched_tensor<double> Wa({  v,v,v,  o,o,o}, Wa_idx);
     //batched_tensor<double> Wb({  v,v,v,  o,o,o}, Wb_idx);
 
+    for (auto t : {&T4, &T3, &Wa})
+    {
+        std::vector<len_type> len(t->lengths());
+        len.resize(t->dense_dimension());
+
+        for (len_type i = 0;i < t->num_batches();i++)
+        {
+            double* data = t->batch_data(i);
+            MArray::viterator<> it(len, t->strides());
+            while (it.next(data)) *data = random_number<double>();
+        }
+    }
+
+    batched_tensor<double> tmp0(T4);
+    batched_tensor<double> tmp1(T4);
+    batched_tensor<double> tmp2(T4);
+    batched_tensor<double> tmp3(T4);
+
+    double t0 = run_kernel(R,
+    [&]
+    {
+        contract_batch_dumb<double>(1.0,   T3,   "ABEIJM",
+                                           Wa,   "CDEKLM",
+                                    0.5, tmp0, "ABCDIJKL");
+    });
+
     flops = 0;
 
     double t1 = run_kernel(R,
     [&]
     {
-        contract_batch_ref<double>(1.0, T3,   "ABEIJM",
-                                        Wa,   "CDEKLM",
-                                   1.0, T4, "ABCDIJKL");
+        contract_batch_ref<double>(1.0,  T3,   "ABEIJM",
+                                         Wa,   "CDEKLM",
+                                   0.5, tmp1, "ABCDIJKL");
     });
 
     auto flops1 = flops.load();
@@ -180,15 +227,33 @@ int main(int argc, char** argv)
     double t2 = run_kernel(R,
     [&]
     {
-        contract_batch<double>(1.0, T3,   "ABEIJM",
-                                    Wa,   "CDEKLM",
-                               1.0, T4, "ABCDIJKL");
+        contract_batch<double>(1.0,  T3,   "ABEIJM",
+                                     Wa,   "CDEKLM",
+                               0.5, tmp2, "ABCDIJKL");
     });
 
     auto flops2 = flops.load();
     printf("%ld\n", flops2);
-    printf("%g %g\n", t1, t2);
-    printf("%g %g\n", flops1/t1/1e9/R, flops2/t2/1e9/R);
+    flops = 0;
+
+    double t3 = run_kernel(R,
+    [&]
+    {
+        contract_batch2<double>(1.0,  T3,   "ABEIJM",
+                                      Wa,   "CDEKLM",
+                                0.5, tmp3, "ABCDIJKL");
+    });
+
+    auto flops3 = flops.load();
+    printf("%ld\n", flops3);
+
+    double d1 = diff(tmp0, tmp1);
+    double d2 = diff(tmp0, tmp2);
+    double d3 = diff(tmp0, tmp3);
+
+    printf("%g %g %g\n", d1, d2, d3);
+    printf("%g %g %g\n", t1, t2, t3);
+    printf("%g %g %g\n", flops1/t1/1e9/R, flops2/t2/1e9/R, flops3/t3/1e9/R);
 
     return 0;
 }

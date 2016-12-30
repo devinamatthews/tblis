@@ -18,8 +18,8 @@ namespace detail
     extern MemoryPool BuffersForScatter;
 }
 
-template <typename T>
-void block_scatter(const communicator& comm, tensor_matrix<T>& A,
+template <typename MatrixA>
+void block_scatter(const communicator& comm, MatrixA& A,
                    stride_type* rscat, len_type MB, stride_type* rbs,
                    stride_type* cscat, len_type NB, stride_type* cbs)
 {

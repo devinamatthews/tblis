@@ -21,12 +21,13 @@
 #include "src/external/stl_ext/include/iostream.hpp"
 
 #define OUTER_THREADING 0
-#define INOUT_RATIO 200000ull
 
 extern std::atomic<long> flops;
 
 namespace tblis
 {
+
+len_type inout_ratio = 200000;
 
 template <typename T, T Empty=T()>
 class slot
@@ -767,9 +768,9 @@ int contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* id
 
                 int nt_outer, nt_inner;
                 std::tie(nt_outer, nt_inner) =
-                    partition_2x2(comm.num_threads(), INOUT_RATIO*total, dense_M*dense_N);
+                    partition_2x2(comm.num_threads(), inout_ratio*total, dense_M*dense_N);
 
-                //if (comm.master()) printf("%ld:%ld -> %d:%d\n", INOUT_RATIO*total, dense_M*dense_N, nt_outer, nt_inner);
+                //if (comm.master()) printf("%ld:%ld -> %d:%d\n", inout_ratio*total, dense_M*dense_N, nt_outer, nt_inner);
 
                 communicator subcomm = comm.gang(TCI_EVENLY, nt_outer);
 
@@ -1194,9 +1195,9 @@ int contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* i
 
                 int nt_outer, nt_inner;
                 std::tie(nt_outer, nt_inner) =
-                    partition_2x2(comm.num_threads(), INOUT_RATIO*nonzero, dense_M*dense_N);
+                    partition_2x2(comm.num_threads(), inout_ratio*nonzero, dense_M*dense_N);
 
-                //if (comm.master()) printf("%ld:%ld -> %d:%d\n", INOUT_RATIO*nonzero, dense_M*dense_N, nt_outer, nt_inner);
+                //if (comm.master()) printf("%ld:%ld -> %d:%d\n", inout_ratio*nonzero, dense_M*dense_N, nt_outer, nt_inner);
 
                 communicator subcomm = comm.gang(TCI_EVENLY, nt_outer);
                 unsigned gid = subcomm.gang_num();
@@ -1311,9 +1312,9 @@ int contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* i
 
                 int nt_outer, nt_inner;
                 std::tie(nt_outer, nt_inner) =
-                    partition_2x2(comm.num_threads(), INOUT_RATIO*nonzero, dense_M*dense_N*quasi_N);
+                    partition_2x2(comm.num_threads(), inout_ratio*nonzero, dense_M*dense_N*quasi_N);
 
-                //if (comm.master()) printf("%d %ld:%ld -> %d:%d %d\n", comm.thread_num(), INOUT_RATIO*nonzero, dense_M*dense_N*quasi_N, nt_outer, nt_inner, quasi_N);
+                //if (comm.master()) printf("%d %ld:%ld -> %d:%d %d\n", comm.thread_num(), inout_ratio*nonzero, dense_M*dense_N*quasi_N, nt_outer, nt_inner, quasi_N);
 
                 communicator subcomm = comm.gang(TCI_EVENLY, nt_outer);
                 unsigned gid = subcomm.gang_num();
@@ -1430,9 +1431,9 @@ int contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* i
 
                 int nt_outer, nt_inner;
                 std::tie(nt_outer, nt_inner) =
-                    partition_2x2(comm.num_threads(), INOUT_RATIO*nonzero, dense_M*dense_N*quasi_M);
+                    partition_2x2(comm.num_threads(), inout_ratio*nonzero, dense_M*dense_N*quasi_M);
 
-                //if (comm.master()) printf("%ld:%ld -> %d:%d\n", INOUT_RATIO*nonzero, dense_M*dense_N*quasi_M, nt_outer, nt_inner);
+                //if (comm.master()) printf("%ld:%ld -> %d:%d\n", inout_ratio*nonzero, dense_M*dense_N*quasi_M, nt_outer, nt_inner);
 
                 communicator subcomm = comm.gang(TCI_EVENLY, nt_outer);
                 unsigned gid = subcomm.gang_num();

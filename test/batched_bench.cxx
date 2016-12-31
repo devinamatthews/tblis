@@ -28,6 +28,18 @@ using namespace std;
 using namespace tblis;
 using namespace stl_ext;
 
+std::atomic<long> flops;
+
+len_type v = 30;
+len_type o = 5;
+
+namespace tblis
+{
+
+extern len_type inout_ratio;
+
+}
+
 template <typename Kernel, typename ...Args>
 double run_kernel(len_type R, Kernel&& kernel, Args&&...args)
 {
@@ -50,11 +62,6 @@ double run_kernel(len_type R, Kernel&& kernel, Args&&...args)
 
     return dt - bias;
 }
-
-std::atomic<long> flops;
-
-constexpr len_type v = 30;
-constexpr len_type o = 5;
 
 template <typename T>
 void init(batched_tensor<T>& A, const string& dense, const string& batch)
@@ -278,12 +285,24 @@ int main(int argc, char** argv)
     while (true)
     {
         istringstream iss;
-        int arg = getopt_long(argc, argv, "r:s:", opts, NULL);
+        int arg = getopt_long(argc, argv, "r:s:v:o:i:", opts, NULL);
 
         if (arg == -1) break;
 
         switch (arg)
         {
+            case 'i':
+                iss.str(optarg);
+                iss >> inout_ratio;
+                break;
+            case 'v':
+                iss.str(optarg);
+                iss >> v;
+                break;
+            case 'o':
+                iss.str(optarg);
+                iss >> o;
+                break;
             case 'r':
                 iss.str(optarg);
                 iss >> R;

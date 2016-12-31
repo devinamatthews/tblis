@@ -80,7 +80,7 @@ class block_scatter_matrix
 
             for (len_type i = 0;i < m;i += MB)
             {
-                stride_type s = (m-i) > 1 ? rscat[i+1]-rscat[i] : -1;
+                stride_type s = (m-i) > 1 ? rscat[i+1]-rscat[i] : 1;
                 for (len_type j = i+1;j+1 < std::min(i+MB,m);j++)
                 {
                     if (rscat[j+1]-rscat[j] != s) s = 0;
@@ -90,7 +90,7 @@ class block_scatter_matrix
 
             for (len_type i = 0;i < n;i += NB)
             {
-                stride_type s = (n-i) > 1 ? cscat[i+1]-cscat[i] : -1;
+                stride_type s = (n-i) > 1 ? cscat[i+1]-cscat[i] : 1;
                 for (len_type j = i+1;j+1 < std::min(i+NB,n);j++)
                 {
                     if (cscat[j+1]-cscat[j] != s) s = 0;

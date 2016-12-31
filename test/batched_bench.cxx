@@ -22,12 +22,14 @@
 #include "tensor/tblis_batched_tensor.hpp"
 #include "tensor/tblis_batched_tensor_contract.hpp"
 
+#define DUMB 0
+
 using namespace std;
 using namespace tblis;
 using namespace stl_ext;
 
-template<typename Kernel, typename ...Args>
-double run_kernel(len_type R, const Kernel& kernel, Args&&...args)
+template <typename Kernel, typename ...Args>
+double run_kernel(len_type R, Kernel&& kernel, Args&&...args)
 {
     double bias = numeric_limits<double>::max();
     for (len_type r = 0;r < R;r++)
@@ -51,6 +53,123 @@ double run_kernel(len_type R, const Kernel& kernel, Args&&...args)
 
 std::atomic<long> flops;
 
+constexpr len_type v = 30;
+constexpr len_type o = 5;
+
+template <typename T>
+void init(batched_tensor<T>& A, const string& dense, const string& batch)
+{
+    unsigned n = dense.size();
+    unsigned m = batch.size();
+
+    vector<len_type> len;
+    for (auto c : dense+batch)
+        len.push_back(tolower(c) >= 'a' && tolower(c) <= 'h' ? v :
+                      tolower(c) >= 'i' && tolower(c) <= 'p' ? o : len.back());
+
+    len_type size = 1;
+    for (unsigned i = 0;i < m;)
+    {
+        int j = i+1;
+        while (j < m && batch[j] == '=') j++;
+
+        len_type s = len[n+i];
+
+        switch (j-i)
+        {
+            case 1: size *= s; break;
+            case 2: size *= s*(s+1)/2; break;
+            case 3: size *= s*(s+1)*(s+2)/6-s; break;
+            case 4: size *= s*(s+1)*(s+2)*(s+3)/24-s*s; break;
+        }
+
+        i = j;
+    }
+
+    vector<len_type> cur_idx(m);
+    for (unsigned i = 0;i < m;i++)
+    {
+        if (i == 0 || batch[i] != '=')
+        {
+            cur_idx[i] = 0;
+        }
+        else if (i == 1 || batch[i-1] != '=' || cur_idx[i-2] != cur_idx[i-1])
+        {
+            cur_idx[i] = cur_idx[i-1];
+        }
+        else
+        {
+            cur_idx[i] = cur_idx[i-1]+1;
+        }
+    }
+
+    matrix<len_type> idx({size, m}, 0, ROW_MAJOR);
+
+    if (m > 0 && size > 0)
+    {
+        len_type off = 0;
+        for (bool done = false;!done;)
+        {
+            for (unsigned i = 0;i < m;i++) idx[off][i] = cur_idx[i];
+            off++;
+
+            for (unsigned i = m;i --> 0;)
+            {
+                bool over = (i == m-1 || batch[i+1] != '=')
+
+                                ? (cur_idx[i] >= len[n+i]-1) :
+
+                            (i == m-2 || batch[i+2] != '=' ||
+                             cur_idx[i+1] != cur_idx[i+2])
+
+                                ? (cur_idx[i] >= cur_idx[i+1])
+
+                                : (cur_idx[i] >= cur_idx[i+1]-1);
+
+                if (over)
+                {
+                    if (i == 0) done = true;
+                }
+                else
+                {
+                    cur_idx[i]++;
+
+                    for (i++;i < m;i++)
+                    {
+                        if (i == 0 || batch[i] != '=')
+                        {
+                            cur_idx[i] = 0;
+                        }
+                        else if (i == 1 || batch[i-1] != '=' || cur_idx[i-2] != cur_idx[i-1])
+                        {
+                            cur_idx[i] = cur_idx[i-1];
+                        }
+                        else
+                        {
+                            cur_idx[i] = cur_idx[i-1]+1;
+                        }
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        assert(off == size);
+    }
+
+    A.reset(len, idx);
+
+    len.resize(n);
+
+    for (len_type i = 0;i < size;i++)
+    {
+        double* data = A.batch_data(i);
+        MArray::viterator<> it(len, A.strides());
+        while (it.next(data)) *data = random_number<double>();
+    }
+}
+
 template <typename T>
 double diff(const batched_tensor<T>& A, const batched_tensor<T>& B)
 {
@@ -72,6 +191,81 @@ double diff(const batched_tensor<T>& A, const batched_tensor<T>& B)
     return sqrt(d);
 }
 
+template <typename T>
+void bench(int R,
+           T alpha, const batched_tensor<T>& A, const std::string& typea,
+                    const batched_tensor<T>& B, const std::string& typeb,
+           T  beta, const batched_tensor<T>& C, const std::string& typec)
+{
+    batched_tensor<double> tmp0(C);
+    batched_tensor<double> tmp1(C);
+    batched_tensor<double> tmp2(C);
+    batched_tensor<double> tmp3(C);
+
+    #if DUMB
+
+    double t0 = run_kernel(R,
+    [&]
+    {
+        contract_batch_dumb<double>(alpha,    A, typea.data(),
+                                              B, typeb.data(),
+                                     beta, tmp0, typec.data());
+    });
+
+    #endif
+
+    flops = 0;
+
+    double t1 = run_kernel(R,
+    [&]
+    {
+        contract_batch_ref<double>(alpha,    A, typea.data(),
+                                             B, typeb.data(),
+                                    beta, tmp1, typec.data());
+    });
+
+    auto flops1 = flops.load();
+    printf("%ld\n", flops1);
+    flops = 0;
+
+    double t2 = run_kernel(R,
+    [&]
+    {
+        contract_batch<double>(alpha,    A, typea.data(),
+                                         B, typeb.data(),
+                                beta, tmp2, typec.data());
+    });
+
+    auto flops2 = flops.load();
+    printf("%ld\n", flops2);
+    flops = 0;
+
+    double t3 = run_kernel(R,
+    [&]
+    {
+        contract_batch2<double>(alpha,    A, typea.data(),
+                                          B, typeb.data(),
+                                 beta, tmp3, typec.data());
+    });
+
+    auto flops3 = flops.load();
+    printf("%ld\n", flops3);
+
+    #if DUMB
+    double d1 = diff(tmp0, tmp1);
+    double d2 = diff(tmp0, tmp2);
+    double d3 = diff(tmp0, tmp3);
+    #else
+    double d1 = diff(tmp1, tmp1);
+    double d2 = diff(tmp1, tmp2);
+    double d3 = diff(tmp1, tmp3);
+    #endif
+
+    printf("%g %g %g\n", d1, d2, d3);
+    printf("%g %g %g\n", t1, t2, t3);
+    printf("%g %g %g\n", flops1/t1/1e9/R, flops2/t2/1e9/R, flops3/t3/1e9/R);
+}
+
 int main(int argc, char** argv)
 {
     int R = 5;
@@ -81,11 +275,13 @@ int main(int argc, char** argv)
                             {"seed", required_argument, NULL, 's'},
                             {0, 0, 0, 0}};
 
-    int arg;
-    int index;
-    istringstream iss;
-    while ((arg = getopt_long(argc, argv, "r:s:", opts, &index)) != -1)
+    while (true)
     {
+        istringstream iss;
+        int arg = getopt_long(argc, argv, "r:s:", opts, NULL);
+
+        if (arg == -1) break;
+
         switch (arg)
         {
             case 'r':
@@ -105,155 +301,54 @@ int main(int argc, char** argv)
     cout << "Using mt19937 with seed " << seed << endl;
     rand_engine.seed(seed);
 
-    len_type v = 10;
-    len_type o = 4;
+    constexpr bool test0 = true;
+    constexpr bool test1 = false;
+    constexpr bool test2 = false;
 
-    matrix<len_type> T4_idx({o*(o+1)*(o+2)*(o+3)/24 - o*o, 4}, 0, ROW_MAJOR);
-    for (len_type i = 0, off = 0;i < o;i++)
+    if (test0)
     {
-        for (len_type j = 0;j <= i;j++)
-        {
-            for (len_type k = 0;k <= j;k++)
-            {
-                if (i == j && j == k) continue;
-                for (len_type l = 0;l <= k;l++)
-                {
-                    if (j == k && k == l) continue;
-                    T4_idx[off][0] = i;
-                    T4_idx[off][1] = j;
-                    T4_idx[off][2] = k;
-                    T4_idx[off][3] = l;
-                    off++;
-                }
-            }
-        }
-        if (i == o-1) assert(off == T4_idx.length(0));
+        batched_tensor<double> T4;
+        batched_tensor<double> T3;
+        batched_tensor<double> Wa;
+
+        init(T4, "ABCD", "I===");
+        init(T3,  "ABC",  "I==");
+        init(Wa,  "ABC",  "I=K");
+
+        bench(R, 1.0, T3,   "ABEIJM",
+                      Wa,   "CDEKLM",
+                 1.0, T4, "ABCDIJKL");
     }
 
-    matrix<len_type> T3_idx({o*(o+1)*(o+2)/6 - o, 3}, 0, ROW_MAJOR);
-    for (len_type i = 0, off = 0;i < o;i++)
+    if (test1)
     {
-        for (len_type j = 0;j <= i;j++)
-        {
-            for (len_type k = 0;k <= j;k++)
-            {
-                if (i == j && j == k) continue;
-                T3_idx[off][0] = i;
-                T3_idx[off][1] = j;
-                T3_idx[off][2] = k;
-                off++;
-            }
-        }
-        if (i == o-1) assert(off == T3_idx.length(0));
+        batched_tensor<double> T2;
+        batched_tensor<double> W;
+        batched_tensor<double> T3;
+
+        init(T2, "ABIJ", "");
+        init(W, "IJKA", "");
+        init(T3, "ABC", "I==");
+
+        bench(R, 1.0, T2,   "ABIM",
+                       W,   "JKMC",
+                 1.0, T3, "ABCIJK");
     }
 
-    matrix<len_type> Wa_idx({o*o*(o+1)/2, 3}, 0, ROW_MAJOR);
-    for (len_type i = 0, off = 0;i < o;i++)
+    if (test2)
     {
-        for (len_type j = 0;j <= i;j++)
-        {
-            for (len_type k = 0;k < o;k++)
-            {
-                Wa_idx[off][0] = i;
-                Wa_idx[off][1] = j;
-                Wa_idx[off][2] = k;
-                off++;
-            }
-        }
-        if (i == o-1) assert(off == Wa_idx.length(0));
+        batched_tensor<double> T2;
+        batched_tensor<double> W;
+        batched_tensor<double> T3;
+
+        init(T2, "ABIJ", "");
+        init(W, "ABCI", "");
+        init(T3, "ABC", "I==");
+
+        bench(R, 1.0, T2,   "AEIJ",
+                       W,   "BCEK",
+                 1.0, T3, "ABCIJK");
     }
-
-    matrix<len_type> Wb_idx({o*o*o, 3}, 0, ROW_MAJOR);
-    for (len_type i = 0, off = 0;i < o;i++)
-    {
-        for (len_type j = 0;j < o;j++)
-        {
-            for (len_type k = 0;k < o;k++)
-            {
-                Wb_idx[off][0] = i;
-                Wb_idx[off][1] = j;
-                Wb_idx[off][2] = k;
-                off++;
-            }
-        }
-        if (i == o-1) assert(off == Wb_idx.length(0));
-    }
-
-    batched_tensor<double> T4({v,v,v,v,o,o,o,o}, T4_idx);
-    batched_tensor<double> T3({  v,v,v,  o,o,o}, T3_idx);
-    batched_tensor<double> Wa({  v,v,v,  o,o,o}, Wa_idx);
-    //batched_tensor<double> Wb({  v,v,v,  o,o,o}, Wb_idx);
-
-    for (auto t : {&T4, &T3, &Wa})
-    {
-        std::vector<len_type> len(t->lengths());
-        len.resize(t->dense_dimension());
-
-        for (len_type i = 0;i < t->num_batches();i++)
-        {
-            double* data = t->batch_data(i);
-            MArray::viterator<> it(len, t->strides());
-            while (it.next(data)) *data = random_number<double>();
-        }
-    }
-
-    batched_tensor<double> tmp0(T4);
-    batched_tensor<double> tmp1(T4);
-    batched_tensor<double> tmp2(T4);
-    batched_tensor<double> tmp3(T4);
-
-    double t0 = run_kernel(R,
-    [&]
-    {
-        contract_batch_dumb<double>(1.0,   T3,   "ABEIJM",
-                                           Wa,   "CDEKLM",
-                                    0.5, tmp0, "ABCDIJKL");
-    });
-
-    flops = 0;
-
-    double t1 = run_kernel(R,
-    [&]
-    {
-        contract_batch_ref<double>(1.0,  T3,   "ABEIJM",
-                                         Wa,   "CDEKLM",
-                                   0.5, tmp1, "ABCDIJKL");
-    });
-
-    auto flops1 = flops.load();
-    printf("%ld\n", flops1);
-    flops = 0;
-
-    double t2 = run_kernel(R,
-    [&]
-    {
-        contract_batch<double>(1.0,  T3,   "ABEIJM",
-                                     Wa,   "CDEKLM",
-                               0.5, tmp2, "ABCDIJKL");
-    });
-
-    auto flops2 = flops.load();
-    printf("%ld\n", flops2);
-    flops = 0;
-
-    double t3 = run_kernel(R,
-    [&]
-    {
-        contract_batch2<double>(1.0,  T3,   "ABEIJM",
-                                      Wa,   "CDEKLM",
-                                0.5, tmp3, "ABCDIJKL");
-    });
-
-    auto flops3 = flops.load();
-    printf("%ld\n", flops3);
-
-    double d1 = diff(tmp0, tmp1);
-    double d2 = diff(tmp0, tmp2);
-    double d3 = diff(tmp0, tmp3);
-
-    printf("%g %g %g\n", d1, d2, d3);
-    printf("%g %g %g\n", t1, t2, t3);
-    printf("%g %g %g\n", flops1/t1/1e9/R, flops2/t2/1e9/R, flops3/t3/1e9/R);
 
     return 0;
 }

@@ -222,6 +222,7 @@ class scatter_tensor_matrix
         {
             TBLIS_ASSERT(dim < 2);
             std::swap(m, scatter_len_[dim]);
+            len_[dim] = dense_len_[dim]*scatter_len_[dim];
             return m;
         }
 
@@ -293,9 +294,14 @@ class scatter_tensor_matrix
             off_m = off_m%dense_m;
             len_type m_max = (off_m+m-1)%dense_m + 1;
 
+            TBLIS_ASSERT(scat_min >= 0 && scat_min <  scatter_len_[dim]);
+            TBLIS_ASSERT(scat_max >  0 && scat_max <= scatter_len_[dim]);
+            TBLIS_ASSERT(off_m >= 0 && off_m <  dense_len_[dim]);
+            TBLIS_ASSERT(m_max >  0 && m_max <= dense_len_[dim]);
+
             if (scatter_[dim])
             {
-                for (len_type scat_m = scat_min;scat_m < scat_max;scat_m++)
+                for (len_type scat_m = scat_min, scat_idx = 0;scat_m < scat_max;scat_m++)
                 {
                     m = (scat_m == scat_max-1 ? m_max : dense_m) - off_m;
                     len_type p0 = off_m%m0;
@@ -307,12 +313,13 @@ class scatter_tensor_matrix
                         for (len_type i0 = p0;i0 < m0;i0++)
                         {
                             if (idx == m) return;
-                            scatter[idx++] = off + i0*s0;
+                            scatter[scat_idx + idx++] = off + i0*s0;
                         }
                         p0 = 0;
                     }
 
                     off_m = 0;
+                    scat_idx += m;
                 }
             }
             else
@@ -330,8 +337,6 @@ class scatter_tensor_matrix
                     }
                     p0 = 0;
                 }
-
-                off_m = 0;
             }
         }
 

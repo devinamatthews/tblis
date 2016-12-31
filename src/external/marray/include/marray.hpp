@@ -1954,6 +1954,19 @@ namespace MArray
             {
                 return ndim;
             }
+
+            void swap(const_marray_view& other)
+            {
+                using std::swap;
+                swap(data_, other.data_);
+                swap(len_, other.len_);
+                swap(stride_, other.stride_);
+            }
+
+            friend void swap(const_marray_view& a, const_marray_view& b)
+            {
+                a.swap(b);
+            }
     };
 
     template <typename T, unsigned ndim>
@@ -2416,6 +2429,16 @@ namespace MArray
             pointer data(pointer ptr)
             {
                 return const_cast<pointer>(base::data(ptr));
+            }
+
+            void swap(marray_view& other)
+            {
+                base::swap(other);
+            }
+
+            friend void swap(marray_view& a, marray_view& b)
+            {
+                a.swap(b);
             }
 
             using base::length;

@@ -20,14 +20,13 @@
 
 #include "src/external/stl_ext/include/iostream.hpp"
 
-#define OUTER_THREADING 1
-
 extern std::atomic<long> flops;
 
 namespace tblis
 {
 
 len_type inout_ratio = 200000;
+int outer_threading = 1;
 
 template <typename T, T Empty=T()>
 class slot
@@ -385,9 +384,8 @@ int contract_batch_ref(T alpha, const_batched_tensor_view<T> A, const label_type
 
     //printf("(%ld,%ld,%ld)\n", dense_M, dense_N, dense_K);
 
-    #if OUTER_THREADING
-    #pragma omp parallel for schedule(static,1), firstprivate(tensor_A, tensor_B, tensor_C)
-    #endif
+    #pragma omp parallel for if(outer_threading), schedule(static,1), \
+                             firstprivate(tensor_A, tensor_B, tensor_C)
     for (unsigned batch_C = 0;batch_C < C.num_batches();batch_C++)
     {
         T local_beta = beta;
@@ -483,13 +481,18 @@ int contract_batch_ref(T alpha, const_batched_tensor_view<T> A, const label_type
                 //             batch_B << " " <<
                 //             batch_C << std::endl;
 
-                mult(
-                #if OUTER_THREADING
-                     single,
-                #endif
-                          alpha, tensor_A, dense_idx_A.data(),
-                                 tensor_B, dense_idx_B.data(),
-                     local_beta, tensor_C, dense_idx_C.data());
+                if (outer_threading)
+                {
+                    mult(single, alpha, tensor_A, dense_idx_A.data(),
+                                        tensor_B, dense_idx_B.data(),
+                            local_beta, tensor_C, dense_idx_C.data());
+                }
+                else
+                {
+                    mult(     alpha, tensor_A, dense_idx_A.data(),
+                                     tensor_B, dense_idx_B.data(),
+                         local_beta, tensor_C, dense_idx_C.data());
+                }
 
                 local_beta = T(1);
             }

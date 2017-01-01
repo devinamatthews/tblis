@@ -23,6 +23,7 @@
 #include "tensor/tblis_batched_tensor_contract.hpp"
 
 #define DUMB 0
+#define VALIDATE 0
 
 using namespace std;
 using namespace tblis;
@@ -167,6 +168,8 @@ void init(batched_tensor<T>& A, const string& dense, const string& batch)
 
     A.reset(len, idx);
 
+    #if VALIDATE
+
     len.resize(n);
 
     for (len_type i = 0;i < size;i++)
@@ -175,6 +178,8 @@ void init(batched_tensor<T>& A, const string& dense, const string& batch)
         MArray::viterator<> it(len, A.strides());
         while (it.next(data)) *data = random_number<double>();
     }
+
+    #endif
 }
 
 template <typename T>
@@ -204,10 +209,17 @@ void bench(int R,
                     const batched_tensor<T>& B, const std::string& typeb,
            T  beta, const batched_tensor<T>& C, const std::string& typec)
 {
+    #if VALIDATE
     batched_tensor<double> tmp0(C);
     batched_tensor<double> tmp1(C);
     batched_tensor<double> tmp2(C);
     batched_tensor<double> tmp3(C);
+    #else
+    auto& tmp0 = const_cast<batched_tensor<T>&>(C);
+    auto& tmp1 = const_cast<batched_tensor<T>&>(C);
+    auto& tmp2 = const_cast<batched_tensor<T>&>(C);
+    auto& tmp3 = const_cast<batched_tensor<T>&>(C);
+    #endif
 
     #if DUMB
 
@@ -258,6 +270,7 @@ void bench(int R,
     auto flops3 = flops.load();
     printf("%ld\n", flops3);
 
+    #if VALIDATE
     #if DUMB
     double d1 = diff(tmp0, tmp1);
     double d2 = diff(tmp0, tmp2);
@@ -266,6 +279,9 @@ void bench(int R,
     double d1 = diff(tmp1, tmp1);
     double d2 = diff(tmp1, tmp2);
     double d3 = diff(tmp1, tmp3);
+    #endif
+    #else
+    double d1 = 0, d2 = 0, d3 = 0;
     #endif
 
     printf("%g %g %g\n", d1, d2, d3);

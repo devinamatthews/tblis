@@ -20,7 +20,7 @@
 
 #include "src/external/stl_ext/include/iostream.hpp"
 
-#define OUTER_THREADING 0
+#define OUTER_THREADING 1
 
 extern std::atomic<long> flops;
 
@@ -1151,6 +1151,8 @@ int contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* i
         {
             if (batch_K > 1 && dense_K < dense_M && dense_K < dense_N)
             {
+                //if (comm.master()) printf("K algorithm\n");
+
                 scatter_tensor_matrix<T> at(dense_len_AC, 1,
                                             dense_len_AB, 1,
                                             nullptr,
@@ -1175,18 +1177,9 @@ int contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* i
                 std::tie(mn_min, mn_max, std::ignore) =
                     comm.distribute_over_threads(batch_M*batch_N);
 
-                len_type n_min = mn_min%batch_N;
-                len_type m_min = mn_min/batch_N;
-                len_type n_max = mn_max%batch_N;
-                len_type m_max = mn_max/batch_N;
-
-                for (len_type m = m_min;m < m_max;m++)
+                for (len_type mn = mn_min;mn < mn_max;mn++)
                 {
-                    for (len_type n = (m == m_min   ? n_min : 0);
-                                  n < (m == m_max-1 ? n_max : batch_N);n++)
-                    {
-                        if (batch_C[m][n]) nonzero_local++;
-                    }
+                    if (batch_C.data()[mn]) nonzero_local++;
                 }
 
                 nonzero += nonzero_local;
@@ -1264,6 +1257,8 @@ int contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* i
             }
             else if (batch_N > 1 && dense_N < dense_M)
             {
+                //if (comm.master()) printf("N algorithm\n");
+
                 tensor_matrix<T> at(dense_len_AC,
                                     dense_len_AB,
                                     nullptr,
@@ -1383,6 +1378,8 @@ int contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* i
             }
             else
             {
+                //if (comm.master()) printf("M algorithm\n");
+
                 scatter_tensor_matrix<T> at(dense_len_AC, 1,
                                             dense_len_AB, 1,
                                             nullptr,

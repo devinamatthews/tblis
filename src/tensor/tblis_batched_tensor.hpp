@@ -16,6 +16,10 @@ class batched_tensor_view;
 template <typename T>
 class const_batched_tensor_view
 {
+    template <typename T_> friend class const_batched_tensor_view;
+    template <typename T_> friend class batched_tensor_view;
+    template <typename T_, typename Allocator_> friend class batched_tensor;
+
     public:
         typedef T value_type;
         typedef T* pointer;
@@ -232,6 +236,10 @@ class const_batched_tensor_view
 template <typename T>
 class batched_tensor_view : public const_batched_tensor_view<T>
 {
+    template <typename T_> friend class const_batched_tensor_view;
+    template <typename T_> friend class batched_tensor_view;
+    template <typename T_, typename Allocator_> friend class batched_tensor;
+
     protected:
         typedef const_batched_tensor_view<T> base;
 
@@ -363,6 +371,10 @@ class batched_tensor_view : public const_batched_tensor_view<T>
 template <typename T, typename Allocator=aligned_allocator<T,64>>
 class batched_tensor : public batched_tensor_view<T>, private Allocator
 {
+    template <typename T_> friend class const_batched_tensor_view;
+    template <typename T_> friend class batched_tensor_view;
+    template <typename T_, typename Allocator_> friend class batched_tensor;
+
     protected:
         typedef batched_tensor_view<T> base;
 
@@ -493,12 +505,12 @@ class batched_tensor : public batched_tensor_view<T>, private Allocator
                 reset(other.len_, other.batch_idx_, T(), layout);
             }
 
-            auto it = MArray::make_iterator(std::vector<len_type>{len_.begin(), len_.begin+dense_dimension},
+            auto it = MArray::make_iterator(std::vector<len_type>{len_.begin(), len_.begin()+dense_dimension()},
                                             stride_, stride_);
             for (len_type batch = 0;batch < num_batches();batch++)
             {
-                auto a = other.data_[batch];
-                auto b =       data_[batch];
+                auto a = other.batch_data(batch);
+                auto b =       batch_data(batch);
                 while (it.next(a, b)) *b = *a;
             }
         }

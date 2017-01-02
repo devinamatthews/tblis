@@ -207,10 +207,10 @@ int tci_context_receive_nowait(tci_context_t* context,
 typedef struct
 {
     tci_context_t* context;
-    unsigned nthread;
-    unsigned tid;
     unsigned ngang;
     unsigned gid;
+    unsigned nthread;
+    unsigned tid;
 } tci_comm_t;
 
 typedef enum

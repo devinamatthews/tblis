@@ -16,7 +16,7 @@ void add(const communicator& comm, const config& cfg, len_type m, len_type n,
     const len_type MR = (TWOD ? cfg.trans_mr.def<T>() : 1);
     const len_type NR = (TWOD ? cfg.trans_nr.def<T>() : 1);
 
-    const bool trans = (TWOD ? cfg.trans_row_major<T>() && rs_B < cs_B
+    const bool trans = (TWOD ? cfg.trans_row_major.value<T>() && rs_B < cs_B
                              : rs_B > cs_B);
 
     if (trans)

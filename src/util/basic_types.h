@@ -159,7 +159,7 @@ typedef struct tblis_scalar
 
 #ifdef __cplusplus
 
-    tblis_scalar() {}
+    tblis_scalar() : type(TYPE_DOUBLE) {}
 
     template <typename T>
     tblis_scalar(T value)
@@ -197,7 +197,24 @@ typedef struct tblis_vector
 
 #ifdef __cplusplus
 
-    tblis_vector() {}
+    tblis_vector()
+    : type(TYPE_DOUBLE), conj(false), data(0), n(0), inc(0) {}
+
+    template <typename T>
+    tblis_vector(const T* A, len_type n, stride_type inc)
+    : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(A))),
+      n(n), inc(inc)
+    {
+        *reinterpret_cast<T*>(scalar) = T(1);
+    }
+
+    template <typename T>
+    tblis_vector(T alpha, const T* A, len_type n, stride_type inc)
+    : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(A))),
+      n(n), inc(inc)
+    {
+        *reinterpret_cast<T*>(scalar) = alpha;
+    }
 
     template <typename T>
     tblis_vector(const_row_view<T> view)
@@ -255,7 +272,24 @@ typedef struct tblis_matrix
 
 #ifdef __cplusplus
 
-    tblis_matrix() {}
+    tblis_matrix()
+    : type(TYPE_DOUBLE), conj(false), data(0), m(0), n(0), rs(0), cs(0) {}
+
+    template <typename T>
+    tblis_matrix(const T* A, len_type m, len_type n, stride_type rs, stride_type cs)
+    : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(A))),
+      m(m), n(n), rs(rs), cs(rs)
+    {
+        *reinterpret_cast<T*>(scalar) = T(1);
+    }
+
+    template <typename T>
+    tblis_matrix(T alpha, const T* A, len_type m, len_type n, stride_type rs, stride_type cs)
+    : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(A))),
+      m(m), n(n), rs(rs), cs(rs)
+    {
+        *reinterpret_cast<T*>(scalar) = alpha;
+    }
 
     template <typename T>
     tblis_matrix(const_matrix_view<T> view)

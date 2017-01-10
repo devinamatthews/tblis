@@ -127,7 +127,9 @@
     VSHUFF64X2(ZMM(b7), ZMM(a3), ZMM(a7), IMM(0xDD))
 
 //This is an array used for the scatter/gather instructions.
-extern int32_t offsets[32];
+static int32_t offsets[32] __attribute__((aligned(64))) =
+    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
+     16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31};
 
 // NOTE: assumes packdim_mr == 32
 void bli_dpackm_30xk_opt

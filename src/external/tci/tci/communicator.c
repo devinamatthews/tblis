@@ -1,12 +1,13 @@
-#include "tci.h"
+#include "communicator.h"
+#include "parallel.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-static tci_comm_t _tci_single = {NULL, 1, 0, 1, 0};
-const tci_comm_t* const tci_single = &_tci_single;
+static tci_comm _tci_single = {NULL, 1, 0, 1, 0};
+const tci_comm* const tci_single = &_tci_single;
 
-int tci_comm_init_single(tci_comm_t* comm)
+int tci_comm_init_single(tci_comm* comm)
 {
     comm->context = NULL;
     comm->nthread = 1;
@@ -16,7 +17,7 @@ int tci_comm_init_single(tci_comm_t* comm)
     return 0;
 }
 
-int tci_comm_init(tci_comm_t* comm, tci_context_t* context,
+int tci_comm_init(tci_comm* comm, tci_context* context,
                   unsigned nthread, unsigned tid, unsigned ngang, unsigned gid)
 {
     comm->context = context;
@@ -30,7 +31,7 @@ int tci_comm_init(tci_comm_t* comm, tci_context_t* context,
     return 0;
 }
 
-int tci_comm_destroy(tci_comm_t* comm)
+int tci_comm_destroy(tci_comm* comm)
 {
     if (comm->context)
     {
@@ -42,18 +43,18 @@ int tci_comm_destroy(tci_comm_t* comm)
     }
 }
 
-int tci_comm_is_master(const tci_comm_t* comm)
+int tci_comm_is_master(const tci_comm* comm)
 {
     return comm->tid == 0;
 }
 
-int tci_comm_barrier(tci_comm_t* comm)
+int tci_comm_barrier(tci_comm* comm)
 {
     if (!comm->context) return 0;
     return tci_context_barrier(comm->context, comm->tid);
 }
 
-int tci_comm_bcast(tci_comm_t* comm, void** object, unsigned root)
+int tci_comm_bcast(tci_comm* comm, void** object, unsigned root)
 {
     if (!comm->context) return 0;
 
@@ -67,7 +68,7 @@ int tci_comm_bcast(tci_comm_t* comm, void** object, unsigned root)
     }
 }
 
-int tci_comm_bcast_nowait(tci_comm_t* comm, void** object, unsigned root)
+int tci_comm_bcast_nowait(tci_comm* comm, void** object, unsigned root)
 {
     if (!comm->context) return 0;
 
@@ -81,8 +82,8 @@ int tci_comm_bcast_nowait(tci_comm_t* comm, void** object, unsigned root)
     }
 }
 
-int tci_comm_gang(tci_comm_t* parent, tci_comm_t* child,
-                  unsigned type, unsigned n, unsigned bs)
+int tci_comm_gang(tci_comm* parent, tci_comm* child,
+                  int type, unsigned n, unsigned bs)
 {
     unsigned nt = parent->nthread;
     unsigned tid = parent->tid;
@@ -139,8 +140,8 @@ int tci_comm_gang(tci_comm_t* parent, tci_comm_t* child,
     }
     else
     {
-        tci_context_t* contexts_buf[n];
-        tci_context_t** contexts = &contexts_buf[0];
+        tci_context* contexts_buf[n];
+        tci_context** contexts = &contexts_buf[0];
 
         memset(contexts_buf, 0, sizeof(contexts_buf));
         tci_comm_bcast_nowait(parent, (void**)&contexts, 0);
@@ -184,7 +185,7 @@ void tci_distribute(unsigned n, unsigned idx, uint64_t range,
     }
 }
 
-void tci_comm_distribute_over_gangs(tci_comm_t* comm, uint64_t range,
+void tci_comm_distribute_over_gangs(tci_comm* comm, uint64_t range,
                                     uint64_t granularity, uint64_t* first,
                                     uint64_t* last, uint64_t* max)
 {
@@ -192,7 +193,7 @@ void tci_comm_distribute_over_gangs(tci_comm_t* comm, uint64_t range,
                    first, last, max);
 }
 
-void tci_comm_distribute_over_threads(tci_comm_t* comm, uint64_t range,
+void tci_comm_distribute_over_threads(tci_comm* comm, uint64_t range,
                                       uint64_t granularity, uint64_t* first,
                                       uint64_t* last, uint64_t* max)
 {
@@ -200,7 +201,7 @@ void tci_comm_distribute_over_threads(tci_comm_t* comm, uint64_t range,
                    first, last, max);
 }
 
-void tci_comm_distribute_over_gangs_2d(tci_comm_t* comm,
+void tci_comm_distribute_over_gangs_2d(tci_comm* comm,
     uint64_t range_m, uint64_t range_n,
     uint64_t granularity_m, uint64_t granularity_n,
     uint64_t* first_m, uint64_t* last_m, uint64_t* max_m,
@@ -216,7 +217,7 @@ void tci_comm_distribute_over_gangs_2d(tci_comm_t* comm,
     tci_distribute(n, idx_n, range_n, granularity_n, first_n, last_n, max_n);
 }
 
-void tci_comm_distribute_over_threads_2d(tci_comm_t* comm,
+void tci_comm_distribute_over_threads_2d(tci_comm* comm,
      uint64_t range_m, uint64_t range_n,
      uint64_t granularity_m, uint64_t granularity_n,
      uint64_t* first_m, uint64_t* last_m, uint64_t* max_m,

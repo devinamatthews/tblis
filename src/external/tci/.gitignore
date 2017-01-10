@@ -7,7 +7,7 @@ config.log
 config.status
 libtool
 .deps
-src/tci.h
+src/tci_config.h
 .git.bak
 autom4te.cache/
 .ptp-sync-folder

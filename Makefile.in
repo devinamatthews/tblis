@@ -315,8 +315,7 @@ am_lib_libtblis_la_OBJECTS = src/iface/1v/add.lo src/iface/1v/dot.lo \
 	src/internal/1t/reduce.lo src/internal/1t/scale.lo \
 	src/internal/1t/set.lo src/internal/3m/mult.lo \
 	src/internal/3t/mult.lo src/configs/configs.lo \
-	src/util/cpuid.lo src/util/gemm_thread.lo src/util/random.lo \
-	src/util/thread.lo
+	src/util/cpuid.lo src/util/random.lo src/util/thread.lo
 lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
 @ENABLE_BLAS_TRUE@am__EXEEXT_1 = bin/bench$(EXEEXT) \
 @ENABLE_BLAS_TRUE@	bin/batched_bench$(EXEEXT)
@@ -679,7 +678,6 @@ lib_libtblis_la_SOURCES = \
     src/configs/configs.cxx \
     \
     src/util/cpuid.cxx \
-    src/util/gemm_thread.cxx \
     src/util/random.cxx \
     src/util/thread.cxx
 
@@ -832,7 +830,7 @@ bin_bench_SOURCES = test/bench.cxx
 bin_batched_bench_SOURCES = test/batched_bench.cxx
 SUBDIRS = src/external/tci
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/util -Isrc/external/tci/src
+AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/util -I$(srcdir)/src/external/tci -Isrc/external/tci/tci
 AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la
 bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
@@ -1238,8 +1236,6 @@ src/util/$(DEPDIR)/$(am__dirstamp):
 	@: > src/util/$(DEPDIR)/$(am__dirstamp)
 src/util/cpuid.lo: src/util/$(am__dirstamp) \
 	src/util/$(DEPDIR)/$(am__dirstamp)
-src/util/gemm_thread.lo: src/util/$(am__dirstamp) \
-	src/util/$(DEPDIR)/$(am__dirstamp)
 src/util/random.lo: src/util/$(am__dirstamp) \
 	src/util/$(DEPDIR)/$(am__dirstamp)
 src/util/thread.lo: src/util/$(am__dirstamp) \
@@ -1392,7 +1388,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/3m/$(DEPDIR)/mult.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/3t/$(DEPDIR)/mult.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/cpuid.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/gemm_thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/random.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/batched_bench.Po@am__quote@

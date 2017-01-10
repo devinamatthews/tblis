@@ -33,7 +33,7 @@ void mult(const communicator& comm, const config& cfg,
 {
     TBLIS_ASSERT(!conj_A && !conj_B && !conj_C);
 
-    const bool row_major = cfg.gemm_row_major<T>();
+    const bool row_major = cfg.gemm_row_major.value<T>();
 
     if ((row_major ? rs_C : cs_C) == 1)
     {
@@ -54,7 +54,7 @@ void mult(const communicator& comm, const config& cfg,
     GotoGEMM gemm;
 
     int nt = comm.num_threads();
-    gemm_thread_config tc = make_gemm_thread_config(nt, m, n, k);
+    gemm_thread_config tc = make_gemm_thread_config<T>(cfg, nt, m, n, k);
     step<0>(gemm).distribute = tc.jc_nt;
     step<3>(gemm).distribute = tc.ic_nt;
     step<5>(gemm).distribute = tc.jr_nt;

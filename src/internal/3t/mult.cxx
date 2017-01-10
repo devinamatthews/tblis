@@ -192,7 +192,7 @@ void contract_blis(const communicator& comm, const config& cfg,
                         stl_ext::permuted(stride_C_AC, reorder_AC),
                         stl_ext::permuted(stride_C_BC, reorder_BC));
 
-    const bool row_major = cfg.gemm_row_major<T>();
+    const bool row_major = cfg.gemm_row_major.value<T>();
 
     if (ct.stride(!row_major) == 1)
     {
@@ -212,7 +212,7 @@ void contract_blis(const communicator& comm, const config& cfg,
     len_type k = at.length(1);
 
     int nt = comm.num_threads();
-    auto tc = make_gemm_thread_config(nt, m, n, k);
+    auto tc = make_gemm_thread_config<T>(cfg, nt, m, n, k);
     step<0>(gemm).distribute = tc.jc_nt;
     step<4>(gemm).distribute = tc.ic_nt;
     step<8>(gemm).distribute = tc.jr_nt;

@@ -97,24 +97,62 @@ else
 fi
 
 #
-# Check for __sync builtins
+# Check for __atomic builtins
 #
 
-AX_GCC_BUILTIN(__sync_fetch_and_add)
-AX_GCC_BUILTIN(__sync_fetch_and_sub)
-AX_GCC_BUILTIN(__sync_add_and_fetch)
-AX_GCC_BUILTIN(__sync_sub_and_fetch)
-AX_GCC_BUILTIN(__sync_synchronize)
-AX_GCC_BUILTIN(__sync_lock_test_and_set)
-AX_GCC_BUILTIN(__sync_lock_release)
-if test x"$ax_cv_have___sync_fetch_and_add" = xno -o \
-        x"$ax_cv_have___sync_fetch_and_sub" = xno -o \
-        x"$ax_cv_have___sync_add_and_fetch" = xno -o \
-        x"$ax_cv_have___sync_sub_and_fetch" = xno -o \
-        x"$ax_cv_have___sync_synchronize" = xno -o \
-        x"$ax_cv_have___sync_lock_test_and_set" = xno -o \
-        x"$ax_cv_have___sync_lock_release" = xno; then
-    AC_MSG_ERROR([__sync atomic builtins required])
+AX_GCC_BUILTIN(__atomic_load_n)
+AX_GCC_BUILTIN(__atomic_load)
+AX_GCC_BUILTIN(__atomic_store_n)
+AX_GCC_BUILTIN(__atomic_store)
+AX_GCC_BUILTIN(__atomic_exchange_n)
+AX_GCC_BUILTIN(__atomic_exchange)
+AX_GCC_BUILTIN(__atomic_compare_exchange_n)
+AX_GCC_BUILTIN(__atomic_compare_exchange)
+AX_GCC_BUILTIN(__atomic_add_fetch)
+AX_GCC_BUILTIN(__atomic_sub_fetch)
+AX_GCC_BUILTIN(__atomic_and_fetch)
+AX_GCC_BUILTIN(__atomic_xor_fetch)
+AX_GCC_BUILTIN(__atomic_or_fetch)
+AX_GCC_BUILTIN(__atomic_nand_fetch)
+AX_GCC_BUILTIN(__atomic_fetch_add)
+AX_GCC_BUILTIN(__atomic_fetch_sub)
+AX_GCC_BUILTIN(__atomic_fetch_and)
+AX_GCC_BUILTIN(__atomic_fetch_xor)
+AX_GCC_BUILTIN(__atomic_fetch_or)
+AX_GCC_BUILTIN(__atomic_fetch_nand)
+AX_GCC_BUILTIN(__atomic_test_and_set)
+AX_GCC_BUILTIN(__atomic_clear)
+AX_GCC_BUILTIN(__atomic_thread_fence)
+AX_GCC_BUILTIN(__atomic_signal_fence)
+AX_GCC_BUILTIN(__atomic_always_lock_free)
+AX_GCC_BUILTIN(__atomic_is_lock_free)
+if test x"$ax_cv_have___atomic_load_n" = xno -o \
+        x"$ax_cv_have___atomic_load" = xno -o \
+        x"$ax_cv_have___atomic_store_n" = xno -o \
+        x"$ax_cv_have___atomic_store" = xno -o \
+        x"$ax_cv_have___atomic_exchange_n" = xno -o \
+        x"$ax_cv_have___atomic_exchange" = xno -o \
+        x"$ax_cv_have___atomic_compare_exchange_n" = xno -o \
+        x"$ax_cv_have___atomic_compare_exchange" = xno -o \
+        x"$ax_cv_have___atomic_add_fetch" = xno -o \
+        x"$ax_cv_have___atomic_sub_fetch" = xno -o \
+        x"$ax_cv_have___atomic_and_fetch" = xno -o \
+        x"$ax_cv_have___atomic_xor_fetch" = xno -o \
+        x"$ax_cv_have___atomic_or_fetch" = xno -o \
+        x"$ax_cv_have___atomic_nand_fetch" = xno -o \
+        x"$ax_cv_have___atomic_fetch_add" = xno -o \
+        x"$ax_cv_have___atomic_fetch_sub" = xno -o \
+        x"$ax_cv_have___atomic_fetch_and" = xno -o \
+        x"$ax_cv_have___atomic_fetch_xor" = xno -o \
+        x"$ax_cv_have___atomic_fetch_or" = xno -o \
+        x"$ax_cv_have___atomic_fetch_nand" = xno -o \
+        x"$ax_cv_have___atomic_test_and_set" = xno -o \
+        x"$ax_cv_have___atomic_clear" = xno -o \
+        x"$ax_cv_have___atomic_thread_fence" = xno -o \
+        x"$ax_cv_have___atomic_signal_fence" = xno -o \
+        x"$ax_cv_have___atomic_always_lock_free" = xno -o \
+        x"$ax_cv_have___atomic_is_lock_free" = xno; then
+    AC_MSG_ERROR([__atomic builtins required])
 fi
 
 #
@@ -236,5 +274,5 @@ AC_SUBST([USE_PTHREADS_THREADS])
 
 LT_INIT
 
-AC_CONFIG_FILES([Makefile src/tci.h])
+AC_CONFIG_FILES([Makefile tci/tci_config.h])
 AC_OUTPUT

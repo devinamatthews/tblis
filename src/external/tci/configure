@@ -4606,15 +4606,15 @@ else
 fi
 
 #
-# Check for __sync builtins
+# Check for __atomic builtins
 #
 
 
 
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __sync_fetch_and_add" >&5
-$as_echo_n "checking for __sync_fetch_and_add... " >&6; }
-if ${ax_cv_have___sync_fetch_and_add+:} false; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_load_n" >&5
+$as_echo_n "checking for __atomic_load_n... " >&6; }
+if ${ax_cv_have___atomic_load_n+:} false; then :
   $as_echo_n "(cached) " >&6
 else
 
@@ -4625,28 +4625,28 @@ int
 main ()
 {
 
-            __sync_fetch_and_add((int*)0, 1)
+            __atomic_load_n((int*)0, __ATOMIC_SEQ_CST)
 
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ax_cv_have___sync_fetch_and_add=yes
+  ax_cv_have___atomic_load_n=yes
 else
-  ax_cv_have___sync_fetch_and_add=no
+  ax_cv_have___atomic_load_n=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___sync_fetch_and_add" >&5
-$as_echo "$ax_cv_have___sync_fetch_and_add" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_load_n" >&5
+$as_echo "$ax_cv_have___atomic_load_n" >&6; }
 
-    if test yes = $ax_cv_have___sync_fetch_and_add; then :
+    if test yes = $ax_cv_have___atomic_load_n; then :
 
 cat >>confdefs.h <<_ACEOF
-#define HAVE___SYNC_FETCH_AND_ADD 1
+#define HAVE___ATOMIC_LOAD_N 1
 _ACEOF
 
 fi
@@ -4656,9 +4656,9 @@ fi
 
 
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __sync_fetch_and_sub" >&5
-$as_echo_n "checking for __sync_fetch_and_sub... " >&6; }
-if ${ax_cv_have___sync_fetch_and_sub+:} false; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_load" >&5
+$as_echo_n "checking for __atomic_load... " >&6; }
+if ${ax_cv_have___atomic_load+:} false; then :
   $as_echo_n "(cached) " >&6
 else
 
@@ -4669,28 +4669,28 @@ int
 main ()
 {
 
-            __sync_fetch_and_sub((int*)0, 1)
+            __atomic_load((int*)0, (int*)0, __ATOMIC_SEQ_CST)
 
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ax_cv_have___sync_fetch_and_sub=yes
+  ax_cv_have___atomic_load=yes
 else
-  ax_cv_have___sync_fetch_and_sub=no
+  ax_cv_have___atomic_load=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___sync_fetch_and_sub" >&5
-$as_echo "$ax_cv_have___sync_fetch_and_sub" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_load" >&5
+$as_echo "$ax_cv_have___atomic_load" >&6; }
 
-    if test yes = $ax_cv_have___sync_fetch_and_sub; then :
+    if test yes = $ax_cv_have___atomic_load; then :
 
 cat >>confdefs.h <<_ACEOF
-#define HAVE___SYNC_FETCH_AND_SUB 1
+#define HAVE___ATOMIC_LOAD 1
 _ACEOF
 
 fi
@@ -4700,9 +4700,9 @@ fi
 
 
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __sync_add_and_fetch" >&5
-$as_echo_n "checking for __sync_add_and_fetch... " >&6; }
-if ${ax_cv_have___sync_add_and_fetch+:} false; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_store_n" >&5
+$as_echo_n "checking for __atomic_store_n... " >&6; }
+if ${ax_cv_have___atomic_store_n+:} false; then :
   $as_echo_n "(cached) " >&6
 else
 
@@ -4713,28 +4713,28 @@ int
 main ()
 {
 
-            __sync_add_and_fetch((int*)0, 1)
+            __atomic_store_n((int*)0, 1, __ATOMIC_SEQ_CST)
 
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ax_cv_have___sync_add_and_fetch=yes
+  ax_cv_have___atomic_store_n=yes
 else
-  ax_cv_have___sync_add_and_fetch=no
+  ax_cv_have___atomic_store_n=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___sync_add_and_fetch" >&5
-$as_echo "$ax_cv_have___sync_add_and_fetch" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_store_n" >&5
+$as_echo "$ax_cv_have___atomic_store_n" >&6; }
 
-    if test yes = $ax_cv_have___sync_add_and_fetch; then :
+    if test yes = $ax_cv_have___atomic_store_n; then :
 
 cat >>confdefs.h <<_ACEOF
-#define HAVE___SYNC_ADD_AND_FETCH 1
+#define HAVE___ATOMIC_STORE_N 1
 _ACEOF
 
 fi
@@ -4744,9 +4744,9 @@ fi
 
 
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __sync_sub_and_fetch" >&5
-$as_echo_n "checking for __sync_sub_and_fetch... " >&6; }
-if ${ax_cv_have___sync_sub_and_fetch+:} false; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_store" >&5
+$as_echo_n "checking for __atomic_store... " >&6; }
+if ${ax_cv_have___atomic_store+:} false; then :
   $as_echo_n "(cached) " >&6
 else
 
@@ -4757,28 +4757,28 @@ int
 main ()
 {
 
-            __sync_sub_and_fetch((int*)0, 1)
+            __atomic_store((int*)0, (int*)0, __ATOMIC_SEQ_CST)
 
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ax_cv_have___sync_sub_and_fetch=yes
+  ax_cv_have___atomic_store=yes
 else
-  ax_cv_have___sync_sub_and_fetch=no
+  ax_cv_have___atomic_store=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___sync_sub_and_fetch" >&5
-$as_echo "$ax_cv_have___sync_sub_and_fetch" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_store" >&5
+$as_echo "$ax_cv_have___atomic_store" >&6; }
 
-    if test yes = $ax_cv_have___sync_sub_and_fetch; then :
+    if test yes = $ax_cv_have___atomic_store; then :
 
 cat >>confdefs.h <<_ACEOF
-#define HAVE___SYNC_SUB_AND_FETCH 1
+#define HAVE___ATOMIC_STORE 1
 _ACEOF
 
 fi
@@ -4788,9 +4788,9 @@ fi
 
 
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __sync_synchronize" >&5
-$as_echo_n "checking for __sync_synchronize... " >&6; }
-if ${ax_cv_have___sync_synchronize+:} false; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_exchange_n" >&5
+$as_echo_n "checking for __atomic_exchange_n... " >&6; }
+if ${ax_cv_have___atomic_exchange_n+:} false; then :
   $as_echo_n "(cached) " >&6
 else
 
@@ -4801,28 +4801,28 @@ int
 main ()
 {
 
-            __sync_synchronize()
+            __atomic_exchange_n((int*)0, 1, __ATOMIC_SEQ_CST)
 
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ax_cv_have___sync_synchronize=yes
+  ax_cv_have___atomic_exchange_n=yes
 else
-  ax_cv_have___sync_synchronize=no
+  ax_cv_have___atomic_exchange_n=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___sync_synchronize" >&5
-$as_echo "$ax_cv_have___sync_synchronize" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_exchange_n" >&5
+$as_echo "$ax_cv_have___atomic_exchange_n" >&6; }
 
-    if test yes = $ax_cv_have___sync_synchronize; then :
+    if test yes = $ax_cv_have___atomic_exchange_n; then :
 
 cat >>confdefs.h <<_ACEOF
-#define HAVE___SYNC_SYNCHRONIZE 1
+#define HAVE___ATOMIC_EXCHANGE_N 1
 _ACEOF
 
 fi
@@ -4832,9 +4832,9 @@ fi
 
 
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __sync_lock_test_and_set" >&5
-$as_echo_n "checking for __sync_lock_test_and_set... " >&6; }
-if ${ax_cv_have___sync_lock_test_and_set+:} false; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_exchange" >&5
+$as_echo_n "checking for __atomic_exchange... " >&6; }
+if ${ax_cv_have___atomic_exchange+:} false; then :
   $as_echo_n "(cached) " >&6
 else
 
@@ -4845,28 +4845,28 @@ int
 main ()
 {
 
-            __sync_lock_test_and_set((int*)0, 1)
+            __atomic_exchange((int*)0, (int*)0, (int*)0, __ATOMIC_SEQ_CST)
 
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ax_cv_have___sync_lock_test_and_set=yes
+  ax_cv_have___atomic_exchange=yes
 else
-  ax_cv_have___sync_lock_test_and_set=no
+  ax_cv_have___atomic_exchange=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___sync_lock_test_and_set" >&5
-$as_echo "$ax_cv_have___sync_lock_test_and_set" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_exchange" >&5
+$as_echo "$ax_cv_have___atomic_exchange" >&6; }
 
-    if test yes = $ax_cv_have___sync_lock_test_and_set; then :
+    if test yes = $ax_cv_have___atomic_exchange; then :
 
 cat >>confdefs.h <<_ACEOF
-#define HAVE___SYNC_LOCK_TEST_AND_SET 1
+#define HAVE___ATOMIC_EXCHANGE 1
 _ACEOF
 
 fi
@@ -4876,9 +4876,9 @@ fi
 
 
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __sync_lock_release" >&5
-$as_echo_n "checking for __sync_lock_release... " >&6; }
-if ${ax_cv_have___sync_lock_release+:} false; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_compare_exchange_n" >&5
+$as_echo_n "checking for __atomic_compare_exchange_n... " >&6; }
+if ${ax_cv_have___atomic_compare_exchange_n+:} false; then :
   $as_echo_n "(cached) " >&6
 else
 
@@ -4889,42 +4889,897 @@ int
 main ()
 {
 
-            __sync_lock_release((int*)0)
+            __atomic_compare_exchange_n((int*)0, (int*)0, 0, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
 
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ax_cv_have___sync_lock_release=yes
+  ax_cv_have___atomic_compare_exchange_n=yes
 else
-  ax_cv_have___sync_lock_release=no
+  ax_cv_have___atomic_compare_exchange_n=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___sync_lock_release" >&5
-$as_echo "$ax_cv_have___sync_lock_release" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_compare_exchange_n" >&5
+$as_echo "$ax_cv_have___atomic_compare_exchange_n" >&6; }
 
-    if test yes = $ax_cv_have___sync_lock_release; then :
+    if test yes = $ax_cv_have___atomic_compare_exchange_n; then :
 
 cat >>confdefs.h <<_ACEOF
-#define HAVE___SYNC_LOCK_RELEASE 1
+#define HAVE___ATOMIC_COMPARE_EXCHANGE_N 1
 _ACEOF
 
 fi
 
 
 
-if test x"$ax_cv_have___sync_fetch_and_add" = xno -o \
-        x"$ax_cv_have___sync_fetch_and_sub" = xno -o \
-        x"$ax_cv_have___sync_add_and_fetch" = xno -o \
-        x"$ax_cv_have___sync_sub_and_fetch" = xno -o \
-        x"$ax_cv_have___sync_synchronize" = xno -o \
-        x"$ax_cv_have___sync_lock_test_and_set" = xno -o \
-        x"$ax_cv_have___sync_lock_release" = xno; then
-    as_fn_error $? "__sync atomic builtins required" "$LINENO" 5
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_compare_exchange" >&5
+$as_echo_n "checking for __atomic_compare_exchange... " >&6; }
+if ${ax_cv_have___atomic_compare_exchange+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+            __atomic_compare_exchange((int*)0, (int*)0, (int*)0, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_have___atomic_compare_exchange=yes
+else
+  ax_cv_have___atomic_compare_exchange=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_compare_exchange" >&5
+$as_echo "$ax_cv_have___atomic_compare_exchange" >&6; }
+
+    if test yes = $ax_cv_have___atomic_compare_exchange; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE___ATOMIC_COMPARE_EXCHANGE 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_add_fetch" >&5
+$as_echo_n "checking for __atomic_add_fetch... " >&6; }
+if ${ax_cv_have___atomic_add_fetch+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+            __atomic_add_fetch((int*)0, 1, __ATOMIC_SEQ_CST)
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_have___atomic_add_fetch=yes
+else
+  ax_cv_have___atomic_add_fetch=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_add_fetch" >&5
+$as_echo "$ax_cv_have___atomic_add_fetch" >&6; }
+
+    if test yes = $ax_cv_have___atomic_add_fetch; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE___ATOMIC_ADD_FETCH 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_sub_fetch" >&5
+$as_echo_n "checking for __atomic_sub_fetch... " >&6; }
+if ${ax_cv_have___atomic_sub_fetch+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+            __atomic_sub_fetch((int*)0, 1, __ATOMIC_SEQ_CST)
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_have___atomic_sub_fetch=yes
+else
+  ax_cv_have___atomic_sub_fetch=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_sub_fetch" >&5
+$as_echo "$ax_cv_have___atomic_sub_fetch" >&6; }
+
+    if test yes = $ax_cv_have___atomic_sub_fetch; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE___ATOMIC_SUB_FETCH 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_and_fetch" >&5
+$as_echo_n "checking for __atomic_and_fetch... " >&6; }
+if ${ax_cv_have___atomic_and_fetch+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+            __atomic_and_fetch((int*)0, 1, __ATOMIC_SEQ_CST)
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_have___atomic_and_fetch=yes
+else
+  ax_cv_have___atomic_and_fetch=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_and_fetch" >&5
+$as_echo "$ax_cv_have___atomic_and_fetch" >&6; }
+
+    if test yes = $ax_cv_have___atomic_and_fetch; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE___ATOMIC_AND_FETCH 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_xor_fetch" >&5
+$as_echo_n "checking for __atomic_xor_fetch... " >&6; }
+if ${ax_cv_have___atomic_xor_fetch+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+            __atomic_xor_fetch((int*)0, 1, __ATOMIC_SEQ_CST)
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_have___atomic_xor_fetch=yes
+else
+  ax_cv_have___atomic_xor_fetch=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_xor_fetch" >&5
+$as_echo "$ax_cv_have___atomic_xor_fetch" >&6; }
+
+    if test yes = $ax_cv_have___atomic_xor_fetch; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE___ATOMIC_XOR_FETCH 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_or_fetch" >&5
+$as_echo_n "checking for __atomic_or_fetch... " >&6; }
+if ${ax_cv_have___atomic_or_fetch+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+            __atomic_or_fetch((int*)0, 1, __ATOMIC_SEQ_CST)
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_have___atomic_or_fetch=yes
+else
+  ax_cv_have___atomic_or_fetch=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_or_fetch" >&5
+$as_echo "$ax_cv_have___atomic_or_fetch" >&6; }
+
+    if test yes = $ax_cv_have___atomic_or_fetch; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE___ATOMIC_OR_FETCH 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_nand_fetch" >&5
+$as_echo_n "checking for __atomic_nand_fetch... " >&6; }
+if ${ax_cv_have___atomic_nand_fetch+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+            __atomic_nand_fetch((int*)0, 1, __ATOMIC_SEQ_CST)
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_have___atomic_nand_fetch=yes
+else
+  ax_cv_have___atomic_nand_fetch=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_nand_fetch" >&5
+$as_echo "$ax_cv_have___atomic_nand_fetch" >&6; }
+
+    if test yes = $ax_cv_have___atomic_nand_fetch; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE___ATOMIC_NAND_FETCH 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_fetch_add" >&5
+$as_echo_n "checking for __atomic_fetch_add... " >&6; }
+if ${ax_cv_have___atomic_fetch_add+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+            __atomic_fetch_add((int*)0, 1, __ATOMIC_SEQ_CST)
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_have___atomic_fetch_add=yes
+else
+  ax_cv_have___atomic_fetch_add=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_fetch_add" >&5
+$as_echo "$ax_cv_have___atomic_fetch_add" >&6; }
+
+    if test yes = $ax_cv_have___atomic_fetch_add; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE___ATOMIC_FETCH_ADD 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_fetch_sub" >&5
+$as_echo_n "checking for __atomic_fetch_sub... " >&6; }
+if ${ax_cv_have___atomic_fetch_sub+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+            __atomic_fetch_sub((int*)0, 1, __ATOMIC_SEQ_CST)
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_have___atomic_fetch_sub=yes
+else
+  ax_cv_have___atomic_fetch_sub=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_fetch_sub" >&5
+$as_echo "$ax_cv_have___atomic_fetch_sub" >&6; }
+
+    if test yes = $ax_cv_have___atomic_fetch_sub; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE___ATOMIC_FETCH_SUB 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_fetch_and" >&5
+$as_echo_n "checking for __atomic_fetch_and... " >&6; }
+if ${ax_cv_have___atomic_fetch_and+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+            __atomic_fetch_and((int*)0, 1, __ATOMIC_SEQ_CST)
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_have___atomic_fetch_and=yes
+else
+  ax_cv_have___atomic_fetch_and=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_fetch_and" >&5
+$as_echo "$ax_cv_have___atomic_fetch_and" >&6; }
+
+    if test yes = $ax_cv_have___atomic_fetch_and; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE___ATOMIC_FETCH_AND 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_fetch_xor" >&5
+$as_echo_n "checking for __atomic_fetch_xor... " >&6; }
+if ${ax_cv_have___atomic_fetch_xor+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+            __atomic_fetch_xor((int*)0, 1, __ATOMIC_SEQ_CST)
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_have___atomic_fetch_xor=yes
+else
+  ax_cv_have___atomic_fetch_xor=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_fetch_xor" >&5
+$as_echo "$ax_cv_have___atomic_fetch_xor" >&6; }
+
+    if test yes = $ax_cv_have___atomic_fetch_xor; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE___ATOMIC_FETCH_XOR 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_fetch_or" >&5
+$as_echo_n "checking for __atomic_fetch_or... " >&6; }
+if ${ax_cv_have___atomic_fetch_or+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+            __atomic_fetch_or((int*)0, 1, __ATOMIC_SEQ_CST)
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_have___atomic_fetch_or=yes
+else
+  ax_cv_have___atomic_fetch_or=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_fetch_or" >&5
+$as_echo "$ax_cv_have___atomic_fetch_or" >&6; }
+
+    if test yes = $ax_cv_have___atomic_fetch_or; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE___ATOMIC_FETCH_OR 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_fetch_nand" >&5
+$as_echo_n "checking for __atomic_fetch_nand... " >&6; }
+if ${ax_cv_have___atomic_fetch_nand+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+            __atomic_fetch_nand((int*)0, 1, __ATOMIC_SEQ_CST)
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_have___atomic_fetch_nand=yes
+else
+  ax_cv_have___atomic_fetch_nand=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_fetch_nand" >&5
+$as_echo "$ax_cv_have___atomic_fetch_nand" >&6; }
+
+    if test yes = $ax_cv_have___atomic_fetch_nand; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE___ATOMIC_FETCH_NAND 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_test_and_set" >&5
+$as_echo_n "checking for __atomic_test_and_set... " >&6; }
+if ${ax_cv_have___atomic_test_and_set+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+            __atomic_test_and_set((char*)0, __ATOMIC_SEQ_CST)
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_have___atomic_test_and_set=yes
+else
+  ax_cv_have___atomic_test_and_set=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_test_and_set" >&5
+$as_echo "$ax_cv_have___atomic_test_and_set" >&6; }
+
+    if test yes = $ax_cv_have___atomic_test_and_set; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE___ATOMIC_TEST_AND_SET 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_clear" >&5
+$as_echo_n "checking for __atomic_clear... " >&6; }
+if ${ax_cv_have___atomic_clear+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+            __atomic_clear((_Bool*)0, __ATOMIC_SEQ_CST)
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_have___atomic_clear=yes
+else
+  ax_cv_have___atomic_clear=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_clear" >&5
+$as_echo "$ax_cv_have___atomic_clear" >&6; }
+
+    if test yes = $ax_cv_have___atomic_clear; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE___ATOMIC_CLEAR 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_thread_fence" >&5
+$as_echo_n "checking for __atomic_thread_fence... " >&6; }
+if ${ax_cv_have___atomic_thread_fence+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+            __atomic_thread_fence(__ATOMIC_SEQ_CST)
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_have___atomic_thread_fence=yes
+else
+  ax_cv_have___atomic_thread_fence=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_thread_fence" >&5
+$as_echo "$ax_cv_have___atomic_thread_fence" >&6; }
+
+    if test yes = $ax_cv_have___atomic_thread_fence; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE___ATOMIC_THREAD_FENCE 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_signal_fence" >&5
+$as_echo_n "checking for __atomic_signal_fence... " >&6; }
+if ${ax_cv_have___atomic_signal_fence+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+            __atomic_signal_fence(__ATOMIC_SEQ_CST)
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_have___atomic_signal_fence=yes
+else
+  ax_cv_have___atomic_signal_fence=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_signal_fence" >&5
+$as_echo "$ax_cv_have___atomic_signal_fence" >&6; }
+
+    if test yes = $ax_cv_have___atomic_signal_fence; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE___ATOMIC_SIGNAL_FENCE 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_always_lock_free" >&5
+$as_echo_n "checking for __atomic_always_lock_free... " >&6; }
+if ${ax_cv_have___atomic_always_lock_free+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+            __atomic_always_lock_free(4, 0)
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_have___atomic_always_lock_free=yes
+else
+  ax_cv_have___atomic_always_lock_free=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_always_lock_free" >&5
+$as_echo "$ax_cv_have___atomic_always_lock_free" >&6; }
+
+    if test yes = $ax_cv_have___atomic_always_lock_free; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE___ATOMIC_ALWAYS_LOCK_FREE 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __atomic_is_lock_free" >&5
+$as_echo_n "checking for __atomic_is_lock_free... " >&6; }
+if ${ax_cv_have___atomic_is_lock_free+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+            __atomic_is_lock_free(4, 0)
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ax_cv_have___atomic_is_lock_free=yes
+else
+  ax_cv_have___atomic_is_lock_free=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have___atomic_is_lock_free" >&5
+$as_echo "$ax_cv_have___atomic_is_lock_free" >&6; }
+
+    if test yes = $ax_cv_have___atomic_is_lock_free; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE___ATOMIC_IS_LOCK_FREE 1
+_ACEOF
+
+fi
+
+
+
+if test x"$ax_cv_have___atomic_load_n" = xno -o \
+        x"$ax_cv_have___atomic_load" = xno -o \
+        x"$ax_cv_have___atomic_store_n" = xno -o \
+        x"$ax_cv_have___atomic_store" = xno -o \
+        x"$ax_cv_have___atomic_exchange_n" = xno -o \
+        x"$ax_cv_have___atomic_exchange" = xno -o \
+        x"$ax_cv_have___atomic_compare_exchange_n" = xno -o \
+        x"$ax_cv_have___atomic_compare_exchange" = xno -o \
+        x"$ax_cv_have___atomic_add_fetch" = xno -o \
+        x"$ax_cv_have___atomic_sub_fetch" = xno -o \
+        x"$ax_cv_have___atomic_and_fetch" = xno -o \
+        x"$ax_cv_have___atomic_xor_fetch" = xno -o \
+        x"$ax_cv_have___atomic_or_fetch" = xno -o \
+        x"$ax_cv_have___atomic_nand_fetch" = xno -o \
+        x"$ax_cv_have___atomic_fetch_add" = xno -o \
+        x"$ax_cv_have___atomic_fetch_sub" = xno -o \
+        x"$ax_cv_have___atomic_fetch_and" = xno -o \
+        x"$ax_cv_have___atomic_fetch_xor" = xno -o \
+        x"$ax_cv_have___atomic_fetch_or" = xno -o \
+        x"$ax_cv_have___atomic_fetch_nand" = xno -o \
+        x"$ax_cv_have___atomic_test_and_set" = xno -o \
+        x"$ax_cv_have___atomic_clear" = xno -o \
+        x"$ax_cv_have___atomic_thread_fence" = xno -o \
+        x"$ax_cv_have___atomic_signal_fence" = xno -o \
+        x"$ax_cv_have___atomic_always_lock_free" = xno -o \
+        x"$ax_cv_have___atomic_is_lock_free" = xno; then
+    as_fn_error $? "__atomic builtins required" "$LINENO" 5
 fi
 
 #
@@ -12722,7 +13577,7 @@ CC=$lt_save_CC
 
 
 
-ac_config_files="$ac_config_files Makefile src/tci.h"
+ac_config_files="$ac_config_files Makefile tci/tci_config.h"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -13756,7 +14611,7 @@ do
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "src/tci.h") CONFIG_FILES="$CONFIG_FILES src/tci.h" ;;
+    "tci/tci_config.h") CONFIG_FILES="$CONFIG_FILES tci/tci_config.h" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

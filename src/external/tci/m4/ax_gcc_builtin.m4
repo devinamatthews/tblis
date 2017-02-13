@@ -95,6 +95,32 @@
 #    __sync_synchronize
 #    __sync_lock_test_and_set
 #    __sync_lock_release
+#    __atomic_load_n
+#    __atomic_load
+#    __atomic_store_n
+#    __atomic_store
+#    __atomic_exchange_n
+#    __atomic_exchange
+#    __atomic_compare_exchange_n
+#    __atomic_compare_exchange
+#    __atomic_add_fetch
+#    __atomic_sub_fetch
+#    __atomic_and_fetch
+#    __atomic_xor_fetch
+#    __atomic_or_fetch
+#    __atomic_nand_fetch
+#    __atomic_fetch_add
+#    __atomic_fetch_sub
+#    __atomic_fetch_and
+#    __atomic_fetch_xor
+#    __atomic_fetch_or
+#    __atomic_fetch_nand
+#    __atomic_test_and_set
+#    __atomic_clear
+#    __atomic_thread_fence
+#    __atomic_signal_fence
+#    __atomic_always_lock_free
+#    __atomic_is_lock_free
 #
 #   Unsuppored built-ins will be tested with an empty parameter set and the
 #   result of the check might be wrong or meaningless so use with care.
@@ -188,6 +214,32 @@ AC_DEFUN([AX_GCC_BUILTIN], [
                 [__sync_synchronize], [$1()],
                 [__sync_lock_test_and_set], [$1((int*)0, 1)],
                 [__sync_lock_release], [$1((int*)0)],
+                [__atomic_load_n], [$1((int*)0, __ATOMIC_SEQ_CST)],
+                [__atomic_load], [$1((int*)0, (int*)0, __ATOMIC_SEQ_CST)],
+                [__atomic_store_n], [$1((int*)0, 1, __ATOMIC_SEQ_CST)],
+                [__atomic_store], [$1((int*)0, (int*)0, __ATOMIC_SEQ_CST)],
+                [__atomic_exchange_n], [$1((int*)0, 1, __ATOMIC_SEQ_CST)],
+                [__atomic_exchange], [$1((int*)0, (int*)0, (int*)0, __ATOMIC_SEQ_CST)],
+                [__atomic_compare_exchange_n], [$1((int*)0, (int*)0, 0, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)],
+                [__atomic_compare_exchange], [$1((int*)0, (int*)0, (int*)0, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)],
+                [__atomic_add_fetch], [$1((int*)0, 1, __ATOMIC_SEQ_CST)],
+                [__atomic_sub_fetch], [$1((int*)0, 1, __ATOMIC_SEQ_CST)],
+                [__atomic_and_fetch], [$1((int*)0, 1, __ATOMIC_SEQ_CST)],
+                [__atomic_xor_fetch], [$1((int*)0, 1, __ATOMIC_SEQ_CST)],
+                [__atomic_or_fetch], [$1((int*)0, 1, __ATOMIC_SEQ_CST)],
+                [__atomic_nand_fetch], [$1((int*)0, 1, __ATOMIC_SEQ_CST)],
+                [__atomic_fetch_add], [$1((int*)0, 1, __ATOMIC_SEQ_CST)],
+                [__atomic_fetch_sub], [$1((int*)0, 1, __ATOMIC_SEQ_CST)],
+                [__atomic_fetch_and], [$1((int*)0, 1, __ATOMIC_SEQ_CST)],
+                [__atomic_fetch_xor], [$1((int*)0, 1, __ATOMIC_SEQ_CST)],
+                [__atomic_fetch_or], [$1((int*)0, 1, __ATOMIC_SEQ_CST)],
+                [__atomic_fetch_nand], [$1((int*)0, 1, __ATOMIC_SEQ_CST)],
+                [__atomic_test_and_set], [$1((char*)0, __ATOMIC_SEQ_CST)],
+                [__atomic_clear], [$1((_Bool*)0, __ATOMIC_SEQ_CST)],
+                [__atomic_thread_fence], [$1(__ATOMIC_SEQ_CST)],
+                [__atomic_signal_fence], [$1(__ATOMIC_SEQ_CST)],
+                [__atomic_always_lock_free], [$1(4, 0)],
+                [__atomic_is_lock_free], [$1(4, 0)],
                 [m4_warn([syntax], [Unsupported built-in $1, the test may fail])
                  $1()]
             )

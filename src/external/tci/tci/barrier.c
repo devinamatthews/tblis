@@ -1,24 +1,24 @@
-#include "tci.h"
+#include "barrier.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 
 #if TCI_USE_PTHREAD_BARRIER
 
-int tci_barrier_node_init(tci_barrier_node_t* barrier,
-                          tci_barrier_node_t* parent,
+int tci_barrier_node_init(tci_barrier_node* barrier,
+                          tci_barrier_node* parent,
                           unsigned nchildren)
 {
     barrier->parent = parent;
     return pthread_barrier_init(&barrier->barrier, NULL, nchildren);
 }
 
-int tci_barrier_node_destroy(tci_barrier_node_t* barrier)
+int tci_barrier_node_destroy(tci_barrier_node* barrier)
 {
     return pthread_barrier_destroy(&barrier->barrier);
 }
 
-int tci_barrier_node_wait(tci_barrier_node_t* barrier)
+int tci_barrier_node_wait(tci_barrier_node* barrier)
 {
     int ret = pthread_barrier_wait(&barrier->barrier);
     if (ret != 0 && ret != PTHREAD_BARRIER_SERIAL_THREAD) return ret;
@@ -33,10 +33,10 @@ int tci_barrier_node_wait(tci_barrier_node_t* barrier)
     return 0;
 }
 
-#elif TCI_USE_SPIN_BARRIER
+#else
 
-int tci_barrier_node_init(tci_barrier_node_t* barrier,
-                          tci_barrier_node_t* parent,
+int tci_barrier_node_init(tci_barrier_node* barrier,
+                          tci_barrier_node* parent,
                           unsigned nchildren)
 {
     barrier->parent = parent;
@@ -46,25 +46,27 @@ int tci_barrier_node_init(tci_barrier_node_t* barrier,
     return 0;
 }
 
-int tci_barrier_node_destroy(tci_barrier_node_t* barrier)
+int tci_barrier_node_destroy(tci_barrier_node* barrier)
 {
     (void)barrier;
     return 0;
 }
 
-int tci_barrier_node_wait(tci_barrier_node_t* barrier)
+int tci_barrier_node_wait(tci_barrier_node* barrier)
 {
-    const unsigned old_step = __sync_fetch_and_add(&barrier->step, 0);
+    const unsigned old_step = __atomic_load_n(&barrier->step, __ATOMIC_RELAXED);
 
-    if (__sync_add_and_fetch(&barrier->nwaiting, 1) == barrier->nchildren)
+    if (__atomic_add_fetch(&barrier->nwaiting, 1, __ATOMIC_ACQ_REL) ==
+        barrier->nchildren)
     {
         if (barrier->parent) tci_barrier_node_wait(barrier->parent);
         barrier->nwaiting = 0;
-        __sync_fetch_and_add(&barrier->step, 1);
+        __atomic_fetch_add(&barrier->step, 1, __ATOMIC_RELEASE);
     }
     else
     {
-        while (__sync_fetch_and_add(&barrier->step, 0) == old_step) tci_yield();
+        while (__atomic_load_n(&barrier->step, __ATOMIC_ACQUIRE) == old_step)
+            tci_yield();
     }
 
     return 0;
@@ -72,13 +74,13 @@ int tci_barrier_node_wait(tci_barrier_node_t* barrier)
 
 #endif
 
-int tci_barrier_is_tree(tci_barrier_t* barrier)
+int tci_barrier_is_tree(tci_barrier* barrier)
 {
     return barrier->group_size > 1 &&
            barrier->group_size < barrier->nthread;
 }
 
-int tci_barrier_init(tci_barrier_t* barrier,
+int tci_barrier_init(tci_barrier* barrier,
                      unsigned nthread, unsigned group_size)
 {
     barrier->nthread = nthread;
@@ -99,7 +101,7 @@ int tci_barrier_init(tci_barrier_t* barrier,
     while (nleaders > 1);
 
     barrier->barrier.array =
-        (tci_barrier_node_t*)malloc(sizeof(tci_barrier_node_t)*nbarrier);
+        (tci_barrier_node*)malloc(sizeof(tci_barrier_node)*nbarrier);
     if (!barrier->barrier.array) return ENOMEM;
 
     unsigned idx = 0;
@@ -109,8 +111,8 @@ int tci_barrier_init(tci_barrier_t* barrier,
         unsigned nparents = (nchildren+group_size-1)/group_size;
         for (unsigned i = 0;i < nparents;i++)
         {
-            tci_barrier_node_t* node = barrier->barrier.array+idx+i;
-            tci_barrier_node_t* parent = (nparents == 1 ? NULL :
+            tci_barrier_node* node = barrier->barrier.array+idx+i;
+            tci_barrier_node* parent = (nparents == 1 ? NULL :
                 barrier->barrier.array+idx+nparents+i/group_size);
             unsigned nthreads_sub = TCI_MIN(group_size, nchildren-i*group_size);
 
@@ -133,7 +135,7 @@ int tci_barrier_init(tci_barrier_t* barrier,
     return 0;
 }
 
-int tci_barrier_destroy(tci_barrier_t* barrier)
+int tci_barrier_destroy(tci_barrier* barrier)
 {
     if (tci_barrier_is_tree(barrier))
     {
@@ -161,7 +163,7 @@ int tci_barrier_destroy(tci_barrier_t* barrier)
     return 0;
 }
 
-int tci_barrier_wait(tci_barrier_t* barrier, unsigned tid)
+int tci_barrier_wait(tci_barrier* barrier, unsigned tid)
 {
     if (tci_barrier_is_tree(barrier))
     {

@@ -1152,7 +1152,7 @@ int contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* i
     (
         [&](const communicator& comm)
         {
-            if (batch_K > 1 && dense_K < dense_M && dense_K < dense_N)
+            if (batch_K > 1 && dense_K <= dense_M && dense_K <= dense_N)
             {
                 //if (comm.master()) printf("K algorithm\n");
 
@@ -1258,7 +1258,7 @@ int contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* i
                     }
                 }
             }
-            else if (batch_N > 1 && dense_N < dense_M)
+            else if (batch_N > 1 && dense_N <= dense_M)
             {
                 //if (comm.master()) printf("N algorithm\n");
 

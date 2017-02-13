@@ -349,7 +349,9 @@ int main(int argc, char** argv)
     constexpr bool test0 = false;
     constexpr bool test1 = false;
     constexpr bool test2 = false;
-    constexpr bool test3 = true;
+    constexpr bool test3 = false;
+    constexpr bool test4 = true;
+    constexpr bool test5 = false;
 
     if (test0)
     {
@@ -409,6 +411,36 @@ int main(int argc, char** argv)
         bench(R, 1.0, T3,   "ABCIJM",
                        W,     "KLMD",
                  1.0, T4, "ABCDIJKL");
+    }
+
+    if (test4)
+    {
+        batched_tensor<double> T4;
+        batched_tensor<double> Z4;
+        batched_tensor<double> Wa;
+
+        init(T4, "ABCD", "I===");
+        init(Z4, "ABCD", "I===");
+        init(Wa, "AIBJ", "");
+
+        bench(R, 1.0, T4, "ABCEIJKM",
+                      Wa,     "DMEL",
+                 1.0, Z4, "ABCDIJKL");
+    }
+
+    if (test5)
+    {
+        batched_tensor<double> T3;
+        batched_tensor<double> Z4;
+        batched_tensor<double> W;
+
+        init(T3, "ABC", "I==");
+        init(Z4, "ABCD", "I===");
+        init(W, "ABCI", "");
+
+        bench(R, 1.0, T3,   "ABEIJK",
+                       W,     "CDEL",
+                 1.0, Z4, "ABCDIJKL");
     }
 
     return 0;

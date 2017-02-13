@@ -452,9 +452,9 @@ int main(int argc, char** argv)
 
     int arg;
     int index;
-    istringstream iss;
     while ((arg = getopt_long(argc, argv, "r:s:", opts, &index)) != -1)
     {
+        istringstream iss;
         switch (arg)
         {
             case 'r':

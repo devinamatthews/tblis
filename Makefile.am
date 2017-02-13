@@ -48,7 +48,6 @@ lib_libtblis_la_SOURCES = \
     src/configs/configs.cxx \
     \
     src/util/cpuid.cxx \
-    src/util/gemm_thread.cxx \
     src/util/random.cxx \
     src/util/thread.cxx
     
@@ -336,7 +335,7 @@ VPATH += $(srcdir)
 
 SUBDIRS = src/external/tci
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/util -Isrc/external/tci/src
+AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/util -I$(srcdir)/src/external/tci -Isrc/external/tci/tci
 AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la
 bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)

@@ -133,7 +133,7 @@ struct gemm_micro_kernel
 
         const len_type MR = cfg.gemm_mr.def<T>();
         const len_type NR = cfg.gemm_nr.def<T>();
-        const bool row_major = cfg.gemm_row_major<T>();
+        const bool row_major = cfg.gemm_row_major.value<T>();
         const len_type rs_ab = (row_major ? NR : 1);
         const len_type cs_ab = (row_major ? 1 : MR);
 
@@ -175,7 +175,7 @@ struct gemm_micro_kernel
 
         const len_type MR = cfg.gemm_mr.def<T>();
         const len_type NR = cfg.gemm_nr.def<T>();
-        const bool row_major = cfg.gemm_row_major<T>();
+        const bool row_major = cfg.gemm_row_major.value<T>();
         const len_type rs_ab = (row_major ? NR : 1);
         const len_type cs_ab = (row_major ? 1 : MR);
 
@@ -237,7 +237,7 @@ struct gemm_micro_kernel
 
         const len_type MR = cfg.gemm_mr.def<T>();
         const len_type NR = cfg.gemm_nr.def<T>();
-        const bool row_major = cfg.gemm_row_major<T>();
+        const bool row_major = cfg.gemm_row_major.value<T>();
         const len_type rs_ab = (row_major ? NR : 1);
         const len_type cs_ab = (row_major ? 1 : MR);
 

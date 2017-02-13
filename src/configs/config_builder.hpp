@@ -3,6 +3,8 @@
 
 #include "configs.hpp"
 
+#include "src/external/stl_ext/include/type_traits.hpp"
+
 #define TBLIS_PASTE(x,y) x##y
 #define TBLIS_HAS_COMMA_HELPER(_0,_1,_2,...) _2
 #define TBLIS_HAS_COMMA(...) TBLIS_HAS_COMMA_HELPER(__VA_ARGS__,1,0)
@@ -89,17 +91,26 @@ config cfg##_config_instance = config(cfg##_config());
 #define TBLIS_CONFIG_GEMM_KC_MAX(S,D,C,Z, SE,DE,CE,ZE) \
     TBLIS_CONFIG_CACHE_BLOCKSIZE(gemm_kc, gemm_kr, S,D,C,Z, SE,DE,CE,ZE,  256,  256,  256,  256)
 
-#define TBLIS_CONFIG_BOOL(name, S,D,C,Z, SD,DD,CD,ZD) \
-    template <typename T> struct name : static_bool<T, \
+#define TBLIS_CONFIG_PARAMETER(name, type, S,D,C,Z, SD,DD,CD,ZD) \
+    template <typename T> struct name : static_value<T, type, \
         TBLIS_GET_VALUE_OR_DEFAULT(S,SD), \
         TBLIS_GET_VALUE_OR_DEFAULT(D,DD), \
         TBLIS_GET_VALUE_OR_DEFAULT(C,CD), \
         TBLIS_GET_VALUE_OR_DEFAULT(Z,ZD)> {};
 
 #define TBLIS_CONFIG_TRANS_ROW_MAJOR(S,D,C,Z) \
-    TBLIS_CONFIG_BOOL(trans_row_major, S,D,C,Z, false,false,false,false)
+    TBLIS_CONFIG_PARAMETER(trans_row_major, bool, S,D,C,Z, false,false,false,false)
 #define TBLIS_CONFIG_GEMM_ROW_MAJOR(S,D,C,Z) \
-    TBLIS_CONFIG_BOOL(gemm_row_major, S,D,C,Z, false,false,false,false)
+    TBLIS_CONFIG_PARAMETER(gemm_row_major, bool, S,D,C,Z, false,false,false,false)
+
+#define TBLIS_CONFIG_M_THREAD_RATIO(S,D,C,Z) \
+    TBLIS_CONFIG_PARAMETER(m_thread_ratio, bool, S,D,C,Z, 2,2,2,2)
+#define TBLIS_CONFIG_N_THREAD_RATIO(S,D,C,Z) \
+    TBLIS_CONFIG_PARAMETER(n_thread_ratio, bool, S,D,C,Z, 1,1,1,1)
+#define TBLIS_CONFIG_MR_MAX_THREAD(S,D,C,Z) \
+    TBLIS_CONFIG_PARAMETER(mr_max_thread, bool, S,D,C,Z, 1,1,1,1)
+#define TBLIS_CONFIG_NR_MAX_THREAD(S,D,C,Z) \
+    TBLIS_CONFIG_PARAMETER(nr_max_thread, bool, S,D,C,Z, 3,3,3,3)
 
 #define TBLIS_CONFIG_UKR(name, type, S,D,C,Z, def_ker) \
     template <typename T> struct name : static_microkernel<T, \
@@ -173,13 +184,13 @@ config cfg##_config_instance = config(cfg##_config());
 namespace tblis
 {
 
-template <typename T, bool S, bool D, bool C, bool Z>
-struct static_bool
+template <typename T, typename U, U S, U D, U C, U Z>
+struct static_value
 {
-    static constexpr bool value = std::is_same<T,   float>::value ? S :
-                                  std::is_same<T,  double>::value ? D :
-                                  std::is_same<T,scomplex>::value ? C :
-                                                                    Z;
+    static constexpr U value = std::is_same<T,   float>::value ? S :
+                               std::is_same<T,  double>::value ? D :
+                               std::is_same<T,scomplex>::value ? C :
+                                                                 Z;
 };
 
 template <typename T, len_type S, len_type D, len_type C, len_type Z,
@@ -296,6 +307,11 @@ struct config_template
     TBLIS_CONFIG_PACK_NB_NR_UKR(_,_,_,_)
     TBLIS_CONFIG_PACK_SB_MR_UKR(_,_,_,_)
     TBLIS_CONFIG_PACK_SB_NR_UKR(_,_,_,_)
+
+    TBLIS_CONFIG_M_THREAD_RATIO(_,_,_,_)
+    TBLIS_CONFIG_N_THREAD_RATIO(_,_,_,_)
+    TBLIS_CONFIG_MR_MAX_THREAD(_,_,_,_)
+    TBLIS_CONFIG_NR_MAX_THREAD(_,_,_,_)
 };
 
 }

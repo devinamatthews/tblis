@@ -68,6 +68,24 @@ struct microkernel
     }
 };
 
+template <typename U>
+struct parameter
+{
+    U _val[4];
+
+    template <template <typename> class param, typename T> parameter(const param<T>&)
+    : _val{param<   float>::value,
+           param<  double>::value,
+           param<scomplex>::value,
+           param<dcomplex>::value} {}
+
+    template <typename T>
+    U value() const
+    {
+        return _val[type_idx<T>::value];
+    }
+};
+
 struct config
 {
     /*
@@ -91,10 +109,7 @@ struct config
     microkernel<trans_add_ukr_t> trans_add_ukr;
     microkernel<trans_copy_ukr_t> trans_copy_ukr;
 
-    bool _trans_row_major[4];
-
-    template <typename T>
-    bool trans_row_major() const { return _trans_row_major[type_idx<T>::value]; }
+    parameter<bool> trans_row_major;
 
     /*
      * GEMM blocksizes and kernels
@@ -109,7 +124,7 @@ struct config
 
     microkernel<gemm_ukr_t> gemm_ukr;
 
-    bool _gemm_row_major[4];
+    parameter<bool> gemm_row_major;
 
     microkernel<pack_nn_ukr_t> pack_nn_mr_ukr;
     microkernel<pack_nn_ukr_t> pack_nn_nr_ukr;
@@ -124,8 +139,10 @@ struct config
     microkernel<pack_sb_ukr_t> pack_sb_mr_ukr;
     microkernel<pack_sb_ukr_t> pack_sb_nr_ukr;
 
-    template <typename T>
-    bool gemm_row_major() const { return _gemm_row_major[type_idx<T>::value]; }
+    parameter<unsigned> m_thread_ratio;
+    parameter<unsigned> n_thread_ratio;
+    parameter<unsigned> mr_max_thread;
+    parameter<unsigned> nr_max_thread;
 
     check_fn_t check;
     const char* name;
@@ -144,10 +161,7 @@ struct config
       trans_add_ukr(typename Traits::template trans_add_ukr<float>()),
       trans_copy_ukr(typename Traits::template trans_copy_ukr<float>()),
 
-      _trans_row_major{Traits::template trans_row_major<   float>::value,
-                       Traits::template trans_row_major<  double>::value,
-                       Traits::template trans_row_major<scomplex>::value,
-                       Traits::template trans_row_major<dcomplex>::value},
+      trans_row_major(typename Traits::template trans_row_major<float>()),
 
       gemm_mr(typename Traits::template gemm_mr<float>()),
       gemm_nr(typename Traits::template gemm_nr<float>()),
@@ -158,10 +172,7 @@ struct config
 
       gemm_ukr(typename Traits::template gemm_ukr<float>()),
 
-      _gemm_row_major{Traits::template gemm_row_major<   float>::value,
-                      Traits::template gemm_row_major<  double>::value,
-                      Traits::template gemm_row_major<scomplex>::value,
-                      Traits::template gemm_row_major<dcomplex>::value},
+      gemm_row_major(typename Traits::template gemm_row_major<float>()),
 
       pack_nn_mr_ukr(typename Traits::template pack_nn_mr_ukr<float>()),
       pack_nn_nr_ukr(typename Traits::template pack_nn_nr_ukr<float>()),
@@ -175,6 +186,11 @@ struct config
       pack_nb_nr_ukr(typename Traits::template pack_nb_nr_ukr<float>()),
       pack_sb_mr_ukr(typename Traits::template pack_sb_mr_ukr<float>()),
       pack_sb_nr_ukr(typename Traits::template pack_sb_nr_ukr<float>()),
+
+      m_thread_ratio(typename Traits::template m_thread_ratio<float>()),
+      n_thread_ratio(typename Traits::template n_thread_ratio<float>()),
+      mr_max_thread(typename Traits::template mr_max_thread<float>()),
+      nr_max_thread(typename Traits::template nr_max_thread<float>()),
 
       check(Traits::check), name(Traits::name) {}
 };

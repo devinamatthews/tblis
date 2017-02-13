@@ -4,7 +4,7 @@
 #include "tci.h"
 #include "basic_types.h"
 
-typedef tci_comm_t tblis_comm;
+typedef tci_comm tblis_comm;
 extern const tblis_comm* const tblis_single;
 
 #ifdef __cplusplus

@@ -27,6 +27,7 @@ TBLIS_BEGIN_CONFIG(knl_d30x8_knc)
     TBLIS_CONFIG_GEMM_MR_EXTENT(   30,    30, _, _,
                                    32,    32, _, _)
     TBLIS_CONFIG_GEMM_NR       (   16,     8, _, _)
+    TBLIS_CONFIG_GEMM_KR       (   16,     8, _, _)
     TBLIS_CONFIG_GEMM_MC_MAX   (  240,   120, _, _,
                                   300,   150, _, _)
     TBLIS_CONFIG_GEMM_NC       (14400, 14400, _, _)
@@ -49,6 +50,7 @@ TBLIS_BEGIN_CONFIG(knl_d30x8)
     TBLIS_CONFIG_GEMM_MR_EXTENT(_,    30, _, _,
                                 _,    32, _, _)
     TBLIS_CONFIG_GEMM_NR       (_,     8, _, _)
+    TBLIS_CONFIG_GEMM_KR       (_,     8, _, _)
     TBLIS_CONFIG_GEMM_MC_MAX   (_,   120, _, _,
                                 _,   150, _, _)
     TBLIS_CONFIG_GEMM_NC       (_, 14400, _, _)
@@ -70,6 +72,7 @@ TBLIS_BEGIN_CONFIG(knl_d24x8)
 
     TBLIS_CONFIG_GEMM_MR    (_,    24, _, _)
     TBLIS_CONFIG_GEMM_NR    (_,     8, _, _)
+    TBLIS_CONFIG_GEMM_KR    (_,     8, _, _)
     TBLIS_CONFIG_GEMM_MC_MAX(_,   120, _, _,
                              _,   150, _, _)
     TBLIS_CONFIG_GEMM_NC    (_, 14400, _, _)
@@ -82,6 +85,9 @@ TBLIS_BEGIN_CONFIG(knl_d24x8)
     TBLIS_CONFIG_PACK_NN_NR_UKR(_, knl_packm_8xk , _, _)
 
     TBLIS_CONFIG_GEMM_ROW_MAJOR(_, true, _, _)
+
+    TBLIS_CONFIG_M_THREAD_RATIO(_, 4, _, _)
+    TBLIS_CONFIG_NR_MAX_THREAD(_, 1, _, _)
 
     TBLIS_CONFIG_CHECK(knl_check)
 

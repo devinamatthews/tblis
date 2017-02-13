@@ -1127,7 +1127,7 @@ int contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* i
     std::vector<slot<unsigned, -1>> slot(batch_M*batch_N);
 
     const config& cfg = get_default_config();
-    const bool row_major = cfg.gemm_row_major<T>();
+    const bool row_major = cfg.gemm_row_major.value<T>();
     const bool transpose = (row_major ? !dense_stride_C_AC.empty() && dense_stride_C_AC[0] == 1
                                       : !dense_stride_C_BC.empty() && dense_stride_C_BC[0] == 1);
 
@@ -1198,8 +1198,8 @@ int contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* i
                 communicator subcomm = comm.gang(TCI_EVENLY, nt_outer);
                 unsigned gid = subcomm.gang_num();
 
-                auto tc = make_gemm_thread_config(subcomm.num_threads(),
-                                                  dense_M, dense_N, dense_K);
+                auto tc = make_gemm_thread_config<T>(cfg, subcomm.num_threads(),
+                                                     dense_M, dense_N, dense_K);
 
                 std::vector<stride_type> scatter_A(batch_K);
                 std::vector<stride_type> scatter_B(batch_K);
@@ -1365,8 +1365,8 @@ int contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* i
 
                         internal::TensorGEMM gemm;
 
-                        auto tc = make_gemm_thread_config(subcomm.num_threads(),
-                                                          dense_M, dense_N*nnz, dense_K);
+                        auto tc = make_gemm_thread_config<T>(cfg, subcomm.num_threads(),
+                                                             dense_M, dense_N*nnz, dense_K);
 
                         step<0>(gemm).distribute = tc.jc_nt;
                         step<4>(gemm).distribute = tc.ic_nt;
@@ -1486,8 +1486,8 @@ int contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* i
 
                         internal::TensorGEMM gemm;
 
-                        auto tc = make_gemm_thread_config(subcomm.num_threads(),
-                                                          dense_M*mnz, dense_N, dense_K);
+                        auto tc = make_gemm_thread_config<T>(cfg, subcomm.num_threads(),
+                                                             dense_M*mnz, dense_N, dense_K);
 
                         step<0>(gemm).distribute = tc.jc_nt;
                         step<4>(gemm).distribute = tc.ic_nt;

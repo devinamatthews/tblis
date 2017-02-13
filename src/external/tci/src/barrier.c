@@ -1,6 +1,7 @@
 #include "tci.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #if TCI_USE_PTHREAD_BARRIER
 
@@ -109,8 +110,8 @@ int tci_barrier_init(tci_barrier_t* barrier,
         for (unsigned i = 0;i < nparents;i++)
         {
             tci_barrier_node_t* node = barrier->barrier.array+idx+i;
-            tci_barrier_node_t* parent =
-                barrier->barrier.array+idx+nparents+i/group_size;
+            tci_barrier_node_t* parent = (nparents == 1 ? NULL :
+                barrier->barrier.array+idx+nparents+i/group_size);
             unsigned nthreads_sub = TCI_MIN(group_size, nchildren-i*group_size);
 
             int ret = tci_barrier_node_init(node, parent, nthreads_sub);

@@ -47,8 +47,10 @@ void scale(const communicator& comm, T alpha, row_view<T> A)
     tblis_vector_scale(comm, nullptr, &A_s);
 }
 
-}
+#endif
 
+#ifdef __cplusplus
+}
 #endif
 
 #endif

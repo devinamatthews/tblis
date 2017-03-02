@@ -50,8 +50,10 @@ void set(const communicator& comm, T alpha, row_view<T> A)
     tblis_vector_set(comm, nullptr, &alpha_s, &A_s);
 }
 
-}
+#endif
 
+#ifdef __cplusplus
+}
 #endif
 
 #endif

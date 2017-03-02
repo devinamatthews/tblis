@@ -87,8 +87,10 @@ T dot(const communicator& comm,
     return result;
 }
 
-}
+#endif
 
+#ifdef __cplusplus
+}
 #endif
 
 #endif

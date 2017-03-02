@@ -50,8 +50,10 @@ void set(const communicator& comm, T alpha, matrix_view<T> A)
     tblis_matrix_set(comm, nullptr, &alpha_s, &A_s);
 }
 
-}
+#endif
 
+#ifdef __cplusplus
+}
 #endif
 
 #endif

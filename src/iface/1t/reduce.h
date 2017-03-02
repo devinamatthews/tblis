@@ -78,8 +78,10 @@ std::pair<T,len_type> reduce(const communicator& comm, reduce_t op,
     return result;
 }
 
-}
+#endif
 
+#ifdef __cplusplus
+}
 #endif
 
 #endif

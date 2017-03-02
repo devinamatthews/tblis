@@ -59,8 +59,10 @@ void mult(const communicator& comm,
     tblis_matrix_mult(comm, nullptr, &A_s, &B_s, &C_s);
 }
 
-}
+#endif
 
+#ifdef __cplusplus
+}
 #endif
 
 #endif

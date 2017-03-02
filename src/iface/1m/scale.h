@@ -47,8 +47,10 @@ void scale(const communicator& comm, T alpha, matrix_view<T> A)
     tblis_matrix_scale(comm, nullptr, &A_s);
 }
 
-}
+#endif
 
+#ifdef __cplusplus
+}
 #endif
 
 #endif

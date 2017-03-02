@@ -47,8 +47,10 @@ void scale(const communicator& comm, T alpha, tensor_view<T> A, const label_type
     tblis_tensor_scale(comm, nullptr, &A_s, idx_A);
 }
 
-}
+#endif
 
+#ifdef __cplusplus
+}
 #endif
 
 #endif

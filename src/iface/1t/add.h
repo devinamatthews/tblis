@@ -55,8 +55,10 @@ void add(const communicator& comm,
     tblis_tensor_add(comm, nullptr, &A_s, idx_A, &B_s, idx_B);
 }
 
-}
+#endif
 
+#ifdef __cplusplus
+}
 #endif
 
 #endif

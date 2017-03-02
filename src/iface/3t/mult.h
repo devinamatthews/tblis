@@ -63,8 +63,10 @@ void mult(const communicator& comm,
     tblis_tensor_mult(comm, nullptr, &A_s, idx_A, &B_s, idx_B, &C_s, idx_C);
 }
 
-}
+#endif
 
+#ifdef __cplusplus
+}
 #endif
 
 #endif

@@ -51,8 +51,10 @@ void add(const communicator& comm, T alpha, const_row_view<T> A,
     tblis_vector_add(comm, nullptr, &A_s, &B_s);
 }
 
-}
+#endif
 
+#ifdef __cplusplus
+}
 #endif
 
 #endif

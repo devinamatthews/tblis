@@ -78,8 +78,10 @@ T dot(const communicator& comm, const_matrix_view<T> A, const_matrix_view<T> B)
     return result;
 }
 
-}
+#endif
 
+#ifdef __cplusplus
+}
 #endif
 
 #endif

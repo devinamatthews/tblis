@@ -10,7 +10,7 @@
 
 #include "assert.h"
 
-#if defined(__cplusplus) && !TBLIS_DONT_USE_CXX11
+#if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 #include <string>
 
@@ -78,7 +78,7 @@ typedef complex double dcomplex;
 
 #endif
 
-#if defined(__cplusplus) && !TBLIS_DONT_USE_CXX11
+#if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 struct single_t
 {
@@ -159,7 +159,7 @@ typedef struct tblis_scalar
     type_t type;
     char data[16] __attribute__((__aligned__(8)));
 
-#if defined(__cplusplus) && !TBLIS_DONT_USE_CXX11
+#if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
     tblis_scalar() : type(TYPE_DOUBLE) {}
 
@@ -197,7 +197,7 @@ typedef struct tblis_vector
     len_type n;
     stride_type inc;
 
-#if defined(__cplusplus) && !TBLIS_DONT_USE_CXX11
+#if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
     tblis_vector()
     : type(TYPE_DOUBLE), conj(false), data(0), n(0), inc(0) {}
@@ -272,7 +272,7 @@ typedef struct tblis_matrix
     len_type m, n;
     stride_type rs, cs;
 
-#if defined(__cplusplus) && !TBLIS_DONT_USE_CXX11
+#if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
     tblis_matrix()
     : type(TYPE_DOUBLE), conj(false), data(0), m(0), n(0), rs(0), cs(0) {}
@@ -350,7 +350,7 @@ typedef struct tblis_tensor
     len_type* len;
     stride_type* stride;
 
-#if defined(__cplusplus) && !TBLIS_DONT_USE_CXX11
+#if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
     tblis_tensor() {}
 

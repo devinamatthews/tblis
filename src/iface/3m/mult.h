@@ -22,7 +22,7 @@ void tblis_matrix_mult(const tblis_comm* comm, const tblis_config* cfg,
 }
 #endif
 
-#if defined(__cplusplus) && !TBLIS_DONT_USE_CXX11
+#if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 template <typename T>
 void mult(T alpha, const_matrix_view<T> A, const_matrix_view<T> B,

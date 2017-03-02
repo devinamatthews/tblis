@@ -45,7 +45,7 @@ int tci_mutex_unlock(tci_mutex* mutex);
 }
 #endif
 
-#if defined(__cplusplus) && !TCI_DONT_USE_CXX11
+#if defined(__cplusplus) && !defined(TCI_DONT_USE_CXX11)
 
 #include <system_error>
 

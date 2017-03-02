@@ -75,7 +75,7 @@ void tci_comm_distribute_over_threads_2d(tci_comm* comm,
 }
 #endif
 
-#if defined(__cplusplus) && !TCI_DONT_USE_CXX11
+#if defined(__cplusplus) && !defined(TCI_DONT_USE_CXX11)
 
 #include <system_error>
 #include <tuple>

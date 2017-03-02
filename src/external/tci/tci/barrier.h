@@ -63,7 +63,7 @@ int tci_barrier_wait(tci_barrier* barrier, unsigned tid);
 }
 #endif
 
-#if defined(__cplusplus) && !TCI_DONT_USE_CXX11
+#if defined(__cplusplus) && !defined(TCI_DONT_USE_CXX11)
 
 #include <system_error>
 

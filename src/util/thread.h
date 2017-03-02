@@ -1,11 +1,10 @@
 #ifndef _TBLIS_THREAD_HPP_
 #define _TBLIS_THREAD_HPP_
 
-#if TBLIS_DONT_USE_CXX11
-#ifdef TCI_DONT_USE_CXX11
-#undef TCI_DONT_USE_CXX11
+#ifdef TBLIS_DONT_USE_CXX11
+#ifndef TCI_DONT_USE_CXX11
+#define TCI_DONT_USE_CXX11
 #endif
-#define TCI_DONT_USE_CXX11 1
 #endif
 
 #include "tci.h"
@@ -27,7 +26,7 @@ void tblis_set_num_threads(unsigned num_threads);
 }
 #endif
 
-#if defined(__cplusplus) && !TBLIS_DONT_USE_CXX11
+#if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 #include <vector>
 #include <utility>

@@ -19,8 +19,10 @@ void tblis_tensor_add(const tblis_comm* comm, const tblis_config* cfg,
                             tblis_tensor* B, const label_type* idx_B);
 
 #ifdef __cplusplus
-
 }
+#endif
+
+#if defined(__cplusplus) && !TBLIS_DONT_USE_CXX11
 
 template <typename T>
 void add(T alpha, const_tensor_view<T> A, const label_type* idx_A,

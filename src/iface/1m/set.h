@@ -18,8 +18,10 @@ void tblis_matrix_set(const tblis_comm* comm, const tblis_config* cfg,
                       const tblis_scalar* alpha, tblis_matrix* A);
 
 #ifdef __cplusplus
-
 }
+#endif
+
+#if defined(__cplusplus) && !TBLIS_DONT_USE_CXX11
 
 template <typename T>
 void set(T alpha, matrix_view<T> A)

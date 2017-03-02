@@ -10,7 +10,7 @@
 
 #include "assert.h"
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !TBLIS_DONT_USE_CXX11
 
 #include <string>
 
@@ -23,10 +23,6 @@
 #define assert TBLIS_ASSERT
 #include "../external/marray/include/varray.hpp"
 #include "../external/marray/include/marray.hpp"
-
-#else
-
-#include <complex.h>
 
 #endif
 
@@ -72,6 +68,17 @@ template <> struct type_tag<   float> { static constexpr type_t value =    TYPE_
 template <> struct type_tag<  double> { static constexpr type_t value =   TYPE_DOUBLE; };
 template <> struct type_tag<scomplex> { static constexpr type_t value = TYPE_SCOMPLEX; };
 template <> struct type_tag<dcomplex> { static constexpr type_t value = TYPE_DCOMPLEX; };
+
+#else
+
+#include <complex.h>
+
+typedef complex float scomplex;
+typedef complex double dcomplex;
+
+#endif
+
+#if defined(__cplusplus) && !TBLIS_DONT_USE_CXX11
 
 struct single_t
 {
@@ -145,11 +152,6 @@ namespace matrix_constants
     enum {DIM_M, DIM_N, DIM_K};
 }
 
-#else
-
-typedef complex float scomplex;
-typedef complex double dcomplex;
-
 #endif
 
 typedef struct tblis_scalar
@@ -157,7 +159,7 @@ typedef struct tblis_scalar
     type_t type;
     char data[16] __attribute__((__aligned__(8)));
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !TBLIS_DONT_USE_CXX11
 
     tblis_scalar() : type(TYPE_DOUBLE) {}
 
@@ -195,7 +197,7 @@ typedef struct tblis_vector
     len_type n;
     stride_type inc;
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !TBLIS_DONT_USE_CXX11
 
     tblis_vector()
     : type(TYPE_DOUBLE), conj(false), data(0), n(0), inc(0) {}
@@ -270,7 +272,7 @@ typedef struct tblis_matrix
     len_type m, n;
     stride_type rs, cs;
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !TBLIS_DONT_USE_CXX11
 
     tblis_matrix()
     : type(TYPE_DOUBLE), conj(false), data(0), m(0), n(0), rs(0), cs(0) {}
@@ -348,7 +350,7 @@ typedef struct tblis_tensor
     len_type* len;
     stride_type* stride;
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !TBLIS_DONT_USE_CXX11
 
     tblis_tensor() {}
 

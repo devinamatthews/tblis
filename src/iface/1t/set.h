@@ -18,8 +18,10 @@ void tblis_tensor_set(const tblis_comm* comm, const tblis_config* cfg,
                       const tblis_scalar* alpha, tblis_tensor* A, const label_type* idx_A);
 
 #ifdef __cplusplus
-
 }
+#endif
+
+#if defined(__cplusplus) && !TBLIS_DONT_USE_CXX11
 
 template <typename T>
 void set(T alpha, tensor_view<T> A, const label_type* idx_A)

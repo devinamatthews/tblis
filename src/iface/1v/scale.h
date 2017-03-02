@@ -18,8 +18,10 @@ void tblis_vector_scale(const tblis_comm* comm, const tblis_config* cfg,
                         tblis_vector* A);
 
 #ifdef __cplusplus
-
 }
+#endif
+
+#if defined(__cplusplus) && !TBLIS_DONT_USE_CXX11
 
 template <typename T>
 void scale(T alpha, row_view<T> A)

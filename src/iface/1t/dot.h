@@ -20,8 +20,10 @@ void tblis_tensor_dot(const tblis_comm* comm, const tblis_config* cfg,
                       tblis_scalar* result);
 
 #ifdef __cplusplus
-
 }
+#endif
+
+#if defined(__cplusplus) && !TBLIS_DONT_USE_CXX11
 
 template <typename T>
 void dot(const_tensor_view<T> A, const label_type* idx_A,

@@ -10,6 +10,12 @@
 
 #include "assert.h"
 
+#ifdef __cplusplus
+#include <complex>
+#else
+#include <complex.h>
+#endif
+
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 #include <string>
@@ -63,15 +69,7 @@ typedef TBLIS_LABEL_TYPE label_type;
 typedef std::complex<float> scomplex;
 typedef std::complex<double> dcomplex;
 
-template <typename T> struct type_tag;
-template <> struct type_tag<   float> { static constexpr type_t value =    TYPE_FLOAT; };
-template <> struct type_tag<  double> { static constexpr type_t value =   TYPE_DOUBLE; };
-template <> struct type_tag<scomplex> { static constexpr type_t value = TYPE_SCOMPLEX; };
-template <> struct type_tag<dcomplex> { static constexpr type_t value = TYPE_DCOMPLEX; };
-
 #else
-
-#include <complex.h>
 
 typedef complex float scomplex;
 typedef complex double dcomplex;
@@ -79,6 +77,12 @@ typedef complex double dcomplex;
 #endif
 
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
+
+template <typename T> struct type_tag;
+template <> struct type_tag<   float> { static constexpr type_t value =    TYPE_FLOAT; };
+template <> struct type_tag<  double> { static constexpr type_t value =   TYPE_DOUBLE; };
+template <> struct type_tag<scomplex> { static constexpr type_t value = TYPE_SCOMPLEX; };
+template <> struct type_tag<dcomplex> { static constexpr type_t value = TYPE_DCOMPLEX; };
 
 struct single_t
 {

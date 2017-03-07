@@ -232,6 +232,78 @@ elif test x"$cc_vendor" = xclang; then
     fi
 fi
 
+if ( echo $configs | grep -q sandybridge ); then
+    AC_MSG_CHECKING([whether inline AVX can be compiled])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
+        __asm__ __volatile__
+        (
+            "vzeroall \n\t"
+            "vmovapd %%ymm0, %%ymm1 \n\t"
+            "vmulpd %%ymm0, %%ymm0, %%ymm1 \n\t"
+            :::
+        );])],
+        [enable_avx=yes], [enable_avx=no])
+    AC_MSG_RESULT([$enable_avx])
+    if test "x$enable_avx" = xno; then
+        AC_MSG_WARN([AVX cannot be compiled; disabling sandybridge configuration])
+        configs=`echo $configs | sed 's/ *sandybridge */ /'`
+    fi
+fi
+
+if ( echo $configs | $EGREP -q 'haswell|piledriver|excavator' ); then
+    AC_MSG_CHECKING([whether inline FMA3 can be compiled])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
+        __asm__ __volatile__
+        (
+            "vzeroall \n\t"
+            "vfmadd213pd %%ymm0, %%ymm1, %%ymm2 \n\t"
+            :::
+        );])],
+        [enable_fma3=yes], [enable_fma3=no])
+    AC_MSG_RESULT([$enable_fma3])
+    if test "x$enable_fma3" = xno; then
+        AC_MSG_WARN([FMA3 cannot be compiled; disabling haswell, piledriver, and excavator configurations])
+        configs=`echo $configs | sed 's/ *haswell */ /' \
+                               | sed 's/ *piledriver */ /' \
+                               | sed 's/ *excavator */ /'`
+    fi
+fi
+
+if ( echo $configs | grep -q bulldozer ); then
+    AC_MSG_CHECKING([whether inline FMA4 can be compiled])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
+        __asm__ __volatile__
+        (
+            "vzeroall \n\t"
+            "vfmaddpd %%ymm0, %%ymm1, %%ymm2, %%ymm3 \n\t"
+            :::
+        );])],
+        [enable_fma4=yes], [enable_fma4=no])
+    AC_MSG_RESULT([$enable_fma4])
+    if test "x$enable_fma4" = xno; then
+        AC_MSG_WARN([FMA4 cannot be compiled; disabling bulldozer configuration])
+        configs=`echo $configs | sed 's/ *bulldozer */ /'`
+    fi
+fi
+
+if ( echo $configs | grep -q knl ); then
+    AC_MSG_CHECKING([whether inline AVX-512F can be compiled])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
+        __asm__ __volatile__
+        (
+            "vmovapd %%zmm0, %%zmm1 \n\t"
+            "vmulpd %%zmm0, %%zmm0, %%zmm1 \n\t"
+            "vfmadd213pd 0x400(%%rax,%%rsi,8) %{1to8%}, %%zmm1, %%zmm2 \n\t"
+            :::
+        );])],
+        [enable_avx512f=yes], [enable_avx512f=no])
+    AC_MSG_RESULT([$enable_avx512f])
+    if test "x$enable_avx512f" = xno; then
+        AC_MSG_WARN([AVX-512F cannot be compiled; disabling knl configuration])
+        configs=`echo $configs | sed 's/ *knl */ /'`
+    fi
+fi
+
 AM_CONDITIONAL(ENABLE_INTEL_COMPILER, [test x"$cc_vendor" = xicc])
 
 AM_CONDITIONAL(IS_OSX, [test `uname -s` = Darwin])

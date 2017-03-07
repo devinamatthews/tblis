@@ -9205,6 +9205,182 @@ elif test x"$cc_vendor" = xclang; then
     fi
 fi
 
+if ( echo $configs | grep -q sandybridge ); then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether inline AVX can be compiled" >&5
+$as_echo_n "checking whether inline AVX can be compiled... " >&6; }
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+
+        __asm__ __volatile__
+        (
+            "vzeroall \n\t"
+            "vmovapd %%ymm0, %%ymm1 \n\t"
+            "vmulpd %%ymm0, %%ymm0, %%ymm1 \n\t"
+            :::
+        );
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  enable_avx=yes
+else
+  enable_avx=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_avx" >&5
+$as_echo "$enable_avx" >&6; }
+    if test "x$enable_avx" = xno; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: AVX cannot be compiled; disabling sandybridge configuration" >&5
+$as_echo "$as_me: WARNING: AVX cannot be compiled; disabling sandybridge configuration" >&2;}
+        configs=`echo $configs | sed 's/ *sandybridge */ /'`
+    fi
+fi
+
+if ( echo $configs | $EGREP -q 'haswell|piledriver|excavator' ); then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether inline FMA3 can be compiled" >&5
+$as_echo_n "checking whether inline FMA3 can be compiled... " >&6; }
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+
+        __asm__ __volatile__
+        (
+            "vzeroall \n\t"
+            "vfmadd213pd %%ymm0, %%ymm1, %%ymm2 \n\t"
+            :::
+        );
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  enable_fma3=yes
+else
+  enable_fma3=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_fma3" >&5
+$as_echo "$enable_fma3" >&6; }
+    if test "x$enable_fma3" = xno; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: FMA3 cannot be compiled; disabling haswell, piledriver, and excavator configurations" >&5
+$as_echo "$as_me: WARNING: FMA3 cannot be compiled; disabling haswell, piledriver, and excavator configurations" >&2;}
+        configs=`echo $configs | sed 's/ *haswell */ /' \
+                               | sed 's/ *piledriver */ /' \
+                               | sed 's/ *excavator */ /'`
+    fi
+fi
+
+if ( echo $configs | grep -q bulldozer ); then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether inline FMA4 can be compiled" >&5
+$as_echo_n "checking whether inline FMA4 can be compiled... " >&6; }
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+
+        __asm__ __volatile__
+        (
+            "vzeroall \n\t"
+            "vfmaddpd %%ymm0, %%ymm1, %%ymm2, %%ymm3 \n\t"
+            :::
+        );
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  enable_fma4=yes
+else
+  enable_fma4=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_fma4" >&5
+$as_echo "$enable_fma4" >&6; }
+    if test "x$enable_fma4" = xno; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: FMA4 cannot be compiled; disabling bulldozer configuration" >&5
+$as_echo "$as_me: WARNING: FMA4 cannot be compiled; disabling bulldozer configuration" >&2;}
+        configs=`echo $configs | sed 's/ *bulldozer */ /'`
+    fi
+fi
+
+if ( echo $configs | grep -q knl ); then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether inline AVX-512F can be compiled" >&5
+$as_echo_n "checking whether inline AVX-512F can be compiled... " >&6; }
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+
+        __asm__ __volatile__
+        (
+            "vmovapd %%zmm0, %%zmm1 \n\t"
+            "vmulpd %%zmm0, %%zmm0, %%zmm1 \n\t"
+            "vfmadd213pd 0x400(%%rax,%%rsi,8) %{1to8%}, %%zmm1, %%zmm2 \n\t"
+            :::
+        );
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  enable_avx512f=yes
+else
+  enable_avx512f=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_avx512f" >&5
+$as_echo "$enable_avx512f" >&6; }
+    if test "x$enable_avx512f" = xno; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: AVX-512F cannot be compiled; disabling knl configuration" >&5
+$as_echo "$as_me: WARNING: AVX-512F cannot be compiled; disabling knl configuration" >&2;}
+        configs=`echo $configs | sed 's/ *knl */ /'`
+    fi
+fi
+
  if test x"$cc_vendor" = xicc; then
   ENABLE_INTEL_COMPILER_TRUE=
   ENABLE_INTEL_COMPILER_FALSE='#'

@@ -12,7 +12,7 @@
 
 #ifdef __cplusplus
 #include <complex>
-#else
+#elif __STDC_VERSION__ >= 199901l
 #include <complex.h>
 #endif
 
@@ -64,15 +64,23 @@ typedef TBLIS_LEN_TYPE len_type;
 typedef TBLIS_STRIDE_TYPE stride_type;
 typedef TBLIS_LABEL_TYPE label_type;
 
+typedef struct fake_scomplex { float real, imag; } fake_scomplex;
+typedef struct fake_dcomplex { double real, imag; } fake_dcomplex;
+
 #ifdef __cplusplus
 
 typedef std::complex<float> scomplex;
 typedef std::complex<double> dcomplex;
 
-#else
+#elif __STDC_VERSION__ >= 199901l
 
 typedef complex float scomplex;
 typedef complex double dcomplex;
+
+#else
+
+typedef fake_scomplex scomplex;
+typedef fake_dcomplex dcomplex;
 
 #endif
 
@@ -158,45 +166,87 @@ namespace matrix_constants
 
 #endif
 
+typedef union scalar_variant
+{
+    float s;
+    double d;
+#if defined(__cplusplus) && defined(TBLIS_DONT_USE_CXX11)
+    fake_scomplex c;
+    fake_dcomplex z;
+#else
+    scomplex c;
+    dcomplex z;
+#endif
+} scalar_variant;
+
 typedef struct tblis_scalar
 {
     type_t type;
-    char data[16] __attribute__((__aligned__(8)));
+    scalar_variant data;
 
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
-    tblis_scalar() : type(TYPE_DOUBLE) {}
+    tblis_scalar() : type(TYPE_DOUBLE), data{} {}
 
     template <typename T>
     tblis_scalar(T value)
-    : type(type_tag<T>::value)
+    : type(type_tag<T>::value), data{}
     {
-        *reinterpret_cast<T*>(data) = value;
+        *reinterpret_cast<T*>(&data) = value;
     }
 
     template <typename T>
     T& get()
     {
         TBLIS_ASSERT(type_tag<T>::value == type);
-        return *reinterpret_cast<T*>(data);
+        return *reinterpret_cast<T*>(&data);
     }
 
     template <typename T>
     const T& get() const
     {
         TBLIS_ASSERT(type_tag<T>::value == type);
-        return *reinterpret_cast<const T*>(data);
+        return *reinterpret_cast<const T*>(&data);
+    }
+
+    void swap(tblis_scalar& other)
+    {
+        using std::swap;
+        swap(type, other.type);
+        swap(data, other.data);
+    }
+
+    friend void swap(tblis_scalar& a, tblis_scalar& b)
+    {
+        a.swap(b);
     }
 
 #endif
 
 } tblis_scalar;
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+void tblis_init_scalar_s(tblis_scalar* s, float value);
+
+void tblis_init_scalar_d(tblis_scalar* s, double value);
+
+void tblis_init_scalar_c(tblis_scalar* s, scomplex value);
+
+void tblis_init_scalar_z(tblis_scalar* s, dcomplex value);
+
+#ifdef __cplusplus
+}
+#endif
+
 typedef struct tblis_vector
 {
     type_t type;
     int conj;
-    char scalar[16] __attribute__((__aligned__(8)));
+    scalar_variant scalar;
     void* data;
     len_type n;
     stride_type inc;
@@ -204,52 +254,52 @@ typedef struct tblis_vector
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
     tblis_vector()
-    : type(TYPE_DOUBLE), conj(false), data(0), n(0), inc(0) {}
+    : type(TYPE_DOUBLE), conj(false), data(0), n(0), inc(0), scalar{} {}
 
     template <typename T>
     tblis_vector(const T* A, len_type n, stride_type inc)
     : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(A))),
-      n(n), inc(inc)
+      n(n), inc(inc), scalar{}
     {
-        *reinterpret_cast<T*>(scalar) = T(1);
+        *reinterpret_cast<T*>(&scalar) = T(1);
     }
 
     template <typename T>
     tblis_vector(T alpha, const T* A, len_type n, stride_type inc)
     : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(A))),
-      n(n), inc(inc)
+      n(n), inc(inc), scalar{}
     {
-        *reinterpret_cast<T*>(scalar) = alpha;
+        *reinterpret_cast<T*>(&scalar) = alpha;
     }
 
     template <typename T>
     tblis_vector(const_row_view<T> view)
     : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(view.data()))),
-      n(view.length()), inc(view.stride())
+      n(view.length()), inc(view.stride()), scalar{}
     {
-        *reinterpret_cast<T*>(scalar) = T(1);
+        *reinterpret_cast<T*>(&scalar) = T(1);
     }
 
     template <typename T>
     tblis_vector(T alpha, const_row_view<T> view)
     : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(view.data()))),
-      n(view.length()), inc(view.stride())
+      n(view.length()), inc(view.stride()), scalar{}
     {
-        *reinterpret_cast<T*>(scalar) = alpha;
+        *reinterpret_cast<T*>(&scalar) = alpha;
     }
 
     template <typename T>
     T& alpha()
     {
         TBLIS_ASSERT(type_tag<T>::value == type);
-        return *reinterpret_cast<T*>(scalar);
+        return *reinterpret_cast<T*>(&scalar);
     }
 
     template <typename T>
     const T& alpha() const
     {
         TBLIS_ASSERT(type_tag<T>::value == type);
-        return *reinterpret_cast<const T*>(scalar);
+        return *reinterpret_cast<const T*>(&scalar);
     }
 
     void swap(tblis_vector& other)
@@ -263,15 +313,53 @@ typedef struct tblis_vector
         swap(inc, other.inc);
     }
 
+    friend void swap(tblis_vector& a, tblis_vector& b)
+    {
+        a.swap(b);
+    }
+
 #endif
 
 } tblis_vector;
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+void tblis_init_vector_scaled_s(tblis_vector* v, float scalar,
+                                len_type n, float* data,stride_type inc);
+
+void tblis_init_vector_scaled_d(tblis_vector* v, double scalar,
+                                len_type n, double* data,stride_type inc);
+
+void tblis_init_vector_scaled_c(tblis_vector* v, scomplex scalar,
+                                len_type n, scomplex* data,stride_type inc);
+
+void tblis_init_vector_scaled_z(tblis_vector* v, dcomplex scalar,
+                                len_type n, dcomplex* data,stride_type inc);
+
+void tblis_init_vector_s(tblis_vector* v,
+                         len_type n, float* data,stride_type inc);
+
+void tblis_init_vector_d(tblis_vector* v,
+                         len_type n, double* data,stride_type inc);
+
+void tblis_init_vector_c(tblis_vector* v,
+                         len_type n, scomplex* data,stride_type inc);
+
+void tblis_init_vector_z(tblis_vector* v,
+                         len_type n, dcomplex* data,stride_type inc);
+
+#ifdef __cplusplus
+}
+#endif
 
 typedef struct tblis_matrix
 {
     type_t type;
     int conj;
-    char scalar[16] __attribute__((__aligned__(8)));
+    scalar_variant scalar;
     void* data;
     len_type m, n;
     stride_type rs, cs;
@@ -279,52 +367,52 @@ typedef struct tblis_matrix
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
     tblis_matrix()
-    : type(TYPE_DOUBLE), conj(false), data(0), m(0), n(0), rs(0), cs(0) {}
+    : type(TYPE_DOUBLE), conj(false), data(0), m(0), n(0), rs(0), cs(0), scalar{} {}
 
     template <typename T>
     tblis_matrix(const T* A, len_type m, len_type n, stride_type rs, stride_type cs)
     : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(A))),
-      m(m), n(n), rs(rs), cs(rs)
+      m(m), n(n), rs(rs), cs(rs), scalar{}
     {
-        *reinterpret_cast<T*>(scalar) = T(1);
+        *reinterpret_cast<T*>(&scalar) = T(1);
     }
 
     template <typename T>
     tblis_matrix(T alpha, const T* A, len_type m, len_type n, stride_type rs, stride_type cs)
     : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(A))),
-      m(m), n(n), rs(rs), cs(rs)
+      m(m), n(n), rs(rs), cs(rs), scalar{}
     {
-        *reinterpret_cast<T*>(scalar) = alpha;
+        *reinterpret_cast<T*>(&scalar) = alpha;
     }
 
     template <typename T>
     tblis_matrix(const_matrix_view<T> view)
     : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(view.data()))),
-      m(view.length(0)), n(view.length(1)), rs(view.stride(0)), cs(view.stride(1))
+      m(view.length(0)), n(view.length(1)), rs(view.stride(0)), cs(view.stride(1)), scalar{}
     {
-        *reinterpret_cast<T*>(scalar) = T(1);
+        *reinterpret_cast<T*>(&scalar) = T(1);
     }
 
     template <typename T>
     tblis_matrix(T alpha, const_matrix_view<T> view)
     : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(view.data()))),
-      m(view.length(0)), n(view.length(1)), rs(view.stride(0)), cs(view.stride(1))
+      m(view.length(0)), n(view.length(1)), rs(view.stride(0)), cs(view.stride(1)), scalar{}
     {
-        *reinterpret_cast<T*>(scalar) = alpha;
+        *reinterpret_cast<T*>(&scalar) = alpha;
     }
 
     template <typename T>
     T& alpha()
     {
         TBLIS_ASSERT(type_tag<T>::value == type);
-        return *reinterpret_cast<T*>(scalar);
+        return *reinterpret_cast<T*>(&scalar);
     }
 
     template <typename T>
     const T& alpha() const
     {
         TBLIS_ASSERT(type_tag<T>::value == type);
-        return *reinterpret_cast<const T*>(scalar);
+        return *reinterpret_cast<const T*>(&scalar);
     }
 
     void swap(tblis_matrix& other)
@@ -340,15 +428,61 @@ typedef struct tblis_matrix
         swap(cs, other.cs);
     }
 
+    friend void swap(tblis_matrix& a, tblis_matrix& b)
+    {
+        a.swap(b);
+    }
+
 #endif
 
 } tblis_matrix;
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+void tblis_init_matrix_scaled_s(tblis_matrix* mat, float scalar,
+                                len_type m, len_type n, float* data,
+                                stride_type rs, stride_type cs);
+
+void tblis_init_matrix_scaled_d(tblis_matrix* mat, double scalar,
+                                len_type m, len_type n, double* data,
+                                stride_type rs, stride_type cs);
+
+void tblis_init_matrix_scaled_c(tblis_matrix* mat, scomplex scalar,
+                                len_type m, len_type n, scomplex* data,
+                                stride_type rs, stride_type cs);
+
+void tblis_init_matrix_scaled_z(tblis_matrix* mat, dcomplex scalar,
+                                len_type m, len_type n, dcomplex* data,
+                                stride_type rs, stride_type cs);
+
+void tblis_init_matrix_s(tblis_matrix* mat,
+                         len_type m, len_type n, float* data,
+                         stride_type rs, stride_type cs);
+
+void tblis_init_matrix_d(tblis_matrix* mat,
+                         len_type m, len_type n, double* data,
+                         stride_type rs, stride_type cs);
+
+void tblis_init_matrix_c(tblis_matrix* mat,
+                         len_type m, len_type n, scomplex* data,
+                         stride_type rs, stride_type cs);
+
+void tblis_init_matrix_z(tblis_matrix* mat,
+                         len_type m, len_type n, dcomplex* data,
+                         stride_type rs, stride_type cs);
+
+#ifdef __cplusplus
+}
+#endif
 
 typedef struct tblis_tensor
 {
     type_t type;
     int conj;
-    char scalar[16] __attribute__((__aligned__(8)));
+    scalar_variant scalar;
     void* data;
     unsigned ndim;
     len_type* len;
@@ -356,56 +490,56 @@ typedef struct tblis_tensor
 
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
-    tblis_tensor() {}
+    tblis_tensor() : scalar{} {}
 
     template <typename T>
     tblis_tensor(const_tensor_view<T>& view)
     : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(view.data()))),
       ndim(view.dimension()), len(const_cast<len_type*>(view.lengths().data())),
-      stride(const_cast<stride_type*>(view.strides().data()))
+      stride(const_cast<stride_type*>(view.strides().data())), scalar{}
     {
-        *reinterpret_cast<T*>(scalar) = T(1);
+        *reinterpret_cast<T*>(&scalar) = T(1);
     }
 
     template <typename T>
     tblis_tensor(tensor_view<T>& view)
     : type(type_tag<T>::value), conj(false), data(static_cast<void*>(view.data())),
       ndim(view.dimension()), len(const_cast<len_type*>(view.lengths().data())),
-      stride(const_cast<stride_type*>(view.strides().data()))
+      stride(const_cast<stride_type*>(view.strides().data())), scalar{}
     {
-        *reinterpret_cast<T*>(scalar) = T(1);
+        *reinterpret_cast<T*>(&scalar) = T(1);
     }
 
     template <typename T>
     tblis_tensor(T alpha, const_tensor_view<T>& view)
     : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(view.data()))),
       ndim(view.dimension()), len(const_cast<len_type*>(view.lengths().data())),
-      stride(const_cast<stride_type*>(view.strides().data()))
+      stride(const_cast<stride_type*>(view.strides().data())), scalar{}
     {
-        *reinterpret_cast<T*>(scalar) = alpha;
+        *reinterpret_cast<T*>(&scalar) = alpha;
     }
 
     template <typename T>
     tblis_tensor(T alpha, tensor_view<T>& view)
     : type(type_tag<T>::value), conj(false), data(static_cast<void*>(view.data())),
       ndim(view.dimension()), len(const_cast<len_type*>(view.lengths().data())),
-      stride(const_cast<stride_type*>(view.strides().data()))
+      stride(const_cast<stride_type*>(view.strides().data())), scalar{}
     {
-        *reinterpret_cast<T*>(scalar) = alpha;
+        *reinterpret_cast<T*>(&scalar) = alpha;
     }
 
     template <typename T>
     T& alpha()
     {
         TBLIS_ASSERT(type_tag<T>::value == type);
-        return *reinterpret_cast<T*>(scalar);
+        return *reinterpret_cast<T*>(&scalar);
     }
 
     template <typename T>
     const T& alpha() const
     {
         TBLIS_ASSERT(type_tag<T>::value == type);
-        return *reinterpret_cast<const T*>(scalar);
+        return *reinterpret_cast<const T*>(&scalar);
     }
 
     void swap(tblis_tensor& other)
@@ -420,9 +554,55 @@ typedef struct tblis_tensor
         swap(stride, other.stride);
     }
 
+    friend void swap(tblis_tensor& a, tblis_tensor& b)
+    {
+        a.swap(b);
+    }
+
 #endif
 
 } tblis_tensor;
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+void tblis_init_tensor_scaled_s(tblis_tensor* t, float scalar,
+                                unsigned ndim, len_type* len, float* data,
+                                stride_type* stride);
+
+void tblis_init_tensor_scaled_d(tblis_tensor* t, double scalar,
+                                unsigned ndim, len_type* len, double* data,
+                                stride_type* stride);
+
+void tblis_init_tensor_scaled_c(tblis_tensor* t, scomplex scalar,
+                                unsigned ndim, len_type* len, scomplex* data,
+                                stride_type* stride);
+
+void tblis_init_tensor_scaled_z(tblis_tensor* t, dcomplex scalar,
+                                unsigned ndim, len_type* len, dcomplex* data,
+                                stride_type* stride);
+
+void tblis_init_tensor_s(tblis_tensor* t,
+                         unsigned ndim, len_type* len, float* data,
+                         stride_type* stride);
+
+void tblis_init_tensor_d(tblis_tensor* t,
+                         unsigned ndim, len_type* len, double* data,
+                         stride_type* stride);
+
+void tblis_init_tensor_c(tblis_tensor* t,
+                         unsigned ndim, len_type* len, scomplex* data,
+                         stride_type* stride);
+
+void tblis_init_tensor_z(tblis_tensor* t,
+                         unsigned ndim, len_type* len, dcomplex* data,
+                         stride_type* stride);
+
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef __cplusplus
 }

@@ -104,13 +104,13 @@ config cfg##_config_instance = config(cfg##_config());
     TBLIS_CONFIG_PARAMETER(gemm_row_major, bool, S,D,C,Z, false,false,false,false)
 
 #define TBLIS_CONFIG_M_THREAD_RATIO(S,D,C,Z) \
-    TBLIS_CONFIG_PARAMETER(m_thread_ratio, bool, S,D,C,Z, 2,2,2,2)
+    TBLIS_CONFIG_PARAMETER(m_thread_ratio, unsigned, S,D,C,Z, 2,2,2,2)
 #define TBLIS_CONFIG_N_THREAD_RATIO(S,D,C,Z) \
-    TBLIS_CONFIG_PARAMETER(n_thread_ratio, bool, S,D,C,Z, 1,1,1,1)
+    TBLIS_CONFIG_PARAMETER(n_thread_ratio, unsigned, S,D,C,Z, 1,1,1,1)
 #define TBLIS_CONFIG_MR_MAX_THREAD(S,D,C,Z) \
-    TBLIS_CONFIG_PARAMETER(mr_max_thread, bool, S,D,C,Z, 1,1,1,1)
+    TBLIS_CONFIG_PARAMETER(mr_max_thread, unsigned, S,D,C,Z, 1,1,1,1)
 #define TBLIS_CONFIG_NR_MAX_THREAD(S,D,C,Z) \
-    TBLIS_CONFIG_PARAMETER(nr_max_thread, bool, S,D,C,Z, 3,3,3,3)
+    TBLIS_CONFIG_PARAMETER(nr_max_thread, unsigned, S,D,C,Z, 3,3,3,3)
 
 #define TBLIS_CONFIG_UKR(name, type, S,D,C,Z, def_ker) \
     template <typename T> struct name : static_microkernel<T, \

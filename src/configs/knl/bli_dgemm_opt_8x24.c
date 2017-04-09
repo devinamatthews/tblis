@@ -1,6 +1,6 @@
 /*
 
-   BLIS    
+   BLIS
    An object-based framework for developing high-performance BLAS-like
    libraries.
 
@@ -37,21 +37,16 @@
 
 #include "bli_avx512_macros.h"
 
-#define UNROLL_K 8
+#define UNROLL_K 32
 
-#define SCATTER_PREFETCH_AB 0
 #define SCATTER_PREFETCH_C 1
 
 #define PREFETCH_A_L2 0
 #define PREFETCH_B_L2 0
 #define L2_PREFETCH_DIST 64
 
-#define A_L1_PREFETCH_DIST 32
-#define B_L1_PREFETCH_DIST 12
-
-#define C_MIN_L2_ITERS 64 //C is not prefetched into L2 for k <= this
-#define C_L1_ITERS 8 //number of iterations before the end to prefetch C into L1
-                      //make sure there is an unrolled MAIN_LOOP_X for this number
+#define A_L1_PREFETCH_DIST 18
+#define B_L1_PREFETCH_DIST 18
 
 #define LOOP_ALIGN ALIGN16
 
@@ -130,38 +125,12 @@
 #define PREFETCH_A_L2(...)
 #endif
 
-#if SCATTER_PREFETCH_AB
-#undef SCATTER_PREFETCH_AB
-#undef PREFETCH_B_L1_1
-#undef PREFETCH_B_L1_2
-#undef PREFETCH_B_L1_3
-#undef PREFETCH_A_L1
-
-#define SCATTER_PREFETCH_AB(n) \
-\
-    KXNORW(K(1), K(0), K(0)) \
-    VGATHERPFDPS(0, MEM(RBX,ZMM(4),8,((3*n  )*16+3*B_L1_PREFETCH_DIST)*64) MASK_K(1)) \
-    KXNORW(K(2), K(0), K(0)) \
-    VGATHERPFDPS(0, MEM(RBX,ZMM(4),8,((3*n+1)*16+3*B_L1_PREFETCH_DIST)*64) MASK_K(2)) \
-    KXNORW(K(3), K(0), K(0)) \
-    VGATHERPFDPS(0, MEM(RBX,ZMM(4),8,((3*n+2)*16+3*B_L1_PREFETCH_DIST)*64) MASK_K(3)) \
-    KXNORW(K(4), K(0), K(0)) \
-    VGATHERPFDPS(0, MEM(RAX,ZMM(4),8,(   n   *16+  A_L1_PREFETCH_DIST)*64) MASK_K(4))
-
-#define PREFETCH_B_L1_1(...)
-#define PREFETCH_B_L1_2(...)
-#define PREFETCH_B_L1_3(...)
-#define PREFETCH_A_L1(...)
-
-#else
-#undef SCATTER_PREFETCH_AB
-
-#define SCATTER_PREFETCH_AB(...)
-
-#endif
+#define PREFETCH_C_L1_1
+#define PREFETCH_C_L1_2
+#define PREFETCH_C_L1_3
 
 //
-// n: index in unrolled loop (for prefetching offsets)
+// n: index in unrolled loop
 //
 // a: ZMM register to load into
 // b: ZMM register to read from
@@ -170,282 +139,41 @@
 //
 #define SUBITER(n,a,b,...) \
 \
-        PREFETCH_B_L2(n) \
+        PREFETCH_A_L2(n) \
 \
         VMOVAPD(ZMM(a), MEM(RAX,(n+1)*64)) \
         VFMADD231PD(ZMM( 8), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 0)*8)) \
         VFMADD231PD(ZMM( 9), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 1)*8)) \
         VFMADD231PD(ZMM(10), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 2)*8)) \
-        VFMADD231PD(ZMM(11), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 3)*8)) \
         PREFETCH_B_L1_1(n) \
+        VFMADD231PD(ZMM(11), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 3)*8)) \
         VFMADD231PD(ZMM(12), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 4)*8)) \
         VFMADD231PD(ZMM(13), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 5)*8)) \
+        PREFETCH_C_L1_1 \
         VFMADD231PD(ZMM(14), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 6)*8)) \
         VFMADD231PD(ZMM(15), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 7)*8)) \
-        PREFETCH_B_L1_2(n) \
         VFMADD231PD(ZMM(16), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 8)*8)) \
+        PREFETCH_B_L1_2(n) \
         VFMADD231PD(ZMM(17), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 9)*8)) \
         VFMADD231PD(ZMM(18), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+10)*8)) \
         VFMADD231PD(ZMM(19), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+11)*8)) \
-        PREFETCH_B_L1_3(n) \
+        PREFETCH_C_L1_2 \
         VFMADD231PD(ZMM(20), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+12)*8)) \
         VFMADD231PD(ZMM(21), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+13)*8)) \
         VFMADD231PD(ZMM(22), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+14)*8)) \
+        PREFETCH_B_L1_3(n) \
         VFMADD231PD(ZMM(23), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+15)*8)) \
-        PREFETCH_A_L1(n) \
         VFMADD231PD(ZMM(24), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+16)*8)) \
         VFMADD231PD(ZMM(25), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+17)*8)) \
+        PREFETCH_C_L1_3 \
         VFMADD231PD(ZMM(26), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+18)*8)) \
         VFMADD231PD(ZMM(27), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+19)*8)) \
-        PREFETCH_A_L2(n) \
         VFMADD231PD(ZMM(28), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+20)*8)) \
+        PREFETCH_A_L1(n) \
         VFMADD231PD(ZMM(29), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+21)*8)) \
         VFMADD231PD(ZMM(30), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+22)*8)) \
-        VFMADD231PD(ZMM(31), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+23)*8))
-
-#define TAIL_LOOP(NAME) \
-\
-    LOOP_ALIGN \
-    LABEL(NAME) \
-\
-        SUBITER(0,1,0,RBX) \
-\
-        VMOVAPD(ZMM(0), ZMM(1)) \
-\
-        LEA(RBX, MEM(RBX,24*8)) \
-        LEA(RAX, MEM(RAX, 8*8)) \
-\
-        SUB(RDI, IMM(1)) \
-\
-    JNZ(NAME)
-
-#define MAIN_LOOP_1(NAME) \
-\
-    LOOP_ALIGN \
-    LABEL(NAME##_LOOP) \
-\
-        SUBITER(0,1,0,RBX) \
-\
-        VMOVAPD(ZMM(0), ZMM(1)) \
-\
-        LEA(RBX, MEM(RBX,24*8)) \
-        LEA(RAX, MEM(RAX, 8*8)) \
-\
-        SUB(RSI, IMM(1)) \
-\
-    JNZ(NAME##_LOOP)
-
-#define MAIN_LOOP_2(NAME) \
-\
-    MOV(RDI, RSI) \
-    AND(RDI, IMM(1)) \
-    SAR1(RSI) \
-    JZ(NAME##_TAIL) \
-\
-    LOOP_ALIGN \
-    LABEL(NAME##_LOOP) \
-\
-        SUBITER(0,1,0,RBX) \
-        SUBITER(1,0,1,RBX) \
-\
-        LEA(RBX, MEM(RBX,2*24*8)) \
-        LEA(RAX, MEM(RAX,2* 8*8)) \
-\
-        SUB(RSI, IMM(1)) \
-\
-    JNZ(NAME##_LOOP) \
-\
-    TEST(RDI, RDI) \
-    JZ(NAME##_DONE) \
-\
-    LABEL(NAME##_TAIL) \
-\
-    SUBITER(0,1,0,RBX) \
-\
-    VMOVAPD(ZMM(0), ZMM(1)) \
-\
-    LEA(RBX, MEM(RBX,24*8)) \
-    LEA(RAX, MEM(RAX, 8*8)) \
-\
-    LABEL(NAME##_DONE)
-
-#define MAIN_LOOP_4(NAME) \
-\
-    MOV(RDI, RSI) \
-    AND(RDI, IMM(3)) \
-    SAR(RSI, IMM(2)) \
-    JZ(NAME##_TAIL) \
-\
-    LOOP_ALIGN \
-    LABEL(NAME##_LOOP) \
-\
-        SUBITER(0,1,0,RBX) \
-        SUBITER(1,0,1,RBX) \
-        SUBITER(2,1,0,RBX) \
-        SUBITER(3,0,1,RBX) \
-\
-        LEA(RBX, MEM(RBX,4*24*8)) \
-        LEA(RAX, MEM(RAX,4* 8*8)) \
-\
-        SUB(RSI, IMM(1)) \
-\
-    JNZ(NAME##_LOOP) \
-\
-    TEST(RDI, RDI) \
-    JZ(NAME##_DONE) \
-\
-    TAIL_LOOP(NAME##_TAIL) \
-\
-    LABEL(NAME##_DONE)
-
-#define MAIN_LOOP_8(NAME) \
-\
-    MOV(RDI, RSI) \
-    AND(RDI, IMM(7)) \
-    SAR(RSI, IMM(3)) \
-    JZ(NAME##_TAIL) \
-\
-    LOOP_ALIGN \
-    LABEL(NAME##_LOOP) \
-\
-        SUBITER(0,1,0,RBX) \
-        SUBITER(1,0,1,RBX) \
-        SUBITER(2,1,0,RBX) \
-        SUBITER(3,0,1,RBX) \
-        SUBITER(4,1,0,RBX,R8,1) \
-        SUBITER(5,0,1,RBX,R8,1) \
-        SUBITER(6,1,0,RBX,R8,1) \
-        SUBITER(7,0,1,RBX,R8,1) \
-\
-        LEA(RBX, MEM(RBX,8*24*8)) \
-        LEA(RAX, MEM(RAX,8* 8*8)) \
-\
-        SUB(RSI, IMM(1)) \
-\
-    JNZ(NAME##_LOOP) \
-\
-    TEST(RDI, RDI) \
-    JZ(NAME##_DONE) \
-\
-    TAIL_LOOP(NAME##_TAIL) \
-\
-    LABEL(NAME##_DONE)
-
-#define MAIN_LOOP_16(NAME) \
-\
-    MOV(RDI, RSI) \
-    AND(RDI, IMM(15)) \
-    SAR(RSI, IMM(4)) \
-    JZ(NAME##_TAIL) \
-\
-    LOOP_ALIGN \
-    LABEL(NAME##_LOOP) \
-\
-        SCATTER_PREFETCH_AB(0) \
-\
-        SUBITER( 0,1,0,RBX) \
-        SUBITER( 1,0,1,RBX) \
-        SUBITER( 2,1,0,RBX) \
-        SUBITER( 3,0,1,RBX) \
-        SUBITER( 4,1,0,RBX,R8,1) \
-        SUBITER( 5,0,1,RBX,R8,1) \
-        SUBITER( 6,1,0,RBX,R8,1) \
-        SUBITER( 7,0,1,RBX,R8,1) \
-        SUBITER( 8,1,0,RBX,R8,2) \
-        SUBITER( 9,0,1,RBX,R8,2) \
-        SUBITER(10,1,0,RBX,R8,2) \
-        SUBITER(11,0,1,RBX,R8,2) \
-        SUBITER(12,1,0,RBX,R9,1) \
-        SUBITER(13,0,1,RBX,R9,1) \
-        SUBITER(14,1,0,RBX,R9,1) \
-        SUBITER(15,0,1,RBX,R9,1) \
-\
-        LEA(RBX, MEM(RBX,16*24*8)) \
-        LEA(RAX, MEM(RAX,16* 8*8)) \
-\
-        SUB(RSI, IMM(1)) \
-\
-    JNZ(NAME##_LOOP) \
-\
-    TEST(RDI, RDI) \
-    JZ(NAME##_DONE) \
-\
-    SCATTER_PREFETCH_AB(0) \
-\
-    TAIL_LOOP(NAME##_TAIL) \
-\
-    LABEL(NAME##_DONE)
-
-#define MAIN_LOOP_32(NAME) \
-\
-    MOV(RDI, RSI) \
-    AND(RDI, IMM(31)) \
-    SAR(RSI, IMM(5)) \
-    JZ(NAME##_TAIL) \
-\
-    LOOP_ALIGN \
-    LABEL(NAME##_LOOP) \
-\
-        SCATTER_PREFETCH_AB(0) \
-\
-        SUBITER( 0,1,0,RBX) \
-        SUBITER( 1,0,1,RBX) \
-        SUBITER( 2,1,0,RBX) \
-        SUBITER( 3,0,1,RBX) \
-        SUBITER( 4,1,0,RBX,R8,1) \
-        SUBITER( 5,0,1,RBX,R8,1) \
-        SUBITER( 6,1,0,RBX,R8,1) \
-        SUBITER( 7,0,1,RBX,R8,1) \
-        SUBITER( 8,1,0,RBX,R8,2) \
-        SUBITER( 9,0,1,RBX,R8,2) \
-        SUBITER(10,1,0,RBX,R8,2) \
-        SUBITER(11,0,1,RBX,R8,2) \
-        SUBITER(12,1,0,RBX,R9,1) \
-        SUBITER(13,0,1,RBX,R9,1) \
-        SUBITER(14,1,0,RBX,R9,1) \
-        SUBITER(15,0,1,RBX,R9,1) \
-\
-        SCATTER_PREFETCH_AB(1) \
-\
-        SUBITER(16,1,0,RBX,R8,4) \
-        SUBITER(17,0,1,RBX,R8,4) \
-        SUBITER(18,1,0,RBX,R8,4) \
-        SUBITER(19,0,1,RBX,R8,4) \
-        SUBITER(20,1,0,RBX,R10,1) \
-        SUBITER(21,0,1,RBX,R10,1) \
-        SUBITER(22,1,0,RBX,R10,1) \
-        SUBITER(23,0,1,RBX,R10,1) \
-        SUBITER(24,1,0,RBX,R9,2) \
-        SUBITER(25,0,1,RBX,R9,2) \
-        SUBITER(26,1,0,RBX,R9,2) \
-        SUBITER(27,0,1,RBX,R9,2) \
-        SUBITER(28,1,0,RBX,R11,1) \
-        SUBITER(29,0,1,RBX,R11,1) \
-        SUBITER(30,1,0,RBX,R11,1) \
-        SUBITER(31,0,1,RBX,R11,1) \
-\
-        LEA(RBX, MEM(RBX,32*24*8)) \
-        LEA(RAX, MEM(RAX,32* 8*8)) \
-\
-        SUB(RSI, IMM(1)) \
-\
-    JNZ(NAME##_LOOP) \
-\
-    TEST(RDI, RDI) \
-    JZ(NAME##_DONE) \
-\
-    SCATTER_PREFETCH_AB(0) \
-    SCATTER_PREFETCH_AB(1) \
-\
-    TAIL_LOOP(NAME##_TAIL) \
-\
-    LABEL(NAME##_DONE)
-
-#define LOOP_K_(M,K) M##K
-#define LOOP_K(M,K,NAME) LOOP_K_(M,K)(NAME)
-
-#define MAIN_LOOP_L2 LOOP_K(MAIN_LOOP_,UNROLL_K,MAIN_LOOP_L2)
-#define MAIN_LOOP_L1 LOOP_K(MAIN_LOOP_,C_L1_ITERS,MAIN_LOOP_L1)
+        VFMADD231PD(ZMM(31), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+23)*8)) \
+        PREFETCH_B_L2(n)
 
 //This is an array used for the scatter/gather instructions.
 static int32_t offsets[32] __attribute__((aligned(64))) =
@@ -455,22 +183,26 @@ static int32_t offsets[32] __attribute__((aligned(64))) =
 //#define MONITORS
 //#define LOOPMON
 void bli_dgemm_opt_8x24(
-                    dim_t            k,
+                    dim_t            k_,
                     double* restrict alpha,
                     double* restrict a,
                     double* restrict b,
                     double* restrict beta,
-                    double* restrict c, inc_t rs_c, inc_t cs_c,
+                    double* restrict c, inc_t rs_c_, inc_t cs_c_,
                     auxinfo_t*       data,
                     cntx_t* restrict cntx
                   )
 {
+    (void)data;
+    (void)cntx;
+
     const double * a_next = bli_auxinfo_next_a( data );
     const double * b_next = bli_auxinfo_next_b( data );
 
     const int32_t * offsetPtr = &offsets[0];
-
-    uint64_t k64 = k;
+    const int64_t k = k_;
+    const int64_t rs_c = rs_c_;
+    const int64_t cs_c = cs_c_;
 
 #ifdef MONITORS
     int toph, topl, both, botl, midl, midh, mid2l, mid2h;
@@ -488,7 +220,7 @@ void bli_dgemm_opt_8x24(
 #endif
 
     VPXORD(ZMM(8), ZMM(8), ZMM(8)) //clear out registers
-    VMOVAPS(ZMM( 9), ZMM(8))
+    VMOVAPS(ZMM( 9), ZMM(8))   MOV(R12, VAR(cs_c))
     VMOVAPS(ZMM(10), ZMM(8))   MOV(RSI, VAR(k)) //loop index
     VMOVAPS(ZMM(11), ZMM(8))   MOV(RAX, VAR(a)) //load address of a
     VMOVAPS(ZMM(12), ZMM(8))   MOV(RBX, VAR(b)) //load address of b
@@ -505,12 +237,12 @@ void bli_dgemm_opt_8x24(
     VMOVAPS(ZMM(22), ZMM(8))   VMOVAPS(YMM(3), MEM(RDI,64))
     VMOVAPS(ZMM(23), ZMM(8))   VPMULLD(YMM(3), YMM(3), YMM(5))
 #else
-    VMOVAPS(ZMM(17), ZMM(8))   MOV(R12, VAR(cs_c))
+    VMOVAPS(ZMM(17), ZMM(8))
     VMOVAPS(ZMM(18), ZMM(8))   LEA(R13, MEM(R12,R12,2))
     VMOVAPS(ZMM(19), ZMM(8))   LEA(R14, MEM(R12,R12,4))
     VMOVAPS(ZMM(20), ZMM(8))   LEA(R15, MEM(R13,R12,4))
-    VMOVAPS(ZMM(21), ZMM(8))   LEA(RDX, MEM(RCX,R12,8))
-    VMOVAPS(ZMM(22), ZMM(8))   LEA(RDI, MEM(RDX,R12,8))
+    VMOVAPS(ZMM(21), ZMM(8))
+    VMOVAPS(ZMM(22), ZMM(8))
     VMOVAPS(ZMM(23), ZMM(8))
 #endif
     VMOVAPS(ZMM(24), ZMM(8))   VPSLLD(ZMM(4), ZMM(4), IMM(3))
@@ -528,50 +260,192 @@ void bli_dgemm_opt_8x24(
     MOV(VAR(midh), EDX)
 #endif
 
-    //need 0+... to satisfy preprocessor
-    CMP(RSI, IMM(0+C_MIN_L2_ITERS))
-    JLE(PREFETCH_C_L1)
-
-    SUB(RSI, IMM(0+C_L1_ITERS))
+    SUB(RSI, IMM(32))
+    JLE(TAIL)
 
     //prefetch C into L2
 #if SCATTER_PREFETCH_C
+    ADD(RSI, IMM(24))
     KXNORW(K(1), K(0), K(0))
     KXNORW(K(2), K(0), K(0))
     VSCATTERPFDPS(1, MEM(RCX,ZMM(2),8) MASK_K(1))
     VSCATTERPFDPD(1, MEM(RCX,YMM(3),8) MASK_K(2))
 #else
-    PREFETCH(1, MEM(RCX      ))
-    PREFETCH(1, MEM(RCX,R12,1))
-    PREFETCH(1, MEM(RCX,R12,2))
-    PREFETCH(1, MEM(RCX,R13,1))
-    PREFETCH(1, MEM(RCX,R12,4))
-    PREFETCH(1, MEM(RCX,R14,1))
-    PREFETCH(1, MEM(RCX,R13,2))
-    PREFETCH(1, MEM(RCX,R15,1))
-    PREFETCH(1, MEM(RDX      ))
-    PREFETCH(1, MEM(RDX,R12,1))
-    PREFETCH(1, MEM(RDX,R12,2))
-    PREFETCH(1, MEM(RDX,R13,1))
-    PREFETCH(1, MEM(RDX,R12,4))
-    PREFETCH(1, MEM(RDX,R14,1))
-    PREFETCH(1, MEM(RDX,R13,2))
-    PREFETCH(1, MEM(RDX,R15,1))
-    PREFETCH(1, MEM(RDI      ))
-    PREFETCH(1, MEM(RDI,R12,1))
-    PREFETCH(1, MEM(RDI,R12,2))
-    PREFETCH(1, MEM(RDI,R13,1))
-    PREFETCH(1, MEM(RDI,R12,4))
-    PREFETCH(1, MEM(RDI,R14,1))
-    PREFETCH(1, MEM(RDI,R13,2))
-    PREFETCH(1, MEM(RDI,R15,1))
+    PREFETCHW1(MEM(RCX      ))
+    SUBITER( 0,1,0,RBX      )
+    PREFETCHW1(MEM(RCX,R12,1))
+    SUBITER( 1,0,1,RBX      )
+    PREFETCHW1(MEM(RCX,R12,2))
+    SUBITER( 2,1,0,RBX      )
+    PREFETCHW1(MEM(RCX,R13,1))
+    SUBITER( 3,0,1,RBX      )
+    PREFETCHW1(MEM(RCX,R12,4))
+    SUBITER( 4,1,0,RBX,R8, 1)
+    PREFETCHW1(MEM(RCX,R14,1))
+    SUBITER( 5,0,1,RBX,R8, 1)
+    PREFETCHW1(MEM(RCX,R13,2))
+    SUBITER( 6,1,0,RBX,R8, 1)
+    PREFETCHW1(MEM(RCX,R15,1))
+    SUBITER( 7,0,1,RBX,R8, 1)
+
+    LEA(RDX, MEM(RCX,R12,8))
+
+    PREFETCHW1(MEM(RDX      ))
+    SUBITER( 8,1,0,RBX,R8, 2)
+    PREFETCHW1(MEM(RDX,R12,1))
+    SUBITER( 9,0,1,RBX,R8, 2)
+    PREFETCHW1(MEM(RDX,R12,2))
+    SUBITER(10,1,0,RBX,R8, 2)
+    PREFETCHW1(MEM(RDX,R13,1))
+    SUBITER(11,0,1,RBX,R8, 2)
+    PREFETCHW1(MEM(RDX,R12,4))
+    SUBITER(12,1,0,RBX,R9, 1)
+    PREFETCHW1(MEM(RDX,R14,1))
+    SUBITER(13,0,1,RBX,R9, 1)
+    PREFETCHW1(MEM(RDX,R13,2))
+    SUBITER(14,1,0,RBX,R9, 1)
+    PREFETCHW1(MEM(RDX,R15,1))
+    SUBITER(15,0,1,RBX,R9, 1)
+
+    LEA(RDI, MEM(RDX,R12,8))
+
+    PREFETCHW1(MEM(RDI      ))
+    SUBITER(16,1,0,RBX,R8, 4)
+    PREFETCHW1(MEM(RDI,R12,1))
+    SUBITER(17,0,1,RBX,R8, 4)
+    PREFETCHW1(MEM(RDI,R12,2))
+    SUBITER(18,1,0,RBX,R8, 4)
+    PREFETCHW1(MEM(RDI,R13,1))
+    SUBITER(19,0,1,RBX,R8, 4)
+    PREFETCHW1(MEM(RDI,R12,4))
+    SUBITER(20,1,0,RBX,R10,1)
+    PREFETCHW1(MEM(RDI,R14,1))
+    SUBITER(21,0,1,RBX,R10,1)
+    PREFETCHW1(MEM(RDI,R13,2))
+    SUBITER(22,1,0,RBX,R10,1)
+    PREFETCHW1(MEM(RDI,R15,1))
+    SUBITER(23,0,1,RBX,R10,1)
+
+    ADD(RBX, IMM(24*24*8))
+    ADD(RAX, IMM(24* 8*8))
 #endif
 
-    MAIN_LOOP_L2
+    MOV(RDI, RSI)
+    AND(RDI, IMM(31))
+    SAR(RSI, IMM(5))
+    JZ(REM_1)
 
-    MOV(RSI, IMM(0+C_L1_ITERS))
+    LOOP_ALIGN
+    LABEL(MAIN_LOOP)
 
-    LABEL(PREFETCH_C_L1)
+        SUBITER( 0,1,0,RBX      )
+        SUBITER( 1,0,1,RBX      )
+        SUBITER( 2,1,0,RBX      )
+        SUBITER( 3,0,1,RBX      )
+        SUBITER( 4,1,0,RBX,R8, 1)
+        SUBITER( 5,0,1,RBX,R8, 1)
+        SUBITER( 6,1,0,RBX,R8, 1)
+        SUBITER( 7,0,1,RBX,R8, 1)
+        SUBITER( 8,1,0,RBX,R8, 2)
+        SUBITER( 9,0,1,RBX,R8, 2)
+        SUBITER(10,1,0,RBX,R8, 2)
+        SUBITER(11,0,1,RBX,R8, 2)
+        SUBITER(12,1,0,RBX,R9, 1)
+        SUBITER(13,0,1,RBX,R9, 1)
+        SUBITER(14,1,0,RBX,R9, 1)
+        SUBITER(15,0,1,RBX,R9, 1)
+        SUBITER(16,1,0,RBX,R8, 4)
+        SUBITER(17,0,1,RBX,R8, 4)
+        SUBITER(18,1,0,RBX,R8, 4)
+        SUBITER(19,0,1,RBX,R8, 4)
+        SUBITER(20,1,0,RBX,R10,1)
+        SUBITER(21,0,1,RBX,R10,1)
+        SUBITER(22,1,0,RBX,R10,1)
+        SUBITER(23,0,1,RBX,R10,1)
+        SUBITER(24,1,0,RBX,R9, 2)
+        SUBITER(25,0,1,RBX,R9, 2)
+        SUBITER(26,1,0,RBX,R9, 2)
+        SUBITER(27,0,1,RBX,R9, 2)
+        SUBITER(28,1,0,RBX,R11,1)
+        SUBITER(29,0,1,RBX,R11,1)
+        SUBITER(30,1,0,RBX,R11,1)
+        SUBITER(31,0,1,RBX,R11,1)
+
+        ADD(RBX, IMM(32*24*8))
+        ADD(RAX, IMM(32* 8*8))
+
+        SUB(RSI, IMM(1))
+
+    JNZ(MAIN_LOOP)
+
+    LABEL(REM_1)
+    SAR1(RDI)
+    JNC(REM_2)
+
+    SUBITER(0,1,0,RBX)
+    VMOVAPD(ZMM(0), ZMM(1))
+    ADD(RBX, IMM(24*8))
+    ADD(RAX, IMM( 8*8))
+
+    LABEL(REM_2)
+    SAR1(RDI)
+    JNC(REM_4)
+
+    SUBITER(0,1,0,RBX)
+    SUBITER(1,0,1,RBX)
+    ADD(RBX, IMM(2*24*8))
+    ADD(RAX, IMM(2* 8*8))
+
+    LABEL(REM_4)
+    SAR1(RDI)
+    JNC(REM_8)
+
+    SUBITER(0,1,0,RBX)
+    SUBITER(1,0,1,RBX)
+    SUBITER(2,1,0,RBX)
+    SUBITER(3,0,1,RBX)
+    ADD(RBX, IMM(4*24*8))
+    ADD(RAX, IMM(4* 8*8))
+
+    LABEL(REM_8)
+    SAR1(RDI)
+    JNC(REM_16)
+
+    SUBITER(0,1,0,RBX     )
+    SUBITER(1,0,1,RBX     )
+    SUBITER(2,1,0,RBX     )
+    SUBITER(3,0,1,RBX     )
+    SUBITER(4,1,0,RBX,R8,1)
+    SUBITER(5,0,1,RBX,R8,1)
+    SUBITER(6,1,0,RBX,R8,1)
+    SUBITER(7,0,1,RBX,R8,1)
+    ADD(RBX, IMM(8*24*8))
+    ADD(RAX, IMM(8* 8*8))
+
+    LABEL(REM_16)
+    SAR1(RDI)
+    JNC(AFTER_LOOP)
+
+    SUBITER( 0,1,0,RBX      )
+    SUBITER( 1,0,1,RBX      )
+    SUBITER( 2,1,0,RBX      )
+    SUBITER( 3,0,1,RBX      )
+    SUBITER( 4,1,0,RBX,R8, 1)
+    SUBITER( 5,0,1,RBX,R8, 1)
+    SUBITER( 6,1,0,RBX,R8, 1)
+    SUBITER( 7,0,1,RBX,R8, 1)
+    SUBITER( 8,1,0,RBX,R8, 2)
+    SUBITER( 9,0,1,RBX,R8, 2)
+    SUBITER(10,1,0,RBX,R8, 2)
+    SUBITER(11,0,1,RBX,R8, 2)
+    SUBITER(12,1,0,RBX,R9, 1)
+    SUBITER(13,0,1,RBX,R9, 1)
+    SUBITER(14,1,0,RBX,R9, 1)
+    SUBITER(15,0,1,RBX,R9, 1)
+    ADD(RBX, IMM(16*24*8))
+    ADD(RAX, IMM(16* 8*8))
+
+    LABEL(AFTER_LOOP)
 
     //prefetch C into L1
 #if SCATTER_PREFETCH_C
@@ -579,34 +453,98 @@ void bli_dgemm_opt_8x24(
     KXNORW(K(2), K(0), K(0))
     VSCATTERPFDPS(0, MEM(RCX,ZMM(2),8) MASK_K(1))
     VSCATTERPFDPD(0, MEM(RCX,YMM(3),8) MASK_K(2))
+
+    SUBITER(0,1,0,RBX     )
+    SUBITER(1,0,1,RBX     )
+    SUBITER(2,1,0,RBX     )
+    SUBITER(3,0,1,RBX     )
+    SUBITER(4,1,0,RBX,R8,1)
+    SUBITER(5,0,1,RBX,R8,1)
+    SUBITER(6,1,0,RBX,R8,1)
+    SUBITER(7,0,1,RBX,R8,1)
 #else
-    PREFETCH(0, MEM(RCX      ))
-    PREFETCH(0, MEM(RCX,R12,1))
-    PREFETCH(0, MEM(RCX,R12,2))
-    PREFETCH(0, MEM(RCX,R13,1))
-    PREFETCH(0, MEM(RCX,R12,4))
-    PREFETCH(0, MEM(RCX,R14,1))
-    PREFETCH(0, MEM(RCX,R13,2))
-    PREFETCH(0, MEM(RCX,R15,1))
-    PREFETCH(0, MEM(RDX      ))
-    PREFETCH(0, MEM(RDX,R12,1))
-    PREFETCH(0, MEM(RDX,R12,2))
-    PREFETCH(0, MEM(RDX,R13,1))
-    PREFETCH(0, MEM(RDX,R12,4))
-    PREFETCH(0, MEM(RDX,R14,1))
-    PREFETCH(0, MEM(RDX,R13,2))
-    PREFETCH(0, MEM(RDX,R15,1))
-    PREFETCH(0, MEM(RDI      ))
-    PREFETCH(0, MEM(RDI,R12,1))
-    PREFETCH(0, MEM(RDI,R12,2))
-    PREFETCH(0, MEM(RDI,R13,1))
-    PREFETCH(0, MEM(RDI,R12,4))
-    PREFETCH(0, MEM(RDI,R14,1))
-    PREFETCH(0, MEM(RDI,R13,2))
-    PREFETCH(0, MEM(RDI,R15,1))
+
+    LEA(RDX, MEM(RCX,R12,8))
+    LEA(RDI, MEM(RDX,R12,8))
+
+#undef PREFETCH_C_L1_1
+#undef PREFETCH_C_L1_2
+#undef PREFETCH_C_L1_3
+#define PREFETCH_C_L1_1 PREFETCHW0(MEM(RCX      ))
+#define PREFETCH_C_L1_2 PREFETCHW0(MEM(RCX,R12,1))
+#define PREFETCH_C_L1_3 PREFETCHW0(MEM(RCX,R12,2))
+    SUBITER(0,1,0,RBX     )
+#undef PREFETCH_C_L1_1
+#undef PREFETCH_C_L1_2
+#undef PREFETCH_C_L1_3
+#define PREFETCH_C_L1_1 PREFETCHW0(MEM(RCX,R13,1))
+#define PREFETCH_C_L1_2 PREFETCHW0(MEM(RCX,R12,4))
+#define PREFETCH_C_L1_3 PREFETCHW0(MEM(RCX,R14,1))
+    SUBITER(1,0,1,RBX     )
+#undef PREFETCH_C_L1_1
+#undef PREFETCH_C_L1_2
+#undef PREFETCH_C_L1_3
+#define PREFETCH_C_L1_1 PREFETCHW0(MEM(RCX,R13,2))
+#define PREFETCH_C_L1_2 PREFETCHW0(MEM(RCX,R15,1))
+#define PREFETCH_C_L1_3 PREFETCHW0(MEM(RDX      ))
+    SUBITER(2,1,0,RBX     )
+#undef PREFETCH_C_L1_1
+#undef PREFETCH_C_L1_2
+#undef PREFETCH_C_L1_3
+#define PREFETCH_C_L1_1 PREFETCHW0(MEM(RDX,R12,1))
+#define PREFETCH_C_L1_2 PREFETCHW0(MEM(RDX,R12,2))
+#define PREFETCH_C_L1_3 PREFETCHW0(MEM(RDX,R13,1))
+    SUBITER(3,0,1,RBX     )
+#undef PREFETCH_C_L1_1
+#undef PREFETCH_C_L1_2
+#undef PREFETCH_C_L1_3
+#define PREFETCH_C_L1_1 PREFETCHW0(MEM(RDX,R12,4))
+#define PREFETCH_C_L1_2 PREFETCHW0(MEM(RDX,R14,1))
+#define PREFETCH_C_L1_3 PREFETCHW0(MEM(RDX,R13,2))
+    SUBITER(4,1,0,RBX,R8,1)
+#undef PREFETCH_C_L1_1
+#undef PREFETCH_C_L1_2
+#undef PREFETCH_C_L1_3
+#define PREFETCH_C_L1_1 PREFETCHW0(MEM(RDX,R15,1))
+#define PREFETCH_C_L1_2 PREFETCHW0(MEM(RDI      ))
+#define PREFETCH_C_L1_3 PREFETCHW0(MEM(RDI,R12,1))
+    SUBITER(5,0,1,RBX,R8,1)
+#undef PREFETCH_C_L1_1
+#undef PREFETCH_C_L1_2
+#undef PREFETCH_C_L1_3
+#define PREFETCH_C_L1_1 PREFETCHW0(MEM(RDI,R12,2))
+#define PREFETCH_C_L1_2 PREFETCHW0(MEM(RDI,R13,1))
+#define PREFETCH_C_L1_3 PREFETCHW0(MEM(RDI,R12,4))
+    SUBITER(6,1,0,RBX,R8,1)
+#undef PREFETCH_C_L1_1
+#undef PREFETCH_C_L1_2
+#undef PREFETCH_C_L1_3
+#define PREFETCH_C_L1_1 PREFETCHW0(MEM(RDI,R14,1))
+#define PREFETCH_C_L1_2 PREFETCHW0(MEM(RDI,R13,2))
+#define PREFETCH_C_L1_3 PREFETCHW0(MEM(RDI,R15,1))
+    SUBITER(7,0,1,RBX,R8,1)
 #endif
 
-    MAIN_LOOP_L1
+    JMP(POSTACCUM)
+
+    LABEL(TAIL)
+
+    MOV(RDX, RCX)
+    ADD(RSI, IMM(32))
+
+    LABEL(TAIL_LOOP)
+
+        PREFETCHW0(MEM(RDX))
+        ADD(RDX, R12)
+
+        SUBITER(0,1,0,RBX)
+        VMOVAPD(ZMM(0), ZMM(1))
+        ADD(RBX, IMM(24*8))
+        ADD(RAX, IMM( 8*8))
+
+        SUB(RSI, IMM(1))
+
+    JNZ(TAIL_LOOP)
 
     LABEL(POSTACCUM)
 
@@ -657,7 +595,7 @@ void bli_dgemm_opt_8x24(
 
     MOV(RDI, VAR(offsetPtr))
     VMOVAPS(ZMM(2), MEM(RDI))
-    /* Note that this ignores the upper 32 bits in rs_c */
+    /* Note that this ignores the upper 32 bits in cs_c */
     VPBROADCASTD(ZMM(3), EBX)
     VPMULLD(ZMM(2), ZMM(3), ZMM(2))
 
@@ -738,7 +676,7 @@ void bli_dgemm_opt_8x24(
       [both]  "=m" (both)
 #endif
     : // input operands
-      [k]         "m" (k64),
+      [k]         "m" (k),
       [a]         "m" (a),
       [b]         "m" (b),
       [alpha]     "m" (alpha),

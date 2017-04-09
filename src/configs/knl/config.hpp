@@ -112,7 +112,7 @@ TBLIS_BEGIN_CONFIG(knl_d8x24)
     TBLIS_CONFIG_PACK_NN_MR_UKR(_, knl_packm_8xk, _, _)
     TBLIS_CONFIG_PACK_NN_NR_UKR(_, knl_packm_24xk , _, _)
 
-    TBLIS_CONFIG_M_THREAD_RATIO(_, 4, _, _)
+    TBLIS_CONFIG_M_THREAD_RATIO(_, 16, _, _)
     TBLIS_CONFIG_NR_MAX_THREAD(_, 1, _, _)
 
     TBLIS_CONFIG_CHECK(knl_check)

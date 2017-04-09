@@ -21,8 +21,10 @@ void tblis_vector_reduce(const tblis_comm* comm, const tblis_config* cfg,
                          tblis_scalar* result, len_type* idx);
 
 #ifdef __cplusplus
-
 }
+#endif
+
+#if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 template <typename T>
 void reduce(reduce_t op, const_row_view<T> A, T& result, len_type& idx)
@@ -78,8 +80,10 @@ std::pair<T,len_type> reduce(const communicator& comm, reduce_t op,
     return result;
 }
 
-}
+#endif
 
+#ifdef __cplusplus
+}
 #endif
 
 #endif

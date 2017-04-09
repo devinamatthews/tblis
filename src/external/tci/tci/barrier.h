@@ -61,6 +61,9 @@ int tci_barrier_wait(tci_barrier* barrier, unsigned tid);
 
 #ifdef __cplusplus
 }
+#endif
+
+#if defined(__cplusplus) && !defined(TCI_DONT_USE_CXX11)
 
 #include <system_error>
 
@@ -105,9 +108,9 @@ class barrier
         {
             return _barrier.group_size;
         }
-        
+
         operator tci_barrier*() { return &_barrier; }
-        
+
         operator const tci_barrier*() const { return &_barrier; }
 
     protected:

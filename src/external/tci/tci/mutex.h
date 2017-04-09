@@ -43,6 +43,9 @@ int tci_mutex_unlock(tci_mutex* mutex);
 
 #ifdef __cplusplus
 }
+#endif
+
+#if defined(__cplusplus) && !defined(TCI_DONT_USE_CXX11)
 
 #include <system_error>
 
@@ -91,9 +94,9 @@ class mutex
             int ret = tci_mutex_unlock(&_lock);
             if (ret != 0) throw std::system_error(ret, std::system_category());
         }
-        
+
         operator tci_mutex*() { return &_lock; }
-        
+
         operator const tci_mutex*() const { return &_lock; }
 
     protected:

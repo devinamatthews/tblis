@@ -19,8 +19,10 @@ void tblis_matrix_mult(const tblis_comm* comm, const tblis_config* cfg,
                        tblis_matrix* C);
 
 #ifdef __cplusplus
-
 }
+#endif
+
+#if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 template <typename T>
 void mult(T alpha, const_matrix_view<T> A, const_matrix_view<T> B,
@@ -57,8 +59,10 @@ void mult(const communicator& comm,
     tblis_matrix_mult(comm, nullptr, &A_s, &B_s, &C_s);
 }
 
-}
+#endif
 
+#ifdef __cplusplus
+}
 #endif
 
 #endif

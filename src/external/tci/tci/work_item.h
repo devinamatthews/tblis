@@ -31,6 +31,9 @@ void tci_work_item_wait(tci_work_item* item);
 
 #ifdef __cplusplus
 }
+#endif
+
+#if defined(__cplusplus) && !defined(TCI_DONT_USE_CXX11)
 
 namespace tci
 {

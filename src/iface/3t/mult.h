@@ -20,8 +20,10 @@ void tblis_tensor_mult(const tblis_comm* comm, const tblis_config* cfg,
                              tblis_tensor* C, const label_type* idx_C);
 
 #ifdef __cplusplus
-
 }
+#endif
+
+#if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 template <typename T>
 void mult(T alpha, const_tensor_view<T> A, const label_type* idx_A,
@@ -61,8 +63,10 @@ void mult(const communicator& comm,
     tblis_tensor_mult(comm, nullptr, &A_s, idx_A, &B_s, idx_B, &C_s, idx_C);
 }
 
-}
+#endif
 
+#ifdef __cplusplus
+}
 #endif
 
 #endif

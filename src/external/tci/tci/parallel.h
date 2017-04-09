@@ -30,6 +30,9 @@ void tci_partition_2x2(unsigned nthread, uint64_t work1, uint64_t work2,
 
 #ifdef __cplusplus
 }
+#endif
+
+#if defined(__cplusplus) && !defined(TCI_DONT_USE_CXX11)
 
 #include <system_error>
 #include <tuple>

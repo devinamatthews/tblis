@@ -47,6 +47,7 @@ lib_libtblis_la_SOURCES = \
     \
     src/configs/configs.cxx \
     \
+    src/util/basic_types.cxx \
     src/util/cpuid.cxx \
     src/util/random.cxx \
     src/util/thread.cxx

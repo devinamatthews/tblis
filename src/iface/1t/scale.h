@@ -18,8 +18,10 @@ void tblis_tensor_scale(const tblis_comm* comm, const tblis_config* cfg,
                         tblis_tensor* A, const label_type* idx_A);
 
 #ifdef __cplusplus
-
 }
+#endif
+
+#if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 template <typename T>
 void scale(T alpha, tensor_view<T> A, const label_type* idx_A)
@@ -45,8 +47,10 @@ void scale(const communicator& comm, T alpha, tensor_view<T> A, const label_type
     tblis_tensor_scale(comm, nullptr, &A_s, idx_A);
 }
 
-}
+#endif
 
+#ifdef __cplusplus
+}
 #endif
 
 #endif

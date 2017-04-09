@@ -73,6 +73,9 @@ void tci_comm_distribute_over_threads_2d(tci_comm* comm,
 
 #ifdef __cplusplus
 }
+#endif
+
+#if defined(__cplusplus) && !defined(TCI_DONT_USE_CXX11)
 
 #include <system_error>
 #include <tuple>
@@ -206,7 +209,7 @@ class communicator
             return std::make_tuple(first_m, last_m, max_m,
                                    first_n, last_n, max_n);
         }
-        
+
         operator tci_comm*() const { return const_cast<tci_comm*>(&_comm); }
 
     protected:

@@ -18,8 +18,10 @@ void tblis_vector_add(const tblis_comm* comm, const tblis_config* cfg,
                       const tblis_vector* A, tblis_vector* B);
 
 #ifdef __cplusplus
-
 }
+#endif
+
+#if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 template <typename T>
 void add(T alpha, const_row_view<T> A, T beta, row_view<T> B)
@@ -49,8 +51,10 @@ void add(const communicator& comm, T alpha, const_row_view<T> A,
     tblis_vector_add(comm, nullptr, &A_s, &B_s);
 }
 
-}
+#endif
 
+#ifdef __cplusplus
+}
 #endif
 
 #endif

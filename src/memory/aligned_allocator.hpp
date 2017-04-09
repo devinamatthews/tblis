@@ -25,6 +25,8 @@ template <typename T, size_t N=8> struct aligned_allocator
 
     T* allocate(size_t n)
     {
+        if (n == 0) return nullptr;
+
         void* ptr;
 #if TBLIS_HAVE_HBWMALLOC_H
         int ret = hbw_posix_memalign(&ptr, N, n*sizeof(T));
@@ -38,6 +40,9 @@ template <typename T, size_t N=8> struct aligned_allocator
     void deallocate(T* ptr, size_t n)
     {
         (void)n;
+
+        if (!ptr) return;
+
 #if TBLIS_HAVE_HBWMALLOC_H
         hbw_free(ptr);
 #else

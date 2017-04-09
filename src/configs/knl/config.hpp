@@ -74,8 +74,9 @@ TBLIS_BEGIN_CONFIG(knl_d24x8)
     TBLIS_CONFIG_GEMM_MR    (_,    24, _, _)
     TBLIS_CONFIG_GEMM_NR    (_,     8, _, _)
     TBLIS_CONFIG_GEMM_KR    (_,     8, _, _)
-    TBLIS_CONFIG_GEMM_MC_MAX(_,   120, _, _,
-                             _,   144, _, _)
+    TBLIS_CONFIG_GEMM_MC    (_,   120, _, _)
+    //TBLIS_CONFIG_GEMM_MC_MAX(_,   120, _, _,
+    //                         _,   144, _, _)
     TBLIS_CONFIG_GEMM_NC    (_, 14400, _, _)
     TBLIS_CONFIG_GEMM_KC_MAX(_,   336, _, _,
                              _,   408, _, _)
@@ -99,8 +100,9 @@ TBLIS_BEGIN_CONFIG(knl_d8x24)
     TBLIS_CONFIG_GEMM_MR    (_,     8, _, _)
     TBLIS_CONFIG_GEMM_NR    (_,    24, _, _)
     TBLIS_CONFIG_GEMM_KR    (_,     8, _, _)
-    TBLIS_CONFIG_GEMM_MC_MAX(_,   120, _, _,
-                             _,   144, _, _)
+    TBLIS_CONFIG_GEMM_MC    (_,   120, _, _)
+    //TBLIS_CONFIG_GEMM_MC_MAX(_,   120, _, _,
+    //                         _,   144, _, _)
     TBLIS_CONFIG_GEMM_NC    (_, 14400, _, _)
     TBLIS_CONFIG_GEMM_KC_MAX(_,   336, _, _,
                              _,   408, _, _)

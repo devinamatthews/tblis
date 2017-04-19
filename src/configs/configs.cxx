@@ -22,7 +22,7 @@ const config* const configs[num_configs] =
 
 struct default_config
 {
-    const config* value;
+    const config* value = nullptr;
 
     default_config()
     {
@@ -38,6 +38,10 @@ struct default_config
                 value = configs[cfg];
             }
         }
+
+        if (!value)
+            tblis_abort_with_message(nullptr,
+                "tblis: No usable configuration enabled, aborting!");
     }
 };
 

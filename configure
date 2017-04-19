@@ -663,6 +663,8 @@ FOREACH_CONFIG
 INCLUDE_CONFIGS
 ENABLE_SANDYBRIDGE_FALSE
 ENABLE_SANDYBRIDGE_TRUE
+ENABLE_REFERENCE_FALSE
+ENABLE_REFERENCE_TRUE
 ENABLE_POWER7_FALSE
 ENABLE_POWER7_TRUE
 ENABLE_PILEDRIVER_FALSE
@@ -9119,7 +9121,7 @@ if test $ac_cv_defined___mips != "no"; then :
 fi
 fi
 
-if echo $enable_config | grep -qv reference; then
+if ( echo $enable_config | grep -qv reference ) && test x$using_default_configs = xyes; then
     enable_config="${enable_config},reference"
 fi
 
@@ -9399,6 +9401,10 @@ else
 fi
 
 
+if test -z `echo $configs | tr -d "$IFS"`; then
+    as_fn_error $? "no configurations enabled" "$LINENO" 5
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking enabled configurations" >&5
 $as_echo_n "checking enabled configurations... " >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $configs" >&5
@@ -9514,6 +9520,14 @@ fi
 else
   ENABLE_POWER7_TRUE='#'
   ENABLE_POWER7_FALSE=
+fi
+
+ if echo $configs | grep -q reference; then
+  ENABLE_REFERENCE_TRUE=
+  ENABLE_REFERENCE_FALSE='#'
+else
+  ENABLE_REFERENCE_TRUE='#'
+  ENABLE_REFERENCE_FALSE=
 fi
 
  if echo $configs | grep -q sandybridge; then
@@ -23758,6 +23772,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_POWER7_TRUE}" && test -z "${ENABLE_POWER7_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_POWER7\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_REFERENCE_TRUE}" && test -z "${ENABLE_REFERENCE_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_REFERENCE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_SANDYBRIDGE_TRUE}" && test -z "${ENABLE_SANDYBRIDGE_FALSE}"; then

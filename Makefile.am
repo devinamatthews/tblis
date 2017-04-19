@@ -134,11 +134,13 @@ stl_extinclude_HEADERS = \
 noinst_LTLIBRARIES =
 lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la
 
+if ENABLE_REFERENCE
 noinst_LTLIBRARIES += lib/libreference.la
 lib_libtblis_la_LIBADD += lib/libreference.la
 lib_libreference_la_SOURCES = src/configs/reference/config.cxx
 lib_libreference_la_CFLAGS = -O3
 lib_libreference_la_CXXFLAGS = -O3
+endif
 
 #
 # AMD architectures

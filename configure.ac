@@ -151,7 +151,7 @@ if echo $enable_config | grep -q auto; then
     AC_CHECK_DEFINE([__mips], [enable_config=loongson3a])
 fi
                              
-if echo $enable_config | grep -qv reference; then
+if ( echo $enable_config | grep -qv reference ) && test x$using_default_configs = xyes; then
     enable_config="${enable_config},reference"
 fi
 
@@ -307,7 +307,11 @@ fi
 AM_CONDITIONAL(ENABLE_INTEL_COMPILER, [test x"$cc_vendor" = xicc])
 
 AM_CONDITIONAL(IS_OSX, [test `uname -s` = Darwin])
-                             
+
+if test -z `echo $configs | tr -d "$IFS"`; then
+    AC_MSG_ERROR([no configurations enabled])
+fi
+
 AC_MSG_CHECKING([enabled configurations])
 AC_MSG_RESULT([$configs])
 
@@ -325,6 +329,7 @@ AM_CONDITIONAL(ENABLE_LOONGSON3A, [echo $configs | grep -q loongson3a])
 AM_CONDITIONAL(ENABLE_MIC, [echo $configs | grep -q mic])
 AM_CONDITIONAL(ENABLE_PILEDRIVER, [echo $configs | grep -q piledriver])
 AM_CONDITIONAL(ENABLE_POWER7, [echo $configs | grep -q power7])
+AM_CONDITIONAL(ENABLE_REFERENCE, [echo $configs | grep -q reference])
 AM_CONDITIONAL(ENABLE_SANDYBRIDGE, [echo $configs | grep -q sandybridge])
 
 include_configs=""

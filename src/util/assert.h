@@ -14,8 +14,6 @@
 #define TBLIS_CONCAT(x,y) TBLIS_CONCAT_(x,y)
 #define TBLIS_FIRST_ARG(arg,...) arg
 
-#ifdef TBLIS_DEBUG
-
 inline void __attribute__((format(printf, 2, 3),noreturn))
 tblis_abort_with_message(const char* cond, const char* fmt, ...)
 {
@@ -33,6 +31,8 @@ tblis_abort_with_message(const char* cond, const char* fmt, ...)
     fprintf(stderr, "\n");
     abort();
 }
+
+#ifdef TBLIS_DEBUG
 
 #define TBLIS_ASSERT(x,...) ((x) ? (void)(x) : \
     tblis_abort_with_message(TBLIS_STRINGIZE(x), "" __VA_ARGS__))

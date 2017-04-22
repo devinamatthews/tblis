@@ -20,8 +20,9 @@ matrix:
   exclude:
   
 before_install:
-  - 'if [ $TRAVIS_OS_NAME = osx ]; then
+  - 'if [ "$TRAVIS_OS_NAME" = "osx" ]; then
         brew update && brew install gcc@6 llvm@3.9;
+        brew link --force llvm@3.9;
     fi'
 
 addons:
@@ -37,10 +38,11 @@ addons:
 install:
   - if [ "$CC" = "gcc" ] ; then export CC="gcc-6" CXX="g++-6"; fi
   - if [ "$CC" = "clang" ] ; then export CC="clang-3.9" CXX="clang++-3.9"; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" -a "$CXX" = "clang++-3.9"]; then export CXX="clang-3.9"; fi
 
 script:
-  - ./configure CC=$CC CXX=$CXX --enable-threading=$THREADING --enable-config=$BUILD_CONFIG
   - $CC --version
   - $CXX --version
+  - ./configure CC=$CC CXX=$CXX --enable-threading=$THREADING --enable-config=$BUILD_CONFIG || cat config.log
   - make -j 2
   - if [ $RUN_TEST -eq 1 ]; then bin/test; fi

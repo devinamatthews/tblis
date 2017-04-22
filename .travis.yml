@@ -1,6 +1,6 @@
 language: cpp
-dist: trusty
-sudo: false
+dist: precise
+sudo: required
 
 os:
   - linux
@@ -30,13 +30,12 @@ addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
-    - llvm-toolchain-trusty-3.9
+    - llvm-toolchain-precise-3.9
     packages:
     - gcc-6
     - g++-6
     - clang-3.9
-    - libiomp5
-    - libiomp-dev
+    - libomp-dev
     
 install:
   - if [ "$CC" = "gcc" ] ; then export CC="gcc-6" CXX="g++-6"; fi

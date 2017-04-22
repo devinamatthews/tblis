@@ -18,7 +18,7 @@ env:
 
 matrix:
   exclude:
-    - env: RUN_TEST=0 THREADING="openmp" BUILD_CONFIG="auto"
+    - env: RUN_TEST=1 THREADING="none" BUILD_CONFIG="auto"
       os: osx
       compiler: clang
   

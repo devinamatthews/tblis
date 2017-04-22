@@ -22,7 +22,6 @@ enum {FEATURE_MASK_SSE3     = (1u<< 0), //CPUID[EAX=1]:ECX[0]
       XGETBV_MASK_YMM       = 0x04u,     //XCR0[2]
       XGETBV_MASK_ZMM       = 0xE0u};    //XCR0[7:5]
 
-/*
 static void print_binary(uint32_t x)
 {
     uint32_t mask = (1u<<31);
@@ -38,7 +37,6 @@ static void print_binary(uint32_t x)
     }
     printf("\n");
 }
-*/
 
 int get_cpu_type(int& family, int& model, int& features)
 {
@@ -56,17 +54,17 @@ int get_cpu_type(int& family, int& model, int& features)
                     vendor_string[2],
                     vendor_string[1]);
 
-    //printf("max cpuid leaf: %d\n", cpuid_max);
-    //printf("max extended cpuid leaf: %08x\n", cpuid_max_ext);
+    printf("max cpuid leaf: %d\n", cpuid_max);
+    printf("max extended cpuid leaf: %08x\n", cpuid_max_ext);
 
     if (cpuid_max >= 7)
     {
         __cpuid_count(7, 0, eax, ebx, ecx, edx);
-        //printf("cpuid leaf 7:\n");
-        //print_binary(eax);
-        //print_binary(ebx);
-        //print_binary(ecx);
-        //print_binary(edx);
+        printf("cpuid leaf 7:\n");
+        print_binary(eax);
+        print_binary(ebx);
+        print_binary(ecx);
+        print_binary(edx);
 
         if (check_features(ebx, FEATURE_MASK_AVX2)) features |= FEATURE_AVX2;
         if (check_features(ebx, FEATURE_MASK_AVX512F)) features |= FEATURE_AVX512F;
@@ -77,21 +75,21 @@ int get_cpu_type(int& family, int& model, int& features)
     if (cpuid_max_ext >= 0x80000001u)
     {
         __cpuid(0x80000001u, eax, ebx, ecx, edx);
-        //printf("extended cpuid leaf 0x80000001:\n");
-        //print_binary(eax);
-        //print_binary(ebx);
-        //print_binary(ecx);
-        //print_binary(edx);
+        printf("extended cpuid leaf 0x80000001:\n");
+        print_binary(eax);
+        print_binary(ebx);
+        print_binary(ecx);
+        print_binary(edx);
 
         if (check_features(ecx, FEATURE_MASK_FMA4)) features |= FEATURE_FMA4;
     }
 
     __cpuid(1, eax, ebx, ecx, edx);
-    //printf("cpuid leaf 1:\n");
-    //print_binary(eax);
-    //print_binary(ebx);
-    //print_binary(ecx);
-    //print_binary(edx);
+    printf("cpuid leaf 1:\n");
+    print_binary(eax);
+    print_binary(ebx);
+    print_binary(ecx);
+    print_binary(edx);
 
     family = (eax>>8)&(0xF); // bits 11:8
     model = (eax>>4)&(0xF); // bits 7:4
@@ -125,16 +123,16 @@ int get_cpu_type(int& family, int& model, int& features)
             : "cc"
         );
 
-        //printf("xcr0:\n");
-        //print_binary(eax);
-        //print_binary(edx);
+        printf("xcr0:\n");
+        print_binary(eax);
+        print_binary(edx);
 
-        //printf("xgetbv: xmm: %d\n", check_features(eax, XGETBV_MASK_XMM));
-        //printf("xgetbv: ymm: %d\n", check_features(eax, XGETBV_MASK_XMM|
-        //                                                XGETBV_MASK_YMM));
-        //printf("xgetbv: zmm: %d\n", check_features(eax, XGETBV_MASK_XMM|
-        //                                                XGETBV_MASK_YMM|
-        //                                                XGETBV_MASK_ZMM));
+        printf("xgetbv: xmm: %d\n", check_features(eax, XGETBV_MASK_XMM));
+        printf("xgetbv: ymm: %d\n", check_features(eax, XGETBV_MASK_XMM|
+                                                        XGETBV_MASK_YMM));
+        printf("xgetbv: zmm: %d\n", check_features(eax, XGETBV_MASK_XMM|
+                                                        XGETBV_MASK_YMM|
+                                                        XGETBV_MASK_ZMM));
 
         if (!check_features(eax, XGETBV_MASK_XMM|
                                  XGETBV_MASK_YMM|
@@ -161,24 +159,24 @@ int get_cpu_type(int& family, int& model, int& features)
     }
     else
     {
-        //printf("xgetbv: no\n");
+        printf("xgetbv: no\n");
         features = 0;
     }
 
-    //printf("vendor: %12s\n", vendor_string);
-    //printf("family: %d\n", family);
-    //printf("model: %d\n", model);
-    //printf("sse3: %d\n", check_features(features, FEATURE_SSE3));
-    //printf("ssse3: %d\n", check_features(features, FEATURE_SSSE3));
-    //printf("sse4.1: %d\n", check_features(features, FEATURE_SSE41));
-    //printf("sse4.2: %d\n", check_features(features, FEATURE_SSE42));
-    //printf("avx: %d\n", check_features(features, FEATURE_AVX));
-    //printf("avx2: %d\n", check_features(features, FEATURE_AVX2));
-    //printf("fma3: %d\n", check_features(features, FEATURE_FMA3));
-    //printf("fma4: %d\n", check_features(features, FEATURE_FMA4));
-    //printf("avx512f: %d\n", check_features(features, FEATURE_AVX512F));
-    //printf("avx512pf: %d\n", check_features(features, FEATURE_AVX512PF));
-    //printf("avx512dq: %d\n", check_features(features, FEATURE_AVX512DQ));
+    printf("vendor: %12s\n", vendor_string);
+    printf("family: %d\n", family);
+    printf("model: %d\n", model);
+    printf("sse3: %d\n", check_features(features, FEATURE_SSE3));
+    printf("ssse3: %d\n", check_features(features, FEATURE_SSSE3));
+    printf("sse4.1: %d\n", check_features(features, FEATURE_SSE41));
+    printf("sse4.2: %d\n", check_features(features, FEATURE_SSE42));
+    printf("avx: %d\n", check_features(features, FEATURE_AVX));
+    printf("avx2: %d\n", check_features(features, FEATURE_AVX2));
+    printf("fma3: %d\n", check_features(features, FEATURE_FMA3));
+    printf("fma4: %d\n", check_features(features, FEATURE_FMA4));
+    printf("avx512f: %d\n", check_features(features, FEATURE_AVX512F));
+    printf("avx512pf: %d\n", check_features(features, FEATURE_AVX512PF));
+    printf("avx512dq: %d\n", check_features(features, FEATURE_AVX512DQ));
 
     if (strcmp(reinterpret_cast<char*>(&vendor_string[0]), "AuthenticAMD") == 0)
         return VENDOR_AMD;

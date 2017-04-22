@@ -35,12 +35,17 @@ addons:
     - gcc-6
     - g++-6
     - clang-3.9
-    - libomp-dev
+    - libiomp-dev
     
 install:
   - if [ "$CC" = "gcc" ] ; then export CC="gcc-6" CXX="g++-6"; fi
-  - if [ "$CC" = "clang" ] ; then export CC="clang-3.9" CXX="clang++-3.9"; fi
-  - if [ "$TRAVIS_OS_NAME" = "osx" -a "$CXX" = "clang++-3.9" ]; then export CXX="clang++"; fi
+  - 'if [ "$CC" = "clang" ] ; then
+        if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+            export CC="clang-3.9 -fopenmp=libiomp5" CXX="clang++-3.9 -fopenmp=libiomp5";
+        else
+            export CC="clang-3.9" CXX="clang++";
+        fi;
+    fi'
 
 script:
   - $CC --version

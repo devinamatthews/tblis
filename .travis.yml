@@ -21,9 +21,9 @@ matrix:
   
 before_install:
   - 'if [ $TRAVIS_OS_NAME = osx ]; then
-        brew update
-        brew install gcc@6
-        brew install clang@3.9
+        brew update;
+        brew install gcc@6;
+        brew install clang@3.9;
     fi'
 
 addons:

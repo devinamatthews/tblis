@@ -1,0 +1,42 @@
+language: cpp
+sudo: false
+
+os:
+  - linux
+  - osx
+
+compiler:
+  - gcc-6
+  - clang-3.9
+
+env:
+  - RUN_TEST=1 THREADING="none" BUILD_CONFIG="auto"
+  - RUN_TEST=1 THREADING="none" BUILD_CONFIG="reference"
+  - RUN_TEST=0 THREADING="openmp" BUILD_CONFIG="auto"
+  - RUN_TEST=0 THREADING="pthreads" BUILD_CONFIG="auto"
+
+matrix:
+  allow_failures:
+  exclude:
+  
+before_install:
+  - 'if [ $TRAVIS_OS_NAME = osx ]; then
+        brew update
+        brew install gcc@6
+        brew install clang@3.9
+    fi'
+
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    - llvm-toolchain-trusty-3.9
+    packages:
+    - gcc-6
+    - clang-3.9
+
+script:
+  - ./configure CC=$CC --enable-threading=$THREADING --enable-config=$BUILD_CONFIG
+  - $CC --version
+  - make -j 2
+  - if [ $RUN_TEST -eq 1 ]; then bin/test; fi

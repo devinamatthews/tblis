@@ -1,5 +1,5 @@
 language: cpp
-dist: precise
+dist: trusty
 sudo: required
 
 os:

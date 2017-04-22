@@ -6,7 +6,7 @@ os:
   - osx
 
 compiler:
-  - gccc
+  - gcc
   - clang
 
 env:

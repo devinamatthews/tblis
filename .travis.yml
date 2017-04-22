@@ -36,6 +36,7 @@ addons:
     - g++-6
     - clang-3.9
     - libiomp5
+    - libiomp-dev
     
 install:
   - if [ "$CC" = "gcc" ] ; then export CC="gcc-6" CXX="g++-6"; fi
@@ -49,3 +50,4 @@ script:
   - ./configure CC=$CC CXX=$CXX --enable-threading=$THREADING --enable-config=$BUILD_CONFIG || cat config.log src/external/tci/config.log
   - make -j 2
   - if [ $RUN_TEST -eq 1 ]; then travis_wait 30 bin/test; fi
+  - ls

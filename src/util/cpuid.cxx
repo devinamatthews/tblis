@@ -30,12 +30,12 @@ static void print_binary(uint32_t x)
     {
         for (int i = 0;i < 4;i++)
         {
-            printf("%d", !!(x&mask));
+            fprintf(stderr, "%d", !!(x&mask));
             mask >>= 1;
         }
-        printf(" ");
+        fprintf(stderr, " ");
     }
-    printf("\n");
+    fprintf(stderr, "\n");
 }
 
 int get_cpu_type(int& family, int& model, int& features)
@@ -44,8 +44,13 @@ int get_cpu_type(int& family, int& model, int& features)
 
     family = model = features = 0;
 
+    fprintf(stderr, "checking cpuid\n");
+
     unsigned cpuid_max = __get_cpuid_max(0, 0);
     unsigned cpuid_max_ext = __get_cpuid_max(0x80000000u, 0);
+
+    fprintf(stderr, "max cpuid leaf: %d\n", cpuid_max);
+    fprintf(stderr, "max extended cpuid leaf: %08x\n", cpuid_max_ext);
 
     if (cpuid_max < 1) return VENDOR_UNKNOWN;
 
@@ -54,13 +59,10 @@ int get_cpu_type(int& family, int& model, int& features)
                     vendor_string[2],
                     vendor_string[1]);
 
-    printf("max cpuid leaf: %d\n", cpuid_max);
-    printf("max extended cpuid leaf: %08x\n", cpuid_max_ext);
-
     if (cpuid_max >= 7)
     {
         __cpuid_count(7, 0, eax, ebx, ecx, edx);
-        printf("cpuid leaf 7:\n");
+        fprintf(stderr, "cpuid leaf 7:\n");
         print_binary(eax);
         print_binary(ebx);
         print_binary(ecx);
@@ -75,7 +77,7 @@ int get_cpu_type(int& family, int& model, int& features)
     if (cpuid_max_ext >= 0x80000001u)
     {
         __cpuid(0x80000001u, eax, ebx, ecx, edx);
-        printf("extended cpuid leaf 0x80000001:\n");
+        fprintf(stderr, "extended cpuid leaf 0x80000001:\n");
         print_binary(eax);
         print_binary(ebx);
         print_binary(ecx);
@@ -85,7 +87,7 @@ int get_cpu_type(int& family, int& model, int& features)
     }
 
     __cpuid(1, eax, ebx, ecx, edx);
-    printf("cpuid leaf 1:\n");
+    fprintf(stderr, "cpuid leaf 1:\n");
     print_binary(eax);
     print_binary(ebx);
     print_binary(ecx);
@@ -123,14 +125,14 @@ int get_cpu_type(int& family, int& model, int& features)
             : "cc"
         );
 
-        printf("xcr0:\n");
+        fprintf(stderr, "xcr0:\n");
         print_binary(eax);
         print_binary(edx);
 
-        printf("xgetbv: xmm: %d\n", check_features(eax, XGETBV_MASK_XMM));
-        printf("xgetbv: ymm: %d\n", check_features(eax, XGETBV_MASK_XMM|
+        fprintf(stderr, "xgetbv: xmm: %d\n", check_features(eax, XGETBV_MASK_XMM));
+        fprintf(stderr, "xgetbv: ymm: %d\n", check_features(eax, XGETBV_MASK_XMM|
                                                         XGETBV_MASK_YMM));
-        printf("xgetbv: zmm: %d\n", check_features(eax, XGETBV_MASK_XMM|
+        fprintf(stderr, "xgetbv: zmm: %d\n", check_features(eax, XGETBV_MASK_XMM|
                                                         XGETBV_MASK_YMM|
                                                         XGETBV_MASK_ZMM));
 
@@ -159,24 +161,24 @@ int get_cpu_type(int& family, int& model, int& features)
     }
     else
     {
-        printf("xgetbv: no\n");
+        fprintf(stderr, "xgetbv: no\n");
         features = 0;
     }
 
-    printf("vendor: %12s\n", vendor_string);
-    printf("family: %d\n", family);
-    printf("model: %d\n", model);
-    printf("sse3: %d\n", check_features(features, FEATURE_SSE3));
-    printf("ssse3: %d\n", check_features(features, FEATURE_SSSE3));
-    printf("sse4.1: %d\n", check_features(features, FEATURE_SSE41));
-    printf("sse4.2: %d\n", check_features(features, FEATURE_SSE42));
-    printf("avx: %d\n", check_features(features, FEATURE_AVX));
-    printf("avx2: %d\n", check_features(features, FEATURE_AVX2));
-    printf("fma3: %d\n", check_features(features, FEATURE_FMA3));
-    printf("fma4: %d\n", check_features(features, FEATURE_FMA4));
-    printf("avx512f: %d\n", check_features(features, FEATURE_AVX512F));
-    printf("avx512pf: %d\n", check_features(features, FEATURE_AVX512PF));
-    printf("avx512dq: %d\n", check_features(features, FEATURE_AVX512DQ));
+    fprintf(stderr, "vendor: %12s\n", vendor_string);
+    fprintf(stderr, "family: %d\n", family);
+    fprintf(stderr, "model: %d\n", model);
+    fprintf(stderr, "sse3: %d\n", check_features(features, FEATURE_SSE3));
+    fprintf(stderr, "ssse3: %d\n", check_features(features, FEATURE_SSSE3));
+    fprintf(stderr, "sse4.1: %d\n", check_features(features, FEATURE_SSE41));
+    fprintf(stderr, "sse4.2: %d\n", check_features(features, FEATURE_SSE42));
+    fprintf(stderr, "avx: %d\n", check_features(features, FEATURE_AVX));
+    fprintf(stderr, "avx2: %d\n", check_features(features, FEATURE_AVX2));
+    fprintf(stderr, "fma3: %d\n", check_features(features, FEATURE_FMA3));
+    fprintf(stderr, "fma4: %d\n", check_features(features, FEATURE_FMA4));
+    fprintf(stderr, "avx512f: %d\n", check_features(features, FEATURE_AVX512F));
+    fprintf(stderr, "avx512pf: %d\n", check_features(features, FEATURE_AVX512PF));
+    fprintf(stderr, "avx512dq: %d\n", check_features(features, FEATURE_AVX512DQ));
 
     if (strcmp(reinterpret_cast<char*>(&vendor_string[0]), "AuthenticAMD") == 0)
         return VENDOR_AMD;

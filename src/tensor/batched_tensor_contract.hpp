@@ -1,6 +1,7 @@
 #ifndef _TBLIS_BATCHED_TENSOR_CONTRACT_HPP_
 #define _TBLIS_BATCHED_TENSOR_CONTRACT_HPP_
 
+#include "batched_tensor.hpp"
 #include "iface/3t/mult.h"
 
 #include "nodes/matrify.hpp"
@@ -15,8 +16,6 @@
 #include "util/basic_types.h"
 
 #include "configs/configs.hpp"
-
-#include "tblis_batched_tensor.hpp"
 
 #include "src/external/stl_ext/include/iostream.hpp"
 

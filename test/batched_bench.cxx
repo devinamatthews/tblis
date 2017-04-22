@@ -19,8 +19,8 @@
 #include "util/tensor.hpp"
 #include "util/random.hpp"
 #include "internal/3t/mult.hpp"
-#include "tensor/tblis_batched_tensor.hpp"
-#include "tensor/tblis_batched_tensor_contract.hpp"
+#include "tensor/batched_tensor.hpp"
+#include "tensor/batched_tensor_contract.hpp"
 
 int dumb = 0;
 int check = 0;

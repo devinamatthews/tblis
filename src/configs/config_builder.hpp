@@ -5,7 +5,6 @@
 
 #include "src/external/stl_ext/include/type_traits.hpp"
 
-#define TBLIS_PASTE(x,y) x##y
 #define TBLIS_HAS_COMMA_HELPER(_0,_1,_2,...) _2
 #define TBLIS_HAS_COMMA(...) TBLIS_HAS_COMMA_HELPER(__VA_ARGS__,1,0)
 #define TBLIS_COMMA_IF_EMPTY() ,

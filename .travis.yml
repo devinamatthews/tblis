@@ -34,6 +34,10 @@ addons:
     packages:
     - gcc-6
     - clang-3.9
+    
+install:
+  - if [ "$CC" = "gcc" ] ; then export CC="gcc-6" CXX="g++-6"; fi
+  - if [ "$CC" = "clang" ] ; then export CC="clang-3.9" CXX="clang-3.9"; fi
 
 script:
   - ./configure CC=$CC --enable-threading=$THREADING --enable-config=$BUILD_CONFIG

@@ -38,19 +38,56 @@ class dpd_tensor_view
         typedef const T& const_reference;
         typedef uint32_t mask_type;
 
-        static unsigned product(unsigned x, unsigned y)
+        class irrep
         {
-            //                               n
-            // Valid for groups of the form Z , 0 <= n < 32
-            //                               2
-            return x^y;
-        }
+            protected:
+                unsigned value_ = 0;
+
+            public:
+                irrep() {}
+
+                irrep(unsigned value)
+                : value_(value) {}
+
+                irrep& operator*=(const irrep& other)
+                {
+                    //                               n
+                    // Valid for groups of the form Z , 0 <= n < 32
+                    //                               2
+                    // i.e. non-denegerate point groups
+                    //
+                    value_ ^= other.value_;
+                    return *this;
+                }
+
+                irrep operator*(const irrep& other) const
+                {
+                    irrep ret(*this);
+                    ret *= other;
+                    return ret;
+                }
+
+                explicit operator bool() const
+                {
+                    return value_ == 0;
+                }
+
+                operator unsigned() const
+                {
+                    return value_;
+                }
+        };
 
     protected:
+        // data_[i][j][k]... = pointer to block with irreps i, j, k...
         tensor<pointer> data_;
+        // len_[a][i] = length of index a under irrep i
         matrix<len_type> len_;
+        // stride_[a][i] = stride of index a when the direct product of
+        // the irreps precedingindices (see mask_) is i
         matrix<stride_type> stride_;
-        matrix<mask_type> mask_;
+        // mask_[a][b:b] (i.e. the bth bit) = 1 iff index b precedes index a
+        std::vector<mask_type> mask_;
 
         dpd_tensor_view& operator=(const dpd_tensor_view& other) = delete;
 
@@ -106,7 +143,7 @@ class dpd_tensor_view
             data_.reset();
             len_.reset();
             stride_.reset();
-            mask_.reset();
+            mask_.clear();
         }
 
         template <typename U, typename=
@@ -117,7 +154,7 @@ class dpd_tensor_view
             data_.reset(other.data_);
             len_.reset(other.len_);
             stride_.reset(other.stride_);
-            mask_.reset(other.mask_);
+            mask_ = other.mask_;
         }
 
         template <typename U, typename=
@@ -128,7 +165,7 @@ class dpd_tensor_view
             data_.reset(std::move(other.data_));
             len_.reset(std::move(other.len_));
             stride_.reset(std::move(other.stride_));
-            mask_.reset(std::move(other.mask_));
+            mask_ = std::move(other.mask_);
         }
 
         template <typename U, typename=MArray::detail::enable_if_integral_t<U>>
@@ -212,60 +249,73 @@ class dpd_tensor_view
 };
 
 template <typename T, typename Allocator=aligned_allocator<T,64>>
-class dpd_tensor : public dpd_tensor_view<T>, private Allocator
+class dpd_tensor : private Allocator
 {
-    template <typename T_> friend class dpd_tensor_view;
-    template <typename T_> friend class dpd_tensor_view;
-    template <typename T_, typename Allocator_> friend class dpd_tensor;
-
     protected:
         typedef dpd_tensor_view<T> base;
 
     public:
-        typedef typename base::value_type value_type;
-        typedef typename base::pointer pointer;
-        typedef typename base::const_pointer const_pointer;
-        typedef typename base::reference reference;
-        typedef typename base::const_reference const_reference;
+        typedef T value_type;
+        typedef T* pointer;
+        typedef const T* const_pointer;
+        typedef T& reference;
+        typedef const T& const_reference;
+        typedef uint32_t mask_type;
+
+        typedef dpd_tensor_view<T>::irrep irrep;
 
     protected:
-        using base::data_;
-        using base::batch_idx_;
-        using base::len_;
-        using base::stride_;
-        row<T> data_ptr_;
-        row<const_pointer> data_alloc_;
-        matrix<len_type> batch_idx_alloc_;
+        irrep irrep_;
+        pointer data_;
+        matrix<len_type> len_;          // len_[a][i] = length of index a under irrep i
+        matrix<stride_type> stride_;    // stride_[a][i] = stride of index a when the direct product of
+                                        // the irreps precedingindices is i
         len_type size_ = 0;
-        dpd_layout layout_ = DEFAULT;
+        dpd_layout layout_ = dpd_layout::DEFAULT;
 
         dpd_tensor& operator=(const dpd_tensor& other) = delete;
 
-        std::vector<stride_type> default_strides(const std::vector<len_type>& len, dpd_layout layout=dpd_layout::DEFAULT)
+        static void default_strides(const matrix<len_type>& len,
+                                    dpd_layout layout=dpd_layout::DEFAULT,
+                                    matrix<stride_type>& stride,
+                                    std::vector<mask_type>& mask)
         {
-            std::vector<stride_type> stride(len.size());
+            auto ndim = len.length(0);
+            auto nirrep = len.length(1);
 
-            if (stride.empty()) return stride;
-
-            auto ndim = len.size();
-            if (dpd_layout == ROW_MAJOR)
+            switch (layout)
             {
-                stride[ndim-1] = 1;
-                for (auto i = ndim;i --> 1;)
+                case dpd_layout::BALANCED_ROW_MAJOR:
                 {
-                    stride[i-1] = stride[i]*len[i];
-                }
-            }
-            else
-            {
-                stride[0] = 1;
-                for (unsigned i = 1;i < ndim;i++)
-                {
-                    stride[i] = stride[i-1]*len[i-1];
-                }
-            }
 
-            return stride;
+                }
+                break;
+                case dpd_layout::BALANCED_COLUMN_MAJOR:
+                {
+
+                }
+                break;
+                case dpd_layout::BLOCKED_ROW_MAJOR:
+                {
+
+                }
+                break;
+                case dpd_layout::BLOCKED_COLUMN_MAJOR:
+                {
+
+                }
+                break;
+                case dpd_layout::RECURSIVE_ROW_MAJOR:
+                {
+
+                }
+                break;
+                case dpd_layout::RECURSIVE_COLUMN_MAJOR:
+                {
+
+                }
+                break;
+            }
         }
 
     public:

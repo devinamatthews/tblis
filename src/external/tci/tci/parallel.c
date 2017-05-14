@@ -84,7 +84,7 @@ int tci_parallelize(tci_thread_func func, void* payload,
         int ret = pthread_create(&threads[i], NULL, tci_run_thread, &data[i]);
         if (ret != 0)
         {
-            for (unsigned j = i-1;j >= 0;j--) pthread_join(threads[j], NULL);
+            for (unsigned j = 1;j < i;j++) pthread_join(threads[j], NULL);
         }
     }
 

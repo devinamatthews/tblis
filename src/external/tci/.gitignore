@@ -1,13 +1,16 @@
 *.o
+*.lo
 *.a
 ~*
+lib
+.dirstamp
 *.swp
 Makefile
 config.log
 config.status
 libtool
 .deps
-src/tci_config.h
+tci_config.h
 .git.bak
 autom4te.cache/
 .ptp-sync-folder

@@ -3,12 +3,19 @@
 
 #ifdef TBLIS_DONT_USE_CXX11
 #ifndef TCI_DONT_USE_CXX11
-#define TCI_DONT_USE_CXX11
+#define TCI_DONT_USE_CXX11 1
 #endif
 #endif
 
 #include "tci.h"
 #include "basic_types.h"
+
+#if defined(__cplusplus) && TBLIS_ENABLE_TBB
+#ifndef TBB_PREVIEW_TASK_ISOLATION
+#define TBB_PREVIEW_TASK_ISOLATION 1
+#endif
+#include <tbb/tbb.h>
+#endif
 
 typedef tci_comm tblis_comm;
 extern const tblis_comm* const tblis_single;

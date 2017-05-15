@@ -37,6 +37,26 @@ struct partition
         //printf("B before: %p %ld %ld %ld %ld\n", B.data(), B.length(0), B.length(1), B.stride(0), B.stride(1));
         //printf("C before: %p %ld %ld %ld %ld\n", C.data(), C.length(0), C.length(1), C.stride(0), C.stride(1));
 
+        len_type m_u = (Dim == DIM_M ? A.length(0) : Dim == DIM_N ? B.length(1) : A.length(1));
+        len_type m_v = (Dim == DIM_M ? C.length(0) : Dim == DIM_N ? C.length(1) : B.length(0));
+        len_type m = std::min(m_u, m_v);
+
+        if (!ganged)
+        {
+            //printf("distributing %d ways\n", distribute);
+            subcomm = comm.gang(TCI_EVENLY, distribute);
+            ganged = true;
+        }
+
+        len_type m_first, m_last;
+        std::tie(m_first, m_last, std::ignore) =
+            subcomm.distribute_over_gangs(m, M_iota);
+
+        //printf("thread %d/%d in gang %d/%d got %ld-%ld/%ld\n",
+        //       subcomm.thread_num(), subcomm.num_threads(),
+        //       subcomm.gang_num(), subcomm.num_gangs(),
+        //       m_first, m_last, m_u);
+
         auto length = [&](len_type m_u, len_type m_v)
         {
             (Dim == DIM_M ? A.length(0, m_u) : Dim == DIM_N ? B.length(1, m_u) : A.length(1, m_u));
@@ -49,27 +69,9 @@ struct partition
             (Dim == DIM_M ? C.shift(0, m_v) : Dim == DIM_N ? C.shift(1, m_v) : B.shift(0, m_v));
         };
 
-        len_type m_u = (Dim == DIM_M ? A.length(0) : Dim == DIM_N ? B.length(1) : A.length(1));
-        len_type m_v = (Dim == DIM_M ? C.length(0) : Dim == DIM_N ? C.length(1) : B.length(0));
-
-        if (!ganged)
-        {
-            //printf("distributing %d ways\n", distribute);
-            subcomm = comm.gang(TCI_EVENLY, distribute);
-            ganged = true;
-        }
-
-        len_type m_first, m_last;
-        std::tie(m_first, m_last, std::ignore) =
-            subcomm.distribute_over_gangs(std::min(m_u, m_v), M_iota);
-
-        //printf("thread %d/%d in gang %d/%d got %ld-%ld/%ld\n",
-        //       subcomm.thread_num(), subcomm.num_threads(),
-        //       subcomm.gang_num(), subcomm.num_gangs(),
-        //       m_first, m_last, m_u);
-
         len_type m_off = m_first;
         len_type m_len = m_last-m_first;
+
         shift(m_off, m_off);
 
         len_type M_cur = (m_len%M_def <= M_over ? M_max : M_def);

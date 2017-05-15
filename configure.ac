@@ -69,7 +69,38 @@ AX_CHECK_DEFINE([unistd.h], [_SC_NPROCESSORS_CONF],
 AX_CHECK_DEFINE([unistd.h], [_SC_NPROCESSORS_ONLN],
                 [AC_DEFINE([HAVE__SC_NPROCESSORS_ONLN], [1],
                            [sysconf(_SC_NPROCESSORS_ONLN) is valid.])])
-                           
+
+#
+# Check for TBB
+#
+
+AC_CHECK_HEADERS([tbb/tbb.h])
+AC_SEARCH_LIBS([TBB_runtime_interface_version], [tbb])
+
+#
+# Determine if TBB should be used (may override TCI threading)
+#
+
+AC_ARG_ENABLE([thread-model], AS_HELP_STRING([--enable-thread-model@<:@=model@:>@],
+    [enable threading with the specified model, one of none, auto, \
+    openmp, pthreads, tbb @<:@default=auto@:>@]),
+    [thread_model=$enable_thread_model], [thread_model=auto])
+
+AC_ARG_ENABLE([threading], [], [thread_model=$enable_threading], [])
+
+enable_tbb=0
+if test x"$thread_model" = xtbb; then
+    if test x"$ac_cv_header_tbb_tbb_h" = xyes && \
+       test x"$ac_cv_search_TBB_runtime_interface_version" != xno; then
+        AC_MSG_NOTICE([using tbb for threading])
+        enable_tbb=1
+    else
+        AC_MSG_ERROR([tbb requested but not available])
+    fi
+fi
+
+AC_DEFINE_UNQUOTED([ENABLE_TBB], [$enable_tbb], [enable_tbb])
+
 #
 # Determine basic types
 #
@@ -77,7 +108,7 @@ AX_CHECK_DEFINE([unistd.h], [_SC_NPROCESSORS_ONLN],
 AC_ARG_WITH([length-type], AS_HELP_STRING([--with-length-type@<:@=type@:>@],
     [use 'type' for the default index length type @<:@default=ptrdiff_t@:>@]),
     [len_type=$with_length_type], [len_type=ptrdiff_t])
-    
+
 AC_CHECK_TYPE([$len_type],,
               [AC_MSG_ERROR([$len_type must be a standard ISO C type])])
 AX_CHECK_SIGN([$len_type],,
@@ -89,7 +120,7 @@ AC_DEFINE_UNQUOTED([LEN_TYPE], [$len_type], [len_type])
 AC_ARG_WITH([stride-type], AS_HELP_STRING([--with-stride-type@<:@=type@:>@],
     [use 'type' for the default index stride type @<:@default=ptrdiff_t@:>@]),
     [stride_type=$with_stride_type], [stride_type=ptrdiff_t])
-    
+
 AC_CHECK_TYPE([$stride_type],,
               [AC_MSG_ERROR([$stride_type must be a standard ISO C type])])
 AX_CHECK_SIGN([$stride_type],,
@@ -101,13 +132,13 @@ AC_DEFINE_UNQUOTED([STRIDE_TYPE], [$stride_type], [stride_type])
 AC_ARG_WITH([label-type], AS_HELP_STRING([--with-label-type@<:@=type@:>@],
     [use 'type' for the default index label type @<:@default=char@:>@]),
     [label_type=$with_label_type], [label_type=char])
-    
+
 AC_CHECK_TYPE([$label_type],,
               [AC_MSG_ERROR([$label_type must be a standard ISO C type])])
 AC_MSG_CHECKING([for index label type])
 AC_MSG_RESULT([$label_type])
 AC_DEFINE_UNQUOTED([LABEL_TYPE], [$label_type], [label_type])
-                
+
 #
 # Determine configurations to build
 #
@@ -129,7 +160,7 @@ AC_ARG_ENABLE([config],
                           amd = bulldozer,piledriver,excavator
                           x86 = intel,amd],
               [], [enable_config=auto])
-                             
+
 if echo $enable_config | grep -q auto; then
     enable_config=
     using_default_configs=yes
@@ -372,7 +403,7 @@ AC_SUBST([FOREACH_TYPE], [$foreach_type])
 AM_SUBST_NOTMAKE([FOREACH_TYPE])
 
 LT_INIT
-                
+
 mkdir -p bin
 
 AC_CONFIG_FILES([Makefile 
@@ -381,5 +412,10 @@ AC_CONFIG_FILES([Makefile
                  src/configs/foreach_config_and_type.h
                  src/configs/include_configs.hpp])
 AX_PREFIX_CONFIG_H([src/tblis_config.h], [TBLIS])
-AC_CONFIG_SUBDIRS([src/external/tci])
 AC_OUTPUT
+
+if test "x$enable_tbb" = "x1"; then
+    TBLIS_CONFIG_SUBDIR([src/external/tci], [--enable-threading=no --enable-thread-model=no])
+else
+    TBLIS_CONFIG_SUBDIR([src/external/tci])
+fi

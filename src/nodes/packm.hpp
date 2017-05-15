@@ -37,16 +37,30 @@ struct pack_row_panel
         len_type k_a = A.length(!Trans);
         stride_type rs_a = A.stride( Trans);
         stride_type cs_a = A.stride(!Trans);
-        const T* p_a = A.data();
-        T* p_ap = Ap.data();
+
+#if TBLIS_ENABLE_TBB
+
+        tbb::parallel_for(tbb::blocked_range2d<len_type>(0, (m_a+MR-1)/MR, 2,
+                                                         0, (k_a+KR-1)/KR, 2),
+        [&](const tbb::blocked_range2d<len_type>& range)
+        {
+
+        len_type m_first = range.rows().begin()*MR;
+        len_type m_last = std::min(m_a, range.rows().end()*MR);
+        len_type k_first = range.cols().begin()*KR;
+        len_type k_last = std::min(k_a, range.cols().end()*KR);
+
+#else
 
         len_type m_first, m_last, k_first, k_last;
         std::tie(m_first, m_last, std::ignore,
                  k_first, k_last, std::ignore) =
             comm.distribute_over_threads_2d(m_a, k_a, MR, KR);
 
-        p_a += m_first*rs_a + k_first*cs_a;
-        p_ap += (m_first/MR)*ME*k_a + k_first*ME;
+#endif
+
+        const T*  p_a =  A.data() +  m_first       *rs_a + k_first*cs_a;
+              T* p_ap = Ap.data() + (m_first/MR)*ME* k_a + k_first*  ME;
 
         /*
         comm.barrier();
@@ -95,6 +109,11 @@ struct pack_row_panel
                (Trans ? "B" : "A"), sqrt(norm));
         comm.barrier();
         */
+
+#if TBLIS_ENABLE_TBB
+        });
+#endif
+
     }
 
     void operator()(const communicator& comm, const config& cfg,

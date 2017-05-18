@@ -50,7 +50,7 @@ void reduce_init(reduce_t op, T& value, len_type& idx)
             value = T();
             break;
         case REDUCE_MAX:
-            value = limits::min();
+            value = limits::lowest();
             break;
         case REDUCE_MIN:
         case REDUCE_MIN_ABS:

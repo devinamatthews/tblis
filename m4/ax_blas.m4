@@ -75,7 +75,9 @@ AC_ARG_WITH(blas,
 	[AS_HELP_STRING([--with-blas=<lib>], [use BLAS library <lib>])])
 case $with_blas in
 	-* | */* | *.a | *.so | *.so.* | *.o) BLAS_LIBS="$with_blas" ;;
-	*) BLAS_LIBS="-l$with_blas" ;;
+	"") ;;
+    no) BLAS_LIBS="" ;;
+    *) BLAS_LIBS="-l$with_blas" ;;
 esac
 
 # First, check BLAS_LIBS environment variable

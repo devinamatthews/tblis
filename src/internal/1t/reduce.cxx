@@ -13,31 +13,13 @@ void reduce(const communicator& comm, const config& cfg, reduce_t op,
             const T* A, const std::vector<stride_type>& stride_A,
             T& result, len_type& idx)
 {
-    if (len_A.size() == 0)
-    {
-        idx = 0;
-        switch (op)
-        {
-            case REDUCE_SUM:
-            case REDUCE_MIN:
-            case REDUCE_MAX:
-                result = *A;
-                break;
-            case REDUCE_SUM_ABS:
-            case REDUCE_NORM_2:
-            case REDUCE_MIN_ABS:
-            case REDUCE_MAX_ABS:
-                result = std::abs(*A);
-                break;
-        }
-        return;
-    }
+    bool empty = len_A.size() == 0;
 
-    len_type len0 = len_A[0];
-    std::vector<len_type> len1(len_A.begin()+1, len_A.end());
+    len_type len0 = (empty ? 1 : len_A[0]);
+    std::vector<len_type> len1(len_A.begin() + !empty, len_A.end());
 
-    stride_type stride0 = stride_A[0];
-    std::vector<len_type> stride1(stride_A.begin()+1, stride_A.end());
+    stride_type stride0 = (empty ? 1 : stride_A[0]);
+    std::vector<len_type> stride1(stride_A.begin() + !empty, stride_A.end());
 
     MArray::viterator<1> iter_A(len1, stride1);
     len_type n = stl_ext::prod(len1);

@@ -17,10 +17,12 @@ using namespace stl_ext;
 using namespace tblis;
 using namespace tblis::internal;
 
+constexpr int ulp_factor = 16;
+
 template <typename T>
 double ceil2(T x)
 {
-    return nearbyint(pow(2.0, ceil(log2((double)std::abs(x)))));
+    return nearbyint(pow(2.0, max(0.0, ceil(log2((double)std::abs(x))))));
 }
 
 template <typename T>
@@ -104,7 +106,7 @@ void passfail(const string& label, stride_type ia, stride_type ib, T a, U b, dou
 {
     auto c = std::abs(a-b);
     auto epsilon = ulps*std::numeric_limits<decltype(c)>::epsilon();
-    bool pass = c < std::max(std::numeric_limits<T>::min(), epsilon) && ia == ib;
+    bool pass = c < std::max(std::numeric_limits<decltype(c)>::min(), epsilon) && ia == ib;
 
     cout << label << ": ";
     if (pass)
@@ -117,7 +119,7 @@ void passfail(const string& label, stride_type ia, stride_type ib, T a, U b, dou
         cout << std::scientific << std::setprecision(15);
         cout << a << " " << ia << endl;
         cout << b << " " << ib << endl;
-        cout << c << " > " << std::max(std::numeric_limits<T>::min(), epsilon) << endl;
+        cout << c << " > " << std::max(std::numeric_limits<decltype(c)>::min(), epsilon) << endl;
         ::abort();
     }
 }
@@ -955,7 +957,7 @@ void test_tblis(stride_type N)
         add(T(-1), D, T(1), E);
         T error = reduce(REDUCE_NORM_2, E).first;
 
-        passfail("REF", error, 0, 8*ceil2(scale*m*n*k));
+        passfail("REF", error, 0, ulp_factor*ceil2(scale*m*n*k));
     }
 }
 
@@ -1004,7 +1006,7 @@ void test_mult(stride_type N)
     add(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
     T error = reduce(REDUCE_NORM_2, E, idx_C.data()).first;
 
-    passfail("BLAS", error, 0, 8*ceil2(scale*neps));
+    passfail("BLAS", error, 0, ulp_factor*ceil2(scale*neps));
 }
 
 template <typename T>
@@ -1046,7 +1048,7 @@ void test_contract(stride_type N)
     add(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
     T error = reduce(REDUCE_NORM_2, E, idx_C.data()).first;
 
-    passfail("BLAS", error, 0, 8*ceil2(scale*neps));
+    passfail("BLAS", error, 0, ulp_factor*ceil2(scale*neps));
 
     impl = BLIS_BASED;
     E.reset(C);
@@ -1055,7 +1057,7 @@ void test_contract(stride_type N)
     add(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
     error = reduce(REDUCE_NORM_2, E, idx_C.data()).first;
 
-    passfail("BLIS", error, 0, 8*ceil2(scale*neps));
+    passfail("BLIS", error, 0, ulp_factor*ceil2(scale*neps));
 }
 
 template <typename T>
@@ -1094,7 +1096,7 @@ void test_weight(stride_type N)
     add(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
     T error = reduce(REDUCE_NORM_2, E, idx_C.data()).first;
 
-    passfail("BLAS", error, 0, 8*ceil2(scale*neps));
+    passfail("BLAS", error, 0, ulp_factor*ceil2(scale*neps));
 }
 
 template <typename T>
@@ -1133,7 +1135,7 @@ void test_outer_prod(stride_type N)
     add(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
     T error = reduce(REDUCE_NORM_2, E, idx_C.data()).first;
 
-    passfail("BLAS", error, 0, 8*ceil2(scale*neps));
+    passfail("BLAS", error, 0, ulp_factor*ceil2(scale*neps));
 }
 
 template <typename T>
@@ -1166,7 +1168,7 @@ void test_add(stride_type N)
     T add_b = reduce(REDUCE_SUM, B, idx_B.data()).first;
     add(scale, A, idx_A.data(), scale, B, idx_B.data());
     T calc_val = reduce(REDUCE_SUM, B, idx_B.data()).first;
-    passfail("SUM", scale*(NB*ref_val+add_b), calc_val, 8*ceil2(neps*scale));
+    passfail("SUM", scale*(NB*ref_val+add_b), calc_val, ulp_factor*ceil2(neps*scale));
 }
 
 template <typename T>
@@ -1195,7 +1197,7 @@ void test_trace(stride_type N)
     T add_b = reduce(REDUCE_SUM, B, idx_B.data()).first;
     add(scale, A, idx_A.data(), scale, B, idx_B.data());
     T calc_val = reduce(REDUCE_SUM, B, idx_B.data()).first;
-    passfail("SUM", scale*(ref_val+add_b), calc_val, 8*ceil2(neps*scale));
+    passfail("SUM", scale*(ref_val+add_b), calc_val, ulp_factor*ceil2(neps*scale));
 }
 
 template <typename T>
@@ -1226,12 +1228,12 @@ void test_replicate(stride_type N)
     T add_b = reduce(REDUCE_SUM, B, idx_B.data()).first;
     add(scale, A, idx_A.data(), scale, B, idx_B.data());
     T calc_val = reduce(REDUCE_SUM, B, idx_B.data()).first;
-    passfail("SUM", scale*(NB*ref_val+add_b), calc_val, 8*ceil2(neps*scale));
+    passfail("SUM", scale*(NB*ref_val+add_b), calc_val, ulp_factor*ceil2(neps*scale));
 
     ref_val = reduce(REDUCE_NORM_1, A, idx_A.data()).first;
     add(scale, A, idx_A.data(), T(0.0), B, idx_B.data());
     calc_val = reduce(REDUCE_NORM_1, B, idx_B.data()).first;
-    passfail("NRM1", std::abs(scale)*NB*ref_val, calc_val, 8*ceil2(neps*scale));
+    passfail("NRM1", std::abs(scale)*NB*ref_val, calc_val, ulp_factor*ceil2(neps*scale));
 }
 
 template <typename T>
@@ -1253,19 +1255,19 @@ void test_dot(stride_type N)
     add(T(1.0), A, idx_A.data(), T(0.0), B, idx_B.data());
     T* data = B.data();
     MArray::viterator<> it(B.lengths(), B.strides());
-    while (it.next(data)) *data = conj(*data);
+    while (it.next(data)) *data = tblis::conj(*data);
     T ref_val = reduce(REDUCE_NORM_2, A, idx_A.data()).first;
     T calc_val = dot(A, idx_A.data(), B, idx_B.data());
-    passfail("NRM2", ref_val*ref_val, calc_val, 8*ceil2(neps));
+    passfail("NRM2", ref_val*ref_val, calc_val, ulp_factor*ceil2(neps));
 
     B = T(1);
     ref_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
     calc_val = dot(A, idx_A.data(), B, idx_B.data());
-    passfail("UNIT", ref_val, calc_val, 8*ceil2(neps));
+    passfail("UNIT", ref_val, calc_val, ulp_factor*ceil2(neps));
 
     B = T(0);
     calc_val = dot(A, idx_A.data(), B, idx_B.data());
-    passfail("ZERO", calc_val, 0, 8*ceil2(neps));
+    passfail("ZERO", calc_val, 0, ulp_factor*ceil2(neps));
 }
 
 template <typename T>
@@ -1296,7 +1298,7 @@ void test_transpose(stride_type N)
 
     add(-2*scale, A, idx_A.data(), T(1), C, idx_A.data());
     T error = reduce(REDUCE_NORM_2, C, idx_A.data()).first;
-    passfail("INVERSE", error, 0, 8*ceil2(2*scale*neps));
+    passfail("INVERSE", error, 0, ulp_factor*ceil2(2*scale*neps));
 
     B.reset(A);
     idx_B = idx_A;
@@ -1319,7 +1321,7 @@ void test_transpose(stride_type N)
 
     add(T(-1), A, idx_A.data(), T(1), C, idx_A.data());
     error = reduce(REDUCE_NORM_2, C, idx_A.data()).first;
-    passfail("CYCLE", error, 0, 8*ceil2(neps));
+    passfail("CYCLE", error, 0, ulp_factor*ceil2(neps));
 }
 
 template <typename T>
@@ -1343,15 +1345,15 @@ void test_scale(stride_type N)
     T scale = 10.0*random_unit<T>();
     tblis::scale(scale, A, idx_A.data());
     T calc_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
-    passfail("RANDOM", ref_val, calc_val/scale, 8*ceil2(neps));
+    passfail("RANDOM", ref_val, calc_val/scale, ulp_factor*ceil2(neps));
 
     tblis::scale(T(1.0), A, idx_A.data());
     calc_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
-    passfail("UNIT", ref_val, calc_val/scale, 8*ceil2(neps));
+    passfail("UNIT", ref_val, calc_val/scale, ulp_factor*ceil2(neps));
 
     tblis::scale(T(0.0), A, idx_A.data());
     calc_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
-    passfail("ZERO", calc_val, 0, 8*ceil2(neps));
+    passfail("ZERO", calc_val, 0, ulp_factor*ceil2(neps));
 }
 
 template <typename T>
@@ -1381,7 +1383,7 @@ void test_reduce(stride_type N)
     {
         blas_val += data[i];
     }
-    passfail("REDUCE_SUM", ref_val, blas_val, 8*ceil2(NA));
+    passfail("REDUCE_SUM", ref_val, blas_val, ulp_factor*ceil2(NA));
 
     reduce(REDUCE_SUM_ABS, A, idx_A.data(), ref_val, ref_idx);
     blas_val = 0;
@@ -1389,7 +1391,7 @@ void test_reduce(stride_type N)
     {
         blas_val += std::abs(data[i]);
     }
-    passfail("REDUCE_SUM_ABS", ref_val, blas_val, 8*ceil2(NA));
+    passfail("REDUCE_SUM_ABS", ref_val, blas_val, ulp_factor*ceil2(NA));
 
     reduce(REDUCE_MAX, A, idx_A.data(), ref_val, ref_idx);
     blas_val = data[0];
@@ -1452,11 +1454,11 @@ void test_reduce(stride_type N)
         blas_val += norm2(data[i]);
     }
     blas_val = sqrt(real(blas_val));
-    passfail("REDUCE_NORM_2", ref_val, blas_val, 8*ceil2(NA));
+    passfail("REDUCE_NORM_2", ref_val, blas_val, ulp_factor*ceil2(NA));
 
     A = T(1);
     reduce(REDUCE_SUM, A, idx_A.data(), ref_val, ref_idx);
-    passfail("COUNT", ref_val, NA, 8*ceil2(NA));
+    passfail("COUNT", ref_val, NA, ulp_factor*ceil2(NA));
 }
 
 template <typename T>

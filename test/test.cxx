@@ -20,7 +20,7 @@ using namespace tblis::internal;
 template <typename T>
 double ceil2(T x)
 {
-    return nearbyint(pow(2.0, ceil(log2((double)std::abs(x)))));
+    return nearbyint(pow(2.0, max(0.0, ceil(log2((double)std::abs(x))))));
 }
 
 template <typename T>
@@ -104,7 +104,7 @@ void passfail(const string& label, stride_type ia, stride_type ib, T a, U b, dou
 {
     auto c = std::abs(a-b);
     auto epsilon = ulps*std::numeric_limits<decltype(c)>::epsilon();
-    bool pass = c < std::max(std::numeric_limits<T>::min(), epsilon) && ia == ib;
+    bool pass = c < std::max(std::numeric_limits<decltype(c)>::min(), epsilon) && ia == ib;
 
     cout << label << ": ";
     if (pass)
@@ -117,7 +117,7 @@ void passfail(const string& label, stride_type ia, stride_type ib, T a, U b, dou
         cout << std::scientific << std::setprecision(15);
         cout << a << " " << ia << endl;
         cout << b << " " << ib << endl;
-        cout << c << " > " << std::max(std::numeric_limits<T>::min(), epsilon) << endl;
+        cout << c << " > " << std::max(std::numeric_limits<decltype(c)>::min(), epsilon) << endl;
         ::abort();
     }
 }

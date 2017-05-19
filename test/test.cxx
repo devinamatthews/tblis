@@ -17,7 +17,7 @@ using namespace stl_ext;
 using namespace tblis;
 using namespace tblis::internal;
 
-constexpr int ulp_factor = 16;
+constexpr int ulp_factor = 32;
 
 template <typename T>
 double ceil2(T x)

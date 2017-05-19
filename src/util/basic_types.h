@@ -292,13 +292,13 @@ typedef struct tblis_vector
     template <typename T>
     T& alpha()
     {
-        scalar.get<T>();
+        return scalar.get<T>();
     }
 
     template <typename T>
     const T& alpha() const
     {
-        scalar.get<T>();
+        return scalar.get<T>();
     }
 
     void swap(tblis_vector& other)

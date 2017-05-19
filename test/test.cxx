@@ -1255,7 +1255,7 @@ void test_dot(stride_type N)
     add(T(1.0), A, idx_A.data(), T(0.0), B, idx_B.data());
     T* data = B.data();
     MArray::viterator<> it(B.lengths(), B.strides());
-    while (it.next(data)) *data = conj(*data);
+    while (it.next(data)) *data = tblis::conj(*data);
     T ref_val = reduce(REDUCE_NORM_2, A, idx_A.data()).first;
     T calc_val = dot(A, idx_A.data(), B, idx_B.data());
     passfail("NRM2", ref_val*ref_val, calc_val, ulp_factor*ceil2(neps));

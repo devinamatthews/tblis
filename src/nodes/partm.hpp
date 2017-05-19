@@ -17,9 +17,14 @@ struct partition
     bool ganged = false;
     int distribute = 1;
 
-    template <typename T, typename MatrixA, typename MatrixB, typename MatrixC>
-    void operator()(const communicator& comm, const config& cfg,
-                    T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
+    partition() {}
+
+    partition(const partition& other)
+    : child(other.child), distribute(other.distribute) {}
+
+    template <typename T, typename Communicator, typename MatrixA, typename MatrixB, typename MatrixC>
+    void operator()(Communicator& comm, const config& cfg,
+                    T alpha, MatrixA& A_, MatrixB& B_, T beta_, MatrixC& C_)
     {
         using namespace matrix_constants;
 
@@ -32,30 +37,50 @@ struct partition
 
         TBLIS_ASSERT(M_ext == M_def);
 
-        //printf("partition along: %c\n", "MNK"[Dim]);
-        //printf("A before: %p %ld %ld %ld %ld\n", A.data(), A.length(0), A.length(1), A.stride(0), A.stride(1));
-        //printf("B before: %p %ld %ld %ld %ld\n", B.data(), B.length(0), B.length(1), B.stride(0), B.stride(1));
-        //printf("C before: %p %ld %ld %ld %ld\n", C.data(), C.length(0), C.length(1), C.stride(0), C.stride(1));
-
-        len_type m_u = (Dim == DIM_M ? A.length(0) : Dim == DIM_N ? B.length(1) : A.length(1));
-        len_type m_v = (Dim == DIM_M ? C.length(0) : Dim == DIM_N ? C.length(1) : B.length(0));
+        len_type m_u = (Dim == DIM_M ? A_.length(0) : Dim == DIM_N ? B_.length(1) : A_.length(1));
+        len_type m_v = (Dim == DIM_M ? C_.length(0) : Dim == DIM_N ? C_.length(1) : B_.length(0));
         len_type m = std::min(m_u, m_v);
+
+#if TBLIS_ENABLE_TBB
+
+#if TBLIS_SIMPLE_TBB
+        tbb::task_group tg;
+#endif
+
+        for (int tid = 0;tid < distribute;tid++)
+        {
+
+#if TBLIS_SIMPLE_TBB
+        tg.run([&,tid,this]
+        {
+
+        auto child = this->child;
+        auto A = A_;
+        auto B = B_;
+        auto C = C_;
+        auto beta = beta_;
+#endif
+
+#else
 
         if (!ganged)
         {
-            //printf("distributing %d ways\n", distribute);
             subcomm = comm.gang(TCI_EVENLY, distribute);
             ganged = true;
         }
 
+        int tid = subcomm.gang_num();
+
+        auto& A = A_;
+        auto& B = B_;
+        auto& C = C_;
+        auto& beta = beta_;
+
+#endif
+
         len_type m_first, m_last;
         std::tie(m_first, m_last, std::ignore) =
-            subcomm.distribute_over_gangs(m, M_iota);
-
-        //printf("thread %d/%d in gang %d/%d got %ld-%ld/%ld\n",
-        //       subcomm.thread_num(), subcomm.num_threads(),
-        //       subcomm.gang_num(), subcomm.num_gangs(),
-        //       m_first, m_last, m_u);
+            communicator::distribute(distribute, tid, m, M_iota);
 
         auto length = [&](len_type m_u, len_type m_v)
         {
@@ -81,8 +106,6 @@ struct partition
             len_type m_loc = std::min(m_last-m_off, M_cur);
             length(m_loc, m_loc);
 
-            //printf("[%ld:%ld)\n", m_off, m_off+m_loc);
-
             child(subcomm, cfg, alpha, A, B, beta, C);
             if (Dim == DIM_K) beta = 1.0;
 
@@ -94,9 +117,19 @@ struct partition
         shift(-m_off, -m_off);
         length(m_u, m_v);
 
-        //printf("A after: %p %ld %ld %ld %ld\n", A.data(), A.length(0), A.length(1), A.stride(0), A.stride(1));
-        //printf("B after: %p %ld %ld %ld %ld\n", B.data(), B.length(0), B.length(1), B.stride(0), B.stride(1));
-        //printf("C after: %p %ld %ld %ld %ld\n", C.data(), C.length(0), C.length(1), C.stride(0), C.stride(1));
+#if TBLIS_ENABLE_TBB
+
+#if TBLIS_SIMPLE_TBB
+        });
+#endif
+
+        }
+
+#if TBLIS_SIMPLE_TBB
+        tg.wait();
+#endif
+
+#endif
     }
 };
 

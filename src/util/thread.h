@@ -11,9 +11,7 @@
 #include "basic_types.h"
 
 #if defined(__cplusplus) && TBLIS_ENABLE_TBB
-#ifndef TBB_PREVIEW_TASK_ISOLATION
-#define TBB_PREVIEW_TASK_ISOLATION 1
-#endif
+#define TBLIS_SIMPLE_TBB 1
 #include <tbb/tbb.h>
 #endif
 

@@ -71,13 +71,6 @@ AX_CHECK_DEFINE([unistd.h], [_SC_NPROCESSORS_ONLN],
                            [sysconf(_SC_NPROCESSORS_ONLN) is valid.])])
 
 #
-# Check for TBB
-#
-
-AC_CHECK_HEADERS([tbb/tbb.h])
-AC_SEARCH_LIBS([TBB_runtime_interface_version], [tbb])
-
-#
 # Determine if TBB should be used (may override TCI threading)
 #
 
@@ -90,6 +83,13 @@ AC_ARG_ENABLE([threading], [], [thread_model=$enable_threading], [])
 
 enable_tbb=0
 if test x"$thread_model" = xtbb; then
+    #
+    # Check for TBB
+    #
+    
+    AC_CHECK_HEADERS([tbb/tbb.h])
+    AC_SEARCH_LIBS([TBB_runtime_interface_version], [tbb])
+    
     if test x"$ac_cv_header_tbb_tbb_h" = xyes && \
        test x"$ac_cv_search_TBB_runtime_interface_version" != xno; then
         AC_MSG_NOTICE([using tbb for threading])

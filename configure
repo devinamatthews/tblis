@@ -631,12 +631,10 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-enable_option_checking=no
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
-subdirs
 LT_SYS_LIBRARY_PATH
 OTOOL64
 OTOOL
@@ -816,6 +814,8 @@ enable_silent_rules
 enable_maintainer_mode
 enable_dependency_tracking
 with_blas
+enable_thread_model
+enable_threading
 with_length_type
 with_stride_type
 with_label_type
@@ -844,7 +844,7 @@ CXXFLAGS
 CCC
 CXXCPP
 LT_SYS_LIBRARY_PATH'
-ac_subdirs_all='src/external/tci'
+
 
 # Initialize some variables set by options.
 ac_init_help=
@@ -1471,6 +1471,10 @@ Optional Features:
                           do not reject slow dependency extractors
   --disable-dependency-tracking
                           speeds up one-time build
+  --enable-thread-model[=model]
+                          enable threading with the specified model, one of
+                          none, auto, openmp, pthreads, tbb [default=auto]
+
   --enable-config=...    a comma-separated list of configurations
                           [default=auto]
 
@@ -5950,6 +5954,115 @@ if test $ac_cv_defined__SC_NPROCESSORS_ONLN_unistd_h != "no"; then :
 $as_echo "#define HAVE__SC_NPROCESSORS_ONLN 1" >>confdefs.h
 
 fi
+
+#
+# Determine if TBB should be used (may override TCI threading)
+#
+
+# Check whether --enable-thread-model was given.
+if test "${enable_thread_model+set}" = set; then :
+  enableval=$enable_thread_model; thread_model=$enable_thread_model
+else
+  thread_model=auto
+fi
+
+
+# Check whether --enable-threading was given.
+if test "${enable_threading+set}" = set; then :
+  enableval=$enable_threading; thread_model=$enable_threading
+fi
+
+
+enable_tbb=0
+if test x"$thread_model" = xtbb; then
+    #
+    # Check for TBB
+    #
+
+    for ac_header in tbb/tbb.h
+do :
+  ac_fn_cxx_check_header_mongrel "$LINENO" "tbb/tbb.h" "ac_cv_header_tbb_tbb_h" "$ac_includes_default"
+if test "x$ac_cv_header_tbb_tbb_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_TBB_TBB_H 1
+_ACEOF
+
+fi
+
+done
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing TBB_runtime_interface_version" >&5
+$as_echo_n "checking for library containing TBB_runtime_interface_version... " >&6; }
+if ${ac_cv_search_TBB_runtime_interface_version+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char TBB_runtime_interface_version ();
+int
+main ()
+{
+return TBB_runtime_interface_version ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' tbb; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_search_TBB_runtime_interface_version=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_TBB_runtime_interface_version+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_TBB_runtime_interface_version+:} false; then :
+
+else
+  ac_cv_search_TBB_runtime_interface_version=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_TBB_runtime_interface_version" >&5
+$as_echo "$ac_cv_search_TBB_runtime_interface_version" >&6; }
+ac_res=$ac_cv_search_TBB_runtime_interface_version
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+
+    if test x"$ac_cv_header_tbb_tbb_h" = xyes && \
+       test x"$ac_cv_search_TBB_runtime_interface_version" != xno; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: using tbb for threading" >&5
+$as_echo "$as_me: using tbb for threading" >&6;}
+        enable_tbb=1
+    else
+        as_fn_error $? "tbb requested but not available" "$LINENO" 5
+    fi
+fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define ENABLE_TBB $enable_tbb
+_ACEOF
+
 
 #
 # Determine basic types
@@ -18036,10 +18149,6 @@ ac_config_files="$ac_config_files Makefile src/configs/foreach_type.h src/config
 
 ac_config_commands="$ac_config_commands src/tblis_config.h"
 
-
-
-subdirs="$subdirs src/external/tci"
-
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -20765,10 +20874,14 @@ if test "$no_create" != yes; then
   # would make configure fail if this is the last instruction.
   $ac_cs_success || as_fn_exit 1
 fi
+if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
+$as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
+fi
 
-#
-# CONFIG_SUBDIRS section.
-#
+
+if test "x$enable_tbb" = "x1"; then
+
 if test "$no_recursion" != yes; then
 
   # Remove --cache-file, --srcdir, and --disable-option-checking arguments
@@ -20807,8 +20920,34 @@ if test "$no_recursion" != yes; then
       case $ac_arg in
       *\'*) ac_arg=`$as_echo "$ac_arg" | sed "s/'/'\\\\\\\\''/g"` ;;
       esac
-      as_fn_append ac_sub_configure_args " '$ac_arg'" ;;
+
+      ac_arg_override=no
+      for ac_flag in : --enable-threading=no --enable-thread-model=no; do test "x$ac_flag" = x: && continue
+        case $ac_flag in
+        -*|*=*)
+          ac_opt=`expr "x$ac_flag" : 'x\([^=]*\)'`
+          case $ac_arg in
+          $ac_opt|${ac_opt}=*)
+            ac_arg_override=yes
+            ;;
+          esac
+          ;;
+        *)
+          as_fn_error $? "bad option $ac_flag" "$LINENO" 5
+          ;;
+        esac
+      done
+
+      if test "x$ac_arg_override" = "xno"; then
+        as_fn_append ac_sub_configure_args " '$ac_arg'"
+      fi
+
+      ;;
     esac
+  done
+
+  for ac_flag in : --enable-threading=no --enable-thread-model=no; do test "x$ac_flag" = x: && continue
+    as_fn_append ac_sub_configure_args " '$ac_flag'"
   done
 
   # Always prepend --prefix to ensure using the same prefix
@@ -20829,7 +20968,7 @@ if test "$no_recursion" != yes; then
   ac_sub_configure_args="--disable-option-checking $ac_sub_configure_args"
 
   ac_popdir=`pwd`
-  for ac_dir in : $subdirs; do test "x$ac_dir" = x: && continue
+  for ac_dir in : src/external/tci; do test "x$ac_dir" = x: && continue
 
     # Do not complain, so a configure script can configure whichever
     # parts of a large source tree are present.
@@ -20896,22 +21035,189 @@ $as_echo "$as_me: WARNING: no configuration information is in $ac_dir" >&2;}
       case $cache_file in
       [\\/]* | ?:[\\/]* ) ac_sub_cache_file=$cache_file ;;
       *) # Relative name.
-	ac_sub_cache_file=$ac_top_build_prefix$cache_file ;;
+    ac_sub_cache_file=$ac_top_build_prefix$cache_file ;;
       esac
 
       { $as_echo "$as_me:${as_lineno-$LINENO}: running $SHELL $ac_sub_configure $ac_sub_configure_args --cache-file=$ac_sub_cache_file --srcdir=$ac_srcdir" >&5
 $as_echo "$as_me: running $SHELL $ac_sub_configure $ac_sub_configure_args --cache-file=$ac_sub_cache_file --srcdir=$ac_srcdir" >&6;}
       # The eval makes quoting arguments work.
       eval "\$SHELL \"\$ac_sub_configure\" $ac_sub_configure_args \
-	   --cache-file=\"\$ac_sub_cache_file\" --srcdir=\"\$ac_srcdir\"" ||
-	as_fn_error $? "$ac_sub_configure failed for $ac_dir" "$LINENO" 5
+       --cache-file=\"\$ac_sub_cache_file\" --srcdir=\"\$ac_srcdir\"" ||
+    as_fn_error $? "$ac_sub_configure failed for $ac_dir" "$LINENO" 5
     fi
 
     cd "$ac_popdir"
   done
 fi
-if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
-$as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
+
+else
+
+if test "$no_recursion" != yes; then
+
+  # Remove --cache-file, --srcdir, and --disable-option-checking arguments
+  # so they do not pile up.
+  ac_sub_configure_args=
+  ac_prev=
+  eval "set x $ac_configure_args"
+  shift
+  for ac_arg
+  do
+    if test -n "$ac_prev"; then
+      ac_prev=
+      continue
+    fi
+    case $ac_arg in
+    -cache-file | --cache-file | --cache-fil | --cache-fi \
+    | --cache-f | --cache- | --cache | --cach | --cac | --ca | --c)
+      ac_prev=cache_file ;;
+    -cache-file=* | --cache-file=* | --cache-fil=* | --cache-fi=* \
+    | --cache-f=* | --cache-=* | --cache=* | --cach=* | --cac=* | --ca=* \
+    | --c=*)
+      ;;
+    --config-cache | -C)
+      ;;
+    -srcdir | --srcdir | --srcdi | --srcd | --src | --sr)
+      ac_prev=srcdir ;;
+    -srcdir=* | --srcdir=* | --srcdi=* | --srcd=* | --src=* | --sr=*)
+      ;;
+    -prefix | --prefix | --prefi | --pref | --pre | --pr | --p)
+      ac_prev=prefix ;;
+    -prefix=* | --prefix=* | --prefi=* | --pref=* | --pre=* | --pr=* | --p=*)
+      ;;
+    --disable-option-checking)
+      ;;
+    *)
+      case $ac_arg in
+      *\'*) ac_arg=`$as_echo "$ac_arg" | sed "s/'/'\\\\\\\\''/g"` ;;
+      esac
+
+      ac_arg_override=no
+      for ac_flag in : ; do test "x$ac_flag" = x: && continue
+        case $ac_flag in
+        -*|*=*)
+          ac_opt=`expr "x$ac_flag" : 'x\([^=]*\)'`
+          case $ac_arg in
+          $ac_opt|${ac_opt}=*)
+            ac_arg_override=yes
+            ;;
+          esac
+          ;;
+        *)
+          as_fn_error $? "bad option $ac_flag" "$LINENO" 5
+          ;;
+        esac
+      done
+
+      if test "x$ac_arg_override" = "xno"; then
+        as_fn_append ac_sub_configure_args " '$ac_arg'"
+      fi
+
+      ;;
+    esac
+  done
+
+  for ac_flag in : ; do test "x$ac_flag" = x: && continue
+    as_fn_append ac_sub_configure_args " '$ac_flag'"
+  done
+
+  # Always prepend --prefix to ensure using the same prefix
+  # in subdir configurations.
+  ac_arg="--prefix=$prefix"
+  case $ac_arg in
+  *\'*) ac_arg=`$as_echo "$ac_arg" | sed "s/'/'\\\\\\\\''/g"` ;;
+  esac
+  ac_sub_configure_args="'$ac_arg' $ac_sub_configure_args"
+
+  # Pass --silent
+  if test "$silent" = yes; then
+    ac_sub_configure_args="--silent $ac_sub_configure_args"
+  fi
+
+  # Always prepend --disable-option-checking to silence warnings, since
+  # different subdirs can have different --enable and --with options.
+  ac_sub_configure_args="--disable-option-checking $ac_sub_configure_args"
+
+  ac_popdir=`pwd`
+  for ac_dir in : src/external/tci; do test "x$ac_dir" = x: && continue
+
+    # Do not complain, so a configure script can configure whichever
+    # parts of a large source tree are present.
+    test -d "$srcdir/$ac_dir" || continue
+
+    ac_msg="=== configuring in $ac_dir (`pwd`/$ac_dir)"
+    $as_echo "$as_me:${as_lineno-$LINENO}: $ac_msg" >&5
+    $as_echo "$ac_msg" >&6
+    as_dir="$ac_dir"; as_fn_mkdir_p
+    ac_builddir=.
+
+case "$ac_dir" in
+.) ac_dir_suffix= ac_top_builddir_sub=. ac_top_build_prefix= ;;
+*)
+  ac_dir_suffix=/`$as_echo "$ac_dir" | sed 's|^\.[\\/]||'`
+  # A ".." for each directory in $ac_dir_suffix.
+  ac_top_builddir_sub=`$as_echo "$ac_dir_suffix" | sed 's|/[^\\/]*|/..|g;s|/||'`
+  case $ac_top_builddir_sub in
+  "") ac_top_builddir_sub=. ac_top_build_prefix= ;;
+  *)  ac_top_build_prefix=$ac_top_builddir_sub/ ;;
+  esac ;;
+esac
+ac_abs_top_builddir=$ac_pwd
+ac_abs_builddir=$ac_pwd$ac_dir_suffix
+# for backward compatibility:
+ac_top_builddir=$ac_top_build_prefix
+
+case $srcdir in
+  .)  # We are building in place.
+    ac_srcdir=.
+    ac_top_srcdir=$ac_top_builddir_sub
+    ac_abs_top_srcdir=$ac_pwd ;;
+  [\\/]* | ?:[\\/]* )  # Absolute name.
+    ac_srcdir=$srcdir$ac_dir_suffix;
+    ac_top_srcdir=$srcdir
+    ac_abs_top_srcdir=$srcdir ;;
+  *) # Relative name.
+    ac_srcdir=$ac_top_build_prefix$srcdir$ac_dir_suffix
+    ac_top_srcdir=$ac_top_build_prefix$srcdir
+    ac_abs_top_srcdir=$ac_pwd/$srcdir ;;
+esac
+ac_abs_srcdir=$ac_abs_top_srcdir$ac_dir_suffix
+
+
+    cd "$ac_dir"
+
+    # Check for guested configure; otherwise get Cygnus style configure.
+    if test -f "$ac_srcdir/configure.gnu"; then
+      ac_sub_configure=$ac_srcdir/configure.gnu
+    elif test -f "$ac_srcdir/configure"; then
+      ac_sub_configure=$ac_srcdir/configure
+    elif test -f "$ac_srcdir/configure.in"; then
+      # This should be Cygnus configure.
+      ac_sub_configure=$ac_aux_dir/configure
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: no configuration information is in $ac_dir" >&5
+$as_echo "$as_me: WARNING: no configuration information is in $ac_dir" >&2;}
+      ac_sub_configure=
+    fi
+
+    # The recursion is here.
+    if test -n "$ac_sub_configure"; then
+      # Make the cache file name correct relative to the subdirectory.
+      case $cache_file in
+      [\\/]* | ?:[\\/]* ) ac_sub_cache_file=$cache_file ;;
+      *) # Relative name.
+    ac_sub_cache_file=$ac_top_build_prefix$cache_file ;;
+      esac
+
+      { $as_echo "$as_me:${as_lineno-$LINENO}: running $SHELL $ac_sub_configure $ac_sub_configure_args --cache-file=$ac_sub_cache_file --srcdir=$ac_srcdir" >&5
+$as_echo "$as_me: running $SHELL $ac_sub_configure $ac_sub_configure_args --cache-file=$ac_sub_cache_file --srcdir=$ac_srcdir" >&6;}
+      # The eval makes quoting arguments work.
+      eval "\$SHELL \"\$ac_sub_configure\" $ac_sub_configure_args \
+       --cache-file=\"\$ac_sub_cache_file\" --srcdir=\"\$ac_srcdir\"" ||
+    as_fn_error $? "$ac_sub_configure failed for $ac_dir" "$LINENO" 5
+    fi
+
+    cd "$ac_popdir"
+  done
 fi
 
+fi

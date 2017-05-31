@@ -18,8 +18,8 @@ namespace detail
     extern MemoryPool BuffersForScatter;
 }
 
-template <typename MatrixA>
-void block_scatter(const communicator& comm, MatrixA& A,
+template <typename Communicator, typename MatrixA>
+void block_scatter(Communicator& comm, MatrixA& A,
                    stride_type* rscat, len_type MB, stride_type* rbs,
                    stride_type* cscat, len_type NB, stride_type* cbs)
 {
@@ -50,13 +50,10 @@ template <int Mat> struct matrify_and_run;
 
 template <> struct matrify_and_run<matrix_constants::MAT_A>
 {
-    template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
-    matrify_and_run(Parent& parent, const communicator& comm, const config& cfg,
+    template <typename T, typename Parent, typename Communicator, typename MatrixA, typename MatrixB, typename MatrixC>
+    matrify_and_run(len_type MB, len_type NB, Parent& parent, Communicator& comm, const config& cfg,
                     T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
-        const len_type MB = cfg.gemm_mr.def<T>();
-        const len_type NB = cfg.gemm_kr.def<T>();
-
         //block_scatter(comm, A, parent.rscat, MB, parent.rbs,
         //                       parent.cscat, NB, parent.cbs);
 
@@ -73,13 +70,10 @@ template <> struct matrify_and_run<matrix_constants::MAT_A>
 
 template <> struct matrify_and_run<matrix_constants::MAT_B>
 {
-    template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
-    matrify_and_run(Parent& parent, const communicator& comm, const config& cfg,
+    template <typename T, typename Parent, typename Communicator, typename MatrixA, typename MatrixB, typename MatrixC>
+    matrify_and_run(len_type MB, len_type NB, Parent& parent, Communicator& comm, const config& cfg,
                     T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
-        const len_type MB = cfg.gemm_kr.def<T>();
-        const len_type NB = cfg.gemm_nr.def<T>();
-
         //block_scatter(comm, B, parent.rscat, MB, parent.rbs,
         //                       parent.cscat, NB, parent.cbs);
 
@@ -96,13 +90,10 @@ template <> struct matrify_and_run<matrix_constants::MAT_B>
 
 template <> struct matrify_and_run<matrix_constants::MAT_C>
 {
-    template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
-    matrify_and_run(Parent& parent, const communicator& comm, const config& cfg,
+    template <typename T, typename Parent, typename Communicator, typename MatrixA, typename MatrixB, typename MatrixC>
+    matrify_and_run(len_type MB, len_type NB, Parent& parent, Communicator& comm, const config& cfg,
                     T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
-        const len_type MB = cfg.gemm_mr.def<T>();
-        const len_type NB = cfg.gemm_nr.def<T>();
-
         //block_scatter(comm, C, parent.rscat, MB, parent.rbs,
         //                       parent.cscat, NB, parent.cbs);
 
@@ -117,7 +108,7 @@ template <> struct matrify_and_run<matrix_constants::MAT_C>
     }
 };
 
-template <int Mat, MemoryPool& Pool, typename Child>
+template <int Mat, blocksize config::*MBS, blocksize config::*NBS, MemoryPool& Pool, typename Child>
 struct matrify
 {
     Child child;
@@ -127,14 +118,24 @@ struct matrify
     stride_type* rbs = nullptr;
     stride_type* cbs = nullptr;
 
-    template <typename T, typename MatrixA, typename MatrixB, typename MatrixC>
-    void operator()(const communicator& comm, const config& cfg,
+    matrify() {}
+
+    matrify(const matrify& other)
+    : child(other.child) {}
+
+    template <typename T, typename Communicator, typename MatrixA, typename MatrixB, typename MatrixC>
+    void operator()(Communicator& comm, const config& cfg,
                     T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         using namespace matrix_constants;
 
         len_type m = (Mat == MAT_A ? A.length(0) : Mat == MAT_B ? B.length(0) : C.length(0));
         len_type n = (Mat == MAT_A ? A.length(1) : Mat == MAT_B ? B.length(1) : C.length(1));
+
+        const blocksize M = cfg.*MBS;
+        const blocksize N = cfg.*NBS;
+        const len_type MB = M.def<T>();
+        const len_type NB = N.def<T>();
 
         if (!rscat)
         {
@@ -151,23 +152,40 @@ struct matrify
             cbs = rbs+m;
         }
 
-        matrify_and_run<Mat>(*this, comm, cfg, alpha, A, B, beta, C);
+        matrify_and_run<Mat>(MB, NB, *this, comm, cfg, alpha, A, B, beta, C);
     }
 };
 
 template <MemoryPool& Pool, typename Child>
-using matrify_a = matrify<matrix_constants::MAT_A, Pool, Child>;
+using matrify_a = matrify<matrix_constants::MAT_A, &config::gemm_mr, &config::gemm_kr, Pool, Child>;
 
 template <MemoryPool& Pool, typename Child>
-using matrify_b = matrify<matrix_constants::MAT_B, Pool, Child>;
+using matrify_b = matrify<matrix_constants::MAT_B, &config::gemm_kr, &config::gemm_nr, Pool, Child>;
 
 template <MemoryPool& Pool, typename Child>
-using matrify_c = matrify<matrix_constants::MAT_C, Pool, Child>;
+using matrify_c = matrify<matrix_constants::MAT_C, &config::gemm_mr, &config::gemm_nr, Pool, Child>;
 
-template <int Mat, MemoryPool& Pool, typename Child>
-struct matrify_and_pack : matrify<Mat, Pool, pack<Mat, Pool, Child>>
+template <int Mat, blocksize config::*MB, blocksize config::*NB, MemoryPool& Pool, typename Child>
+struct matrify_and_pack_sibling;
+
+template <blocksize config::*MB, blocksize config::*NB, MemoryPool& Pool, typename Child>
+struct matrify_and_pack_sibling<matrix_constants::MAT_A, MB, NB, Pool, Child>
 {
-    typedef matrify<Mat, Pool, pack<Mat, Pool, Child>> Sib;
+    typedef matrify<matrix_constants::MAT_A, MB, NB, Pool,
+               pack<matrix_constants::MAT_A, MB, Pool, Child>> type;
+};
+
+template <blocksize config::*MB, blocksize config::*NB, MemoryPool& Pool, typename Child>
+struct matrify_and_pack_sibling<matrix_constants::MAT_B, MB, NB, Pool, Child>
+{
+    typedef matrify<matrix_constants::MAT_B, MB, NB, Pool,
+               pack<matrix_constants::MAT_B, NB, Pool, Child>> type;
+};
+
+template <int Mat, blocksize config::*MB, blocksize config::*NB, MemoryPool& Pool, typename Child>
+struct matrify_and_pack : matrify_and_pack_sibling<Mat, MB, NB, Pool, Child>::type
+{
+    typedef typename matrify_and_pack_sibling<Mat, MB, NB, Pool, Child>::type Sib;
 
     using Sib::child;
     using Sib::rscat;
@@ -175,8 +193,8 @@ struct matrify_and_pack : matrify<Mat, Pool, pack<Mat, Pool, Child>>
     using Sib::rbs;
     using Sib::cbs;
 
-    template <typename T, typename MatrixA, typename MatrixB, typename MatrixC>
-    void operator()(const communicator& comm, const config& cfg,
+    template <typename T, typename Communicator, typename MatrixA, typename MatrixB, typename MatrixC>
+    void operator()(Communicator& comm, const config& cfg,
                     T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         using namespace matrix_constants;
@@ -216,10 +234,10 @@ struct matrify_and_pack : matrify<Mat, Pool, pack<Mat, Pool, Child>>
 };
 
 template <MemoryPool& Pool, typename Child>
-using matrify_and_pack_a = matrify_and_pack<matrix_constants::MAT_A, Pool, Child>;
+using matrify_and_pack_a = matrify_and_pack<matrix_constants::MAT_A, &config::gemm_mr, &config::gemm_kr, Pool, Child>;
 
 template <MemoryPool& Pool, typename Child>
-using matrify_and_pack_b = matrify_and_pack<matrix_constants::MAT_B, Pool, Child>;
+using matrify_and_pack_b = matrify_and_pack<matrix_constants::MAT_B, &config::gemm_kr, &config::gemm_nr, Pool, Child>;
 
 }
 

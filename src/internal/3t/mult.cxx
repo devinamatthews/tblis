@@ -212,10 +212,14 @@ void contract_blis(const communicator& comm, const config& cfg,
     len_type k = at.length(1);
 
 #if TBLIS_ENABLE_TBB
+#if TBB_INTERFACE_VERSION >= 9100
     int nt = tbb::this_task_arena::max_concurrency();
-#else
+#else //TBB_INTERFACE_VERSION >= 9100
+    int nt = tblis_get_num_threads();
+#endif //TBB_INTERFACE_VERSION >= 9100
+#else //TBLIS_ENABLE_TBB
     int nt = comm.num_threads();
-#endif
+#endif //TBLIS_ENABLE_TBB
 
     auto tc = make_gemm_thread_config<T>(cfg, nt, m, n, k);
     step<0>(gemm).distribute = tc.jc_nt;

@@ -59,10 +59,14 @@ void mult(const communicator& comm, const config& cfg,
     matrix_view<T> Cv({m, n},                C , {rs_C, cs_C});
 
 #if TBLIS_ENABLE_TBB
+#if TBB_INTERFACE_VERSION >= 9100
     int nt = tbb::this_task_arena::max_concurrency();
-#else
+#else //TBB_INTERFACE_VERSION >= 9100
+    int nt = tblis_get_num_threads();
+#endif //TBB_INTERFACE_VERSION >= 9100
+#else //TBLIS_ENABLE_TBB
     int nt = comm.num_threads();
-#endif
+#endif //TBLIS_ENABLE_TBB
 
     gemm_thread_config tc = make_gemm_thread_config<T>(cfg, nt, m, n, k);
 

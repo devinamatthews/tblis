@@ -15,6 +15,7 @@ env:
   - RUN_TEST=1 THREADING="none" BUILD_CONFIG="reference"
   - RUN_TEST=0 THREADING="openmp" BUILD_CONFIG="auto"
   - RUN_TEST=0 THREADING="pthreads" BUILD_CONFIG="auto"
+  - RUN_TEST=0 THREADING="tbb" BUILD_CONFIG="auto"
 
 matrix:
   exclude:
@@ -24,7 +25,7 @@ matrix:
   
 before_install:
   - 'if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-        brew update && brew install gcc@6 llvm@3.9;
+        brew update && brew install gcc@6 llvm@3.9 tbb;
         brew link --force llvm@3.9;
     fi'
 
@@ -38,6 +39,7 @@ addons:
     - g++-6
     - clang-3.9
     - libiomp-dev
+    - libtbb-dev
     
 install:
   - if [ "$CC" = "gcc" ] ; then export CC="gcc-6" CXX="g++-6"; fi

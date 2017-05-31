@@ -11,6 +11,7 @@
 namespace tblis
 {
 
+/*
 #if TBLIS_ENABLE_TBB
 
 struct gemm_task_graph
@@ -59,6 +60,7 @@ struct gemm_task_graph
 };
 
 #endif
+*/
 
 struct gemm_macro_kernel
 {

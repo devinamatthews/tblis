@@ -1,7 +1,7 @@
 #ifndef _MARRAY_VITERATOR_HPP_
 #define _MARRAY_VITERATOR_HPP_
 
-#include "miterator.hpp"
+#include "utility.hpp"
 
 namespace MArray
 {
@@ -10,9 +10,6 @@ template <unsigned N=1>
 class viterator
 {
     public:
-        typedef unsigned idx_type;
-        typedef ptrdiff_t stride_type;
-
         viterator() {}
 
         viterator(const viterator&) = default;
@@ -24,11 +21,11 @@ class viterator
                                                    detail::are_containers<Strides...>::value &&
                                                    sizeof...(Strides) == N>::type>
         viterator(const Len& len, const Strides&... strides)
-        : _ndim(len.size()), _pos(len.size()), _len(len.size()), _first(true), _empty(false)
+        : ndim_(len.size()), pos_(len.size()), len_(len.size()), first_(true), empty_(false)
         {
-            for (unsigned i = 0;i < _ndim;i++) if (len[i] == 0) _empty = true;
-            std::copy_n(len.begin(), _ndim, _len.begin());
-            detail::set_strides(_strides, strides...);
+            for (unsigned i = 0;i < ndim_;i++) if (len[i] == 0) empty_ = true;
+            std::copy_n(len.begin(), ndim_, len_.begin());
+            detail::set_strides(strides_, strides...);
         }
 
         viterator& operator=(const viterator&) = default;
@@ -37,45 +34,45 @@ class viterator
 
         void reset()
         {
-            _pos.assign(_ndim, 0);
-            _first = true;
+            pos_.assign(ndim_, 0);
+            first_ = true;
         }
 
         template <typename... Offsets,
                   typename=typename std::enable_if<sizeof...(Offsets) == N>::type>
         bool next(Offsets&... off)
         {
-            if (_empty) return false;
+            if (empty_) return false;
 
-            if (_first)
+            if (first_)
             {
-                _first = false;
+                first_ = false;
                 return true;
             }
 
-            if (_ndim == 0)
+            if (ndim_ == 0)
             {
-                _first = true;
+                first_ = true;
                 return false;
             }
 
-            for (unsigned i = 0;i < _ndim;i++)
+            for (unsigned i = 0;i < ndim_;i++)
             {
-                if (_pos[i] == _len[i]-1)
+                if (pos_[i] == len_[i]-1)
                 {
-                    detail::dec_offsets(i, _pos, _strides, off...);
-                    _pos[i] = 0;
+                    detail::dec_offsets(i, pos_, strides_, off...);
+                    pos_[i] = 0;
 
-                    if (i == _ndim-1)
+                    if (i == ndim_-1)
                     {
-                        _first = true;
+                        first_ = true;
                         return false;
                     }
                 }
                 else
                 {
-                    detail::inc_offsets(i, _strides, off...);
-                    _pos[i]++;
+                    detail::inc_offsets(i, strides_, off...);
+                    pos_[i]++;
                     return true;
                 }
             }
@@ -87,94 +84,99 @@ class viterator
                   typename=typename std::enable_if<sizeof...(Offsets) == N>::type>
         void position(stride_type pos, Offsets&... off)
         {
-            for (size_t i = 0;i < _ndim;i++)
+            for (size_t i = 0;i < ndim_;i++)
             {
-                _pos[i] = pos%_len[i];
-                pos = pos/_len[i];
+                pos_[i] = pos%len_[i];
+                pos = pos/len_[i];
             }
             assert(pos == 0);
 
-            position(_pos, off...);
+            position(pos_, off...);
         }
 
         template <typename Pos, typename... Offsets,
-                  typename=typename std::enable_if<detail::is_container_of<idx_type, Pos>::value &&
+                  typename=typename std::enable_if<detail::is_container_of<Pos, len_type>::value &&
                                                    sizeof...(Offsets) == N>::type>
         void position(const Pos& pos, Offsets&... off)
         {
-            assert(pos.size() == _ndim);
+            assert(pos.size() == ndim_);
 
-            _pos = pos;
+            pos_.assign(pos.begin(), pos.end());
 
-            for (size_t i = 0;i < _ndim;i++)
+            for (size_t i = 0;i < ndim_;i++)
             {
-                assert(_pos[i] >= 0 && _pos[i] < _len[i]);
+                assert(pos_[i] >= 0 && pos_[i] < len_[i]);
             }
 
-            detail::move_offsets(_pos, _strides, off...);
+            detail::move_offsets(pos_, strides_, off...);
 
-            _first = true;
+            first_ = true;
         }
 
         unsigned dimension() const
         {
-            return _ndim;
+            return ndim_;
         }
 
-        idx_type position(unsigned dim) const
+        len_type position(unsigned dim) const
         {
-            return _pos[dim];
+            return pos_[dim];
         }
 
-        const std::vector<idx_type>& position() const
+        const std::vector<len_type>& position() const
         {
-            return _pos;
+            return pos_;
         }
 
-        idx_type length(unsigned dim) const
+        len_type length(unsigned dim) const
         {
-            return _len[dim];
+            return len_[dim];
         }
 
-        const std::vector<idx_type>& lengths() const
+        const std::vector<len_type>& lengths() const
         {
-            return _len;
+            return len_;
         }
 
         stride_type stride(unsigned i, unsigned dim) const
         {
-            return _strides[i][dim];
+            return strides_[i][dim];
         }
 
         const std::vector<stride_type>& strides(unsigned i) const
         {
-            return _strides[i];
+            return strides_[i];
+        }
+
+        void swap(viterator& i2)
+        {
+            using std::swap;
+            swap(ndim_, i2.ndim_);
+            swap(pos_, i2.pos_);
+            swap(len_, i2.len_);
+            swap(strides_, i2.strides_);
+            swap(first_, i2.first_);
+            swap(empty_, i2.empty_);
         }
 
         friend void swap(viterator& i1, viterator& i2)
         {
-            using std::swap;
-            swap(i1._ndim, i2._ndim);
-            swap(i1._pos, i2._pos);
-            swap(i1._len, i2._len);
-            swap(i1._strides, i2._strides);
-            swap(i1._first, i2._first);
-            swap(i1._empty, i2._empty);
+            i1.swap(i2);
         }
 
     private:
-        size_t _ndim = 0;
-        std::vector<idx_type> _pos;
-        std::vector<idx_type> _len;
-        std::array<std::vector<stride_type>,N> _strides;
-        bool _first = true;
-        bool _empty = true;
+        size_t ndim_ = 0;
+        std::vector<len_type> pos_;
+        std::vector<len_type> len_;
+        std::array<std::vector<stride_type>,N> strides_;
+        bool first_ = true;
+        bool empty_ = true;
 };
 
-template <typename idx_type, typename stride_type, typename... Strides,
+template <typename len_type, typename stride_type, typename... Strides,
           typename=typename std::enable_if<detail::are_containers<Strides...>::value>::type>
 viterator<1+sizeof...(Strides)>
-make_iterator(const std::vector<idx_type>& len,
+make_iterator(const std::vector<len_type>& len,
               const std::vector<stride_type>& stride0,
               const Strides&... strides)
 {

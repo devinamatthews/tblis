@@ -6,26 +6,14 @@ AM_MAINTAINER_MODE([disable])
 
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_CONFIG_HEADER(config.h)
-AH_TOP([
-#ifndef _CONFIG_H_
-#define _CONFIG_H_
-])
-AH_BOTTOM([
-#ifndef DEBUG
-#define NDEBUG
-#endif
-
-#endif
-])
-
 AC_PROG_CXX([g++ clang++ icpc])
 AX_CXX_COMPILE_STDCXX_11([noext])
 AC_LANG([C++])
 
-mkdir -p external
-mkdir -p lib
+LT_INIT
+
 mkdir -p bin
 
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_SUBDIRS([third_party/googletest])
 AC_OUTPUT

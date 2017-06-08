@@ -32,7 +32,7 @@ void add(const communicator& comm, const config& cfg,
         std::vector<stride_type> stride_B1(stride_B_AB.begin()+1,
                                            stride_B_AB.end());
 
-        MArray::viterator<2> iter_AB(len1, stride_A1, stride_B1);
+        viterator<2> iter_AB(len1, stride_A1, stride_B1);
         len_type n = stl_ext::prod(len1);
 
         len_type m_min, m_max, n_min, n_max;
@@ -67,9 +67,9 @@ void add(const communicator& comm, const config& cfg,
     }
     else
     {
-        MArray::viterator<1> iter_A(len_A, stride_A);
-        MArray::viterator<1> iter_B(len_B, stride_B);
-        MArray::viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
+        viterator<1> iter_A(len_A, stride_A);
+        viterator<1> iter_B(len_B, stride_B);
+        viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
         len_type n = stl_ext::prod(len_AB);
 
         len_type n_min, n_max;

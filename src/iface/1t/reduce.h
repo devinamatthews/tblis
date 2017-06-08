@@ -25,7 +25,7 @@ void tblis_tensor_reduce(const tblis_comm* comm, const tblis_config* cfg,
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 template <typename T>
-void reduce(reduce_t op, const_tensor_view<T> A, const label_type* idx_A, T& result, len_type& idx)
+void reduce(reduce_t op, varray_view<const T> A, const label_type* idx_A, T& result, len_type& idx)
 {
     tblis_tensor A_s(A);
     tblis_scalar result_s(result);
@@ -34,7 +34,7 @@ void reduce(reduce_t op, const_tensor_view<T> A, const label_type* idx_A, T& res
 }
 
 template <typename T>
-void reduce(single_t, reduce_t op, const_tensor_view<T> A, const label_type* idx_A,
+void reduce(single_t, reduce_t op, varray_view<const T> A, const label_type* idx_A,
             T& result, len_type& idx)
 {
     tblis_tensor A_s(A);
@@ -44,7 +44,7 @@ void reduce(single_t, reduce_t op, const_tensor_view<T> A, const label_type* idx
 }
 
 template <typename T>
-void reduce(const communicator& comm, reduce_t op, const_tensor_view<T> A, const label_type* idx_A,
+void reduce(const communicator& comm, reduce_t op, varray_view<const T> A, const label_type* idx_A,
             T& result, len_type& idx)
 {
     tblis_tensor A_s(A);
@@ -54,7 +54,7 @@ void reduce(const communicator& comm, reduce_t op, const_tensor_view<T> A, const
 }
 
 template <typename T>
-std::pair<T,len_type> reduce(reduce_t op, const_tensor_view<T> A, const label_type* idx_A)
+std::pair<T,len_type> reduce(reduce_t op, varray_view<const T> A, const label_type* idx_A)
 {
     std::pair<T,len_type> result;
     reduce(op, A, idx_A, result.first, result.second);
@@ -62,7 +62,7 @@ std::pair<T,len_type> reduce(reduce_t op, const_tensor_view<T> A, const label_ty
 }
 
 template <typename T>
-std::pair<T,len_type> reduce(single_t, reduce_t op, const_tensor_view<T> A, const label_type* idx_A)
+std::pair<T,len_type> reduce(single_t, reduce_t op, varray_view<const T> A, const label_type* idx_A)
 {
     std::pair<T,len_type> result;
     reduce(single, op, A, idx_A, result.first, result.second);
@@ -71,7 +71,7 @@ std::pair<T,len_type> reduce(single_t, reduce_t op, const_tensor_view<T> A, cons
 
 template <typename T>
 std::pair<T,len_type> reduce(const communicator& comm, reduce_t op,
-                             const_tensor_view<T> A, const label_type* idx_A)
+                             varray_view<const T> A, const label_type* idx_A)
 {
     std::pair<T,len_type> result;
     reduce(comm, op, A, idx_A, result.first, result.second);

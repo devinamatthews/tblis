@@ -39,7 +39,7 @@ void reduce(const communicator& comm, const config& cfg, reduce_t op,
     stride_type stride0 = stride_A[0];
     std::vector<len_type> stride1(stride_A.begin()+1, stride_A.end());
 
-    MArray::viterator<1> iter_A(len1, stride1);
+    viterator<1> iter_A(len1, stride1);
     len_type n = stl_ext::prod(len1);
 
     len_type m_min, m_max, n_min, n_max;

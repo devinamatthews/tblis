@@ -226,31 +226,31 @@ struct gemm_experiment
         {
             if (Algorithm == BLIS)
             {
-                mult(T(1), A, B, T(0), C);
+                mult<T>(T(1), A, B, T(0), C);
             }
             else if (Algorithm == BLIS_COPY)
             {
-                add(T(1), A, T(0), A_copy);
-                add(T(1), B, T(0), B_copy);
-                mult(T(1), A_copy, B_copy, T(0), C_copy);
-                add(T(1), C_copy, T(0), C);
+                add<T>(T(1), A, T(0), A_copy);
+                add<T>(T(1), B, T(0), B_copy);
+                mult<T>(T(1), A_copy, B_copy, T(0), C_copy);
+                add<T>(T(1), C_copy, T(0), C);
             }
             else if (Algorithm == BLAS)
             {
-                gemm('N', 'N', m, n, k,
-                     T(1), A.data(), m,
-                           B.data(), k,
-                     T(0), C.data(), m);
+                gemm<T>('N', 'N', m, n, k,
+                        T(1), A.data(), m,
+                              B.data(), k,
+                        T(0), C.data(), m);
             }
             else if (Algorithm == BLAS_COPY)
             {
-                copy(m*k, A.data(), 1, A_copy.data(), 1);
-                copy(k*n, B.data(), 1, B_copy.data(), 1);
-                gemm('N', 'N', m, n, k,
-                     T(1), A_copy.data(), m,
-                           B_copy.data(), k,
-                     T(0), C_copy.data(), m);
-                copy(m*n, C_copy.data(), 1, C.data(), 1);
+                copy<T>(m*k, A.data(), 1, A_copy.data(), 1);
+                copy<T>(k*n, B.data(), 1, B_copy.data(), 1);
+                gemm<T>('N', 'N', m, n, k,
+                        T(1), A_copy.data(), m,
+                              B_copy.data(), k,
+                        T(0), C_copy.data(), m);
+                copy<T>(m*n, C_copy.data(), 1, C.data(), 1);
             }
         });
         double gflops = 2*m*n*k*1e-9;
@@ -350,18 +350,18 @@ struct random_contraction
             permute(idx_C, reorder_C);
             permute(len_C, reorder_C);
 
-            tensor<T> A(len_A);
-            tensor<T> B(len_B);
-            tensor<T> C(len_C);
+            varray<T> A(len_A);
+            varray<T> B(len_B);
+            varray<T> C(len_C);
 
             double gflops = 2*tm*tn*tk*1e-9;
             tblis::internal::impl = (Implementation == BLAS ? tblis::internal::BLAS_BASED
                                                             : tblis::internal::BLIS_BASED);
             double dt = run_kernel(R,
             [&]
-            {   mult(T(1), A, idx_A.data(),
-                           B, idx_B.data(),
-                     T(0), C, idx_C.data());
+            {   mult<T>(T(1), A, idx_A.data(),
+                              B, idx_B.data(),
+                        T(0), C, idx_C.data());
             });
 
             printf("%e %e -- %s %c %*s %*s %*s", gflops, gflops / dt,
@@ -414,9 +414,9 @@ struct regular_contraction
             len_C.push_back(lengths.at(c));
         }
 
-        tensor<T> A(len_A);
-        tensor<T> B(len_B);
-        tensor<T> C(len_C);
+        varray<T> A(len_A);
+        varray<T> B(len_B);
+        varray<T> C(len_C);
 
         double gflops = 2*ntot*1e-9;
         tblis::internal::impl = (Implementation == BLAS ? tblis::internal::BLAS_BASED
@@ -424,9 +424,9 @@ struct regular_contraction
         double dt = run_kernel(R,
         [&]
         {
-            mult(T(1), A, idx_A.data(),
-                       B, idx_B.data(),
-                 T(0), C, idx_C.data());
+            mult<T>(T(1), A, idx_A.data(),
+                          B, idx_B.data(),
+                    T(0), C, idx_C.data());
         });
 
         printf("%e %e -- %s %c %*s %*s %*s", gflops, gflops / dt,

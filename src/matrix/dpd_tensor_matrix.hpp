@@ -24,7 +24,7 @@ class tensor_matrix
         std::array<len_type, 2> offset_;
         std::array<len_type, 2> leading_len_;
         std::array<stride_type, 2> leading_stride_;
-        std::array<MArray::viterator<>, 2> iterator_;
+        std::array<viterator<>, 2> iterator_;
 
     public:
         tensor_matrix()
@@ -73,8 +73,8 @@ class tensor_matrix
             leading_len_[1] = 0;
             leading_stride_[0] = 0;
             leading_stride_[1] = 0;
-            iterator_[0] = MArray::viterator<>();
-            iterator_[1] = MArray::viterator<>();
+            iterator_[0] = viterator<>();
+            iterator_[1] = viterator<>();
         }
 
         void reset(const tensor_matrix& other)
@@ -160,8 +160,8 @@ class tensor_matrix
             for (len_type len : len_m_) len_[0] *= len;
             for (len_type len : len_n_) len_[1] *= len;
 
-            iterator_[0] = MArray::viterator<>(len_m_, stride_m_);
-            iterator_[1] = MArray::viterator<>(len_n_, stride_n_);
+            iterator_[0] = viterator<>(len_m_, stride_m_);
+            iterator_[1] = viterator<>(len_n_, stride_n_);
         }
 
         void transpose()

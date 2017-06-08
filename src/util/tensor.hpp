@@ -72,14 +72,14 @@ size_t check_sizes(const T& arg, const Ts&... args)
 template <typename... Strides>
 std::vector<unsigned> sort_by_stride(const Strides&... strides)
 {
-    std::vector<unsigned> idx = MArray::range(static_cast<unsigned>(check_sizes(strides...)));
+    std::vector<unsigned> idx = range(static_cast<unsigned>(check_sizes(strides...)));
     std::sort(idx.begin(), idx.end(), sort_by_stride_helper<sizeof...(Strides)>{&strides...});
     return idx;
 }
 
 template <typename T>
-bool are_congruent_along(const const_tensor_view<T>& A,
-                         const const_tensor_view<T>& B, unsigned dim)
+bool are_congruent_along(const varray_view<const T>& A,
+                         const varray_view<const T>& B, unsigned dim)
 {
     if (A.dimension() < B.dimension()) swap(A, B);
 
@@ -128,8 +128,8 @@ inline bool are_compatible(const std::vector<len_type>& len_A,
     if (stl_ext::prod(len_Ar) != stl_ext::prod(len_Br))
         return false;
 
-    MArray::viterator<> it_A(len_Ar, stride_Ar);
-    MArray::viterator<> it_B(len_Br, stride_Br);
+    viterator<> it_A(len_Ar, stride_Ar);
+    viterator<> it_B(len_Br, stride_Br);
 
     stride_type off_A = 0, off_B = 0;
     while (it_A.next(off_A) + it_B.next(off_B))
@@ -139,8 +139,8 @@ inline bool are_compatible(const std::vector<len_type>& len_A,
 }
 
 template <typename T>
-bool are_compatible(const const_tensor_view<T>& A,
-                    const const_tensor_view<T>& B)
+bool are_compatible(const varray_view<const T>& A,
+                    const varray_view<const T>& B)
 {
     return A.data() == B.data() &&
         are_compatible(A.lengths(), A.strides(),
@@ -314,7 +314,7 @@ inline void diagonal(unsigned& ndim,
     stride_out.reserve(ndim);
     idx_out.reserve(ndim);
 
-    std::vector<unsigned> inds = MArray::range(ndim);
+    std::vector<unsigned> inds = range(ndim);
     stl_ext::sort(inds, detail::sort_by_idx(idx_in));
 
     unsigned ndim_in = ndim;
@@ -342,8 +342,8 @@ inline void diagonal(unsigned& ndim,
 }
 
 template <typename T>
-void matricize(const_tensor_view<T>  A,
-               const_matrix_view<T>& AM, unsigned split)
+void matricize(varray_view<const T>  A,
+               matrix_view<const T>& AM, unsigned split)
 {
     unsigned ndim = A.dimension();
     TBLIS_ASSERT(split <= ndim);
@@ -405,10 +405,10 @@ void matricize(const_tensor_view<T>  A,
 }
 
 template <typename T>
-void matricize(tensor_view<T>  A,
+void matricize(varray_view<T>  A,
                matrix_view<T>& AM, unsigned split)
 {
-    matricize<T>(A, reinterpret_cast<const_matrix_view<T>&>(AM), split);
+    matricize<T>(A, reinterpret_cast<matrix_view<const T>&>(AM), split);
 }
 
 }

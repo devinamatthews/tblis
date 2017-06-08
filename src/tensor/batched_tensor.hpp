@@ -28,8 +28,8 @@ class const_batched_tensor_view
         typedef const T& const_reference;
 
     protected:
-        const_row_view<const_pointer> data_;
-        const_matrix_view<len_type> batch_idx_;
+        row_view<const const_pointer> data_;
+        matrix_view<const len_type> batch_idx_;
         std::vector<len_type> len_;
         std::vector<stride_type> stride_;
 
@@ -58,27 +58,27 @@ class const_batched_tensor_view
             reset(std::move(other));
         }
 
-        const_batched_tensor_view(const std::vector<len_type>& len, const_row_view<const_pointer> ptr, const_matrix_view<len_type> batch_idx, Layout layout=DEFAULT)
+        const_batched_tensor_view(const std::vector<len_type>& len, row_view<const const_pointer> ptr, matrix_view<const len_type> batch_idx, layout layout=DEFAULT)
         {
             reset(len, ptr, batch_idx, layout);
         }
 
         template <typename U, typename=
-            MArray::detail::enable_if_integral_t<U>>
-        const_batched_tensor_view(const std::vector<U>& len, const_row_view<const_pointer> ptr, const_matrix_view<len_type> batch_idx, Layout layout=DEFAULT)
+            detail::enable_if_integral_t<U>>
+        const_batched_tensor_view(const std::vector<U>& len, row_view<const const_pointer> ptr, matrix_view<const len_type> batch_idx, layout layout=DEFAULT)
         {
             reset(len, ptr, batch_idx, layout);
         }
 
-        const_batched_tensor_view(const std::vector<len_type>& len, const_row_view<const_pointer> ptr, const_matrix_view<len_type> batch_idx, const std::vector<stride_type>& stride)
+        const_batched_tensor_view(const std::vector<len_type>& len, row_view<const const_pointer> ptr, matrix_view<const len_type> batch_idx, const std::vector<stride_type>& stride)
         {
             reset(len, ptr, batch_idx, stride);
         }
 
         template <typename U, typename V, typename=
-            MArray::detail::enable_if_t<std::is_integral<U>::value &&
+            detail::enable_if_t<std::is_integral<U>::value &&
                                         std::is_integral<V>::value>>
-        const_batched_tensor_view(const std::vector<U>& len, const_row_view<const_pointer> ptr, const_matrix_view<len_type> batch_idx, const std::vector<V>& stride)
+        const_batched_tensor_view(const std::vector<U>& len, row_view<const const_pointer> ptr, matrix_view<const len_type> batch_idx, const std::vector<V>& stride)
         {
             reset(len, ptr, batch_idx, stride);
         }
@@ -117,27 +117,27 @@ class const_batched_tensor_view
             reset(static_cast<const_batched_tensor_view<T>&&>(other));
         }
 
-        void reset(const std::vector<len_type>& len, const_row_view<const_pointer> ptr, const_matrix_view<len_type> batch_idx, Layout layout = DEFAULT)
+        void reset(const std::vector<len_type>& len, row_view<const const_pointer> ptr, matrix_view<const len_type> batch_idx, layout layout = DEFAULT)
         {
             reset<len_type>(len, ptr, batch_idx, layout);
         }
 
         template <typename U>
-        MArray::detail::enable_if_integral_t<U>
-        reset(const std::vector<U>& len, const_row_view<const_pointer> ptr, const_matrix_view<len_type> batch_idx, Layout layout = DEFAULT)
+        detail::enable_if_integral_t<U>
+        reset(const std::vector<U>& len, row_view<const const_pointer> ptr, matrix_view<const len_type> batch_idx, layout layout = DEFAULT)
         {
-            reset(len, ptr, batch_idx, tensor<T>::default_strides(len, layout));
+            reset(len, ptr, batch_idx, varray<T>::strides(len, layout));
         }
 
-        void reset(const std::vector<len_type>& len, const_row_view<const_pointer> ptr, const_matrix_view<len_type> batch_idx, const std::vector<stride_type>& stride)
+        void reset(const std::vector<len_type>& len, row_view<const const_pointer> ptr, matrix_view<const len_type> batch_idx, const std::vector<stride_type>& stride)
         {
             reset<len_type, stride_type>(len, ptr, batch_idx, stride);
         }
 
         template <typename U, typename V>
-        MArray::detail::enable_if_t<std::is_integral<U>::value &&
+        detail::enable_if_t<std::is_integral<U>::value &&
                                     std::is_integral<V>::value>
-        reset(const std::vector<U>& len, const_row_view<const_pointer> ptr, const_matrix_view<len_type> batch_idx, const std::vector<V>& stride)
+        reset(const std::vector<U>& len, row_view<const const_pointer> ptr, matrix_view<const len_type> batch_idx, const std::vector<V>& stride)
         {
             TBLIS_ASSERT(len.size() == stride.size()+batch_idx.length(1));
             TBLIS_ASSERT(ptr.length() == batch_idx.length(0));
@@ -147,14 +147,14 @@ class const_batched_tensor_view
             stride_ = stride;
         }
 
-        const_tensor_view<T> operator[](len_type batch) const
+        varray_view<const T> operator[](len_type batch) const
         {
             TBLIS_ASSERT(0 <= batch && batch < num_batches());
             return {{len_.begin(), len_.begin()+dense_dimension()},
                     data_[batch], stride_};
         }
 
-        const const_row_view<const_pointer>& batch_data() const
+        const row_view<const const_pointer>& batch_data() const
         {
             return data_;
         }
@@ -165,12 +165,12 @@ class const_batched_tensor_view
             return data_[batch];
         }
 
-        const const_matrix_view<len_type>& batch_indices() const
+        const matrix_view<const len_type>& batch_indices() const
         {
             return batch_idx_;
         }
 
-        const_row_view<len_type> batch_indices(len_type batch) const
+        row_view<const len_type> batch_indices(len_type batch) const
         {
             TBLIS_ASSERT(0 <= batch && batch < num_batches());
             return batch_idx_[batch];
@@ -271,27 +271,27 @@ class batched_tensor_view : public const_batched_tensor_view<T>
             reset(std::move(other));
         }
 
-        batched_tensor_view(const std::vector<len_type>& len, const pointer* ptr, const_matrix_view<len_type> batch_idx, Layout layout=DEFAULT)
+        batched_tensor_view(const std::vector<len_type>& len, const pointer* ptr, matrix_view<const len_type> batch_idx, layout layout=DEFAULT)
         {
             reset(len, ptr, batch_idx, layout);
         }
 
         template <typename U, typename=
-            MArray::detail::enable_if_integral_t<U>>
-        batched_tensor_view(const std::vector<U>& len, const pointer* ptr, const_matrix_view<len_type> batch_idx, Layout layout=DEFAULT)
+            detail::enable_if_integral_t<U>>
+        batched_tensor_view(const std::vector<U>& len, const pointer* ptr, matrix_view<const len_type> batch_idx, layout layout=DEFAULT)
         {
             reset(len, ptr, batch_idx, layout);
         }
 
-        batched_tensor_view(const std::vector<len_type>& len, const pointer* ptr, const_matrix_view<len_type> batch_idx, const std::vector<stride_type>& stride)
+        batched_tensor_view(const std::vector<len_type>& len, const pointer* ptr, matrix_view<const len_type> batch_idx, const std::vector<stride_type>& stride)
         {
             reset(len, ptr, batch_idx, stride);
         }
 
         template <typename U, typename V, typename=
-            MArray::detail::enable_if_t<std::is_integral<U>::value &&
+            detail::enable_if_t<std::is_integral<U>::value &&
                                         std::is_integral<V>::value>>
-        batched_tensor_view(const std::vector<U>& len, const pointer* ptr, const_matrix_view<len_type> batch_idx, const std::vector<V>& stride)
+        batched_tensor_view(const std::vector<U>& len, const pointer* ptr, matrix_view<const len_type> batch_idx, const std::vector<V>& stride)
         {
             reset(len, ptr, batch_idx, stride);
         }
@@ -311,32 +311,32 @@ class batched_tensor_view : public const_batched_tensor_view<T>
             base::reset(std::move(other));
         }
 
-        void reset(const std::vector<len_type>& len, const pointer* ptr, const_matrix_view<len_type> batch_idx, Layout layout = DEFAULT)
+        void reset(const std::vector<len_type>& len, const pointer* ptr, matrix_view<const len_type> batch_idx, layout layout = DEFAULT)
         {
             base::reset(len, ptr, batch_idx, layout);
         }
 
         template <typename U>
-        MArray::detail::enable_if_integral_t<U>
-        reset(const std::vector<U>& len, const pointer& ptr, const_matrix_view<len_type> batch_idx, Layout layout = DEFAULT)
+        detail::enable_if_integral_t<U>
+        reset(const std::vector<U>& len, const pointer& ptr, matrix_view<const len_type> batch_idx, layout layout = DEFAULT)
         {
             base::reset(len, ptr, batch_idx, layout);
         }
 
-        void reset(const std::vector<len_type>& len, const pointer* ptr, const_matrix_view<len_type> batch_idx, const std::vector<stride_type>& stride)
+        void reset(const std::vector<len_type>& len, const pointer* ptr, matrix_view<const len_type> batch_idx, const std::vector<stride_type>& stride)
         {
             base::reset(len, ptr, batch_idx, stride);
         }
 
         template <typename U, typename V>
-        MArray::detail::enable_if_t<std::is_integral<U>::value &&
+        detail::enable_if_t<std::is_integral<U>::value &&
                                     std::is_integral<V>::value>
-        reset(const std::vector<U>& len, const pointer* ptr, const_matrix_view<len_type> batch_idx, const std::vector<V>& stride)
+        reset(const std::vector<U>& len, const pointer* ptr, matrix_view<const len_type> batch_idx, const std::vector<V>& stride)
         {
             base::reset(len, ptr, batch_idx, stride);
         }
 
-        tensor_view<T> operator[](len_type batch) const
+        varray_view<T> operator[](len_type batch) const
         {
             return {{len_.begin(), len_.begin()+dense_dimension()},
                     const_cast<pointer>(data_[batch]), stride_};
@@ -394,11 +394,11 @@ class batched_tensor : public batched_tensor_view<T>, private Allocator
         row<const_pointer> data_alloc_;
         matrix<len_type> batch_idx_alloc_;
         len_type size_ = 0;
-        Layout layout_ = DEFAULT;
+        layout layout_ = DEFAULT;
 
         batched_tensor& operator=(const batched_tensor& other) = delete;
 
-        std::vector<stride_type> default_strides(const std::vector<len_type>& len, Layout layout=DEFAULT)
+        std::vector<stride_type> default_strides(const std::vector<len_type>& len, layout layout=DEFAULT)
         {
             std::vector<stride_type> stride(len.size());
 
@@ -428,19 +428,19 @@ class batched_tensor : public batched_tensor_view<T>, private Allocator
     public:
         batched_tensor() {}
 
-        batched_tensor(const const_batched_tensor_view<T>& other, Layout layout=DEFAULT)
+        batched_tensor(const const_batched_tensor_view<T>& other, layout layout=DEFAULT)
         {
             reset(other, layout);
         }
 
-        batched_tensor(const batched_tensor_view<T>& other, Layout layout=DEFAULT)
+        batched_tensor(const batched_tensor_view<T>& other, layout layout=DEFAULT)
         {
             reset(other, layout);
         }
 
         template <typename OAlloc, typename=
-            MArray::detail::enable_if_not_integral_t<OAlloc>>
-        batched_tensor(const batched_tensor<T, OAlloc>& other, Layout layout=DEFAULT)
+            detail::enable_if_not_integral_t<OAlloc>>
+        batched_tensor(const batched_tensor<T, OAlloc>& other, layout layout=DEFAULT)
         {
             reset(other, layout);
         }
@@ -455,26 +455,26 @@ class batched_tensor : public batched_tensor_view<T>, private Allocator
             reset(std::move(other));
         }
 
-        batched_tensor(const std::vector<len_type>& len, const_matrix_view<len_type> batch_idx, const T& value=T(), Layout layout=DEFAULT)
+        batched_tensor(const std::vector<len_type>& len, matrix_view<const len_type> batch_idx, const T& value=T(), layout layout=DEFAULT)
         {
             reset(len, batch_idx, value, layout);
         }
 
         template <typename U, typename=
-            MArray::detail::enable_if_integral_t<U>>
-        batched_tensor(const std::vector<U>& len, const_matrix_view<len_type> batch_idx, const T& value=T(), Layout layout=DEFAULT)
+            detail::enable_if_integral_t<U>>
+        batched_tensor(const std::vector<U>& len, matrix_view<const len_type> batch_idx, const T& value=T(), layout layout=DEFAULT)
         {
             reset(len, batch_idx, value, layout);
         }
 
-        batched_tensor(const std::vector<len_type>& len, const_matrix_view<len_type> batch_idx, uninitialized_t u, Layout layout=DEFAULT)
+        batched_tensor(const std::vector<len_type>& len, matrix_view<const len_type> batch_idx, uninitialized_t u, layout layout=DEFAULT)
         {
             reset(len, batch_idx, uninitialized, layout);
         }
 
         template <typename U, typename=
-            MArray::detail::enable_if_integral_t<U>>
-        batched_tensor(const std::vector<U>& len, const_matrix_view<len_type> batch_idx, uninitialized_t u, Layout layout=DEFAULT)
+            detail::enable_if_integral_t<U>>
+        batched_tensor(const std::vector<U>& len, matrix_view<const len_type> batch_idx, uninitialized_t u, layout layout=DEFAULT)
         {
             reset(len, batch_idx, uninitialized, layout);
         }
@@ -494,7 +494,7 @@ class batched_tensor : public batched_tensor_view<T>, private Allocator
             base::reset();
         }
 
-        void reset(const const_batched_tensor_view<T>& other, Layout layout=DEFAULT)
+        void reset(const const_batched_tensor_view<T>& other, layout layout=DEFAULT)
         {
             if (std::is_scalar<T>::value)
             {
@@ -505,7 +505,7 @@ class batched_tensor : public batched_tensor_view<T>, private Allocator
                 reset(other.len_, other.batch_idx_, T(), layout);
             }
 
-            auto it = MArray::make_iterator(std::vector<len_type>{len_.begin(), len_.begin()+dense_dimension()},
+            auto it = make_iterator(std::vector<len_type>{len_.begin(), len_.begin()+dense_dimension()},
                                             stride_, stride_);
             for (len_type batch = 0;batch < num_batches();batch++)
             {
@@ -515,14 +515,14 @@ class batched_tensor : public batched_tensor_view<T>, private Allocator
             }
         }
 
-        void reset(const batched_tensor_view<T>& other, Layout layout=DEFAULT)
+        void reset(const batched_tensor_view<T>& other, layout layout=DEFAULT)
         {
             reset(static_cast<const const_batched_tensor_view<T>&>(other), layout);
         }
 
         template <typename OAlloc>
-        MArray::detail::enable_if_not_integral_t<OAlloc>
-        reset(const batched_tensor<T, OAlloc>& other, Layout layout=DEFAULT)
+        detail::enable_if_not_integral_t<OAlloc>
+        reset(const batched_tensor<T, OAlloc>& other, layout layout=DEFAULT)
         {
             reset(static_cast<const const_batched_tensor_view<T>&>(other), layout);
         }
@@ -532,27 +532,27 @@ class batched_tensor : public batched_tensor_view<T>, private Allocator
             swap(other);
         }
 
-        void reset(const std::vector<len_type>& len, const_matrix_view<len_type> batch_idx, const T& val=T(), Layout layout=DEFAULT)
+        void reset(const std::vector<len_type>& len, matrix_view<const len_type> batch_idx, const T& val=T(), layout layout=DEFAULT)
         {
-            reset<len_type>(len, batch_idx, val, layout);
+            reset<>(len, batch_idx, val, layout);
         }
 
         template <typename U>
-        MArray::detail::enable_if_integral_t<U>
-        reset(const std::vector<U>& len, const_matrix_view<len_type> batch_idx, const T& val=T(), Layout layout=DEFAULT)
+        detail::enable_if_integral_t<U>
+        reset(const std::vector<U>& len, matrix_view<const len_type> batch_idx, const T& val=T(), layout layout=DEFAULT)
         {
             reset(len, batch_idx, uninitialized, layout);
             std::uninitialized_fill_n(data_ptr_.data(), size_*num_batches(), val);
         }
 
-        void reset(const std::vector<len_type>& len, const_matrix_view<len_type> batch_idx, uninitialized_t u, Layout layout=DEFAULT)
+        void reset(const std::vector<len_type>& len, matrix_view<const len_type> batch_idx, uninitialized_t u, layout layout=DEFAULT)
         {
-            reset<len_type>(len, batch_idx, uninitialized, layout);
+            reset<>(len, batch_idx, uninitialized, layout);
         }
 
         template <typename U>
-        MArray::detail::enable_if_integral_t<U>
-        reset(const std::vector<U>& len, const_matrix_view<len_type> batch_idx, uninitialized_t u, Layout layout=DEFAULT)
+        detail::enable_if_integral_t<U>
+        reset(const std::vector<U>& len, matrix_view<const len_type> batch_idx, uninitialized_t u, layout layout=DEFAULT)
         {
             batch_idx_alloc_.reset(batch_idx, ROW_MAJOR);
             batch_idx_.reset(batch_idx_alloc_);
@@ -573,12 +573,12 @@ class batched_tensor : public batched_tensor_view<T>, private Allocator
             }
         }
 
-        const_tensor_view<T> operator[](len_type batch) const
+        varray_view<const T> operator[](len_type batch) const
         {
             return base::operator[](batch);
         }
 
-        tensor_view<T> operator[](len_type batch)
+        varray_view<T> operator[](len_type batch)
         {
             return base::operator[](batch);
         }

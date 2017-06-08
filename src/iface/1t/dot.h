@@ -26,8 +26,8 @@ void tblis_tensor_dot(const tblis_comm* comm, const tblis_config* cfg,
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 template <typename T>
-void dot(const_tensor_view<T> A, const label_type* idx_A,
-         const_tensor_view<T> B, const label_type* idx_B, T& result)
+void dot(varray_view<const T> A, const label_type* idx_A,
+         varray_view<const T> B, const label_type* idx_B, T& result)
 {
     tblis_tensor A_s(A);
     tblis_tensor B_s(B);
@@ -37,8 +37,8 @@ void dot(const_tensor_view<T> A, const label_type* idx_A,
 }
 
 template <typename T>
-void dot(single_t, const_tensor_view<T> A, const label_type* idx_A,
-                     const_tensor_view<T> B, const label_type* idx_B, T& result)
+void dot(single_t, varray_view<const T> A, const label_type* idx_A,
+                     varray_view<const T> B, const label_type* idx_B, T& result)
 {
     tblis_tensor A_s(A);
     tblis_tensor B_s(B);
@@ -49,8 +49,8 @@ void dot(single_t, const_tensor_view<T> A, const label_type* idx_A,
 
 template <typename T>
 void dot(const communicator& comm,
-         const_tensor_view<T> A, const label_type* idx_A,
-         const_tensor_view<T> B, const label_type* idx_B, T& result)
+         varray_view<const T> A, const label_type* idx_A,
+         varray_view<const T> B, const label_type* idx_B, T& result)
 {
     tblis_tensor A_s(A);
     tblis_tensor B_s(B);
@@ -60,8 +60,8 @@ void dot(const communicator& comm,
 }
 
 template <typename T>
-T dot(const_tensor_view<T> A, const label_type* idx_A,
-      const_tensor_view<T> B, const label_type* idx_B)
+T dot(varray_view<const T> A, const label_type* idx_A,
+      varray_view<const T> B, const label_type* idx_B)
 {
     T result;
     dot(A, idx_A, B, idx_B, result);
@@ -69,8 +69,8 @@ T dot(const_tensor_view<T> A, const label_type* idx_A,
 }
 
 template <typename T>
-T dot(single_t, const_tensor_view<T> A, const label_type* idx_A,
-                  const_tensor_view<T> B, const label_type* idx_B)
+T dot(single_t, varray_view<const T> A, const label_type* idx_A,
+                  varray_view<const T> B, const label_type* idx_B)
 {
     T result;
     dot(single, A, idx_A, B, idx_B, result);
@@ -79,8 +79,8 @@ T dot(single_t, const_tensor_view<T> A, const label_type* idx_A,
 
 template <typename T>
 T dot(const communicator& comm,
-      const_tensor_view<T> A, const label_type* idx_A,
-      const_tensor_view<T> B, const label_type* idx_B)
+      varray_view<const T> A, const label_type* idx_A,
+      varray_view<const T> B, const label_type* idx_B)
 {
     T result;
     dot(comm, A, idx_A, B, idx_B, result);

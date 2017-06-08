@@ -24,7 +24,7 @@ class tensor_matrix
         std::array<len_type, 2> offset_;
         std::array<len_type, 2> leading_len_;
         std::array<stride_type, 2> leading_stride_;
-        std::array<MArray::viterator<>, 2> iterator_;
+        std::array<viterator<>, 2> iterator_;
 
     public:
         tensor_matrix()
@@ -43,7 +43,7 @@ class tensor_matrix
         }
 
         template <typename U, typename V>
-        tensor_matrix(tensor_view<T> other,
+        tensor_matrix(varray_view<const T> other,
                       const std::vector<U>& row_inds,
                       const std::vector<V>& col_inds)
         {
@@ -73,8 +73,8 @@ class tensor_matrix
             leading_len_[1] = 0;
             leading_stride_[0] = 0;
             leading_stride_[1] = 0;
-            iterator_[0] = MArray::viterator<>();
-            iterator_[1] = MArray::viterator<>();
+            iterator_[0] = viterator<>();
+            iterator_[1] = viterator<>();
         }
 
         void reset(const tensor_matrix& other)
@@ -108,28 +108,42 @@ class tensor_matrix
         }
 
         template <typename U, typename V>
-        void reset(tensor_view<T> other,
+        void reset(varray_view<const T> other,
                    const std::vector<U>& row_inds,
                    const std::vector<V>& col_inds)
         {
-            std::vector<len_type> len_m(row_inds.size());
-            std::vector<len_type> len_n(col_inds.size());
-            std::vector<stride_type> stride_m(row_inds.size());
-            std::vector<stride_type> stride_n(col_inds.size());
+            TBLIS_ASSERT(row_inds.size()+col_inds.size() == other.dimension());
 
-            for (size_t i = 0;i < row_inds.size();i++)
+            data_ = const_cast<T*>(other.data());
+            len_[0] = leading_len_[0] = (row_inds.empty() ? 1 : other.length(row_inds[0]));
+            len_[1] = leading_len_[1] = (col_inds.empty() ? 1 : other.length(col_inds[0]));
+            leading_stride_[0] = (row_inds.empty() ? 1 : other.stride(row_inds[0]));
+            leading_stride_[1] = (col_inds.empty() ? 1 : other.stride(col_inds[0]));
+            offset_[0] = 0;
+            offset_[1] = 0;
+
+            std::vector<len_type> len_m_; len_m_.reserve(row_inds.size());
+            std::vector<len_type> len_n_; len_n_.reserve(col_inds.size());
+            std::vector<stride_type> stride_m_; stride_m_.reserve(row_inds.size());
+            std::vector<stride_type> stride_n_; stride_n_.reserve(col_inds.size());
+
+            for (unsigned i = 1;i < row_inds.size();i++)
             {
-                len_m[i-1] = other.length(row_inds[i]);
-                stride_m[i-1] = other.stride(row_inds[i]);
+                len_m_.push_back(other.length(row_inds[i]));
+                stride_m_.push_back(other.stride(row_inds[i]));
             }
 
-            for (size_t i = 0;i < col_inds.size();i++)
+            for (unsigned i = 1;i < col_inds.size();i++)
             {
-                len_n[i-1] = other.length(col_inds[i]);
-                stride_n[i-1] = other.stride(col_inds[i]);
+                len_n_.push_back(other.length(col_inds[i]));
+                stride_n_.push_back(other.stride(col_inds[i]));
             }
 
-            reset(len_m, len_n, other.data(), stride_m, stride_n);
+            for (len_type len : len_m_) len_[0] *= len;
+            for (len_type len : len_n_) len_[1] *= len;
+
+            iterator_[0] = viterator<>(len_m_, stride_m_);
+            iterator_[1] = viterator<>(len_n_, stride_n_);
         }
 
         template <typename U, typename V, typename W, typename X>
@@ -160,8 +174,8 @@ class tensor_matrix
             for (len_type len : len_m_) len_[0] *= len;
             for (len_type len : len_n_) len_[1] *= len;
 
-            iterator_[0] = MArray::viterator<>(len_m_, stride_m_);
-            iterator_[1] = MArray::viterator<>(len_n_, stride_n_);
+            iterator_[0] = viterator<>(len_m_, stride_m_);
+            iterator_[1] = viterator<>(len_n_, stride_n_);
         }
 
         void transpose()

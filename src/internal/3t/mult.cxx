@@ -45,7 +45,7 @@ void contract_blas(const communicator& comm, const config& cfg,
                    const std::vector<stride_type>& stride_C_AC,
                    const std::vector<stride_type>& stride_C_BC)
 {
-    tensor<T> ar, br, cr;
+    varray<T> ar, br, cr;
     T* ptrs_local[3];
     T** ptrs = &ptrs_local[0];
 
@@ -61,9 +61,9 @@ void contract_blas(const communicator& comm, const config& cfg,
 
     comm.broadcast(ptrs);
 
-    tensor_view<T> arv(len_AC+len_AB, ptrs[0]);
-    tensor_view<T> brv(len_AB+len_BC, ptrs[1]);
-    tensor_view<T> crv(len_AC+len_BC, ptrs[2]);
+    varray_view<T> arv(len_AC+len_AB, ptrs[0]);
+    varray_view<T> brv(len_AB+len_BC, ptrs[1]);
+    varray_view<T> crv(len_AC+len_BC, ptrs[2]);
 
     matrix_view<T> am, bm, cm;
     matricize<T>(arv, am, static_cast<unsigned>(len_AC.size()));
@@ -105,9 +105,9 @@ void contract_ref(const communicator& comm, const config& cfg,
 {
     (void)cfg;
 
-    MArray::viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
-    MArray::viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
-    MArray::viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
+    viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
+    viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
+    viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
     len_type m = stl_ext::prod(len_AC);
     len_type n = stl_ext::prod(len_BC);
 
@@ -266,7 +266,7 @@ void mult_blas(const communicator& comm, const config& cfg,
                const std::vector<stride_type>& stride_C_BC,
                const std::vector<stride_type>& stride_C_ABC)
 {
-    tensor<T> ar, br, cr;
+    varray<T> ar, br, cr;
     T* ptrs_local[3];
     T** ptrs = &ptrs_local[0];
 
@@ -282,16 +282,16 @@ void mult_blas(const communicator& comm, const config& cfg,
 
     comm.broadcast(ptrs);
 
-    tensor_view<T> arv(len_AC+len_AB, ptrs[0]);
-    tensor_view<T> brv(len_AB+len_BC, ptrs[1]);
-    tensor_view<T> crv(len_AC+len_BC, ptrs[2]);
+    varray_view<T> arv(len_AC+len_AB, ptrs[0]);
+    varray_view<T> brv(len_AB+len_BC, ptrs[1]);
+    varray_view<T> crv(len_AC+len_BC, ptrs[2]);
 
     matrix_view<T> am, bm, cm;
     matricize<T>(arv, am, static_cast<unsigned>(len_AC.size()));
     matricize<T>(brv, bm, static_cast<unsigned>(len_AB.size()));
     matricize<T>(crv, cm, static_cast<unsigned>(len_AC.size()));
 
-    MArray::viterator<3> it(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
+    viterator<3> it(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
 
     while (it.next(A, B, C))
     {
@@ -341,13 +341,13 @@ void mult_ref(const communicator& comm, const config& cfg,
 {
     (void)cfg;
 
-    MArray::viterator<1> iter_A(len_A, stride_A_A);
-    MArray::viterator<1> iter_B(len_B, stride_B_B);
-    MArray::viterator<1> iter_C(len_C, stride_C_C);
-    MArray::viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
-    MArray::viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
-    MArray::viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
-    MArray::viterator<3> iter_ABC(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
+    viterator<1> iter_A(len_A, stride_A_A);
+    viterator<1> iter_B(len_B, stride_B_B);
+    viterator<1> iter_C(len_C, stride_C_C);
+    viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
+    viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
+    viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
+    viterator<3> iter_ABC(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
     len_type n = stl_ext::prod(len_ABC);
 
     len_type n_min, n_max;
@@ -415,7 +415,7 @@ void outer_prod_blas(const communicator& comm, const config& cfg,
                      const std::vector<stride_type>& stride_C_AC,
                      const std::vector<stride_type>& stride_C_BC)
 {
-    tensor<T> ar, br, cr;
+    varray<T> ar, br, cr;
     T* ptrs_local[3];
     T** ptrs = &ptrs_local[0];
 
@@ -431,9 +431,9 @@ void outer_prod_blas(const communicator& comm, const config& cfg,
 
     comm.broadcast(ptrs);
 
-    tensor_view<T> arv(len_AC, ptrs[0]);
-    tensor_view<T> brv(len_BC, ptrs[1]);
-    tensor_view<T> crv(len_AC+len_BC, ptrs[2]);
+    varray_view<T> arv(len_AC, ptrs[0]);
+    varray_view<T> brv(len_BC, ptrs[1]);
+    varray_view<T> crv(len_AC+len_BC, ptrs[2]);
 
     matrix_view<T> am, bm, cm;
     matricize<T>(arv, am, static_cast<unsigned>(len_AC.size()));
@@ -472,8 +472,8 @@ void outer_prod_ref(const communicator& comm, const config& cfg,
 {
     (void)cfg;
 
-    MArray::viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
-    MArray::viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
+    viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
+    viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
     len_type m = stl_ext::prod(len_AC);
     len_type n = stl_ext::prod(len_BC);
 
@@ -532,7 +532,7 @@ void weight_blas(const communicator& comm, const config& cfg,
                  const std::vector<stride_type>& stride_C_BC,
                  const std::vector<stride_type>& stride_C_ABC)
 {
-    tensor<T> ar, br, cr;
+    varray<T> ar, br, cr;
     T* ptrs_local[3];
     T** ptrs = &ptrs_local[0];
 
@@ -548,16 +548,16 @@ void weight_blas(const communicator& comm, const config& cfg,
 
     comm.broadcast(ptrs);
 
-    tensor_view<T> arv(len_AC, ptrs[0]);
-    tensor_view<T> brv(len_BC, ptrs[1]);
-    tensor_view<T> crv(len_AC+len_BC, ptrs[2]);
+    varray_view<T> arv(len_AC, ptrs[0]);
+    varray_view<T> brv(len_BC, ptrs[1]);
+    varray_view<T> crv(len_AC+len_BC, ptrs[2]);
 
     matrix_view<T> am, bm, cm;
     matricize<T>(arv, am, static_cast<unsigned>(len_AC.size()));
     matricize<T>(brv, bm, 0);
     matricize<T>(crv, cm, static_cast<unsigned>(len_AC.size()));
 
-    MArray::viterator<3> it(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
+    viterator<3> it(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
 
     while (it.next(A, B, C))
     {
@@ -598,9 +598,9 @@ void weight_ref(const communicator& comm, const config& cfg,
 {
     (void)cfg;
 
-    MArray::viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
-    MArray::viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
-    MArray::viterator<3> iter_ABC(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
+    viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
+    viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
+    viterator<3> iter_ABC(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
     len_type n = stl_ext::prod(len_ABC);
 
     len_type n_min, n_max;

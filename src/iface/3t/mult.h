@@ -26,9 +26,9 @@ void tblis_tensor_mult(const tblis_comm* comm, const tblis_config* cfg,
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 template <typename T>
-void mult(T alpha, const_tensor_view<T> A, const label_type* idx_A,
-                   const_tensor_view<T> B, const label_type* idx_B,
-          T  beta,       tensor_view<T> C, const label_type* idx_C)
+void mult(T alpha, varray_view<const T> A, const label_type* idx_A,
+                   varray_view<const T> B, const label_type* idx_B,
+          T  beta,       varray_view<T> C, const label_type* idx_C)
 {
     tblis_tensor A_s(alpha, A);
     tblis_tensor B_s(B);
@@ -39,9 +39,9 @@ void mult(T alpha, const_tensor_view<T> A, const label_type* idx_A,
 
 template <typename T>
 void mult(single_t,
-          T alpha, const_tensor_view<T> A, const label_type* idx_A,
-                   const_tensor_view<T> B, const label_type* idx_B,
-          T  beta,       tensor_view<T> C, const label_type* idx_C)
+          T alpha, varray_view<const T> A, const label_type* idx_A,
+                   varray_view<const T> B, const label_type* idx_B,
+          T  beta,       varray_view<T> C, const label_type* idx_C)
 {
     tblis_tensor A_s(alpha, A);
     tblis_tensor B_s(B);
@@ -52,9 +52,9 @@ void mult(single_t,
 
 template <typename T>
 void mult(const communicator& comm,
-          T alpha, const_tensor_view<T> A, const label_type* idx_A,
-                   const_tensor_view<T> B, const label_type* idx_B,
-          T  beta,       tensor_view<T> C, const label_type* idx_C)
+          T alpha, varray_view<const T> A, const label_type* idx_A,
+                   varray_view<const T> B, const label_type* idx_B,
+          T  beta,       varray_view<T> C, const label_type* idx_C)
 {
     tblis_tensor A_s(alpha, A);
     tblis_tensor B_s(B);

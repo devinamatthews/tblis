@@ -176,7 +176,7 @@ void init(batched_tensor<T>& A, const string& dense, const string& batch)
         for (len_type i = 0;i < size;i++)
         {
             double* data = A.batch_data(i);
-            MArray::viterator<> it(len, A.strides());
+            viterator<> it(len, A.strides());
             while (it.next(data)) *data = random_number<double>();
         }
     }
@@ -197,7 +197,7 @@ double diff(const_batched_tensor_view<T> A,
         const T* b = B.batch_data(i);
 
         stride_type off = 0;
-        MArray::viterator<> it(dense_len, A.strides());
+        viterator<> it(dense_len, A.strides());
         while (it.next(off)) d += norm2(a[off]-b[off]);
     }
 

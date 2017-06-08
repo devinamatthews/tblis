@@ -326,11 +326,12 @@ endif
 
 noinst_PROGRAMS = bin/test
 if ENABLE_BLAS
-noinst_PROGRAMS += bin/bench bin/batched_bench
+noinst_PROGRAMS += bin/bench bin/batched_bench bin/dpd_bench
 endif
 bin_test_SOURCES = test/test.cxx
 bin_bench_SOURCES = test/bench.cxx
 bin_batched_bench_SOURCES = test/batched_bench.cxx
+bin_dpd_bench_SOURCES = test/dpd_bench.cxx
 
 VPATH += $(srcdir)
 
@@ -341,3 +342,4 @@ AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la
 bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 bin_batched_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
+bin_dpd_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)

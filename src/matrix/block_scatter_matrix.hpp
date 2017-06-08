@@ -332,7 +332,7 @@ void add(single_t, T alpha, tensor_matrix<T> A, T beta, matrix_view<T> B)
 }
 
 template <typename T>
-void add(const communicator& comm, T alpha, const_matrix_view<T> A,
+void add(const communicator& comm, T alpha, matrix_view<const T> A,
                                    T  beta,     tensor_matrix<T> B)
 {
     constexpr len_type MB = 4;
@@ -465,7 +465,7 @@ void add(const communicator& comm, T alpha, const_matrix_view<T> A,
 }
 
 template <typename T>
-void add(T alpha, const_matrix_view<T> A, T beta, tensor_matrix<T> B)
+void add(T alpha, matrix_view<const T> A, T beta, tensor_matrix<T> B)
 {
     parallelize_if(
         [&](const communicator& comm)
@@ -476,7 +476,7 @@ void add(T alpha, const_matrix_view<T> A, T beta, tensor_matrix<T> B)
 }
 
 template <typename T>
-void add(single_t, T alpha, const_matrix_view<T> A, T beta, tensor_matrix<T> B)
+void add(single_t, T alpha, matrix_view<const T> A, T beta, tensor_matrix<T> B)
 {
     communicator comm;
     add(comm, alpha, A, beta, B);

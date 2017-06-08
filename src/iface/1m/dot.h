@@ -25,7 +25,7 @@ void tblis_matrix_dot(const tblis_comm* comm, const tblis_config* cfg,
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 template <typename T>
-void dot(const_matrix_view<T> A, const_matrix_view<T> B, T& result)
+void dot(matrix_view<const T> A, matrix_view<const T> B, T& result)
 {
     tblis_matrix A_s(A);
     tblis_matrix B_s(B);
@@ -35,7 +35,7 @@ void dot(const_matrix_view<T> A, const_matrix_view<T> B, T& result)
 }
 
 template <typename T>
-void dot(single_t, const_matrix_view<T> A, const_matrix_view<T> B, T& result)
+void dot(single_t, matrix_view<const T> A, matrix_view<const T> B, T& result)
 {
     tblis_matrix A_s(A);
     tblis_matrix B_s(B);
@@ -45,7 +45,7 @@ void dot(single_t, const_matrix_view<T> A, const_matrix_view<T> B, T& result)
 }
 
 template <typename T>
-void dot(const communicator& comm, const_matrix_view<T> A, const_matrix_view<T> B, T& result)
+void dot(const communicator& comm, matrix_view<const T> A, matrix_view<const T> B, T& result)
 {
     tblis_matrix A_s(A);
     tblis_matrix B_s(B);
@@ -55,7 +55,7 @@ void dot(const communicator& comm, const_matrix_view<T> A, const_matrix_view<T> 
 }
 
 template <typename T>
-T dot(const_matrix_view<T> A, const_matrix_view<T> B)
+T dot(matrix_view<const T> A, matrix_view<const T> B)
 {
     T result;
     dot(A, B, result);
@@ -63,7 +63,7 @@ T dot(const_matrix_view<T> A, const_matrix_view<T> B)
 }
 
 template <typename T>
-T dot(single_t, const_matrix_view<T> A, const_matrix_view<T> B)
+T dot(single_t, matrix_view<const T> A, matrix_view<const T> B)
 {
     T result;
     dot(single, A, B, result);
@@ -71,7 +71,7 @@ T dot(single_t, const_matrix_view<T> A, const_matrix_view<T> B)
 }
 
 template <typename T>
-T dot(const communicator& comm, const_matrix_view<T> A, const_matrix_view<T> B)
+T dot(const communicator& comm, matrix_view<const T> A, matrix_view<const T> B)
 {
     T result;
     dot(comm, A, B, result);

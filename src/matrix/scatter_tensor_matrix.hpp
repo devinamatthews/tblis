@@ -25,7 +25,7 @@ class scatter_tensor_matrix
         std::array<len_type, 2> offset_;
         std::array<len_type, 2> leading_len_;
         std::array<stride_type, 2> leading_stride_;
-        std::array<MArray::viterator<>, 2> iterator_;
+        std::array<viterator<>, 2> iterator_;
         std::array<len_type, 2> scatter_len_;
         std::array<scatter_type, 2> scatter_;
 
@@ -73,8 +73,8 @@ class scatter_tensor_matrix
             leading_len_[1] = 0;
             leading_stride_[0] = 0;
             leading_stride_[1] = 0;
-            iterator_[0] = MArray::viterator<>();
-            iterator_[1] = MArray::viterator<>();
+            iterator_[0] = viterator<>();
+            iterator_[1] = viterator<>();
             scatter_len_[0] = 0;
             scatter_len_[1] = 0;
             scatter_[0] = nullptr;
@@ -155,8 +155,8 @@ class scatter_tensor_matrix
             for (len_type len : len_m_) dense_len_[0] *= len;
             for (len_type len : len_n_) dense_len_[1] *= len;
 
-            iterator_[0] = MArray::viterator<>(len_m_, stride_m_);
-            iterator_[1] = MArray::viterator<>(len_n_, stride_n_);
+            iterator_[0] = viterator<>(len_m_, stride_m_);
+            iterator_[1] = viterator<>(len_n_, stride_n_);
 
             scatter_len_[0] = scatter_len_m;
             scatter_len_[1] = scatter_len_n;

@@ -111,13 +111,13 @@ using TensorGEMM = partition_gemm_nc<
 }
 
 template <typename T>
-int contract_batch_dumb(T alpha, const_batched_tensor_view<T> A, const label_type* idx_A,
-                                 const_batched_tensor_view<T> B, const label_type* idx_B,
-                        T  beta,       batched_tensor_view<T> C, const label_type* idx_C)
+void contract_batch_dumb(T alpha, const_batched_tensor_view<T> A, const label_type* idx_A,
+                                  const_batched_tensor_view<T> B, const label_type* idx_B,
+                         T  beta,       batched_tensor_view<T> C, const label_type* idx_C)
 {
-    tensor<T> at(A.lengths());
-    tensor<T> bt(B.lengths());
-    tensor<T> ct(C.lengths());
+    varray<T> at(A.lengths());
+    varray<T> bt(B.lengths());
+    varray<T> ct(C.lengths());
 
     unsigned dense_ndim_A = A.dense_dimension();
     unsigned dense_ndim_B = B.dense_dimension();
@@ -146,7 +146,7 @@ int contract_batch_dumb(T alpha, const_batched_tensor_view<T> A, const label_typ
         for (len_type j = 0;j < batched_ndim_A;j++)
             to += A.batch_indices()[i][j]*at.stride(j+dense_ndim_A);
 
-        MArray::viterator<2> it(dense_len_A, dense_stride_A, packed_stride_A);
+        viterator<2> it(dense_len_A, dense_stride_A, packed_stride_A);
         while (it.next(from, to)) *to = *from;
     }
 
@@ -157,7 +157,7 @@ int contract_batch_dumb(T alpha, const_batched_tensor_view<T> A, const label_typ
         for (len_type j = 0;j < batched_ndim_B;j++)
             to += B.batch_indices()[i][j]*bt.stride(j+dense_ndim_B);
 
-        MArray::viterator<2> it(dense_len_B, dense_stride_B, packed_stride_B);
+        viterator<2> it(dense_len_B, dense_stride_B, packed_stride_B);
         while (it.next(from, to)) *to = *from;
     }
 
@@ -168,13 +168,13 @@ int contract_batch_dumb(T alpha, const_batched_tensor_view<T> A, const label_typ
         for (len_type j = 0;j < batched_ndim_C;j++)
             to += C.batch_indices()[i][j]*ct.stride(j+dense_ndim_C);
 
-        MArray::viterator<2> it(dense_len_C, dense_stride_C, packed_stride_C);
+        viterator<2> it(dense_len_C, dense_stride_C, packed_stride_C);
         while (it.next(from, to)) *to = *from;
     }
 
-    mult(alpha, at, idx_A,
-                bt, idx_B,
-          beta, ct, idx_C);
+    mult<T>(alpha, at, idx_A,
+                   bt, idx_B,
+             beta, ct, idx_C);
 
     for (len_type i = 0;i < C.num_batches();i++)
     {
@@ -183,15 +183,15 @@ int contract_batch_dumb(T alpha, const_batched_tensor_view<T> A, const label_typ
         for (len_type j = 0;j < batched_ndim_C;j++)
             from += C.batch_indices()[i][j]*ct.stride(j+dense_ndim_C);
 
-        MArray::viterator<2> it(dense_len_C, dense_stride_C, packed_stride_C);
+        viterator<2> it(dense_len_C, dense_stride_C, packed_stride_C);
         while (it.next(to, from)) *to = *from;
     }
 }
 
 template <typename T>
-int contract_batch_ref(T alpha, const_batched_tensor_view<T> A, const label_type* idx_A,
-                                const_batched_tensor_view<T> B, const label_type* idx_B,
-                       T  beta,       batched_tensor_view<T> C, const label_type* idx_C)
+void contract_batch_ref(T alpha, const_batched_tensor_view<T> A, const label_type* idx_A,
+                                 const_batched_tensor_view<T> B, const label_type* idx_B,
+                        T  beta,       batched_tensor_view<T> C, const label_type* idx_C)
 {
     unsigned ndim_A = A.dense_dimension();
     unsigned ndim_B = B.dense_dimension();
@@ -364,9 +364,9 @@ int contract_batch_ref(T alpha, const_batched_tensor_view<T> A, const label_type
         }
     }
 
-    const_tensor_view<T> tensor_A(len_A, nullptr, stride_A);
-    const_tensor_view<T> tensor_B(len_B, nullptr, stride_B);
-          tensor_view<T> tensor_C(len_C, nullptr, stride_C);
+    varray_view<const T> tensor_A(len_A, nullptr, stride_A);
+    varray_view<const T> tensor_B(len_B, nullptr, stride_B);
+          varray_view<T> tensor_C(len_C, nullptr, stride_C);
 
     auto dense_idx_AB = stl_ext::intersection(dense_idx_A, dense_idx_B);
     auto dense_idx_AC = stl_ext::intersection(dense_idx_A, dense_idx_C);
@@ -500,9 +500,9 @@ int contract_batch_ref(T alpha, const_batched_tensor_view<T> A, const label_type
 }
 
 template <typename T>
-int contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* idx_A_,
-                            const_batched_tensor_view<T> B, const label_type* idx_B_,
-                   T  beta,       batched_tensor_view<T> C, const label_type* idx_C_)
+void contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* idx_A_,
+                             const_batched_tensor_view<T> B, const label_type* idx_B_,
+                    T  beta,       batched_tensor_view<T> C, const label_type* idx_C_)
 {
     using stl_ext::intersection;
     using stl_ext::exclusion;
@@ -636,8 +636,8 @@ int contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* id
     matrix<const T*> batch_B({batch_K, batch_N});
     matrix<      T*> batch_C({batch_M, batch_N});
 
-    MArray::viterator<2> it_A_AB(mixed_len_A_AB, mixed_stride_A_AB, mixed_off_stride_A_AB);
-    MArray::viterator<2> it_A_AC(mixed_len_A_AC, mixed_stride_A_AC, mixed_off_stride_A_AC);
+    viterator<2> it_A_AB(mixed_len_A_AB, mixed_stride_A_AB, mixed_off_stride_A_AB);
+    viterator<2> it_A_AC(mixed_len_A_AC, mixed_stride_A_AC, mixed_off_stride_A_AC);
 
     for (len_type b = 0;b < A.num_batches();b++)
     {
@@ -659,8 +659,8 @@ int contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* id
         }
     }
 
-    MArray::viterator<2> it_B_AB(mixed_len_B_AB, mixed_stride_B_AB, mixed_off_stride_B_AB);
-    MArray::viterator<2> it_B_BC(mixed_len_B_BC, mixed_stride_B_BC, mixed_off_stride_B_BC);
+    viterator<2> it_B_AB(mixed_len_B_AB, mixed_stride_B_AB, mixed_off_stride_B_AB);
+    viterator<2> it_B_BC(mixed_len_B_BC, mixed_stride_B_BC, mixed_off_stride_B_BC);
 
     for (len_type b = 0;b < B.num_batches();b++)
     {
@@ -682,8 +682,8 @@ int contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* id
         }
     }
 
-    MArray::viterator<2> it_C_AC(mixed_len_C_AC, mixed_stride_C_AC, mixed_off_stride_C_AC);
-    MArray::viterator<2> it_C_BC(mixed_len_C_BC, mixed_stride_C_BC, mixed_off_stride_C_BC);
+    viterator<2> it_C_AC(mixed_len_C_AC, mixed_stride_C_AC, mixed_off_stride_C_AC);
+    viterator<2> it_C_BC(mixed_len_C_BC, mixed_stride_C_BC, mixed_off_stride_C_BC);
 
     for (len_type b = 0;b < C.num_batches();b++)
     {
@@ -873,9 +873,9 @@ int contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* id
 }
 
 template <typename T>
-int contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* idx_A_,
-                             const_batched_tensor_view<T> B, const label_type* idx_B_,
-                    T  beta,       batched_tensor_view<T> C, const label_type* idx_C_)
+void contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* idx_A_,
+                              const_batched_tensor_view<T> B, const label_type* idx_B_,
+                     T  beta,       batched_tensor_view<T> C, const label_type* idx_C_)
 {
     using stl_ext::intersection;
     using stl_ext::exclusion;
@@ -1010,12 +1010,16 @@ int contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* i
     //std::cout << batch_off_stride_B_BC << std::endl;
     //std::cout << batch_off_stride_C_BC << std::endl << std::endl;
 
-    matrix<const T*> batch_A({batch_M, batch_K});
-    matrix<const T*> batch_B({batch_K, batch_N});
-    matrix<      T*> batch_C({batch_M, batch_N});
+    matrix<const T*> batch_A_({batch_M, batch_K});
+    matrix<const T*> batch_B_({batch_K, batch_N});
+    matrix<      T*> batch_C_({batch_M, batch_N});
 
-    MArray::viterator<2> it_A_AB(mixed_len_A_AB, mixed_stride_A_AB, mixed_off_stride_A_AB);
-    MArray::viterator<2> it_A_AC(mixed_len_A_AC, mixed_stride_A_AC, mixed_off_stride_A_AC);
+    matrix_view<const T*> batch_A(batch_A_);
+    matrix_view<const T*> batch_B(batch_B_);
+    matrix_view<      T*> batch_C(batch_C_);
+
+    viterator<2> it_A_AB(mixed_len_A_AB, mixed_stride_A_AB, mixed_off_stride_A_AB);
+    viterator<2> it_A_AC(mixed_len_A_AC, mixed_stride_A_AC, mixed_off_stride_A_AC);
 
     for (len_type b = 0;b < A.num_batches();b++)
     {
@@ -1042,8 +1046,8 @@ int contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* i
         }
     }
 
-    MArray::viterator<2> it_B_AB(mixed_len_B_AB, mixed_stride_B_AB, mixed_off_stride_B_AB);
-    MArray::viterator<2> it_B_BC(mixed_len_B_BC, mixed_stride_B_BC, mixed_off_stride_B_BC);
+    viterator<2> it_B_AB(mixed_len_B_AB, mixed_stride_B_AB, mixed_off_stride_B_AB);
+    viterator<2> it_B_BC(mixed_len_B_BC, mixed_stride_B_BC, mixed_off_stride_B_BC);
 
     for (len_type b = 0;b < B.num_batches();b++)
     {
@@ -1070,8 +1074,8 @@ int contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* i
         }
     }
 
-    MArray::viterator<2> it_C_AC(mixed_len_C_AC, mixed_stride_C_AC, mixed_off_stride_C_AC);
-    MArray::viterator<2> it_C_BC(mixed_len_C_BC, mixed_stride_C_BC, mixed_off_stride_C_BC);
+    viterator<2> it_C_AC(mixed_len_C_AC, mixed_stride_C_AC, mixed_off_stride_C_AC);
+    viterator<2> it_C_BC(mixed_len_C_BC, mixed_stride_C_BC, mixed_off_stride_C_BC);
 
     for (len_type b = 0;b < C.num_batches();b++)
     {
@@ -1123,7 +1127,7 @@ int contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* i
 
     auto local_flops = 2*dense_K*dense_M*dense_N;
 
-    std::vector<slot<unsigned, -1>> slot(batch_M*batch_N);
+    std::vector<slot<int, -1>> slot(batch_M*batch_N);
 
     const config& cfg = get_default_config();
     const bool row_major = cfg.gemm_row_major.value<T>();

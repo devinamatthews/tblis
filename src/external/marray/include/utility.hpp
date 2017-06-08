@@ -141,6 +141,14 @@ template <typename I> class range_t;
 
 namespace detail
 {
+    template <size_t N>
+    std::array<unsigned, N> inverse_permutation(const std::array<unsigned, N>& p)
+    {
+        std::array<unsigned, N> ip;
+        for (unsigned i = 0;i < N;i++) ip[p[i]] = i;
+        return ip;
+    }
+
     inline std::vector<unsigned> inverse_permutation(const std::vector<unsigned>& p)
     {
         std::vector<unsigned> ip(p.size());
@@ -529,8 +537,8 @@ namespace detail
                             const std::array<std::array<stride_type,NDim>,0>&) {}
 
         template <typename len_type, typename stride_type>
-        move_offsets_helper(const std::vector<len_type>& pos,
-                            const std::array<std::vector<stride_type>,0>& strides) {}
+        move_offsets_helper(const std::vector<len_type>&,
+                            const std::array<std::vector<stride_type>,0>&) {}
     };
 
     template <size_t NDim, size_t N, typename Offset>
@@ -601,7 +609,7 @@ namespace detail
         set_strides_helper(std::array<std::array<stride_type,NDim>,0>&) {}
 
         template <typename stride_type>
-        set_strides_helper(std::array<std::vector<stride_type>,0>& strides_) {}
+        set_strides_helper(std::array<std::vector<stride_type>,0>&) {}
     };
 
     template <size_t NDim, size_t N, typename Stride>

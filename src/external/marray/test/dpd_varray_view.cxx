@@ -105,8 +105,11 @@ static arrays<stride_type,6,8> offsets =
     { \
         auto vs = v(1,0,0,0); \
         EXPECT_EQ(d + offsets[j][0], vs.data()); \
-        EXPECT_EQ(lengths[0], vs.lengths()); \
-        EXPECT_EQ(strides[j][0], vs.strides()); \
+        for (unsigned k = 0;k < 4;k++) \
+        { \
+            EXPECT_EQ(lengths[0][k], vs.length(k)); \
+            EXPECT_EQ(strides[j][0][k], vs.stride(k)); \
+        } \
     } \
     \
     { \

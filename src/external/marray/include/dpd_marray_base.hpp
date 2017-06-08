@@ -88,26 +88,28 @@ class dpd_marray_base
             size_[idx][irrep] = size;
         }
 
-        unsigned local_offset(const std::array<unsigned, NDim>& irreps,
+        template <typename V, typename U>
+        unsigned local_offset(const std::array<unsigned, NDim>& iperm,
+                              const V& irreps,
                               stride_type size_before, pointer& data,
-                              std::array<stride_type, NDim>& stride,
+                              U& stride,
                               unsigned begin, unsigned end, unsigned idx)
         {
             unsigned ndim = end-begin;
 
             if (ndim == 1)
             {
-                stride[begin] = size_before;
-                return irreps[begin];
+                stride[iperm[begin]] = size_before;
+                return irreps[iperm[begin]];
             }
 
             unsigned mid = begin+(ndim+1)/2;
             unsigned idxl = idx+1;
             unsigned idxr = idx+((ndim+1)/2)*2;
 
-            unsigned irrepl = local_offset(irreps, size_before,
+            unsigned irrepl = local_offset(iperm, irreps, size_before,
                                            data, stride, begin, mid, idxl);
-            unsigned irrepr = local_offset(irreps, size_before*size_[idxl][irrepl],
+            unsigned irrepr = local_offset(iperm, irreps, size_before*size_[idxl][irrepl],
                                            data, stride, mid, end, idxr);
             unsigned irrep = irrepl^irrepr;
 
@@ -579,29 +581,58 @@ class dpd_marray_base
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,unsigned>>
-        marray_view<Type, NDim> operator()(const U& irreps)
+        marray_view<Type, NDim> operator()(const U& irreps_)
         {
-            unsigned irrep = 0;
-            auto it = irreps.begin();
-            std::array<unsigned, NDim> irreps_;
-            for (unsigned i = 0;i < NDim;i++)
-            {
-                irrep ^= irreps_[perm_[i]] = *it;
-                ++it;
-            }
-            MARRAY_ASSERT(irrep == irrep_);
+            MARRAY_ASSERT(irreps_.size() == NDim);
 
+            std::array<unsigned, NDim> irreps;
             std::array<len_type, NDim> len;
             std::array<stride_type, NDim> stride;
-            pointer data = data_;
+
+            std::copy_n(irreps_.begin(), NDim, irreps.begin());
+
+            pointer data;
+            get_block(irreps, len, data, stride);
+
+            return marray_view<Type, NDim>(len, data, stride);
+        }
+
+        template <typename U, typename V, typename W,
+            typename=detail::enable_if_t<detail::is_container_of<U,unsigned>::value &&
+                                         detail::is_container_of<V,len_type>::value &&
+                                         detail::is_container_of<W,stride_type>::value>>
+        void get_block(const U& irreps, V& len, const_pointer& data, W& stride) const
+        {
+            const_cast<dpd_marray_base&>(*this).get_block(irreps, len,
+                                                          const_cast<pointer&>(data),
+                                                          stride);
+        }
+
+        template <typename U, typename V, typename W,
+            typename=detail::enable_if_t<detail::is_container_of<U,unsigned>::value &&
+                                         detail::is_container_of<V,len_type>::value &&
+                                         detail::is_container_of<W,stride_type>::value>>
+        void get_block(const U& irreps, V& len, pointer& data, W& stride)
+        {
+            MARRAY_ASSERT(irreps.size() == NDim);
+            MARRAY_ASSERT(len.size() == NDim);
+            MARRAY_ASSERT(stride.size() == NDim);
+
+            unsigned irrep = 0;
+            for (auto& i : irreps) irrep ^= i;
+            MARRAY_ASSERT(irrep == irrep_);
+
+            auto iperm = detail::inverse_permutation(perm_);
+
+            data = data_;
 
             for (unsigned i = 0;i < NDim;i++)
-                len[i] = len_[i][irreps_[i]];
+                len[i] = len_[perm_[i]][irreps[i]];
 
             if (layout_ == BALANCED_ROW_MAJOR ||
                 layout_ == BALANCED_COLUMN_MAJOR)
             {
-                local_offset(irreps_, 1, data, stride, 0, NDim, 0);
+                local_offset(iperm, irreps, 1, data, stride, 0, NDim, 0);
             }
             else
             {
@@ -609,22 +640,22 @@ class dpd_marray_base
                     layout_ == PREFIX_COLUMN_MAJOR)
                 {
                     unsigned lirrep = 0;
-                    stride[0] = 1;
+                    stride[iperm[0]] = 1;
                     for (unsigned i = 1;i < NDim;i++)
                     {
-                        lirrep ^= irreps_[i-1];
-                        stride[i] = size_[i-1][lirrep];
+                        lirrep ^= irreps[iperm[i-1]];
+                        stride[iperm[i]] = size_[i-1][lirrep];
                     }
 
                     unsigned rirrep = irrep_;
                     for (unsigned i = NDim;i --> 1;)
                     {
-                        for (unsigned irr1 = 0;irr1 < irreps_[i];irr1++)
+                        for (unsigned irr1 = 0;irr1 < irreps[iperm[i]];irr1++)
                         {
                             unsigned irr2 = irr1^rirrep;
                             data += size_[i-1][irr2]*len_[i][irr1];
                         }
-                        rirrep ^= irreps_[i];
+                        rirrep ^= irreps[iperm[i]];
                     }
                 }
                 else
@@ -632,8 +663,8 @@ class dpd_marray_base
                     stride_type lsize = 1;
                     for (unsigned i = 0;i < NDim;i++)
                     {
-                        stride[i] = lsize;
-                        lsize *= len[i];
+                        stride[iperm[i]] = lsize;
+                        lsize *= len[iperm[i]];
                     }
 
                     stride_type rsize = 1;
@@ -641,19 +672,17 @@ class dpd_marray_base
                     for (unsigned i = NDim;i --> 1;)
                     {
                         stride_type offset = 0;
-                        for (unsigned irr1 = 0;irr1 < irreps_[i];irr1++)
+                        for (unsigned irr1 = 0;irr1 < irreps[iperm[i]];irr1++)
                         {
                             unsigned irr2 = irr1^rirrep;
                             offset += size_[i-1][irr2]*len_[i][irr1];
                         }
                         data += offset*rsize;
-                        rsize *= len[i];
-                        rirrep ^= irreps_[i];
+                        rsize *= len[iperm[i]];
+                        rirrep ^= irreps[iperm[i]];
                     }
                 }
             }
-
-            return marray_view<Type, NDim>(len, data, stride).permuted(perm_);
         }
 
         /***********************************************************************

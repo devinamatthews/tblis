@@ -5891,7 +5891,8 @@ if test x"$thread_model" = xopenmp; then
         as_fn_error $? "openmp requested but not available" "$LINENO" 5
     fi
     USE_OPENMP_THREADS=1
-elif test x"$thread_model" = xpthread; then
+elif test x"$thread_model" = xpthread || \
+     test x"$thread_model" = xpthreads; then
     if test x"$have_pthreads" = xno; then
         as_fn_error $? "pthreads requested but not available" "$LINENO" 5
     fi

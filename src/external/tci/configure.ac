@@ -259,7 +259,8 @@ if test x"$thread_model" = xopenmp; then
         AC_MSG_ERROR([openmp requested but not available])
     fi
     USE_OPENMP_THREADS=1
-elif test x"$thread_model" = xpthread; then
+elif test x"$thread_model" = xpthread || \
+     test x"$thread_model" = xpthreads; then
     if test x"$have_pthreads" = xno; then
         AC_MSG_ERROR([pthreads requested but not available])
     fi

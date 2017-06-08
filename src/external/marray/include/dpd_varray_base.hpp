@@ -69,26 +69,28 @@ class dpd_varray_base
             size_[idx][irrep] = size;
         }
 
-        unsigned local_offset(const std::vector<unsigned>& irreps,
+        template <typename U, typename V>
+        unsigned local_offset(const std::vector<unsigned>& iperm,
+                              const U& irreps,
                               stride_type size_before, pointer& data,
-                              std::vector<stride_type>& stride,
+                              V& stride,
                               unsigned begin, unsigned end, unsigned idx)
         {
             unsigned ndim = end-begin;
 
             if (ndim == 1)
             {
-                stride[begin] = size_before;
-                return irreps[begin];
+                stride[iperm[begin]] = size_before;
+                return irreps[iperm[begin]];
             }
 
             unsigned mid = begin+(ndim+1)/2;
             unsigned idxl = idx+1;
             unsigned idxr = idx+((ndim+1)/2)*2;
 
-            unsigned irrepl = local_offset(irreps, size_before,
+            unsigned irrepl = local_offset(iperm, irreps, size_before,
                                            data, stride, begin, mid, idxl);
-            unsigned irrepr = local_offset(irreps, size_before*size_[idxl][irrepl],
+            unsigned irrepr = local_offset(iperm, irreps, size_before*size_[idxl][irrepl],
                                            data, stride, mid, end, idxr);
             unsigned irrep = irrepl^irrepr;
 
@@ -470,16 +472,27 @@ class dpd_varray_base
 
         template <typename... Irreps,
             typename=detail::enable_if_t<detail::are_assignable<unsigned&, Irreps...>::value>>
-        varray_view<ctype> operator()(const Irreps&... irreps) const
+        marray_view<ctype, sizeof...(Irreps)> operator()(const Irreps&... irreps) const
         {
             return const_cast<dpd_varray_base&>(*this)(irreps...);
         }
 
         template <typename... Irreps,
             typename=detail::enable_if_t<detail::are_assignable<unsigned&, Irreps...>::value>>
-        varray_view<Type> operator()(const Irreps&... irreps)
+        marray_view<Type, sizeof...(Irreps)> operator()(const Irreps&... irreps_)
         {
-            return operator()({(unsigned)irreps...});
+            constexpr unsigned NDim = sizeof...(Irreps);
+
+            MARRAY_ASSERT(NDim == dimension());
+
+            std::array<unsigned, NDim> irreps{(unsigned)irreps_...};
+            std::array<len_type, NDim> len;
+            std::array<stride_type, NDim> stride;
+
+            pointer data;
+            get_block(irreps, len, data, stride);
+
+            return marray_view<Type, NDim>(len, data, stride);
         }
 
         varray_view<ctype> operator()(std::initializer_list<unsigned> irreps) const
@@ -499,33 +512,58 @@ class dpd_varray_base
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,unsigned>>
-        varray_view<Type> operator()(const U& irreps)
+        varray_view<Type> operator()(const U& irreps_)
+        {
+            unsigned ndim = dimension();
+
+            std::vector<unsigned> irreps(irreps_.begin(), irreps_.end());
+            std::vector<len_type> len(ndim);
+            std::vector<stride_type> stride(ndim);
+
+            pointer data;
+            get_block(irreps, len, data, stride);
+
+            return varray_view<Type>(len, data, stride);
+        }
+
+        template <typename U, typename V, typename W,
+            typename=detail::enable_if_t<detail::is_container_of<U,unsigned>::value &&
+                                         detail::is_container_of<V,len_type>::value &&
+                                         detail::is_container_of<W,stride_type>::value>>
+        void get_block(const U& irreps, V& len, const_pointer& data, W& stride) const
+        {
+            const_cast<dpd_varray_base&>(*this).get_block(irreps, len,
+                                                          const_cast<pointer&>(data),
+                                                          stride);
+        }
+
+        template <typename U, typename V, typename W,
+            typename=detail::enable_if_t<detail::is_container_of<U,unsigned>::value &&
+                                         detail::is_container_of<V,len_type>::value &&
+                                         detail::is_container_of<W,stride_type>::value>>
+        void get_block(const U& irreps, V& len, pointer& data, W& stride)
         {
             unsigned ndim = dimension();
 
             MARRAY_ASSERT(irreps.size() == ndim);
+            MARRAY_ASSERT(len.size() == ndim);
+            MARRAY_ASSERT(stride.size() == ndim);
 
             unsigned irrep = 0;
-            auto it = irreps.begin();
-            std::vector<unsigned> irreps_(ndim);
-            for (unsigned i = 0;i < ndim;i++)
-            {
-                irrep ^= irreps_[perm_[i]] = *it;
-                ++it;
-            }
+            for (auto& i : irreps) irrep ^= i;
             MARRAY_ASSERT(irrep == irrep_);
 
-            std::vector<len_type> len(ndim);
-            std::vector<stride_type> stride(ndim);
-            pointer data = data_;
+            auto iperm = detail::inverse_permutation(perm_);
+
+            data = data_;
 
             for (unsigned i = 0;i < ndim;i++)
-                len[i] = len_[i][irreps_[i]];
+                len[i] = len_[perm_[i]][irreps[i]];
 
             if (layout_ == BALANCED_ROW_MAJOR ||
                 layout_ == BALANCED_COLUMN_MAJOR)
             {
-                local_offset(irreps_, 1, data, stride, 0, ndim, 0);
+                local_offset(iperm, irreps, 1, data, stride, 0, ndim, 0);
             }
             else
             {
@@ -533,22 +571,22 @@ class dpd_varray_base
                     layout_ == PREFIX_COLUMN_MAJOR)
                 {
                     unsigned lirrep = 0;
-                    stride[0] = 1;
+                    stride[iperm[0]] = 1;
                     for (unsigned i = 1;i < ndim;i++)
                     {
-                        lirrep ^= irreps_[i-1];
-                        stride[i] = size_[i-1][lirrep];
+                        lirrep ^= irreps[iperm[i-1]];
+                        stride[iperm[i]] = size_[i-1][lirrep];
                     }
 
                     unsigned rirrep = irrep_;
                     for (unsigned i = ndim;i --> 1;)
                     {
-                        for (unsigned irr1 = 0;irr1 < irreps_[i];irr1++)
+                        for (unsigned irr1 = 0;irr1 < irreps[iperm[i]];irr1++)
                         {
                             unsigned irr2 = irr1^rirrep;
                             data += size_[i-1][irr2]*len_[i][irr1];
                         }
-                        rirrep ^= irreps_[i];
+                        rirrep ^= irreps[iperm[i]];
                     }
                 }
                 else
@@ -556,8 +594,8 @@ class dpd_varray_base
                     stride_type lsize = 1;
                     for (unsigned i = 0;i < ndim;i++)
                     {
-                        stride[i] = lsize;
-                        lsize *= len[i];
+                        stride[iperm[i]] = lsize;
+                        lsize *= len[iperm[i]];
                     }
 
                     stride_type rsize = 1;
@@ -565,19 +603,17 @@ class dpd_varray_base
                     for (unsigned i = ndim;i --> 1;)
                     {
                         stride_type offset = 0;
-                        for (unsigned irr1 = 0;irr1 < irreps_[i];irr1++)
+                        for (unsigned irr1 = 0;irr1 < irreps[iperm[i]];irr1++)
                         {
                             unsigned irr2 = irr1^rirrep;
                             offset += size_[i-1][irr2]*len_[i][irr1];
                         }
                         data += offset*rsize;
-                        rsize *= len[i];
-                        rirrep ^= irreps_[i];
+                        rsize *= len[iperm[i]];
+                        rirrep ^= irreps[iperm[i]];
                     }
                 }
             }
-
-            return varray_view<Type>(len, data, stride).permuted(perm_);
         }
 
         /***********************************************************************

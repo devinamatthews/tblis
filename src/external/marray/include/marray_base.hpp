@@ -274,15 +274,18 @@ class marray_base
          *
          **********************************************************************/
 
-        marray_base& operator=(const marray_base& other) = delete;
+        Derived& operator=(const marray_base& other)
+        {
+            return operator=<>(other);
+        }
 
-        marray_base& operator=(initializer_type data)
+        Derived& operator=(initializer_type data)
         {
             std::array<len_type, NDim> len;
             set_lengths(0, len, data);
             MARRAY_ASSERT(len == len_);
             set_data(0, data_, data);
-            return *this;
+            return static_cast<Derived&>(*this);
         }
 
         template <typename Expression,

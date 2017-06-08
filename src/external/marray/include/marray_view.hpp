@@ -92,7 +92,7 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
 
         marray_view& operator=(const marray_view& other)
         {
-            return base::template operator=<>(other);
+            return base::operator=(other);
         }
 
         using base::operator=;

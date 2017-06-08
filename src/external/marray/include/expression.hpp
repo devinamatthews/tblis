@@ -645,10 +645,6 @@ struct expression_type<Expr, detail::enable_if_t<is_expression<detail::decay_t<E
     typedef detail::decay_t<Expr> type;
 };
 
-template <typename T, typename Expr>
-struct converted_scalar_type :
-    std::common_type<T, typename expr_result_type<typename expression_type<Expr>::type>::type> {};
-
 template <typename T, unsigned NDim, unsigned NIndexed, typename... Dims,
           size_t... I, size_t... J>
 typename expression_type<marray_slice<T, NDim, NIndexed, Dims...>>::type
@@ -716,6 +712,14 @@ template <typename Expr>
 struct is_expression_arg_or_scalar :
     std::integral_constant<bool, is_expression_arg<detail::decay_t<Expr>>::value ||
                                  is_scalar<detail::decay_t<Expr>>::value> {};
+
+template <typename T, typename Expr, typename=void>
+struct converted_scalar_type {};
+
+template <typename T, typename Expr>
+struct converted_scalar_type<T, Expr, detail::enable_if_t<is_scalar<T>::value &&
+                                                          is_expression_arg<Expr>::value>> :
+    std::common_type<T, typename expr_result_type<typename expression_type<Expr>::type>::type> {};
 
 template <typename LHS, typename RHS>
 detail::enable_if_t<is_expression_arg<LHS>::value &&

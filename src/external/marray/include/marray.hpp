@@ -119,7 +119,7 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
 
         marray& operator=(const marray& other)
         {
-            return base::template operator=<>(other);
+            return base::operator=(other);
         }
 
         using base::operator=;

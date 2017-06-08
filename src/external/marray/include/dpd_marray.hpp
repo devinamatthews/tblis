@@ -64,31 +64,46 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
             reset(other, layout);
         }
 
-        explicit dpd_marray(unsigned irrep, unsigned nirrep,
-                            initializer_matrix<len_type> len,
-                            const Type& val=Type(), dpd_layout layout = DEFAULT)
+        dpd_marray(unsigned irrep, unsigned nirrep,
+                   initializer_matrix<len_type> len,
+                   const Type& val=Type(), dpd_layout layout = DEFAULT)
+        {
+            reset(irrep, nirrep, len, val, layout);
+        }
+
+        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
+        dpd_marray(unsigned irrep, unsigned nirrep,
+                   std::initializer_list<U> len,
+                   const Type& val=Type(), dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, val, layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_containers_of_t<U,len_type>>
-        explicit dpd_marray(unsigned irrep, unsigned nirrep,
-                            const U& len, const Type& val=Type(),
-                            dpd_layout layout = DEFAULT)
+        dpd_marray(unsigned irrep, unsigned nirrep,
+                   const U& len, const Type& val=Type(),
+                   dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, val, layout);
         }
 
         template <typename U>
-        explicit dpd_marray(unsigned irrep, unsigned nirrep,
-                            matrix_view<U> len, const Type& val=Type(),
-                            dpd_layout layout = DEFAULT)
+        dpd_marray(unsigned irrep, unsigned nirrep,
+                   matrix_view<U> len, const Type& val=Type(),
+                   dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, val, layout);
         }
 
         dpd_marray(unsigned irrep, unsigned nirrep,
                    initializer_matrix<len_type> len, dpd_layout layout)
+        {
+            reset(irrep, nirrep, len, Type(), layout);
+        }
+
+        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
+        dpd_marray(unsigned irrep, unsigned nirrep,
+                   std::initializer_list<U> len, dpd_layout layout)
         {
             reset(irrep, nirrep, len, Type(), layout);
         }
@@ -110,6 +125,14 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
         dpd_marray(unsigned irrep, unsigned nirrep,
                    initializer_matrix<len_type> len,
                    uninitialized_t, dpd_layout layout = DEFAULT)
+        {
+            reset(irrep, nirrep, len, uninitialized, layout);
+        }
+
+        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
+        dpd_marray(unsigned irrep, unsigned nirrep,
+                   std::initializer_list<U> len, uninitialized_t,
+                   dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, uninitialized, layout);
         }
@@ -138,7 +161,7 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
 
         dpd_marray& operator=(const dpd_marray& other)
         {
-            return base::template operator=<>(other);
+            return base::operator=(other);
         }
 
         using base::operator=;
@@ -216,7 +239,15 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
                    initializer_matrix<len_type> len, const Type& val=Type(),
                    dpd_layout layout = DEFAULT)
         {
-            reset<>(irrep, nirrep, len, val, layout);
+            reset<initializer_matrix<len_type>>(irrep, nirrep, len, val, layout);
+        }
+
+        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
+        void reset(unsigned irrep, unsigned nirrep,
+                   std::initializer_list<U> len, const Type& val=Type(),
+                   dpd_layout layout = DEFAULT)
+        {
+            reset<std::initializer_list<U>>(irrep, nirrep, len, val, layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_containers_of_t<U,len_type>>
@@ -240,7 +271,14 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
         void reset(unsigned irrep, unsigned nirrep,
                    initializer_matrix<len_type> len, dpd_layout layout)
         {
-            reset<>(irrep, nirrep, len, Type(), layout);
+            reset(irrep, nirrep, len, Type(), layout);
+        }
+
+        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
+        void reset(unsigned irrep, unsigned nirrep,
+                   std::initializer_list<U> len, dpd_layout layout)
+        {
+            reset(irrep, nirrep, len, Type(), layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_containers_of_t<U,len_type>>
@@ -261,7 +299,15 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
                    initializer_matrix<len_type> len,
                    uninitialized_t, dpd_layout layout = DEFAULT)
         {
-            reset<>(irrep, nirrep, len, uninitialized, layout);
+            reset<initializer_matrix<len_type>>(irrep, nirrep, len, uninitialized, layout);
+        }
+
+        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
+        void reset(unsigned irrep, unsigned nirrep,
+                   std::initializer_list<U> len, uninitialized_t,
+                   dpd_layout layout = DEFAULT)
+        {
+            reset<std::initializer_list<U>>(irrep, nirrep, len, uninitialized, layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_containers_of_t<U,len_type>>

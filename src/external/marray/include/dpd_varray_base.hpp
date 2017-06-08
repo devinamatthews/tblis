@@ -151,7 +151,16 @@ class dpd_varray_base
                    initializer_matrix<len_type> len, pointer ptr,
                    dpd_layout layout = DEFAULT)
         {
-            reset<>(irrep, nirrep, len, ptr, layout);
+            reset<initializer_matrix<len_type>>(irrep, nirrep, len, ptr, layout);
+        }
+
+        template <typename U, typename=
+            detail::enable_if_container_of_t<U,len_type>>
+        void reset(unsigned irrep, unsigned nirrep,
+                   std::initializer_list<U> len, pointer ptr,
+                   dpd_layout layout = DEFAULT)
+        {
+            reset<std::initializer_list<U>>(irrep, nirrep, len, ptr, layout);
         }
 
         template <typename U, typename=
@@ -331,13 +340,13 @@ class dpd_varray_base
         template <typename U, typename=detail::enable_if_container_of_containers_of_t<U,len_type>>
         static stride_type size(unsigned irrep, const U& len)
         {
-            return dpd_marray_base<Type,1,void,false>::size(irrep, len);
+            return dpd_marray_base<Type,1,dpd_marray_view<Type,1>,false>::size(irrep, len);
         }
 
         template <typename U>
         static stride_type size(unsigned irrep, matrix_view<U> len)
         {
-            return dpd_marray_base<Type,1,void,false>::size(irrep, len);
+            return dpd_marray_base<Type,1,dpd_marray_view<Type,1>,false>::size(irrep, len);
         }
 
         /***********************************************************************
@@ -346,9 +355,46 @@ class dpd_varray_base
          *
          **********************************************************************/
 
-        dpd_varray_base& operator=(const dpd_varray_base& other) = delete;
+        Derived& operator=(const dpd_varray_base& other)
+        {
+            return operator=<>(other);
+        }
 
-        //TODO
+        template <typename U, typename D, bool O,
+            typename=detail::enable_if_t<std::is_assignable<reference,U>::value>>
+        Derived& operator=(const dpd_varray_base<U, D, O>& other)
+        {
+            unsigned ndim = dimension();
+
+            MARRAY_ASSERT(ndim == other.dimension());
+            MARRAY_ASSERT(nirrep_ == other.nirrep_);
+            MARRAY_ASSERT(irrep_ == other.irrep_);
+
+            for (unsigned i = 0;i < ndim;i++)
+            {
+                MARRAY_ASSERT(lengths(i) == other.lengths(i));
+            }
+
+            unsigned mask = nirrep_-1;
+            unsigned shift = (nirrep_>1) + (nirrep_>2) + (nirrep_>4);
+
+            unsigned nblocks = 1u << (shift*(ndim-1));
+            std::vector<unsigned> irreps(ndim);
+            for (unsigned block = 0;block < nblocks;block++)
+            {
+                unsigned b = block;
+                irreps[0] = irrep_;
+                for (unsigned i = 1;i < ndim;i++)
+                {
+                    irreps[0] ^= irreps[i] = b & mask;
+                    b >>= shift;
+                }
+
+                (*this)(irreps) = other(irreps);
+            }
+
+            return static_cast<Derived&>(*this);
+        }
 
         /***********************************************************************
          *

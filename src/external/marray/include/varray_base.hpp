@@ -277,7 +277,10 @@ class varray_base
          *
          **********************************************************************/
 
-        varray_base& operator=(const varray_base& other) = delete;
+        Derived& operator=(const varray_base& other)
+        {
+            return operator=<>(other);
+        }
 
         template <typename U, typename D, bool O,
             typename=detail::enable_if_t<std::is_assignable<reference,U>::value>>

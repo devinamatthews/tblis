@@ -67,6 +67,15 @@ class dpd_marray_view : public dpd_marray_base<Type, NDim, dpd_marray_view<Type,
         }
 
         template <typename U, typename=
+            detail::enable_if_container_of_t<U,len_type>>
+        dpd_marray_view(unsigned irrep, unsigned nirrep,
+                        std::initializer_list<U> len, pointer ptr,
+                        dpd_layout layout = DEFAULT)
+        {
+            reset(irrep, nirrep, len, ptr, layout);
+        }
+
+        template <typename U, typename=
             detail::enable_if_container_of_containers_of_t<U,len_type>>
         dpd_marray_view(unsigned irrep, unsigned nirrep, const U& len, pointer ptr,
                         dpd_layout layout = DEFAULT)
@@ -90,7 +99,7 @@ class dpd_marray_view : public dpd_marray_base<Type, NDim, dpd_marray_view<Type,
 
         dpd_marray_view& operator=(const dpd_marray_view& other)
         {
-            return base::template operator=<>(other);
+            return base::operator=(other);
         }
 
         using base::operator=;

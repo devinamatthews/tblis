@@ -67,6 +67,15 @@ class dpd_varray_view : public dpd_varray_base<Type, dpd_varray_view<Type>, fals
         }
 
         template <typename U, typename=
+            detail::enable_if_container_of_t<U,len_type>>
+        dpd_varray_view(unsigned irrep, unsigned nirrep,
+                        std::initializer_list<U> len, pointer ptr,
+                        dpd_layout layout = DEFAULT)
+        {
+            reset(irrep, nirrep, len, ptr, layout);
+        }
+
+        template <typename U, typename=
             detail::enable_if_container_of_containers_of_t<U,len_type>>
         dpd_varray_view(unsigned irrep, unsigned nirrep, const U& len, pointer ptr,
                         dpd_layout layout = DEFAULT)
@@ -90,7 +99,7 @@ class dpd_varray_view : public dpd_varray_base<Type, dpd_varray_view<Type>, fals
 
         dpd_varray_view& operator=(const dpd_varray_view& other)
         {
-            return base::template operator=<>(other);
+            return base::operator=(other);
         }
 
         using base::operator=;

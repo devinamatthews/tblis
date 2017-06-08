@@ -64,31 +64,46 @@ class dpd_varray : public dpd_varray_base<Type, dpd_varray<Type, Allocator>, tru
             reset(other, layout);
         }
 
-        explicit dpd_varray(unsigned irrep, unsigned nirrep,
-                            initializer_matrix<len_type> len,
-                            const Type& val=Type(), dpd_layout layout = DEFAULT)
+        dpd_varray(unsigned irrep, unsigned nirrep,
+                   initializer_matrix<len_type> len,
+                   const Type& val=Type(), dpd_layout layout = DEFAULT)
+        {
+            reset(irrep, nirrep, len, val, layout);
+        }
+
+        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
+        dpd_varray(unsigned irrep, unsigned nirrep,
+                   std::initializer_list<U> len, const Type& val=Type(),
+                   dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, val, layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_containers_of_t<U,len_type>>
-        explicit dpd_varray(unsigned irrep, unsigned nirrep,
-                            const U& len, const Type& val=Type(),
-                            dpd_layout layout = DEFAULT)
+        dpd_varray(unsigned irrep, unsigned nirrep,
+                   const U& len, const Type& val=Type(),
+                   dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, val, layout);
         }
 
         template <typename U>
-        explicit dpd_varray(unsigned irrep, unsigned nirrep,
-                            matrix_view<U> len, const Type& val=Type(),
-                            dpd_layout layout = DEFAULT)
+        dpd_varray(unsigned irrep, unsigned nirrep,
+                   matrix_view<U> len, const Type& val=Type(),
+                   dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, val, layout);
         }
 
         dpd_varray(unsigned irrep, unsigned nirrep,
                    initializer_matrix<len_type> len, dpd_layout layout)
+        {
+            reset(irrep, nirrep, len, Type(), layout);
+        }
+
+        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
+        dpd_varray(unsigned irrep, unsigned nirrep,
+                   std::initializer_list<U> len, dpd_layout layout)
         {
             reset(irrep, nirrep, len, Type(), layout);
         }
@@ -110,6 +125,14 @@ class dpd_varray : public dpd_varray_base<Type, dpd_varray<Type, Allocator>, tru
         dpd_varray(unsigned irrep, unsigned nirrep,
                    initializer_matrix<len_type> len,
                    uninitialized_t, dpd_layout layout = DEFAULT)
+        {
+            reset(irrep, nirrep, len, uninitialized, layout);
+        }
+
+        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
+        dpd_varray(unsigned irrep, unsigned nirrep,
+                   std::initializer_list<U> len, uninitialized_t,
+                   dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, uninitialized, layout);
         }
@@ -138,7 +161,7 @@ class dpd_varray : public dpd_varray_base<Type, dpd_varray<Type, Allocator>, tru
 
         dpd_varray& operator=(const dpd_varray& other)
         {
-            return base::template operator=<>(other);
+            return base::operator=(other);
         }
 
         using base::operator=;
@@ -200,21 +223,29 @@ class dpd_varray : public dpd_varray_base<Type, dpd_varray<Type, Allocator>, tru
 
             if (std::is_scalar<Type>::value)
             {
-                reset(other.irrep_, other.nirrep_, len, uninitialized, layout);
+                reset(other.irrep_, other.nirrep_, len.view(), uninitialized, layout);
             }
             else
             {
-                reset(other.irrep_, other.nirrep_, len, layout);
+                reset(other.irrep_, other.nirrep_, len.view(), layout);
             }
 
-            base::template operator=<>(other);
+            *this = other;
         }
 
         void reset(unsigned irrep, unsigned nirrep,
                    initializer_matrix<len_type> len, const Type& val=Type(),
                    dpd_layout layout = DEFAULT)
         {
-            reset<>(irrep, nirrep, len, val, layout);
+            reset<initializer_matrix<len_type>>(irrep, nirrep, len, val, layout);
+        }
+
+        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
+        void reset(unsigned irrep, unsigned nirrep,
+                   std::initializer_list<U> len, const Type& val=Type(),
+                   dpd_layout layout = DEFAULT)
+        {
+            reset<std::initializer_list<U>>(irrep, nirrep, len, val, layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_containers_of_t<U,len_type>>
@@ -238,7 +269,14 @@ class dpd_varray : public dpd_varray_base<Type, dpd_varray<Type, Allocator>, tru
         void reset(unsigned irrep, unsigned nirrep,
                    initializer_matrix<len_type> len, dpd_layout layout)
         {
-            reset<>(irrep, nirrep, len, Type(), layout);
+            reset(irrep, nirrep, len, Type(), layout);
+        }
+
+        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
+        void reset(unsigned irrep, unsigned nirrep,
+                   std::initializer_list<U> len, dpd_layout layout)
+        {
+            reset(irrep, nirrep, len, Type(), layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_containers_of_t<U,len_type>>
@@ -259,7 +297,15 @@ class dpd_varray : public dpd_varray_base<Type, dpd_varray<Type, Allocator>, tru
                    initializer_matrix<len_type> len,
                    uninitialized_t, dpd_layout layout = DEFAULT)
         {
-            reset<>(irrep, nirrep, len, uninitialized, layout);
+            reset<initializer_matrix<len_type>>(irrep, nirrep, len, uninitialized, layout);
+        }
+
+        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
+        void reset(unsigned irrep, unsigned nirrep,
+                   std::initializer_list<U> len, uninitialized_t,
+                   dpd_layout layout = DEFAULT)
+        {
+            reset<std::initializer_list<U>>(irrep, nirrep, len, uninitialized, layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_containers_of_t<U,len_type>>

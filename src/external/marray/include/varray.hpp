@@ -111,7 +111,7 @@ class varray : public varray_base<Type, varray<Type, Allocator>, true>
 
         varray& operator=(const varray& other)
         {
-            return base::template operator=<>(other);
+            return base::operator=(other);
         }
 
         using base::operator=;

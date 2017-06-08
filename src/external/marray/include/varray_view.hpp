@@ -90,7 +90,7 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
 
         varray_view& operator=(const varray_view& other)
         {
-            return base::template operator=<>(other);
+            return base::operator=(other);
         }
 
         using base::operator=;

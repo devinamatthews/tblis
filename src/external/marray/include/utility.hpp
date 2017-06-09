@@ -675,26 +675,26 @@ namespace detail
         typedef integer_sequence<T, S..., (R+sizeof...(S))...> type;
     };
 
-    template <size_t N> struct static_range_helper;
+    template <typename T, T N, typename=void> struct static_range_helper;
 
-    template <> struct static_range_helper<0>
+    template <typename T, T N> struct static_range_helper<T, N, enable_if_t<N==0>>
     {
-        typedef integer_sequence<size_t> type;
+        typedef integer_sequence<T> type;
     };
 
-    template <> struct static_range_helper<1>
+    template <typename T, T N> struct static_range_helper<T, N, enable_if_t<N==1>>
     {
-        typedef integer_sequence<size_t,0> type;
+        typedef integer_sequence<T, 0> type;
     };
 
-    template <size_t N> struct static_range_helper
+    template <typename T, T N> struct static_range_helper<T, N, enable_if_t<(N>1)>>
     {
-        typedef typename concat_sequences<size_t, typename static_range_helper<(N+1)/2>::type,
-                                                  typename static_range_helper<N/2>::type>::type type;
+        typedef typename concat_sequences<T, typename static_range_helper<T, (N+1)/2>::type,
+                                             typename static_range_helper<T, N/2>::type>::type type;
     };
 
-    template <size_t N>
-    using static_range = typename static_range_helper<N>::type;
+    template <typename T, T N>
+    using static_range = typename static_range_helper<T, N>::type;
 }
 
 /*

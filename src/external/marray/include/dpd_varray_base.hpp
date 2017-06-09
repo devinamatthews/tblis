@@ -38,80 +38,6 @@ class dpd_varray_base
 
         /***********************************************************************
          *
-         * Private helper functions
-         *
-         **********************************************************************/
-
-        void local_size(unsigned irrep, unsigned begin, unsigned end,
-                        unsigned idx)
-        {
-            unsigned ndim = end-begin;
-
-            if (ndim == 1)
-            {
-                size_[idx][irrep] = len_[begin][irrep];
-                return;
-            }
-
-            unsigned mid = begin+(ndim+1)/2;
-            unsigned idxl = idx+1;
-            unsigned idxr = idx+((ndim+1)/2)*2;
-
-            stride_type size = 0;
-            for (unsigned irrepr = 0;irrepr < nirrep_;irrepr++)
-            {
-                unsigned irrepl = irrepr^irrep;
-                local_size(irrepl, begin, mid, idxl);
-                local_size(irrepr,   mid, end, idxr);
-                size += size_[idxl][irrepl]*size_[idxr][irrepr];
-            }
-
-            size_[idx][irrep] = size;
-        }
-
-        template <typename U, typename V>
-        unsigned local_offset(const std::vector<unsigned>& iperm,
-                              const U& irreps,
-                              stride_type size_before, pointer& data,
-                              V& stride,
-                              unsigned begin, unsigned end, unsigned idx)
-        {
-            unsigned ndim = end-begin;
-
-            if (ndim == 1)
-            {
-                stride[iperm[begin]] = size_before;
-                return irreps[iperm[begin]];
-            }
-
-            unsigned mid = begin+(ndim+1)/2;
-            unsigned idxl = idx+1;
-            unsigned idxr = idx+((ndim+1)/2)*2;
-
-            unsigned irrepl = local_offset(iperm, irreps, size_before,
-                                           data, stride, begin, mid, idxl);
-            unsigned irrepr = local_offset(iperm, irreps, size_before*size_[idxl][irrepl],
-                                           data, stride, mid, end, idxr);
-            unsigned irrep = irrepl^irrepr;
-
-            for (unsigned irr2 = 0;irr2 < irrepr;irr2++)
-            {
-                unsigned irr1 = irr2^irrep;
-                data += size_before*size_[idxl][irr1]*size_[idxr][irr2];
-            }
-
-            return irrep;
-        }
-
-        static unsigned num_sizes(unsigned ndim, dpd_layout layout)
-        {
-            if (layout == BALANCED_ROW_MAJOR ||
-                layout == BALANCED_COLUMN_MAJOR) return 2*ndim-1;
-            else return ndim;
-        }
-
-        /***********************************************************************
-         *
          * Reset
          *
          **********************************************************************/
@@ -312,6 +238,107 @@ class dpd_varray_base
                     }
                 }
             }
+        }
+
+        /***********************************************************************
+         *
+         * Private helper functions
+         *
+         **********************************************************************/
+
+        template <typename View, typename Func>
+        void for_each_block(Func&& f) const
+        {
+            typedef typename View::pointer Ptr;
+
+            unsigned ndim = dimension();
+
+            const_pointer cptr;
+            std::vector<unsigned> irreps(ndim);
+            std::vector<len_type> len(ndim);
+            std::vector<stride_type> stride(ndim);
+
+            viterator<0> it(std::vector<unsigned>(ndim-1, nirrep_));
+            while (it.next())
+            {
+                irreps[0] = irrep_;
+                for (unsigned i = 1;i < ndim;i++)
+                {
+                    irreps[0] ^= irreps[i] = it.position()[i-1];
+                }
+
+                get_block(irreps, len, cptr, stride);
+
+                f(View(len, const_cast<Ptr>(cptr), stride), irreps);
+            }
+        }
+
+        void local_size(unsigned irrep, unsigned begin, unsigned end,
+                        unsigned idx)
+        {
+            unsigned ndim = end-begin;
+
+            if (ndim == 1)
+            {
+                size_[idx][irrep] = len_[begin][irrep];
+                return;
+            }
+
+            unsigned mid = begin+(ndim+1)/2;
+            unsigned idxl = idx+1;
+            unsigned idxr = idx+((ndim+1)/2)*2;
+
+            stride_type size = 0;
+            for (unsigned irrepr = 0;irrepr < nirrep_;irrepr++)
+            {
+                unsigned irrepl = irrepr^irrep;
+                local_size(irrepl, begin, mid, idxl);
+                local_size(irrepr,   mid, end, idxr);
+                size += size_[idxl][irrepl]*size_[idxr][irrepr];
+            }
+
+            size_[idx][irrep] = size;
+        }
+
+        template <typename U, typename V>
+        unsigned local_offset(const std::vector<unsigned>& iperm,
+                              const U& irreps,
+                              stride_type size_before, pointer& data,
+                              V& stride,
+                              unsigned begin, unsigned end, unsigned idx)
+        {
+            unsigned ndim = end-begin;
+
+            if (ndim == 1)
+            {
+                stride[iperm[begin]] = size_before;
+                return irreps[iperm[begin]];
+            }
+
+            unsigned mid = begin+(ndim+1)/2;
+            unsigned idxl = idx+1;
+            unsigned idxr = idx+((ndim+1)/2)*2;
+
+            unsigned irrepl = local_offset(iperm, irreps, size_before,
+                                           data, stride, begin, mid, idxl);
+            unsigned irrepr = local_offset(iperm, irreps, size_before*size_[idxl][irrepl],
+                                           data, stride, mid, end, idxr);
+            unsigned irrep = irrepl^irrepr;
+
+            for (unsigned irr2 = 0;irr2 < irrepr;irr2++)
+            {
+                unsigned irr1 = irr2^irrep;
+                data += size_before*size_[idxl][irr1]*size_[idxr][irr2];
+            }
+
+            return irrep;
+        }
+
+        static unsigned num_sizes(unsigned ndim, dpd_layout layout)
+        {
+            if (layout == BALANCED_ROW_MAJOR ||
+                layout == BALANCED_COLUMN_MAJOR) return 2*ndim-1;
+            else return ndim;
         }
 
         void swap(dpd_varray_base& other)
@@ -614,6 +641,52 @@ class dpd_varray_base
                     }
                 }
             }
+        }
+
+        /***********************************************************************
+         *
+         * Iteration
+         *
+         **********************************************************************/
+
+        template <typename Func>
+        void for_each_block(Func&& f) const
+        {
+            for_each_block<varray_view<ctype>>(std::forward<Func>(f));
+        }
+
+        template <typename Func>
+        void for_each_block(Func&& f)
+        {
+            for_each_block<varray_view<Type>>(std::forward<Func>(f));
+        }
+
+        template <typename Func>
+        void for_each_element(Func&& f) const
+        {
+            for_each_block(
+            [&](const varray_view<ctype>& view, const std::vector<unsigned>& irreps)
+            {
+                view.for_each_element(
+                [&](cref value, const std::vector<len_type>& pos)
+                {
+                    f(value, irreps, pos);
+                });
+            });
+        }
+
+        template <typename Func>
+        void for_each_element(Func&& f)
+        {
+            for_each_block(
+            [&](const varray_view<Type>& view, const std::vector<unsigned>& irreps)
+            {
+                view.for_each_element(
+                [&](reference value, const std::vector<len_type>& pos)
+                {
+                    f(value, irreps, pos);
+                });
+            });
         }
 
         /***********************************************************************

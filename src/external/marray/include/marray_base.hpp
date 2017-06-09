@@ -155,6 +155,27 @@ class marray_base
             std::copy_n(stride.begin(), NDim, stride_.begin());
         }
 
+        void reset(initializer_type data, layout layout = DEFAULT)
+        {
+            set_lengths(0, len_, data);
+            stride_ = strides(len_, layout);
+            set_data(0, data_, data);
+        }
+
+        /***********************************************************************
+         *
+         * Private helper functions
+         *
+         **********************************************************************/
+
+        template <typename Ptr, typename Func, unsigned... I>
+        void for_each_element(Func&& f, detail::integer_sequence<unsigned, I...>) const
+        {
+            miterator<NDim, 1> it(len_, stride_);
+            Ptr ptr = const_cast<Ptr>(data_);
+            while (it.next(ptr)) f(*ptr, it.position()[I]...);
+        }
+
         void set_lengths(unsigned i, std::array<len_type, NDim>& len, std::initializer_list<Type> data)
         {
             len[i] = data.size();
@@ -186,13 +207,6 @@ class marray_base
                 set_data(i+1, ptr + j*stride_[i], *it);
                 ++it;
             }
-        }
-
-        void reset(initializer_type data, layout layout = DEFAULT)
-        {
-            set_lengths(0, len_, data);
-            stride_ = strides(len_, layout);
-            set_data(0, data_, data);
         }
 
         void swap(marray_base& other)
@@ -1048,6 +1062,24 @@ class marray_base
         decltype((*this)[std::forward<Arg>(arg)](std::forward<Args>(args)...))
         {
             return (*this)[std::forward<Arg>(arg)](std::forward<Args>(args)...);
+        }
+
+        /***********************************************************************
+         *
+         * Iteration
+         *
+         **********************************************************************/
+
+        template <typename Func>
+        void for_each_element(Func&& f) const
+        {
+            for_each_element<cptr>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
+        }
+
+        template <typename Func>
+        void for_each_element(Func&& f)
+        {
+            for_each_element<pointer>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
         }
 
         /***********************************************************************

@@ -173,14 +173,13 @@ class viterator
         bool empty_ = true;
 };
 
-template <typename len_type, typename stride_type, typename... Strides,
-          typename=typename std::enable_if<detail::are_containers<Strides...>::value>::type>
-viterator<1+sizeof...(Strides)>
+template <typename len_type, typename... Strides,
+          typename=detail::enable_if_t<detail::are_containers_of<stride_type, Strides...>::value>>
+viterator<sizeof...(Strides)>
 make_iterator(const std::vector<len_type>& len,
-              const std::vector<stride_type>& stride0,
               const Strides&... strides)
 {
-    return {len, stride0, strides...};
+    return {len, strides...};
 }
 
 }

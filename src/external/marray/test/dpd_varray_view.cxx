@@ -362,6 +362,155 @@ TEST(dpd_varray_view, permute)
     }
 }
 
+TEST(dpd_varray_view, block_iteration)
+{
+    array<array<int,2>,2> visited;
+    double tmp;
+    double* data = &tmp;
+
+    for (int l = 0;l < 6;l++)
+    {
+        SCOPED_TRACE(l);
+
+        dpd_varray_view<double> v1(0, 2, {{2, 3}, {1, 2}, {3, 1}}, data, layouts[l]);
+        dpd_varray_view<const double> v2(0, 2, {{2, 3}, {1, 2}, {3, 1}}, data, layouts[l]);
+
+        visited = {};
+        v1.for_each_block(
+        [&](varray_view<double>&& v3, const std::vector<unsigned>& irreps)
+        {
+            EXPECT_EQ(irreps.size(), 3u);
+            unsigned i = irreps[0];
+            unsigned j = irreps[1];
+            unsigned k = irreps[2];
+            EXPECT_LT(i, 2u);
+            EXPECT_LT(j, 2u);
+            EXPECT_LT(k, 2u);
+            EXPECT_EQ(i^j^k, 0u);
+            auto v4 = v1({i, j, k});
+            EXPECT_EQ(v3.data(), v4.data());
+            EXPECT_EQ(v3.lengths(), v4.lengths());
+            EXPECT_EQ(v3.strides(), v4.strides());
+            visited[i][j]++;
+        });
+
+        for (len_type i = 0;i < 2;i++)
+        {
+            for (len_type j = 0;j < 2;j++)
+            {
+                EXPECT_EQ(visited[i][j], 1);
+            }
+        }
+
+        visited = {};
+        v2.for_each_block(
+        [&](varray_view<const double>&& v3, const std::vector<unsigned>& irreps)
+        {
+            EXPECT_EQ(irreps.size(), 3u);
+            unsigned i = irreps[0];
+            unsigned j = irreps[1];
+            unsigned k = irreps[2];
+            EXPECT_LT(i, 2u);
+            EXPECT_LT(j, 2u);
+            EXPECT_LT(k, 2u);
+            EXPECT_EQ(i^j^k, 0u);
+            auto v4 = v2({i, j, k});
+            EXPECT_EQ(v3.data(), v4.data());
+            EXPECT_EQ(v3.lengths(), v4.lengths());
+            EXPECT_EQ(v3.strides(), v4.strides());
+            visited[i][j]++;
+        });
+
+        for (len_type i = 0;i < 2;i++)
+        {
+            for (len_type j = 0;j < 2;j++)
+            {
+                EXPECT_EQ(visited[i][j], 1);
+            }
+        }
+    }
+}
+
+TEST(dpd_varray_view, element_iteration)
+{
+    array<int,31> visited;
+    double tmp;
+    double* data = &tmp;
+    arrays<len_type,3,2> len = {{{2, 3}, {1, 2}, {3, 1}}};
+
+    for (int l = 0;l < 6;l++)
+    {
+        SCOPED_TRACE(l);
+
+        dpd_varray_view<double> v1(0, 2, len, data, layouts[l]);
+        dpd_varray_view<const double> v2(0, 2, len, data, layouts[l]);
+
+        visited = {};
+        v1.for_each_element(
+        [&](double& v, const std::vector<unsigned>& irreps, const std::vector<len_type>& pos)
+        {
+            EXPECT_EQ(irreps.size(), 3u);
+            EXPECT_EQ(pos.size(), 3u);
+            unsigned i = irreps[0];
+            unsigned j = irreps[1];
+            unsigned k = irreps[2];
+            len_type a = pos[0];
+            len_type b = pos[1];
+            len_type c = pos[2];
+            EXPECT_LT(i, 2u);
+            EXPECT_LT(j, 2u);
+            EXPECT_LT(k, 2u);
+            EXPECT_GE(a, 0);
+            EXPECT_LT(a, len[0][i]);
+            EXPECT_GE(b, 0);
+            EXPECT_LT(b, len[1][j]);
+            EXPECT_GE(c, 0);
+            EXPECT_LT(c, len[2][k]);
+            EXPECT_EQ(i^j^k, 0u);
+            auto v3 = v1(i, j, k);
+            EXPECT_EQ(&v, &v3(a, b, c));
+            visited[&v - data]++;
+        });
+
+        for (unsigned i = 0;i < 31;i++)
+        {
+            EXPECT_EQ(visited[i], 1);
+        }
+
+        visited = {};
+        v2.for_each_element(
+        [&](const double& v, const std::vector<unsigned>& irreps, const std::vector<len_type>& pos)
+        {
+            EXPECT_EQ(irreps.size(), 3u);
+            EXPECT_EQ(pos.size(), 3u);
+            unsigned i = irreps[0];
+            unsigned j = irreps[1];
+            unsigned k = irreps[2];
+            len_type a = pos[0];
+            len_type b = pos[1];
+            len_type c = pos[2];
+            EXPECT_LT(i, 2u);
+            EXPECT_LT(j, 2u);
+            EXPECT_LT(k, 2u);
+            EXPECT_GE(a, 0);
+            EXPECT_LT(a, len[0][i]);
+            EXPECT_GE(b, 0);
+            EXPECT_LT(b, len[1][j]);
+            EXPECT_GE(c, 0);
+            EXPECT_LT(c, len[2][k]);
+            EXPECT_EQ(i^j^k, 0u);
+            auto v4 = v1(i, j, k);
+            EXPECT_EQ(&v, &v4(a, b, c));
+            visited[&v - data]++;
+        });
+
+        for (unsigned i = 0;i < 31;i++)
+        {
+            EXPECT_EQ(visited[i], 1);
+        }
+    }
+}
+
 TEST(dpd_varray_view, swap)
 {
     double tmp1, tmp2;

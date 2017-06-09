@@ -471,6 +471,131 @@ TEST(dpd_marray_view, transpose)
     }
 }
 
+TEST(dpd_marray_view, block_iteration)
+{
+    arrays<int,2,2> visited;
+    double tmp;
+    double* data = &tmp;
+
+    for (int l = 0;l < 6;l++)
+    {
+        SCOPED_TRACE(l);
+
+        dpd_marray_view<double,3> v1(0, 2, {{2, 3}, {1, 2}, {3, 1}}, data, layouts[l]);
+        dpd_marray_view<const double,3> v2(0, 2, {{2, 3}, {1, 2}, {3, 1}}, data, layouts[l]);
+
+        visited = {};
+        v1.for_each_block(
+        [&](marray_view<double,3>&& v3, unsigned i, unsigned j, unsigned k)
+        {
+            EXPECT_LT(i, 2u);
+            EXPECT_LT(j, 2u);
+            EXPECT_LT(k, 2u);
+            EXPECT_EQ(i^j^k, 0u);
+            auto v4 = v1(i, j, k);
+            EXPECT_EQ(v3.data(), v4.data());
+            EXPECT_EQ(v3.lengths(), v4.lengths());
+            EXPECT_EQ(v3.strides(), v4.strides());
+            visited[i][j]++;
+        });
+
+        for (len_type i = 0;i < 2;i++)
+        {
+            for (len_type j = 0;j < 2;j++)
+            {
+                EXPECT_EQ(visited[i][j], 1);
+            }
+        }
+
+        visited = {};
+        v2.for_each_block(
+        [&](marray_view<const double,3>&& v3, unsigned i, unsigned j, unsigned k)
+        {
+            EXPECT_LT(i, 2u);
+            EXPECT_LT(j, 2u);
+            EXPECT_LT(k, 2u);
+            EXPECT_EQ(i^j^k, 0u);
+            auto v4 = v2(i, j, k);
+            EXPECT_EQ(v3.data(), v4.data());
+            EXPECT_EQ(v3.lengths(), v4.lengths());
+            EXPECT_EQ(v3.strides(), v4.strides());
+            visited[i][j]++;
+        });
+
+        for (len_type i = 0;i < 2;i++)
+        {
+            for (len_type j = 0;j < 2;j++)
+            {
+                EXPECT_EQ(visited[i][j], 1);
+            }
+        }
+    }
+}
+
+TEST(dpd_marray_view, element_iteration)
+{
+    array<int,31> visited;
+    double tmp;
+    double* data = &tmp;
+    arrays<len_type,3,2> len = {{{2, 3}, {1, 2}, {3, 1}}};
+
+    for (int l = 0;l < 6;l++)
+    {
+        SCOPED_TRACE(l);
+
+        dpd_marray_view<double,3> v1(0, 2, len, data, layouts[l]);
+        dpd_marray_view<const double,3> v2(0, 2, len, data, layouts[l]);
+
+        visited = {};
+        v1.for_each_element(
+        [&](double& v, unsigned i, unsigned j, unsigned k, len_type a, len_type b, len_type c)
+        {
+            EXPECT_LT(i, 2u);
+            EXPECT_LT(j, 2u);
+            EXPECT_LT(k, 2u);
+            EXPECT_GE(a, 0);
+            EXPECT_LT(a, len[0][i]);
+            EXPECT_GE(b, 0);
+            EXPECT_LT(b, len[1][j]);
+            EXPECT_GE(c, 0);
+            EXPECT_LT(c, len[2][k]);
+            EXPECT_EQ(i^j^k, 0u);
+            auto v3 = v1(i, j, k);
+            EXPECT_EQ(&v, &v3(a, b, c));
+            visited[&v - data]++;
+        });
+
+        for (unsigned i = 0;i < 31;i++)
+        {
+            EXPECT_EQ(visited[i], 1);
+        }
+
+        visited = {};
+        v2.for_each_element(
+        [&](const double& v, unsigned i, unsigned j, unsigned k, len_type a, len_type b, len_type c)
+        {
+            EXPECT_LT(i, 2u);
+            EXPECT_LT(j, 2u);
+            EXPECT_LT(k, 2u);
+            EXPECT_GE(a, 0);
+            EXPECT_LT(a, len[0][i]);
+            EXPECT_GE(b, 0);
+            EXPECT_LT(b, len[1][j]);
+            EXPECT_GE(c, 0);
+            EXPECT_LT(c, len[2][k]);
+            EXPECT_EQ(i^j^k, 0u);
+            auto v4 = v1(i, j, k);
+            EXPECT_EQ(&v, &v4(a, b, c));
+            visited[&v - data]++;
+        });
+
+        for (unsigned i = 0;i < 31;i++)
+        {
+            EXPECT_EQ(visited[i], 1);
+        }
+    }
+}
+
 TEST(dpd_marray_view, swap)
 {
     double tmp1, tmp2;

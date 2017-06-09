@@ -35,91 +35,6 @@ class varray_base
 
         /***********************************************************************
          *
-         * Private helper functions
-         *
-         **********************************************************************/
-
-        template <unsigned Dim>
-        void get_slice(pointer&, std::vector<len_type>&,
-                       std::vector<stride_type>&) const {}
-
-        template <unsigned Dim, typename... Args>
-        void get_slice(pointer& ptr, std::vector<len_type>& len,
-                       std::vector<stride_type>& stride,
-                       len_type arg, Args&&... args) const
-        {
-            MARRAY_ASSERT(arg >= 0 && arg < len_[Dim]);
-            ptr += arg*stride_[Dim];
-            get_slice<Dim+1>(ptr, len, stride, std::forward<Args>(args)...);
-        }
-
-        template <unsigned Dim, typename I, typename... Args>
-        void get_slice(pointer& ptr, std::vector<len_type>& len,
-                       std::vector<stride_type>& stride,
-                       const range_t<I>& arg, Args&&... args) const
-        {
-            MARRAY_ASSERT(arg.front() <= arg.back());
-            MARRAY_ASSERT(arg.front() >= 0 && arg.back() < len_[Dim]);
-            ptr += arg.front()*stride_[Dim];
-            len.push_back(arg.size());
-            stride.push_back(arg.step()*stride_[Dim]);
-            get_slice<Dim+1>(ptr, len, stride, std::forward<Args>(args)...);
-        }
-
-        template <unsigned Dim, typename... Args>
-        void get_slice(pointer& ptr, std::vector<len_type>& len,
-                       std::vector<stride_type>& stride,
-                       all_t, Args&&... args) const
-        {
-            len.push_back(len_[Dim]);
-            stride.push_back(stride_[Dim]);
-            get_slice<Dim+1>(ptr, len, stride, std::forward<Args>(args)...);
-        }
-
-        template <unsigned Dim>
-        void get_reference(pointer&) const {}
-
-        template <unsigned Dim, typename... Args>
-        void get_reference(pointer& ptr, len_type arg, Args&&... args) const
-        {
-            MARRAY_ASSERT(arg >= 0 && arg < len_[Dim]);
-            ptr += arg*stride_[Dim];
-            get_reference<Dim+1>(ptr, std::forward<Args>(args)...);
-        }
-
-        template <typename U, typename D, bool O>
-        void copy(const varray_base<U, D, O>& other) const
-        {
-            MARRAY_ASSERT(lengths() == other.lengths());
-
-            auto it = make_iterator(lengths(), strides(), other.strides());
-            pointer a = const_cast<pointer>(data());
-            auto b = other.data();
-            while (it.next(a, b)) *a = *b;
-        }
-
-        template <typename U, unsigned N, typename D, bool O>
-        void copy(const marray_base<U, N, D, O>& other) const
-        {
-            MARRAY_ASSERT(dimension() == N);
-            MARRAY_ASSERT(std::equal(lengths().begin(), lengths().end(),
-                                     other.lengths().begin()));
-
-            auto it = make_iterator(lengths(), strides(), other.strides());
-            pointer a = const_cast<pointer>(data());
-            auto b = other.data();
-            while (it.next(a, b)) *a = *b;
-        }
-
-        void copy(const Type& value) const
-        {
-            auto it = make_iterator(lengths(), strides());
-            pointer a = const_cast<pointer>(data());
-            while (it.next(a)) *a = value;
-        }
-
-        /***********************************************************************
-         *
          * Reset
          *
          **********************************************************************/
@@ -198,6 +113,99 @@ class varray_base
             data_ = ptr;
             len_.assign(len.begin(), len.end());
             stride_.assign(stride.begin(), stride.end());
+        }
+
+        /***********************************************************************
+         *
+         * Private helper functions
+         *
+         **********************************************************************/
+
+        template <typename Ptr, typename Func>
+        void for_each_element(Func&& f) const
+        {
+            viterator<1> it(len_, stride_);
+            Ptr ptr = const_cast<Ptr>(data_);
+            while (it.next(ptr)) f(*ptr, it.position());
+        }
+
+        template <unsigned Dim>
+        void get_slice(pointer&, std::vector<len_type>&,
+                       std::vector<stride_type>&) const {}
+
+        template <unsigned Dim, typename... Args>
+        void get_slice(pointer& ptr, std::vector<len_type>& len,
+                       std::vector<stride_type>& stride,
+                       len_type arg, Args&&... args) const
+        {
+            MARRAY_ASSERT(arg >= 0 && arg < len_[Dim]);
+            ptr += arg*stride_[Dim];
+            get_slice<Dim+1>(ptr, len, stride, std::forward<Args>(args)...);
+        }
+
+        template <unsigned Dim, typename I, typename... Args>
+        void get_slice(pointer& ptr, std::vector<len_type>& len,
+                       std::vector<stride_type>& stride,
+                       const range_t<I>& arg, Args&&... args) const
+        {
+            MARRAY_ASSERT(arg.front() <= arg.back());
+            MARRAY_ASSERT(arg.front() >= 0 && arg.back() < len_[Dim]);
+            ptr += arg.front()*stride_[Dim];
+            len.push_back(arg.size());
+            stride.push_back(arg.step()*stride_[Dim]);
+            get_slice<Dim+1>(ptr, len, stride, std::forward<Args>(args)...);
+        }
+
+        template <unsigned Dim, typename... Args>
+        void get_slice(pointer& ptr, std::vector<len_type>& len,
+                       std::vector<stride_type>& stride,
+                       all_t, Args&&... args) const
+        {
+            len.push_back(len_[Dim]);
+            stride.push_back(stride_[Dim]);
+            get_slice<Dim+1>(ptr, len, stride, std::forward<Args>(args)...);
+        }
+
+        template <unsigned Dim>
+        void get_reference(pointer&) const {}
+
+        template <unsigned Dim, typename... Args>
+        void get_reference(pointer& ptr, len_type arg, Args&&... args) const
+        {
+            MARRAY_ASSERT(arg >= 0 && arg < len_[Dim]);
+            ptr += arg*stride_[Dim];
+            get_reference<Dim+1>(ptr, std::forward<Args>(args)...);
+        }
+
+        template <typename U, typename D, bool O>
+        void copy(const varray_base<U, D, O>& other) const
+        {
+            MARRAY_ASSERT(lengths() == other.lengths());
+
+            auto it = make_iterator(lengths(), strides(), other.strides());
+            pointer a = const_cast<pointer>(data());
+            auto b = other.data();
+            while (it.next(a, b)) *a = *b;
+        }
+
+        template <typename U, unsigned N, typename D, bool O>
+        void copy(const marray_base<U, N, D, O>& other) const
+        {
+            MARRAY_ASSERT(dimension() == N);
+            MARRAY_ASSERT(std::equal(lengths().begin(), lengths().end(),
+                                     other.lengths().begin()));
+
+            auto it = make_iterator(lengths(), strides(), other.strides());
+            pointer a = const_cast<pointer>(data());
+            auto b = other.data();
+            while (it.next(a, b)) *a = *b;
+        }
+
+        void copy(const Type& value) const
+        {
+            auto it = make_iterator(lengths(), strides());
+            pointer a = const_cast<pointer>(data());
+            while (it.next(a)) *a = value;
         }
 
         void swap(varray_base& other)
@@ -679,6 +687,24 @@ class varray_base
             pointer ptr = data();
             get_reference<0>(ptr, std::forward<Args>(args)...);
             return *ptr;
+        }
+
+        /***********************************************************************
+         *
+         * Iteration
+         *
+         **********************************************************************/
+
+        template <typename Func>
+        void for_each_element(Func&& f) const
+        {
+            for_each_element<cptr>(std::forward<Func>(f));
+        }
+
+        template <typename Func>
+        void for_each_element(Func&& f)
+        {
+            for_each_element<pointer>(std::forward<Func>(f));
         }
 
         /***********************************************************************

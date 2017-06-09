@@ -57,80 +57,6 @@ class dpd_marray_base
 
         /***********************************************************************
          *
-         * Private helper functions
-         *
-         **********************************************************************/
-
-        void local_size(unsigned irrep, unsigned begin, unsigned end,
-                        unsigned idx)
-        {
-            unsigned ndim = end-begin;
-
-            if (ndim == 1)
-            {
-                size_[idx][irrep] = len_[begin][irrep];
-                return;
-            }
-
-            unsigned mid = begin+(ndim+1)/2;
-            unsigned idxl = idx+1;
-            unsigned idxr = idx+((ndim+1)/2)*2;
-
-            stride_type size = 0;
-            for (unsigned irrepr = 0;irrepr < nirrep_;irrepr++)
-            {
-                unsigned irrepl = irrepr^irrep;
-                local_size(irrepl, begin, mid, idxl);
-                local_size(irrepr,   mid, end, idxr);
-                size += size_[idxl][irrepl]*size_[idxr][irrepr];
-            }
-
-            size_[idx][irrep] = size;
-        }
-
-        template <typename V, typename U>
-        unsigned local_offset(const std::array<unsigned, NDim>& iperm,
-                              const V& irreps,
-                              stride_type size_before, pointer& data,
-                              U& stride,
-                              unsigned begin, unsigned end, unsigned idx)
-        {
-            unsigned ndim = end-begin;
-
-            if (ndim == 1)
-            {
-                stride[iperm[begin]] = size_before;
-                return irreps[iperm[begin]];
-            }
-
-            unsigned mid = begin+(ndim+1)/2;
-            unsigned idxl = idx+1;
-            unsigned idxr = idx+((ndim+1)/2)*2;
-
-            unsigned irrepl = local_offset(iperm, irreps, size_before,
-                                           data, stride, begin, mid, idxl);
-            unsigned irrepr = local_offset(iperm, irreps, size_before*size_[idxl][irrepl],
-                                           data, stride, mid, end, idxr);
-            unsigned irrep = irrepl^irrepr;
-
-            for (unsigned irr2 = 0;irr2 < irrepr;irr2++)
-            {
-                unsigned irr1 = irr2^irrep;
-                data += size_before*size_[idxl][irr1]*size_[idxr][irr2];
-            }
-
-            return irrep;
-        }
-
-        static unsigned num_sizes(dpd_layout layout)
-        {
-            if (layout == BALANCED_ROW_MAJOR ||
-                layout == BALANCED_COLUMN_MAJOR) return 2*NDim-1;
-            else return NDim;
-        }
-
-        /***********************************************************************
-         *
          * Reset
          *
          **********************************************************************/
@@ -306,6 +232,138 @@ class dpd_marray_base
                     }
                 }
             }
+        }
+
+        /***********************************************************************
+         *
+         * Private helper functions
+         *
+         **********************************************************************/
+
+        template <typename View, typename Func, unsigned... I>
+        void for_each_block(Func&& f, detail::integer_sequence<unsigned, I...>) const
+        {
+            typedef typename View::pointer Ptr;
+
+            std::array<unsigned, NDim-1> nirrep;
+            nirrep.fill(nirrep_);
+
+            const_pointer cptr;
+            std::array<unsigned, NDim> irreps;
+            std::array<len_type, NDim> len;
+            std::array<stride_type, NDim> stride;
+
+            miterator<NDim-1, 0> it(nirrep);
+            while (it.next())
+            {
+                irreps[0] = irrep_;
+                for (unsigned i = 1;i < NDim;i++)
+                {
+                    irreps[0] ^= irreps[i] = it.position()[i-1];
+                }
+
+                get_block(irreps, len, cptr, stride);
+
+                f(View(len, const_cast<Ptr>(cptr), stride), irreps[I]...);
+            }
+        }
+
+        template <typename Tp, typename Func, unsigned... I>
+        void for_each_element(Func&& f, detail::integer_sequence<unsigned, I...>) const
+        {
+            typedef Tp* Ptr;
+
+            std::array<unsigned, NDim-1> nirrep;
+            nirrep.fill(nirrep_);
+
+            const_pointer cptr;
+            std::array<unsigned, NDim> irreps;
+            std::array<len_type, NDim> len;
+            std::array<stride_type, NDim> stride;
+
+            miterator<NDim-1, 0> it(nirrep);
+            while (it.next())
+            {
+                irreps[0] = irrep_;
+                for (unsigned i = 1;i < NDim;i++)
+                {
+                    irreps[0] ^= irreps[i] = it.position()[i-1];
+                }
+
+                get_block(irreps, len, cptr, stride);
+
+                miterator<NDim, 1> it(len, stride);
+                Ptr ptr = const_cast<Ptr>(cptr);
+                while (it.next(ptr)) f(*ptr, irreps[I]..., it.position()[I]...);
+            }
+        }
+
+        void local_size(unsigned irrep, unsigned begin, unsigned end,
+                        unsigned idx)
+        {
+            unsigned ndim = end-begin;
+
+            if (ndim == 1)
+            {
+                size_[idx][irrep] = len_[begin][irrep];
+                return;
+            }
+
+            unsigned mid = begin+(ndim+1)/2;
+            unsigned idxl = idx+1;
+            unsigned idxr = idx+((ndim+1)/2)*2;
+
+            stride_type size = 0;
+            for (unsigned irrepr = 0;irrepr < nirrep_;irrepr++)
+            {
+                unsigned irrepl = irrepr^irrep;
+                local_size(irrepl, begin, mid, idxl);
+                local_size(irrepr,   mid, end, idxr);
+                size += size_[idxl][irrepl]*size_[idxr][irrepr];
+            }
+
+            size_[idx][irrep] = size;
+        }
+
+        template <typename V, typename U>
+        unsigned local_offset(const std::array<unsigned, NDim>& iperm,
+                              const V& irreps,
+                              stride_type size_before, pointer& data,
+                              U& stride,
+                              unsigned begin, unsigned end, unsigned idx)
+        {
+            unsigned ndim = end-begin;
+
+            if (ndim == 1)
+            {
+                stride[iperm[begin]] = size_before;
+                return irreps[iperm[begin]];
+            }
+
+            unsigned mid = begin+(ndim+1)/2;
+            unsigned idxl = idx+1;
+            unsigned idxr = idx+((ndim+1)/2)*2;
+
+            unsigned irrepl = local_offset(iperm, irreps, size_before,
+                                           data, stride, begin, mid, idxl);
+            unsigned irrepr = local_offset(iperm, irreps, size_before*size_[idxl][irrepl],
+                                           data, stride, mid, end, idxr);
+            unsigned irrep = irrepl^irrepr;
+
+            for (unsigned irr2 = 0;irr2 < irrepr;irr2++)
+            {
+                unsigned irr1 = irr2^irrep;
+                data += size_before*size_[idxl][irr1]*size_[idxr][irr2];
+            }
+
+            return irrep;
+        }
+
+        static unsigned num_sizes(dpd_layout layout)
+        {
+            if (layout == BALANCED_ROW_MAJOR ||
+                layout == BALANCED_COLUMN_MAJOR) return 2*NDim-1;
+            else return NDim;
         }
 
         void swap(dpd_marray_base& other)
@@ -683,6 +741,36 @@ class dpd_marray_base
                     }
                 }
             }
+        }
+
+        /***********************************************************************
+         *
+         * Iteration
+         *
+         **********************************************************************/
+
+        template <typename Func>
+        void for_each_block(Func&& f) const
+        {
+            for_each_block<marray_view<ctype, NDim>>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
+        }
+
+        template <typename Func>
+        void for_each_block(Func&& f)
+        {
+            for_each_block<marray_view<Type, NDim>>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
+        }
+
+        template <typename Func>
+        void for_each_element(Func&& f) const
+        {
+            for_each_element<ctype>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
+        }
+
+        template <typename Func>
+        void for_each_element(Func&& f)
+        {
+            for_each_element<Type>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
         }
 
         /***********************************************************************

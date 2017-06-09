@@ -677,22 +677,22 @@ template <typename T, unsigned NDim, unsigned NIndexed, typename... Dims>
 typename expression_type<marray_slice<T, NDim, NIndexed, Dims...>>::type
 make_expression(const marray_slice<T, NDim, NIndexed, Dims...>& x)
 {
-    return make_expression_helper(x, detail::static_range<sizeof...(Dims)>(),
-                                  detail::static_range<NDim-NIndexed>());
+    return make_expression_helper(x, detail::static_range<size_t, sizeof...(Dims)>(),
+                                  detail::static_range<size_t, NDim-NIndexed>());
 }
 
 template <typename T, unsigned NDim, typename Derived, bool Owner>
 typename expression_type<const marray_base<T, NDim, Derived, Owner>>::type
 make_expression(const marray_base<T, NDim, Derived, Owner>& x)
 {
-    return make_expression_helper(x, detail::static_range<NDim>());
+    return make_expression_helper(x, detail::static_range<size_t, NDim>());
 }
 
 template <typename T, unsigned NDim, typename Derived, bool Owner>
 typename expression_type<marray_base<T, NDim, Derived, Owner>>::type
 make_expression(marray_base<T, NDim, Derived, Owner>& x)
 {
-    return make_expression_helper(x, detail::static_range<NDim>());
+    return make_expression_helper(x, detail::static_range<size_t, NDim>());
 }
 
 template <typename Expr>
@@ -954,7 +954,7 @@ template <typename T, typename... Dims>
 std::array<len_type, sizeof...(Dims)>
 get_array_lengths(const array_expr<T, Dims...>& array)
 {
-    return get_array_lengths_helper(array, detail::static_range<sizeof...(Dims)>());
+    return get_array_lengths_helper(array, detail::static_range<size_t, sizeof...(Dims)>());
 }
 
 inline bool check_expr_length(const bcast_dim&, len_type)
@@ -985,7 +985,7 @@ template <typename T, typename... Dims, size_t NDim>
 bool check_expr_lengths(const array_expr<T, Dims...>& array,
                         const std::array<len_type, NDim>& len)
 {
-    return check_expr_lengths_helper(array, len, detail::static_range<sizeof...(Dims)>());
+    return check_expr_lengths_helper(array, len, detail::static_range<size_t, sizeof...(Dims)>());
 }
 
 template <typename Expr, size_t NDim>

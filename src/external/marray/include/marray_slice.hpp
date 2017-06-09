@@ -43,7 +43,7 @@ void get_slice_dims(It1 len, It2 stride,
                     const std::tuple<Dims...>& dims)
 {
     get_slice_dims_helper(len, stride, dims,
-                          detail::static_range<sizeof...(Dims)>());
+                          detail::static_range<size_t, sizeof...(Dims)>());
 }
 
 }

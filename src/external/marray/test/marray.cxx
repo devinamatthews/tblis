@@ -531,6 +531,61 @@ TEST(marray, access)
     EXPECT_EQ(v1.data() + 6, v11.data());
 }
 
+TEST(marray, iteration)
+{
+    array<array<int,3>,4> visited;
+    array<array<double,3>,4> data = {{{ 0, 1, 2},
+                                      { 3, 4, 5},
+                                      { 6, 7, 8},
+                                      { 9,10,11}}};
+
+    marray<double,2> v1 = {{{ 0, 1, 2},
+                            { 3, 4, 5},
+                            { 6, 7, 8},
+                            { 9,10,11}}};
+    const marray<double,2> v2(v1);
+
+    visited = {};
+    v1.for_each_element(
+    [&](double& v, len_type i, len_type j)
+    {
+        EXPECT_GE(i, 0);
+        EXPECT_LT(i, 4);
+        EXPECT_GE(j, 0);
+        EXPECT_LT(j, 3);
+        EXPECT_EQ(v, data[i][j]);
+        visited[i][j]++;
+    });
+
+    for (len_type i = 0;i < 4;i++)
+    {
+        for (len_type j = 0;j < 3;j++)
+        {
+            EXPECT_EQ(visited[i][j], 1);
+        }
+    }
+
+    visited = {};
+    v2.for_each_element(
+    [&](const double& v, len_type i, len_type j)
+    {
+        EXPECT_GE(i, 0);
+        EXPECT_LT(i, 4);
+        EXPECT_GE(j, 0);
+        EXPECT_LT(j, 3);
+        EXPECT_EQ(v, data[i][j]);
+        visited[i][j]++;
+    });
+
+    for (len_type i = 0;i < 4;i++)
+    {
+        for (len_type j = 0;j < 3;j++)
+        {
+            EXPECT_EQ(visited[i][j], 1);
+        }
+    }
+}
+
 TEST(marray, swap)
 {
     marray<double,3> v1({4, 2, 5});

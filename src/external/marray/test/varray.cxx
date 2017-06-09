@@ -477,6 +477,65 @@ TEST(varray, access)
     EXPECT_EQ(v1.data() + 1, v5.data());
 }
 
+TEST(varray, iteration)
+{
+    array<array<int,3>,4> visited;
+    array<array<double,3>,4> data = {{{ 0, 1, 2},
+                                      { 3, 4, 5},
+                                      { 6, 7, 8},
+                                      { 9,10,11}}};
+
+    varray<double> v1({4, 3});
+    std::copy_n(&data[0][0], 12, v1.data());
+    const varray<double> v2(v1);
+
+    visited = {};
+    v1.for_each_element(
+    [&](double& v, const std::vector<len_type>& pos)
+    {
+        EXPECT_EQ(pos.size(), 2u);
+        len_type i = pos[0];
+        len_type j = pos[1];
+        EXPECT_GE(i, 0);
+        EXPECT_LT(i, 4);
+        EXPECT_GE(j, 0);
+        EXPECT_LT(j, 3);
+        EXPECT_EQ(v, data[i][j]);
+        visited[i][j]++;
+    });
+
+    for (len_type i = 0;i < 4;i++)
+    {
+        for (len_type j = 0;j < 3;j++)
+        {
+            EXPECT_EQ(visited[i][j], 1);
+        }
+    }
+
+    visited = {};
+    v2.for_each_element(
+    [&](const double& v, const std::vector<len_type>& pos)
+    {
+        EXPECT_EQ(pos.size(), 2u);
+        len_type i = pos[0];
+        len_type j = pos[1];
+        EXPECT_GE(i, 0);
+        EXPECT_LT(i, 4);
+        EXPECT_GE(j, 0);
+        EXPECT_LT(j, 3);
+        EXPECT_EQ(v, data[i][j]);
+        visited[i][j]++;
+    });
+
+    for (len_type i = 0;i < 4;i++)
+    {
+        for (len_type j = 0;j < 3;j++)
+        {
+            EXPECT_EQ(visited[i][j], 1);
+        }
+    }
+}
+
 TEST(varray, swap)
 {
     varray<double> v1({4, 2, 5});

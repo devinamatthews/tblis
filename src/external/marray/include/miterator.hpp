@@ -15,9 +15,9 @@ class miterator
         miterator(miterator&&) = default;
 
         template <typename Len, typename... Strides,
-                  typename=typename std::enable_if<detail::is_container_of<Len, len_type>::value &&
-                                                   detail::are_containers_of<stride_type, Strides...>::value &&
-                                                   sizeof...(Strides) == N>::type>
+                  typename=detail::enable_if_t<detail::is_container_of<Len, len_type>::value &&
+                                               detail::are_containers_of<stride_type, Strides...>::value &&
+                                               sizeof...(Strides) == N>>
         miterator(const Len& len, const Strides&... strides)
         : pos_{}, first_(true), empty_(false)
         {
@@ -170,14 +170,13 @@ class miterator
         bool empty_;
 };
 
-template <typename len_type, typename stride_type, size_t NDim, typename... Strides,
-          typename=typename std::enable_if<detail::are_arrays_of<stride_type, NDim, Strides...>::value>::type>
-miterator<NDim, 1+sizeof...(Strides)>
+template <typename len_type, size_t NDim, typename... Strides,
+          typename=detail::enable_if_t<detail::are_containers_of<stride_type, Strides...>::value>>
+miterator<NDim, sizeof...(Strides)>
 make_iterator(const std::array<len_type, NDim>& len,
-              const std::array<stride_type, NDim>& stride0,
               const Strides&... strides)
 {
-    return {len, stride0, strides...};
+    return {len, strides...};
 }
 
 }

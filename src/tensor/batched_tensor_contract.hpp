@@ -19,6 +19,8 @@
 
 #include "src/external/stl_ext/include/iostream.hpp"
 
+#include <atomic>
+
 extern std::atomic<long> flops;
 
 namespace tblis

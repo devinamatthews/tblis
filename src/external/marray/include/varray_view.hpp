@@ -57,7 +57,8 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
             reset(other);
         }
 
-        varray_view(std::initializer_list<len_type> len, pointer ptr, layout layout = DEFAULT)
+        template <typename U>
+        varray_view(std::initializer_list<U> len, pointer ptr, layout layout = DEFAULT)
         {
             reset(len, ptr, layout);
         }
@@ -68,8 +69,9 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
             reset(len, ptr, layout);
         }
 
-        varray_view(std::initializer_list<len_type> len, pointer ptr,
-                    std::initializer_list<stride_type> stride)
+        template <typename U, typename V>
+        varray_view(std::initializer_list<U> len, pointer ptr,
+                    std::initializer_list<V> stride)
         {
             reset(len, ptr, stride);
         }
@@ -123,9 +125,10 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
          *
          **********************************************************************/
 
-        void shift(std::initializer_list<len_type> n)
+        template <typename U>
+        void shift(std::initializer_list<U> n)
         {
-            shift<>(n);
+            shift<std::initializer_list<U>>(n);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>

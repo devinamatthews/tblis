@@ -73,7 +73,8 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
             reset(other, layout);
         }
 
-        explicit marray(std::initializer_list<len_type> len, const Type& val=Type(), layout layout = DEFAULT)
+        template <typename U>
+        explicit marray(std::initializer_list<U> len, const Type& val=Type(), layout layout = DEFAULT)
         {
             reset(len, val, layout);
         }
@@ -84,7 +85,8 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
             reset(len, val, layout);
         }
 
-        marray(std::initializer_list<len_type> len, layout layout)
+        template <typename U>
+        marray(std::initializer_list<U> len, layout layout)
         {
             reset(len, Type(), layout);
         }
@@ -95,7 +97,8 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
             reset(len, Type(), layout);
         }
 
-        marray(std::initializer_list<len_type> len, uninitialized_t, layout layout = DEFAULT)
+        template <typename U>
+        marray(std::initializer_list<U> len, uninitialized_t, layout layout = DEFAULT)
         {
             reset(len, uninitialized, layout);
         }
@@ -208,9 +211,10 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
             reset(other.view(), layout);
         }
 
-        void reset(std::initializer_list<len_type> len, const Type& val=Type(), layout layout = DEFAULT)
+        template <typename U>
+        void reset(std::initializer_list<U> len, const Type& val=Type(), layout layout = DEFAULT)
         {
-            reset<>(len, val, layout);
+            reset<std::initializer_list<U>>(len, val, layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
@@ -220,9 +224,10 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
             std::uninitialized_fill_n(data_, storage_.size, val);
         }
 
-        void reset(std::initializer_list<len_type> len, layout layout)
+        template <typename U>
+        void reset(std::initializer_list<U> len, layout layout)
         {
-            reset<>(len, Type(), layout);
+            reset<std::initializer_list<U>>(len, Type(), layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
@@ -231,9 +236,10 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
             reset(len, Type(), layout);
         }
 
-        void reset(std::initializer_list<len_type> len, uninitialized_t, layout layout = DEFAULT)
+        template <typename U>
+        void reset(std::initializer_list<U> len, uninitialized_t, layout layout = DEFAULT)
         {
-            reset<>(len, uninitialized, layout);
+            reset<std::initializer_list<U>>(len, uninitialized, layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
@@ -265,9 +271,10 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
          *
          **********************************************************************/
 
-        void resize(std::initializer_list<len_type> len, const Type& val=Type())
+        template <typename U>
+        void resize(std::initializer_list<U> len, const Type& val=Type())
         {
-            resize<>(len, val);
+            resize<std::initializer_list<U>>(len, val);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>

@@ -86,9 +86,10 @@ class varray_base
             stride_.assign(other.strides().begin(), other.strides().end());
         }
 
-        void reset(std::initializer_list<len_type> len, pointer ptr, layout layout = DEFAULT)
+        template <typename U>
+        void reset(std::initializer_list<U> len, pointer ptr, layout layout = DEFAULT)
         {
-            reset<>(len, ptr, layout);
+            reset<std::initializer_list<U>>(len, ptr, layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
@@ -97,10 +98,12 @@ class varray_base
             reset(len, ptr, strides(len, layout));
         }
 
-        void reset(std::initializer_list<len_type> len, pointer ptr,
-                   std::initializer_list<stride_type> stride)
+        template <typename U, typename V>
+        void reset(std::initializer_list<U> len, pointer ptr,
+                   std::initializer_list<V> stride)
         {
-            reset<decltype(len), decltype(stride)>(len, ptr, stride);
+            reset<std::initializer_list<U>,
+                  std::initializer_list<V>>(len, ptr, stride);
         }
 
         template <typename U, typename V, typename=detail::enable_if_t<
@@ -224,13 +227,16 @@ class varray_base
          *
          **********************************************************************/
 
-        static std::vector<stride_type> strides(std::initializer_list<len_type> len, layout layout = DEFAULT)
+        template <typename U>
+        static std::vector<stride_type>
+        strides(std::initializer_list<U> len, layout layout = DEFAULT)
         {
-            return strides<>(len, layout);
+            return strides<std::initializer_list<U>>(len, layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        static std::vector<stride_type> strides(const U& len, layout layout = DEFAULT)
+        static std::vector<stride_type>
+        strides(const U& len, layout layout = DEFAULT)
         {
             MARRAY_ASSERT(len.size() > 0);
 
@@ -265,9 +271,10 @@ class varray_base
             return stride;
         }
 
-        stride_type size(std::initializer_list<len_type> len)
+        template <typename U>
+        stride_type size(std::initializer_list<U> len)
         {
-            return size<>(len);
+            return size<std::initializer_list<U>>(len);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
@@ -396,14 +403,16 @@ class varray_base
          *
          **********************************************************************/
 
-        varray_view<ctype> shifted(std::initializer_list<len_type> n) const
+        template <typename U>
+        varray_view<ctype> shifted(std::initializer_list<U> n) const
         {
             return const_cast<varray_base&>(*this).shifted(n);
         }
 
-        varray_view<Type> shifted(std::initializer_list<len_type> n)
+        template <typename U>
+        varray_view<Type> shifted(std::initializer_list<U> n)
         {
-            return shifted<>(n);
+            return shifted<std::initializer_list<U>>(n);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>

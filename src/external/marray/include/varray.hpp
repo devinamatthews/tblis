@@ -65,7 +65,8 @@ class varray : public varray_base<Type, varray<Type, Allocator>, true>
             reset(other, layout);
         }
 
-        explicit varray(std::initializer_list<len_type> len, const Type& val=Type(), layout layout = DEFAULT)
+        template <typename U>
+        explicit varray(std::initializer_list<U> len, const Type& val=Type(), layout layout = DEFAULT)
         {
             reset(len, val, layout);
         }
@@ -76,7 +77,8 @@ class varray : public varray_base<Type, varray<Type, Allocator>, true>
             reset(len, val, layout);
         }
 
-        varray(std::initializer_list<len_type> len, layout layout)
+        template <typename U>
+        varray(std::initializer_list<U> len, layout layout)
         {
             reset(len, Type(), layout);
         }
@@ -87,7 +89,8 @@ class varray : public varray_base<Type, varray<Type, Allocator>, true>
             reset(len, Type(), layout);
         }
 
-        varray(std::initializer_list<len_type> len, uninitialized_t, layout layout = DEFAULT)
+        template <typename U>
+        varray(std::initializer_list<U> len, uninitialized_t, layout layout = DEFAULT)
         {
             reset(len, uninitialized, layout);
         }
@@ -187,9 +190,10 @@ class varray : public varray_base<Type, varray<Type, Allocator>, true>
             base::template operator=<>(other);
         }
 
-        void reset(std::initializer_list<len_type> len, const Type& val=Type(), layout layout = DEFAULT)
+        template <typename U>
+        void reset(std::initializer_list<U> len, const Type& val=Type(), layout layout = DEFAULT)
         {
-            reset<>(len, val, layout);
+            reset<std::initializer_list<U>>(len, val, layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
@@ -199,9 +203,10 @@ class varray : public varray_base<Type, varray<Type, Allocator>, true>
             std::uninitialized_fill_n(data_, storage_.size, val);
         }
 
-        void reset(std::initializer_list<len_type> len, layout layout)
+        template <typename U>
+        void reset(std::initializer_list<U> len, layout layout)
         {
-            reset<>(len, Type(), layout);
+            reset<std::initializer_list<U>>(len, Type(), layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
@@ -210,9 +215,10 @@ class varray : public varray_base<Type, varray<Type, Allocator>, true>
             reset(len, Type(), layout);
         }
 
-        void reset(std::initializer_list<len_type> len, uninitialized_t, layout layout = DEFAULT)
+        template <typename U>
+        void reset(std::initializer_list<U> len, uninitialized_t, layout layout = DEFAULT)
         {
-            reset<>(len, uninitialized, layout);
+            reset<std::initializer_list<U>>(len, uninitialized, layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
@@ -233,9 +239,10 @@ class varray : public varray_base<Type, varray<Type, Allocator>, true>
          *
          **********************************************************************/
 
-        void resize(std::initializer_list<len_type> len, const Type& val=Type())
+        template <typename U>
+        void resize(std::initializer_list<U> len, const Type& val=Type())
         {
-            resize<>(len, val);
+            resize<std::initializer_list<U>>(len, val);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>

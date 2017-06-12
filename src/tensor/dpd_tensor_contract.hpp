@@ -267,7 +267,6 @@ void contract_dpd(T alpha, dpd_varray_view<const T> A, const label_type* idx_A_,
         block_M *= nirrep;
     }
     dense_M /= block_M;
-    block_M /= nirrep;
 
     stride_type dense_N = 1;
     stride_type block_N = 1;
@@ -284,7 +283,6 @@ void contract_dpd(T alpha, dpd_varray_view<const T> A, const label_type* idx_A_,
         block_N *= nirrep;
     }
     dense_N /= block_N;
-    block_N /= nirrep;
 
     stride_type dense_K = 1;
     stride_type block_K = 1;
@@ -301,14 +299,17 @@ void contract_dpd(T alpha, dpd_varray_view<const T> A, const label_type* idx_A_,
         block_K *= nirrep;
     }
     dense_K /= block_K;
-    block_K /= nirrep;
 
-    std::vector<slot<int, -1>> slot(nirrep*block_M*block_N);
+    std::vector<slot<int, -1>> slot(block_M*block_N/nirrep);
+
+    if (block_M > 1) block_M /= nirrep;
+    if (block_N > 1) block_N /= nirrep;
+    if (block_K > 1) block_K /= nirrep;
 
     const config& cfg = get_default_config();
     const bool row_major = cfg.gemm_row_major.value<T>();
-    const bool transpose = row_major ? stride_C[perm_C_M[0]] == 1
-                                     : stride_C[perm_C_N[0]] == 1;
+    const bool transpose = row_major ? (ndim_M > 0 ? stride_C[perm_C_M[0]] : 0) == 1
+                                     : (ndim_N > 0 ? stride_C[perm_C_N[0]] : 0) == 1;
 
     if (transpose)
     {
@@ -341,7 +342,7 @@ void contract_dpd(T alpha, dpd_varray_view<const T> A, const label_type* idx_A_,
                       irreps_B[perm_B[i]] = block & mask;
             block >>= shift;
         }
-        irreps_A[perm_A[0]] = irreps_B[perm_B[0]] = irrep0;
+        if (ndim) irreps_A[perm_A[0]] = irreps_B[perm_B[0]] = irrep0;
     };
 
     parallelize([&](const communicator& comm)
@@ -364,6 +365,10 @@ void contract_dpd(T alpha, dpd_varray_view<const T> A, const label_type* idx_A_,
         {
             unsigned irrep_M = A.irrep()^irrep_K;
             unsigned irrep_N = B.irrep()^irrep_K;
+
+            if (ndim_M == 0 && irrep_M != 0) continue;
+            if (ndim_N == 0 && irrep_N != 0) continue;
+            if (ndim_K == 0 && irrep_K != 0) continue;
 
             for (stride_type iM = 0;iM < block_M;iM++)
             {

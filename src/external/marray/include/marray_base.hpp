@@ -412,6 +412,12 @@ class marray_base
             return false;
         }
 
+        template <typename U, unsigned N, typename D, bool O>
+        bool operator!=(const marray_base<U, N, D, O>& other) const
+        {
+            return !(*this == other);
+        }
+
         /***********************************************************************
          *
          * Views

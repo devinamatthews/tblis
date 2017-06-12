@@ -29,16 +29,15 @@ using namespace std;
 using namespace tblis;
 using namespace stl_ext;
 
-std::atomic<long> flops;
-
 len_type v = 30;
 len_type o = 5;
 
 namespace tblis
 {
 
-extern len_type inout_ratio;
-extern int outer_threading;
+std::atomic<long> flops;
+len_type inout_ratio = 200000;
+int outer_threading = 1;
 
 }
 
@@ -112,7 +111,7 @@ void init(batched_tensor<T>& A, const string& dense, const string& batch)
         }
     }
 
-    matrix<len_type> idx({size, m}, 0, ROW_MAJOR);
+    matrix<len_type> idx({size, (len_type)m}, 0, ROW_MAJOR);
 
     if (m > 0 && size > 0)
     {

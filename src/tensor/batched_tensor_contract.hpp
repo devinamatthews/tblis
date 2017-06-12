@@ -21,13 +21,12 @@
 
 #include <atomic>
 
-extern std::atomic<long> flops;
-
 namespace tblis
 {
 
-len_type inout_ratio = 200000;
-int outer_threading = 1;
+extern std::atomic<long> flops;
+extern len_type inout_ratio;
+extern int outer_threading;
 
 template <typename T, T Empty=T()>
 class slot

@@ -27,8 +27,6 @@ using namespace std;
 using namespace tblis;
 using namespace stl_ext;
 
-std::atomic<long> flops;
-
 len_type v = 40;
 len_type o = 20;
 len_type g = 8;
@@ -36,7 +34,9 @@ len_type g = 8;
 namespace tblis
 {
 
-extern len_type inout_ratio;
+std::atomic<long> flops;
+len_type inout_ratio = 200000;
+int outer_threading = 1;
 
 }
 

@@ -273,6 +273,66 @@ class dpd_varray_base
             }
         }
 
+        template <typename View, typename Func, unsigned... I>
+        void for_each_block(Func&& f, detail::integer_sequence<unsigned, I...>) const
+        {
+            constexpr unsigned NDim = sizeof...(I);
+            typedef typename View::pointer Ptr;
+
+            std::array<unsigned, NDim-1> nirrep;
+            nirrep.fill(nirrep_);
+
+            const_pointer cptr;
+            std::array<unsigned, NDim> irreps;
+            std::array<len_type, NDim> len;
+            std::array<stride_type, NDim> stride;
+
+            miterator<NDim-1, 0> it(nirrep);
+            while (it.next())
+            {
+                irreps[0] = irrep_;
+                for (unsigned i = 1;i < NDim;i++)
+                {
+                    irreps[0] ^= irreps[i] = it.position()[i-1];
+                }
+
+                get_block(irreps, len, cptr, stride);
+
+                f(View(len, const_cast<Ptr>(cptr), stride), irreps[I]...);
+            }
+        }
+
+        template <typename Tp, typename Func, unsigned... I>
+        void for_each_element(Func&& f, detail::integer_sequence<unsigned, I...>) const
+        {
+            constexpr unsigned NDim = sizeof...(I);
+            typedef Tp* Ptr;
+
+            std::array<unsigned, NDim-1> nirrep;
+            nirrep.fill(nirrep_);
+
+            const_pointer cptr;
+            std::array<unsigned, NDim> irreps;
+            std::array<len_type, NDim> len;
+            std::array<stride_type, NDim> stride;
+
+            miterator<NDim-1, 0> it(nirrep);
+            while (it.next())
+            {
+                irreps[0] = irrep_;
+                for (unsigned i = 1;i < NDim;i++)
+                {
+                    irreps[0] ^= irreps[i] = it.position()[i-1];
+                }
+
+                get_block(irreps, len, cptr, stride);
+
+                miterator<NDim, 1> it(len, stride);
+                Ptr ptr = const_cast<Ptr>(cptr);
+                while (it.next(ptr)) f(*ptr, irreps[I]..., it.position()[I]...);
+            }
+        }
+
         void local_size(unsigned irrep, unsigned begin, unsigned end,
                         unsigned idx)
         {
@@ -661,6 +721,18 @@ class dpd_varray_base
             for_each_block<varray_view<Type>>(std::forward<Func>(f));
         }
 
+        template <unsigned NDim, typename Func>
+        void for_each_block(Func&& f) const
+        {
+            for_each_block<marray_view<ctype, NDim>>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
+        }
+
+        template <unsigned NDim, typename Func>
+        void for_each_block(Func&& f)
+        {
+            for_each_block<marray_view<Type, NDim>>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
+        }
+
         template <typename Func>
         void for_each_element(Func&& f) const
         {
@@ -687,6 +759,18 @@ class dpd_varray_base
                     f(value, irreps, pos);
                 });
             });
+        }
+
+        template <unsigned NDim, typename Func>
+        void for_each_element(Func&& f) const
+        {
+            for_each_element<ctype>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
+        }
+
+        template <unsigned NDim, typename Func>
+        void for_each_element(Func&& f)
+        {
+            for_each_element<Type>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
         }
 
         /***********************************************************************

@@ -600,6 +600,46 @@ TEST(varray_view, iteration)
             EXPECT_EQ(visited[i][j], 1);
         }
     }
+
+    visited = {};
+    v1.for_each_element<2>(
+    [&](double& v, len_type i, len_type j)
+    {
+        EXPECT_GE(i, 0);
+        EXPECT_LT(i, 4);
+        EXPECT_GE(j, 0);
+        EXPECT_LT(j, 3);
+        EXPECT_EQ(v, data[i][j]);
+        visited[i][j]++;
+    });
+
+    for (len_type i = 0;i < 4;i++)
+    {
+        for (len_type j = 0;j < 3;j++)
+        {
+            EXPECT_EQ(visited[i][j], 1);
+        }
+    }
+
+    visited = {};
+    v2.for_each_element<2>(
+    [&](const double& v, len_type i, len_type j)
+    {
+        EXPECT_GE(i, 0);
+        EXPECT_LT(i, 4);
+        EXPECT_GE(j, 0);
+        EXPECT_LT(j, 3);
+        EXPECT_EQ(v, data[i][j]);
+        visited[i][j]++;
+    });
+
+    for (len_type i = 0;i < 4;i++)
+    {
+        for (len_type j = 0;j < 3;j++)
+        {
+            EXPECT_EQ(visited[i][j], 1);
+        }
+    }
 }
 
 TEST(varray_view, length_stride)

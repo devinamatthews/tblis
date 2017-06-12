@@ -132,6 +132,14 @@ class varray_base
             while (it.next(ptr)) f(*ptr, it.position());
         }
 
+        template <typename Ptr, typename Func, unsigned... I>
+        void for_each_element(Func&& f, detail::integer_sequence<unsigned, I...>) const
+        {
+            miterator<sizeof...(I), 1> it(len_, stride_);
+            Ptr ptr = const_cast<Ptr>(data_);
+            while (it.next(ptr)) f(*ptr, it.position()[I]...);
+        }
+
         template <unsigned Dim>
         void get_slice(pointer&, std::vector<len_type>&,
                        std::vector<stride_type>&) const {}
@@ -714,6 +722,18 @@ class varray_base
         void for_each_element(Func&& f)
         {
             for_each_element<pointer>(std::forward<Func>(f));
+        }
+
+        template <unsigned NDim, typename Func>
+        void for_each_element(Func&& f) const
+        {
+            for_each_element<cptr>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
+        }
+
+        template <unsigned NDim, typename Func>
+        void for_each_element(Func&& f)
+        {
+            for_each_element<pointer>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
         }
 
         /***********************************************************************

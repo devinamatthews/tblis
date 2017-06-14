@@ -24,12 +24,10 @@
 
 #include "../external/stl_ext/include/complex.hpp"
 
-#define MARRAY_DEFAULT_LAYOUT COLUMN_MAJOR
-#undef assert
-#define assert TBLIS_ASSERT
 #ifdef TBLIS_DEBUG
 #define MARRAY_ENABLE_ASSERTS
 #endif
+
 #include "../external/marray/include/varray.hpp"
 #include "../external/marray/include/marray.hpp"
 #include "../external/marray/include/dpd_varray.hpp"

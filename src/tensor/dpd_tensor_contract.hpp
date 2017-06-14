@@ -350,8 +350,8 @@ void contract_dpd(T alpha, dpd_varray_view<const T> A, const label_type* idx_A_,
         int nt_outer, nt_inner;
         std::tie(nt_outer, nt_inner) =
             partition_2x2(comm.num_threads(),
-                          inout_ratio*nirrep*block_M*block_N,
-                          dense_M*dense_N);
+                          inout_ratio*slot.size(), slot.size(),
+                          dense_M*dense_N, comm.num_threads());
 
         communicator subcomm = comm.gang(TCI_EVENLY, nt_outer);
         unsigned gid = subcomm.gang_num();
@@ -372,15 +372,15 @@ void contract_dpd(T alpha, dpd_varray_view<const T> A, const label_type* idx_A_,
 
             for (stride_type iM = 0;iM < block_M;iM++)
             {
-                assign_irreps(ndim_M, irrep_M, iM,
-                              irreps_A, perm_A_M, irreps_C, perm_C_M);
-
                 for (stride_type iN = 0;iN < block_N;iN++)
                 {
+                    if (!slot[block_idx++].try_fill(gid)) continue;
+
+                    assign_irreps(ndim_M, irrep_M, iM,
+                                  irreps_A, perm_A_M, irreps_C, perm_C_M);
+
                     assign_irreps(ndim_N, irrep_N, iN,
                                   irreps_B, perm_B_N, irreps_C, perm_C_N);
-
-                    if (!slot[block_idx++].try_fill(gid)) continue;
 
                     tensor_matrix<T> ct(C(irreps_C), perm_C_M, perm_C_N);
                     T beta = beta_;

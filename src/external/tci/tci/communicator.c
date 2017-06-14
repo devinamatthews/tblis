@@ -192,7 +192,7 @@ void tci_distribute_2d(unsigned num, unsigned idx,
      uint64_t* first_n, uint64_t* last_n, uint64_t* max_n)
 {
     unsigned m, n;
-    tci_partition_2x2(num, range_m, range_n, &m, &n);
+    tci_partition_2x2(num, range_m, num, range_n, num, &m, &n);
 
     unsigned idx_m = idx % m;
     unsigned idx_n = idx / m;

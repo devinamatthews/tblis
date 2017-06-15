@@ -48,23 +48,6 @@ struct pack_row_panel
         p_a += m_first*rs_a + k_first*cs_a;
         p_ap += (m_first/MR)*ME*k_a + k_first*ME;
 
-        /*
-        comm.barrier();
-        T norm = T();
-        for (len_type i = 0;i < m_a;i++)
-        {
-            for (len_type j = 0;j < k_a;j++)
-            {
-                norm += norm2(A.data()[i*rs_a + j*cs_a]);
-            }
-        }
-        printf("%d/%d in %d/%d: %s before: %.15f\n",
-               comm.thread_num(), comm.num_threads(),
-               comm.gang_num(), comm.num_gangs(),
-               (Trans ? "B" : "A"), sqrt(norm));
-        comm.barrier();
-        */
-
         for (len_type off_m = m_first;off_m < m_last;off_m += MR)
         {
             len_type m = std::min(MR, m_last-off_m);
@@ -78,23 +61,6 @@ struct pack_row_panel
             p_a += m*rs_a;
             p_ap += ME*k_a;
         }
-
-        /*
-        comm.barrier();
-        norm = T();
-        for (len_type i = 0;i < m_a;i++)
-        {
-            for (len_type j = 0;j < k_a;j++)
-            {
-                norm += norm2(Ap.data()[(i/MR)*ME*k_a + (i%MR) + j*ME]);
-            }
-        }
-        printf("%d/%d in %d/%d: %s after: %.15f\n",
-               comm.thread_num(), comm.num_threads(),
-               comm.gang_num(), comm.num_gangs(),
-               (Trans ? "B" : "A"), sqrt(norm));
-        comm.barrier();
-        */
     }
 
     void operator()(const communicator& comm, const config& cfg,
@@ -194,27 +160,6 @@ struct pack_row_panel
 
         p_ap += m_first*k_a + k_first*ME;
 
-        /*
-        comm.barrier();
-        T norm = T();
-        for (len_type i = 0;i < m_a;i++)
-        {
-            for (len_type j = 0;j < k_a;j++)
-            {
-                norm += norm2(A.raw_data()[A.scatter(Trans)[i] + A.scatter(!Trans)[j]]);
-            }
-        }
-        printf("%d/%d in %d/%d: %d-%d/%d %d-%d/%d\n",
-               comm.thread_num(), comm.num_threads(),
-               comm.gang_num(), comm.num_gangs(),
-               m_first, m_last, m_a, k_first, k_last, k_a);
-        printf("%d/%d in %d/%d: %s before: %.15f\n",
-               comm.thread_num(), comm.num_threads(),
-               comm.gang_num(), comm.num_gangs(),
-               (Trans ? "B" : "A"), sqrt(norm));
-        comm.barrier();
-        */
-
         len_type off_m = m_first;
 
         A.length(Trans, MR);
@@ -234,9 +179,6 @@ struct pack_row_panel
 
             if (rs_a == 0)
             {
-                //printf("%d/%d in %d/%d: sb\n",
-                //       comm.thread_num(), comm.num_threads(),
-                //       comm.gang_num(), comm.num_gangs());
                 if (!Trans)
                     cfg.pack_sb_mr_ukr.call<T>(m, k, p_a, rscat_a, cscat_a, cbs_a, p_ap);
                 else
@@ -244,34 +186,11 @@ struct pack_row_panel
             }
             else
             {
-                //printf("%d/%d in %d/%d: nb\n",
-                //       comm.thread_num(), comm.num_threads(),
-                //       comm.gang_num(), comm.num_gangs());
                 if (!Trans)
                     cfg.pack_nb_mr_ukr.call<T>(m, k, p_a+rscat_a[0], rs_a, cscat_a, cbs_a, p_ap);
                 else
                     cfg.pack_nb_nr_ukr.call<T>(m, k, p_a+rscat_a[0], rs_a, cscat_a, cbs_a, p_ap);
             }
-
-            /*
-            T nrm1 = T();
-            T nrm2 = T();
-            for (len_type i = 0;i < m;i++)
-            {
-                for (len_type j = 0;j < k;j++)
-                {
-                    nrm1 += norm2(p_ap[i + j*ME]);
-                    if (rs_a == 0)
-                        nrm1 += norm2(p_a[rscat_a[i] + cscat_a[j]]);
-                    else
-                        nrm2 += norm2(p_a[i*rs_a + cscat_a[j]]);
-                }
-            }
-            printf("%d/%d in %d/%d: %s sub: %.15f %.15f\n",
-                   comm.thread_num(), comm.num_threads(),
-                   comm.gang_num(), comm.num_gangs(),
-                   (Trans ? "B" : "A"), sqrt(nrm1), sqrt(nrm2));
-            */
 
             p_ap += ME*k_a;
             A.shift_block(Trans, 1);
@@ -280,23 +199,6 @@ struct pack_row_panel
 
         A.shift(Trans, -off_m);
         A.length(Trans, m_a);
-
-        /*
-        comm.barrier();
-        norm = T();
-        for (len_type i = 0;i < m_a;i++)
-        {
-            for (len_type j = 0;j < k_a;j++)
-            {
-                norm += norm2(Ap.data()[(i/MR)*ME*k_a + (i%MR) + j*ME]);
-            }
-        }
-        printf("%d/%d in %d/%d: %s after: %.15f\n",
-               comm.thread_num(), comm.num_threads(),
-               comm.gang_num(), comm.num_gangs(),
-               (Trans ? "B" : "A"), sqrt(norm));
-        comm.barrier();
-        */
     }
 };
 

@@ -40,9 +40,13 @@ void tblis_tensor_reduce(const tblis_comm* comm, const tblis_config* cfg,
             result->get<T>() = conj(result->get<T>());
         }
 
-        if (op == REDUCE_SUM || op == REDUCE_SUM_ABS || op == REDUCE_NORM_2)
+        if (op == REDUCE_SUM)
         {
             result->get<T>() *= A->alpha<T>();
+        }
+        else if (op == REDUCE_SUM_ABS || op == REDUCE_NORM_2)
+        {
+            result->get<T>() *= std::abs(A->alpha<T>());
         }
     })
 }

@@ -104,8 +104,8 @@ static vector<unsigned> permutation(unsigned ndim, const label_type* from, const
 template <typename T, typename U>
 void passfail(const string& label, stride_type ia, stride_type ib, T a, U b, double ulps)
 {
-    auto c = std::abs(a-b);
-    auto epsilon = ulps*std::numeric_limits<decltype(c)>::epsilon();
+    auto c = real(std::abs(a-b));
+    decltype(c) epsilon(ulps*std::numeric_limits<decltype(c)>::epsilon());
     bool pass = c < std::max(std::numeric_limits<decltype(c)>::min(), epsilon) && ia == ib;
 
     cout << label << ": ";
@@ -769,9 +769,9 @@ void random_gemm(stride_type N, matrix<T>& A,
     //n += (NR<T>::value-1)-(n-1)%NR<T>::value;
     //k += (KR<T>::value-1)-(k-1)%KR<T>::value;
 
-    //m = 46;
-    //n = 334;
-    //k = 28;
+    //m = 3;
+    //n = 3;
+    //k = 3;
 
     //engine.seed(0);
 
@@ -930,7 +930,7 @@ void test_tblis(stride_type N)
             case 2: random_ger (N, A, B, C); break;
         }
 
-        T scale = 10.0*random_unit<T>();
+        T scale(10.0*random_unit<T>());
 
         cout << endl;
         cout << "Testing TBLIS/" << (pass == 0 ? "GEMM" :
@@ -967,7 +967,7 @@ void test_mult(stride_type N)
     tensor<T> A, B, C, D, E;
     std::vector<label_type> idx_A, idx_B, idx_C;
 
-    T scale = 10.0*random_unit<T>();
+    T scale(10.0*random_unit<T>());
 
     cout << endl;
     cout << "Testing mult (" << type_name<T>() << "):" << endl;
@@ -1017,7 +1017,7 @@ void test_contract(stride_type N)
 
     random_contract(N, A, idx_A, B, idx_B, C, idx_C);
 
-    T scale = 10.0*random_unit<T>();
+    T scale(10.0*random_unit<T>());
 
     cout << endl;
     cout << "Testing contract (" << type_name<T>() << "):" << endl;
@@ -1083,7 +1083,7 @@ void test_weight(stride_type N)
 
     auto neps = ceil2(prod(C.lengths()));
 
-    T scale = 10.0*random_unit<T>();
+    T scale(10.0*random_unit<T>());
 
     impl = BLAS_BASED;
     D.reset(C);
@@ -1122,7 +1122,7 @@ void test_outer_prod(stride_type N)
 
     auto neps = ceil(prod(C.lengths()));
 
-    T scale = 10.0*random_unit<T>();
+    T scale(10.0*random_unit<T>());
 
     impl = BLAS_BASED;
     D.reset(C);
@@ -1144,7 +1144,7 @@ void test_add(stride_type N)
     tensor<T> A, B, C;
     std::vector<label_type> idx_A, idx_B;
 
-    T scale = 10.0*random_unit<T>();
+    T scale(10.0*random_unit<T>());
 
     cout << endl;
     cout << "Testing add (" << type_name<T>() << "):" << endl;
@@ -1191,7 +1191,7 @@ void test_trace(stride_type N)
 
     auto neps = prod(A.lengths());
 
-    T scale = 10.0*random_unit<T>();
+    T scale(10.0*random_unit<T>());
 
     T ref_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
     T add_b = reduce(REDUCE_SUM, B, idx_B.data()).first;
@@ -1222,7 +1222,7 @@ void test_replicate(stride_type N)
     stride_type NB = prod(select_from(B.lengths(), idx_B, idx_B_only));
     auto neps = prod(B.lengths());
 
-    T scale = 10.0*random_unit<T>();
+    T scale(10.0*random_unit<T>());
 
     T ref_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
     T add_b = reduce(REDUCE_SUM, B, idx_B.data()).first;
@@ -1290,7 +1290,7 @@ void test_transpose(stride_type N)
 
     auto neps = prod(A.lengths());
 
-    T scale = 10.0*random_unit<T>();
+    T scale(10.0*random_unit<T>());
 
     C.reset(A);
     add(T(1), A, idx_A.data(), T(0), B, idx_B.data());
@@ -1342,7 +1342,8 @@ void test_scale(stride_type N)
 
     T ref_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
 
-    T scale = 10.0*random_unit<T>();
+    T scale(10.0*random_unit<T>());
+
     tblis::scale(scale, A, idx_A.data());
     T calc_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
     passfail("RANDOM", ref_val, calc_val/scale, ulp_factor*ceil2(neps));
@@ -1519,10 +1520,10 @@ int main(int argc, char **argv)
     cout << "Using mt19937 with seed " << seed << endl;
     rand_engine.seed(seed);
 
-    //test<   float>(N, R);
+    test<   float>(N, R);
     test<  double>(N, R);
-    //test<scomplex>(N, R);
-    //test<dcomplex>(N, R);
+    test<scomplex>(N, R);
+    test<dcomplex>(N, R);
 
     return 0;
 }

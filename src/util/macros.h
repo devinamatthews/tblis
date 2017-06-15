@@ -12,12 +12,12 @@ else if ((type) == TYPE_DOUBLE) \
     typedef double T; \
     __VA_ARGS__ \
 } \
-else if ((type) == TYPE_DOUBLE) \
+else if ((type) == TYPE_SCOMPLEX) \
 { \
     typedef scomplex T; \
     __VA_ARGS__ \
 } \
-else if ((type) == TYPE_DOUBLE) \
+else if ((type) == TYPE_DCOMPLEX) \
 { \
     typedef dcomplex T; \
     __VA_ARGS__ \

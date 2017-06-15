@@ -44,10 +44,10 @@ struct blocksize
     template <typename T> len_type extent() const { return _extent[type_idx<T>::value]; }
 
     template <template <typename> class BS, typename T> blocksize(const BS<T>&)
-    : _def   {BS<float>::def,    BS<double>::def,    BS<double>::def,    BS<double>::def},
-      _max   {BS<float>::max,    BS<double>::max,    BS<double>::max,    BS<double>::max},
-      _iota  {BS<float>::iota,   BS<double>::iota,   BS<double>::iota,   BS<double>::iota},
-      _extent{BS<float>::extent, BS<double>::extent, BS<double>::extent, BS<double>::extent} {}
+    : _def   {BS<float>::def,    BS<double>::def,    BS<scomplex>::def,    BS<dcomplex>::def},
+      _max   {BS<float>::max,    BS<double>::max,    BS<scomplex>::max,    BS<dcomplex>::max},
+      _iota  {BS<float>::iota,   BS<double>::iota,   BS<scomplex>::iota,   BS<dcomplex>::iota},
+      _extent{BS<float>::extent, BS<double>::extent, BS<scomplex>::extent, BS<dcomplex>::extent} {}
 };
 
 template <template <typename> class ukr_t>

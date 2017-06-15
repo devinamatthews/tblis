@@ -205,17 +205,23 @@ static int ipow(int base, int power)
 
 #endif
 
-void tci_partition_2x2(unsigned nthread, uint64_t work1, uint64_t work2,
+void tci_partition_2x2(unsigned nthread,
+                       uint64_t work1, unsigned max1,
+                       uint64_t work2, unsigned max2,
                        unsigned* nt1, unsigned* nt2)
 {
-    *nt1 = *nt2 = 1;
-
     if (nthread < 4)
     {
-        if (work1 >= work2)
+        if (work1 >= work2 && max1 >= nthread)
+        {
             *nt1 = nthread;
+            *nt2 = 1;
+        }
         else
+        {
+            *nt1 = 1;
             *nt2 = nthread;
+        }
         return;
     }
 
@@ -224,20 +230,26 @@ void tci_partition_2x2(unsigned nthread, uint64_t work1, uint64_t work2,
 
     #if !TCI_USE_EXPENSIVE_PARTITION
 
+    unsigned num1 = 1;
+    unsigned num2 = 1;
+
     unsigned f;
     while ((f = tci_next_prime_factor(&factors)) > 1)
     {
-        if (work1 > work2)
+        if ((work1 > work2 && num1*f <= max1) || num2*f > max2)
         {
             work1 /= f;
-            *nt1 *= f;
+            num1 *= f;
         }
         else
         {
             work2 /= f;
-            *nt2 *= f;
+            num2 *= f;
         }
     }
+
+    *nt1 = num1;
+    *nt2 = num2;
 
     #else
 

@@ -185,6 +185,22 @@ void tci_distribute(unsigned n, unsigned idx, uint64_t range,
     }
 }
 
+void tci_distribute_2d(unsigned num, unsigned idx,
+     uint64_t range_m, uint64_t range_n,
+     uint64_t granularity_m, uint64_t granularity_n,
+     uint64_t* first_m, uint64_t* last_m, uint64_t* max_m,
+     uint64_t* first_n, uint64_t* last_n, uint64_t* max_n)
+{
+    unsigned m, n;
+    tci_partition_2x2(num, range_m, num, range_n, num, &m, &n);
+
+    unsigned idx_m = idx % m;
+    unsigned idx_n = idx / m;
+
+    tci_distribute(m, idx_m, range_m, granularity_m, first_m, last_m, max_m);
+    tci_distribute(n, idx_n, range_n, granularity_n, first_n, last_n, max_n);
+}
+
 void tci_comm_distribute_over_gangs(tci_comm* comm, uint64_t range,
                                     uint64_t granularity, uint64_t* first,
                                     uint64_t* last, uint64_t* max)
@@ -207,14 +223,10 @@ void tci_comm_distribute_over_gangs_2d(tci_comm* comm,
     uint64_t* first_m, uint64_t* last_m, uint64_t* max_m,
     uint64_t* first_n, uint64_t* last_n, uint64_t* max_n)
 {
-    unsigned m, n;
-    tci_partition_2x2(comm->ngang, range_m, range_n, &m, &n);
-
-    unsigned idx_m = comm->gid % m;
-    unsigned idx_n = comm->gid / m;
-
-    tci_distribute(m, idx_m, range_m, granularity_m, first_m, last_m, max_m);
-    tci_distribute(n, idx_n, range_n, granularity_n, first_n, last_n, max_n);
+    tci_distribute_2d(comm->ngang, comm->gid, range_m, range_n,
+                      granularity_m, granularity_n,
+                      first_m, last_m, max_m,
+                      first_n, last_n, max_n);
 }
 
 void tci_comm_distribute_over_threads_2d(tci_comm* comm,
@@ -223,12 +235,8 @@ void tci_comm_distribute_over_threads_2d(tci_comm* comm,
      uint64_t* first_m, uint64_t* last_m, uint64_t* max_m,
      uint64_t* first_n, uint64_t* last_n, uint64_t* max_n)
 {
-    unsigned m, n;
-    tci_partition_2x2(comm->nthread, range_m, range_n, &m, &n);
-
-    unsigned idx_m = comm->tid % m;
-    unsigned idx_n = comm->tid / m;
-
-    tci_distribute(m, idx_m, range_m, granularity_m, first_m, last_m, max_m);
-    tci_distribute(n, idx_n, range_n, granularity_n, first_n, last_n, max_n);
+    tci_distribute_2d(comm->nthread, comm->tid, range_m, range_n,
+                      granularity_m, granularity_n,
+                      first_m, last_m, max_m,
+                      first_n, last_n, max_n);
 }

@@ -161,7 +161,7 @@ void parallelize_if(Func f, const tblis_comm* _comm, Args&&... args)
     {
         parallelize
         (
-            [&](const communicator& comm)
+            [&,f](const communicator& comm) mutable
             {
                 f(comm, args...);
                 comm.barrier();

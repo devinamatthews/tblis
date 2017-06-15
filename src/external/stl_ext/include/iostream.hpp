@@ -540,7 +540,7 @@ namespace detail
 
         double l = log10(fabs(p.val));
         auto d = lrint(l < 0 ? l-1 : l);
-        if (std::abs(d) > 2)
+        if (fabs(d) > 2)
         {
             os << std::scientific << std::setprecision(p.sigfigs) << p.val;
         }

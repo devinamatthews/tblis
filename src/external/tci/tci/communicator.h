@@ -51,6 +51,12 @@ void tci_distribute(unsigned n, unsigned idx, uint64_t range,
                     uint64_t granularity, uint64_t* first, uint64_t* last,
                     uint64_t* max);
 
+void tci_distribute_2d(unsigned num, unsigned idx,
+                       uint64_t range_m, uint64_t range_n,
+                       uint64_t granularity_m, uint64_t granularity_n,
+                       uint64_t* first_m, uint64_t* last_m, uint64_t* max_m,
+                       uint64_t* first_n, uint64_t* last_n, uint64_t* max_n);
+
 void tci_comm_distribute_over_gangs(tci_comm* comm, uint64_t range,
                                     uint64_t granularity, uint64_t* first,
                                     uint64_t* last, uint64_t* max);
@@ -162,6 +168,31 @@ class communicator
             int ret = tci_comm_gang(*this, &child._comm, type, n, bs);
             if (ret != 0) throw std::system_error(ret, std::system_category());
             return child;
+        }
+
+        static std::tuple<uint64_t,uint64_t,uint64_t>
+        distribute(unsigned nthread, unsigned tid, uint64_t range,
+                   uint64_t granularity=1)
+        {
+            uint64_t first, last, max;
+            tci_distribute(nthread, tid, range, granularity,
+                           &first, &last, &max);
+            return std::make_tuple(first, last, max);
+        }
+
+        static std::tuple<uint64_t,uint64_t,uint64_t,uint64_t,uint64_t,uint64_t>
+        distribute_2d(unsigned nthread, unsigned tid,
+                      uint64_t range_m, uint64_t range_n,
+                      uint64_t granularity_m=1,
+                      uint64_t granularity_n=1)
+        {
+            uint64_t first_m, last_m, max_m, first_n, last_n, max_n;
+            tci_distribute_2d(nthread, tid, range_m, range_n,
+                              granularity_m, granularity_n,
+                              &first_m, &last_m, &max_m,
+                              &first_n, &last_n, &max_n);
+            return std::make_tuple(first_m, last_m, max_m,
+                                   first_n, last_n, max_n);
         }
 
         std::tuple<uint64_t,uint64_t,uint64_t>

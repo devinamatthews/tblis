@@ -81,11 +81,11 @@ class marray_base
         typedef typename detail::initializer_type<Type, NDim>::type
             initializer_type;
 
-    protected:
         typedef typename std::conditional<Owner,const Type,Type>::type ctype;
         typedef ctype& cref;
         typedef ctype* cptr;
 
+    protected:
         std::array<len_type, NDim> len_ = {};
         std::array<stride_type, NDim> stride_ = {};
         pointer data_ = nullptr;

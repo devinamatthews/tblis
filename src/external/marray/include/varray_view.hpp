@@ -52,6 +52,14 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
         template <typename U, typename D, bool O,
             typename=detail::enable_if_convertible_t<
                 typename varray_base<U, D, O>::pointer,pointer>>
+        varray_view(varray_base<U, D, O>&& other)
+        {
+            reset(other);
+        }
+
+        template <typename U, typename D, bool O,
+            typename=detail::enable_if_convertible_t<
+                typename varray_base<U, D, O>::pointer,pointer>>
         varray_view(varray_base<U, D, O>& other)
         {
             reset(other);

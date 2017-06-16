@@ -19,7 +19,6 @@
 #include "util/tensor.hpp"
 #include "util/random.hpp"
 #include "internal/3t/mult.hpp"
-#include "tensor/batched_tensor.hpp"
 #include "tensor/batched_tensor_contract.hpp"
 
 int dumb = 0;
@@ -65,7 +64,7 @@ double run_kernel(len_type R, Kernel&& kernel, Args&&...args)
 }
 
 template <typename T>
-void init(batched_tensor<T>& A, const string& dense, const string& batch)
+void init(indexed_varray<T>& A, const string& dense, const string& batch)
 {
     unsigned n = dense.size();
     unsigned m = batch.size();
@@ -166,7 +165,7 @@ void init(batched_tensor<T>& A, const string& dense, const string& batch)
         assert(off == size);
     }
 
-    A.reset(len, idx);
+    A.reset(len, idx.view());
 
     if (check)
     {
@@ -174,29 +173,27 @@ void init(batched_tensor<T>& A, const string& dense, const string& batch)
 
         for (len_type i = 0;i < size;i++)
         {
-            double* data = A.batch_data(i);
-            viterator<> it(len, A.strides());
+            double* data = A.data(i);
+            viterator<> it(len, A.dense_strides());
             while (it.next(data)) *data = random_number<double>();
         }
     }
 }
 
 template <typename T>
-double diff(const_batched_tensor_view<T> A,
-            const_batched_tensor_view<T> B)
+double diff(const indexed_varray_view<T>& A,
+            const indexed_varray_view<T>& B)
 {
     double d = 0.0;
 
-    std::vector<len_type> dense_len(A.lengths());
-    dense_len.resize(A.dense_dimension());
+    viterator<> it(A.dense_lengths(), A.dense_strides());
 
-    for (len_type i = 0;i < A.num_batches();i++)
+    for (len_type i = 0;i < A.num_indices();i++)
     {
-        const T* a = A.batch_data(i);
-        const T* b = B.batch_data(i);
+        const T* a = A.data(i);
+        const T* b = B.data(i);
 
         stride_type off = 0;
-        viterator<> it(dense_len, A.strides());
         while (it.next(off)) d += norm2(a[off]-b[off]);
     }
 
@@ -205,12 +202,12 @@ double diff(const_batched_tensor_view<T> A,
 
 template <typename T>
 void bench(int R,
-           T alpha, const batched_tensor<T>& A, const std::string& typea,
-                    const batched_tensor<T>& B, const std::string& typeb,
-           T  beta, const batched_tensor<T>& C, const std::string& typec)
+           T alpha, indexed_varray_view<const T> A, const std::string& typea,
+                    indexed_varray_view<const T> B, const std::string& typeb,
+           T  beta, indexed_varray_view<      T> C, const std::string& typec)
 {
-    batched_tensor<double> tmp0_, tmp1_, tmp2_, tmp3_;
-    batched_tensor_view<T> tmp0, tmp1, tmp2, tmp3;
+    indexed_varray<T> tmp0_, tmp1_, tmp2_, tmp3_;
+    indexed_varray_view<T> tmp0, tmp1, tmp2, tmp3;
 
     if (check)
     {
@@ -225,10 +222,10 @@ void bench(int R,
     }
     else
     {
-        tmp0.reset(const_cast<batched_tensor<T>&>(C));
-        tmp1.reset(const_cast<batched_tensor<T>&>(C));
-        tmp2.reset(const_cast<batched_tensor<T>&>(C));
-        tmp3.reset(const_cast<batched_tensor<T>&>(C));
+        tmp0.reset(C);
+        tmp1.reset(C);
+        tmp2.reset(C);
+        tmp3.reset(C);
     }
 
     if (dumb)
@@ -354,92 +351,92 @@ int main(int argc, char** argv)
 
     if (test0)
     {
-        batched_tensor<double> T4;
-        batched_tensor<double> T3;
-        batched_tensor<double> Wa;
+        indexed_varray<double> T4;
+        indexed_varray<double> T3;
+        indexed_varray<double> Wa;
 
         init(T4, "ABCD", "I===");
         init(T3,  "ABC",  "I==");
         init(Wa,  "ABC",  "I=K");
 
-        bench(R, 1.0, T3,   "ABEIJM",
-                      Wa,   "CDEKLM",
-                 1.0, T4, "ABCDIJKL");
+        bench<double>(R, 1.0, T3,   "ABEIJM",
+                              Wa,   "CDEKLM",
+                         1.0, T4, "ABCDIJKL");
     }
 
     if (test1)
     {
-        batched_tensor<double> T2;
-        batched_tensor<double> W;
-        batched_tensor<double> T3;
+        indexed_varray<double> T2;
+        indexed_varray<double> W;
+        indexed_varray<double> T3;
 
         init(T2, "ABIJ", "");
         init(W, "IJKA", "");
         init(T3, "ABC", "I==");
 
-        bench(R, 1.0, T2,   "ABIM",
-                       W,   "JKMC",
-                 1.0, T3, "ABCIJK");
+        bench<double>(R, 1.0, T2,   "ABIM",
+                               W,   "JKMC",
+                         1.0, T3, "ABCIJK");
     }
 
     if (test2)
     {
-        batched_tensor<double> T2;
-        batched_tensor<double> W;
-        batched_tensor<double> T3;
+        indexed_varray<double> T2;
+        indexed_varray<double> W;
+        indexed_varray<double> T3;
 
         init(T2, "ABIJ", "");
         init(W, "ABCI", "");
         init(T3, "ABC", "I==");
 
-        bench(R, 1.0, T2,   "AEIJ",
-                       W,   "BCEK",
-                 1.0, T3, "ABCIJK");
+        bench<double>(R, 1.0, T2,   "AEIJ",
+                               W,   "BCEK",
+                         1.0, T3, "ABCIJK");
     }
 
     if (test3)
     {
-        batched_tensor<double> T4;
-        batched_tensor<double> T3;
-        batched_tensor<double> W;
+        indexed_varray<double> T4;
+        indexed_varray<double> T3;
+        indexed_varray<double> W;
 
         init(T4, "ABCD", "I===");
         init(T3,  "ABC",  "I==");
         init(W,  "IJKA",  "");
 
-        bench(R, 1.0, T3,   "ABCIJM",
-                       W,     "KLMD",
-                 1.0, T4, "ABCDIJKL");
+        bench<double>(R, 1.0, T3,   "ABCIJM",
+                               W,     "KLMD",
+                         1.0, T4, "ABCDIJKL");
     }
 
     if (test4)
     {
-        batched_tensor<double> T4;
-        batched_tensor<double> Z4;
-        batched_tensor<double> Wa;
+        indexed_varray<double> T4;
+        indexed_varray<double> Z4;
+        indexed_varray<double> Wa;
 
         init(T4, "ABCD", "I===");
         init(Z4, "ABCD", "I===");
         init(Wa, "AIBJ", "");
 
-        bench(R, 1.0, T4, "ABCEIJKM",
-                      Wa,     "DMEL",
-                 1.0, Z4, "ABCDIJKL");
+        bench<double>(R, 1.0, T4, "ABCEIJKM",
+                              Wa,     "DMEL",
+                         1.0, Z4, "ABCDIJKL");
     }
 
     if (test5)
     {
-        batched_tensor<double> T3;
-        batched_tensor<double> Z4;
-        batched_tensor<double> W;
+        indexed_varray<double> T3;
+        indexed_varray<double> Z4;
+        indexed_varray<double> W;
 
         init(T3, "ABC", "I==");
         init(Z4, "ABCD", "I===");
         init(W, "ABCI", "");
 
-        bench(R, 1.0, T3,   "ABEIJK",
-                       W,     "CDEL",
-                 1.0, Z4, "ABCDIJKL");
+        bench<double>(R, 1.0, T3,   "ABEIJK",
+                               W,     "CDEL",
+                         1.0, Z4, "ABCDIJKL");
     }
 
     return 0;

@@ -54,6 +54,14 @@ class dpd_varray_view : public dpd_varray_base<Type, dpd_varray_view<Type>, fals
         template <typename U, typename D, bool O,
             typename=detail::enable_if_convertible_t<
                 typename dpd_varray_base<U, D, O>::pointer,pointer>>
+        dpd_varray_view(dpd_varray_base<U, D, O>&& other)
+        {
+            reset(other);
+        }
+
+        template <typename U, typename D, bool O,
+            typename=detail::enable_if_convertible_t<
+                typename dpd_varray_base<U, D, O>::pointer,pointer>>
         dpd_varray_view(dpd_varray_base<U, D, O>& other)
         {
             reset(other);

@@ -10,6 +10,13 @@ namespace MArray
 template <typename Type, typename Derived, bool Owner>
 class varray_base
 {
+    template <typename, unsigned, typename, bool> friend class marray_base;
+    template <typename, unsigned> friend class marray_view;
+    template <typename, unsigned, typename> friend class marray;
+    template <typename, typename, bool> friend class varray_base;
+    template <typename> friend class varray_view;
+    template <typename, typename> friend class varray;
+
     public:
         typedef Type value_type;
         typedef Type* pointer;
@@ -17,18 +24,11 @@ class varray_base
         typedef Type& reference;
         typedef const Type& const_reference;
 
-        template <typename, unsigned, typename, bool> friend class marray_base;
-        template <typename, unsigned> friend class marray_view;
-        template <typename, unsigned, typename> friend class marray;
-        template <typename, typename, bool> friend class varray_base;
-        template <typename> friend class varray_view;
-        template <typename, typename> friend class varray;
-
-    protected:
         typedef typename std::conditional<Owner,const Type,Type>::type ctype;
         typedef ctype& cref;
         typedef ctype* cptr;
 
+    protected:
         std::vector<len_type> len_;
         std::vector<stride_type> stride_;
         pointer data_ = nullptr;
@@ -193,10 +193,22 @@ class varray_base
         {
             MARRAY_ASSERT(lengths() == other.lengths());
 
-            auto it = make_iterator(lengths(), strides(), other.strides());
             pointer a = const_cast<pointer>(data());
             auto b = other.data();
-            while (it.next(a, b)) *a = *b;
+
+            bool contiguous;
+            stride_type size;
+            std::tie(contiguous, size) = is_contiguous(len_, stride_);
+
+            if (contiguous && strides() == other.strides())
+            {
+                std::copy_n(b, size, a);
+            }
+            else
+            {
+                auto it = make_iterator(lengths(), strides(), other.strides());
+                while (it.next(a, b)) *a = *b;
+            }
         }
 
         template <typename U, unsigned N, typename D, bool O>
@@ -206,17 +218,42 @@ class varray_base
             MARRAY_ASSERT(std::equal(lengths().begin(), lengths().end(),
                                      other.lengths().begin()));
 
-            auto it = make_iterator(lengths(), strides(), other.strides());
             pointer a = const_cast<pointer>(data());
             auto b = other.data();
-            while (it.next(a, b)) *a = *b;
+
+            bool contiguous;
+            stride_type size;
+            std::tie(contiguous, size) = is_contiguous(len_, stride_);
+
+            if (contiguous && std::equal(strides().begin(), strides().end(),
+                                         other.strides().begin()))
+            {
+                std::copy_n(b, size, a);
+            }
+            else
+            {
+                auto it = make_iterator(lengths(), strides(), other.strides());
+                while (it.next(a, b)) *a = *b;
+            }
         }
 
         void copy(const Type& value) const
         {
-            auto it = make_iterator(lengths(), strides());
             pointer a = const_cast<pointer>(data());
-            while (it.next(a)) *a = value;
+
+            bool contiguous;
+            stride_type size;
+            std::tie(contiguous, size) = is_contiguous(len_, stride_);
+
+            if (contiguous)
+            {
+                std::fill_n(a, size, value);
+            }
+            else
+            {
+                auto it = make_iterator(lengths(), strides());
+                while (it.next(a)) *a = value;
+            }
         }
 
         void swap(varray_base& other)
@@ -292,6 +329,79 @@ class varray_base
             stride_type s = 1;
             for (auto& l : len) s *= l;
             return s;
+        }
+
+        template <typename U, typename V>
+        static std::pair<bool,stride_type> is_contiguous(std::initializer_list<U> len,
+                                                         std::initializer_list<V> stride)
+        {
+            return is_contiguous<std::initializer_list<U>,
+                                 std::initializer_list<V>>(len, stride);
+        }
+
+        template <typename U, typename V,
+            typename=detail::enable_if_t<
+                detail::is_container_of<U,len_type>::value &&
+                detail::is_container_of<V,stride_type>::value>>
+        static std::pair<bool,stride_type> is_contiguous(const U& len, const V& stride)
+        {
+            MARRAY_ASSERT(len.size() > 0);
+            MARRAY_ASSERT(len.size() == stride.size());
+
+            if (len.size() == 1) return std::make_pair(true, *len.begin());
+
+            auto len_it = len.begin();
+            auto stride_it = stride.begin();
+
+            len_type len0 = *len_it;
+            stride_type stride0 = *stride_it;
+
+            ++len_it;
+            ++stride_it;
+
+            len_type len1 = *len_it;
+            stride_type stride1 = *stride_it;
+
+            stride_type size = len0;
+
+            if (stride0 < stride1)
+            {
+                for (unsigned i = 1;i < len.size();i++)
+                {
+                    size *= len1;
+
+                    if (stride1 != stride0*len0)
+                        return std::make_pair(false, stride_type());
+
+                    if (i < len.size()-1)
+                    {
+                        len0 = len1;
+                        stride0 = stride1;
+                        len1 = *(++len_it);
+                        stride1 = *(++stride_it);
+                    }
+                }
+            }
+            else
+            {
+                for (unsigned i = 1;i < len.size();i++)
+                {
+                    size *= len1;
+
+                    if (stride0 != stride1*len1)
+                        return std::make_pair(false, stride_type());
+
+                    if (i < len.size()-1)
+                    {
+                        len0 = len1;
+                        stride0 = stride1;
+                        len1 = *(++len_it);
+                        stride1 = *(++stride_it);
+                    }
+                }
+            }
+
+            return std::make_pair(true, size);
         }
 
         /***********************************************************************

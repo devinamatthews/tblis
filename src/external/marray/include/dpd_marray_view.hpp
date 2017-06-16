@@ -54,6 +54,14 @@ class dpd_marray_view : public dpd_marray_base<Type, NDim, dpd_marray_view<Type,
         template <typename U, typename D, bool O,
             typename=detail::enable_if_convertible_t<
                 typename dpd_marray_base<U, NDim, D, O>::pointer,pointer>>
+        dpd_marray_view(dpd_marray_base<U, NDim, D, O>&& other)
+        {
+            reset(other);
+        }
+
+        template <typename U, typename D, bool O,
+            typename=detail::enable_if_convertible_t<
+                typename dpd_marray_base<U, NDim, D, O>::pointer,pointer>>
         dpd_marray_view(dpd_marray_base<U, NDim, D, O>& other)
         {
             reset(other);

@@ -40,13 +40,13 @@ class dpd_marray_base
         typedef Type& reference;
         typedef const Type& const_reference;
 
-    protected:
         typedef typename std::conditional<Owner,const Type,Type>::type ctype;
         typedef ctype& cref;
         typedef ctype* cptr;
         template <typename U> using initializer_matrix =
             std::initializer_list<std::initializer_list<U>>;
 
+    protected:
         std::array<std::array<len_type,8>, NDim> len_ = {};
         std::array<std::array<stride_type,8>, 2*NDim> size_ = {};
         std::array<unsigned, NDim> perm_ = {};
@@ -489,24 +489,37 @@ class dpd_marray_base
                 MARRAY_ASSERT(lengths(i) == other.lengths(i));
             }
 
-            unsigned mask = nirrep_-1;
-            unsigned shift = (nirrep_>1) + (nirrep_>2) + (nirrep_>4);
-
-            unsigned nblocks = 1u << (shift*(NDim-1));
-            std::array<unsigned, NDim> irreps;
-            for (unsigned block = 0;block < nblocks;block++)
+            if (layout_ == other.layout_ && perm_ == other.perm_)
             {
-                unsigned b = block;
-                irreps[0] = irrep_;
-                for (unsigned i = 1;i < NDim;i++)
-                {
-                    irreps[0] ^= irreps[i] = b & mask;
-                    b >>= shift;
-                }
+                std::copy_n(other.data(), size(irrep_, len_.view()), data());
+            }
+            else
+            {
+                unsigned mask = nirrep_-1;
+                unsigned shift = (nirrep_>1) + (nirrep_>2) + (nirrep_>4);
 
-                (*this)(irreps) = other(irreps);
+                unsigned nblocks = 1u << (shift*(NDim-1));
+                std::array<unsigned, NDim> irreps;
+                for (unsigned block = 0;block < nblocks;block++)
+                {
+                    unsigned b = block;
+                    irreps[0] = irrep_;
+                    for (unsigned i = 1;i < NDim;i++)
+                    {
+                        irreps[0] ^= irreps[i] = b & mask;
+                        b >>= shift;
+                    }
+
+                    (*this)(irreps) = other(irreps);
+                }
             }
 
+            return static_cast<Derived&>(*this);
+        }
+
+        Derived& operator=(const Type& value)
+        {
+            std::fill_n(data(), size(irrep_, len_.view()));
             return static_cast<Derived&>(*this);
         }
 

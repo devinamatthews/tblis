@@ -1520,6 +1520,8 @@ int main(int argc, char **argv)
     cout << "Using mt19937 with seed " << seed << endl;
     rand_engine.seed(seed);
 
+    cout << "Running tests with " << tblis_get_num_threads() << " threads" << endl;
+
     test<   float>(N, R);
     test<  double>(N, R);
     test<scomplex>(N, R);

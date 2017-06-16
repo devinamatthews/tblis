@@ -47,6 +47,14 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
         template <typename U, typename D, bool O,
             typename=detail::enable_if_convertible_t<
                 typename marray_base<U, NDim, D, O>::pointer,pointer>>
+        marray_view(marray_base<U, NDim, D, O>&& other)
+        {
+            reset(other);
+        }
+
+        template <typename U, typename D, bool O,
+            typename=detail::enable_if_convertible_t<
+                typename marray_base<U, NDim, D, O>::pointer,pointer>>
         marray_view(marray_base<U, NDim, D, O>& other)
         {
             reset(other);

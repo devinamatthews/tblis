@@ -14,6 +14,7 @@ lib
 .ptp-sync-folder
 autom4te.cache
 /config.h
+tci_config.h
 /tblis_config.hpp
 /src/configs/include_configs.hpp
 /src/configs/foreach_config.h

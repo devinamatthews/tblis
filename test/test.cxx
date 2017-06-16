@@ -9,11 +9,21 @@
 
 #include "internal/3t/mult.hpp"
 #include "util/random.hpp"
+#include "external/stl_ext/include/algorithm.hpp"
 #include "external/stl_ext/include/iostream.hpp"
 
 using namespace std;
+using namespace stl_ext;
 using namespace tblis;
 using namespace tblis::internal;
+
+constexpr int ulp_factor = 32;
+
+template <typename T>
+double ceil2(T x)
+{
+    return nearbyint(pow(2.0, max(0.0, ceil(log2((double)std::abs(x))))));
+}
 
 template <typename T>
 void gemm_ref(T alpha, matrix_view<const T> A,
@@ -92,10 +102,11 @@ static vector<unsigned> permutation(unsigned ndim, const label_type* from, const
 }
 
 template <typename T, typename U>
-void passfail(const string& label, stride_type ia, stride_type ib, T a, U b)
+void passfail(const string& label, stride_type ia, stride_type ib, T a, U b, double ulps)
 {
-    auto c = std::abs(a-b)/(std::abs((a+b)/U(2.0)+U(1e-15)));
-    bool pass = (sizeof(c) == 4 ? c < 1e-3 : c < 1e-11) && ia == ib;
+    auto c = real(std::abs(a-b));
+    decltype(c) epsilon(ulps*std::numeric_limits<decltype(c)>::epsilon());
+    bool pass = c < std::max(std::numeric_limits<decltype(c)>::min(), epsilon) && ia == ib;
 
     cout << label << ": ";
     if (pass)
@@ -108,15 +119,15 @@ void passfail(const string& label, stride_type ia, stride_type ib, T a, U b)
         cout << std::scientific << std::setprecision(15);
         cout << a << " " << ia << endl;
         cout << b << " " << ib << endl;
-        cout << c << endl;
+        cout << c << " > " << std::max(std::numeric_limits<decltype(c)>::min(), epsilon) << endl;
         ::abort();
     }
 }
 
 template <typename T, typename U>
-void passfail(const string& label, T a, U b)
+void passfail(const string& label, T a, U b, double ulps)
 {
-    passfail(label, 0, 0, a, b);
+    passfail(label, 0, 0, a, b, ulps);
 }
 
 template <typename T> const string& type_name();
@@ -240,10 +251,10 @@ enum index_type
 
 template <typename T>
 void random_tensors(stride_type N,
-                   unsigned ndim_A_only, unsigned ndim_B_only,
-                   unsigned ndim_AB,
-                   varray<T>& A, std::vector<label_type>& idx_A,
-                   varray<T>& B, std::vector<label_type>& idx_B)
+                    unsigned ndim_A_only, unsigned ndim_B_only,
+                    unsigned ndim_AB,
+                    tensor<T>& A, std::vector<label_type>& idx_A,
+                    tensor<T>& B, std::vector<label_type>& idx_B)
 {
     unsigned ndim_A = ndim_A_only+ndim_AB;
     unsigned ndim_B = ndim_B_only+ndim_AB;
@@ -509,7 +520,11 @@ void random_tensors(stride_type N,
         {
             for (unsigned j = 0;j < ndim_A;j++)
             {
-                if (idx_B[i] == idx_A[j]) min_B[i] = A.length(j);
+                if (idx_B[i] == idx_A[j])
+                {
+                    min_B[i] = A.length(j);
+                    break;
+                }
             }
         }
 
@@ -519,20 +534,25 @@ void random_tensors(stride_type N,
         vector<len_type> min_C(ndim_C);
         for (unsigned i = 0;i < ndim_C;i++)
         {
+            bool found = false;
             for (unsigned j = 0;j < ndim_A;j++)
             {
                 if (idx_C[i] == idx_A[j])
                 {
                     min_C[i] = A.length(j);
                     siz *= min_C[i];
+                    found = true;
+                    break;
                 }
             }
+            if (found) continue;
             for (unsigned j = 0;j < ndim_B;j++)
             {
                 if (idx_C[i] == idx_B[j])
                 {
                     min_C[i] = B.length(j);
                     siz *= min_C[i];
+                    break;
                 }
             }
         }
@@ -715,6 +735,9 @@ void random_mult(stride_type N, varray<T>& A, std::vector<label_type>& idx_A,
     while (ndim_AB < 0 ||
            ndim_AC < 0 ||
            ndim_BC < 0 ||
+           ndim_A_only == ndim_A ||
+           ndim_B_only == ndim_B ||
+           ndim_C_only == ndim_C ||
            ((ndim_A-ndim_A_only)+
             (ndim_B-ndim_B_only)-
             (ndim_C-ndim_C_only)-ndim_ABC)%2 != 0);
@@ -735,8 +758,8 @@ void random_mult(stride_type N, varray<T>& A, std::vector<label_type>& idx_A,
  */
 template <typename T>
 void random_gemm(stride_type N, matrix<T>& A,
-                           matrix<T>& B,
-                           matrix<T>& C)
+                                matrix<T>& B,
+                                matrix<T>& C)
 {
     len_type m = random_number<len_type>(1, lrint(floor(sqrt(N))));
     len_type n = random_number<len_type>(1, lrint(floor(sqrt(N))));
@@ -746,9 +769,9 @@ void random_gemm(stride_type N, matrix<T>& A,
     //n += (NR<T>::value-1)-(n-1)%NR<T>::value;
     //k += (KR<T>::value-1)-(k-1)%KR<T>::value;
 
-    //m = 46;
-    //n = 334;
-    //k = 28;
+    //m = 3;
+    //n = 3;
+    //k = 3;
 
     //engine.seed(0);
 
@@ -766,8 +789,8 @@ void random_gemm(stride_type N, matrix<T>& A,
  */
 template <typename T>
 void random_gemv(stride_type N, matrix<T>& A,
-                           matrix<T>& B,
-                           matrix<T>& C)
+                                matrix<T>& B,
+                                matrix<T>& C)
 {
     len_type m = random_number<len_type>(1, lrint(floor(sqrt(N))));
     len_type k = random_number<len_type>(1, lrint(floor(sqrt(N))));
@@ -784,8 +807,8 @@ void random_gemv(stride_type N, matrix<T>& A,
  */
 template <typename T>
 void random_ger(stride_type N, matrix<T>& A,
-                          matrix<T>& B,
-                          matrix<T>& C)
+                               matrix<T>& B,
+                               matrix<T>& C)
 {
     len_type m = random_number<len_type>(1, lrint(floor(sqrt(N))));
     len_type n = random_number<len_type>(1, lrint(floor(sqrt(N))));
@@ -896,7 +919,7 @@ void random_outer_prod(stride_type N, varray<T>& A, std::vector<label_type>& idx
 template <typename T>
 void test_tblis(stride_type N)
 {
-    matrix<T> A, B, C, D;
+    matrix<T> A, B, C, D, E;
 
     for (int pass = 0;pass < 3;pass++)
     {
@@ -907,41 +930,44 @@ void test_tblis(stride_type N)
             case 2: random_ger (N, A, B, C); break;
         }
 
-        D.reset(C);
-
-        T scale = 10.0*random_unit<T>();
+        T scale(10.0*random_unit<T>());
 
         cout << endl;
         cout << "Testing TBLIS/" << (pass == 0 ? "GEMM" :
                                      pass == 1 ? "GEMV" :
                                                  "GER") << " (" << type_name<T>() << "):" << endl;
 
+        len_type m = C.length(0);
+        len_type n = C.length(1);
+        len_type k = A.length(1);
+
         cout << endl;
-        cout << "m, n, k    = " << C.length(0) << ", " << C.length(1) << ", " << A.length(1) << endl;
+        cout << "m, n, k    = " << m << ", " << n << ", " << k << endl;
         cout << "rs_a, cs_a = " << A.stride(0) << ", " << A.stride(1) << endl;
         cout << "rs_b, cs_b = " << B.stride(0) << ", " << B.stride(1) << endl;
         cout << "rs_c, cs_c = " << C.stride(0) << ", " << C.stride(1) << endl;
         cout << endl;
 
-        D = C;
-        gemm_ref<T>(scale, A, B, scale, D);
-        T ref_val = reduce<T>(REDUCE_NORM_2, D).first;
+        D.reset(C);
+        gemm_ref(scale, A, B, scale, D);
 
-        D = C;
-        mult<T>(scale, A, B, scale, D);
-        T calc_val = reduce<T>(REDUCE_NORM_2, D).first;
+        E.reset(C);
+        mult(scale, A, B, scale, E);
 
-        passfail("REF", ref_val, calc_val);
+        add(T(-1), D, T(1), E);
+        T error = reduce(REDUCE_NORM_2, E).first;
+
+        passfail("REF", error, 0, ulp_factor*ceil2(scale*m*n*k));
     }
 }
 
 template <typename T>
 void test_mult(stride_type N)
 {
-    varray<T> A, B, C, D;
+    varray<T> A, B, C, D, E;
     std::vector<label_type> idx_A, idx_B, idx_C;
 
-    T scale = 10.0*random_unit<T>();
+    T scale(10.0*random_unit<T>());
 
     cout << endl;
     cout << "Testing mult (" << type_name<T>() << "):" << endl;
@@ -960,28 +986,38 @@ void test_mult(stride_type N)
     cout << "idx_C    = " << idx_C << endl;
     cout << endl;
 
+    auto idx_AB = exclusion(intersection(idx_A, idx_B), idx_C);
+    auto idx_A_only = exclusion(idx_A, idx_B, idx_C);
+    auto idx_B_only = exclusion(idx_B, idx_A, idx_C);
+
+    auto neps = ceil2(prod(select_from(A.lengths(), idx_A, idx_A_only))*
+                      prod(select_from(A.lengths(), idx_A, idx_AB))*
+                      prod(select_from(B.lengths(), idx_B, idx_B_only))*
+                      prod(C.lengths()));
+
     impl = BLAS_BASED;
     D.reset(C);
-    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
-    T ref_val = reduce<T>(REDUCE_NORM_2, D, idx_C.data()).first;
+    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
     impl = REFERENCE;
-    D.reset(C);
-    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
-    T calc_val = reduce<T>(REDUCE_NORM_2, D, idx_C.data()).first;
+    E.reset(C);
+    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
-    passfail("BLAS", ref_val, calc_val);
+    add(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
+    T error = reduce(REDUCE_NORM_2, E, idx_C.data()).first;
+
+    passfail("BLAS", error, 0, ulp_factor*ceil2(scale*neps));
 }
 
 template <typename T>
 void test_contract(stride_type N)
 {
-    varray<T> A, B, C, D;
+    varray<T> A, B, C, D, E;
     std::vector<label_type> idx_A, idx_B, idx_C;
 
     random_contract(N, A, idx_A, B, idx_B, C, idx_C);
 
-    T scale = 10.0*random_unit<T>();
+    T scale(10.0*random_unit<T>());
 
     cout << endl;
     cout << "Testing contract (" << type_name<T>() << "):" << endl;
@@ -996,30 +1032,38 @@ void test_contract(stride_type N)
     cout << "idx_C    = " << idx_C << endl;
     cout << endl;
 
+    auto idx_AB = intersection(idx_A, idx_B);
+
+    auto neps = ceil2(prod(select_from(A.lengths(), idx_A, idx_AB))*
+                      prod(C.lengths()));
+
     impl = REFERENCE;
     D.reset(C);
-    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
-    T ref_val = reduce<T>(REDUCE_NORM_2, D, idx_C.data()).first;
+    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
     impl = BLAS_BASED;
-    D.reset(C);
-    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
-    T calc_val = reduce<T>(REDUCE_NORM_2, D, idx_C.data()).first;
+    E.reset(C);
+    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
-    passfail("BLAS", ref_val, calc_val);
+    add(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
+    T error = reduce(REDUCE_NORM_2, E, idx_C.data()).first;
+
+    passfail("BLAS", error, 0, ulp_factor*ceil2(scale*neps));
 
     impl = BLIS_BASED;
-    D.reset(C);
-    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
-    calc_val = reduce<T>(REDUCE_NORM_2, D, idx_C.data()).first;
+    E.reset(C);
+    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
-    passfail("BLIS", ref_val, calc_val);
+    add(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
+    error = reduce(REDUCE_NORM_2, E, idx_C.data()).first;
+
+    passfail("BLIS", error, 0, ulp_factor*ceil2(scale*neps));
 }
 
 template <typename T>
 void test_weight(stride_type N)
 {
-    varray<T> A, B, C, D;
+    varray<T> A, B, C, D, E;
     std::vector<label_type> idx_A, idx_B, idx_C;
 
     random_weight(N, A, idx_A, B, idx_B, C, idx_C);
@@ -1037,25 +1081,28 @@ void test_weight(stride_type N)
     cout << "idx_C    = " << idx_C << endl;
     cout << endl;
 
-    T scale = 10.0*random_unit<T>();
+    auto neps = ceil2(prod(C.lengths()));
+
+    T scale(10.0*random_unit<T>());
 
     impl = BLAS_BASED;
     D.reset(C);
-    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
-    T ref_val = reduce<T>(REDUCE_NORM_2, D, idx_C.data()).first;
+    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
     impl = REFERENCE;
-    D.reset(C);
-    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
-    T calc_val = reduce<T>(REDUCE_NORM_2, D, idx_C.data()).first;
+    E.reset(C);
+    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
-    passfail("BLAS", ref_val, calc_val);
+    add(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
+    T error = reduce(REDUCE_NORM_2, E, idx_C.data()).first;
+
+    passfail("BLAS", error, 0, ulp_factor*ceil2(scale*neps));
 }
 
 template <typename T>
 void test_outer_prod(stride_type N)
 {
-    varray<T> A, B, C, D;
+    varray<T> A, B, C, D, E;
     std::vector<label_type> idx_A, idx_B, idx_C;
 
     random_outer_prod(N, A, idx_A, B, idx_B, C, idx_C);
@@ -1073,19 +1120,22 @@ void test_outer_prod(stride_type N)
     cout << "idx_C    = " << idx_C << endl;
     cout << endl;
 
-    T scale = 10.0*random_unit<T>();
+    auto neps = ceil(prod(C.lengths()));
+
+    T scale(10.0*random_unit<T>());
 
     impl = BLAS_BASED;
     D.reset(C);
-    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
-    T ref_val = reduce<T>(REDUCE_NORM_2, D, idx_C.data()).first;
+    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
     impl = REFERENCE;
-    D.reset(C);
-    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
-    T calc_val = reduce<T>(REDUCE_NORM_2, D, idx_C.data()).first;
+    E.reset(C);
+    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
-    passfail("BLAS", ref_val, calc_val);
+    add(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
+    T error = reduce(REDUCE_NORM_2, E, idx_C.data()).first;
+
+    passfail("BLAS", error, 0, ulp_factor*ceil2(scale*neps));
 }
 
 template <typename T>
@@ -1094,12 +1144,12 @@ void test_add(stride_type N)
     varray<T> A, B, C;
     std::vector<label_type> idx_A, idx_B;
 
-    T scale = 10.0*random_unit<T>();
+    T scale(10.0*random_unit<T>());
 
     cout << endl;
     cout << "Testing add (" << type_name<T>() << "):" << endl;
 
-    random_add(N, A, idx_A, B, idx_B);
+    random_add(1000, A, idx_A, B, idx_B);
 
     cout << endl;
     cout << "len_A    = " << A.lengths() << endl;
@@ -1110,26 +1160,15 @@ void test_add(stride_type N)
     cout << "idx_B    = " << idx_B << endl;
     cout << endl;
 
-    stride_type sz = 1;
-    for (unsigned i = 0;i < B.dimension();i++)
-    {
-        bool found = false;
-        for (unsigned j = 0;j < A.dimension();j++)
-        {
-            if (idx_A[j] == idx_B[i])
-            {
-                found = true;
-                break;
-            }
-        }
-        if (!found) sz *= B.length(i);
-    }
+    auto idx_B_only = exclusion(idx_B, idx_A);
+    stride_type NB = prod(select_from(B.lengths(), idx_B, idx_B_only));
+    auto neps = prod(A.lengths())*NB;
 
-    T ref_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
-    T add_b = reduce<T>(REDUCE_SUM, B, idx_B.data()).first;
-    add<T>(scale, A, idx_A.data(), scale, B, idx_B.data());
-    T calc_val = reduce<T>(REDUCE_SUM, B, idx_B.data()).first;
-    passfail("SUM", scale*(sz*ref_val+add_b), calc_val);
+    T ref_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
+    T add_b = reduce(REDUCE_SUM, B, idx_B.data()).first;
+    add(scale, A, idx_A.data(), scale, B, idx_B.data());
+    T calc_val = reduce(REDUCE_SUM, B, idx_B.data()).first;
+    passfail("SUM", scale*(NB*ref_val+add_b), calc_val, ulp_factor*ceil2(neps*scale));
 }
 
 template <typename T>
@@ -1138,7 +1177,7 @@ void test_trace(stride_type N)
     varray<T> A, B;
     std::vector<label_type> idx_A, idx_B;
 
-    random_trace(N, A, idx_A, B, idx_B);
+    random_trace(1000, A, idx_A, B, idx_B);
 
     cout << endl;
     cout << "Testing trace (" << type_name<T>() << "):" << endl;
@@ -1150,13 +1189,15 @@ void test_trace(stride_type N)
     cout << "idx_B    = " << idx_B << endl;
     cout << endl;
 
-    T scale = 10.0*random_unit<T>();
+    auto neps = prod(A.lengths());
 
-    T ref_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
-    T add_b = reduce<T>(REDUCE_SUM, B, idx_B.data()).first;
-    add<T>(scale, A, idx_A.data(), scale, B, idx_B.data());
-    T calc_val = reduce<T>(REDUCE_SUM, B, idx_B.data()).first;
-    passfail("SUM", scale*(ref_val+add_b), calc_val);
+    T scale(10.0*random_unit<T>());
+
+    T ref_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
+    T add_b = reduce(REDUCE_SUM, B, idx_B.data()).first;
+    add(scale, A, idx_A.data(), scale, B, idx_B.data());
+    T calc_val = reduce(REDUCE_SUM, B, idx_B.data()).first;
+    passfail("SUM", scale*(ref_val+add_b), calc_val, ulp_factor*ceil2(neps*scale));
 }
 
 template <typename T>
@@ -1165,7 +1206,7 @@ void test_replicate(stride_type N)
     varray<T> A, B;
     std::vector<label_type> idx_A, idx_B;
 
-    random_replicate(N, A, idx_A, B, idx_B);
+    random_replicate(1000, A, idx_A, B, idx_B);
 
     cout << endl;
     cout << "Testing replicate (" << type_name<T>() << "):" << endl;
@@ -1177,33 +1218,22 @@ void test_replicate(stride_type N)
     cout << "idx_B    = " << idx_B << endl;
     cout << endl;
 
-    T scale = 10.0*random_unit<T>();
+    auto idx_B_only = exclusion(idx_B, idx_A);
+    stride_type NB = prod(select_from(B.lengths(), idx_B, idx_B_only));
+    auto neps = prod(B.lengths());
 
-    stride_type sz = 1;
-    for (unsigned i = 0;i < B.dimension();i++)
-    {
-        bool found = false;
-        for (unsigned j = 0;j < A.dimension();j++)
-        {
-            if (idx_A[j] == idx_B[i])
-            {
-                found = true;
-                break;
-            }
-        }
-        if (!found) sz *= B.length(i);
-    }
+    T scale(10.0*random_unit<T>());
 
-    T ref_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
-    T add_b = reduce<T>(REDUCE_SUM, B, idx_B.data()).first;
-    add<T>(scale, A, idx_A.data(), scale, B, idx_B.data());
-    T calc_val = reduce<T>(REDUCE_SUM, B, idx_B.data()).first;
-    passfail("SUM", scale*(sz*ref_val+add_b), calc_val);
+    T ref_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
+    T add_b = reduce(REDUCE_SUM, B, idx_B.data()).first;
+    add(scale, A, idx_A.data(), scale, B, idx_B.data());
+    T calc_val = reduce(REDUCE_SUM, B, idx_B.data()).first;
+    passfail("SUM", scale*(NB*ref_val+add_b), calc_val, ulp_factor*ceil2(neps*scale));
 
-    ref_val = reduce<T>(REDUCE_NORM_1, A, idx_A.data()).first;
-    add<T>(scale, A, idx_A.data(), T(0.0), B, idx_B.data());
-    calc_val = reduce<T>(REDUCE_NORM_1, B, idx_B.data()).first;
-    passfail("NRM1", sz*T(std::abs(scale))*ref_val, calc_val);
+    ref_val = reduce(REDUCE_NORM_1, A, idx_A.data()).first;
+    add(scale, A, idx_A.data(), T(0.0), B, idx_B.data());
+    calc_val = reduce(REDUCE_NORM_1, B, idx_B.data()).first;
+    passfail("NRM1", std::abs(scale)*NB*ref_val, calc_val, ulp_factor*ceil2(neps*scale));
 }
 
 template <typename T>
@@ -1212,7 +1242,7 @@ void test_dot(stride_type N)
     varray<T> A, B;
     std::vector<label_type> idx_A, idx_B;
 
-    random_dot(N, A, idx_A, B, idx_B);
+    random_dot(1000, A, idx_A, B, idx_B);
 
     cout << endl;
     cout << "Testing dot (" << type_name<T>() << "):" << endl;
@@ -1220,22 +1250,24 @@ void test_dot(stride_type N)
     cout << "stride = " << A.strides() << endl;
     cout << endl;
 
-    add<T>(T(1.0), A, idx_A.data(), T(0.0), B, idx_B.data());
+    auto neps = prod(A.lengths());
+
+    add(T(1.0), A, idx_A.data(), T(0.0), B, idx_B.data());
     T* data = B.data();
-    viterator<> it(B.lengths(), B.strides());
-    while (it.next(data)) *data = stl_ext::conj(*data);
-    T ref_val = reduce<T>(REDUCE_NORM_2, A, idx_A.data()).first;
-    T calc_val = dot<T>(A, idx_A.data(), B, idx_B.data());
-    passfail("NRM2", ref_val*ref_val, calc_val);
+    MArray::viterator<> it(B.lengths(), B.strides());
+    while (it.next(data)) *data = tblis::conj(*data);
+    T ref_val = reduce(REDUCE_NORM_2, A, idx_A.data()).first;
+    T calc_val = dot(A, idx_A.data(), B, idx_B.data());
+    passfail("NRM2", ref_val*ref_val, calc_val, ulp_factor*ceil2(neps));
 
     B = T(1);
-    ref_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
-    calc_val = dot<T>(A, idx_A.data(), B, idx_B.data());
-    passfail("UNIT", ref_val, calc_val);
+    ref_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
+    calc_val = dot(A, idx_A.data(), B, idx_B.data());
+    passfail("UNIT", ref_val, calc_val, ulp_factor*ceil2(neps));
 
     B = T(0);
-    calc_val = dot<T>(A, idx_A.data(), B, idx_B.data());
-    passfail("ZERO", T(0), calc_val);
+    calc_val = dot(A, idx_A.data(), B, idx_B.data());
+    passfail("ZERO", calc_val, 0, ulp_factor*ceil2(neps));
 }
 
 template <typename T>
@@ -1244,7 +1276,7 @@ void test_transpose(stride_type N)
     varray<T> A, B, C;
     std::vector<label_type> idx_A, idx_B;
 
-    random_transpose(N, A, idx_A, B, idx_B);
+    random_transpose(1000, A, idx_A, B, idx_B);
 
     unsigned ndim = A.dimension();
     vector<unsigned> perm = permutation(ndim, idx_A.data(), idx_B.data());
@@ -1256,14 +1288,17 @@ void test_transpose(stride_type N)
     cout << "perm   = " << perm << endl;
     cout << endl;
 
-    T scale = 10.0*random_unit<T>();
+    auto neps = prod(A.lengths());
+
+    T scale(10.0*random_unit<T>());
 
     C.reset(A);
-    T ref_val = reduce<T>(REDUCE_NORM_2, A, idx_A.data()).first;
-    add<T>(T(1), A, idx_A.data(), T(0), B, idx_B.data());
-    add<T>(scale, B, idx_B.data(), scale, C, idx_A.data());
-    T calc_val = reduce<T>(REDUCE_NORM_2, C, idx_A.data()).first;
-    passfail("INVERSE", T(2.0*std::abs(scale))*ref_val, calc_val);
+    add(T(1), A, idx_A.data(), T(0), B, idx_B.data());
+    add(scale, B, idx_B.data(), scale, C, idx_A.data());
+
+    add(-2*scale, A, idx_A.data(), T(1), C, idx_A.data());
+    T error = reduce(REDUCE_NORM_2, C, idx_A.data()).first;
+    passfail("INVERSE", error, 0, ulp_factor*ceil2(2*scale*neps));
 
     B.reset(A);
     idx_B = idx_A;
@@ -1284,8 +1319,9 @@ void test_transpose(stride_type N)
     }
     while (idx_C != idx_A);
 
-    calc_val = reduce<T>(REDUCE_NORM_2, C, idx_C.data()).first;
-    passfail("CYCLE", ref_val, calc_val);
+    add(T(-1), A, idx_A.data(), T(1), C, idx_A.data());
+    error = reduce(REDUCE_NORM_2, C, idx_A.data()).first;
+    passfail("CYCLE", error, 0, ulp_factor*ceil2(neps));
 }
 
 template <typename T>
@@ -1293,7 +1329,7 @@ void test_scale(stride_type N)
 {
     varray<T> A;
 
-    random_tensor(N, A);
+    random_tensor(100, A);
     std::vector<label_type> idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
     cout << endl;
@@ -1302,20 +1338,23 @@ void test_scale(stride_type N)
     cout << "stride = " << A.strides() << endl;
     cout << endl;
 
-    T ref_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
+    auto neps = prod(A.lengths());
 
-    T scale = 10.0*random_unit<T>();
-    tblis::scale<T>(scale, A, idx_A.data());
-    T calc_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
-    passfail("RANDOM", ref_val*scale, calc_val);
+    T ref_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
 
-    tblis::scale<T>(T(1.0), A, idx_A.data());
-    calc_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
-    passfail("UNIT", ref_val*scale, calc_val);
+    T scale(10.0*random_unit<T>());
 
-    tblis::scale<T>(T(0.0), A, idx_A.data());
-    calc_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
-    passfail("ZERO", T(0), calc_val);
+    tblis::scale(scale, A, idx_A.data());
+    T calc_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
+    passfail("RANDOM", ref_val, calc_val/scale, ulp_factor*ceil2(neps));
+
+    tblis::scale(T(1.0), A, idx_A.data());
+    calc_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
+    passfail("UNIT", ref_val, calc_val/scale, ulp_factor*ceil2(neps));
+
+    tblis::scale(T(0.0), A, idx_A.data());
+    calc_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
+    passfail("ZERO", calc_val, 0, ulp_factor*ceil2(neps));
 }
 
 template <typename T>
@@ -1323,8 +1362,7 @@ void test_reduce(stride_type N)
 {
     varray<T> A;
 
-    random_tensor(N, A);
-    stride_type NA = A.stride(A.dimension()-1)*A.length(A.dimension()-1);
+    random_tensor(100, A);
     std::vector<label_type> idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
     cout << endl;
@@ -1332,6 +1370,8 @@ void test_reduce(stride_type N)
     cout << "len    = " << A.lengths() << endl;
     cout << "stride = " << A.strides() << endl;
     cout << endl;
+
+    stride_type NA = prod(A.lengths());
 
     T ref_val, blas_val;
     stride_type ref_idx, blas_idx;
@@ -1344,7 +1384,7 @@ void test_reduce(stride_type N)
     {
         blas_val += data[i];
     }
-    passfail("REDUCE_SUM", ref_val, blas_val);
+    passfail("REDUCE_SUM", ref_val, blas_val, ulp_factor*ceil2(NA));
 
     reduce<T>(REDUCE_SUM_ABS, A, idx_A.data(), ref_val, ref_idx);
     blas_val = 0;
@@ -1352,7 +1392,7 @@ void test_reduce(stride_type N)
     {
         blas_val += std::abs(data[i]);
     }
-    passfail("REDUCE_SUM_ABS", ref_val, blas_val);
+    passfail("REDUCE_SUM_ABS", ref_val, blas_val, ulp_factor*ceil2(NA));
 
     reduce<T>(REDUCE_MAX, A, idx_A.data(), ref_val, ref_idx);
     blas_val = data[0];
@@ -1365,7 +1405,7 @@ void test_reduce(stride_type N)
             blas_idx = i;
         }
     }
-    passfail("REDUCE_MAX", ref_idx, blas_idx, ref_val, blas_val);
+    passfail("REDUCE_MAX", ref_idx, blas_idx, ref_val, blas_val, 4);
 
     reduce<T>(REDUCE_MAX_ABS, A, idx_A.data(), ref_val, ref_idx);
     blas_val = std::abs(data[0]);
@@ -1378,7 +1418,7 @@ void test_reduce(stride_type N)
             blas_idx = i;
         }
     }
-    passfail("REDUCE_MAX_ABS", ref_idx, blas_idx, ref_val, blas_val);
+    passfail("REDUCE_MAX_ABS", ref_idx, blas_idx, ref_val, blas_val, 4);
 
     /*
     reduce<T>(REDUCE_MIN, A, idx_A.data(), ref_val, ref_idx);
@@ -1415,13 +1455,11 @@ void test_reduce(stride_type N)
         blas_val += norm2(data[i]);
     }
     blas_val = sqrt(real(blas_val));
-    passfail("REDUCE_NORM_2", ref_val, blas_val);
+    passfail("REDUCE_NORM_2", ref_val, blas_val, ulp_factor*ceil2(NA));
 
     A = T(1);
-    reduce<T>(REDUCE_SUM, A, idx_A.data(), ref_val, ref_idx);
-    blas_val = 1;
-    for (unsigned i = 0;i < A.dimension();i++) blas_val *= A.length(i);
-    passfail("COUNT", ref_val, blas_val);
+    reduce(REDUCE_SUM, A, idx_A.data(), ref_val, ref_idx);
+    passfail("COUNT", ref_val, NA, ulp_factor*ceil2(NA));
 }
 
 template <typename T>
@@ -1482,10 +1520,10 @@ int main(int argc, char **argv)
     cout << "Using mt19937 with seed " << seed << endl;
     rand_engine.seed(seed);
 
-    //test<   float>(N, R);
+    test<   float>(N, R);
     test<  double>(N, R);
-    //test<scomplex>(N, R);
-    //test<dcomplex>(N, R);
+    test<scomplex>(N, R);
+    test<dcomplex>(N, R);
 
     return 0;
 }

@@ -49,7 +49,7 @@ void parallelize(Body&& body, unsigned nthread, unsigned arity=0)
     tci_parallelize(
         [](tci_comm* comm, void* data)
         {
-            Body& body = *static_cast<Body*>(data);
+            Body body = *static_cast<Body*>(data);
             body(*reinterpret_cast<communicator*>(comm));
         },
         static_cast<void*>(&body), nthread, arity);

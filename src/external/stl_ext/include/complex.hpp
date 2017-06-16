@@ -12,19 +12,6 @@ using std::complex;
 using std::real;
 using std::imag;
 
-inline       float conj(      float x) { return x; }
-inline      double conj(     double x) { return x; }
-inline long double conj(long double x) { return x; }
-inline      double conj(       bool x) { return x; }
-inline      double conj(       char x) { return x; }
-inline      double conj(   char16_t x) { return x; }
-inline      double conj(   char32_t x) { return x; }
-inline      double conj(    wchar_t x) { return x; }
-inline      double conj(      short x) { return x; }
-inline      double conj(        int x) { return x; }
-inline      double conj(       long x) { return x; }
-inline      double conj(  long long x) { return x; }
-
 template <typename T> struct real_type             { typedef T type; };
 template <typename T> struct real_type<complex<T>> { typedef T type; };
 template <typename T>
@@ -47,6 +34,18 @@ template <typename T, typename U=void>
 using enable_if_not_complex = enable_if<!is_complex<T>::value,U>;
 template <typename T, typename U=void>
 using enable_if_not_complex_t = typename enable_if_not_complex<T,U>::type;
+
+template <typename T>
+enable_if_complex_t<T,T> conj(T x)
+{
+    return {x.real(), -x.imag()};
+}
+
+template <typename T>
+enable_if_not_complex_t<T,T> conj(T x)
+{
+    return x;
+}
 
 template <typename T>
 enable_if_complex_t<T,real_type_t<T>> norm2(T x)

@@ -89,30 +89,32 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@ENABLE_REFERENCE_TRUE@am__append_1 = lib/libreference.la
+@ENABLE_REFERENCE_TRUE@am__append_2 = lib/libreference.la
 
 #
 # AMD architectures
 #
-@ENABLE_BULLDOZER_TRUE@am__append_1 = lib/libbulldozer.la
-@ENABLE_BULLDOZER_TRUE@am__append_2 = lib/libbulldozer.la
-@ENABLE_PILEDRIVER_TRUE@am__append_3 = lib/libpiledriver.la
-@ENABLE_PILEDRIVER_TRUE@am__append_4 = lib/libpiledriver.la
-@ENABLE_EXCAVATOR_TRUE@am__append_5 = lib/libexcavator.la
-@ENABLE_EXCAVATOR_TRUE@am__append_6 = lib/libexcavator.la
+@ENABLE_BULLDOZER_TRUE@am__append_3 = lib/libbulldozer.la
+@ENABLE_BULLDOZER_TRUE@am__append_4 = lib/libbulldozer.la
+@ENABLE_PILEDRIVER_TRUE@am__append_5 = lib/libpiledriver.la
+@ENABLE_PILEDRIVER_TRUE@am__append_6 = lib/libpiledriver.la
+@ENABLE_EXCAVATOR_TRUE@am__append_7 = lib/libexcavator.la
+@ENABLE_EXCAVATOR_TRUE@am__append_8 = lib/libexcavator.la
 
 #
 # Intel architectures
 #
-@ENABLE_CORE2_TRUE@am__append_7 = lib/libcore2.la
-@ENABLE_CORE2_TRUE@am__append_8 = lib/libcore2.la
-@ENABLE_SANDYBRIDGE_TRUE@am__append_9 = lib/libsandybridge.la
-@ENABLE_SANDYBRIDGE_TRUE@am__append_10 = lib/libsandybridge.la
-@ENABLE_HASWELL_TRUE@am__append_11 = lib/libhaswell.la
-@ENABLE_HASWELL_TRUE@am__append_12 = lib/libhaswell.la
-@ENABLE_KNL_TRUE@am__append_13 = lib/libknl.la
-@ENABLE_KNL_TRUE@am__append_14 = lib/libknl.la
+@ENABLE_CORE2_TRUE@am__append_9 = lib/libcore2.la
+@ENABLE_CORE2_TRUE@am__append_10 = lib/libcore2.la
+@ENABLE_SANDYBRIDGE_TRUE@am__append_11 = lib/libsandybridge.la
+@ENABLE_SANDYBRIDGE_TRUE@am__append_12 = lib/libsandybridge.la
+@ENABLE_HASWELL_TRUE@am__append_13 = lib/libhaswell.la
+@ENABLE_HASWELL_TRUE@am__append_14 = lib/libhaswell.la
+@ENABLE_KNL_TRUE@am__append_15 = lib/libknl.la
+@ENABLE_KNL_TRUE@am__append_16 = lib/libknl.la
 noinst_PROGRAMS = bin/test$(EXEEXT) $(am__EXEEXT_1)
-@ENABLE_BLAS_TRUE@am__append_15 = bin/bench bin/batched_bench bin/dpd_bench
+@ENABLE_BLAS_TRUE@am__append_17 = bin/bench bin/batched_bench bin/dpd_bench
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_blas.m4 \
@@ -122,7 +124,9 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_blas.m4 \
 	$(top_srcdir)/m4/ax_prefix_config_h.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
 	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
-	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/lt~obsolete.m4 \
+	$(top_srcdir)/m4/tblis_config_subdir.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
@@ -276,13 +280,15 @@ lib_libpiledriver_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(LDFLAGS) -o $@
 @ENABLE_PILEDRIVER_TRUE@am_lib_libpiledriver_la_rpath =
 lib_libreference_la_LIBADD =
-am_lib_libreference_la_OBJECTS =  \
-	src/configs/reference/lib_libreference_la-config.lo
+am__lib_libreference_la_SOURCES_DIST =  \
+	src/configs/reference/config.cxx
+@ENABLE_REFERENCE_TRUE@am_lib_libreference_la_OBJECTS = src/configs/reference/lib_libreference_la-config.lo
 lib_libreference_la_OBJECTS = $(am_lib_libreference_la_OBJECTS)
 lib_libreference_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(lib_libreference_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
+@ENABLE_REFERENCE_TRUE@am_lib_libreference_la_rpath =
 lib_libsandybridge_la_LIBADD =
 am__lib_libsandybridge_la_SOURCES_DIST =  \
 	src/configs/sandybridge/bli_gemm_asm_d8x4.c \
@@ -296,9 +302,9 @@ lib_libsandybridge_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(LDFLAGS) -o $@
 @ENABLE_SANDYBRIDGE_TRUE@am_lib_libsandybridge_la_rpath =
 lib_libtblis_la_DEPENDENCIES = src/external/tci/lib/libtci.la \
-	lib/libreference.la $(am__append_2) $(am__append_4) \
-	$(am__append_6) $(am__append_8) $(am__append_10) \
-	$(am__append_12) $(am__append_14)
+	$(am__append_2) $(am__append_4) $(am__append_6) \
+	$(am__append_8) $(am__append_10) $(am__append_12) \
+	$(am__append_14) $(am__append_16)
 am_lib_libtblis_la_OBJECTS = src/iface/1v/add.lo src/iface/1v/dot.lo \
 	src/iface/1v/reduce.lo src/iface/1v/scale.lo \
 	src/iface/1v/set.lo src/iface/1m/add.lo src/iface/1m/dot.lo \
@@ -400,7 +406,7 @@ DIST_SOURCES = $(am__lib_libbulldozer_la_SOURCES_DIST) \
 	$(am__lib_libhaswell_la_SOURCES_DIST) \
 	$(am__lib_libknl_la_SOURCES_DIST) \
 	$(am__lib_libpiledriver_la_SOURCES_DIST) \
-	$(lib_libreference_la_SOURCES) \
+	$(am__lib_libreference_la_SOURCES_DIST) \
 	$(am__lib_libsandybridge_la_SOURCES_DIST) \
 	$(lib_libtblis_la_SOURCES) $(bin_batched_bench_SOURCES) \
 	$(bin_bench_SOURCES) $(bin_dpd_bench_SOURCES) \
@@ -534,10 +540,7 @@ ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
-F77 = @F77@
-FFLAGS = @FFLAGS@
 FGREP = @FGREP@
-FLIBS = @FLIBS@
 GREP = @GREP@
 HAVE_CXX11 = @HAVE_CXX11@
 INSTALL = @INSTALL@
@@ -587,7 +590,6 @@ ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
-ac_ct_F77 = @ac_ct_F77@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@
@@ -628,7 +630,6 @@ psdir = @psdir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
-subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
@@ -766,16 +767,16 @@ stl_extinclude_HEADERS = \
 	src/external/stl_ext/include/vector.hpp \
 	src/external/stl_ext/include/zip.hpp
 
-noinst_LTLIBRARIES = lib/libreference.la $(am__append_1) \
-	$(am__append_3) $(am__append_5) $(am__append_7) \
-	$(am__append_9) $(am__append_11) $(am__append_13)
+noinst_LTLIBRARIES = $(am__append_1) $(am__append_3) $(am__append_5) \
+	$(am__append_7) $(am__append_9) $(am__append_11) \
+	$(am__append_13) $(am__append_15)
 lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la \
-	lib/libreference.la $(am__append_2) $(am__append_4) \
-	$(am__append_6) $(am__append_8) $(am__append_10) \
-	$(am__append_12) $(am__append_14)
-lib_libreference_la_SOURCES = src/configs/reference/config.cxx
-lib_libreference_la_CFLAGS = -O3
-lib_libreference_la_CXXFLAGS = -O3
+	$(am__append_2) $(am__append_4) $(am__append_6) \
+	$(am__append_8) $(am__append_10) $(am__append_12) \
+	$(am__append_14) $(am__append_16)
+@ENABLE_REFERENCE_TRUE@lib_libreference_la_SOURCES = src/configs/reference/config.cxx
+@ENABLE_REFERENCE_TRUE@lib_libreference_la_CFLAGS = -O3
+@ENABLE_REFERENCE_TRUE@lib_libreference_la_CXXFLAGS = -O3
 @ENABLE_BULLDOZER_TRUE@lib_libbulldozer_la_SOURCES = src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c \
 @ENABLE_BULLDOZER_TRUE@					         src/configs/bulldozer/config.cxx
 
@@ -1085,7 +1086,7 @@ src/configs/reference/lib_libreference_la-config.lo:  \
 	src/configs/reference/$(DEPDIR)/$(am__dirstamp)
 
 lib/libreference.la: $(lib_libreference_la_OBJECTS) $(lib_libreference_la_DEPENDENCIES) $(EXTRA_lib_libreference_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CXXLD)$(lib_libreference_la_LINK)  $(lib_libreference_la_OBJECTS) $(lib_libreference_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(lib_libreference_la_LINK) $(am_lib_libreference_la_rpath) $(lib_libreference_la_OBJECTS) $(lib_libreference_la_LIBADD) $(LIBS)
 src/configs/sandybridge/$(am__dirstamp):
 	@$(MKDIR_P) src/configs/sandybridge
 	@: > src/configs/sandybridge/$(am__dirstamp)

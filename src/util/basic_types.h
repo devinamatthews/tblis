@@ -150,8 +150,8 @@ typedef struct tblis_scalar
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
         scalar(float    v) : s(v) {}
         scalar(double   v) : d(v) {}
-        scalar(dcomplex v) : c(v) {}
-        scalar(scomplex v) : z(v) {}
+        scalar(scomplex v) : c(v) {}
+        scalar(dcomplex v) : z(v) {}
 #endif
     } data;
 

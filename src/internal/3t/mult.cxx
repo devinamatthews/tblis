@@ -8,6 +8,7 @@
 #include "nodes/gemm_ukr.hpp"
 
 #include "internal/1t/add.hpp"
+#include "internal/1t/dot.hpp"
 #include "internal/3m/mult.hpp"
 
 namespace tblis
@@ -675,24 +676,39 @@ void mult(const communicator& comm, const config& cfg,
         {
             if (len_ABC.empty())
             {
-                if (impl == REFERENCE)
+                if (len_AC.empty())
                 {
-                    outer_prod_ref(comm, cfg, len_AC, len_BC,
-                                   alpha, A, stride_A_AC,
-                                          B, stride_B_BC,
-                                    beta, C, stride_C_AC, stride_C_BC);
+                    internal::add(comm, cfg, len_B, len_C, len_BC,
+                                  alpha, conj_B, B, stride_B_B, stride_B_BC,
+                                   beta, conj_C, C, stride_C_C, stride_C_BC);
+                }
+                else if (len_BC.empty())
+                {
+                    internal::add(comm, cfg, len_A, len_C, len_AC,
+                                  alpha, conj_A, A, stride_A_A, stride_A_AC,
+                                   beta, conj_C, C, stride_C_C, stride_C_AC);
                 }
                 else
                 {
-                    outer_prod_blas(comm, cfg, len_AC, len_BC,
-                                    alpha, A, stride_A_AC,
-                                           B, stride_B_BC,
-                                     beta, C, stride_C_AC, stride_C_BC);
+                    if (impl == REFERENCE)
+                    {
+                        outer_prod_ref(comm, cfg, len_AC, len_BC,
+                                       alpha, A, stride_A_AC,
+                                              B, stride_B_BC,
+                                        beta, C, stride_C_AC, stride_C_BC);
+                    }
+                    else
+                    {
+                        outer_prod_blas(comm, cfg, len_AC, len_BC,
+                                        alpha, A, stride_A_AC,
+                                               B, stride_B_BC,
+                                         beta, C, stride_C_AC, stride_C_BC);
+                    }
                 }
             }
             else
             {
-                if (impl == REFERENCE)
+                if (impl == REFERENCE || len_AC.empty() || len_BC.empty())
                 {
                     weight_ref(comm, cfg, len_AC, len_BC, len_ABC,
                                alpha, A, stride_A_AC, stride_A_ABC,
@@ -710,32 +726,44 @@ void mult(const communicator& comm, const config& cfg,
         }
         else
         {
-            if (impl == REFERENCE)
+            if (len_AC.empty() && len_BC.empty())
             {
-                contract_ref(comm, cfg, len_AB, len_AC, len_BC,
-                             alpha, A, stride_A_AB, stride_A_AC,
-                                    B, stride_B_AB, stride_B_BC,
-                              beta, C, stride_C_AC, stride_C_BC);
-            }
-            else if (impl == BLAS_BASED)
-            {
-                contract_blas(comm, cfg, len_AB, len_AC, len_BC,
-                              alpha, A, stride_A_AB, stride_A_AC,
-                                     B, stride_B_AB, stride_B_BC,
-                               beta, C, stride_C_AC, stride_C_BC);
+                internal::dot(comm, cfg, len_A, len_B, len_AB,
+                              conj_A, A, stride_A_A, stride_A_AB,
+                              conj_B, B, stride_B_B, stride_B_AB,
+                              *C);
             }
             else
             {
-                contract_blis(comm, cfg, len_AB, len_AC, len_BC,
-                              alpha, A, stride_A_AB, stride_A_AC,
-                                     B, stride_B_AB, stride_B_BC,
-                               beta, C, stride_C_AC, stride_C_BC);
+                if (impl == REFERENCE)
+                {
+                    contract_ref(comm, cfg, len_AB, len_AC, len_BC,
+                                 alpha, A, stride_A_AB, stride_A_AC,
+                                        B, stride_B_AB, stride_B_BC,
+                                  beta, C, stride_C_AC, stride_C_BC);
+                }
+                else if (impl == BLAS_BASED)
+                {
+                    contract_blas(comm, cfg, len_AB, len_AC, len_BC,
+                                  alpha, A, stride_A_AB, stride_A_AC,
+                                         B, stride_B_AB, stride_B_BC,
+                                   beta, C, stride_C_AC, stride_C_BC);
+                }
+                else
+                {
+                    contract_blis(comm, cfg, len_AB, len_AC, len_BC,
+                                  alpha, A, stride_A_AB, stride_A_AC,
+                                         B, stride_B_AB, stride_B_BC,
+                                   beta, C, stride_C_AC, stride_C_BC);
+                }
             }
         }
     }
     else
     {
-        if (impl == REFERENCE)
+        if (impl == REFERENCE || len_AB.size()+len_AC.size() == 0 ||
+                                 len_AB.size()+len_BC.size() == 0 ||
+                                 len_AC.size()+len_BC.size() == 0)
         {
             mult_ref(comm, cfg, len_A, len_B, len_C,
                      len_AB, len_AC, len_BC, len_ABC,

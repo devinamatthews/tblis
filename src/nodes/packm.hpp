@@ -210,8 +210,8 @@ struct pack_row_panel
                                     : cfg.gemm_nr.extent<T>());
         const len_type KR = cfg.gemm_kr.def<T>();
 
-        TBLIS_ASSERT(A.block_size(0) == (!Trans ? MR : KR));
-        TBLIS_ASSERT(A.block_size(1) == (!Trans ? KR : MR));
+        TBLIS_ASSERT(A_.block_size(0) == (!Trans ? MR : KR));
+        TBLIS_ASSERT(A_.block_size(1) == (!Trans ? KR : MR));
 
         const len_type m_a = A_.length( Trans);
         const len_type k_a = A_.length(!Trans);

@@ -67,8 +67,10 @@ class dpd_marray_view : public dpd_marray_base<Type, NDim, dpd_marray_view<Type,
             reset(other);
         }
 
+        template <typename U, typename=
+            detail::enable_if_assignable_t<len_type&,U>>
         dpd_marray_view(unsigned irrep, unsigned nirrep,
-                        initializer_matrix<len_type> len, pointer ptr,
+                        initializer_matrix<U> len, pointer ptr,
                         dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, ptr, layout);

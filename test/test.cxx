@@ -253,8 +253,8 @@ template <typename T>
 void random_tensors(stride_type N,
                     unsigned ndim_A_only, unsigned ndim_B_only,
                     unsigned ndim_AB,
-                    tensor<T>& A, std::vector<label_type>& idx_A,
-                    tensor<T>& B, std::vector<label_type>& idx_B)
+                    varray<T>& A, std::vector<label_type>& idx_A,
+                    varray<T>& B, std::vector<label_type>& idx_B)
 {
     unsigned ndim_A = ndim_A_only+ndim_AB;
     unsigned ndim_B = ndim_B_only+ndim_AB;
@@ -949,13 +949,13 @@ void test_tblis(stride_type N)
         cout << endl;
 
         D.reset(C);
-        gemm_ref(scale, A, B, scale, D);
+        gemm_ref<T>(scale, A, B, scale, D);
 
         E.reset(C);
-        mult(scale, A, B, scale, E);
+        mult<T>(scale, A, B, scale, E);
 
-        add(T(-1), D, T(1), E);
-        T error = reduce(REDUCE_NORM_2, E).first;
+        add<T>(T(-1), D, T(1), E);
+        T error = reduce<T>(REDUCE_NORM_2, E).first;
 
         passfail("REF", error, 0, ulp_factor*ceil2(scale*m*n*k));
     }
@@ -997,14 +997,14 @@ void test_mult(stride_type N)
 
     impl = BLAS_BASED;
     D.reset(C);
-    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
+    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
     impl = REFERENCE;
     E.reset(C);
-    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
+    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
-    add(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
-    T error = reduce(REDUCE_NORM_2, E, idx_C.data()).first;
+    add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
+    T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
     passfail("BLAS", error, 0, ulp_factor*ceil2(scale*neps));
 }
@@ -1039,23 +1039,23 @@ void test_contract(stride_type N)
 
     impl = REFERENCE;
     D.reset(C);
-    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
+    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
     impl = BLAS_BASED;
     E.reset(C);
-    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
+    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
-    add(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
-    T error = reduce(REDUCE_NORM_2, E, idx_C.data()).first;
+    add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
+    T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
     passfail("BLAS", error, 0, ulp_factor*ceil2(scale*neps));
 
     impl = BLIS_BASED;
     E.reset(C);
-    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
+    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
-    add(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
-    error = reduce(REDUCE_NORM_2, E, idx_C.data()).first;
+    add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
+    error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
     passfail("BLIS", error, 0, ulp_factor*ceil2(scale*neps));
 }
@@ -1087,14 +1087,14 @@ void test_weight(stride_type N)
 
     impl = BLAS_BASED;
     D.reset(C);
-    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
+    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
     impl = REFERENCE;
     E.reset(C);
-    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
+    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
-    add(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
-    T error = reduce(REDUCE_NORM_2, E, idx_C.data()).first;
+    add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
+    T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
     passfail("BLAS", error, 0, ulp_factor*ceil2(scale*neps));
 }
@@ -1126,14 +1126,14 @@ void test_outer_prod(stride_type N)
 
     impl = BLAS_BASED;
     D.reset(C);
-    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
+    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
     impl = REFERENCE;
     E.reset(C);
-    mult(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
+    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
-    add(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
-    T error = reduce(REDUCE_NORM_2, E, idx_C.data()).first;
+    add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
+    T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
     passfail("BLAS", error, 0, ulp_factor*ceil2(scale*neps));
 }
@@ -1164,10 +1164,10 @@ void test_add(stride_type N)
     stride_type NB = prod(select_from(B.lengths(), idx_B, idx_B_only));
     auto neps = prod(A.lengths())*NB;
 
-    T ref_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
-    T add_b = reduce(REDUCE_SUM, B, idx_B.data()).first;
-    add(scale, A, idx_A.data(), scale, B, idx_B.data());
-    T calc_val = reduce(REDUCE_SUM, B, idx_B.data()).first;
+    T ref_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
+    T add_b = reduce<T>(REDUCE_SUM, B, idx_B.data()).first;
+    add<T>(scale, A, idx_A.data(), scale, B, idx_B.data());
+    T calc_val = reduce<T>(REDUCE_SUM, B, idx_B.data()).first;
     passfail("SUM", scale*(NB*ref_val+add_b), calc_val, ulp_factor*ceil2(neps*scale));
 }
 
@@ -1193,10 +1193,10 @@ void test_trace(stride_type N)
 
     T scale(10.0*random_unit<T>());
 
-    T ref_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
-    T add_b = reduce(REDUCE_SUM, B, idx_B.data()).first;
-    add(scale, A, idx_A.data(), scale, B, idx_B.data());
-    T calc_val = reduce(REDUCE_SUM, B, idx_B.data()).first;
+    T ref_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
+    T add_b = reduce<T>(REDUCE_SUM, B, idx_B.data()).first;
+    add<T>(scale, A, idx_A.data(), scale, B, idx_B.data());
+    T calc_val = reduce<T>(REDUCE_SUM, B, idx_B.data()).first;
     passfail("SUM", scale*(ref_val+add_b), calc_val, ulp_factor*ceil2(neps*scale));
 }
 
@@ -1224,15 +1224,15 @@ void test_replicate(stride_type N)
 
     T scale(10.0*random_unit<T>());
 
-    T ref_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
-    T add_b = reduce(REDUCE_SUM, B, idx_B.data()).first;
-    add(scale, A, idx_A.data(), scale, B, idx_B.data());
-    T calc_val = reduce(REDUCE_SUM, B, idx_B.data()).first;
+    T ref_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
+    T add_b = reduce<T>(REDUCE_SUM, B, idx_B.data()).first;
+    add<T>(scale, A, idx_A.data(), scale, B, idx_B.data());
+    T calc_val = reduce<T>(REDUCE_SUM, B, idx_B.data()).first;
     passfail("SUM", scale*(NB*ref_val+add_b), calc_val, ulp_factor*ceil2(neps*scale));
 
-    ref_val = reduce(REDUCE_NORM_1, A, idx_A.data()).first;
-    add(scale, A, idx_A.data(), T(0.0), B, idx_B.data());
-    calc_val = reduce(REDUCE_NORM_1, B, idx_B.data()).first;
+    ref_val = reduce<T>(REDUCE_NORM_1, A, idx_A.data()).first;
+    add<T>(scale, A, idx_A.data(), T(0.0), B, idx_B.data());
+    calc_val = reduce<T>(REDUCE_NORM_1, B, idx_B.data()).first;
     passfail("NRM1", std::abs(scale)*NB*ref_val, calc_val, ulp_factor*ceil2(neps*scale));
 }
 
@@ -1252,21 +1252,21 @@ void test_dot(stride_type N)
 
     auto neps = prod(A.lengths());
 
-    add(T(1.0), A, idx_A.data(), T(0.0), B, idx_B.data());
+    add<T>(T(1.0), A, idx_A.data(), T(0.0), B, idx_B.data());
     T* data = B.data();
     MArray::viterator<> it(B.lengths(), B.strides());
     while (it.next(data)) *data = tblis::conj(*data);
-    T ref_val = reduce(REDUCE_NORM_2, A, idx_A.data()).first;
-    T calc_val = dot(A, idx_A.data(), B, idx_B.data());
+    T ref_val = reduce<T>(REDUCE_NORM_2, A, idx_A.data()).first;
+    T calc_val = dot<T>(A, idx_A.data(), B, idx_B.data());
     passfail("NRM2", ref_val*ref_val, calc_val, ulp_factor*ceil2(neps));
 
     B = T(1);
-    ref_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
-    calc_val = dot(A, idx_A.data(), B, idx_B.data());
+    ref_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
+    calc_val = dot<T>(A, idx_A.data(), B, idx_B.data());
     passfail("UNIT", ref_val, calc_val, ulp_factor*ceil2(neps));
 
     B = T(0);
-    calc_val = dot(A, idx_A.data(), B, idx_B.data());
+    calc_val = dot<T>(A, idx_A.data(), B, idx_B.data());
     passfail("ZERO", calc_val, 0, ulp_factor*ceil2(neps));
 }
 
@@ -1293,11 +1293,11 @@ void test_transpose(stride_type N)
     T scale(10.0*random_unit<T>());
 
     C.reset(A);
-    add(T(1), A, idx_A.data(), T(0), B, idx_B.data());
-    add(scale, B, idx_B.data(), scale, C, idx_A.data());
+    add<T>(T(1), A, idx_A.data(), T(0), B, idx_B.data());
+    add<T>(scale, B, idx_B.data(), scale, C, idx_A.data());
 
-    add(-2*scale, A, idx_A.data(), T(1), C, idx_A.data());
-    T error = reduce(REDUCE_NORM_2, C, idx_A.data()).first;
+    add<T>(-2*scale, A, idx_A.data(), T(1), C, idx_A.data());
+    T error = reduce<T>(REDUCE_NORM_2, C, idx_A.data()).first;
     passfail("INVERSE", error, 0, ulp_factor*ceil2(2*scale*neps));
 
     B.reset(A);
@@ -1319,8 +1319,8 @@ void test_transpose(stride_type N)
     }
     while (idx_C != idx_A);
 
-    add(T(-1), A, idx_A.data(), T(1), C, idx_A.data());
-    error = reduce(REDUCE_NORM_2, C, idx_A.data()).first;
+    add<T>(T(-1), A, idx_A.data(), T(1), C, idx_A.data());
+    error = reduce<T>(REDUCE_NORM_2, C, idx_A.data()).first;
     passfail("CYCLE", error, 0, ulp_factor*ceil2(neps));
 }
 
@@ -1340,20 +1340,20 @@ void test_scale(stride_type N)
 
     auto neps = prod(A.lengths());
 
-    T ref_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
+    T ref_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
 
     T scale(10.0*random_unit<T>());
 
-    tblis::scale(scale, A, idx_A.data());
-    T calc_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
+    tblis::scale<T>(scale, A, idx_A.data());
+    T calc_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
     passfail("RANDOM", ref_val, calc_val/scale, ulp_factor*ceil2(neps));
 
-    tblis::scale(T(1.0), A, idx_A.data());
-    calc_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
+    tblis::scale<T>(T(1.0), A, idx_A.data());
+    calc_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
     passfail("UNIT", ref_val, calc_val/scale, ulp_factor*ceil2(neps));
 
-    tblis::scale(T(0.0), A, idx_A.data());
-    calc_val = reduce(REDUCE_SUM, A, idx_A.data()).first;
+    tblis::scale<T>(T(0.0), A, idx_A.data());
+    calc_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
     passfail("ZERO", calc_val, 0, ulp_factor*ceil2(neps));
 }
 
@@ -1458,7 +1458,7 @@ void test_reduce(stride_type N)
     passfail("REDUCE_NORM_2", ref_val, blas_val, ulp_factor*ceil2(NA));
 
     A = T(1);
-    reduce(REDUCE_SUM, A, idx_A.data(), ref_val, ref_idx);
+    reduce<T>(REDUCE_SUM, A, idx_A.data(), ref_val, ref_idx);
     passfail("COUNT", ref_val, NA, ulp_factor*ceil2(NA));
 }
 

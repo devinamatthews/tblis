@@ -77,15 +77,6 @@ class indexed_varray_base
             dense_stride_ = other.dense_stride_;
         }
 
-        void reset(indexed_varray_base&& other)
-        {
-            data_.reset(std::move(other.data_));
-            idx_.reset(std::move(other.idx_));
-            dense_len_ = std::move(other.dense_len_);
-            idx_len_ = std::move(other.idx_len_);
-            dense_stride_ = std::move(other.dense_stride_);
-        }
-
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
         void reset(const U& len, row_view<const pointer> ptr,
                    matrix_view<const len_type> idx, layout layout = DEFAULT)
@@ -136,6 +127,107 @@ class indexed_varray_base
          * Private helper functions
          *
          **********************************************************************/
+
+        template <typename View, typename Func>
+        void for_each_index(Func&& f) const
+        {
+            typedef typename View::pointer Ptr;
+
+            unsigned ndim = indexed_dimension();
+
+            const_pointer cptr;
+            std::vector<unsigned> indices(ndim);
+
+            for (len_type i = 0;i < num_indices();i++)
+            {
+                for (unsigned j = 0;j < ndim;j++)
+                    indices[j] = idx_[i][j];
+
+                f(View(dense_len_, data_[i], dense_stride_), indices);
+            }
+        }
+
+        template <typename View, typename Func, unsigned... I>
+        void for_each_index(Func&& f, detail::integer_sequence<unsigned, I...>) const
+        {
+            constexpr unsigned NDim = sizeof...(I);
+            typedef typename View::pointer Ptr;
+
+            MARRAY_ASSERT(NDim == indexed_dimension());
+
+            const_pointer cptr;
+            std::array<unsigned, NDim> indices;
+
+            for (len_type i = 0;i < num_indices();i++)
+            {
+                for (unsigned j = 0;j < NDim;j++)
+                    indices[j] = idx_[i][j];
+
+                f(View(dense_len_, data_[i], dense_stride_), indices[I]...);
+            }
+        }
+
+        template <typename Tp, typename Func>
+        void for_each_element(Func&& f) const
+        {
+            typedef Tp* Ptr;
+
+            unsigned indexed_ndim = indexed_dimension();
+            unsigned dense_ndim = dense_dimension();
+            unsigned ndim = dense_ndim + indexed_ndim;
+
+            std::vector<unsigned> indices(ndim);
+
+            for (len_type i = 0;i < num_indices();i++)
+            {
+                for (unsigned j = 0;j < indexed_ndim;j++)
+                    indices[dense_ndim+j] = idx_[i][j];
+
+                Ptr ptr = const_cast<Ptr>(data_[i]);
+                for (bool done = false;!done;)
+                {
+                    f(*ptr, indices);
+
+                    for (unsigned j = 0;j < dense_ndim;j++)
+                    {
+                        ++indices[j];
+                        ptr += dense_stride_[j];
+
+                        if (indices[j] == dense_len_[j])
+                        {
+                            indices[j] = 0;
+                            ptr -= dense_stride_[j]*dense_len_[j];
+                            if (j == dense_ndim-1) done = true;
+                        }
+                        else break;
+                    }
+                }
+            }
+        }
+
+        template <typename Tp, typename Func, unsigned... I, unsigned... J>
+        void for_each_element(Func&& f, detail::integer_sequence<unsigned, I...>,
+                              detail::integer_sequence<unsigned, J...>) const
+        {
+            constexpr unsigned DenseNDim = sizeof...(I);
+            constexpr unsigned IdxNDim = sizeof...(J);
+            typedef Tp* Ptr;
+
+            MARRAY_ASSERT(DenseNDim == indexed_dimension());
+            MARRAY_ASSERT(IdxNDim = indexed_dimension());
+
+            std::array<unsigned, IdxNDim> indices;
+
+            for (len_type i = 0;i < num_indices();i++)
+            {
+                for (unsigned j = 0;j < IdxNDim;j++)
+                    indices[j] = idx_[i][j];
+
+                miterator<DenseNDim,1> it(dense_len_, dense_stride_);
+                Ptr ptr = const_cast<Ptr>(data_[i]);
+                while (!it.next(ptr)) f(*ptr, it.position()[I]..., indices[J]...);
+            }
+        }
 
         template <typename U, typename D, bool O>
         void copy(const indexed_varray_base<U, D, O>& other) const
@@ -306,6 +398,68 @@ class indexed_varray_base
         {
             MARRAY_ASSERT(0 <= idx && idx < num_indices());
             return {dense_len_, data_[idx], dense_stride_};
+        }
+
+        /***********************************************************************
+         *
+         * Iteration
+         *
+         **********************************************************************/
+
+        template <typename Func>
+        void for_each_index(Func&& f) const
+        {
+            for_each_index<varray_view<ctype>>(std::forward<Func>(f));
+        }
+
+        template <typename Func>
+        void for_each_index(Func&& f)
+        {
+            for_each_index<varray_view<Type>>(std::forward<Func>(f));
+        }
+
+        template <unsigned DenseNDim, unsigned IdxNDim, typename Func>
+        void for_each_index(Func&& f) const
+        {
+            MARRAY_ASSERT(DenseNDim == dense_dimension());
+            for_each_index<marray_view<ctype, DenseNDim>>(std::forward<Func>(f),
+                detail::static_range<unsigned, IdxNDim>{});
+        }
+
+        template <unsigned DenseNDim, unsigned IdxNDim, typename Func>
+        void for_each_index(Func&& f)
+        {
+            MARRAY_ASSERT(DenseNDim == dense_dimension());
+            for_each_index<marray_view<Type, DenseNDim>>(std::forward<Func>(f),
+                detail::static_range<unsigned, IdxNDim>{});
+        }
+
+        template <typename Func>
+        void for_each_element(Func&& f) const
+        {
+            for_each_element<ctype>(std::forward<Func>(f));
+        }
+
+        template <typename Func>
+        void for_each_element(Func&& f)
+        {
+            for_each_element<Type>(std::forward<Func>(f));
+        }
+
+        template <unsigned DenseNDim, unsigned IdxNDim, typename Func>
+        void for_each_element(Func&& f) const
+        {
+            for_each_element<ctype>(std::forward<Func>(f),
+                                    detail::static_range<unsigned, DenseNDim>{},
+                                    detail::static_range<unsigned, IdxNDim>{});
+        }
+
+        template <unsigned DenseNDim, unsigned IdxNDim, typename Func>
+        void for_each_element(Func&& f)
+        {
+            for_each_element<Type>(std::forward<Func>(f),
+                                   detail::static_range<unsigned, DenseNDim>{},
+                                   detail::static_range<unsigned, IdxNDim>{});
         }
 
         /***********************************************************************

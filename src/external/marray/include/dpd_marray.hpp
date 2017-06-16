@@ -64,8 +64,10 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
             reset(other, layout);
         }
 
+        template <typename U, typename=
+            detail::enable_if_assignable_t<len_type&,U>>
         dpd_marray(unsigned irrep, unsigned nirrep,
-                   initializer_matrix<len_type> len,
+                   initializer_matrix<U> len,
                    const Type& val=Type(), dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, val, layout);
@@ -95,8 +97,10 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
             reset(irrep, nirrep, len, val, layout);
         }
 
+        template <typename U, typename=
+            detail::enable_if_assignable_t<len_type&,U>>
         dpd_marray(unsigned irrep, unsigned nirrep,
-                   initializer_matrix<len_type> len, dpd_layout layout)
+                   initializer_matrix<U> len, dpd_layout layout)
         {
             reset(irrep, nirrep, len, Type(), layout);
         }
@@ -122,8 +126,10 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
             reset(irrep, nirrep, len, Type(), layout);
         }
 
+        template <typename U, typename=
+            detail::enable_if_assignable_t<len_type&,U>>
         dpd_marray(unsigned irrep, unsigned nirrep,
-                   initializer_matrix<len_type> len,
+                   initializer_matrix<U> len,
                    uninitialized_t, dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, uninitialized, layout);
@@ -235,11 +241,13 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
             base::template operator=<>(other);
         }
 
+        template <typename U, typename=
+            detail::enable_if_assignable_t<len_type&,U>>
         void reset(unsigned irrep, unsigned nirrep,
-                   initializer_matrix<len_type> len, const Type& val=Type(),
+                   initializer_matrix<U> len, const Type& val=Type(),
                    dpd_layout layout = DEFAULT)
         {
-            reset<initializer_matrix<len_type>>(irrep, nirrep, len, val, layout);
+            reset<initializer_matrix<U>>(irrep, nirrep, len, val, layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
@@ -268,8 +276,10 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
             std::uninitialized_fill_n(data_, storage_.size, val);
         }
 
+        template <typename U, typename=
+            detail::enable_if_assignable_t<len_type&,U>>
         void reset(unsigned irrep, unsigned nirrep,
-                   initializer_matrix<len_type> len, dpd_layout layout)
+                   initializer_matrix<U> len, dpd_layout layout)
         {
             reset(irrep, nirrep, len, Type(), layout);
         }
@@ -295,11 +305,13 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
             reset(irrep, nirrep, len, Type(), layout);
         }
 
+        template <typename U, typename=
+            detail::enable_if_assignable_t<len_type&,U>>
         void reset(unsigned irrep, unsigned nirrep,
-                   initializer_matrix<len_type> len,
+                   initializer_matrix<U> len,
                    uninitialized_t, dpd_layout layout = DEFAULT)
         {
-            reset<initializer_matrix<len_type>>(irrep, nirrep, len, uninitialized, layout);
+            reset<initializer_matrix<U>>(irrep, nirrep, len, uninitialized, layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>

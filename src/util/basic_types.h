@@ -32,6 +32,7 @@
 #include "../external/marray/include/marray.hpp"
 #include "../external/marray/include/dpd_varray.hpp"
 #include "../external/marray/include/dpd_marray.hpp"
+#include "../external/marray/include/indexed_varray.hpp"
 
 #endif
 
@@ -92,6 +93,9 @@ typedef fake_dcomplex dcomplex;
 using namespace MArray;
 namespace detail { using namespace MArray::detail; }
 namespace slice { using namespace MArray::slice; }
+
+template <typename T, typename Allocator=std::allocator<T>>
+using tensor = MArray::varray<T, Allocator>;
 
 template <typename T> struct type_tag;
 template <> struct type_tag<   float> { static constexpr type_t value =    TYPE_FLOAT; };

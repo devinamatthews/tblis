@@ -2,9 +2,9 @@
 #define _TBLIS_DPD_TENSOR_CONTRACT_HPP_
 
 #include "batched_tensor_contract.hpp"
+
 #include <numeric>
 #include <functional>
-#include "src/external/marray/include/dpd_varray_view.hpp"
 
 namespace tblis
 {

@@ -1,7 +1,6 @@
 #ifndef _TBLIS_BATCHED_TENSOR_CONTRACT_HPP_
 #define _TBLIS_BATCHED_TENSOR_CONTRACT_HPP_
 
-#include "batched_tensor.hpp"
 #include "iface/3t/mult.h"
 
 #include "nodes/matrify.hpp"
@@ -112,9 +111,9 @@ using TensorGEMM = partition_gemm_nc<
 }
 
 template <typename T>
-void contract_batch_dumb(T alpha, const_batched_tensor_view<T> A, const label_type* idx_A,
-                                  const_batched_tensor_view<T> B, const label_type* idx_B,
-                         T  beta,       batched_tensor_view<T> C, const label_type* idx_C)
+void contract_batch_dumb(T alpha, indexed_varray_view<const T> A, const label_type* idx_A,
+                                  indexed_varray_view<const T> B, const label_type* idx_B,
+                         T  beta,       indexed_varray_view<T> C, const label_type* idx_C)
 {
     varray<T> at(A.lengths());
     varray<T> bt(B.lengths());
@@ -124,50 +123,50 @@ void contract_batch_dumb(T alpha, const_batched_tensor_view<T> A, const label_ty
     unsigned dense_ndim_B = B.dense_dimension();
     unsigned dense_ndim_C = C.dense_dimension();
 
-    unsigned batched_ndim_A = A.batched_dimension();
-    unsigned batched_ndim_B = B.batched_dimension();
-    unsigned batched_ndim_C = C.batched_dimension();
+    unsigned batched_ndim_A = A.indexed_dimension();
+    unsigned batched_ndim_B = B.indexed_dimension();
+    unsigned batched_ndim_C = C.indexed_dimension();
 
-    std::vector<len_type> dense_len_A(A.lengths().begin(), A.lengths().begin()+dense_ndim_A);
-    std::vector<len_type> dense_len_B(B.lengths().begin(), B.lengths().begin()+dense_ndim_B);
-    std::vector<len_type> dense_len_C(C.lengths().begin(), C.lengths().begin()+dense_ndim_C);
+    const auto& dense_len_A = A.dense_lengths();
+    const auto& dense_len_B = B.dense_lengths();
+    const auto& dense_len_C = C.dense_lengths();
 
-    const auto& dense_stride_A = A.strides();
-    const auto& dense_stride_B = B.strides();
-    const auto& dense_stride_C = C.strides();
+    const auto& dense_stride_A = A.dense_strides();
+    const auto& dense_stride_B = B.dense_strides();
+    const auto& dense_stride_C = C.dense_strides();
 
     std::vector<stride_type> packed_stride_A(at.strides().begin(), at.strides().begin()+dense_ndim_A);
     std::vector<stride_type> packed_stride_B(bt.strides().begin(), bt.strides().begin()+dense_ndim_B);
     std::vector<stride_type> packed_stride_C(ct.strides().begin(), ct.strides().begin()+dense_ndim_C);
 
-    for (len_type i = 0;i < A.num_batches();i++)
+    for (len_type i = 0;i < A.num_indices();i++)
     {
-        const T* from = A.batch_data(i);
+        const T* from = A.data(i);
         T* to = at.data();
         for (len_type j = 0;j < batched_ndim_A;j++)
-            to += A.batch_indices()[i][j]*at.stride(j+dense_ndim_A);
+            to += A.indices()[i][j]*at.stride(j+dense_ndim_A);
 
         viterator<2> it(dense_len_A, dense_stride_A, packed_stride_A);
         while (it.next(from, to)) *to = *from;
     }
 
-    for (len_type i = 0;i < B.num_batches();i++)
+    for (len_type i = 0;i < B.num_indices();i++)
     {
-        const T* from = B.batch_data(i);
+        const T* from = B.data(i);
         T* to = bt.data();
         for (len_type j = 0;j < batched_ndim_B;j++)
-            to += B.batch_indices()[i][j]*bt.stride(j+dense_ndim_B);
+            to += B.indices()[i][j]*bt.stride(j+dense_ndim_B);
 
         viterator<2> it(dense_len_B, dense_stride_B, packed_stride_B);
         while (it.next(from, to)) *to = *from;
     }
 
-    for (len_type i = 0;i < C.num_batches();i++)
+    for (len_type i = 0;i < C.num_indices();i++)
     {
-        const T* from = C.batch_data(i);
+        const T* from = C.data(i);
         T* to = ct.data();
         for (len_type j = 0;j < batched_ndim_C;j++)
-            to += C.batch_indices()[i][j]*ct.stride(j+dense_ndim_C);
+            to += C.indices()[i][j]*ct.stride(j+dense_ndim_C);
 
         viterator<2> it(dense_len_C, dense_stride_C, packed_stride_C);
         while (it.next(from, to)) *to = *from;
@@ -177,12 +176,12 @@ void contract_batch_dumb(T alpha, const_batched_tensor_view<T> A, const label_ty
                    bt, idx_B,
              beta, ct, idx_C);
 
-    for (len_type i = 0;i < C.num_batches();i++)
+    for (len_type i = 0;i < C.num_indices();i++)
     {
-        T* to = C.batch_data(i);
+        T* to = C.data(i);
         const T* from = ct.data();
         for (len_type j = 0;j < batched_ndim_C;j++)
-            from += C.batch_indices()[i][j]*ct.stride(j+dense_ndim_C);
+            from += C.indices()[i][j]*ct.stride(j+dense_ndim_C);
 
         viterator<2> it(dense_len_C, dense_stride_C, packed_stride_C);
         while (it.next(to, from)) *to = *from;
@@ -190,25 +189,25 @@ void contract_batch_dumb(T alpha, const_batched_tensor_view<T> A, const label_ty
 }
 
 template <typename T>
-void contract_batch_ref(T alpha, const_batched_tensor_view<T> A, const label_type* idx_A,
-                                 const_batched_tensor_view<T> B, const label_type* idx_B,
-                        T  beta,       batched_tensor_view<T> C, const label_type* idx_C)
+void contract_batch_ref(T alpha, indexed_varray_view<const T> A, const label_type* idx_A,
+                                 indexed_varray_view<const T> B, const label_type* idx_B,
+                        T  beta,       indexed_varray_view<T> C, const label_type* idx_C)
 {
     unsigned ndim_A = A.dense_dimension();
     unsigned ndim_B = B.dense_dimension();
     unsigned ndim_C = C.dense_dimension();
 
-    unsigned batch_ndim_A = A.batched_dimension();
-    unsigned batch_ndim_B = B.batched_dimension();
-    unsigned batch_ndim_C = C.batched_dimension();
+    unsigned batch_ndim_A = A.indexed_dimension();
+    unsigned batch_ndim_B = B.indexed_dimension();
+    unsigned batch_ndim_C = C.indexed_dimension();
 
-    std::vector<len_type> len_A(A.lengths().begin(), A.lengths().begin()+ndim_A);
-    std::vector<len_type> len_B(B.lengths().begin(), B.lengths().begin()+ndim_B);
-    std::vector<len_type> len_C(C.lengths().begin(), C.lengths().begin()+ndim_C);
+    auto len_A = A.lengths();
+    auto len_B = B.lengths();
+    auto len_C = C.lengths();
 
-    std::vector<stride_type> stride_A = A.strides();
-    std::vector<stride_type> stride_B = B.strides();
-    std::vector<stride_type> stride_C = C.strides();
+    auto stride_A = A.dense_strides();
+    auto stride_B = B.dense_strides();
+    auto stride_C = C.dense_strides();
 
     std::vector<label_type> dense_idx_A(idx_A, idx_A+ndim_A);
     std::vector<label_type> dense_idx_B(idx_B, idx_B+ndim_B);
@@ -386,11 +385,11 @@ void contract_batch_ref(T alpha, const_batched_tensor_view<T> A, const label_typ
 
     #pragma omp parallel for if(outer_threading), schedule(static,1), \
                              firstprivate(tensor_A, tensor_B, tensor_C)
-    for (unsigned batch_C = 0;batch_C < C.num_batches();batch_C++)
+    for (unsigned batch_C = 0;batch_C < C.num_indices();batch_C++)
     {
         T local_beta = beta;
 
-        for (unsigned batch_A = 0;batch_A < A.num_batches();batch_A++)
+        for (unsigned batch_A = 0;batch_A < A.num_indices();batch_A++)
         {
             bool ok = true;
             for (unsigned i = 0;ok && i < batch_ndim_C;i++)
@@ -398,13 +397,13 @@ void contract_batch_ref(T alpha, const_batched_tensor_view<T> A, const label_typ
                 for (unsigned j = 0;ok && j < batch_ndim_A;j++)
                 {
                     if (batch_idx_C[i] == batch_idx_A[j] &&
-                        C.batch_indices()[batch_C][i] !=
-                        A.batch_indices()[batch_A][j]) ok = false;
+                        C.indices()[batch_C][i] !=
+                        A.indices()[batch_A][j]) ok = false;
                 }
             }
             if (!ok) continue;
 
-            for (unsigned batch_B = 0;batch_B < B.num_batches();batch_B++)
+            for (unsigned batch_B = 0;batch_B < B.num_indices();batch_B++)
             {
                 bool ok = true;
                 for (unsigned i = 0;ok && i < batch_ndim_C;i++)
@@ -412,8 +411,8 @@ void contract_batch_ref(T alpha, const_batched_tensor_view<T> A, const label_typ
                     for (unsigned j = 0;ok && j < batch_ndim_B;j++)
                     {
                         if (batch_idx_C[i] == batch_idx_B[j] &&
-                            C.batch_indices()[batch_C][i] !=
-                            B.batch_indices()[batch_B][j]) ok = false;
+                            C.indices()[batch_C][i] !=
+                            B.indices()[batch_B][j]) ok = false;
                     }
                 }
                 for (unsigned i = 0;ok && i < batch_ndim_A;i++)
@@ -421,46 +420,46 @@ void contract_batch_ref(T alpha, const_batched_tensor_view<T> A, const label_typ
                     for (unsigned j = 0;ok && j < batch_ndim_B;j++)
                     {
                         if (batch_idx_A[i] == batch_idx_B[j] &&
-                            A.batch_indices()[batch_A][i] !=
-                            B.batch_indices()[batch_B][j]) ok = false;
+                            A.indices()[batch_A][i] !=
+                            B.indices()[batch_B][j]) ok = false;
                     }
                 }
                 if (!ok) continue;
 
                 //printf("idx: %ld %ld %ld\n",
-                //       C.batch_indices()[batch_C][0],
-                //       C.batch_indices()[batch_C][1],
-                //       C.batch_indices()[batch_C][2]);
+                //       C.indices()[batch_C][0],
+                //       C.indices()[batch_C][1],
+                //       C.indices()[batch_C][2]);
 
-                const T* local_A = A.batch_data(batch_A);
-                const T* local_B = B.batch_data(batch_B);
-                      T* local_C = C.batch_data(batch_C);
+                const T* local_A = A.data(batch_A);
+                const T* local_B = B.data(batch_B);
+                      T* local_C = C.data(batch_C);
 
                 for (unsigned i = 0;i < batch_ndim_A;i++)
                 {
-                    len_type k = A.batch_indices()[batch_A][i];
+                    len_type k = A.indices()[batch_A][i];
                     local_A += batch_stride_A_A[i]*k;
                     local_B += batch_stride_A_B[i]*k;
                     local_C += batch_stride_A_C[i]*k;
                 }
                 for (unsigned i = 0;i < batch_ndim_B;i++)
                 {
-                    len_type k = B.batch_indices()[batch_B][i];
+                    len_type k = B.indices()[batch_B][i];
                     local_A += batch_stride_B_A[i]*k;
                     local_B += batch_stride_B_B[i]*k;
                     local_C += batch_stride_B_C[i]*k;
                 }
                 for (unsigned i = 0;i < batch_ndim_C;i++)
                 {
-                    len_type k = C.batch_indices()[batch_C][i];
+                    len_type k = C.indices()[batch_C][i];
                     local_A += batch_stride_C_A[i]*k;
                     local_B += batch_stride_C_B[i]*k;
                     local_C += batch_stride_C_C[i]*k;
                 }
 
-                //printf("off: %ld %ld %ld\n", local_A-A.batch_data(0),
-                //                        local_B-B.batch_data(0),
-                //                        local_C-C.batch_data(0));
+                //printf("off: %ld %ld %ld\n", local_A-A.data(0),
+                //                        local_B-B.data(0),
+                //                        local_C-C.data(0));
 
                 tensor_A.data(local_A);
                 tensor_B.data(local_B);
@@ -470,13 +469,13 @@ void contract_batch_ref(T alpha, const_batched_tensor_view<T> A, const label_typ
 
                 //std::cout << dense_idx_A << " " <<
                 //             tensor_A.lengths() << " " <<
-                //             tensor_A.strides() << " " <<
+                //             tensor_A.dense_strides() << " " <<
                 //             dense_idx_B << " " <<
                 //             tensor_B.lengths() << " " <<
-                //             tensor_B.strides() << " " <<
+                //             tensor_B.dense_strides() << " " <<
                 //             dense_idx_C << " " <<
                 //             tensor_C.lengths() << " " <<
-                //             tensor_C.strides() << " " <<
+                //             tensor_C.dense_strides() << " " <<
                 //             batch_A << " " <<
                 //             batch_B << " " <<
                 //             batch_C << std::endl;
@@ -501,9 +500,9 @@ void contract_batch_ref(T alpha, const_batched_tensor_view<T> A, const label_typ
 }
 
 template <typename T>
-void contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* idx_A_,
-                             const_batched_tensor_view<T> B, const label_type* idx_B_,
-                    T  beta,       batched_tensor_view<T> C, const label_type* idx_C_)
+void contract_batch(T alpha, indexed_varray_view<const T> A, const label_type* idx_A_,
+                             indexed_varray_view<const T> B, const label_type* idx_B_,
+                    T  beta,       indexed_varray_view<T> C, const label_type* idx_C_)
 {
     using stl_ext::intersection;
     using stl_ext::exclusion;
@@ -518,9 +517,9 @@ void contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* i
     unsigned dense_ndim_B = B.dense_dimension();
     unsigned dense_ndim_C = C.dense_dimension();
 
-    unsigned batch_ndim_A = A.batched_dimension();
-    unsigned batch_ndim_B = B.batched_dimension();
-    unsigned batch_ndim_C = C.batched_dimension();
+    unsigned batch_ndim_A = A.indexed_dimension();
+    unsigned batch_ndim_B = B.indexed_dimension();
+    unsigned batch_ndim_C = C.indexed_dimension();
 
     std::vector<label_type> idx_A(idx_A_, idx_A_+ndim_A);
     std::vector<label_type> idx_B(idx_B_, idx_B_+ndim_B);
@@ -534,28 +533,28 @@ void contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* i
     std::vector<label_type> batch_idx_B(idx_B_+dense_ndim_B, idx_B_+ndim_B);
     std::vector<label_type> batch_idx_C(idx_C_+dense_ndim_C, idx_C_+ndim_C);
 
-    const std::vector<len_type>& len_A = A.lengths();
-    const std::vector<len_type>& len_B = B.lengths();
-    const std::vector<len_type>& len_C = C.lengths();
+    const auto& len_A = A.lengths();
+    const auto& len_B = B.lengths();
+    const auto& len_C = C.lengths();
 
-    std::vector<len_type> dense_len_A(A.lengths().begin(), A.lengths().begin()+dense_ndim_A);
-    std::vector<len_type> dense_len_B(B.lengths().begin(), B.lengths().begin()+dense_ndim_B);
-    std::vector<len_type> dense_len_C(C.lengths().begin(), C.lengths().begin()+dense_ndim_C);
+    const auto& dense_len_A = A.dense_lengths();
+    const auto& dense_len_B = B.dense_lengths();
+    const auto& dense_len_C = C.dense_lengths();
 
-    std::vector<len_type> batch_len_A(A.lengths().begin()+dense_ndim_A, A.lengths().end());
-    std::vector<len_type> batch_len_B(B.lengths().begin()+dense_ndim_B, B.lengths().end());
-    std::vector<len_type> batch_len_C(C.lengths().begin()+dense_ndim_C, C.lengths().end());
+    const auto& batch_len_A = A.indexed_lengths();
+    const auto& batch_len_B = B.indexed_lengths();
+    const auto& batch_len_C = C.indexed_lengths();
 
     std::vector<len_type> stride_A(ndim_A);
     std::vector<len_type> stride_B(ndim_B);
     std::vector<len_type> stride_C(ndim_C);
-    std::copy_n(A.strides().begin(), dense_ndim_A, stride_A.begin());
-    std::copy_n(B.strides().begin(), dense_ndim_B, stride_B.begin());
-    std::copy_n(C.strides().begin(), dense_ndim_C, stride_C.begin());
+    std::copy_n(A.dense_strides().begin(), dense_ndim_A, stride_A.begin());
+    std::copy_n(B.dense_strides().begin(), dense_ndim_B, stride_B.begin());
+    std::copy_n(C.dense_strides().begin(), dense_ndim_C, stride_C.begin());
 
-    std::vector<stride_type> dense_stride_A = A.strides();
-    std::vector<stride_type> dense_stride_B = B.strides();
-    std::vector<stride_type> dense_stride_C = C.strides();
+    const auto& dense_stride_A = A.dense_strides();
+    const auto& dense_stride_B = B.dense_strides();
+    const auto& dense_stride_C = C.dense_strides();
 
     auto dense_idx_AB = intersection(dense_idx_A, dense_idx_B);
     auto dense_len_AB = select_from(dense_len_A, dense_idx_A, dense_idx_AB);
@@ -640,16 +639,16 @@ void contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* i
     viterator<2> it_A_AB(mixed_len_A_AB, mixed_stride_A_AB, mixed_off_stride_A_AB);
     viterator<2> it_A_AC(mixed_len_A_AC, mixed_stride_A_AC, mixed_off_stride_A_AC);
 
-    for (len_type b = 0;b < A.num_batches();b++)
+    for (len_type b = 0;b < A.num_indices();b++)
     {
         len_type off_M = 0, off_K = 0;
         for (unsigned i = 0;i < batch_ndim_A;i++)
         {
-            off_M += A.batch_indices()[b][i]*batch_off_stride_A_AC[i];
-            off_K += A.batch_indices()[b][i]*batch_off_stride_A_AB[i];
+            off_M += A.indices()[b][i]*batch_off_stride_A_AC[i];
+            off_K += A.indices()[b][i]*batch_off_stride_A_AB[i];
         }
 
-        const T* ptr_A = A.batch_data(b);
+        const T* ptr_A = A.data(b);
 
         while (it_A_AB.next(ptr_A, off_K))
         {
@@ -663,16 +662,16 @@ void contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* i
     viterator<2> it_B_AB(mixed_len_B_AB, mixed_stride_B_AB, mixed_off_stride_B_AB);
     viterator<2> it_B_BC(mixed_len_B_BC, mixed_stride_B_BC, mixed_off_stride_B_BC);
 
-    for (len_type b = 0;b < B.num_batches();b++)
+    for (len_type b = 0;b < B.num_indices();b++)
     {
         len_type off_K = 0, off_N = 0;
         for (unsigned i = 0;i < batch_ndim_B;i++)
         {
-            off_K += B.batch_indices()[b][i]*batch_off_stride_B_AB[i];
-            off_N += B.batch_indices()[b][i]*batch_off_stride_B_BC[i];
+            off_K += B.indices()[b][i]*batch_off_stride_B_AB[i];
+            off_N += B.indices()[b][i]*batch_off_stride_B_BC[i];
         }
 
-        const T* ptr_B = B.batch_data(b);
+        const T* ptr_B = B.data(b);
 
         while (it_B_AB.next(ptr_B, off_K))
         {
@@ -686,21 +685,21 @@ void contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* i
     viterator<2> it_C_AC(mixed_len_C_AC, mixed_stride_C_AC, mixed_off_stride_C_AC);
     viterator<2> it_C_BC(mixed_len_C_BC, mixed_stride_C_BC, mixed_off_stride_C_BC);
 
-    for (len_type b = 0;b < C.num_batches();b++)
+    for (len_type b = 0;b < C.num_indices();b++)
     {
         len_type off_M = 0, off_N = 0;
         for (unsigned i = 0;i < batch_ndim_C;i++)
         {
-            off_M += C.batch_indices()[b][i]*batch_off_stride_C_AC[i];
-            off_N += C.batch_indices()[b][i]*batch_off_stride_C_BC[i];
+            off_M += C.indices()[b][i]*batch_off_stride_C_AC[i];
+            off_N += C.indices()[b][i]*batch_off_stride_C_BC[i];
         }
 
         //printf("C: %ld %ld %ld - %ld %ld\n",
-        //       C.batch_indices()[b][0],
-        //       C.batch_indices()[b][1],
-        //       C.batch_indices()[b][2], off_M, off_N);
+        //       C.indices()[b][0],
+        //       C.indices()[b][1],
+        //       C.indices()[b][2], off_M, off_N);
 
-        T* ptr_C = C.batch_data(b);
+        T* ptr_C = C.data(b);
 
         while (it_C_BC.next(ptr_C, off_N))
         {
@@ -874,9 +873,9 @@ void contract_batch(T alpha, const_batched_tensor_view<T> A, const label_type* i
 }
 
 template <typename T>
-void contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* idx_A_,
-                              const_batched_tensor_view<T> B, const label_type* idx_B_,
-                     T  beta,       batched_tensor_view<T> C, const label_type* idx_C_)
+void contract_batch2(T alpha, indexed_varray_view<const T> A, const label_type* idx_A_,
+                              indexed_varray_view<const T> B, const label_type* idx_B_,
+                     T  beta,       indexed_varray_view<T> C, const label_type* idx_C_)
 {
     using stl_ext::intersection;
     using stl_ext::exclusion;
@@ -891,9 +890,9 @@ void contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* 
     unsigned dense_ndim_B = B.dense_dimension();
     unsigned dense_ndim_C = C.dense_dimension();
 
-    unsigned batch_ndim_A = A.batched_dimension();
-    unsigned batch_ndim_B = B.batched_dimension();
-    unsigned batch_ndim_C = C.batched_dimension();
+    unsigned batch_ndim_A = A.indexed_dimension();
+    unsigned batch_ndim_B = B.indexed_dimension();
+    unsigned batch_ndim_C = C.indexed_dimension();
 
     std::vector<label_type> idx_A(idx_A_, idx_A_+ndim_A);
     std::vector<label_type> idx_B(idx_B_, idx_B_+ndim_B);
@@ -907,28 +906,28 @@ void contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* 
     std::vector<label_type> batch_idx_B(idx_B_+dense_ndim_B, idx_B_+ndim_B);
     std::vector<label_type> batch_idx_C(idx_C_+dense_ndim_C, idx_C_+ndim_C);
 
-    const std::vector<len_type>& len_A = A.lengths();
-    const std::vector<len_type>& len_B = B.lengths();
-    const std::vector<len_type>& len_C = C.lengths();
+    const auto& len_A = A.lengths();
+    const auto& len_B = B.lengths();
+    const auto& len_C = C.lengths();
 
-    std::vector<len_type> dense_len_A(A.lengths().begin(), A.lengths().begin()+dense_ndim_A);
-    std::vector<len_type> dense_len_B(B.lengths().begin(), B.lengths().begin()+dense_ndim_B);
-    std::vector<len_type> dense_len_C(C.lengths().begin(), C.lengths().begin()+dense_ndim_C);
+    const auto& dense_len_A = A.dense_lengths();
+    const auto& dense_len_B = B.dense_lengths();
+    const auto& dense_len_C = C.dense_lengths();
 
-    std::vector<len_type> batch_len_A(A.lengths().begin()+dense_ndim_A, A.lengths().end());
-    std::vector<len_type> batch_len_B(B.lengths().begin()+dense_ndim_B, B.lengths().end());
-    std::vector<len_type> batch_len_C(C.lengths().begin()+dense_ndim_C, C.lengths().end());
+    const auto& batch_len_A = A.indexed_lengths();
+    const auto& batch_len_B = B.indexed_lengths();
+    const auto& batch_len_C = C.indexed_lengths();
 
     std::vector<len_type> stride_A(ndim_A);
     std::vector<len_type> stride_B(ndim_B);
     std::vector<len_type> stride_C(ndim_C);
-    std::copy_n(A.strides().begin(), dense_ndim_A, stride_A.begin());
-    std::copy_n(B.strides().begin(), dense_ndim_B, stride_B.begin());
-    std::copy_n(C.strides().begin(), dense_ndim_C, stride_C.begin());
+    std::copy_n(A.dense_strides().begin(), dense_ndim_A, stride_A.begin());
+    std::copy_n(B.dense_strides().begin(), dense_ndim_B, stride_B.begin());
+    std::copy_n(C.dense_strides().begin(), dense_ndim_C, stride_C.begin());
 
-    std::vector<stride_type> dense_stride_A = A.strides();
-    std::vector<stride_type> dense_stride_B = B.strides();
-    std::vector<stride_type> dense_stride_C = C.strides();
+    const auto& dense_stride_A = A.dense_strides();
+    const auto& dense_stride_B = B.dense_strides();
+    const auto& dense_stride_C = C.dense_strides();
 
     auto dense_idx_AB = intersection(dense_idx_A, dense_idx_B);
     auto dense_len_AB = select_from(dense_len_A, dense_idx_A, dense_idx_AB);
@@ -1022,21 +1021,21 @@ void contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* 
     viterator<2> it_A_AB(mixed_len_A_AB, mixed_stride_A_AB, mixed_off_stride_A_AB);
     viterator<2> it_A_AC(mixed_len_A_AC, mixed_stride_A_AC, mixed_off_stride_A_AC);
 
-    for (len_type b = 0;b < A.num_batches();b++)
+    for (len_type b = 0;b < A.num_indices();b++)
     {
         len_type off_M = 0, off_K = 0;
         for (unsigned i = 0;i < batch_ndim_A;i++)
         {
-            off_M += A.batch_indices()[b][i]*batch_off_stride_A_AC[i];
-            off_K += A.batch_indices()[b][i]*batch_off_stride_A_AB[i];
+            off_M += A.indices()[b][i]*batch_off_stride_A_AC[i];
+            off_K += A.indices()[b][i]*batch_off_stride_A_AB[i];
         }
 
         //printf("A: %ld %ld %ld - %ld %ld\n",
-        //       A.batch_indices()[b][0],
-        //       A.batch_indices()[b][1],
-        //       A.batch_indices()[b][2], off_M, off_K);
+        //       A.indices()[b][0],
+        //       A.indices()[b][1],
+        //       A.indices()[b][2], off_M, off_K);
 
-        const T* ptr_A = A.batch_data(b);
+        const T* ptr_A = A.data(b);
 
         while (it_A_AB.next(ptr_A, off_K))
         {
@@ -1050,21 +1049,21 @@ void contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* 
     viterator<2> it_B_AB(mixed_len_B_AB, mixed_stride_B_AB, mixed_off_stride_B_AB);
     viterator<2> it_B_BC(mixed_len_B_BC, mixed_stride_B_BC, mixed_off_stride_B_BC);
 
-    for (len_type b = 0;b < B.num_batches();b++)
+    for (len_type b = 0;b < B.num_indices();b++)
     {
         len_type off_K = 0, off_N = 0;
         for (unsigned i = 0;i < batch_ndim_B;i++)
         {
-            off_K += B.batch_indices()[b][i]*batch_off_stride_B_AB[i];
-            off_N += B.batch_indices()[b][i]*batch_off_stride_B_BC[i];
+            off_K += B.indices()[b][i]*batch_off_stride_B_AB[i];
+            off_N += B.indices()[b][i]*batch_off_stride_B_BC[i];
         }
 
         //printf("B: %ld %ld %ld - %ld %ld\n",
-        //       B.batch_indices()[b][0],
-        //       B.batch_indices()[b][1],
-        //       B.batch_indices()[b][2], off_K, off_N);
+        //       B.indices()[b][0],
+        //       B.indices()[b][1],
+        //       B.indices()[b][2], off_K, off_N);
 
-        const T* ptr_B = B.batch_data(b);
+        const T* ptr_B = B.data(b);
 
         while (it_B_AB.next(ptr_B, off_K))
         {
@@ -1078,22 +1077,22 @@ void contract_batch2(T alpha, const_batched_tensor_view<T> A, const label_type* 
     viterator<2> it_C_AC(mixed_len_C_AC, mixed_stride_C_AC, mixed_off_stride_C_AC);
     viterator<2> it_C_BC(mixed_len_C_BC, mixed_stride_C_BC, mixed_off_stride_C_BC);
 
-    for (len_type b = 0;b < C.num_batches();b++)
+    for (len_type b = 0;b < C.num_indices();b++)
     {
         len_type off_M = 0, off_N = 0;
         for (unsigned i = 0;i < batch_ndim_C;i++)
         {
-            off_M += C.batch_indices()[b][i]*batch_off_stride_C_AC[i];
-            off_N += C.batch_indices()[b][i]*batch_off_stride_C_BC[i];
+            off_M += C.indices()[b][i]*batch_off_stride_C_AC[i];
+            off_N += C.indices()[b][i]*batch_off_stride_C_BC[i];
         }
 
         //printf("C: %ld %ld %ld %ld - %ld %ld\n",
-        //       C.batch_indices()[b][0],
-        //       C.batch_indices()[b][1],
-        //       C.batch_indices()[b][2],
-        //       C.batch_indices()[b][3], off_M, off_N);
+        //       C.indices()[b][0],
+        //       C.indices()[b][1],
+        //       C.indices()[b][2],
+        //       C.indices()[b][3], off_M, off_N);
 
-        T* ptr_C = C.batch_data(b);
+        T* ptr_C = C.data(b);
 
         while (it_C_BC.next(ptr_C, off_N))
         {

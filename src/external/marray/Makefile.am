@@ -6,8 +6,12 @@ AM_CPPFLAGS = -DMARRAY_ENABLE_ASSERTS -I$(srcdir)/include -Ithird_party/googlete
 
 noinst_PROGRAMS = bin/test
 bin_test_SOURCES = test/dpd_marray_view.cxx \
-		   test/dpd_varray_view.cxx \
+                   test/dpd_marray.cxx \
+                   test/dpd_varray_view.cxx \
+                   test/dpd_varray.cxx \
                    test/expression.cxx \
+                   test/indexed_dpd_varray.cxx \
+                   test/indexed_varray.cxx \
                    test/marray_view.cxx \
                    test/marray.cxx \
                    test/miterator.cxx \

@@ -266,11 +266,12 @@ namespace detail
     template <typename C, typename T, typename U=void>
     using enable_if_container_of_t = typename std::enable_if<is_container_of<C, T>::value,U>::type;
 
+    template <typename C, typename T, typename=void>
+    struct is_container_of_containers_of : std::false_type {};
+
     template <typename C, typename T>
-    struct is_container_of_containers_of :
-        conditional_t<is_container<C>::value,
-                      is_container_of<typename C::value_type, T>,
-                      std::false_type> {};
+    struct is_container_of_containers_of<C, T, enable_if_t<is_container<C>::value>> :
+        is_container_of<typename C::value_type, T> {};
 
     template <typename C, typename T, typename U=void>
     using enable_if_container_of_containers_of_t =

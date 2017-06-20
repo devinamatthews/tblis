@@ -8,10 +8,10 @@
 namespace MArray
 {
 
-template <typename Array, typename U>
-void rotate(Array& array, std::initializer_list<U> shift)
+template <typename Array>
+void rotate(Array& array, std::initializer_list<len_type> shift)
 {
-    rotate<Array, std::initializer_list<U>>(array, shift);
+    rotate<Array, std::initializer_list<len_type>>(array, shift);
 }
 
 template <typename Array, typename U, typename=detail::enable_if_container_of_t<U,len_type>>

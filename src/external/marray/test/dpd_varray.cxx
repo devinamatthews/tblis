@@ -1,505 +1,422 @@
 #include "gtest/gtest.h"
-#include "varray.hpp"
-#include "rotate.hpp"
+#include "dpd_varray.hpp"
 
 using namespace std;
 using namespace MArray;
 
-TEST(varray, constructor)
+template <typename T, unsigned... Sizes>
+struct arrays_helper;
+
+template <typename T, unsigned Size1, unsigned Size2>
+struct arrays_helper<T, Size1, Size2>
 {
-    double data[40];
+    typedef array<vector<T>,Size1> type;
+};
 
-    varray_view<double> v0({4, 2, 5}, data);
-    varray_view<const double> v01({4, 2, 5}, data);
-    varray_view<int> v02({4, 2, 5}, (int*)data);
-    varray<int> v03({4, 2, 5});
+template <typename T, unsigned Size1, unsigned Size2, unsigned Size3>
+struct arrays_helper<T, Size1, Size2, Size3>
+{
+    typedef array<array<vector<T>,Size2>,Size1> type;
+};
 
-    varray<double> v1;
-    EXPECT_EQ(0, v1.dimension());
-    EXPECT_EQ(nullptr, v1.data());
+template <typename T, unsigned... Sizes>
+using arrays = typename arrays_helper<T, Sizes...>::type;
 
-    varray<double> v2({4, 2, 5});
-    EXPECT_EQ(3, v2.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v2.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v2.strides());
-    EXPECT_EQ(0, v2.data()[0]);
+static array<dpd_layout,6> layouts =
+{{
+    PREFIX_ROW_MAJOR,
+    PREFIX_COLUMN_MAJOR,
+    BLOCKED_ROW_MAJOR,
+    BLOCKED_COLUMN_MAJOR,
+    BALANCED_ROW_MAJOR,
+    BALANCED_COLUMN_MAJOR,
+}};
 
-    varray<double> v3(vector<char>{4, 2, 5});
-    EXPECT_EQ(3, v3.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v3.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v3.strides());
-    EXPECT_EQ(0, v3.data()[0]);
+static arrays<unsigned,6,4> perms =
+    {{{3,2,1,0}, {0,1,2,3}, {3,2,1,0}, {0,1,2,3}, {3,2,1,0}, {0,1,2,3}}};
 
-    varray<double> v21({4, 2, 5}, 1.0);
-    EXPECT_EQ(3, v21.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v21.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v21.strides());
-    EXPECT_EQ(1, v21.data()[0]);
+static arrays<unsigned,8,4> irreps =
+    {{{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {1,1,1,0},
+      {0,0,0,1}, {1,1,0,1}, {1,0,1,1}, {0,1,1,1}}};
+static arrays<len_type,8,4> lengths =
+    {{{1,2,1,3}, {3,2,1,3}, {3,2,2,3}, {1,2,2,3},
+      {3,2,1,4}, {1,2,1,4}, {1,2,2,4}, {3,2,2,4}}};
 
-    varray<double> v31(vector<char>{4, 2, 5}, 1.0);
-    EXPECT_EQ(3, v31.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v31.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v31.strides());
-    EXPECT_EQ(1, v31.data()[0]);
+static arrays<stride_type,6,8,4> strides =
+{{
+    {{{42,11, 3, 1}, {42,11, 3, 1}, {42,10, 3, 1}, {42,10, 3, 1},
+      {42,10, 4, 1}, {42,10, 4, 1}, {42,11, 4, 1}, {42,11, 4, 1}}},
+    {{{ 1, 1, 8,24}, { 1, 3, 8,24}, { 1, 3, 8,24}, { 1, 1, 8,24},
+      { 1, 3, 8,24}, { 1, 1, 8,24}, { 1, 1, 8,24}, { 1, 3, 8,24}}},
+    {{{ 6, 3, 3, 1}, { 6, 3, 3, 1}, {12, 6, 3, 1}, {12, 6, 3, 1},
+      { 8, 4, 4, 1}, { 8, 4, 4, 1}, {16, 8, 4, 1}, {16, 8, 4, 1}}},
+    {{{ 1, 1, 2, 2}, { 1, 3, 6, 6}, { 1, 3, 6,12}, { 1, 1, 2, 4},
+      { 1, 3, 6, 6}, { 1, 1, 2, 2}, { 1, 1, 2, 4}, { 1, 3, 6,12}}},
+    {{{22,11, 3, 1}, {22,11, 3, 1}, {20,10, 3, 1}, {20,10, 3, 1},
+      {20,10, 4, 1}, {20,10, 4, 1}, {22,11, 4, 1}, {22,11, 4, 1}}},
+    {{{ 1, 1, 8, 8}, { 1, 3, 8, 8}, { 1, 3, 8,16}, { 1, 1, 8,16},
+      { 1, 3, 8, 8}, { 1, 1, 8, 8}, { 1, 1, 8,16}, { 1, 3, 8,16}}}
+}};
 
-    varray<double> v4({4, 2, 5}, 1.0, COLUMN_MAJOR);
-    EXPECT_EQ(3, v4.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v4.lengths());
-    EXPECT_EQ((vector<stride_type>{1, 4, 8}), v4.strides());
-    EXPECT_EQ(1, v4.data()[0]);
+static arrays<stride_type,6,8> offsets =
+{{
+     {126, 20,  4,152,  0,148,129, 23},
+     {  0,  2,  8, 14, 72, 78, 80, 82},
+     {126, 60, 24,156,  0,148,132, 78},
+     {  0,  6, 24, 60, 72, 96,104,120},
+     { 80+66, 80   ,     0+4,  0+60+4,
+        0   ,  0+60, 80+66+3, 80   +3},
+     {  0   ,  0   +2, 88   , 88   +6,
+       88+48, 88+48+6,  0+24,  0+24+2}
+}};
 
-    varray<double> v41({4, 2, 5}, COLUMN_MAJOR);
-    EXPECT_EQ(3, v41.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v41.lengths());
-    EXPECT_EQ((vector<stride_type>{1, 4, 8}), v41.strides());
-    EXPECT_EQ(0, v41.data()[0]);
+#define CHECK_DPD_MARRAY_RESET(v) \
+    EXPECT_EQ(nullptr, v.data()); \
+    EXPECT_EQ(0u, v.irrep()); \
+    EXPECT_EQ(0u, v.num_irreps()); \
+    EXPECT_EQ((std::vector<unsigned>{}), v.permutation()); \
+    EXPECT_EQ((matrix<len_type>{}), v.lengths());
 
-    varray<double> v5(v0);
-    EXPECT_EQ(3, v5.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v5.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v5.strides());
+#define CHECK_DPD_MARRAY(v,j) \
+    SCOPED_TRACE(j); \
+    EXPECT_EQ(1u, v.irrep()); \
+    EXPECT_EQ(2u, v.num_irreps()); \
+    EXPECT_EQ(perms[j], v.permutation()); \
+    EXPECT_EQ((matrix<len_type>{{3, 1}, {2, 2}, {1, 2}, {3, 4}}), v.lengths()); \
+    \
+    { \
+        auto vs = v(1,0,0,0); \
+        EXPECT_EQ(v.data() + offsets[j][0], vs.data()); \
+        for (unsigned k = 0;k < 4;k++) \
+        { \
+            EXPECT_EQ(lengths[0][k], vs.length(k)); \
+            EXPECT_EQ(strides[j][0][k], vs.stride(k)); \
+        } \
+    } \
+    \
+    { \
+        auto vs = v({0,1,0,0}); \
+        EXPECT_EQ(v.data() + offsets[j][1], vs.data()); \
+        EXPECT_EQ(lengths[1], vs.lengths()); \
+        EXPECT_EQ(strides[j][1], vs.strides()); \
+    } \
+    \
+    for (unsigned i = 2;i < 8;i++) \
+    { \
+        SCOPED_TRACE(i); \
+        auto vs = v(irreps[i]); \
+        EXPECT_EQ(v.data() + offsets[j][i], vs.data()); \
+        EXPECT_EQ(lengths[i], vs.lengths()); \
+        EXPECT_EQ(strides[j][i], vs.strides()); \
+    }
 
-    varray<double> v52(v01);
-    EXPECT_EQ(3, v52.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v52.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v52.strides());
+TEST(dpd_varray, constructor)
+{
+    double data[168];
+    for (len_type i = 0;i < 168;i++) data[i] = i;
 
-    varray<double> v53(v02);
-    EXPECT_EQ(3, v53.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v53.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v53.strides());
+    dpd_varray<double> v0(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, layouts[0]);
+    dpd_varray_view<double> v00(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, data, layouts[0]);
 
-    varray<double> v54(v03);
-    EXPECT_EQ(3, v54.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v54.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v54.strides());
+    dpd_varray<double> v1;
+    CHECK_DPD_MARRAY_RESET(v1)
 
-    varray<double> v51(v21);
-    EXPECT_EQ(3, v51.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v51.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v51.strides());
-    EXPECT_EQ(1, v51.data()[0]);
+    for (unsigned j = 0;j < 6;j++)
+    {
+        dpd_varray<double> v2(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, layouts[j]);
+        CHECK_DPD_MARRAY(v2, j)
+    }
 
-    varray<double> v6(varray<double>({4, 2, 5}));
-    EXPECT_EQ(3, v6.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v6.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v6.strides());
+    dpd_varray<double> v3(1, 2, arrays<char,4,2>{{{3, 1}, {2, 2}, {1, 2}, {3, 4}}}, layouts[0]);
+    CHECK_DPD_MARRAY(v3, 0)
+
+    dpd_varray<double> v5(v3);
+    CHECK_DPD_MARRAY(v5, 0)
+
+    dpd_varray<double> v51(v0);
+    CHECK_DPD_MARRAY(v51, 0)
+    for (len_type i = 0;i < 168;i++) EXPECT_EQ(v51.data()[i], 0.0);
+
+    dpd_varray<double> v52(v00);
+    CHECK_DPD_MARRAY(v51, 0)
+    for (len_type i = 0;i < 168;i++) EXPECT_EQ(v52.data()[i], i);
+
+    dpd_varray<double> v6(dpd_varray_view<double>(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, data, layouts[0]));
+    CHECK_DPD_MARRAY(v6, 0)
+    for (len_type i = 0;i < 168;i++) EXPECT_EQ(v52.data()[i], i);
 }
 
-TEST(varray, reset)
+TEST(dpd_varray, reset)
 {
-    double data[40];
+    double data[168];
+    for (len_type i = 0;i < 168;i++) data[i] = i;
 
-    varray_view<double> v0({4, 2, 5}, data);
-    varray_view<const double> v01({4, 2, 5}, data);
-    varray_view<int> v02({4, 2, 5}, (int*)data);
-    varray<int> v03({4, 2, 5});
+    dpd_varray<double> v1;
+    dpd_varray_view<double> v3(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, data, layouts[0]);
+    dpd_varray_view<const double> v4(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, data, layouts[0]);
+    dpd_varray<double> v0(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, layouts[0]);
 
-    varray<double> v1;
-    varray<double> v2({4, 2, 5}, 1.0);
+    CHECK_DPD_MARRAY_RESET(v1)
 
-    v1.reset({4, 2, 5});
-    EXPECT_EQ(3, v1.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v1.strides());
-    EXPECT_EQ(0, v1.data()[0]);
+    for (unsigned j = 0;j < 6;j++)
+    {
+        v1.reset(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, uninitialized, layouts[j]);
+        CHECK_DPD_MARRAY(v1, j)
+    }
 
-    v1.reset(vector<char>{4, 2, 5});
-    EXPECT_EQ(3, v1.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v1.strides());
-    EXPECT_EQ(0, v1.data()[0]);
+    v1.reset(1, 2, arrays<char,4,2>{{{3, 1}, {2, 2}, {1, 2}, {3, 4}}}, 2.0, layouts[0]);
+    CHECK_DPD_MARRAY(v1, 0)
+    for (len_type i = 0;i < 168;i++) EXPECT_EQ(v1.data()[i], 2.0);
 
-    v1.reset({4, 2, 5}, 1.0);
-    EXPECT_EQ(3, v1.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v1.strides());
-    EXPECT_EQ(1, v1.data()[0]);
+    v1.reset(v3);
+    CHECK_DPD_MARRAY(v1, 0)
+    for (len_type i = 0;i < 168;i++) EXPECT_EQ(v1.data()[i], i);
 
-    v1.reset(vector<char>{4, 2, 5}, 1.0);
-    EXPECT_EQ(3, v1.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v1.strides());
-    EXPECT_EQ(1, v1.data()[0]);
-
-    v1.reset({4, 2, 5}, 1.0, COLUMN_MAJOR);
-    EXPECT_EQ(3, v1.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{1, 4, 8}), v1.strides());
-    EXPECT_EQ(1, v1.data()[0]);
-
-    v1.reset({4, 2, 5}, COLUMN_MAJOR);
-    EXPECT_EQ(3, v1.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{1, 4, 8}), v1.strides());
-    EXPECT_EQ(0, v1.data()[0]);
+    v1.reset(v4);
+    CHECK_DPD_MARRAY(v1, 0)
+    for (len_type i = 0;i < 168;i++) EXPECT_EQ(v1.data()[i], i);
 
     v1.reset(v0);
-    EXPECT_EQ(3, v1.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v1.strides());
+    CHECK_DPD_MARRAY(v1, 0)
+    for (len_type i = 0;i < 168;i++) EXPECT_EQ(v1.data()[i], 0.0);
 
-    v1.reset(v01);
-    EXPECT_EQ(3, v1.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v1.strides());
+    v1.reset(dpd_varray_view<double>(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, data, layouts[0]));
+    CHECK_DPD_MARRAY(v1, 0)
+    for (len_type i = 0;i < 168;i++) EXPECT_EQ(v1.data()[i], i);
 
-    v1.reset(v02);
-    EXPECT_EQ(3, v1.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v1.strides());
-
-    v1.reset(v03);
-    EXPECT_EQ(3, v1.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v1.strides());
-
-    v1.reset(v2);
-    EXPECT_EQ(3, v1.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v1.strides());
-    EXPECT_EQ(1, v1.data()[0]);
-
-    v1.reset(varray<double>({4, 2, 5}));
-    EXPECT_EQ(3, v1.dimension());
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v1.strides());
+    v1.reset(dpd_varray_view<const double>(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, data, layouts[0]));
+    CHECK_DPD_MARRAY(v1, 0)
+    for (len_type i = 0;i < 168;i++) EXPECT_EQ(v1.data()[i], i);
 
     v1.reset();
-    EXPECT_EQ(0, v1.dimension());
-    EXPECT_EQ(nullptr, v1.data());
+    CHECK_DPD_MARRAY_RESET(v1)
 }
 
-TEST(varray, assign)
+TEST(dpd_varray, permute)
 {
-    double data1[6] = {0, 1, 2,
-                      3, 4, 5};
-    int data2[6] = {0, 1, 2,
-                    3, 4, 5};
+    unsigned perm_irreps[8] = {1, 0, 2, 3, 4, 5, 7, 6};
 
-    varray<double> v1({2, 3});
+    arrays<unsigned,6,4> perms2 =
+        {{{2,3,1,0}, {1,0,2,3}, {2,3,1,0}, {1,0,2,3}, {2,3,1,0}, {1,0,2,3}}};
 
-    v1 = varray_view<double>({2, 3}, data1);
-    EXPECT_EQ((vector<len_type>{2, 3}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{3, 1}), v1.strides());
-    EXPECT_EQ((array<double,6>{0, 1, 2,
-                               3, 4, 5}), *(array<double,6>*)v1.data());
+    for (unsigned j = 0;j < 6;j++)
+    {
+        SCOPED_TRACE(j);
 
-    v1 = 1.0;
-    EXPECT_EQ((vector<len_type>{2, 3}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{3, 1}), v1.strides());
-    EXPECT_EQ((array<double,6>{1, 1, 1,
-                               1, 1, 1}), *(array<double,6>*)v1.data());
+        dpd_varray<double> v1(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, layouts[j]);
 
-    v1 = varray_view<int>({2, 3}, data2);
-    EXPECT_EQ((vector<len_type>{2, 3}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{3, 1}), v1.strides());
-    EXPECT_EQ((array<double,6>{0, 1, 2,
-                               3, 4, 5}), *(array<double,6>*)v1.data());
+        auto v2 = v1.permuted({1, 0, 2, 3});
+        EXPECT_EQ(v1.data(), v2.data());
+        EXPECT_EQ(1u, v2.irrep());
+        EXPECT_EQ(2u, v2.num_irreps());
+        EXPECT_EQ(perms2[j], v2.permutation());
+        EXPECT_EQ((matrix<len_type>{{2, 2}, {3, 1}, {1, 2}, {3, 4}}), v2.lengths());
 
-    v1 = 1;
-    EXPECT_EQ((vector<len_type>{2, 3}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{3, 1}), v1.strides());
-    EXPECT_EQ((array<double,6>{1, 1, 1,
-                               1, 1, 1}), *(array<double,6>*)v1.data());
+        for (unsigned i = 0;i < 8;i++)
+        {
+            SCOPED_TRACE(i);
+            std::vector<len_type> len(4);
+            std::vector<stride_type> stride(4);
+            for (unsigned k = 0;k < 4;k++)
+            {
+                len[k] = lengths[i][perms2[1][k]];
+                stride[k] = strides[j][i][perms2[1][k]];
+            }
+            auto vs = v2(irreps[perm_irreps[i]]);
+            EXPECT_EQ(v1.data() + offsets[j][i], vs.data());
+            EXPECT_EQ(len, vs.lengths());
+            EXPECT_EQ(stride, vs.strides());
+        }
 
-    v1 = varray_view<const double>({2, 3}, data1);
-    EXPECT_EQ((vector<len_type>{2, 3}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{3, 1}), v1.strides());
-    EXPECT_EQ((array<double,6>{0, 1, 2,
-                               3, 4, 5}), *(array<double,6>*)v1.data());
+        auto v3 = v1.permuted(std::vector<char>{1, 0, 2, 3});
+        EXPECT_EQ(v1.data(), v3.data());
+        EXPECT_EQ(1u, v3.irrep());
+        EXPECT_EQ(2u, v3.num_irreps());
+        EXPECT_EQ(perms2[j], v3.permutation());
+        EXPECT_EQ((matrix<len_type>{{2, 2}, {3, 1}, {1, 2}, {3, 4}}), v3.lengths());
+
+        for (unsigned i = 0;i < 8;i++)
+        {
+            SCOPED_TRACE(i);
+            std::vector<len_type> len(4);
+            std::vector<stride_type> stride(4);
+            for (unsigned k = 0;k < 4;k++)
+            {
+                len[k] = lengths[i][perms2[1][k]];
+                stride[k] = strides[j][i][perms2[1][k]];
+            }
+            auto vs = v3(irreps[perm_irreps[i]]);
+            EXPECT_EQ(v1.data() + offsets[j][i], vs.data());
+            EXPECT_EQ(len, vs.lengths());
+            EXPECT_EQ(stride, vs.strides());
+        }
+    }
 }
 
-TEST(varray, resize)
+TEST(dpd_varray, block_iteration)
 {
-    double data[6] = {0, 1, 2,
-                      3, 4, 5};
+    array<array<int,2>,2> visited;
 
-    varray<double> v1(varray_view<const double>({2, 3}, data));
+    for (int l = 0;l < 6;l++)
+    {
+        SCOPED_TRACE(l);
 
-    v1.resize({2, 2});
-    EXPECT_EQ((vector<len_type>{2, 2}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{2, 1}), v1.strides());
-    EXPECT_EQ((array<double,4>{0, 1,
-                               3, 4}), *(array<double,4>*)v1.data());
+        dpd_varray<double> v1(0, 2, {{2, 3}, {1, 2}, {3, 1}}, layouts[l]);
 
-    v1.resize(vector<char>{3, 4}, 1);
-    EXPECT_EQ((vector<len_type>{3, 4}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{4, 1}), v1.strides());
-    EXPECT_EQ((array<double,12>{0, 1, 1, 1,
-                                3, 4, 1, 1,
-                                1, 1, 1, 1}), *(array<double,12>*)v1.data());
+        visited = {};
+        v1.for_each_block(
+        [&](varray_view<double>&& v3, const std::vector<unsigned>& irreps)
+        {
+            EXPECT_EQ(irreps.size(), 3u);
+            unsigned i = irreps[0];
+            unsigned j = irreps[1];
+            unsigned k = irreps[2];
+            EXPECT_LT(i, 2u);
+            EXPECT_LT(j, 2u);
+            EXPECT_LT(k, 2u);
+            EXPECT_EQ(i^j^k, 0u);
+            auto v4 = v1({i, j, k});
+            EXPECT_EQ(v3.data(), v4.data());
+            EXPECT_EQ(v3.lengths(), v4.lengths());
+            EXPECT_EQ(v3.strides(), v4.strides());
+            visited[i][j]++;
+        });
+
+        for (len_type i = 0;i < 2;i++)
+        {
+            for (len_type j = 0;j < 2;j++)
+            {
+                EXPECT_EQ(visited[i][j], 1);
+            }
+        }
+
+        visited = {};
+        v1.for_each_block<3>(
+        [&](marray_view<double,3>&& v3, unsigned i, unsigned j, unsigned k)
+        {
+            EXPECT_LT(i, 2u);
+            EXPECT_LT(j, 2u);
+            EXPECT_LT(k, 2u);
+            EXPECT_EQ(i^j^k, 0u);
+            auto v4 = v1(i, j, k);
+            EXPECT_EQ(v3.data(), v4.data());
+            EXPECT_EQ(v3.lengths(), v4.lengths());
+            EXPECT_EQ(v3.strides(), v4.strides());
+            visited[i][j]++;
+        });
+
+        for (len_type i = 0;i < 2;i++)
+        {
+            for (len_type j = 0;j < 2;j++)
+            {
+                EXPECT_EQ(visited[i][j], 1);
+            }
+        }
+    }
 }
 
-TEST(varray, push_pop)
+TEST(dpd_varray, element_iteration)
 {
-    double data1[6] = {0, 1, 2,
-                       3, 4, 5};
-    double data2[3] = {6, 7, 8};
-    double data3[3] = {-1, -1, -1};
+    array<int,31> visited;
+    arrays<len_type,3,2> len = {{{2, 3}, {1, 2}, {3, 1}}};
 
-    varray<double> v1(varray_view<const double>({2, 3}, data1));
-    varray_view<const double> v2({3}, data2);
-    varray_view<const double> v3({3}, data3);
+    for (int l = 0;l < 6;l++)
+    {
+        SCOPED_TRACE(l);
 
-    v1.push_back(0, v2);
-    EXPECT_EQ((vector<len_type>{3, 3}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{3, 1}), v1.strides());
-    EXPECT_EQ((array<double,9>{0, 1, 2,
-                               3, 4, 5,
-                               6, 7, 8}), *(array<double,9>*)v1.data());
+        dpd_varray<double> v1(0, 2, len, layouts[l]);
 
-    v1.push_back(1, v3);
-    EXPECT_EQ((vector<len_type>{3, 4}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{4, 1}), v1.strides());
-    EXPECT_EQ((array<double,12>{0, 1, 2, -1,
-                                3, 4, 5, -1,
-                                6, 7, 8, -1}), *(array<double,12>*)v1.data());
+        visited = {};
+        v1.for_each_element(
+        [&](double& v, const std::vector<unsigned>& irreps, const std::vector<len_type>& pos)
+        {
+            EXPECT_EQ(irreps.size(), 3u);
+            EXPECT_EQ(pos.size(), 3u);
+            unsigned i = irreps[0];
+            unsigned j = irreps[1];
+            unsigned k = irreps[2];
+            len_type a = pos[0];
+            len_type b = pos[1];
+            len_type c = pos[2];
+            EXPECT_LT(i, 2u);
+            EXPECT_LT(j, 2u);
+            EXPECT_LT(k, 2u);
+            EXPECT_GE(a, 0);
+            EXPECT_LT(a, len[0][i]);
+            EXPECT_GE(b, 0);
+            EXPECT_LT(b, len[1][j]);
+            EXPECT_GE(c, 0);
+            EXPECT_LT(c, len[2][k]);
+            EXPECT_EQ(i^j^k, 0u);
+            auto v3 = v1(i, j, k);
+            EXPECT_EQ(&v, &v3(a, b, c));
+            visited[&v - v1.data()]++;
+        });
 
-    v1.pop_back(0);
-    EXPECT_EQ((vector<len_type>{2, 4}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{4, 1}), v1.strides());
-    EXPECT_EQ((array<double,8>{0, 1, 2, -1,
-                               3, 4, 5, -1}), *(array<double,8>*)v1.data());
+        for (unsigned i = 0;i < 31;i++)
+        {
+            EXPECT_EQ(visited[i], 1);
+        }
 
-    v1.pop_back(1);
-    EXPECT_EQ((vector<len_type>{2, 3}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{3, 1}), v1.strides());
-    EXPECT_EQ((array<double,6>{0, 1, 2,
-                               3, 4, 5}), *(array<double,6>*)v1.data());
+        visited = {};
+        v1.for_each_element<3>(
+        [&](double& v, unsigned i, unsigned j, unsigned k, len_type a, len_type b, len_type c)
+        {
+            EXPECT_LT(i, 2u);
+            EXPECT_LT(j, 2u);
+            EXPECT_LT(k, 2u);
+            EXPECT_GE(a, 0);
+            EXPECT_LT(a, len[0][i]);
+            EXPECT_GE(b, 0);
+            EXPECT_LT(b, len[1][j]);
+            EXPECT_GE(c, 0);
+            EXPECT_LT(c, len[2][k]);
+            EXPECT_EQ(i^j^k, 0u);
+            auto v3 = v1(i, j, k);
+            EXPECT_EQ(&v, &v3(a, b, c));
+            visited[&v - v1.data()]++;
+        });
 
-    varray<double> v4(varray_view<const double>({6}, data1));
-
-    v4.push_back(6);
-
-    EXPECT_EQ((vector<len_type>{7}), v4.lengths());
-    EXPECT_EQ((vector<stride_type>{1}), v4.strides());
-    EXPECT_EQ((array<double,7>{0, 1, 2, 3, 4, 5, 6}), *(array<double,7>*)v4.data());
-
-    v4.pop_back();
-    v4.pop_back();
-
-    EXPECT_EQ((vector<len_type>{5}), v4.lengths());
-    EXPECT_EQ((vector<stride_type>{1}), v4.strides());
-    EXPECT_EQ((array<double,5>{0, 1, 2, 3, 4}), *(array<double,5>*)v4.data());
+        for (unsigned i = 0;i < 31;i++)
+        {
+            EXPECT_EQ(visited[i], 1);
+        }
+    }
 }
 
-TEST(varray, view)
+TEST(dpd_varray, swap)
 {
-    varray<double> v1({4, 2, 5});
+    dpd_varray<double> v1(1, 2, {{2, 3}, {2, 1}, {5, 3}}, PREFIX_ROW_MAJOR);
+    dpd_varray<double> v2(0, 2, {{1, 1}, {6, 3}, {2, 4}}, PREFIX_COLUMN_MAJOR);
 
-    auto v2 = v1.cview();
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v2.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v2.strides());
-    EXPECT_EQ(v1.data(), v2.data());
-
-    auto v3 = v1.view();
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v3.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v3.strides());
-    EXPECT_EQ(v1.data(), v3.data());
-
-    auto v4 = const_cast<const varray<double>&>(v1).view();
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v4.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v4.strides());
-    EXPECT_EQ(v1.data(), v4.data());
-}
-
-TEST(varray, permuted)
-{
-    varray<double> v1({4, 2, 5});
-
-    auto v2 = v1.permuted({1, 0, 2});
-    EXPECT_EQ((vector<len_type>{2, 4, 5}), v2.lengths());
-    EXPECT_EQ((vector<stride_type>{5, 10, 1}), v2.strides());
-    EXPECT_EQ(v1.data(), v2.data());
-
-    auto v3 = v1.permuted(vector<char>{2, 0, 1});
-    EXPECT_EQ((vector<len_type>{5, 4, 2}), v3.lengths());
-    EXPECT_EQ((vector<stride_type>{1, 10, 5}), v3.strides());
-    EXPECT_EQ(v1.data(), v3.data());
-
-    auto v4 = const_cast<const varray<double>&>(v1).permuted({1, 0, 2});
-    EXPECT_EQ((vector<len_type>{2, 4, 5}), v4.lengths());
-    EXPECT_EQ((vector<stride_type>{5, 10, 1}), v4.strides());
-    EXPECT_EQ(v1.data(), v4.data());
-}
-
-TEST(varray, lowered)
-{
-    varray<double> v1({4, 2, 5});
-
-    auto v2 = v1.lowered({1, 2});
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v2.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v2.strides());
-    EXPECT_EQ(v1.data(), v2.data());
-
-    auto v3 = v1.lowered(vector<char>{1});
-    EXPECT_EQ((vector<len_type>{4, 10}), v3.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 1}), v3.strides());
-    EXPECT_EQ(v1.data(), v3.data());
-
-    auto v4 = v1.lowered({});
-    EXPECT_EQ((vector<len_type>{40}), v4.lengths());
-    EXPECT_EQ((vector<stride_type>{1}), v4.strides());
-    EXPECT_EQ(v1.data(), v4.data());
-
-    auto v5 = const_cast<const varray<double>&>(v1).lowered({1, 2});
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v5.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v5.strides());
-    EXPECT_EQ(v1.data(), v2.data());
-}
-
-TEST(varray, fix)
-{
-    varray<double> v1({4, 2, 5});
-
-    auto m1 = fix<3>(v1);
-    EXPECT_EQ((array<len_type,3>{4, 2, 5}), m1.lengths());
-    EXPECT_EQ((array<stride_type,3>{10, 5, 1}), m1.strides());
-    EXPECT_EQ(v1.data(), m1.data());
-
-    auto m2 = fix<3>(const_cast<const varray<double>&>(v1));
-    EXPECT_EQ((array<len_type,3>{4, 2, 5}), m2.lengths());
-    EXPECT_EQ((array<stride_type,3>{10, 5, 1}), m2.strides());
-    EXPECT_EQ(v1.data(), m2.data());
-}
-
-TEST(varray, rotate)
-{
-    array<double,12> data = { 0, 1, 2,
-                              3, 4, 5,
-                              6, 7, 8,
-                              9,10,11};
-
-    varray<double> v1(varray_view<const double>({4, 3}, data.data()));
-
-    rotate(v1, 1, 1);
-    EXPECT_EQ((array<double,12>{ 1, 2, 0,
-                                 4, 5, 3,
-                                 7, 8, 6,
-                                10,11, 9}), *(array<double,12>*)v1.data());
-
-    rotate(v1, 0, -1);
-    EXPECT_EQ((array<double,12>{10,11, 9,
-                                 1, 2, 0,
-                                 4, 5, 3,
-                                 7, 8, 6}), *(array<double,12>*)v1.data());
-
-    rotate(v1, {4,3});
-    EXPECT_EQ((array<double,12>{10,11, 9,
-                                 1, 2, 0,
-                                 4, 5, 3,
-                                 7, 8, 6}), *(array<double,12>*)v1.data());
-
-    rotate(v1, vector<char>{1,1});
-    EXPECT_EQ((array<double,12>{ 2, 0, 1,
-                                 5, 3, 4,
-                                 8, 6, 7,
-                                11, 9,10}), *(array<double,12>*)v1.data());
-}
-
-TEST(varray, front_back)
-{
-    varray<double> v1({8});
-
-    EXPECT_EQ(v1.data(), &v1.cfront());
-    EXPECT_EQ(v1.data(), &v1.front());
-    EXPECT_EQ(v1.data(), &const_cast<const varray<double>&>(v1).front());
-    EXPECT_EQ(v1.data()+7, &v1.cback());
-    EXPECT_EQ(v1.data()+7, &v1.back());
-    EXPECT_EQ(v1.data()+7, &const_cast<const varray<double>&>(v1).back());
-
-    varray<double> v2({4, 2, 5});
-
-    auto v3 = v2.cfront(0);
-    EXPECT_EQ((vector<len_type>{2, 5}), v3.lengths());
-    EXPECT_EQ((vector<stride_type>{5, 1}), v3.strides());
-    EXPECT_EQ(v2.data(), v3.data());
-
-    auto v4 = v2.front(1);
-    EXPECT_EQ((vector<len_type>{4, 5}), v4.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 1}), v4.strides());
-    EXPECT_EQ(v2.data(), v4.data());
-
-    auto v5 = const_cast<const varray<double>&>(v2).front(1);
-    EXPECT_EQ((vector<len_type>{4, 5}), v5.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 1}), v5.strides());
-    EXPECT_EQ(v2.data(), v5.data());
-
-    auto v6 = v2.cback(0);
-    EXPECT_EQ((vector<len_type>{2, 5}), v6.lengths());
-    EXPECT_EQ((vector<stride_type>{5, 1}), v6.strides());
-    EXPECT_EQ(v2.data() + 30, v6.data());
-
-    auto v7 = v2.back(1);
-    EXPECT_EQ((vector<len_type>{4, 5}), v7.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 1}), v7.strides());
-    EXPECT_EQ(v2.data() + 5, v7.data());
-
-    auto v8 = const_cast<const varray<double>&>(v2).back(1);
-    EXPECT_EQ((vector<len_type>{4, 5}), v8.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 1}), v8.strides());
-    EXPECT_EQ(v2.data() + 5, v8.data());
-}
-
-TEST(varray, access)
-{
-    array<double,12> data = { 0, 1, 2,
-                              3, 4, 5,
-                              6, 7, 8,
-                              9,10,11};
-
-    varray<double> v1(varray_view<const double>({4, 3}, data.data()));
-
-    EXPECT_EQ( 0, v1(0, 0));
-    EXPECT_EQ( 5, v1(1, 2));
-    EXPECT_EQ(10, v1(3, 1));
-    EXPECT_EQ(10, const_cast<const varray<double>&>(v1)(3, 1));
-
-    auto v2 = v1(slice::all, range(2));
-    EXPECT_EQ((vector<len_type>{4, 2}), v2.lengths());
-    EXPECT_EQ((vector<stride_type>{3, 1}), v2.strides());
-    EXPECT_EQ(v1.data(), v2.data());
-
-    auto v3 = v1(range(0, 4, 2), 1);
-    EXPECT_EQ((vector<len_type>{2}), v3.lengths());
-    EXPECT_EQ((vector<stride_type>{6}), v3.strides());
-    EXPECT_EQ(v1.data() + 1, v3.data());
-
-    auto v4 = const_cast<const varray<double>&>(v1)(slice::all, range(2));
-    EXPECT_EQ((vector<len_type>{4, 2}), v4.lengths());
-    EXPECT_EQ((vector<stride_type>{3, 1}), v4.strides());
-    EXPECT_EQ(v1.data(), v4.data());
-
-    auto v5 = const_cast<const varray<double>&>(v1)(range(0, 4, 2), 1);
-    EXPECT_EQ((vector<len_type>{2}), v5.lengths());
-    EXPECT_EQ((vector<stride_type>{6}), v5.strides());
-    EXPECT_EQ(v1.data() + 1, v5.data());
-}
-
-TEST(varray, swap)
-{
-    varray<double> v1({4, 2, 5});
-    varray<double> v2({3, 8});
-
-    auto data1 = v1.data();
-    auto data2 = v2.data();
+    double* data1 = v1.data();
+    double* data2 = v2.data();
 
     v1.swap(v2);
 
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v2.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v2.strides());
-    EXPECT_EQ(data1, v2.data());
-    EXPECT_EQ((vector<len_type>{3, 8}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{8, 1}), v1.strides());
     EXPECT_EQ(data2, v1.data());
+    EXPECT_EQ(0u, v1.irrep());
+    EXPECT_EQ(2u, v1.num_irreps());
+    EXPECT_EQ((std::vector<unsigned>{0, 1, 2}), v1.permutation());
+    EXPECT_EQ((matrix<len_type>{{1, 1}, {6, 3}, {2, 4}}), v1.lengths());
+
+    EXPECT_EQ(data1, v2.data());
+    EXPECT_EQ(1u, v2.irrep());
+    EXPECT_EQ(2u, v2.num_irreps());
+    EXPECT_EQ((std::vector<unsigned>{2, 1, 0}), v2.permutation());
+    EXPECT_EQ((matrix<len_type>{{2, 3}, {2, 1}, {5, 3}}), v2.lengths());
 
     swap(v2, v1);
 
-    EXPECT_EQ((vector<len_type>{4, 2, 5}), v1.lengths());
-    EXPECT_EQ((vector<stride_type>{10, 5, 1}), v1.strides());
     EXPECT_EQ(data1, v1.data());
-    EXPECT_EQ((vector<len_type>{3, 8}), v2.lengths());
-    EXPECT_EQ((vector<stride_type>{8, 1}), v2.strides());
+    EXPECT_EQ(1u, v1.irrep());
+    EXPECT_EQ(2u, v1.num_irreps());
+    EXPECT_EQ((std::vector<unsigned>{2, 1, 0}), v1.permutation());
+    EXPECT_EQ((matrix<len_type>{{2, 3}, {2, 1}, {5, 3}}), v1.lengths());
+
     EXPECT_EQ(data2, v2.data());
+    EXPECT_EQ(0u, v2.irrep());
+    EXPECT_EQ(2u, v2.num_irreps());
+    EXPECT_EQ((std::vector<unsigned>{0, 1, 2}), v2.permutation());
+    EXPECT_EQ((matrix<len_type>{{1, 1}, {6, 3}, {2, 4}}), v2.lengths());
 }

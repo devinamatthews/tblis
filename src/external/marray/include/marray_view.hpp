@@ -67,8 +67,7 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
             reset(other);
         }
 
-        template <typename U>
-        marray_view(std::initializer_list<U> len, pointer ptr, layout layout = DEFAULT)
+        marray_view(std::initializer_list<len_type> len, pointer ptr, layout layout = DEFAULT)
         {
             reset(len, ptr, layout);
         }
@@ -79,9 +78,8 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
             reset(len, ptr, layout);
         }
 
-        template <typename U, typename V>
-        marray_view(std::initializer_list<U> len, pointer ptr,
-                    std::initializer_list<V> stride)
+        marray_view(std::initializer_list<len_type> len, pointer ptr,
+                    std::initializer_list<stride_type> stride)
         {
             reset(len, ptr, stride);
         }
@@ -142,10 +140,9 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
 
          **********************************************************************/
 
-        template <typename U>
-        void shift(std::initializer_list<U> n)
+        void shift(std::initializer_list<len_type> n)
         {
-            shift<std::initializer_list<U>>(n);
+            shift<std::initializer_list<len_type>>(n);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>

@@ -75,13 +75,11 @@ class dpd_varray_base
             layout_ = other.layout_;
         }
 
-        template <typename U, typename=
-            detail::enable_if_assignable_t<len_type&,U>>
         void reset(unsigned irrep, unsigned nirrep,
-                   initializer_matrix<U> len, pointer ptr,
+                   initializer_matrix<len_type> len, pointer ptr,
                    dpd_layout layout = DEFAULT)
         {
-            reset<initializer_matrix<U>>(irrep, nirrep, len, ptr, layout);
+            reset<initializer_matrix<len_type>>(irrep, nirrep, len, ptr, layout);
         }
 
         template <typename U, typename=
@@ -94,16 +92,17 @@ class dpd_varray_base
         }
 
         template <typename U, typename=
-            detail::enable_if_container_of_containers_of_t<U,len_type>>
+            detail::enable_if_t<detail::is_container_of_containers_of<U,len_type>::value ||
+                                detail::is_matrix_of<U,len_type>::value>>
         void reset(unsigned irrep, unsigned nirrep, const U& len, pointer ptr,
                    dpd_layout layout = DEFAULT)
         {
             MARRAY_ASSERT(nirrep == 1 || nirrep == 2 ||
                           nirrep == 4 || nirrep == 8);
 
-            unsigned ndim = len.size();
-
+            unsigned ndim = detail::length(len, 0);
             MARRAY_ASSERT(ndim > 0);
+            MARRAY_ASSERT(detail::length(len, 1) >= nirrep);
 
             irrep_ = irrep;
             nirrep_ = nirrep;
@@ -113,91 +112,7 @@ class dpd_varray_base
             size_.reset({detail::num_sizes(ndim, layout), nirrep}, ROW_MAJOR);
             perm_.resize(ndim);
 
-            if (layout == BLOCKED_COLUMN_MAJOR ||
-                layout == PREFIX_COLUMN_MAJOR ||
-                layout == BALANCED_COLUMN_MAJOR)
-            {
-                // Column major
-                auto it = len.begin();
-                for (unsigned i = 0;i < ndim;i++)
-                {
-                    auto it2 = it->begin();
-                    for (unsigned j = 0;j < nirrep;j++)
-                    {
-                        len_[i][j] = *it2;
-                        ++it2;
-                    }
-                    perm_[i] = i;
-                    ++it;
-                }
-            }
-            else
-            {
-                // Row major: reverse the dimensions and treat as
-                // permuted column major
-                auto it = len.begin();
-                for (unsigned i = 0;i < ndim;i++)
-                {
-                    auto it2 = it->begin();
-                    for (unsigned j = 0;j < nirrep;j++)
-                    {
-                        len_[ndim-1-i][j] = *it2;
-                        ++it2;
-                    }
-                    perm_[i] = ndim-1-i;
-                    ++it;
-                }
-            }
-
-            detail::set_size(irrep_, len_, size_, layout_);
-        }
-
-        template <typename U, typename=
-            detail::enable_if_assignable_t<len_type&,U>>
-        void reset(unsigned irrep, unsigned nirrep,
-                   matrix_view<U> len, pointer ptr,
-                   dpd_layout layout = DEFAULT)
-        {
-            MARRAY_ASSERT(nirrep == 1 || nirrep == 2 ||
-                          nirrep == 4 || nirrep == 8);
-
-            unsigned ndim = len.length(0);
-
-            MARRAY_ASSERT(ndim > 0);
-            MARRAY_ASSERT(len.length(1) == nirrep);
-
-            irrep_ = irrep;
-            nirrep_ = nirrep;
-            data_ = ptr;
-            layout_ = layout;
-            len_.reset({ndim, nirrep}, ROW_MAJOR);
-            size_.reset({detail::num_sizes(ndim, layout), nirrep}, ROW_MAJOR);
-            perm_.resize(ndim);
-
-            if (layout == BLOCKED_COLUMN_MAJOR ||
-                layout == PREFIX_COLUMN_MAJOR ||
-                layout == BALANCED_COLUMN_MAJOR)
-            {
-                // Column major
-                for (unsigned i = 0;i < ndim;i++)
-                {
-                    for (unsigned j = 0;j < nirrep;j++)
-                        len_[i][j] = len[i][j];
-                    perm_[i] = i;
-                }
-            }
-            else
-            {
-                // Row major: reverse the dimensions and treat as
-                // permuted column major
-                for (unsigned i = 0;i < ndim;i++)
-                {
-                    for (unsigned j = 0;j < nirrep;j++)
-                        len_[ndim-1-i][j] = len[i][j];
-                    perm_[i] = ndim-1-i;
-                }
-            }
-
+            detail::set_len(len, len_, perm_, layout_);
             detail::set_size(irrep_, len_, size_, layout_);
         }
 
@@ -276,25 +191,25 @@ class dpd_varray_base
             std::array<unsigned, NDim-1> nirrep;
             nirrep.fill(nirrep_);
 
-            const_pointer cptr;
+            const_pointer cptr = data_;
             std::array<unsigned, NDim> irreps;
             std::array<len_type, NDim> len;
             std::array<stride_type, NDim> stride;
 
-            miterator<NDim-1, 0> it(nirrep);
-            while (it.next())
+            miterator<NDim-1, 0> it1(nirrep);
+            while (it1.next())
             {
                 irreps[0] = irrep_;
                 for (unsigned i = 1;i < NDim;i++)
                 {
-                    irreps[0] ^= irreps[i] = it.position()[i-1];
+                    irreps[0] ^= irreps[i] = it1.position()[i-1];
                 }
 
                 get_block(irreps, len, cptr, stride);
 
-                miterator<NDim, 1> it(len, stride);
+                miterator<NDim, 1> it2(len, stride);
                 Ptr ptr = const_cast<Ptr>(cptr);
-                while (it.next(ptr)) f(*ptr, irreps[I]..., it.position()[I]...);
+                while (it2.next(ptr)) f(*ptr, irreps[I]..., it2.position()[I]...);
             }
         }
 
@@ -318,11 +233,9 @@ class dpd_varray_base
          *
          **********************************************************************/
 
-        template <typename U, typename=
-            detail::enable_if_assignable_t<len_type&,U>>
-        static stride_type size(unsigned irrep, initializer_matrix<U> len)
+        static stride_type size(unsigned irrep, initializer_matrix<len_type> len)
         {
-            return size<initializer_matrix<U>>(irrep, len);
+            return size<initializer_matrix<len_type>>(irrep, len);
         }
 
         template <typename U, typename=
@@ -333,14 +246,9 @@ class dpd_varray_base
         }
 
         template <typename U, typename=
-            detail::enable_if_container_of_containers_of_t<U,len_type>>
+            detail::enable_if_t<detail::is_container_of_containers_of<U,len_type>::value ||
+                                detail::is_matrix_of<U,len_type>::value>>
         static stride_type size(unsigned irrep, const U& len)
-        {
-            return dpd_marray_base<Type,1,dpd_marray_view<Type,1>,false>::size(irrep, len);
-        }
-
-        template <typename U>
-        static stride_type size(unsigned irrep, matrix_view<U> len)
         {
             return dpd_marray_base<Type,1,dpd_marray_view<Type,1>,false>::size(irrep, len);
         }
@@ -373,7 +281,7 @@ class dpd_varray_base
 
             if (layout_ == other.layout_ && perm_ == other.perm_)
             {
-                std::copy_n(other.data(), size(irrep_, len_.view()), data());
+                std::copy_n(other.data(), size(irrep_, len_), data());
             }
             else
             {
@@ -401,7 +309,7 @@ class dpd_varray_base
 
         Derived& operator=(const Type& value)
         {
-            std::fill_n(data(), size(irrep_, len_.view()));
+            std::fill_n(data(), size(irrep_, len_), value);
             return static_cast<Derived&>(*this);
         }
 
@@ -447,18 +355,14 @@ class dpd_varray_base
          *
          **********************************************************************/
 
-        template <typename U, typename=
-            detail::enable_if_assignable_t<unsigned&,U>>
-        dpd_varray_view<ctype> permuted(std::initializer_list<U> perm) const
+        dpd_varray_view<ctype> permuted(std::initializer_list<unsigned> perm) const
         {
             return const_cast<dpd_varray_base&>(*this).permuted(perm);
         }
 
-        template <typename U, typename=
-            detail::enable_if_assignable_t<unsigned&,U>>
-        dpd_varray_view<Type> permuted(std::initializer_list<U> perm)
+        dpd_varray_view<Type> permuted(std::initializer_list<unsigned> perm)
         {
-            return permuted<std::initializer_list<U>>(perm);
+            return permuted<std::initializer_list<unsigned>>(perm);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,unsigned>>
@@ -513,7 +417,7 @@ class dpd_varray_base
 
         varray_view<Type> operator()(std::initializer_list<unsigned> irreps)
         {
-            return operator()<>(irreps);
+            return operator()<std::initializer_list<unsigned>>(irreps);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,unsigned>>

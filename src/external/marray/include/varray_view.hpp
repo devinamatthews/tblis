@@ -65,8 +65,7 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
             reset(other);
         }
 
-        template <typename U>
-        varray_view(std::initializer_list<U> len, pointer ptr, layout layout = DEFAULT)
+        varray_view(std::initializer_list<len_type> len, pointer ptr, layout layout = DEFAULT)
         {
             reset(len, ptr, layout);
         }
@@ -77,9 +76,8 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
             reset(len, ptr, layout);
         }
 
-        template <typename U, typename V>
-        varray_view(std::initializer_list<U> len, pointer ptr,
-                    std::initializer_list<V> stride)
+        varray_view(std::initializer_list<len_type> len, pointer ptr,
+                    std::initializer_list<stride_type> stride)
         {
             reset(len, ptr, stride);
         }
@@ -133,10 +131,9 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
          *
          **********************************************************************/
 
-        template <typename U>
-        void shift(std::initializer_list<U> n)
+        void shift(std::initializer_list<len_type> n)
         {
-            shift<std::initializer_list<U>>(n);
+            shift<std::initializer_list<len_type>>(n);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
@@ -170,7 +167,7 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
 
         void permute(std::initializer_list<unsigned> perm)
         {
-            permute<>(perm);
+            permute<std::initializer_list<unsigned>>(perm);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,unsigned>>
@@ -202,7 +199,7 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
 
         void lower(std::initializer_list<unsigned> split)
         {
-            lower<>(split);
+            lower<std::initializer_list<unsigned>>(split);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,unsigned>>

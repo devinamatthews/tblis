@@ -128,10 +128,9 @@ class marray_base
             reset(other.view());
         }
 
-        template <typename U>
-        void reset(std::initializer_list<U> len, pointer ptr, layout layout = DEFAULT)
+        void reset(std::initializer_list<len_type> len, pointer ptr, layout layout = DEFAULT)
         {
-            reset<std::initializer_list<U>>(len, ptr, layout);
+            reset<std::initializer_list<len_type>>(len, ptr, layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
@@ -140,12 +139,11 @@ class marray_base
             reset(len, ptr, strides(len, layout));
         }
 
-        template <typename U, typename V>
-        void reset(std::initializer_list<U> len, pointer ptr,
-                   std::initializer_list<V> stride)
+        void reset(std::initializer_list<len_type> len, pointer ptr,
+                   std::initializer_list<stride_type> stride)
         {
-            reset<std::initializer_list<U>,
-                  std::initializer_list<V>>(len, ptr, stride);
+            reset<std::initializer_list<len_type>,
+                  std::initializer_list<stride_type>>(len, ptr, stride);
         }
 
         template <typename U, typename V, typename=detail::enable_if_t<
@@ -228,11 +226,10 @@ class marray_base
          *
          **********************************************************************/
 
-        template <typename U>
         static std::array<stride_type, NDim>
-        strides(std::initializer_list<U> len, layout layout = DEFAULT)
+        strides(std::initializer_list<len_type> len, layout layout = DEFAULT)
         {
-            return strides<std::initializer_list<U>>(len, layout);
+            return strides<std::initializer_list<len_type>>(len, layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
@@ -271,10 +268,9 @@ class marray_base
             return stride;
         }
 
-        template <typename U>
-        static stride_type size(std::initializer_list<U> len)
+        static stride_type size(std::initializer_list<len_type> len)
         {
-            return size<std::initializer_list<U>>(len);
+            return size<std::initializer_list<len_type>>(len);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
@@ -460,16 +456,14 @@ class marray_base
          *
          **********************************************************************/
 
-        template <typename U>
-        marray_view<ctype, NDim> shifted(std::initializer_list<U> n) const
+        marray_view<ctype, NDim> shifted(std::initializer_list<len_type> n) const
         {
             return const_cast<marray_base&>(*this).shifted(n);
         }
 
-        template <typename U>
-        marray_view<Type, NDim> shifted(std::initializer_list<U> n)
+        marray_view<Type, NDim> shifted(std::initializer_list<len_type> n)
         {
-            return shifted<std::initializer_list<U>>(n);
+            return shifted<std::initializer_list<len_type>>(n);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
@@ -603,7 +597,7 @@ class marray_base
 
         marray_view<Type,NDim> permuted(std::initializer_list<unsigned> perm)
         {
-            return permuted<>(perm);
+            return permuted<std::initializer_list<unsigned>>(perm);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,unsigned>>

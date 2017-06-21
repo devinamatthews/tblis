@@ -71,7 +71,8 @@ template <typename U, typename V, typename W>
 enable_if_container_of_containers_of_t<U,len_type>
 set_len(const U& len_in, V& len, W& perm, dpd_layout layout)
 {
-    unsigned ndim = perm.size();
+    unsigned ndim1 = perm.size();
+    unsigned ndim2 = len_in.size();
     unsigned nirrep = len_in.begin()->size();
 
     auto it = len_in.begin();
@@ -81,7 +82,7 @@ set_len(const U& len_in, V& len, W& perm, dpd_layout layout)
         layout == BALANCED_COLUMN_MAJOR)
     {
         // Column major
-        for (unsigned i = 0;i < ndim;i++)
+        for (unsigned i = 0;i < ndim1;i++)
         {
             std::copy_n(it->begin(), nirrep, &len[i][0]);
             perm[i] = i;
@@ -92,12 +93,18 @@ set_len(const U& len_in, V& len, W& perm, dpd_layout layout)
     {
         // Row major: reverse the dimensions and treat as
         // permuted column major
-        for (unsigned i = 0;i < ndim;i++)
+        for (unsigned i = 0;i < ndim1;i++)
         {
-            std::copy_n(it->begin(), nirrep, &len[ndim-1-i][0]);
-            perm[i] = ndim-1-i;
+            std::copy_n(it->begin(), nirrep, &len[ndim1-1-i][0]);
+            perm[i] = ndim1-1-i;
             ++it;
         }
+    }
+
+    for (unsigned i = ndim1;i < ndim2;i++)
+    {
+        std::copy_n(it->begin(), nirrep, &len[i][0]);
+        ++it;
     }
 }
 
@@ -105,7 +112,8 @@ template <typename U, typename V, typename W>
 enable_if_matrix_of_t<U,len_type>
 set_len(const U& len_in, V& len, W& perm, dpd_layout layout)
 {
-    unsigned ndim = perm.size();
+    unsigned ndim1 = perm.size();
+    unsigned ndim2 = len_in.length(0);
     unsigned nirrep = len_in.length(1);
 
     if (layout == BLOCKED_COLUMN_MAJOR ||
@@ -113,9 +121,10 @@ set_len(const U& len_in, V& len, W& perm, dpd_layout layout)
         layout == BALANCED_COLUMN_MAJOR)
     {
         // Column major
-        for (unsigned i = 0;i < ndim;i++)
+        for (unsigned i = 0;i < ndim1;i++)
         {
-            std::copy_n(&len_in[i][0], nirrep, &len[i][0]);
+            for (unsigned j = 0;j < nirrep;j++)
+                len[i][j] = len_in[i][j];
             perm[i] = i;
         }
     }
@@ -123,11 +132,18 @@ set_len(const U& len_in, V& len, W& perm, dpd_layout layout)
     {
         // Row major: reverse the dimensions and treat as
         // permuted column major
-        for (unsigned i = 0;i < ndim;i++)
+        for (unsigned i = 0;i < ndim1;i++)
         {
-            std::copy_n(&len_in[i][0], nirrep, &len[ndim-1-i][0]);
-            perm[i] = ndim-1-i;
+            for (unsigned j = 0;j < nirrep;j++)
+                len[ndim1-1-i][j] = len_in[i][j];
+            perm[i] = ndim1-1-i;
         }
+    }
+
+    for (unsigned i = ndim1;i < ndim2;i++)
+    {
+        for (unsigned j = 0;j < nirrep;j++)
+            len[i][j] = len_in[i][j];
     }
 }
 
@@ -135,7 +151,7 @@ template <typename U, typename V>
 void set_size_balanced(unsigned irrep, const U& len, V& size,
                        unsigned begin, unsigned end, unsigned idx)
 {
-    unsigned nirrep = length(len, 1);
+    unsigned nirrep = length(size, 1);
     unsigned ndim = end-begin;
 
     if (ndim == 1)
@@ -163,8 +179,8 @@ void set_size_balanced(unsigned irrep, const U& len, V& size,
 template <typename U, typename V>
 void set_size_blocked(unsigned, const U& len, V& size)
 {
-    unsigned ndim = length(len, 0);
-    unsigned nirrep = length(len, 1);
+    unsigned ndim = length(size, 0)/2;
+    unsigned nirrep = length(size, 1);
 
     size[0] = len[0];
 
@@ -187,7 +203,7 @@ void set_size(unsigned irrep, const U& len, V& size, dpd_layout layout)
     if (layout == BALANCED_ROW_MAJOR ||
         layout == BALANCED_COLUMN_MAJOR)
     {
-        set_size_balanced(irrep, len, size, 0, length(len, 0), 0);
+        set_size_balanced(irrep, len, size, 0, length(size, 0)/2, 0);
     }
     else
     {
@@ -234,7 +250,7 @@ template <typename U, typename V, typename W, typename X, typename Y, typename Z
 void get_block_prefix(const U& iperm, const V& irreps, const W& len, const X& size,
                       Y& blen, Z& bdata, Q& bstride, stride_type size_before)
 {
-    unsigned ndim = length(len, 0);
+    unsigned ndim = length(size, 0)/2;
 
     unsigned lirrep = 0;
     bstride[iperm[0]] = size_before;
@@ -262,7 +278,7 @@ template <typename U, typename V, typename W, typename X, typename Y, typename Z
 void get_block_blocked(const U& iperm, const V& irreps, const W& len, const X& size,
                        Y& blen, Z& bdata, Q& bstride, stride_type size_before)
 {
-    unsigned ndim = length(len, 0);
+    unsigned ndim = length(size, 0)/2;
 
     unsigned rirrep = 0;
     stride_type lsize = size_before;
@@ -297,7 +313,7 @@ void get_block(const U& iperm, const V& irreps, const W& len, const X& size,
         layout == BALANCED_COLUMN_MAJOR)
     {
         get_block_balanced(iperm, irreps, len, size, blen, bdata, bstride,
-                           size_before, 0, length(len, 0), 0);
+                           size_before, 0, length(size, 0)/2, 0);
     }
     else if (layout == PREFIX_ROW_MAJOR ||
              layout == PREFIX_COLUMN_MAJOR)
@@ -308,13 +324,6 @@ void get_block(const U& iperm, const V& irreps, const W& len, const X& size,
     {
         get_block_blocked(iperm, irreps, len, size, blen, bdata, bstride, size_before);
     }
-}
-
-inline unsigned num_sizes(unsigned ndim, dpd_layout layout)
-{
-    if (layout == BALANCED_ROW_MAJOR ||
-        layout == BALANCED_COLUMN_MAJOR) return 2*ndim-1;
-    else return ndim;
 }
 
 }

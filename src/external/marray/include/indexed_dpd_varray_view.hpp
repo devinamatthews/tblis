@@ -16,9 +16,8 @@ class indexed_dpd_varray_view : public indexed_dpd_varray_base<Type, indexed_dpd
     protected:
         typedef indexed_dpd_varray_base<Type, indexed_dpd_varray_view, false> base;
 
-        using base::dense_len_;
+        using base::len_;
         using base::dense_size_;
-        using base::idx_len_;
         using base::idx_irrep_;
         using base::perm_;
         using base::data_;

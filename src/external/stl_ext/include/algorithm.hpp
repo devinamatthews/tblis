@@ -485,6 +485,14 @@ T select_from(const T& v, const U& s, const U& match)
     return v2;
 }
 
+template <typename T, typename U>
+T select_from(const T& v, const U& idx)
+{
+    T v2; v2.reserve(idx.size());
+    for (auto& i : idx) v2.push_back(v[i]);
+    return v2;
+}
+
 }
 
 #endif

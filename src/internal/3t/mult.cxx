@@ -231,7 +231,7 @@ void contract_blis(const communicator& comm, const config& cfg,
     gemm(comm, cfg, alpha, at, bt, beta, ct);
 }
 
-#define INSTANTIATE_CONTRACT_BLIS(T) \
+#define FOREACH_TYPE(T) \
 template void contract_blis(const communicator& comm, const config& cfg, \
                             const std::vector<len_type>& len_AB, \
                             const std::vector<len_type>& len_AC, \
@@ -245,11 +245,7 @@ template void contract_blis(const communicator& comm, const config& cfg, \
                             T  beta,       T* C, \
                             const std::vector<stride_type>& stride_C_AC, \
                             const std::vector<stride_type>& stride_C_BC);
-
-INSTANTIATE_CONTRACT_BLIS(float);
-INSTANTIATE_CONTRACT_BLIS(double);
-INSTANTIATE_CONTRACT_BLIS(scomplex);
-INSTANTIATE_CONTRACT_BLIS(dcomplex);
+#include "configs/foreach_type.h"
 
 template <typename T>
 void mult_blas(const communicator& comm, const config& cfg,

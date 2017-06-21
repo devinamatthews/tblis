@@ -43,6 +43,7 @@ lib_libtblis_la_SOURCES = \
     \
     src/internal/3m/mult.cxx \
     \
+    src/internal/3t/dpd_mult.cxx \
     src/internal/3t/mult.cxx \
     \
     src/configs/configs.cxx \

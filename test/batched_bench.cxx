@@ -31,15 +31,6 @@ using namespace stl_ext;
 len_type v = 30;
 len_type o = 5;
 
-namespace tblis
-{
-
-std::atomic<long> flops;
-len_type inout_ratio = 200000;
-int outer_threading = 1;
-
-}
-
 template <typename Kernel, typename ...Args>
 double run_kernel(len_type R, Kernel&& kernel, Args&&...args)
 {

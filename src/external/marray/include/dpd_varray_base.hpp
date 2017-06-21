@@ -109,7 +109,7 @@ class dpd_varray_base
             data_ = ptr;
             layout_ = layout;
             len_.reset({ndim, nirrep}, ROW_MAJOR);
-            size_.reset({detail::num_sizes(ndim, layout), nirrep}, ROW_MAJOR);
+            size_.reset({2*ndim, nirrep}, ROW_MAJOR);
             perm_.resize(ndim);
 
             detail::set_len(len, len_, perm_, layout_);

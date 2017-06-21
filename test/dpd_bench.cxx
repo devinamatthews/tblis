@@ -19,7 +19,6 @@
 #include "util/tensor.hpp"
 #include "util/random.hpp"
 #include "internal/3t/mult.hpp"
-#include "tensor/dpd_tensor_contract.hpp"
 
 int check = 0;
 
@@ -66,34 +65,13 @@ double run_kernel(len_type R, Kernel&& kernel, Args&&...args)
 template <typename T>
 double diff(const dpd_varray_view<T>& A, const dpd_varray_view<T>& B)
 {
-    unsigned nirrep = A.num_irreps();
-    unsigned irrep = A.irrep();
-    unsigned ndim = A.dimension();
-
-    std::vector<unsigned> size(nirrep);
-    size[0] = 1;
-
-    for (unsigned i = 0;i < ndim;i++)
-    {
-        std::vector<unsigned> new_size(nirrep);
-
-        for (unsigned irr1 = 0;irr1 < nirrep;irr1++)
-        {
-            for (unsigned irr2 = 0;irr2 < nirrep;irr2++)
-            {
-                new_size[irr1] += A.length(i, irr2)*size[irr1^irr2];
-            }
-        }
-
-        size.swap(new_size);
-    }
-
     const T* a = A.data();
     const T* b = B.data();
+    stride_type size = dpd_varray<T>::size(A.irrep(), A.lengths());
 
     double d = 0;
 
-    for (stride_type i = 0;i < size[irrep];i++)
+    for (stride_type i = 0;i < size;i++)
     {
         d += norm2(a[i]-b[i]);
     }
@@ -104,31 +82,10 @@ double diff(const dpd_varray_view<T>& A, const dpd_varray_view<T>& B)
 template <typename T>
 void randomize(dpd_varray<T>& A)
 {
-    unsigned nirrep = A.num_irreps();
-    unsigned irrep = A.irrep();
-    unsigned ndim = A.dimension();
-
-    std::vector<unsigned> size(nirrep);
-    size[0] = 1;
-
-    for (unsigned i = 0;i < ndim;i++)
-    {
-        std::vector<unsigned> new_size(nirrep);
-
-        for (unsigned irr1 = 0;irr1 < nirrep;irr1++)
-        {
-            for (unsigned irr2 = 0;irr2 < nirrep;irr2++)
-            {
-                new_size[irr1] += A.length(i, irr2)*size[irr1^irr2];
-            }
-        }
-
-        size.swap(new_size);
-    }
-
     T* a = A.data();
+    stride_type size = dpd_varray<T>::size(A.irrep(), A.lengths());
 
-    for (stride_type i = 0;i < size[irrep];i++)
+    for (stride_type i = 0;i < size;i++)
     {
         a[i] = random_number<double>();
     }
@@ -161,9 +118,10 @@ void bench(int R,
     double t1 = run_kernel(R,
     [&]
     {
-        contract_dpd_ref<double>(alpha,    A, typea.data(),
-                                           B, typeb.data(),
-                                  beta, tmp1, typec.data());
+        internal::impl = internal::REFERENCE;
+        mult<double>(alpha,    A, typea.data(),
+                               B, typeb.data(),
+                      beta, tmp1, typec.data());
     });
 
     auto flops1 = flops.load();
@@ -173,9 +131,10 @@ void bench(int R,
     double t2 = run_kernel(R,
     [&]
     {
-        contract_dpd<double>(alpha,    A, typea.data(),
-                                       B, typeb.data(),
-                              beta, tmp2, typec.data());
+        internal::impl = internal::BLIS_BASED;
+        mult<double>(alpha,    A, typea.data(),
+                               B, typeb.data(),
+                      beta, tmp2, typec.data());
     });
 
     auto flops2 = flops.load();

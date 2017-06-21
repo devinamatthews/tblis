@@ -25,9 +25,8 @@ class indexed_dpd_varray : public indexed_dpd_varray_base<Type, indexed_dpd_varr
         using typename base::const_reference;
 
     protected:
-        using base::dense_len_;
+        using base::len_;
         using base::dense_size_;
-        using base::idx_len_;
         using base::idx_irrep_;
         using base::perm_;
         using base::data_;
@@ -389,7 +388,7 @@ class indexed_dpd_varray : public indexed_dpd_varray_base<Type, indexed_dpd_varr
 
             base::reset(irrep, nirrep, len, real_data_.cview(), idx_irrep, real_idx_.cview(), layout);
 
-            stride_type size = dpd_varray_view<Type>::size(dense_irrep_, dense_len_);
+            stride_type size = dpd_varray_view<Type>::size(dense_irrep_, dense_lengths());
             storage_.size = size*idx_ndim;
             real_data_[0] = alloc_traits::allocate(storage_, storage_.size);
             for (len_type i = 1;i < idx_ndim;i++)

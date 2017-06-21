@@ -22,13 +22,16 @@ namespace
 
 struct thread_configuration
 {
-    unsigned num_threads;
+    unsigned num_threads = 1;
 
     thread_configuration()
-    : num_threads(1)
     {
-        const char* str = getenv("TBLIS_NUM_THREADS");
+        const char* str = nullptr;
+
+#if !TBLIS_ENABLE_TBB
+        str = getenv("TBLIS_NUM_THREADS");
         if (!str) str = getenv("OMP_NUM_THREADS");
+#endif //!TBLIS_ENABLE_TBB
 
         if (str)
         {

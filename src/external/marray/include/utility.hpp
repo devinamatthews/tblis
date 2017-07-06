@@ -14,6 +14,7 @@
 #include <cstddef>
 #include <string>
 #include <functional>
+#include <ostream>
 
 #ifdef MARRAY_ENABLE_ASSERTS
 #define MARRAY_ASSERT(e) assert(e)

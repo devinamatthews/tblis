@@ -1162,6 +1162,57 @@ class marray_base
         {
             return NDim;
         }
+
+        friend std::ostream& operator<<(std::ostream& os, const marray_base& x)
+        {
+
+            for (unsigned i = 0;i < NDim-1;i++)
+            {
+                for (unsigned j = 0;j < i;j++) os << ' ';
+                os << "{\n";
+            }
+
+            std::array<len_type,NDim-1> idx = {};
+            auto data = x.data_;
+
+            for (bool done = false;!done;)
+            {
+                for (unsigned i = 0;i < NDim-1;i++) os << ' ';
+                os << '{';
+                len_type n = x.len_[NDim-1];
+                for (len_type i = 0;i < n-1;i++)
+                    os << data[i*x.stride_[NDim-1]] << ", ";
+                os << data[(n-1)*x.stride_[NDim-1]] << "}";
+
+                for (unsigned i = NDim-1;i --> 0;)
+                {
+                    idx[i]++;
+                    data += x.stride_[i];
+
+                    if (idx[i] >= x.len_[i])
+                    {
+                        data -= idx[i]*x.stride_[i];
+                        idx[i] = 0;
+                        os << "\n";
+                        for (unsigned j = 0;j < i;j++) os << ' ';
+                        os << '}';
+                        if (i == 0) done = true;
+                    }
+                    else
+                    {
+                        os << ",\n";
+                        for (unsigned j = i+1;j < NDim-1;j++)
+                        {
+                            for (unsigned k = 0;k < j;k++) os << ' ';
+                            os << "{\n";
+                        }
+                        break;
+                    }
+                }
+            }
+
+            return os;
+        }
 };
 
 }

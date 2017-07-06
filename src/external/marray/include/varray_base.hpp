@@ -886,6 +886,58 @@ class varray_base
         {
             return static_cast<unsigned>(len_.size());
         }
+
+        friend std::ostream& operator<<(std::ostream& os, const varray_base& x)
+        {
+            unsigned ndim = x.dimension();
+
+            for (unsigned i = 0;i < ndim-1;i++)
+            {
+                for (unsigned j = 0;j < i;j++) os << ' ';
+                os << "{\n";
+            }
+
+            std::vector<len_type> idx(ndim-1);
+            auto data = x.data_;
+
+            for (bool done = false;!done;)
+            {
+                for (unsigned i = 0;i < ndim-1;i++) os << ' ';
+                os << '{';
+                len_type n = x.len_[ndim-1];
+                for (len_type i = 0;i < n-1;i++)
+                    os << data[i*x.stride_[ndim-1]] << ", ";
+                os << data[(n-1)*x.stride_[ndim-1]] << "}";
+
+                for (unsigned i = ndim-1;i --> 0;)
+                {
+                    idx[i]++;
+                    data += x.stride_[i];
+
+                    if (idx[i] >= x.len_[i])
+                    {
+                        data -= idx[i]*x.stride_[i];
+                        idx[i] = 0;
+                        os << "\n";
+                        for (unsigned j = 0;j < i;j++) os << ' ';
+                        os << '}';
+                        if (i == 0) done = true;
+                    }
+                    else
+                    {
+                        os << ",\n";
+                        for (unsigned j = i+1;j < ndim-1;j++)
+                        {
+                            for (unsigned k = 0;k < j;k++) os << ' ';
+                            os << "{\n";
+                        }
+                        break;
+                    }
+                }
+            }
+
+            return os;
+        }
 };
 
 template <unsigned NDim, typename Type, typename Derived>

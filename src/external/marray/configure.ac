@@ -15,5 +15,4 @@ LT_INIT
 mkdir -p bin
 
 AC_CONFIG_FILES([Makefile])
-AC_CONFIG_SUBDIRS([third_party/googletest])
 AC_OUTPUT

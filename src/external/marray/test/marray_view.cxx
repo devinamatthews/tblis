@@ -613,3 +613,37 @@ TEST(marray_view, swap)
     EXPECT_EQ((array<stride_type,3>{24, 3, 1}), v2.strides());
     EXPECT_EQ(data2, v2.data());
 }
+
+TEST(marray_view, print)
+{
+    double data[2][2][3] =
+    {
+     {
+      {0, 1, 2},
+      {3, 4, 5}
+     },
+     {
+      {6, 7, 8},
+      {9, 10, 11}
+     }
+    };
+
+    marray_view<double,3> v1({2,2,3}, (double*)data, ROW_MAJOR);
+
+    std::string expected =
+R"XXX({
+ {
+  {0, 1, 2},
+  {3, 4, 5}
+ },
+ {
+  {6, 7, 8},
+  {9, 10, 11}
+ }
+})XXX";
+
+    std::ostringstream oss;
+    oss << v1;
+
+    EXPECT_EQ(oss.str(), expected);
+}

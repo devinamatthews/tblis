@@ -2,7 +2,7 @@ VPATH += $(srcdir)
 
 ACLOCAL_AMFLAGS = -I m4
 
-AM_CPPFLAGS = -DMARRAY_ENABLE_ASSERTS -I$(srcdir)/include -Ithird_party/googletest/include
+AM_CPPFLAGS = -DMARRAY_ENABLE_ASSERTS -I$(srcdir)/include -Ithird_party
 
 noinst_PROGRAMS = bin/test
 bin_test_SOURCES = test/dpd_marray_view.cxx \
@@ -20,10 +20,7 @@ bin_test_SOURCES = test/dpd_marray_view.cxx \
                    test/utility.cxx \
                    test/varray_view.cxx \
                    test/varray.cxx \
-                   test/viterator.cxx
-bin_test_LDADD = third_party/googletest/lib/libgtest_main.la \
-                 third_party/googletest/lib/libgtest.la
+                   third_party/gtest/gtest_main.cc \
+                   third_party/gtest/gtest-all.cc
 
 TESTS = bin/test
-
-SUBDIRS = third_party/googletest

@@ -696,3 +696,37 @@ TEST(varray_view, swap)
     EXPECT_EQ((vector<stride_type>{8, 1}), v2.strides());
     EXPECT_EQ(data2, v2.data());
 }
+
+TEST(varray_view, print)
+{
+    double data[2][2][3] =
+    {
+     {
+      {0, 1, 2},
+      {3, 4, 5}
+     },
+     {
+      {6, 7, 8},
+      {9, 10, 11}
+     }
+    };
+
+    varray_view<double> v1({2,2,3}, (double*)data, ROW_MAJOR);
+
+    std::string expected =
+R"XXX({
+ {
+  {0, 1, 2},
+  {3, 4, 5}
+ },
+ {
+  {6, 7, 8},
+  {9, 10, 11}
+ }
+})XXX";
+
+    std::ostringstream oss;
+    oss << v1;
+
+    EXPECT_EQ(oss.str(), expected);
+}

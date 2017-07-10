@@ -180,7 +180,9 @@ class indexed_dpd_varray_base
             for (len_type i = 0;i < num_indices();i++)
             {
                 std::copy_n(&idx_[i][0], ndim, indices.data());
-                f(View(dense_irrep_, nirrep_, len, const_cast<Ptr>(data_[i]), layout_), indices);
+                detail::call(std::forward<Func>(f),
+                             View(dense_irrep_, nirrep_, len, const_cast<Ptr>(data_[i]), layout_),
+                             indices);
             }
         }
 
@@ -196,7 +198,9 @@ class indexed_dpd_varray_base
 
             for (len_type i = 0;i < num_indices();i++)
             {
-                f(View(dense_irrep_, nirrep_, len, const_cast<Ptr>(data_[i]), layout_), idx_[i][I]...);
+                detail::call(std::forward<Func>(f),
+                             View(dense_irrep_, nirrep_, len, const_cast<Ptr>(data_[i]), layout_),
+                             idx_[i][I]...);
             }
         }
 
@@ -242,7 +246,7 @@ class indexed_dpd_varray_base
                     Ptr ptr = const_cast<Ptr>(cptr);
                     for (bool done = false;!done;)
                     {
-                        f(*ptr, irreps, indices);
+                        detail::call(std::forward<Func>(f), *ptr, irreps, indices);
 
                         for (unsigned j = 0;j < dense_ndim;j++)
                         {
@@ -300,7 +304,9 @@ class indexed_dpd_varray_base
 
                     miterator<DenseNDim, 1> it2(len, stride);
                     Ptr ptr = const_cast<Ptr>(cptr);
-                    while (it2.next(ptr)) f(*ptr, irreps[I]..., idx_irrep_[J]..., it2.position()[I]..., idx_[i][J]...);
+                    while (it2.next(ptr)) detail::call(std::forward<Func>(f), *ptr,
+                                                       irreps[I]..., idx_irrep_[J]...,
+                                                       it2.position()[I]..., idx_[i][J]...);
                 }
             }
         }

@@ -58,6 +58,20 @@ struct initializer_type
     typedef std::initializer_list<typename initializer_type<Type, NDim-1>::type> type;
 };
 
+template <typename Func, typename Arg, typename... Args>
+auto call(Func&& f, Arg&& arg, Args&&... args)
+-> detail::enable_if_t<std::is_same<decltype(f(std::forward<Arg>(arg), std::forward<Args>(args)...)),void>::value>
+{
+    f(std::forward<Arg>(arg), std::forward<Args>(args)...);
+}
+
+template <typename Func, typename Arg, typename... Args>
+auto call(Func&& f, Arg&& arg, Args&&... args)
+-> detail::enable_if_t<std::is_same<decltype(f(std::forward<Arg>(arg))),void>::value>
+{
+    f(std::forward<Arg>(arg));
+}
+
 }
 
 template <typename Type, unsigned NDim, typename Derived, bool Owner>
@@ -174,7 +188,7 @@ class marray_base
         {
             miterator<NDim, 1> it(len_, stride_);
             Ptr ptr = const_cast<Ptr>(data_);
-            while (it.next(ptr)) f(*ptr, it.position()[I]...);
+            while (it.next(ptr)) detail::call(std::forward<Func>(f), *ptr, it.position()[I]...);
         }
 
         void set_lengths(unsigned i, std::array<len_type, NDim>& len, std::initializer_list<Type> data)

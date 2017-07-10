@@ -143,9 +143,18 @@ class dpd_varray_base
                     irreps[0] ^= irreps[i] = it.position()[i-1];
                 }
 
+                bool empty = false;
+                for (unsigned i = 0;i < ndim;i++)
+                {
+                    if (!len_[perm_[i]][irreps[i]]) empty = true;
+                }
+                if (empty) continue;
+
                 get_block(irreps, len, cptr, stride);
 
-                f(View(len, const_cast<Ptr>(cptr), stride), irreps);
+                detail::call(std::forward<Func>(f),
+                             View(len, const_cast<Ptr>(cptr), stride),
+                             irreps);
             }
         }
 
@@ -174,9 +183,55 @@ class dpd_varray_base
                     irreps[0] ^= irreps[i] = it.position()[i-1];
                 }
 
+                bool empty = false;
+                for (unsigned i = 0;i < NDim;i++)
+                {
+                    if (!len_[perm_[i]][irreps[i]]) empty = true;
+                }
+                if (empty) continue;
+
                 get_block(irreps, len, cptr, stride);
 
-                f(View(len, const_cast<Ptr>(cptr), stride), irreps[I]...);
+                detail::call(std::forward<Func>(f),
+                             View(len, const_cast<Ptr>(cptr), stride),
+                             irreps[I]...);
+            }
+        }
+
+        template <typename Tp, typename Func>
+        void for_each_element(Func&& f) const
+        {
+            typedef Tp* Ptr;
+
+            unsigned ndim = dimension();
+
+            const_pointer cptr = data_;
+            std::vector<unsigned> irreps(ndim);
+            std::vector<len_type> len(ndim);
+            std::vector<stride_type> stride(ndim);
+
+            viterator<0> it1(std::vector<unsigned>(ndim-1, nirrep_));
+            while (it1.next())
+            {
+                irreps[0] = irrep_;
+                for (unsigned i = 1;i < ndim;i++)
+                {
+                    irreps[0] ^= irreps[i] = it1.position()[i-1];
+                }
+
+                bool empty = false;
+                for (unsigned i = 0;i < ndim;i++)
+                {
+                    if (!len_[perm_[i]][irreps[i]]) empty = true;
+                }
+                if (empty) continue;
+
+                get_block(irreps, len, cptr, stride);
+
+                viterator<1> it2(len, stride);
+                Ptr ptr = const_cast<Ptr>(cptr);
+                while (it2.next(ptr)) detail::call(std::forward<Func>(f), *ptr,
+                                                   irreps, it2.position());
             }
         }
 
@@ -205,11 +260,19 @@ class dpd_varray_base
                     irreps[0] ^= irreps[i] = it1.position()[i-1];
                 }
 
+                bool empty = false;
+                for (unsigned i = 0;i < NDim;i++)
+                {
+                    if (!len_[perm_[i]][irreps[i]]) empty = true;
+                }
+                if (empty) continue;
+
                 get_block(irreps, len, cptr, stride);
 
                 miterator<NDim, 1> it2(len, stride);
                 Ptr ptr = const_cast<Ptr>(cptr);
-                while (it2.next(ptr)) f(*ptr, irreps[I]..., it2.position()[I]...);
+                while (it2.next(ptr)) detail::call(std::forward<Func>(f), *ptr,
+                                                   irreps[I]..., it2.position()[I]...);
             }
         }
 
@@ -506,29 +569,13 @@ class dpd_varray_base
         template <typename Func>
         void for_each_element(Func&& f) const
         {
-            for_each_block(
-            [&](const varray_view<ctype>& view, const std::vector<unsigned>& irreps)
-            {
-                view.for_each_element(
-                [&](cref value, const std::vector<len_type>& pos)
-                {
-                    f(value, irreps, pos);
-                });
-            });
+            for_each_element<ctype>(std::forward<Func>(f));
         }
 
         template <typename Func>
         void for_each_element(Func&& f)
         {
-            for_each_block(
-            [&](const varray_view<Type>& view, const std::vector<unsigned>& irreps)
-            {
-                view.for_each_element(
-                [&](reference value, const std::vector<len_type>& pos)
-                {
-                    f(value, irreps, pos);
-                });
-            });
+            for_each_element<Type>(std::forward<Func>(f));
         }
 
         template <unsigned NDim, typename Func>

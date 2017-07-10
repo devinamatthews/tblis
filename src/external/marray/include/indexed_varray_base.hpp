@@ -174,7 +174,9 @@ class indexed_varray_base
             for (len_type i = 0;i < num_indices();i++)
             {
                 std::copy_n(&idx_[i][0], ndim, indices.data());
-                f(View(dense_len_, const_cast<Ptr>(data_[i]), dense_stride_), indices);
+                detail::call(std::forward<Func>(f),
+                             View(dense_len_, const_cast<Ptr>(data_[i]), dense_stride_),
+                             indices);
             }
         }
 
@@ -188,7 +190,9 @@ class indexed_varray_base
 
             for (len_type i = 0;i < num_indices();i++)
             {
-                f(View(dense_len_, const_cast<Ptr>(data_[i]), dense_stride_), idx_[i][I]...);
+                detail::call(std::forward<Func>(f),
+                             View(dense_len_, const_cast<Ptr>(data_[i]), dense_stride_),
+                             idx_[i][I]...);
             }
         }
 
@@ -211,7 +215,7 @@ class indexed_varray_base
                 Ptr ptr = const_cast<Ptr>(data_[i]);
                 for (bool done = false;!done;)
                 {
-                    f(*ptr, indices);
+                    detail::call(std::forward<Func>(f), *ptr, indices);
 
                     for (unsigned j = 0;j < dense_ndim;j++)
                     {
@@ -246,7 +250,8 @@ class indexed_varray_base
             for (len_type i = 0;i < num_indices();i++)
             {
                 Ptr ptr = const_cast<Ptr>(data_[i]);
-                while (it.next(ptr)) f(*ptr, it.position()[I]..., idx_[i][J]...);
+                while (it.next(ptr)) detail::call(std::forward<Func>(f), *ptr,
+                                                  it.position()[I]..., idx_[i][J]...);
             }
         }
 

@@ -84,6 +84,8 @@ class viterator
                   typename=typename std::enable_if<sizeof...(Offsets) == N>::type>
         void position(stride_type pos, Offsets&... off)
         {
+            if (empty_) return;
+
             for (size_t i = 0;i < ndim_;i++)
             {
                 pos_[i] = pos%len_[i];
@@ -99,6 +101,8 @@ class viterator
                                                    sizeof...(Offsets) == N>::type>
         void position(const Pos& pos, Offsets&... off)
         {
+            if (empty_) return;
+
             assert(pos.size() == ndim_);
 
             pos_.assign(pos.begin(), pos.end());

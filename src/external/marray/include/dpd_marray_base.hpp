@@ -430,6 +430,7 @@ class dpd_marray_base
             irrep_ = irrep;
             nirrep_ = nirrep;
             layout_ = layout;
+            len_ = {};
 
             detail::set_len(len, len_, perm_, layout_);
             detail::set_size(irrep_, len_, size_, layout_);
@@ -463,9 +464,18 @@ class dpd_marray_base
                     irreps[0] ^= irreps[i] = it.position()[i-1];
                 }
 
+                bool empty = false;
+                for (unsigned i = 0;i < NDim;i++)
+                {
+                    if (!len_[perm_[i]][irreps[i]]) empty = true;
+                }
+                if (empty) continue;
+
                 get_block(irreps, len, cptr, stride);
 
-                f(View(len, const_cast<Ptr>(cptr), stride), irreps[I]...);
+                detail::call(std::forward<Func>(f),
+                             View(len, const_cast<Ptr>(cptr), stride),
+                             irreps[I]...);
             }
         }
 
@@ -491,11 +501,19 @@ class dpd_marray_base
                     irreps[0] ^= irreps[i] = it1.position()[i-1];
                 }
 
+                bool empty = false;
+                for (unsigned i = 0;i < NDim;i++)
+                {
+                    if (!len_[perm_[i]][irreps[i]]) empty = true;
+                }
+                if (empty) continue;
+
                 get_block(irreps, len, cptr, stride);
 
                 miterator<NDim, 1> it2(len, stride);
                 Ptr ptr = const_cast<Ptr>(cptr);
-                while (it2.next(ptr)) f(*ptr, irreps[I]..., it2.position()[I]...);
+                while (it2.next(ptr)) detail::call(std::forward<Func>(f), *ptr,
+                                                   irreps[I]..., it2.position()[I]...);
             }
         }
 
@@ -920,7 +938,7 @@ class dpd_marray_base
 
         std::array<std::array<len_type,8>, NDim> lengths() const
         {
-            std::array<std::array<len_type,8>, NDim> len;
+            std::array<std::array<len_type,8>, NDim> len = {};
             for (unsigned i = 0;i < NDim;i++) len[i] = len_[perm_[i]];
             return len;
         }

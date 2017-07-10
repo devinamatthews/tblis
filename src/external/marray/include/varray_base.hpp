@@ -127,7 +127,7 @@ class varray_base
         {
             viterator<1> it(len_, stride_);
             Ptr ptr = const_cast<Ptr>(data_);
-            while (it.next(ptr)) f(*ptr, it.position());
+            while (it.next(ptr)) detail::call(std::forward<Func>(f), *ptr, it.position());
         }
 
         template <typename Ptr, typename Func, unsigned... I>
@@ -135,7 +135,7 @@ class varray_base
         {
             miterator<sizeof...(I), 1> it(len_, stride_);
             Ptr ptr = const_cast<Ptr>(data_);
-            while (it.next(ptr)) f(*ptr, it.position()[I]...);
+            while (it.next(ptr)) detail::call(std::forward<Func>(f), *ptr, it.position()[I]...);
         }
 
         template <unsigned Dim>

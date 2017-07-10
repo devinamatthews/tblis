@@ -83,6 +83,8 @@ class miterator
                   typename=typename std::enable_if<sizeof...(Offsets) == N>::type>
         void position(stride_type pos, Offsets&... off)
         {
+            if (empty_) return;
+
             for (size_t i = 0;i < NDim;i++)
             {
                 pos_[i] = pos%len_[i];
@@ -98,6 +100,8 @@ class miterator
                                                    sizeof...(Offsets) == N>::type>
         void position(const Pos& pos, Offsets&... off)
         {
+            if (empty_) return;
+
             assert(pos.size() == NDim);
 
             std::copy_n(pos.begin(), NDim, pos_.begin());

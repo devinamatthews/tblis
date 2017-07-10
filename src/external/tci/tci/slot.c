@@ -1,34 +1,38 @@
 #include "slot.h"
 
-#include <stdlib.h>
-
-int tci_work_item_try_work(tci_work_item* item)
+int tci_slot_init(tci_slot* slot, int empty)
 {
-    int expected = TCI_NOT_WORKED_ON;
+    *slot = empty;
+    return 0;
+}
 
-    if (__atomic_compare_exchange_n(item, &expected, TCI_IN_PROGRESS,
-                                    1, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE))
+int tci_slot_is_filled(tci_slot* slot, int empty)
+{
+    return __atomic_load_n(slot, __ATOMIC_ACQUIRE) != empty;
+}
+
+int tci_slot_try_fill(tci_slot* slot, int empty, int value)
+{
+    if (__atomic_compare_exchange_n(slot, &empty, value, 1,
+                                    __ATOMIC_ACQUIRE,
+                                    __ATOMIC_RELAXED)) return 1;
+
+    return empty == value;
+}
+
+void tci_slot_fill(tci_slot* slot, int empty, int value)
+{
+    while (true)
     {
-        return TCI_RESERVED;
-    }
-    else
-    {
-        return expected;
-    }
-}
-
-void tci_work_item_finish(tci_work_item* item)
-{
-    __atomic_store_n(item, TCI_FINISHED, __ATOMIC_RELEASE);
-}
-
-int tci_work_item_status(tci_work_item* item)
-{
-    return __atomic_load_n(item, __ATOMIC_ACQUIRE);
-}
-
-void tci_work_item_wait(tci_work_item* item)
-{
-    while (__atomic_load_n(item, __ATOMIC_ACQUIRE) != TCI_FINISHED)
+        int expected = empty;
+        if (__atomic_compare_exchange_n(slot, &expected, value, 0,
+                                        __ATOMIC_ACQUIRE,
+                                        __ATOMIC_RELAXED)) break;
         tci_yield();
+    }
+}
+
+void tci_slot_clear(tci_slot* slot, int empty)
+{
+    __atomic_store_n(slot, empty, __ATOMIC_RELEASE);
 }

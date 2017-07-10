@@ -234,6 +234,38 @@ class communicator
             barrier();
         }
 
+        template <typename Arg>
+        void broadcast_value_from_nowait(int root, Arg& arg) const
+        {
+            bool tid = thread_num();
+            broadcast_from_nowait(root,
+            [&](Arg& master)
+            {
+                if (tid != root) arg = master;
+            },
+            arg);
+        }
+
+        template <typename Arg>
+        void broadcast_value_from(int root, Arg& arg) const
+        {
+            broadcast_value_from_nowait(root, arg);
+            barrier();
+        }
+
+        template <typename Arg>
+        void broadcast_value_nowait(Arg& arg) const
+        {
+            broadcast_value_from_nowait(0, arg);
+        }
+
+        template <typename Arg>
+        void broadcast_value(Arg& arg) const
+        {
+            broadcast_value_from_nowait(0, arg);
+            barrier();
+        }
+
         communicator gang(int type, unsigned n, unsigned bs=0) const
         {
             communicator child;

@@ -14,3 +14,5 @@ tci_config.h
 .git.bak
 autom4te.cache/
 .ptp-sync-folder
+.cproject
+.project

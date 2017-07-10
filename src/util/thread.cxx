@@ -91,6 +91,15 @@ thread_configuration& get_thread_configuration()
 
 }
 
+namespace tblis
+{
+
+tci::communicator single;
+
+len_type dynamic_task_set::inout_ratio = 200000;
+
+}
+
 extern "C"
 {
 

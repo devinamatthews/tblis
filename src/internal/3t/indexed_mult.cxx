@@ -24,10 +24,6 @@ extern std::atomic<long> flops;
 extern len_type inout_ratio;
 extern int outer_threading;
 
-std::atomic<long> flops;
-len_type inout_ratio = 200000;
-int outer_threading = 1;
-
 namespace internal
 {
 

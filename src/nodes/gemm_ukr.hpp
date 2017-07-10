@@ -123,8 +123,8 @@ void accum_utile(len_type m, len_type n,
 
 struct gemm_micro_kernel
 {
-    template <typename T, typename Communicator>
-    void operator()(Communicator& comm, const config& cfg,
+    template <typename T>
+    void operator()(const communicator& comm, const config& cfg,
                     T alpha, matrix_view<T>& A,
                              matrix_view<T>& B,
                     T  beta, matrix_view<T>& C) const
@@ -165,8 +165,8 @@ struct gemm_micro_kernel
         }
     }
 
-    template <typename T, typename Communicator>
-    void operator()(Communicator& comm, const config& cfg,
+    template <typename T>
+    void operator()(const communicator& comm, const config& cfg,
                     T alpha,         matrix_view<T>& A,
                                      matrix_view<T>& B,
                     T  beta, scatter_matrix_view<T>& C) const
@@ -227,8 +227,8 @@ struct gemm_micro_kernel
         }
     }
 
-    template <typename T, typename Communicator>
-    void operator()(Communicator& comm, const config& cfg,
+    template <typename T>
+    void operator()(const communicator& comm, const config& cfg,
                     T alpha,          matrix_view<T>& A,
                                       matrix_view<T>& B,
                     T  beta, block_scatter_matrix<T>& C) const

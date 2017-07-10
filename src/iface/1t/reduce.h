@@ -34,16 +34,6 @@ void reduce(reduce_t op, varray_view<const T> A, const label_type* idx_A, T& res
 }
 
 template <typename T>
-void reduce(single_t, reduce_t op, varray_view<const T> A, const label_type* idx_A,
-            T& result, len_type& idx)
-{
-    tblis_tensor A_s(A);
-    tblis_scalar result_s(result);
-    tblis_tensor_reduce(tblis_single, nullptr, op, &A_s, idx_A, &result_s, &idx);
-    result = result_s.get<T>();
-}
-
-template <typename T>
 void reduce(const communicator& comm, reduce_t op, varray_view<const T> A, const label_type* idx_A,
             T& result, len_type& idx)
 {
@@ -62,16 +52,43 @@ std::pair<T,len_type> reduce(reduce_t op, varray_view<const T> A, const label_ty
 }
 
 template <typename T>
-std::pair<T,len_type> reduce(single_t, reduce_t op, varray_view<const T> A, const label_type* idx_A)
+std::pair<T,len_type> reduce(const communicator& comm, reduce_t op,
+                             varray_view<const T> A, const label_type* idx_A)
 {
     std::pair<T,len_type> result;
-    reduce(single, op, A, idx_A, result.first, result.second);
+    reduce(comm, op, A, idx_A, result.first, result.second);
+    return result;
+}
+
+template <typename T>
+void reduce(const communicator& comm, reduce_t op, dpd_varray_view<const T> A,
+            const label_type* idx_A, T& result, len_type& idx);
+
+template <typename T>
+void reduce(reduce_t op, dpd_varray_view<const T> A, const label_type* idx_A,
+            T& result, len_type& idx)
+{
+    parallelize
+    (
+        [&](const communicator& comm)
+        {
+            reduce(comm, op, A, idx_A, result, idx);
+        },
+        tblis_get_num_threads()
+    );
+}
+
+template <typename T>
+std::pair<T,len_type> reduce(reduce_t op, dpd_varray_view<const T> A, const label_type* idx_A)
+{
+    std::pair<T,len_type> result;
+    reduce(op, A, idx_A, result.first, result.second);
     return result;
 }
 
 template <typename T>
 std::pair<T,len_type> reduce(const communicator& comm, reduce_t op,
-                             varray_view<const T> A, const label_type* idx_A)
+                             dpd_varray_view<const T> A, const label_type* idx_A)
 {
     std::pair<T,len_type> result;
     reduce(comm, op, A, idx_A, result.first, result.second);

@@ -33,6 +33,7 @@
 #include "../external/marray/include/dpd_varray.hpp"
 #include "../external/marray/include/dpd_marray.hpp"
 #include "../external/marray/include/indexed_varray.hpp"
+#include "../external/marray/include/indexed_dpd_varray.hpp"
 
 #endif
 
@@ -103,12 +104,6 @@ template <> struct type_tag<  double> { static constexpr type_t value =   TYPE_D
 template <> struct type_tag<scomplex> { static constexpr type_t value = TYPE_SCOMPLEX; };
 template <> struct type_tag<dcomplex> { static constexpr type_t value = TYPE_DCOMPLEX; };
 
-struct single_t
-{
-    constexpr single_t() {}
-};
-constexpr single_t single;
-
 using stl_ext::enable_if_t;
 using stl_ext::enable_if_integral_t;
 using stl_ext::enable_if_floating_point_t;
@@ -150,7 +145,7 @@ typedef struct tblis_scalar
         scomplex c;
         dcomplex z;
 #endif
-        
+
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
         scalar(float    v) : s(v) {}
         scalar(double   v) : d(v) {}

@@ -1,9 +1,7 @@
 #include "dpd_mult.hpp"
 #include "mult.hpp"
 
-#include "nodes/matrify.hpp"
-#include "nodes/partm.hpp"
-#include "nodes/gemm_ukr.hpp"
+#include "nodes/gemm.hpp"
 
 #include "matrix/scatter_tensor_matrix.hpp"
 
@@ -19,36 +17,22 @@ namespace tblis
 namespace internal
 {
 
-inline unsigned assign_irrep(unsigned dim, unsigned irrep)
-{
-    return irrep;
-}
+std::atomic<long> flops;
 
-template <typename... Args>
-unsigned assign_irrep(unsigned dim, unsigned irrep,
-                      std::vector<unsigned>& irreps,
-                      const std::vector<unsigned>& idx,
-                      Args&... args)
-{
-    irreps[idx[dim]] = irrep;
-    return assign_irrep(dim, irrep, args...);
-}
-
-template <typename... Args>
-void assign_irreps(unsigned ndim, unsigned irrep, unsigned nirrep,
-                   stride_type block, Args&... args)
-{
-    unsigned mask = nirrep-1;
-    unsigned shift = (nirrep>1) + (nirrep>2) + (nirrep>4);
-
-    unsigned irrep0 = irrep;
-    for (unsigned i = 1;i < ndim;i++)
-    {
-        irrep0 ^= assign_irrep(i, block & mask, args...);
-        block >>= shift;
-    }
-    if (ndim) assign_irrep(0, irrep0, args...);
-}
+template <typename T>
+void contract_blis(const communicator& comm, const config& cfg,
+                   const std::vector<len_type>& len_AB,
+                   const std::vector<len_type>& len_AC,
+                   const std::vector<len_type>& len_BC,
+                   T alpha, const T* A,
+                   const std::vector<stride_type>& stride_A_AB,
+                   const std::vector<stride_type>& stride_A_AC,
+                            const T* B,
+                   const std::vector<stride_type>& stride_B_AB,
+                   const std::vector<stride_type>& stride_B_BC,
+                   T  beta,       T* C,
+                   const std::vector<stride_type>& stride_C_AC,
+                   const std::vector<stride_type>& stride_C_BC);
 
 template <typename T>
 void dpd_contract_block(const communicator& comm, const config& cfg,
@@ -176,40 +160,14 @@ void dpd_contract_block(const communicator& comm, const config& cfg,
     }
     dense_AB /= nblock_AB;
 
-#if TBLIS_ENABLE_TBB
-#if TBB_INTERFACE_VERSION >= 9100
-    int nt = tbb::this_task_arena::max_concurrency();
-#else //TBB_INTERFACE_VERSION >= 9100
-    int nt = tblis_get_num_threads();
-#endif //TBB_INTERFACE_VERSION >= 9100
-#else //TBLIS_ENABLE_TBB
-    int nt = comm.num_threads();
-#endif //TBLIS_ENABLE_TBB
-
     stride_type nblock_par = nblock_AC*nblock_BC/nirrep;
     if (ndim_AB == 0) nblock_par /= nirrep;
-
-    int nt_outer, nt_inner;
-    std::tie(nt_outer, nt_inner) =
-        partition_2x2(nt, inout_ratio*nblock_par, nblock_par,
-                      dense_AC*dense_BC, nt);
-
-#if TBLIS_ENABLE_TBB
-
-    tbb::task_group tg;
-    auto& subcomm = comm;
-
-#else //TBLIS_ENABLE_TBB
-
-    std::vector<slot<int, -1>> slot(nblock_par);
-    communicator subcomm = comm.gang(TCI_EVENLY, nt_outer);
-    unsigned gid = subcomm.gang_num();
-
-#endif //TBLIS_ENABLE_TBB
 
     if (nblock_AC > 1) nblock_AC /= nirrep;
     if (nblock_BC > 1) nblock_BC /= nirrep;
     if (nblock_AB > 1) nblock_AB /= nirrep;
+
+    dynamic_task_set tasks(comm, nblock_par, dense_AC*dense_BC);
 
     stride_type block_idx = 0;
     for (unsigned irrep_AB = 0;irrep_AB < nirrep;irrep_AB++)
@@ -225,72 +183,52 @@ void dpd_contract_block(const communicator& comm, const config& cfg,
         {
             for (stride_type block_BC = 0;block_BC < nblock_BC;block_BC++)
             {
-#if TBLIS_ENABLE_TBB
-
-                tg.run([&,irrep_AB,irrep_AC,irrep_BC,block_AC,block_BC]
+                tasks.visit(block_idx++,
+                [&,irrep_AB,irrep_AC,irrep_BC,block_AC,block_BC]
+                (const communicator& subcomm, int)
                 {
+                    std::vector<unsigned> irreps_A(ndim_A);
+                    std::vector<unsigned> irreps_B(ndim_B);
+                    std::vector<unsigned> irreps_C(ndim_C);
 
-#else //TBLIS_ENABLE_TBB
+                    detail::assign_irreps(ndim_AC, irrep_AC, nirrep, block_AC,
+                                  irreps_A, idx_A_AC, irreps_C, idx_C_AC);
 
-                if (!slot[block_idx++].try_fill(gid)) continue;
+                    detail::assign_irreps(ndim_BC, irrep_BC, nirrep, block_BC,
+                                  irreps_B, idx_B_BC, irreps_C, idx_C_BC);
 
-#endif //TBLIS_ENABLE_TBB
+                    tensor_matrix<T> ct(C(irreps_C), idx_C_AC, idx_C_BC);
+                    T beta = beta_;
 
-                std::vector<unsigned> irreps_A(ndim_A);
-                std::vector<unsigned> irreps_B(ndim_B);
-                std::vector<unsigned> irreps_C(ndim_C);
+                    for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
+                    {
+                        detail::assign_irreps(ndim_AB, irrep_AB, nirrep, block_AB,
+                                      irreps_A, idx_A_AB, irreps_B, idx_B_AB);
 
-                assign_irreps(ndim_AC, irrep_AC, nirrep, block_AC,
-                              irreps_A, idx_A_AC, irreps_C, idx_C_AC);
+                        tensor_matrix<T> at(A(irreps_A), idx_A_AC, idx_A_AB);
+                        tensor_matrix<T> bt(B(irreps_B), idx_B_AB, idx_B_BC);
 
-                assign_irreps(ndim_BC, irrep_BC, nirrep, block_BC,
-                              irreps_B, idx_B_BC, irreps_C, idx_C_BC);
+                        if (subcomm.master())
+                            flops += 2*ct.length(0)*ct.length(1)*at.length(1);
 
-                tensor_matrix<T> ct(C(irreps_C), idx_C_AC, idx_C_BC);
-                T beta = beta_;
+                        TensorGEMM gemm;
 
-                for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
-                {
-                    assign_irreps(ndim_AB, irrep_AB, nirrep, block_AB,
-                                  irreps_A, idx_A_AB, irreps_B, idx_B_AB);
+                        auto tc = make_gemm_thread_config<T>(
+                            cfg, subcomm.num_threads(), ct.length(0), ct.length(1), at.length(1));
 
-                    tensor_matrix<T> at(A(irreps_A), idx_A_AC, idx_A_AB);
-                    tensor_matrix<T> bt(B(irreps_B), idx_B_AB, idx_B_BC);
+                        step<0>(gemm).distribute = tc.jc_nt;
+                        step<4>(gemm).distribute = tc.ic_nt;
+                        step<8>(gemm).distribute = tc.jr_nt;
+                        step<9>(gemm).distribute = tc.ir_nt;
 
-#if !TBLIS_ENABLE_TBB
-                    if (subcomm.master())
-#endif //!TBLIS_ENABLE_TBB
-                        flops += 2*ct.length(0)*ct.length(1)*at.length(1);
+                        gemm(subcomm, cfg, alpha, at, bt, beta, ct);
 
-                    internal::TensorGEMM gemm;
-
-                    auto tc = make_gemm_thread_config<T>(cfg, subcomm.num_threads(),
-                                                         ct.length(0), ct.length(1), at.length(1));
-
-                    step<0>(gemm).distribute = tc.jc_nt;
-                    step<4>(gemm).distribute = tc.ic_nt;
-                    step<8>(gemm).distribute = tc.jr_nt;
-                    step<9>(gemm).distribute = tc.ir_nt;
-
-                    gemm(subcomm, cfg, alpha, at, bt, beta, ct);
-
-                    beta = T(1);
-                }
-
-#if TBLIS_ENABLE_TBB
-
+                        beta = T(1);
+                    }
                 });
-
-#endif //TBLIS_ENABLE_TBB
             }
         }
     }
-
-#if TBLIS_ENABLE_TBB
-
-    tg.wait();
-
-#endif //TBLIS_ENABLE_TBB
 }
 
 template <typename T>
@@ -361,7 +299,7 @@ void dpd_mult_ref(const communicator& comm, const config& cfg,
             C2.reset(len_C);
 
             A.for_each_block(
-            [&](const varray_view<T>& local_A, const std::vector<unsigned>& irreps_A)
+            [&](const varray_view<const T>& local_A, const std::vector<unsigned>& irreps_A)
             {
                 varray_view<T> local_A2 = A2;
 
@@ -375,7 +313,7 @@ void dpd_mult_ref(const communicator& comm, const config& cfg,
             });
 
             B.for_each_block(
-            [&](const varray_view<T>& local_B, const std::vector<unsigned>& irreps_B)
+            [&](const varray_view<const T>& local_B, const std::vector<unsigned>& irreps_B)
             {
                 varray_view<T> local_B2 = B2;
 
@@ -631,22 +569,22 @@ void dpd_mult_block(const communicator& comm, const config& cfg,
 
                 for (stride_type block_ABC = 0;block_ABC < nblock_ABC;block_ABC++)
                 {
-                    assign_irreps(ndim_ABC, irrep_ABC, nirrep, block_ABC,
+                    detail::assign_irreps(ndim_ABC, irrep_ABC, nirrep, block_ABC,
                                   irreps_A, idx_A_ABC, irreps_B, idx_B_ABC, irreps_C, idx_C_ABC);
 
                     for (stride_type block_AC = 0;block_AC < nblock_AC;block_AC++)
                     {
-                        assign_irreps(ndim_AC, irrep_AC, nirrep, block_AC,
+                        detail::assign_irreps(ndim_AC, irrep_AC, nirrep, block_AC,
                                       irreps_A, idx_A_AC, irreps_C, idx_C_AC);
 
                         for (stride_type block_BC = 0;block_BC < nblock_BC;block_BC++)
                         {
-                            assign_irreps(ndim_BC, irrep_BC, nirrep, block_BC,
+                            detail::assign_irreps(ndim_BC, irrep_BC, nirrep, block_BC,
                                           irreps_B, idx_B_BC, irreps_C, idx_C_BC);
 
                             for (stride_type block_C = 0;block_C < nblock_C;block_C++)
                             {
-                                assign_irreps(ndim_C_only, irrep_C, nirrep, block_C,
+                                detail::assign_irreps(ndim_C_only, irrep_C, nirrep, block_C,
                                               irreps_C, idx_C_only);
 
                                 auto local_C = C(irreps_C);
@@ -673,12 +611,12 @@ void dpd_mult_block(const communicator& comm, const config& cfg,
 
                                     for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
                                     {
-                                        assign_irreps(ndim_AB, irrep_AB, nirrep, block_AB,
+                                        detail::assign_irreps(ndim_AB, irrep_AB, nirrep, block_AB,
                                                       irreps_A, idx_A_AB, irreps_B, idx_B_AB);
 
                                         for (stride_type block_A = 0;block_A < nblock_A;block_A++)
                                         {
-                                            assign_irreps(ndim_A_only, irrep_A, nirrep, block_A,
+                                            detail::assign_irreps(ndim_A_only, irrep_A, nirrep, block_A,
                                                           irreps_A, idx_A_only);
 
                                             auto local_A = A(irreps_A);
@@ -692,7 +630,7 @@ void dpd_mult_block(const communicator& comm, const config& cfg,
 
                                             for (stride_type block_B = 0;block_B < nblock_B;block_B++)
                                             {
-                                                assign_irreps(ndim_B_only, irrep_B, nirrep, block_B,
+                                                detail::assign_irreps(ndim_B_only, irrep_B, nirrep, block_B,
                                                               irreps_B, idx_B_only);
 
                                                 auto local_B = B(irreps_B);
@@ -724,17 +662,17 @@ void dpd_mult_block(const communicator& comm, const config& cfg,
 
 template <typename T>
 void dpd_mult(const communicator& comm, const config& cfg,
-              T alpha, const dpd_varray_view<const T>& A,
+              T alpha, bool conj_A, const dpd_varray_view<const T>& A,
               const std::vector<unsigned>& idx_A_only,
               const std::vector<unsigned>& idx_A_AB,
               const std::vector<unsigned>& idx_A_AC,
               const std::vector<unsigned>& idx_A_ABC,
-                       const dpd_varray_view<const T>& B,
+                       bool conj_B, const dpd_varray_view<const T>& B,
               const std::vector<unsigned>& idx_B_only,
               const std::vector<unsigned>& idx_B_AB,
               const std::vector<unsigned>& idx_B_BC,
               const std::vector<unsigned>& idx_B_ABC,
-              T  beta, const dpd_varray_view<      T>& C,
+              T  beta, bool conj_C, const dpd_varray_view<      T>& C,
               const std::vector<unsigned>& idx_C_only,
               const std::vector<unsigned>& idx_C_AC,
               const std::vector<unsigned>& idx_C_BC,
@@ -752,17 +690,17 @@ void dpd_mult(const communicator& comm, const config& cfg,
     else if (idx_A_only.empty() && idx_B_only.empty() &&
              idx_C_only.empty() && idx_C_ABC.empty())
     {
-        dpd_contract_blocked(comm, cfg,
-                             alpha, A, idx_A_AB, idx_A_AC,
-                                    B, idx_B_AB, idx_B_BC,
-                              beta, C, idx_C_AC, idx_C_BC);
+        dpd_contract_block(comm, cfg,
+                           alpha, A, idx_A_AB, idx_A_AC,
+                                  B, idx_B_AB, idx_B_BC,
+                            beta, C, idx_C_AC, idx_C_BC);
     }
     else
     {
-        dpd_mult_blocked(comm, cfg,
-                         alpha, A, idx_A_only, idx_A_AB, idx_A_AC, idx_A_ABC,
-                                B, idx_B_only, idx_B_AB, idx_B_BC, idx_B_ABC,
-                          beta, C, idx_C_only, idx_C_AC, idx_C_BC, idx_C_ABC);
+        dpd_mult_block(comm, cfg,
+                       alpha, A, idx_A_only, idx_A_AB, idx_A_AC, idx_A_ABC,
+                              B, idx_B_only, idx_B_AB, idx_B_BC, idx_B_ABC,
+                        beta, C, idx_C_only, idx_C_AC, idx_C_BC, idx_C_ABC);
     }
 
     comm.barrier();
@@ -770,17 +708,17 @@ void dpd_mult(const communicator& comm, const config& cfg,
 
 #define FOREACH_TYPE(T) \
 template void dpd_mult(const communicator& comm, const config& cfg, \
-                       T alpha, const dpd_varray_view<const T>& A, \
+                       T alpha, bool conj_A, const dpd_varray_view<const T>& A, \
                        const std::vector<unsigned>& idx_A_only, \
                        const std::vector<unsigned>& idx_A_AB, \
                        const std::vector<unsigned>& idx_A_AC, \
                        const std::vector<unsigned>& idx_A_ABC, \
-                                const dpd_varray_view<const T>& B, \
+                                bool conj_B, const dpd_varray_view<const T>& B, \
                        const std::vector<unsigned>& idx_B_only, \
                        const std::vector<unsigned>& idx_B_AB, \
                        const std::vector<unsigned>& idx_B_BC, \
                        const std::vector<unsigned>& idx_B_ABC, \
-                       T  beta, const dpd_varray_view<      T>& C, \
+                       T  beta, bool conj_C, const dpd_varray_view<      T>& C, \
                        const std::vector<unsigned>& idx_C_only, \
                        const std::vector<unsigned>& idx_C_AC, \
                        const std::vector<unsigned>& idx_C_BC, \

@@ -3,9 +3,7 @@
 #include "util/gemm_thread.hpp"
 #include "util/tensor.hpp"
 
-#include "nodes/matrify.hpp"
-#include "nodes/partm.hpp"
-#include "nodes/gemm_ukr.hpp"
+#include "nodes/gemm.hpp"
 
 #include "internal/1t/add.hpp"
 #include "internal/1t/dot.hpp"
@@ -13,23 +11,13 @@
 
 namespace tblis
 {
+
+MemoryPool BuffersForScatter(4096);
+
 namespace internal
 {
 
 impl_t impl = BLIS_BASED;
-
-extern MemoryPool BuffersForA, BuffersForB, BuffersForScatter;
-MemoryPool BuffersForScatter(4096);
-
-using TensorGEMM = partition_gemm_nc<
-                     partition_gemm_kc<
-                       matrify_and_pack_b<BuffersForB,
-                         partition_gemm_mc<
-                           matrify_and_pack_a<BuffersForA,
-                             matrify_c<BuffersForScatter,
-                               partition_gemm_nr<
-                                 partition_gemm_mr<
-                                   gemm_micro_kernel>>>>>>>>;
 
 template <typename T>
 void contract_blas(const communicator& comm, const config& cfg,
@@ -47,46 +35,40 @@ void contract_blas(const communicator& comm, const config& cfg,
                    const std::vector<stride_type>& stride_C_BC)
 {
     varray<T> ar, br, cr;
-    T* ptrs_local[3];
-    T** ptrs = &ptrs_local[0];
 
     if (comm.master())
     {
         ar.reset(len_AC+len_AB);
         br.reset(len_AB+len_BC);
         cr.reset(len_AC+len_BC);
-        ptrs[0] = ar.data();
-        ptrs[1] = br.data();
-        ptrs[2] = cr.data();
     }
 
-    comm.broadcast(ptrs);
+    comm.broadcast(
+    [&](varray<T>& ar, varray<T>& br, varray<T>& cr)
+    {
+        matrix_view<T> am, bm, cm;
+        matricize<T>(ar, am, static_cast<unsigned>(len_AC.size()));
+        matricize<T>(br, bm, static_cast<unsigned>(len_AB.size()));
+        matricize<T>(cr, cm, static_cast<unsigned>(len_AC.size()));
 
-    varray_view<T> arv(len_AC+len_AB, ptrs[0]);
-    varray_view<T> brv(len_AB+len_BC, ptrs[1]);
-    varray_view<T> crv(len_AC+len_BC, ptrs[2]);
+        add(comm, cfg, {}, {}, ar.lengths(),
+            T(1), false,         A, {}, stride_A_AC+stride_A_AB,
+            T(0), false, ar.data(), {},            ar.strides());
 
-    matrix_view<T> am, bm, cm;
-    matricize<T>(arv, am, static_cast<unsigned>(len_AC.size()));
-    matricize<T>(brv, bm, static_cast<unsigned>(len_AB.size()));
-    matricize<T>(crv, cm, static_cast<unsigned>(len_AC.size()));
+        add(comm, cfg, {}, {}, br.lengths(),
+            T(1), false,         B, {}, stride_B_AB+stride_B_BC,
+            T(0), false, br.data(), {},            br.strides());
 
-    add(comm, cfg, {}, {}, arv.lengths(),
-        T(1), false,          A, {}, stride_A_AC+stride_A_AB,
-        T(0), false, arv.data(), {},           arv.strides());
+        mult(comm, cfg, cm.length(0), cm.length(1), am.length(1),
+             alpha, false, am.data(), am.stride(0), am.stride(1),
+                    false, bm.data(), bm.stride(0), bm.stride(1),
+              T(0), false, cm.data(), cm.stride(0), cm.stride(1));
 
-    add(comm, cfg, {}, {}, brv.lengths(),
-        T(1), false,          B, {}, stride_B_AB+stride_B_BC,
-        T(0), false, brv.data(), {},           brv.strides());
-
-    mult(comm, cfg, cm.length(0), cm.length(1), am.length(1),
-         alpha, false, am.data(), am.stride(0), am.stride(1),
-                false, bm.data(), bm.stride(0), bm.stride(1),
-          T(0), false, cm.data(), cm.stride(0), cm.stride(1));
-
-    add(comm, cfg, {}, {}, crv.lengths(),
-        T(1), false, crv.data(), {},            crv.strides(),
-        beta, false,          C, {}, stride_C_AC+stride_C_BC);
+        add(comm, cfg, {}, {}, cr.lengths(),
+            T(1), false, cr.data(), {},            cr.strides(),
+            beta, false,         C, {}, stride_C_AC+stride_C_BC);
+    },
+    ar, br, cr);
 }
 
 template <typename T>
@@ -212,16 +194,7 @@ void contract_blis(const communicator& comm, const config& cfg,
     len_type n = ct.length(1);
     len_type k = at.length(1);
 
-#if TBLIS_ENABLE_TBB
-#if TBB_INTERFACE_VERSION >= 9100
-    int nt = tbb::this_task_arena::max_concurrency();
-#else //TBB_INTERFACE_VERSION >= 9100
-    int nt = tblis_get_num_threads();
-#endif //TBB_INTERFACE_VERSION >= 9100
-#else //TBLIS_ENABLE_TBB
-    int nt = comm.num_threads();
-#endif //TBLIS_ENABLE_TBB
-
+    int nt = max_num_threads(comm);
     auto tc = make_gemm_thread_config<T>(cfg, nt, m, n, k);
     step<0>(gemm).distribute = tc.jc_nt;
     step<4>(gemm).distribute = tc.ic_nt;
@@ -273,51 +246,45 @@ void mult_blas(const communicator& comm, const config& cfg,
                const std::vector<stride_type>& stride_C_ABC)
 {
     varray<T> ar, br, cr;
-    T* ptrs_local[3];
-    T** ptrs = &ptrs_local[0];
 
     if (comm.master())
     {
         ar.reset(len_AC+len_AB);
         br.reset(len_AB+len_BC);
         cr.reset(len_AC+len_BC);
-        ptrs[0] = ar.data();
-        ptrs[1] = br.data();
-        ptrs[2] = cr.data();
     }
 
-    comm.broadcast(ptrs);
-
-    varray_view<T> arv(len_AC+len_AB, ptrs[0]);
-    varray_view<T> brv(len_AB+len_BC, ptrs[1]);
-    varray_view<T> crv(len_AC+len_BC, ptrs[2]);
-
-    matrix_view<T> am, bm, cm;
-    matricize<T>(arv, am, static_cast<unsigned>(len_AC.size()));
-    matricize<T>(brv, bm, static_cast<unsigned>(len_AB.size()));
-    matricize<T>(crv, cm, static_cast<unsigned>(len_AC.size()));
-
-    viterator<3> it(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
-
-    while (it.next(A, B, C))
+    comm.broadcast(
+    [&](varray<T>& ar, varray<T>& br, varray<T>& cr)
     {
-        add(comm, cfg, len_A, {}, arv.lengths(),
-            T(1), false,          A, stride_A_A, stride_A_AC+stride_A_AB,
-            T(0), false, arv.data(),         {},           arv.strides());
+        matrix_view<T> am, bm, cm;
+        matricize<T>(ar, am, static_cast<unsigned>(len_AC.size()));
+        matricize<T>(br, bm, static_cast<unsigned>(len_AB.size()));
+        matricize<T>(cr, cm, static_cast<unsigned>(len_AC.size()));
 
-        add(comm, cfg, len_B, {}, brv.lengths(),
-            T(1), false,          B, stride_B_B, stride_B_AB+stride_B_BC,
-            T(0), false, brv.data(),         {},           brv.strides());
+        viterator<3> it(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
 
-        mult(comm, cfg, cm.length(0), cm.length(1), am.length(1),
-             alpha, false, am.data(), am.stride(0), am.stride(1),
-                    false, bm.data(), bm.stride(0), bm.stride(1),
-              T(0), false, cm.data(), cm.stride(0), cm.stride(1));
+        while (it.next(A, B, C))
+        {
+            add(comm, cfg, len_A, {}, ar.lengths(),
+                T(1), false,         A, stride_A_A, stride_A_AC+stride_A_AB,
+                T(0), false, ar.data(),         {},             ar.strides());
 
-        add(comm, cfg, {}, len_C, crv.lengths(),
-            T(1), false, crv.data(),         {},            crv.strides(),
-            beta, false,          C, stride_C_C, stride_C_AC+stride_C_BC);
-    }
+            add(comm, cfg, len_B, {}, br.lengths(),
+                T(1), false,         B, stride_B_B, stride_B_AB+stride_B_BC,
+                T(0), false, br.data(),         {},             br.strides());
+
+            mult(comm, cfg, cm.length(0), cm.length(1), am.length(1),
+                 alpha, false, am.data(), am.stride(0), am.stride(1),
+                        false, bm.data(), bm.stride(0), bm.stride(1),
+                  T(0), false, cm.data(), cm.stride(0), cm.stride(1));
+
+            add(comm, cfg, {}, len_C, cr.lengths(),
+                T(1), false, cr.data(),         {},            cr.strides(),
+                beta, false,         C, stride_C_C, stride_C_AC+stride_C_BC);
+        }
+    },
+    ar, br, cr);
 }
 
 template <typename T>
@@ -422,46 +389,40 @@ void outer_prod_blas(const communicator& comm, const config& cfg,
                      const std::vector<stride_type>& stride_C_BC)
 {
     varray<T> ar, br, cr;
-    T* ptrs_local[3];
-    T** ptrs = &ptrs_local[0];
 
     if (comm.master())
     {
         ar.reset(len_AC);
         br.reset(len_BC);
         cr.reset(len_AC+len_BC);
-        ptrs[0] = ar.data();
-        ptrs[1] = br.data();
-        ptrs[2] = cr.data();
     }
 
-    comm.broadcast(ptrs);
+    comm.broadcast(
+    [&](varray<T>& ar, varray<T>& br, varray<T>& cr)
+    {
+        matrix_view<T> am, bm, cm;
+        matricize<T>(ar, am, static_cast<unsigned>(len_AC.size()));
+        matricize<T>(br, bm, 0);
+        matricize<T>(cr, cm, static_cast<unsigned>(len_AC.size()));
 
-    varray_view<T> arv(len_AC, ptrs[0]);
-    varray_view<T> brv(len_BC, ptrs[1]);
-    varray_view<T> crv(len_AC+len_BC, ptrs[2]);
+        add(comm, cfg, {}, {}, ar.lengths(),
+            T(1), false,         A, {},  stride_A_AC,
+            T(0), false, ar.data(), {}, ar.strides());
 
-    matrix_view<T> am, bm, cm;
-    matricize<T>(arv, am, static_cast<unsigned>(len_AC.size()));
-    matricize<T>(brv, bm, 0);
-    matricize<T>(crv, cm, static_cast<unsigned>(len_AC.size()));
+        add(comm, cfg, {}, {}, br.lengths(),
+            T(1), false,         B, {},  stride_B_BC,
+            T(0), false, br.data(), {}, br.strides());
 
-    add(comm, cfg, {}, {}, arv.lengths(),
-        T(1), false,          A, {},   stride_A_AC,
-        T(0), false, arv.data(), {}, arv.strides());
+        mult(comm, cfg, cm.length(0), cm.length(1), am.length(1),
+             alpha, false, am.data(), am.stride(0), am.stride(1),
+                    false, bm.data(), bm.stride(0), bm.stride(1),
+              T(0), false, cm.data(), cm.stride(0), cm.stride(1));
 
-    add(comm, cfg, {}, {}, brv.lengths(),
-        T(1), false,          B, {},   stride_B_BC,
-        T(0), false, brv.data(), {}, brv.strides());
-
-    mult(comm, cfg, cm.length(0), cm.length(1), am.length(1),
-         alpha, false, am.data(), am.stride(0), am.stride(1),
-                false, bm.data(), bm.stride(0), bm.stride(1),
-          T(0), false, cm.data(), cm.stride(0), cm.stride(1));
-
-    add(comm, cfg, {}, {}, crv.lengths(),
-        T(1), false, crv.data(), {},            crv.strides(),
-        beta, false,          C, {}, stride_C_AC+stride_C_BC);
+        add(comm, cfg, {}, {}, cr.lengths(),
+            T(1), false, cr.data(), {},             cr.strides(),
+            beta, false,         C, {}, stride_C_AC+stride_C_BC);
+    },
+    ar, br, cr);
 }
 
 template <typename T>
@@ -539,51 +500,45 @@ void weight_blas(const communicator& comm, const config& cfg,
                  const std::vector<stride_type>& stride_C_ABC)
 {
     varray<T> ar, br, cr;
-    T* ptrs_local[3];
-    T** ptrs = &ptrs_local[0];
 
     if (comm.master())
     {
         ar.reset(len_AC);
         br.reset(len_BC);
         cr.reset(len_AC+len_BC);
-        ptrs[0] = ar.data();
-        ptrs[1] = br.data();
-        ptrs[2] = cr.data();
     }
 
-    comm.broadcast(ptrs);
-
-    varray_view<T> arv(len_AC, ptrs[0]);
-    varray_view<T> brv(len_BC, ptrs[1]);
-    varray_view<T> crv(len_AC+len_BC, ptrs[2]);
-
-    matrix_view<T> am, bm, cm;
-    matricize<T>(arv, am, static_cast<unsigned>(len_AC.size()));
-    matricize<T>(brv, bm, 0);
-    matricize<T>(crv, cm, static_cast<unsigned>(len_AC.size()));
-
-    viterator<3> it(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
-
-    while (it.next(A, B, C))
+    comm.broadcast(
+    [&](varray<T>& ar, varray<T>& br, varray<T>& cr)
     {
-        add(comm, cfg, {}, {}, arv.lengths(),
-            T(1), false,          A, {},   stride_A_AC,
-            T(0), false, arv.data(), {}, arv.strides());
+        matrix_view<T> am, bm, cm;
+        matricize<T>(ar, am, static_cast<unsigned>(len_AC.size()));
+        matricize<T>(br, bm, 0);
+        matricize<T>(cr, cm, static_cast<unsigned>(len_AC.size()));
 
-        add(comm, cfg, {}, {}, brv.lengths(),
-            T(1), false,          B, {},   stride_B_BC,
-            T(0), false, brv.data(), {}, brv.strides());
+        viterator<3> it(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
 
-        mult(comm, cfg, cm.length(0), cm.length(1), am.length(1),
-             alpha, false, am.data(), am.stride(0), am.stride(1),
-                    false, bm.data(), bm.stride(0), bm.stride(1),
-              T(0), false, cm.data(), cm.stride(0), cm.stride(1));
+        while (it.next(A, B, C))
+        {
+            add(comm, cfg, {}, {}, ar.lengths(),
+                T(1), false,         A, {},  stride_A_AC,
+                T(0), false, ar.data(), {}, ar.strides());
 
-        add(comm, cfg, {}, {}, crv.lengths(),
-            T(1), false, crv.data(), {},            crv.strides(),
-            beta, false,          C, {}, stride_C_AC+stride_C_BC);
-    }
+            add(comm, cfg, {}, {}, br.lengths(),
+                T(1), false,         B, {},  stride_B_BC,
+                T(0), false, br.data(), {}, br.strides());
+
+            mult(comm, cfg, cm.length(0), cm.length(1), am.length(1),
+                 alpha, false, am.data(), am.stride(0), am.stride(1),
+                        false, bm.data(), bm.stride(0), bm.stride(1),
+                  T(0), false, cm.data(), cm.stride(0), cm.stride(1));
+
+            add(comm, cfg, {}, {}, cr.lengths(),
+                T(1), false, cr.data(), {},             cr.strides(),
+                beta, false,         C, {}, stride_C_AC+stride_C_BC);
+        }
+    },
+    ar, br, cr);
 }
 
 template <typename T>

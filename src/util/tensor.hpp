@@ -17,6 +17,53 @@ namespace tblis
 namespace detail
 {
 
+template <typename T>
+std::vector<unsigned> relative_permutation(const T& a, const T& b)
+{
+    std::vector<unsigned> perm; perm.reserve(a.size());
+
+    for (auto& e : b)
+    {
+        for (unsigned i = 0;i < a.size();i++)
+        {
+            if (a[i] == e) perm.push_back(i);
+        }
+    }
+
+    return perm;
+}
+
+inline unsigned assign_irrep(unsigned dim, unsigned irrep)
+{
+    return irrep;
+}
+
+template <typename... Args>
+unsigned assign_irrep(unsigned dim, unsigned irrep,
+                      std::vector<unsigned>& irreps,
+                      const std::vector<unsigned>& idx,
+                      Args&... args)
+{
+    irreps[idx[dim]] = irrep;
+    return assign_irrep(dim, irrep, args...);
+}
+
+template <typename... Args>
+void assign_irreps(unsigned ndim, unsigned irrep, unsigned nirrep,
+                   stride_type block, Args&... args)
+{
+    unsigned mask = nirrep-1;
+    unsigned shift = (nirrep>1) + (nirrep>2) + (nirrep>4);
+
+    unsigned irrep0 = irrep;
+    for (unsigned i = 1;i < ndim;i++)
+    {
+        irrep0 ^= assign_irrep(i, block & mask, args...);
+        block >>= shift;
+    }
+    if (ndim) assign_irrep(0, irrep0, args...);
+}
+
 struct sort_by_idx_helper
 {
     const label_type* idx;

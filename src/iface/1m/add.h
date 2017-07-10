@@ -33,15 +33,6 @@ void add(T alpha, matrix_view<const T> A, T beta, matrix_view<T> B)
 }
 
 template <typename T>
-void add(single_t, T alpha, matrix_view<const T> A, T beta, matrix_view<T> B)
-{
-    tblis_matrix A_s(alpha, A);
-    tblis_matrix B_s(beta, B);
-
-    tblis_matrix_add(tblis_single, nullptr, &A_s, &B_s);
-}
-
-template <typename T>
 void add(const communicator& comm, T alpha, matrix_view<const T> A,
                                    T  beta,       matrix_view<T> B)
 {

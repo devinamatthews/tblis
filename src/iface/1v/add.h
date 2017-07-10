@@ -33,15 +33,6 @@ void add(T alpha, row_view<const T> A, T beta, row_view<T> B)
 }
 
 template <typename T>
-void add(single_t, T alpha, row_view<const T> A, T beta, row_view<T> B)
-{
-    tblis_vector A_s(alpha, A);
-    tblis_vector B_s(beta, B);
-
-    tblis_vector_add(tblis_single, nullptr, &A_s, &B_s);
-}
-
-template <typename T>
 void add(const communicator& comm, T alpha, row_view<const T> A,
                                    T  beta,       row_view<T> B)
 {

@@ -67,8 +67,8 @@ struct gemm_macro_kernel
     int distribute_m = 1;
     int distribute_n = 1;
 
-    template <typename T, typename Communicator>
-    void operator()(Communicator& comm, const config& cfg,
+    template <typename T>
+    void operator()(const communicator& comm, const config& cfg,
                     T alpha, matrix_view<T>& A,
                              matrix_view<T>& B,
                     T  beta, matrix_view<T>& C) const
@@ -89,19 +89,15 @@ struct gemm_macro_kernel
 
 #if TBLIS_ENABLE_TBB
 
-#if TBLIS_SIMPLE_TBB
         tbb::task_group tg;
-#endif
 
         for (unsigned tid_n = 0;tid_n < distribute_n;tid_n++)
         {
         for (unsigned tid_m = 0;tid_m < distribute_m;tid_m++)
         {
 
-#if TBLIS_SIMPLE_TBB
         tg.run([&,tid_m,tid_n]
         {
-#endif
 
 #else
 
@@ -154,16 +150,12 @@ struct gemm_macro_kernel
 
 #if TBLIS_ENABLE_TBB
 
-#if TBLIS_SIMPLE_TBB
         });
-#endif
 
         }
         }
 
-#if TBLIS_SIMPLE_TBB
         tg.wait();
-#endif
 
 #endif
     }

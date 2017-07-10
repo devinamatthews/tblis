@@ -38,19 +38,6 @@ void mult(T alpha, varray_view<const T> A, const label_type* idx_A,
 }
 
 template <typename T>
-void mult(single_t,
-          T alpha, varray_view<const T> A, const label_type* idx_A,
-                   varray_view<const T> B, const label_type* idx_B,
-          T  beta,       varray_view<T> C, const label_type* idx_C)
-{
-    tblis_tensor A_s(alpha, A);
-    tblis_tensor B_s(B);
-    tblis_tensor C_s(beta, C);
-
-    tblis_tensor_mult(tblis_single, nullptr, &A_s, idx_A, &B_s, idx_B, &C_s, idx_C);
-}
-
-template <typename T>
 void mult(const communicator& comm,
           T alpha, varray_view<const T> A, const label_type* idx_A,
                    varray_view<const T> B, const label_type* idx_B,
@@ -85,16 +72,6 @@ void mult(T alpha, dpd_varray_view<const T> A, const label_type* idx_A,
 }
 
 template <typename T>
-void mult(single_t,
-          T alpha, dpd_varray_view<const T> A, const label_type* idx_A,
-                   dpd_varray_view<const T> B, const label_type* idx_B,
-          T  beta,       dpd_varray_view<T> C, const label_type* idx_C)
-{
-    communicator comm;
-    mult(comm, alpha, A, idx_A, B, idx_B, beta, C, idx_C);
-}
-
-template <typename T>
 void mult(const communicator& comm,
           T alpha, indexed_varray_view<const T> A, const label_type* idx_A,
                    indexed_varray_view<const T> B, const label_type* idx_B,
@@ -116,16 +93,6 @@ void mult(T alpha, indexed_varray_view<const T> A, const label_type* idx_A,
 }
 
 template <typename T>
-void mult(single_t,
-          T alpha, indexed_varray_view<const T> A, const label_type* idx_A,
-                   indexed_varray_view<const T> B, const label_type* idx_B,
-          T  beta,       indexed_varray_view<T> C, const label_type* idx_C)
-{
-    communicator comm;
-    mult(comm, alpha, A, idx_A, B, idx_B, beta, C, idx_C);
-}
-
-template <typename T>
 void mult(const communicator& comm,
           T alpha, indexed_dpd_varray_view<const T> A, const label_type* idx_A,
                    indexed_dpd_varray_view<const T> B, const label_type* idx_B,
@@ -144,16 +111,6 @@ void mult(T alpha, indexed_dpd_varray_view<const T> A, const label_type* idx_A,
         },
         tblis_get_num_threads()
     );
-}
-
-template <typename T>
-void mult(single_t,
-          T alpha, indexed_dpd_varray_view<const T> A, const label_type* idx_A,
-                   indexed_dpd_varray_view<const T> B, const label_type* idx_B,
-          T  beta,       indexed_dpd_varray_view<T> C, const label_type* idx_C)
-{
-    communicator comm;
-    mult(comm, alpha, A, idx_A, B, idx_B, beta, C, idx_C);
 }
 
 #endif

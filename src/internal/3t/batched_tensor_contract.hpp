@@ -26,6 +26,7 @@ namespace tblis
 extern std::atomic<long> flops;
 extern len_type inout_ratio;
 extern int outer_threading;
+int outer_threading = 1;
 
 template <typename T, T Empty=T()>
 class slot

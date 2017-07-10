@@ -3,6 +3,7 @@
 #include "util/macros.h"
 #include "util/tensor.hpp"
 #include "internal/1t/reduce.hpp"
+#include "internal/1t/dpd_reduce.hpp"
 
 namespace tblis
 {
@@ -52,5 +53,29 @@ void tblis_tensor_reduce(const tblis_comm* comm, const tblis_config* cfg,
 }
 
 }
+
+template <typename T>
+void reduce(const communicator& comm, reduce_t op,
+            dpd_varray_view<const T> A, const label_type* idx_A,
+            T& result, len_type& idx)
+{
+    unsigned nirrep = A.num_irreps();
+    unsigned ndim_A = A.dimension();
+
+    for (unsigned i = 1;i < ndim_A;i++)
+        for (unsigned j = 0;j < i;j++)
+            TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+
+    std::vector<unsigned> idx_A_A = range(ndim_A);
+
+    internal::dpd_reduce<T>(comm, get_default_config(), op,
+                            A, idx_A_A, result, idx);
+}
+
+#define FOREACH_TYPE(T) \
+template void reduce(const communicator& comm, reduce_t op, \
+                     dpd_varray_view<const T> A, const label_type* idx_A, \
+                     T& result, len_type& idx);
+#include "configs/foreach_type.h"
 
 }

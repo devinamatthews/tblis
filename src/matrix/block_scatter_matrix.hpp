@@ -316,19 +316,12 @@ void add(const communicator& comm, T alpha, tensor_matrix<T> A,
 template <typename T>
 void add(T alpha, tensor_matrix<T> A, T beta, matrix_view<T> B)
 {
-    parallelize_if(
-        [&](const communicator& comm)
-        {
-            add(comm, alpha, A, beta, B);
-        },
-        nullptr);
-}
-
-template <typename T>
-void add(single_t, T alpha, tensor_matrix<T> A, T beta, matrix_view<T> B)
-{
-    communicator comm;
-    add(comm, alpha, A, beta, B);
+    parallelize(
+    [&](const communicator& comm)
+    {
+        add(comm, alpha, A, beta, B);
+    },
+    tblis_get_num_threads());
 }
 
 template <typename T>
@@ -467,19 +460,12 @@ void add(const communicator& comm, T alpha, matrix_view<const T> A,
 template <typename T>
 void add(T alpha, matrix_view<const T> A, T beta, tensor_matrix<T> B)
 {
-    parallelize_if(
-        [&](const communicator& comm)
-        {
-            add(comm, alpha, A, beta, B);
-        },
-        nullptr);
-}
-
-template <typename T>
-void add(single_t, T alpha, matrix_view<const T> A, T beta, tensor_matrix<T> B)
-{
-    communicator comm;
-    add(comm, alpha, A, beta, B);
+    parallelize(
+    [&](const communicator& comm)
+    {
+        add(comm, alpha, A, beta, B);
+    },
+    tblis_get_num_threads());
 }
 
 }

@@ -33,15 +33,6 @@ void set(T alpha, row_view<T> A)
 }
 
 template <typename T>
-void set(single_t, T alpha, row_view<T> A)
-{
-    tblis_scalar alpha_s(alpha);
-    tblis_vector A_s(A);
-
-    tblis_vector_set(tblis_single, nullptr, &alpha_s, &A_s);
-}
-
-template <typename T>
 void set(const communicator& comm, T alpha, row_view<T> A)
 {
     tblis_scalar alpha_s(alpha);

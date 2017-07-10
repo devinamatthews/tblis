@@ -40,11 +40,16 @@ lib_libtblis_la_SOURCES = \
     src/internal/1t/reduce.cxx \
     src/internal/1t/scale.cxx \
     src/internal/1t/set.cxx \
+    src/internal/1t/dpd_add.cxx \
+    src/internal/1t/dpd_dot.cxx \
+    src/internal/1t/dpd_reduce.cxx \
+    src/internal/1t/dpd_scale.cxx \
+    src/internal/1t/dpd_set.cxx \
     \
     src/internal/3m/mult.cxx \
     \
-    src/internal/3t/dpd_mult.cxx \
     src/internal/3t/mult.cxx \
+    src/internal/3t/dpd_mult.cxx \
     \
     src/configs/configs.cxx \
     \
@@ -346,3 +351,5 @@ bin_test_LDADD = lib/libtblis.la
 bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 bin_batched_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 bin_dpd_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
+
+DISTCLEANFILES = src/tblis_config.h

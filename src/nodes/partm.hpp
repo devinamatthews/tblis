@@ -22,8 +22,8 @@ struct partition
     partition(const partition& other)
     : child(other.child), distribute(other.distribute) {}
 
-    template <typename T, typename Communicator, typename MatrixA, typename MatrixB, typename MatrixC>
-    void operator()(Communicator& comm, const config& cfg,
+    template <typename T, typename MatrixA, typename MatrixB, typename MatrixC>
+    void operator()(const communicator& comm, const config& cfg,
                     T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         using namespace matrix_constants;

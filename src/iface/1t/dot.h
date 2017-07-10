@@ -37,17 +37,6 @@ void dot(varray_view<const T> A, const label_type* idx_A,
 }
 
 template <typename T>
-void dot(single_t, varray_view<const T> A, const label_type* idx_A,
-                     varray_view<const T> B, const label_type* idx_B, T& result)
-{
-    tblis_tensor A_s(A);
-    tblis_tensor B_s(B);
-    tblis_scalar result_s(result);
-    tblis_tensor_dot(tblis_single, nullptr, &A_s, idx_A, &B_s, idx_B, &result_s);
-    result = result_s.get<T>();
-}
-
-template <typename T>
 void dot(const communicator& comm,
          varray_view<const T> A, const label_type* idx_A,
          varray_view<const T> B, const label_type* idx_B, T& result)
@@ -69,18 +58,47 @@ T dot(varray_view<const T> A, const label_type* idx_A,
 }
 
 template <typename T>
-T dot(single_t, varray_view<const T> A, const label_type* idx_A,
-                  varray_view<const T> B, const label_type* idx_B)
+T dot(const communicator& comm,
+      varray_view<const T> A, const label_type* idx_A,
+      varray_view<const T> B, const label_type* idx_B)
 {
     T result;
-    dot(single, A, idx_A, B, idx_B, result);
+    dot(comm, A, idx_A, B, idx_B, result);
+    return result;
+}
+
+template <typename T>
+void dot(const communicator& comm,
+         dpd_varray_view<const T> A, const label_type* idx_A,
+         dpd_varray_view<const T> B, const label_type* idx_B, T& result);
+
+template <typename T>
+void dot(dpd_varray_view<const T> A, const label_type* idx_A,
+         dpd_varray_view<const T> B, const label_type* idx_B, T& result)
+{
+    parallelize
+    (
+        [&](const communicator& comm)
+        {
+            dot(comm, A, idx_A, B, idx_B, result);
+        },
+        tblis_get_num_threads()
+    );
+}
+
+template <typename T>
+T dot(dpd_varray_view<const T> A, const label_type* idx_A,
+      dpd_varray_view<const T> B, const label_type* idx_B)
+{
+    T result;
+    dot(A, idx_A, B, idx_B, result);
     return result;
 }
 
 template <typename T>
 T dot(const communicator& comm,
-      varray_view<const T> A, const label_type* idx_A,
-      varray_view<const T> B, const label_type* idx_B)
+      dpd_varray_view<const T> A, const label_type* idx_A,
+      dpd_varray_view<const T> B, const label_type* idx_B)
 {
     T result;
     dot(comm, A, idx_A, B, idx_B, result);

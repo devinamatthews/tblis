@@ -36,16 +36,6 @@ void reduce(reduce_t op, matrix_view<const T> A, T& result, len_type& idx)
 }
 
 template <typename T>
-void reduce(single_t, reduce_t op, matrix_view<const T> A,
-            T& result, len_type& idx)
-{
-    tblis_matrix A_s(A);
-    tblis_scalar result_s(result);
-    tblis_matrix_reduce(tblis_single, nullptr, op, &A_s, &result_s, &idx);
-    result = result_s.get<T>();
-}
-
-template <typename T>
 void reduce(const communicator& comm, reduce_t op, matrix_view<const T> A,
             T& result, len_type& idx)
 {
@@ -60,14 +50,6 @@ std::pair<T,len_type> reduce(reduce_t op, matrix_view<const T> A)
 {
     std::pair<T,len_type> result;
     reduce(op, A, result.first, result.second);
-    return result;
-}
-
-template <typename T>
-std::pair<T,len_type> reduce(single_t, reduce_t op, matrix_view<const T> A)
-{
-    std::pair<T,len_type> result;
-    reduce(single, op, A, result.first, result.second);
     return result;
 }
 

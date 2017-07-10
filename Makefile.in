@@ -319,8 +319,11 @@ am_lib_libtblis_la_OBJECTS = src/iface/1v/add.lo src/iface/1v/dot.lo \
 	src/internal/1m/scale.lo src/internal/1m/set.lo \
 	src/internal/1t/add.lo src/internal/1t/dot.lo \
 	src/internal/1t/reduce.lo src/internal/1t/scale.lo \
-	src/internal/1t/set.lo src/internal/3m/mult.lo \
-	src/internal/3t/mult.lo src/configs/configs.lo \
+	src/internal/1t/set.lo src/internal/1t/dpd_add.lo \
+	src/internal/1t/dpd_dot.lo src/internal/1t/dpd_reduce.lo \
+	src/internal/1t/dpd_scale.lo src/internal/1t/dpd_set.lo \
+	src/internal/3m/mult.lo src/internal/3t/mult.lo \
+	src/internal/3t/dpd_mult.lo src/configs/configs.lo \
 	src/util/basic_types.lo src/util/cpuid.lo src/util/random.lo \
 	src/util/thread.lo
 lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
@@ -677,10 +680,16 @@ lib_libtblis_la_SOURCES = \
     src/internal/1t/reduce.cxx \
     src/internal/1t/scale.cxx \
     src/internal/1t/set.cxx \
+    src/internal/1t/dpd_add.cxx \
+    src/internal/1t/dpd_dot.cxx \
+    src/internal/1t/dpd_reduce.cxx \
+    src/internal/1t/dpd_scale.cxx \
+    src/internal/1t/dpd_set.cxx \
     \
     src/internal/3m/mult.cxx \
     \
     src/internal/3t/mult.cxx \
+    src/internal/3t/dpd_mult.cxx \
     \
     src/configs/configs.cxx \
     \
@@ -845,6 +854,7 @@ bin_test_LDADD = lib/libtblis.la
 bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 bin_batched_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 bin_dpd_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
+DISTCLEANFILES = src/tblis_config.h
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -1214,6 +1224,16 @@ src/internal/1t/scale.lo: src/internal/1t/$(am__dirstamp) \
 	src/internal/1t/$(DEPDIR)/$(am__dirstamp)
 src/internal/1t/set.lo: src/internal/1t/$(am__dirstamp) \
 	src/internal/1t/$(DEPDIR)/$(am__dirstamp)
+src/internal/1t/dpd_add.lo: src/internal/1t/$(am__dirstamp) \
+	src/internal/1t/$(DEPDIR)/$(am__dirstamp)
+src/internal/1t/dpd_dot.lo: src/internal/1t/$(am__dirstamp) \
+	src/internal/1t/$(DEPDIR)/$(am__dirstamp)
+src/internal/1t/dpd_reduce.lo: src/internal/1t/$(am__dirstamp) \
+	src/internal/1t/$(DEPDIR)/$(am__dirstamp)
+src/internal/1t/dpd_scale.lo: src/internal/1t/$(am__dirstamp) \
+	src/internal/1t/$(DEPDIR)/$(am__dirstamp)
+src/internal/1t/dpd_set.lo: src/internal/1t/$(am__dirstamp) \
+	src/internal/1t/$(DEPDIR)/$(am__dirstamp)
 src/internal/3m/$(am__dirstamp):
 	@$(MKDIR_P) src/internal/3m
 	@: > src/internal/3m/$(am__dirstamp)
@@ -1229,6 +1249,8 @@ src/internal/3t/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/internal/3t/$(DEPDIR)
 	@: > src/internal/3t/$(DEPDIR)/$(am__dirstamp)
 src/internal/3t/mult.lo: src/internal/3t/$(am__dirstamp) \
+	src/internal/3t/$(DEPDIR)/$(am__dirstamp)
+src/internal/3t/dpd_mult.lo: src/internal/3t/$(am__dirstamp) \
 	src/internal/3t/$(DEPDIR)/$(am__dirstamp)
 src/configs/$(am__dirstamp):
 	@$(MKDIR_P) src/configs
@@ -1395,6 +1417,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1m/$(DEPDIR)/set.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/$(DEPDIR)/add.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/$(DEPDIR)/dot.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/$(DEPDIR)/dpd_add.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/$(DEPDIR)/dpd_dot.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/$(DEPDIR)/dpd_reduce.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/$(DEPDIR)/dpd_scale.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/$(DEPDIR)/dpd_set.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/$(DEPDIR)/reduce.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/$(DEPDIR)/scale.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/$(DEPDIR)/set.Plo@am__quote@
@@ -1404,6 +1431,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1v/$(DEPDIR)/scale.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1v/$(DEPDIR)/set.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/3m/$(DEPDIR)/mult.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/3t/$(DEPDIR)/dpd_mult.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/3t/$(DEPDIR)/mult.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/basic_types.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/cpuid.Plo@am__quote@
@@ -2250,6 +2278,7 @@ distclean-generic:
 	-rm -f src/util/$(am__dirstamp)
 	-rm -f test/$(DEPDIR)/$(am__dirstamp)
 	-rm -f test/$(am__dirstamp)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"

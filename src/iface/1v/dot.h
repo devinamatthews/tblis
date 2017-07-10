@@ -35,16 +35,6 @@ void dot(row_view<const T> A, row_view<const T> B, T& result)
 }
 
 template <typename T>
-void dot(single_t, row_view<const T> A, row_view<const T> B, T& result)
-{
-    tblis_vector A_s(A);
-    tblis_vector B_s(B);
-    tblis_scalar result_s(result);
-    tblis_vector_dot(tblis_single, nullptr, &A_s, &B_s, &result_s);
-    result = result_s.get<T>();
-}
-
-template <typename T>
 void dot(const communicator& comm, row_view<const T> A, row_view<const T> B, T& result)
 {
     tblis_vector A_s(A);
@@ -59,14 +49,6 @@ T dot(row_view<const T> A, row_view<const T> B)
 {
     T result;
     dot(A, B, result);
-    return result;
-}
-
-template <typename T>
-T dot(single_t, row_view<const T> A, row_view<const T> B)
-{
-    T result;
-    dot(single, A, B, result);
     return result;
 }
 

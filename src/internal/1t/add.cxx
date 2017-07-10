@@ -9,18 +9,94 @@ namespace internal
 
 template <typename T>
 void add(const communicator& comm, const config& cfg,
-         const std::vector<len_type>& len_A,
-         const std::vector<len_type>& len_B,
-         const std::vector<len_type>& len_AB,
+         const std::vector<len_type>& len_A_,
+         const std::vector<len_type>& len_B_,
+         const std::vector<len_type>& len_AB_,
          T alpha, bool conj_A, const T* A,
-         const std::vector<stride_type>& stride_A,
-         const std::vector<stride_type>& stride_A_AB,
+         const std::vector<stride_type>& stride_A_,
+         const std::vector<stride_type>& stride_A_AB_,
          T  beta, bool conj_B,       T* B,
-         const std::vector<stride_type>& stride_B,
-         const std::vector<stride_type>& stride_B_AB)
+         const std::vector<stride_type>& stride_B_,
+         const std::vector<stride_type>& stride_B_AB_)
 {
-    if (len_A.empty() && len_B.empty() && !len_AB.empty())
+    auto perm_A = detail::sort_by_stride(stride_A_);
+    auto perm_B = detail::sort_by_stride(stride_B_);
+    auto perm_AB = detail::sort_by_stride(stride_B_AB_, stride_A_AB_);
+
+    auto len_A = stl_ext::permuted(len_A_, perm_A);
+    auto len_B = stl_ext::permuted(len_B_, perm_B);
+    auto len_AB = stl_ext::permuted(len_AB_, perm_AB);
+
+    auto stride_A = stl_ext::permuted(stride_A_, perm_A);
+    auto stride_B = stl_ext::permuted(stride_B_, perm_B);
+    auto stride_A_AB = stl_ext::permuted(stride_A_AB_, perm_AB);
+    auto stride_B_AB = stl_ext::permuted(stride_B_AB_, perm_AB);
+
+    if (!len_A.empty())
     {
+        //TODO sum (reduce?) ukr
+        //TODO fused ukr
+
+        viterator<1> iter_A(len_A, stride_A);
+        viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
+        len_type n = stl_ext::prod(len_AB);
+
+        len_type n_min, n_max;
+        std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(n);
+
+        iter_AB.position(n_min, A, B);
+
+        for (len_type i = n_min;i < n_max;i++)
+        {
+            iter_AB.next(A, B);
+
+            T sum_A = T();
+            while (iter_A.next(A)) sum_A += *A;
+            sum_A = alpha*(conj_A ? conj(sum_A) : sum_A);
+
+            TBLIS_SPECIAL_CASE(conj_B,
+            TBLIS_SPECIAL_CASE(beta == T(0),
+            {
+                *B = sum_A + beta*(conj_B ? conj(*B) : *B);
+            }
+            ))
+        }
+    }
+    else if (!len_B.empty())
+    {
+        //TODO replicate ukr
+        //TODO fused ukr
+
+        viterator<1> iter_B(len_B, stride_B);
+        viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
+        len_type n = stl_ext::prod(len_AB);
+
+        len_type n_min, n_max;
+        std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(n);
+
+        iter_AB.position(n_min, A, B);
+
+        for (len_type i = n_min;i < n_max;i++)
+        {
+            iter_AB.next(A, B);
+
+            T tmp_A = alpha*(conj_A ? conj(*A) : *A);
+
+            TBLIS_SPECIAL_CASE(conj_B,
+            TBLIS_SPECIAL_CASE(beta == T(0),
+            {
+                while (iter_B.next(B))
+                {
+                    *B = tmp_A + beta*(conj_B ? conj(*B) : *B);
+                }
+            }
+            ))
+        }
+    }
+    else
+    {
+        //TODO transpose ukr
+
         len_type len0 = len_AB[0];
         std::vector<len_type> len1(len_AB.begin()+1, len_AB.end());
 
@@ -63,37 +139,6 @@ void add(const communicator& comm, const config& cfg,
                                     alpha, conj_A, A, stride_A0,
                                      beta, conj_B, B, stride_B0);
             }
-        }
-    }
-    else
-    {
-        viterator<1> iter_A(len_A, stride_A);
-        viterator<1> iter_B(len_B, stride_B);
-        viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
-        len_type n = stl_ext::prod(len_AB);
-
-        len_type n_min, n_max;
-        std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(n);
-
-        iter_AB.position(n_min, A, B);
-
-        for (len_type i = n_min;i < n_max;i++)
-        {
-            iter_AB.next(A, B);
-
-            T sum_A = T();
-            while (iter_A.next(A)) sum_A += *A;
-            sum_A = alpha*(conj_A ? conj(sum_A) : sum_A);
-
-            TBLIS_SPECIAL_CASE(is_complex<T>::value && conj_B,
-            TBLIS_SPECIAL_CASE(beta == T(0),
-            {
-                while (iter_B.next(B))
-                {
-                    *B = sum_A + beta*(conj_B ? conj(*B) : *B);
-                }
-            }
-            ))
         }
     }
 

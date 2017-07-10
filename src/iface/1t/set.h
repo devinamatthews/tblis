@@ -33,21 +33,29 @@ void set(T alpha, varray_view<T> A, const label_type* idx_A)
 }
 
 template <typename T>
-void set(single_t, T alpha, varray_view<T> A, const label_type* idx_A)
-{
-    tblis_scalar alpha_s(alpha);
-    tblis_tensor A_s(A);
-
-    tblis_tensor_set(tblis_single, nullptr, &alpha_s, &A_s, idx_A);
-}
-
-template <typename T>
 void set(const communicator& comm, T alpha, varray_view<T> A, const label_type* idx_A)
 {
     tblis_scalar alpha_s(alpha);
     tblis_tensor A_s(A);
 
     tblis_tensor_set(comm, nullptr, &alpha_s, &A_s, idx_A);
+}
+
+template <typename T>
+void set(const communicator& comm,
+         T alpha, dpd_varray_view<T> A, const label_type* idx_A);
+
+template <typename T>
+void set(T alpha, dpd_varray_view<T> A, const label_type* idx_A)
+{
+    parallelize
+    (
+        [&](const communicator& comm)
+        {
+            set(comm, alpha, A, idx_A);
+        },
+        tblis_get_num_threads()
+    );
 }
 
 #endif

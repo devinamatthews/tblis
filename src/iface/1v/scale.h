@@ -32,14 +32,6 @@ void scale(T alpha, row_view<T> A)
 }
 
 template <typename T>
-void scale(single_t, T alpha, row_view<T> A)
-{
-    tblis_vector A_s(alpha, A);
-
-    tblis_vector_scale(tblis_single, nullptr, &A_s);
-}
-
-template <typename T>
 void scale(const communicator& comm, T alpha, row_view<T> A)
 {
     tblis_vector A_s(alpha, A);

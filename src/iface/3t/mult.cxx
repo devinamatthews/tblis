@@ -164,6 +164,10 @@ void mult(const communicator& comm,
     unsigned ndim_B = B.dimension();
     unsigned ndim_C = C.dimension();
 
+    std::string idx_A(idx_A_, idx_A_+ndim_A);
+    std::string idx_B(idx_B_, idx_B_+ndim_B);
+    std::string idx_C(idx_C_, idx_C_+ndim_C);
+
     for (unsigned i = 1;i < ndim_A;i++)
         for (unsigned j = 0;j < i;j++)
             TBLIS_ASSERT(idx_A[i] != idx_A[j]);
@@ -175,10 +179,6 @@ void mult(const communicator& comm,
     for (unsigned i = 1;i < ndim_C;i++)
         for (unsigned j = 0;j < i;j++)
             TBLIS_ASSERT(idx_C[i] != idx_C[j]);
-
-    std::string idx_A(idx_A_, idx_A_+ndim_A);
-    std::string idx_B(idx_B_, idx_B_+ndim_B);
-    std::string idx_C(idx_C_, idx_C_+ndim_C);
 
     auto idx_ABC = stl_ext::intersection(idx_A, idx_B, idx_C);
     auto idx_AB = stl_ext::exclusion(stl_ext::intersection(idx_A, idx_B), idx_ABC);
@@ -266,9 +266,9 @@ void mult(const communicator& comm,
     }
 
     internal::dpd_mult(comm, get_default_config(),
-                       alpha, A, idx_A_A, idx_A_AB, idx_A_AC, idx_A_ABC,
-                              B, idx_B_B, idx_B_AB, idx_B_BC, idx_C_ABC,
-                        beta, C, idx_C_C, idx_C_AC, idx_C_BC, idx_B_ABC);
+                       alpha, false, A, idx_A_A, idx_A_AB, idx_A_AC, idx_A_ABC,
+                              false, B, idx_B_B, idx_B_AB, idx_B_BC, idx_C_ABC,
+                        beta, false, C, idx_C_C, idx_C_AC, idx_C_BC, idx_B_ABC);
 }
 
 #define FOREACH_TYPE(T) \
@@ -288,6 +288,10 @@ void mult(const communicator& comm,
     unsigned ndim_B = B.dimension();
     unsigned ndim_C = C.dimension();
 
+    std::string idx_A(idx_A_, idx_A_+ndim_A);
+    std::string idx_B(idx_B_, idx_B_+ndim_B);
+    std::string idx_C(idx_C_, idx_C_+ndim_C);
+
     for (unsigned i = 1;i < ndim_A;i++)
         for (unsigned j = 0;j < i;j++)
             TBLIS_ASSERT(idx_A[i] != idx_A[j]);
@@ -299,10 +303,6 @@ void mult(const communicator& comm,
     for (unsigned i = 1;i < ndim_C;i++)
         for (unsigned j = 0;j < i;j++)
             TBLIS_ASSERT(idx_C[i] != idx_C[j]);
-
-    std::string idx_A(idx_A_, idx_A_+ndim_A);
-    std::string idx_B(idx_B_, idx_B_+ndim_B);
-    std::string idx_C(idx_C_, idx_C_+ndim_C);
 
     auto idx_ABC = stl_ext::intersection(idx_A, idx_B, idx_C);
     auto idx_AB = stl_ext::exclusion(stl_ext::intersection(idx_A, idx_B), idx_ABC);
@@ -377,10 +377,10 @@ void mult(const communicator& comm,
                      C.length(idx_C_BC[i]));
     }
 
-    internal::indexed_mult(comm, get_default_config(),
-                           alpha, A, idx_A_A, idx_A_AB, idx_A_AC, idx_A_ABC,
-                                  B, idx_B_B, idx_B_AB, idx_B_BC, idx_C_ABC,
-                            beta, C, idx_C_C, idx_C_AC, idx_C_BC, idx_B_ABC);
+    //internal::indexed_mult(comm, get_default_config(),
+    //                       alpha, A, idx_A_A, idx_A_AB, idx_A_AC, idx_A_ABC,
+    //                              B, idx_B_B, idx_B_AB, idx_B_BC, idx_C_ABC,
+    //                        beta, C, idx_C_C, idx_C_AC, idx_C_BC, idx_B_ABC);
 }
 
 #define FOREACH_TYPE(T) \
@@ -405,6 +405,10 @@ void mult(const communicator& comm,
     unsigned ndim_B = B.dimension();
     unsigned ndim_C = C.dimension();
 
+    std::string idx_A(idx_A_, idx_A_+ndim_A);
+    std::string idx_B(idx_B_, idx_B_+ndim_B);
+    std::string idx_C(idx_C_, idx_C_+ndim_C);
+
     for (unsigned i = 1;i < ndim_A;i++)
         for (unsigned j = 0;j < i;j++)
             TBLIS_ASSERT(idx_A[i] != idx_A[j]);
@@ -416,10 +420,6 @@ void mult(const communicator& comm,
     for (unsigned i = 1;i < ndim_C;i++)
         for (unsigned j = 0;j < i;j++)
             TBLIS_ASSERT(idx_C[i] != idx_C[j]);
-
-    std::string idx_A(idx_A_, idx_A_+ndim_A);
-    std::string idx_B(idx_B_, idx_B_+ndim_B);
-    std::string idx_C(idx_C_, idx_C_+ndim_C);
 
     auto idx_ABC = stl_ext::intersection(idx_A, idx_B, idx_C);
     auto idx_AB = stl_ext::exclusion(stl_ext::intersection(idx_A, idx_B), idx_ABC);
@@ -506,10 +506,10 @@ void mult(const communicator& comm,
         }
     }
 
-    internal::indexed_dpd_mult(comm, get_default_config(),
-                               alpha, A, idx_A_A, idx_A_AB, idx_A_AC, idx_A_ABC,
-                                      B, idx_B_B, idx_B_AB, idx_B_BC, idx_C_ABC,
-                                beta, C, idx_C_C, idx_C_AC, idx_C_BC, idx_B_ABC);
+    //internal::indexed_dpd_mult(comm, get_default_config(),
+    //                           alpha, A, idx_A_A, idx_A_AB, idx_A_AC, idx_A_ABC,
+    //                                  B, idx_B_B, idx_B_AB, idx_B_BC, idx_C_ABC,
+    //                            beta, C, idx_C_C, idx_C_AC, idx_C_BC, idx_B_ABC);
 }
 
 #define FOREACH_TYPE(T) \

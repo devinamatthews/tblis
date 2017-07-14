@@ -29,8 +29,8 @@ class varray_base
         typedef ctype* cptr;
 
     protected:
-        std::vector<len_type> len_;
-        std::vector<stride_type> stride_;
+        len_vector len_;
+        stride_vector stride_;
         pointer data_ = nullptr;
 
         /***********************************************************************
@@ -139,12 +139,12 @@ class varray_base
         }
 
         template <unsigned Dim>
-        void get_slice(pointer&, std::vector<len_type>&,
-                       std::vector<stride_type>&) const {}
+        void get_slice(pointer&, len_vector&,
+                       stride_vector&) const {}
 
         template <unsigned Dim, typename... Args>
-        void get_slice(pointer& ptr, std::vector<len_type>& len,
-                       std::vector<stride_type>& stride,
+        void get_slice(pointer& ptr, len_vector& len,
+                       stride_vector& stride,
                        len_type arg, Args&&... args) const
         {
             MARRAY_ASSERT(arg >= 0 && arg < len_[Dim]);
@@ -153,8 +153,8 @@ class varray_base
         }
 
         template <unsigned Dim, typename I, typename... Args>
-        void get_slice(pointer& ptr, std::vector<len_type>& len,
-                       std::vector<stride_type>& stride,
+        void get_slice(pointer& ptr, len_vector& len,
+                       stride_vector& stride,
                        const range_t<I>& arg, Args&&... args) const
         {
             MARRAY_ASSERT(arg.front() <= arg.back());
@@ -166,8 +166,8 @@ class varray_base
         }
 
         template <unsigned Dim, typename... Args>
-        void get_slice(pointer& ptr, std::vector<len_type>& len,
-                       std::vector<stride_type>& stride,
+        void get_slice(pointer& ptr, len_vector& len,
+                       stride_vector& stride,
                        all_t, Args&&... args) const
         {
             len.push_back(len_[Dim]);
@@ -270,20 +270,20 @@ class varray_base
          *
          **********************************************************************/
 
-        static std::vector<stride_type>
+        static stride_vector
         strides(std::initializer_list<len_type> len, layout layout = DEFAULT)
         {
             return strides<std::initializer_list<len_type>>(len, layout);
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        static std::vector<stride_type>
+        static stride_vector
         strides(const U& len, layout layout = DEFAULT)
         {
             MARRAY_ASSERT(len.size() > 0);
 
             auto ndim = len.size();
-            std::vector<stride_type> stride(ndim);
+            stride_vector stride(ndim);
 
             if (layout == ROW_MAJOR)
             {
@@ -703,8 +703,8 @@ class varray_base
             MARRAY_ASSERT(dim < dimension());
             MARRAY_ASSERT(len_[dim] > 0);
 
-            std::vector<len_type> len(dimension()-1);
-            std::vector<stride_type> stride(dimension()-1);
+            len_vector len(dimension()-1);
+            stride_vector stride(dimension()-1);
 
             std::copy_n(len_.begin(), dim, len.begin());
             std::copy_n(len_.begin()+dim+1, dimension()-dim-1, len.begin()+dim);
@@ -747,8 +747,8 @@ class varray_base
             MARRAY_ASSERT(dim < dimension());
             MARRAY_ASSERT(len_[dim] > 0);
 
-            std::vector<len_type> len(dimension()-1);
-            std::vector<stride_type> stride(dimension()-1);
+            len_vector len(dimension()-1);
+            stride_vector stride(dimension()-1);
 
             std::copy_n(len_.begin(), dim, len.begin());
             std::copy_n(len_.begin()+dim+1, dimension()-dim-1, len.begin()+dim);
@@ -782,8 +782,8 @@ class varray_base
             MARRAY_ASSERT(sizeof...(Args) == dimension());
 
             pointer ptr = data();
-            std::vector<len_type> len;
-            std::vector<stride_type> stride;
+            len_vector len;
+            stride_vector stride;
 
             get_slice<0>(ptr, len, stride, std::forward<Args>(args)...);
 
@@ -866,7 +866,7 @@ class varray_base
             return len_[dim];
         }
 
-        const std::vector<len_type>& lengths() const
+        const len_vector& lengths() const
         {
             return len_;
         }
@@ -877,7 +877,7 @@ class varray_base
             return stride_[dim];
         }
 
-        const std::vector<stride_type>& strides() const
+        const stride_vector& strides() const
         {
             return stride_;
         }
@@ -897,7 +897,7 @@ class varray_base
                 os << "{\n";
             }
 
-            std::vector<len_type> idx(ndim-1);
+            len_vector idx(ndim-1);
             auto data = x.data_;
 
             for (bool done = false;!done;)
@@ -963,24 +963,24 @@ marray_view<Type, NDim> fix(varray_base<Type, Derived, true>& x)
 template <typename U, unsigned N, typename D>
 varray_view<U> vary(const marray_base<U, N, D, false>& other)
 {
-    std::vector<len_type> len{other.lengths().begin(), other.lengths().end()};
-    std::vector<stride_type> stride{other.strides().begin(), other.strides().end()};
+    len_vector len{other.lengths().begin(), other.lengths().end()};
+    stride_vector stride{other.strides().begin(), other.strides().end()};
     return {len, other.data(), stride};
 }
 
 template <typename U, unsigned N, typename D>
 varray_view<const U> vary(const marray_base<U, N, D, true>& other)
 {
-    std::vector<len_type> len{other.lengths().begin(), other.lengths().end()};
-    std::vector<stride_type> stride{other.strides().begin(), other.strides().end()};
+    len_vector len{other.lengths().begin(), other.lengths().end()};
+    stride_vector stride{other.strides().begin(), other.strides().end()};
     return {len, other.data(), stride};
 }
 
 template <typename U, unsigned N, typename D>
 varray_view<U> vary(marray_base<U, N, D, true>& other)
 {
-    std::vector<len_type> len{other.lengths().begin(), other.lengths().end()};
-    std::vector<stride_type> stride{other.strides().begin(), other.strides().end()};
+    len_vector len{other.lengths().begin(), other.lengths().end()};
+    stride_vector stride{other.strides().begin(), other.strides().end()};
     return {len, other.data(), stride};
 }
 

@@ -46,14 +46,14 @@ class scatter_tensor_matrix
         }
 
         template <typename U, typename V, typename W, typename X>
-        scatter_tensor_matrix(const std::vector<U>& dense_len_m,
+        scatter_tensor_matrix(const U& dense_len_m,
                               len_type scatter_len_m,
-                              const std::vector<V>& dense_len_n,
+                              const V& dense_len_n,
                               len_type scatter_len_n,
                               pointer ptr,
-                              const std::vector<W>& stride_m,
+                              const W& stride_m,
                               scatter_type scatter_m,
-                              const std::vector<X>& stride_n,
+                              const X& stride_n,
                               scatter_type scatter_n)
         {
             reset(dense_len_m, scatter_len_m, dense_len_n, scatter_len_n,
@@ -124,14 +124,14 @@ class scatter_tensor_matrix
         }
 
         template <typename U, typename V, typename W, typename X>
-        void reset(const std::vector<U>& dense_len_m,
+        void reset(const U& dense_len_m,
                    len_type scatter_len_m,
-                   const std::vector<V>& dense_len_n,
+                   const V& dense_len_n,
                    len_type scatter_len_n,
                    pointer ptr,
-                   const std::vector<W>& stride_m,
+                   const W& stride_m,
                    scatter_type scatter_m,
-                   const std::vector<X>& stride_n,
+                   const X& stride_n,
                    scatter_type scatter_n)
         {
             TBLIS_ASSERT(dense_len_m.size() == stride_m.size());
@@ -145,8 +145,8 @@ class scatter_tensor_matrix
             offset_[0] = 0;
             offset_[1] = 0;
 
-            std::vector<len_type> len_m_, len_n_;
-            std::vector<stride_type> stride_m_, stride_n_;
+            len_vector len_m_, len_n_;
+            stride_vector stride_m_, stride_n_;
             if (!dense_len_m.empty()) len_m_.assign(dense_len_m.begin()+1, dense_len_m.end());
             if (!dense_len_n.empty()) len_n_.assign(dense_len_n.begin()+1, dense_len_n.end());
             if (!stride_m.empty()) stride_m_.assign(stride_m.begin()+1, stride_m.end());

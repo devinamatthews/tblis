@@ -552,7 +552,7 @@ class dpd_marray_base
         static detail::enable_if_container_of_containers_of_t<U,len_type,stride_type>
         size(unsigned irrep, const U& len)
         {
-            MARRAY_ASSERT(len.size() > 0);
+            if (len.size() == 0) return 1;
 
             //TODO: add alignment option
 
@@ -594,12 +594,13 @@ class dpd_marray_base
         static detail::enable_if_matrix_of_t<U,len_type,stride_type>
         size(unsigned irrep, const U& len)
         {
+            if (len.length(0) == 0) return 1;
+
             //TODO: add alignment option
 
             unsigned nirrep = len.length(1);
             unsigned ndim = len.length(0);
 
-            MARRAY_ASSERT(len.length(0) > 0);
             MARRAY_ASSERT(nirrep == 1 || nirrep == 2 ||
                           nirrep == 4 || nirrep == 8);
 

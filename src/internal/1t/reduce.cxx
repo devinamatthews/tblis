@@ -2,6 +2,8 @@
 
 #include "util/tensor.hpp"
 
+#include "external/stl_ext/include/iostream.hpp"
+
 namespace tblis
 {
 namespace internal
@@ -9,17 +11,17 @@ namespace internal
 
 template <typename T>
 void reduce(const communicator& comm, const config& cfg, reduce_t op,
-            const std::vector<len_type>& len_A,
-            const T* A, const std::vector<stride_type>& stride_A,
+            const len_vector& len_A,
+            const T* A, const stride_vector& stride_A,
             T& result, len_type& idx)
 {
     bool empty = len_A.size() == 0;
 
     len_type len0 = (empty ? 1 : len_A[0]);
-    std::vector<len_type> len1(len_A.begin() + !empty, len_A.end());
+    len_vector len1(len_A.begin() + !empty, len_A.end());
 
     stride_type stride0 = (empty ? 1 : stride_A[0]);
-    std::vector<len_type> stride1(stride_A.begin() + !empty, stride_A.end());
+    len_vector stride1(stride_A.begin() + !empty, stride_A.end());
 
     viterator<1> iter_A(len1, stride1);
     len_type n = stl_ext::prod(len1);
@@ -62,8 +64,8 @@ void reduce(const communicator& comm, const config& cfg, reduce_t op,
 
 #define FOREACH_TYPE(T) \
 template void reduce(const communicator& comm, const config& cfg, reduce_t op, \
-                     const std::vector<len_type>& len_A, \
-                     const T* A, const std::vector<stride_type>& stride_A, \
+                     const len_vector& len_A, \
+                     const T* A, const stride_vector& stride_A, \
                      T& result, len_type& idx);
 #include "configs/foreach_type.h"
 

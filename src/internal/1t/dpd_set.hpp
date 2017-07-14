@@ -12,7 +12,7 @@ namespace internal
 
 template <typename T>
 void dpd_set(const communicator& comm, const config& cfg,
-             T alpha, const dpd_varray_view<T>& A, const std::vector<unsigned>&);
+             T alpha, const dpd_varray_view<T>& A, const dim_vector&);
 
 }
 }

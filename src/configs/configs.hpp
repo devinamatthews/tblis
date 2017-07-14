@@ -11,6 +11,7 @@
 #include "kernels/1v/reduce.hpp"
 #include "kernels/1v/scale.hpp"
 #include "kernels/1v/set.hpp"
+#include "kernels/1v/shift.hpp"
 
 #include "kernels/1m/trans_add.hpp"
 #include "kernels/1m/trans_copy.hpp"
@@ -99,6 +100,7 @@ struct config
     microkernel<reduce_ukr_t> reduce_ukr;
     microkernel<scale_ukr_t> scale_ukr;
     microkernel<set_ukr_t> set_ukr;
+    microkernel<shift_ukr_t> shift_ukr;
 
     /*
      * Level 1m kernels
@@ -155,6 +157,7 @@ struct config
       reduce_ukr(typename Traits::template reduce_ukr<float>()),
       scale_ukr(typename Traits::template scale_ukr<float>()),
       set_ukr(typename Traits::template set_ukr<float>()),
+      shift_ukr(typename Traits::template shift_ukr<float>()),
 
       trans_mr(typename Traits::template trans_mr<float>()),
       trans_nr(typename Traits::template trans_nr<float>()),

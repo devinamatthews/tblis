@@ -44,18 +44,18 @@ class tensor_matrix
 
         template <typename U, typename V>
         tensor_matrix(tensor_view<T> other,
-                      const std::vector<U>& row_inds,
-                      const std::vector<V>& col_inds)
+                      const U& row_inds,
+                      const V& col_inds)
         {
             reset(std::move(other), row_inds, col_inds);
         }
 
         template <typename U, typename V, typename W, typename X>
-        tensor_matrix(const std::vector<U>& len_m,
-                      const std::vector<V>& len_n,
+        tensor_matrix(const U& len_m,
+                      const V& len_n,
                       pointer ptr,
-                      const std::vector<W>& stride_m,
-                      const std::vector<X>& stride_n)
+                      const W& stride_m,
+                      const X& stride_n)
         {
             reset(len_m, len_n, ptr, stride_m, stride_n);
         }
@@ -109,13 +109,13 @@ class tensor_matrix
 
         template <typename U, typename V>
         void reset(tensor_view<T> other,
-                   const std::vector<U>& row_inds,
-                   const std::vector<V>& col_inds)
+                   const U& row_inds,
+                   const V& col_inds)
         {
-            std::vector<len_type> len_m(row_inds.size());
-            std::vector<len_type> len_n(col_inds.size());
-            std::vector<stride_type> stride_m(row_inds.size());
-            std::vector<stride_type> stride_n(col_inds.size());
+            len_vector len_m(row_inds.size());
+            len_vector len_n(col_inds.size());
+            stride_vector stride_m(row_inds.size());
+            stride_vector stride_n(col_inds.size());
 
             for (size_t i = 0;i < row_inds.size();i++)
             {
@@ -133,11 +133,11 @@ class tensor_matrix
         }
 
         template <typename U, typename V, typename W, typename X>
-        void reset(const std::vector<U>& len_m,
-                   const std::vector<V>& len_n,
+        void reset(const U& len_m,
+                   const V& len_n,
                    pointer ptr,
-                   const std::vector<W>& stride_m,
-                   const std::vector<X>& stride_n)
+                   const W& stride_m,
+                   const X& stride_n)
         {
             TBLIS_ASSERT(len_m.size() == stride_m.size());
             TBLIS_ASSERT(len_n.size() == stride_n.size());
@@ -150,8 +150,8 @@ class tensor_matrix
             offset_[0] = 0;
             offset_[1] = 0;
 
-            std::vector<len_type> len_m_, len_n_;
-            std::vector<stride_type> stride_m_, stride_n_;
+            len_vector len_m_, len_n_;
+            stride_vector stride_m_, stride_n_;
             if (!len_m.empty()) len_m_.assign(len_m.begin()+1, len_m.end());
             if (!len_n.empty()) len_n_.assign(len_n.begin()+1, len_n.end());
             if (!stride_m.empty()) stride_m_.assign(stride_m.begin()+1, stride_m.end());

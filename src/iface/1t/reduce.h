@@ -95,6 +95,76 @@ std::pair<T,len_type> reduce(const communicator& comm, reduce_t op,
     return result;
 }
 
+template <typename T>
+void reduce(const communicator& comm, reduce_t op, indexed_varray_view<const T> A,
+            const label_type* idx_A, T& result, len_type& idx);
+
+template <typename T>
+void reduce(reduce_t op, indexed_varray_view<const T> A, const label_type* idx_A,
+            T& result, len_type& idx)
+{
+    parallelize
+    (
+        [&](const communicator& comm)
+        {
+            reduce(comm, op, A, idx_A, result, idx);
+        },
+        tblis_get_num_threads()
+    );
+}
+
+template <typename T>
+std::pair<T,len_type> reduce(reduce_t op, indexed_varray_view<const T> A, const label_type* idx_A)
+{
+    std::pair<T,len_type> result;
+    reduce(op, A, idx_A, result.first, result.second);
+    return result;
+}
+
+template <typename T>
+std::pair<T,len_type> reduce(const communicator& comm, reduce_t op,
+                             indexed_varray_view<const T> A, const label_type* idx_A)
+{
+    std::pair<T,len_type> result;
+    reduce(comm, op, A, idx_A, result.first, result.second);
+    return result;
+}
+
+template <typename T>
+void reduce(const communicator& comm, reduce_t op, indexed_dpd_varray_view<const T> A,
+            const label_type* idx_A, T& result, len_type& idx);
+
+template <typename T>
+void reduce(reduce_t op, indexed_dpd_varray_view<const T> A, const label_type* idx_A,
+            T& result, len_type& idx)
+{
+    parallelize
+    (
+        [&](const communicator& comm)
+        {
+            reduce(comm, op, A, idx_A, result, idx);
+        },
+        tblis_get_num_threads()
+    );
+}
+
+template <typename T>
+std::pair<T,len_type> reduce(reduce_t op, indexed_dpd_varray_view<const T> A, const label_type* idx_A)
+{
+    std::pair<T,len_type> result;
+    reduce(op, A, idx_A, result.first, result.second);
+    return result;
+}
+
+template <typename T>
+std::pair<T,len_type> reduce(const communicator& comm, reduce_t op,
+                             indexed_dpd_varray_view<const T> A, const label_type* idx_A)
+{
+    std::pair<T,len_type> result;
+    reduce(comm, op, A, idx_A, result.first, result.second);
+    return result;
+}
+
 #endif
 
 #ifdef __cplusplus

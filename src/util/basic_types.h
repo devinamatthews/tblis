@@ -1,6 +1,7 @@
 #ifndef _TBLIS_BASIC_TYPES_H_
 #define _TBLIS_BASIC_TYPES_H_
 
+#include <unistd.h>
 #include <string.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -27,6 +28,9 @@
 #ifdef TBLIS_DEBUG
 #define MARRAY_ENABLE_ASSERTS
 #endif
+
+#define MARRAY_LEN_TYPE TBLIS_LEN_TYPE
+#define MARRAY_STRIDE_TYPE TBLIS_STRIDE_TYPE
 
 #include "../external/marray/include/varray.hpp"
 #include "../external/marray/include/marray.hpp"
@@ -73,6 +77,19 @@ typedef struct fake_scomplex { float real, imag; } fake_scomplex;
 typedef struct fake_dcomplex { double real, imag; } fake_dcomplex;
 
 #ifdef __cplusplus
+
+namespace detail
+{
+
+template <typename T> struct label_vector_type
+{ typedef MArray::short_vector<T,8> type; };
+
+template <> struct label_vector_type<char>
+{ typedef std::string type; };
+
+}
+
+typedef typename detail::label_vector_type<label_type>::type label_vector;
 
 typedef std::complex<float> scomplex;
 typedef std::complex<double> dcomplex;

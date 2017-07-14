@@ -48,11 +48,49 @@ void add(const communicator& comm,
 template <typename T>
 void add(const communicator& comm,
          T alpha, dpd_varray_view<const T> A, const label_type* idx_A,
-         T  beta,       dpd_varray_view<T> B, const label_type* idx_B);
+         T  beta, dpd_varray_view<      T> B, const label_type* idx_B);
 
 template <typename T>
 void add(T alpha, dpd_varray_view<const T> A, const label_type* idx_A,
-         T  beta,       dpd_varray_view<T> B, const label_type* idx_B)
+         T  beta, dpd_varray_view<      T> B, const label_type* idx_B)
+{
+    parallelize
+    (
+        [&](const communicator& comm)
+        {
+            add(comm, alpha, A, idx_A, beta, B, idx_B);
+        },
+        tblis_get_num_threads()
+    );
+}
+
+template <typename T>
+void add(const communicator& comm,
+         T alpha, indexed_varray_view<const T> A, const label_type* idx_A,
+         T  beta, indexed_varray_view<      T> B, const label_type* idx_B);
+
+template <typename T>
+void add(T alpha, indexed_varray_view<const T> A, const label_type* idx_A,
+         T  beta, indexed_varray_view<      T> B, const label_type* idx_B)
+{
+    parallelize
+    (
+        [&](const communicator& comm)
+        {
+            add(comm, alpha, A, idx_A, beta, B, idx_B);
+        },
+        tblis_get_num_threads()
+    );
+}
+
+template <typename T>
+void add(const communicator& comm,
+         T alpha, indexed_dpd_varray_view<const T> A, const label_type* idx_A,
+         T  beta, indexed_dpd_varray_view<      T> B, const label_type* idx_B);
+
+template <typename T>
+void add(T alpha, indexed_dpd_varray_view<const T> A, const label_type* idx_A,
+         T  beta, indexed_dpd_varray_view<      T> B, const label_type* idx_B)
 {
     parallelize
     (

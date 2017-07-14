@@ -30,7 +30,7 @@ class dpd_varray_base
     protected:
         matrix<len_type> len_;
         matrix<stride_type> size_;
-        std::vector<unsigned> perm_;
+        dim_vector perm_;
         pointer data_ = nullptr;
         unsigned irrep_ = 0;
         unsigned nirrep_ = 0;
@@ -130,11 +130,11 @@ class dpd_varray_base
             unsigned ndim = dimension();
 
             const_pointer cptr;
-            std::vector<unsigned> irreps(ndim);
-            std::vector<len_type> len(ndim);
-            std::vector<stride_type> stride(ndim);
+            irrep_vector irreps(ndim);
+            len_vector len(ndim);
+            stride_vector stride(ndim);
 
-            viterator<0> it(std::vector<unsigned>(ndim-1, nirrep_));
+            viterator<0> it(irrep_vector(ndim-1, nirrep_));
             while (it.next())
             {
                 irreps[0] = irrep_;
@@ -206,11 +206,11 @@ class dpd_varray_base
             unsigned ndim = dimension();
 
             const_pointer cptr = data_;
-            std::vector<unsigned> irreps(ndim);
-            std::vector<len_type> len(ndim);
-            std::vector<stride_type> stride(ndim);
+            irrep_vector irreps(ndim);
+            len_vector len(ndim);
+            stride_vector stride(ndim);
 
-            viterator<0> it1(std::vector<unsigned>(ndim-1, nirrep_));
+            viterator<0> it1(irrep_vector(ndim-1, nirrep_));
             while (it1.next())
             {
                 irreps[0] = irrep_;
@@ -352,7 +352,7 @@ class dpd_varray_base
                 unsigned shift = (nirrep_>1) + (nirrep_>2) + (nirrep_>4);
 
                 unsigned nblocks = 1u << (shift*(ndim-1));
-                std::vector<unsigned> irreps(ndim);
+                irrep_vector irreps(ndim);
                 for (unsigned block = 0;block < nblocks;block++)
                 {
                     unsigned b = block;
@@ -494,9 +494,9 @@ class dpd_varray_base
         {
             unsigned ndim = dimension();
 
-            std::vector<unsigned> irreps(irreps_.begin(), irreps_.end());
-            std::vector<len_type> len(ndim);
-            std::vector<stride_type> stride(ndim);
+            irrep_vector irreps(irreps_.begin(), irreps_.end());
+            len_vector len(ndim);
+            stride_vector stride(ndim);
 
             pointer data;
             get_block(irreps, len, data, stride);
@@ -642,7 +642,7 @@ class dpd_varray_base
             return len_.length(1);
         }
 
-        const std::vector<unsigned>& permutation() const
+        const dim_vector& permutation() const
         {
             return perm_;
         }

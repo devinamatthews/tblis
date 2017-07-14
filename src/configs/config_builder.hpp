@@ -149,6 +149,8 @@ config cfg##_config_instance = config(cfg##_config());
     TBLIS_CONFIG_UKR2(this_config, scale_ukr, scale_ukr_t, S,D,C,Z, scale_ukr_def)
 #define TBLIS_CONFIG_SET_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, set_ukr, set_ukr_t, S,D,C,Z, set_ukr_def)
+#define TBLIS_CONFIG_SHIFT_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR2(this_config, shift_ukr, shift_ukr_t, S,D,C,Z, shift_ukr_def)
 
 #define TBLIS_CONFIG_GEMM_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, gemm_ukr, gemm_ukr_t, S,D,C,Z, gemm_ukr_def)
@@ -278,6 +280,7 @@ struct config_template
     TBLIS_CONFIG_REDUCE_UKR(_,_,_,_)
     TBLIS_CONFIG_SCALE_UKR(_,_,_,_)
     TBLIS_CONFIG_SET_UKR(_,_,_,_)
+    TBLIS_CONFIG_SHIFT_UKR(_,_,_,_)
 
     TBLIS_CONFIG_TRANS_MR(_,_,_,_)
     TBLIS_CONFIG_TRANS_NR(_,_,_,_)

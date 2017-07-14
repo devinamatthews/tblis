@@ -137,7 +137,7 @@ class dpd_varray_view : public dpd_varray_base<Type, dpd_varray_view<Type>, fals
 
             MARRAY_ASSERT(perm.size() == ndim);
 
-            std::vector<unsigned> new_perm(ndim);
+            dim_vector new_perm(ndim);
 
             auto it = perm.begin();
             for (unsigned i = 0;i < perm.size();i++)

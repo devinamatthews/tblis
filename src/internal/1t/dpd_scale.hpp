@@ -13,7 +13,7 @@ namespace internal
 template <typename T>
 void dpd_scale(const communicator& comm, const config& cfg,
                T alpha, bool conj_A, const dpd_varray_view<T>& A,
-               const std::vector<unsigned>&);
+               const dim_vector&);
 
 }
 }

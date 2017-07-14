@@ -9,15 +9,15 @@ namespace internal
 
 template <typename T>
 void add(const communicator& comm, const config& cfg,
-         const std::vector<len_type>& len_A_,
-         const std::vector<len_type>& len_B_,
-         const std::vector<len_type>& len_AB_,
+         const len_vector& len_A_,
+         const len_vector& len_B_,
+         const len_vector& len_AB_,
          T alpha, bool conj_A, const T* A,
-         const std::vector<stride_type>& stride_A_,
-         const std::vector<stride_type>& stride_A_AB_,
+         const stride_vector& stride_A_,
+         const stride_vector& stride_A_AB_,
          T  beta, bool conj_B,       T* B,
-         const std::vector<stride_type>& stride_B_,
-         const std::vector<stride_type>& stride_B_AB_)
+         const stride_vector& stride_B_,
+         const stride_vector& stride_B_AB_)
 {
     auto perm_A = detail::sort_by_stride(stride_A_);
     auto perm_B = detail::sort_by_stride(stride_B_);
@@ -93,19 +93,19 @@ void add(const communicator& comm, const config& cfg,
             ))
         }
     }
-    else
+    else if (!len_AB.empty())
     {
         //TODO transpose ukr
 
         len_type len0 = len_AB[0];
-        std::vector<len_type> len1(len_AB.begin()+1, len_AB.end());
+        len_vector len1(len_AB.begin()+1, len_AB.end());
 
         stride_type stride_A0 = stride_A_AB[0];
-        std::vector<stride_type> stride_A1(stride_A_AB.begin()+1,
+        stride_vector stride_A1(stride_A_AB.begin()+1,
                                            stride_A_AB.end());
 
         stride_type stride_B0 = stride_B_AB[0];
-        std::vector<stride_type> stride_B1(stride_B_AB.begin()+1,
+        stride_vector stride_B1(stride_B_AB.begin()+1,
                                            stride_B_AB.end());
 
         viterator<2> iter_AB(len1, stride_A1, stride_B1);
@@ -141,21 +141,34 @@ void add(const communicator& comm, const config& cfg,
             }
         }
     }
+    else
+    {
+        if (beta == T(0))
+        {
+            cfg.copy_ukr.call<T>(1, alpha, conj_A, A, 0,
+                                                   B, 0);
+        }
+        else
+        {
+            cfg.add_ukr.call<T>(1, alpha, conj_A, A, 0,
+                                    beta, conj_B, B, 0);
+        }
+    }
 
     comm.barrier();
 }
 
 #define FOREACH_TYPE(T) \
 template void add(const communicator& comm, const config& cfg, \
-                  const std::vector<len_type>& len_A, \
-                  const std::vector<len_type>& len_B, \
-                  const std::vector<len_type>& len_AB, \
+                  const len_vector& len_A, \
+                  const len_vector& len_B, \
+                  const len_vector& len_AB, \
                   T alpha, bool conj_A, const T* A, \
-                  const std::vector<stride_type>& stride_A, \
-                  const std::vector<stride_type>& stride_A_AB, \
+                  const stride_vector& stride_A, \
+                  const stride_vector& stride_A_AB, \
                   T  beta, bool conj_B,       T* B, \
-                  const std::vector<stride_type>& stride_B, \
-                  const std::vector<stride_type>& stride_B_AB);
+                  const stride_vector& stride_B, \
+                  const stride_vector& stride_B_AB);
 #include "configs/foreach_type.h"
 
 }

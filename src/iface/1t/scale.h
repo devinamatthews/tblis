@@ -56,6 +56,40 @@ void scale(T alpha, dpd_varray_view<T> A, const label_type* idx_A)
     );
 }
 
+template <typename T>
+void scale(const communicator& comm,
+           T alpha, indexed_varray_view<T> A, const label_type* idx_A);
+
+template <typename T>
+void scale(T alpha, indexed_varray_view<T> A, const label_type* idx_A)
+{
+    parallelize
+    (
+        [&](const communicator& comm)
+        {
+            scale(comm, alpha, A, idx_A);
+        },
+        tblis_get_num_threads()
+    );
+}
+
+template <typename T>
+void scale(const communicator& comm,
+           T alpha, indexed_dpd_varray_view<T> A, const label_type* idx_A);
+
+template <typename T>
+void scale(T alpha, indexed_dpd_varray_view<T> A, const label_type* idx_A)
+{
+    parallelize
+    (
+        [&](const communicator& comm)
+        {
+            scale(comm, alpha, A, idx_A);
+        },
+        tblis_get_num_threads()
+    );
+}
+
 #endif
 
 #ifdef __cplusplus

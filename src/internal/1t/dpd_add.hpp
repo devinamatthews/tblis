@@ -13,11 +13,11 @@ namespace internal
 template <typename T>
 void dpd_add(const communicator& comm, const config& cfg,
              T alpha, bool conj_A, const dpd_varray_view<const T>& A,
-             const std::vector<unsigned>& idx_A,
-             const std::vector<unsigned>& idx_A_AB,
+             const dim_vector& idx_A,
+             const dim_vector& idx_A_AB,
              T  beta, bool conj_B, const dpd_varray_view<      T>& B,
-             const std::vector<unsigned>& idx_B,
-             const std::vector<unsigned>& idx_B_AB);
+             const dim_vector& idx_B,
+             const dim_vector& idx_B_AB);
 
 }
 }

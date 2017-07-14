@@ -82,7 +82,7 @@ class varray : public varray_base<Type, varray<Type, Allocator>, true>
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        varray(const std::vector<U>& len, layout layout)
+        varray(const U& len, layout layout)
         {
             reset(len, Type(), layout);
         }
@@ -286,7 +286,7 @@ class varray : public varray_base<Type, varray<Type, Allocator>, true>
                 MARRAY_ASSERT(i == dim || len_[i] == x.length(j++));
             }
 
-            std::vector<len_type> len = len_;
+            len_vector len = len_;
             len[dim]++;
             resize(len);
             back(dim) = x;
@@ -304,7 +304,7 @@ class varray : public varray_base<Type, varray<Type, Allocator>, true>
             MARRAY_ASSERT(dim < dimension());
             MARRAY_ASSERT(len_[dim] > 0);
 
-            std::vector<len_type> len = len_;
+            len_vector len = len_;
             len[dim]--;
             resize(len);
         }

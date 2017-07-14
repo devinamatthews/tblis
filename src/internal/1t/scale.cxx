@@ -9,16 +9,16 @@ namespace internal
 
 template <typename T>
 void scale(const communicator& comm, const config& cfg,
-           const std::vector<len_type>& len_A,
-           T alpha, bool conj_A, T* A, const std::vector<stride_type>& stride_A)
+           const len_vector& len_A,
+           T alpha, bool conj_A, T* A, const stride_vector& stride_A)
 {
     bool empty = len_A.size() == 0;
 
     len_type len0 = (empty ? 1 : len_A[0]);
-    std::vector<len_type> len1(len_A.begin() + !empty, len_A.end());
+    len_vector len1(len_A.begin() + !empty, len_A.end());
 
     stride_type stride0 = (empty ? 1 : stride_A[0]);
-    std::vector<len_type> stride1(stride_A.begin() + !empty, stride_A.end());
+    len_vector stride1(stride_A.begin() + !empty, stride_A.end());
 
     viterator<1> iter_A(len1, stride1);
     len_type n = stl_ext::prod(len1);
@@ -43,8 +43,8 @@ void scale(const communicator& comm, const config& cfg,
 
 #define FOREACH_TYPE(T) \
 template void scale(const communicator& comm, const config& cfg, \
-                    const std::vector<len_type>& len_A, \
-                    T alpha, bool conj_A, T* A, const std::vector<stride_type>& stride_A);
+                    const len_vector& len_A, \
+                    T alpha, bool conj_A, T* A, const stride_vector& stride_A);
 #include "configs/foreach_type.h"
 
 }

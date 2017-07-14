@@ -286,15 +286,15 @@ struct random_contraction
 
         for (int i = 0;i < N;i++)
         {
-            vector<len_type> len_m =
+            len_vector len_m =
                 random_product_constrained_sequence<len_type, ROUND_NEAREST>(random_number(1, 3), m);
-            vector<len_type> len_n =
+            len_vector len_n =
                 random_product_constrained_sequence<len_type, ROUND_NEAREST>(random_number(1, 3), n);
-            vector<len_type> len_k =
+            len_vector len_k =
                 random_product_constrained_sequence<len_type, ROUND_NEAREST>(random_number(1, 3), k);
 
-            vector<label_type> idx_A, idx_B, idx_C;
-            vector<len_type> len_A, len_B, len_C;
+            label_vector idx_A, idx_B, idx_C;
+            len_vector len_A, len_B, len_C;
             char idx = 'a';
 
             map<char,len_type> lengths;
@@ -335,9 +335,9 @@ struct random_contraction
                 tk *= len;
             }
 
-            vector<unsigned> reorder_A = range<unsigned>(len_A.size());
-            vector<unsigned> reorder_B = range<unsigned>(len_B.size());
-            vector<unsigned> reorder_C = range<unsigned>(len_C.size());
+            dim_vector reorder_A = range<unsigned>(len_A.size());
+            dim_vector reorder_B = range<unsigned>(len_B.size());
+            dim_vector reorder_C = range<unsigned>(len_C.size());
 
             random_shuffle(reorder_A.begin(), reorder_A.end());
             random_shuffle(reorder_B.begin(), reorder_B.end());
@@ -381,11 +381,11 @@ template<typename T, algo_t Implementation>
 struct regular_contraction
 {
     len_type R;
-    vector<label_type> idx_A, idx_B, idx_C;
+    label_vector idx_A, idx_B, idx_C;
 
-    regular_contraction(len_type R, const vector<label_type> &idx_A,
-                        const vector<label_type> &idx_B,
-                        const vector<label_type> &idx_C,
+    regular_contraction(len_type R, const label_vector &idx_A,
+                        const label_vector &idx_B,
+                        const label_vector &idx_C,
                         const map<char,range_t<stride_type>> &ranges)
     : R(R), idx_A(idx_A), idx_B(idx_B), idx_C(idx_C)
     {
@@ -394,7 +394,7 @@ struct regular_contraction
 
     void operator()(const map<char, len_type> &lengths) const
     {
-        vector<len_type> len_A, len_B, len_C;
+        len_vector len_A, len_B, len_C;
 
         stride_type ntot = 1;
         for (auto & p : lengths) ntot *= p.second;
@@ -553,9 +553,9 @@ int main(int argc, char** argv)
                 ranges[c] = parse_range(range);
             }
 
-            vector<label_type> idx_A(idx_A_.begin(), idx_A_.end());
-            vector<label_type> idx_B(idx_B_.begin(), idx_B_.end());
-            vector<label_type> idx_C(idx_C_.begin(), idx_C_.end());
+            label_vector idx_A(idx_A_.begin(), idx_A_.end());
+            label_vector idx_B(idx_B_.begin(), idx_B_.end());
+            label_vector idx_C(idx_C_.begin(), idx_C_.end());
 
             switch (dt)
             {

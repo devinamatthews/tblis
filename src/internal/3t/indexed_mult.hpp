@@ -11,20 +11,20 @@ namespace internal
 template <typename T>
 void indexed_mult(const communicator& comm, const config& cfg,
                   T alpha, const indexed_varray_view<const T>& A,
-                  const std::vector<unsigned>& idx_A_only,
-                  const std::vector<unsigned>& idx_A_AB,
-                  const std::vector<unsigned>& idx_A_AC,
-                  const std::vector<unsigned>& idx_A_ABC,
+                  const dim_vector& idx_A_only,
+                  const dim_vector& idx_A_AB,
+                  const dim_vector& idx_A_AC,
+                  const dim_vector& idx_A_ABC,
                            const indexed_varray_view<const T>& B,
-                  const std::vector<unsigned>& idx_B_only,
-                  const std::vector<unsigned>& idx_B_AB,
-                  const std::vector<unsigned>& idx_B_BC,
-                  const std::vector<unsigned>& idx_B_ABC,
+                  const dim_vector& idx_B_only,
+                  const dim_vector& idx_B_AB,
+                  const dim_vector& idx_B_BC,
+                  const dim_vector& idx_B_ABC,
                   T  beta, const indexed_varray_view<      T>& C,
-                  const std::vector<unsigned>& idx_C_only,
-                  const std::vector<unsigned>& idx_C_AC,
-                  const std::vector<unsigned>& idx_C_BC,
-                  const std::vector<unsigned>& idx_C_ABC);
+                  const dim_vector& idx_C_only,
+                  const dim_vector& idx_C_AC,
+                  const dim_vector& idx_C_BC,
+                  const dim_vector& idx_C_ABC);
 
 }
 }

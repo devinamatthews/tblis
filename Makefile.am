@@ -6,18 +6,21 @@ lib_libtblis_la_SOURCES = \
     src/iface/1v/reduce.cxx \
     src/iface/1v/scale.cxx \
     src/iface/1v/set.cxx \
+    src/iface/1v/shift.cxx \
     \
     src/iface/1m/add.cxx \
     src/iface/1m/dot.cxx \
     src/iface/1m/reduce.cxx \
     src/iface/1m/scale.cxx \
     src/iface/1m/set.cxx \
+    src/iface/1m/shift.cxx \
 	\
     src/iface/1t/add.cxx \
     src/iface/1t/dot.cxx \
     src/iface/1t/reduce.cxx \
     src/iface/1t/scale.cxx \
     src/iface/1t/set.cxx \
+    src/iface/1t/shift.cxx \
     \
     src/iface/3m/mult.cxx \
     \
@@ -28,23 +31,27 @@ lib_libtblis_la_SOURCES = \
     src/internal/1v/reduce.cxx \
     src/internal/1v/scale.cxx \
     src/internal/1v/set.cxx \
+    src/internal/1v/shift.cxx \
     \
     src/internal/1m/add.cxx \
     src/internal/1m/dot.cxx \
     src/internal/1m/reduce.cxx \
     src/internal/1m/scale.cxx \
     src/internal/1m/set.cxx \
+    src/internal/1m/shift.cxx \
 	\
     src/internal/1t/add.cxx \
     src/internal/1t/dot.cxx \
     src/internal/1t/reduce.cxx \
     src/internal/1t/scale.cxx \
     src/internal/1t/set.cxx \
+    src/internal/1t/shift.cxx \
     src/internal/1t/dpd_add.cxx \
     src/internal/1t/dpd_dot.cxx \
     src/internal/1t/dpd_reduce.cxx \
     src/internal/1t/dpd_scale.cxx \
     src/internal/1t/dpd_set.cxx \
+    src/internal/1t/dpd_shift.cxx \
     \
     src/internal/3m/mult.cxx \
     \

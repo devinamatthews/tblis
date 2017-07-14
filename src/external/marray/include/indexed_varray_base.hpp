@@ -73,9 +73,9 @@ class indexed_varray_base
     protected:
         row_view<const pointer> data_;
         matrix_view<const len_type> idx_;
-        std::vector<len_type> dense_len_;
-        std::vector<len_type> idx_len_;
-        std::vector<stride_type> dense_stride_;
+        len_vector dense_len_;
+        len_vector idx_len_;
+        stride_vector dense_stride_;
 
         /***********************************************************************
          *
@@ -169,7 +169,7 @@ class indexed_varray_base
             typedef typename View::pointer Ptr;
 
             unsigned ndim = indexed_dimension();
-            std::vector<len_type> indices(ndim);
+            index_vector indices(ndim);
 
             for (len_type i = 0;i < num_indices();i++)
             {
@@ -205,7 +205,7 @@ class indexed_varray_base
             unsigned dense_ndim = dense_dimension();
             unsigned ndim = dense_ndim + indexed_ndim;
 
-            std::vector<len_type> indices(ndim);
+            index_vector indices(ndim);
 
             for (len_type i = 0;i < num_indices();i++)
             {
@@ -536,13 +536,20 @@ class indexed_varray_base
             return idx_[idx];
         }
 
+        len_type index(len_type idx, len_type dim) const
+        {
+            MARRAY_ASSERT(0 <= idx && idx < num_indices());
+            MARRAY_ASSERT(dim < indexed_dimension());
+            return idx_[idx][dim];
+        }
+
         len_type dense_length(unsigned dim) const
         {
             MARRAY_ASSERT(dim < dense_dimension());
             return dense_len_[dim];
         }
 
-        const std::vector<len_type>& dense_lengths() const
+        const len_vector& dense_lengths() const
         {
             return dense_len_;
         }
@@ -553,7 +560,7 @@ class indexed_varray_base
             return idx_len_[dim];
         }
 
-        const std::vector<len_type>& indexed_lengths() const
+        const len_vector& indexed_lengths() const
         {
             return idx_len_;
         }
@@ -566,7 +573,7 @@ class indexed_varray_base
             else return indexed_length(dim - dense_dimension());
         }
 
-        std::vector<len_type> lengths() const
+        len_vector lengths() const
         {
             auto len = dense_len_;
             len.insert(len.end(), idx_len_.begin(), idx_len_.end());
@@ -584,7 +591,7 @@ class indexed_varray_base
             return dense_stride_[dim];
         }
 
-        const std::vector<stride_type>& dense_strides() const
+        const stride_vector& dense_strides() const
         {
             return dense_stride_;
         }

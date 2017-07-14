@@ -29,18 +29,18 @@ namespace internal
 
 template <typename T>
 void contract_blis(const communicator& comm, const config& cfg,
-                   const std::vector<len_type>& len_AB,
-                   const std::vector<len_type>& len_AC,
-                   const std::vector<len_type>& len_BC,
+                   const len_vector& len_AB,
+                   const len_vector& len_AC,
+                   const len_vector& len_BC,
                    T alpha, const T* A,
-                   const std::vector<stride_type>& stride_A_AB,
-                   const std::vector<stride_type>& stride_A_AC,
+                   const stride_vector& stride_A_AB,
+                   const stride_vector& stride_A_AC,
                             const T* B,
-                   const std::vector<stride_type>& stride_B_AB,
-                   const std::vector<stride_type>& stride_B_BC,
+                   const stride_vector& stride_B_AB,
+                   const stride_vector& stride_B_BC,
                    T  beta,       T* C,
-                   const std::vector<stride_type>& stride_C_AC,
-                   const std::vector<stride_type>& stride_C_BC);
+                   const stride_vector& stride_C_AC,
+                   const stride_vector& stride_C_BC);
 
 extern MemoryPool BuffersForA, BuffersForB, BuffersForScatter;
 extern MemoryPool BuffersForScatter;
@@ -82,9 +82,9 @@ void contract_batch_dumb(T alpha, indexed_varray_view<const T> A, const label_ty
     const auto& dense_stride_B = B.dense_strides();
     const auto& dense_stride_C = C.dense_strides();
 
-    std::vector<stride_type> packed_stride_A(at.strides().begin(), at.strides().begin()+dense_ndim_A);
-    std::vector<stride_type> packed_stride_B(bt.strides().begin(), bt.strides().begin()+dense_ndim_B);
-    std::vector<stride_type> packed_stride_C(ct.strides().begin(), ct.strides().begin()+dense_ndim_C);
+    stride_vector packed_stride_A(at.strides().begin(), at.strides().begin()+dense_ndim_A);
+    stride_vector packed_stride_B(bt.strides().begin(), bt.strides().begin()+dense_ndim_B);
+    stride_vector packed_stride_C(ct.strides().begin(), ct.strides().begin()+dense_ndim_C);
 
     for (len_type i = 0;i < A.num_indices();i++)
     {
@@ -156,17 +156,17 @@ void contract_batch_ref(T alpha, indexed_varray_view<const T> A, const label_typ
     auto stride_B = B.dense_strides();
     auto stride_C = C.dense_strides();
 
-    std::vector<label_type> dense_idx_A(idx_A, idx_A+ndim_A);
-    std::vector<label_type> dense_idx_B(idx_B, idx_B+ndim_B);
-    std::vector<label_type> dense_idx_C(idx_C, idx_C+ndim_C);
+    label_vector dense_idx_A(idx_A, idx_A+ndim_A);
+    label_vector dense_idx_B(idx_B, idx_B+ndim_B);
+    label_vector dense_idx_C(idx_C, idx_C+ndim_C);
 
-    std::vector<label_type> batch_idx_A(idx_A+ndim_A, idx_A+ndim_A+batch_ndim_A);
-    std::vector<label_type> batch_idx_B(idx_B+ndim_B, idx_B+ndim_B+batch_ndim_B);
-    std::vector<label_type> batch_idx_C(idx_C+ndim_C, idx_C+ndim_C+batch_ndim_C);
+    label_vector batch_idx_A(idx_A+ndim_A, idx_A+ndim_A+batch_ndim_A);
+    label_vector batch_idx_B(idx_B+ndim_B, idx_B+ndim_B+batch_ndim_B);
+    label_vector batch_idx_C(idx_C+ndim_C, idx_C+ndim_C+batch_ndim_C);
 
-    std::vector<stride_type> batch_stride_A_A(batch_ndim_A);
-    std::vector<stride_type> batch_stride_A_B(batch_ndim_A);
-    std::vector<stride_type> batch_stride_A_C(batch_ndim_A);
+    stride_vector batch_stride_A_A(batch_ndim_A);
+    stride_vector batch_stride_A_B(batch_ndim_A);
+    stride_vector batch_stride_A_C(batch_ndim_A);
 
     for (int i = 0;i < batch_ndim_A;i++)
     {
@@ -210,9 +210,9 @@ void contract_batch_ref(T alpha, indexed_varray_view<const T> A, const label_typ
         }
     }
 
-    std::vector<stride_type> batch_stride_B_A(batch_ndim_B);
-    std::vector<stride_type> batch_stride_B_B(batch_ndim_B);
-    std::vector<stride_type> batch_stride_B_C(batch_ndim_B);
+    stride_vector batch_stride_B_A(batch_ndim_B);
+    stride_vector batch_stride_B_B(batch_ndim_B);
+    stride_vector batch_stride_B_C(batch_ndim_B);
 
     for (int i = 0;i < batch_ndim_B;i++)
     {
@@ -256,9 +256,9 @@ void contract_batch_ref(T alpha, indexed_varray_view<const T> A, const label_typ
         }
     }
 
-    std::vector<stride_type> batch_stride_C_A(batch_ndim_C);
-    std::vector<stride_type> batch_stride_C_B(batch_ndim_C);
-    std::vector<stride_type> batch_stride_C_C(batch_ndim_C);
+    stride_vector batch_stride_C_A(batch_ndim_C);
+    stride_vector batch_stride_C_B(batch_ndim_C);
+    stride_vector batch_stride_C_C(batch_ndim_C);
 
     for (int i = 0;i < batch_ndim_C;i++)
     {
@@ -435,17 +435,17 @@ void contract_batch(T alpha, indexed_varray_view<const T> A, const label_type* i
     unsigned batch_ndim_B = B.indexed_dimension();
     unsigned batch_ndim_C = C.indexed_dimension();
 
-    std::vector<label_type> idx_A(idx_A_, idx_A_+ndim_A);
-    std::vector<label_type> idx_B(idx_B_, idx_B_+ndim_B);
-    std::vector<label_type> idx_C(idx_C_, idx_C_+ndim_C);
+    label_vector idx_A(idx_A_, idx_A_+ndim_A);
+    label_vector idx_B(idx_B_, idx_B_+ndim_B);
+    label_vector idx_C(idx_C_, idx_C_+ndim_C);
 
-    std::vector<label_type> dense_idx_A(idx_A_, idx_A_+dense_ndim_A);
-    std::vector<label_type> dense_idx_B(idx_B_, idx_B_+dense_ndim_B);
-    std::vector<label_type> dense_idx_C(idx_C_, idx_C_+dense_ndim_C);
+    label_vector dense_idx_A(idx_A_, idx_A_+dense_ndim_A);
+    label_vector dense_idx_B(idx_B_, idx_B_+dense_ndim_B);
+    label_vector dense_idx_C(idx_C_, idx_C_+dense_ndim_C);
 
-    std::vector<label_type> batch_idx_A(idx_A_+dense_ndim_A, idx_A_+ndim_A);
-    std::vector<label_type> batch_idx_B(idx_B_+dense_ndim_B, idx_B_+ndim_B);
-    std::vector<label_type> batch_idx_C(idx_C_+dense_ndim_C, idx_C_+ndim_C);
+    label_vector batch_idx_A(idx_A_+dense_ndim_A, idx_A_+ndim_A);
+    label_vector batch_idx_B(idx_B_+dense_ndim_B, idx_B_+ndim_B);
+    label_vector batch_idx_C(idx_C_+dense_ndim_C, idx_C_+ndim_C);
 
     const auto& len_A = A.lengths();
     const auto& len_B = B.lengths();
@@ -459,9 +459,9 @@ void contract_batch(T alpha, indexed_varray_view<const T> A, const label_type* i
     const auto& batch_len_B = B.indexed_lengths();
     const auto& batch_len_C = C.indexed_lengths();
 
-    std::vector<len_type> stride_A(ndim_A);
-    std::vector<len_type> stride_B(ndim_B);
-    std::vector<len_type> stride_C(ndim_C);
+    len_vector stride_A(ndim_A);
+    len_vector stride_B(ndim_B);
+    len_vector stride_C(ndim_C);
     std::copy_n(A.dense_strides().begin(), dense_ndim_A, stride_A.begin());
     std::copy_n(B.dense_strides().begin(), dense_ndim_B, stride_B.begin());
     std::copy_n(C.dense_strides().begin(), dense_ndim_C, stride_C.begin());
@@ -493,9 +493,9 @@ void contract_batch(T alpha, indexed_varray_view<const T> A, const label_type* i
     auto batch_len_AC = select_from(len_A, idx_A, batch_idx_AC);
     auto batch_len_BC = select_from(len_B, idx_B, batch_idx_BC);
 
-    std::vector<stride_type> off_stride_AB(batch_idx_AB.size()+batch_idx_AC.size()+batch_idx_BC.size());
-    std::vector<stride_type> off_stride_AC(batch_idx_AC.size()+batch_idx_AB.size()+batch_idx_BC.size());
-    std::vector<stride_type> off_stride_BC(batch_idx_BC.size()+batch_idx_AB.size()+batch_idx_AC.size());
+    stride_vector off_stride_AB(batch_idx_AB.size()+batch_idx_AC.size()+batch_idx_BC.size());
+    stride_vector off_stride_AC(batch_idx_AC.size()+batch_idx_AB.size()+batch_idx_BC.size());
+    stride_vector off_stride_BC(batch_idx_BC.size()+batch_idx_AB.size()+batch_idx_AC.size());
 
     if (!batch_idx_AB.empty())
     stl_ext::prefix_sum(batch_len_AB.begin(), batch_len_AB.end(),
@@ -629,7 +629,7 @@ void contract_batch(T alpha, indexed_varray_view<const T> A, const label_type* i
     fold(dense_len_BC, dense_idx_BC, dense_stride_B_BC, dense_stride_C_BC);
 
     auto batch_max = std::max({batch_M, batch_N, batch_K});
-    std::vector<len_type> nonzero(batch_max+1);
+    len_vector nonzero(batch_max+1);
 
     len_type dense_M = stl_ext::prod(dense_len_AC);
     len_type dense_N = stl_ext::prod(dense_len_BC);
@@ -796,17 +796,17 @@ void contract_batch2(T alpha, indexed_varray_view<const T> A, const label_type* 
     unsigned batch_ndim_B = B.indexed_dimension();
     unsigned batch_ndim_C = C.indexed_dimension();
 
-    std::vector<label_type> idx_A(idx_A_, idx_A_+ndim_A);
-    std::vector<label_type> idx_B(idx_B_, idx_B_+ndim_B);
-    std::vector<label_type> idx_C(idx_C_, idx_C_+ndim_C);
+    label_vector idx_A(idx_A_, idx_A_+ndim_A);
+    label_vector idx_B(idx_B_, idx_B_+ndim_B);
+    label_vector idx_C(idx_C_, idx_C_+ndim_C);
 
-    std::vector<label_type> dense_idx_A(idx_A_, idx_A_+dense_ndim_A);
-    std::vector<label_type> dense_idx_B(idx_B_, idx_B_+dense_ndim_B);
-    std::vector<label_type> dense_idx_C(idx_C_, idx_C_+dense_ndim_C);
+    label_vector dense_idx_A(idx_A_, idx_A_+dense_ndim_A);
+    label_vector dense_idx_B(idx_B_, idx_B_+dense_ndim_B);
+    label_vector dense_idx_C(idx_C_, idx_C_+dense_ndim_C);
 
-    std::vector<label_type> batch_idx_A(idx_A_+dense_ndim_A, idx_A_+ndim_A);
-    std::vector<label_type> batch_idx_B(idx_B_+dense_ndim_B, idx_B_+ndim_B);
-    std::vector<label_type> batch_idx_C(idx_C_+dense_ndim_C, idx_C_+ndim_C);
+    label_vector batch_idx_A(idx_A_+dense_ndim_A, idx_A_+ndim_A);
+    label_vector batch_idx_B(idx_B_+dense_ndim_B, idx_B_+ndim_B);
+    label_vector batch_idx_C(idx_C_+dense_ndim_C, idx_C_+ndim_C);
 
     const auto& len_A = A.lengths();
     const auto& len_B = B.lengths();
@@ -820,9 +820,9 @@ void contract_batch2(T alpha, indexed_varray_view<const T> A, const label_type* 
     const auto& batch_len_B = B.indexed_lengths();
     const auto& batch_len_C = C.indexed_lengths();
 
-    std::vector<len_type> stride_A(ndim_A);
-    std::vector<len_type> stride_B(ndim_B);
-    std::vector<len_type> stride_C(ndim_C);
+    len_vector stride_A(ndim_A);
+    len_vector stride_B(ndim_B);
+    len_vector stride_C(ndim_C);
     std::copy_n(A.dense_strides().begin(), dense_ndim_A, stride_A.begin());
     std::copy_n(B.dense_strides().begin(), dense_ndim_B, stride_B.begin());
     std::copy_n(C.dense_strides().begin(), dense_ndim_C, stride_C.begin());
@@ -854,9 +854,9 @@ void contract_batch2(T alpha, indexed_varray_view<const T> A, const label_type* 
     auto batch_len_AC = select_from(len_A, idx_A, batch_idx_AC);
     auto batch_len_BC = select_from(len_B, idx_B, batch_idx_BC);
 
-    std::vector<stride_type> off_stride_AB(batch_idx_AB.size()+batch_idx_AC.size()+batch_idx_BC.size());
-    std::vector<stride_type> off_stride_AC(batch_idx_AC.size()+batch_idx_AB.size()+batch_idx_BC.size());
-    std::vector<stride_type> off_stride_BC(batch_idx_BC.size()+batch_idx_AB.size()+batch_idx_AC.size());
+    stride_vector off_stride_AB(batch_idx_AB.size()+batch_idx_AC.size()+batch_idx_BC.size());
+    stride_vector off_stride_AC(batch_idx_AC.size()+batch_idx_AB.size()+batch_idx_BC.size());
+    stride_vector off_stride_BC(batch_idx_BC.size()+batch_idx_AB.size()+batch_idx_AC.size());
 
     if (!batch_idx_AB.empty())
     stl_ext::prefix_sum(batch_len_AB.begin(), batch_len_AB.end(),
@@ -1106,8 +1106,8 @@ void contract_batch2(T alpha, indexed_varray_view<const T> A, const label_type* 
                 auto tc = make_gemm_thread_config<T>(cfg, subcomm.num_threads(),
                                                      dense_M, dense_N, dense_K);
 
-                std::vector<stride_type> scatter_A(batch_K);
-                std::vector<stride_type> scatter_B(batch_K);
+                stride_vector scatter_A(batch_K);
+                stride_vector scatter_B(batch_K);
 
                 const T* A0 = nullptr;
                 const T* B0 = nullptr;
@@ -1222,8 +1222,8 @@ void contract_batch2(T alpha, indexed_varray_view<const T> A, const label_type* 
                 communicator subcomm = comm.gang(TCI_EVENLY, nt_outer);
                 unsigned gid = subcomm.gang_num();
 
-                std::vector<stride_type> scatter_B(batch_N);
-                std::vector<stride_type> scatter_C(batch_N);
+                stride_vector scatter_B(batch_N);
+                stride_vector scatter_C(batch_N);
 
                 const T* B0 = nullptr;
                 const T* C0 = nullptr;
@@ -1343,8 +1343,8 @@ void contract_batch2(T alpha, indexed_varray_view<const T> A, const label_type* 
                 communicator subcomm = comm.gang(TCI_EVENLY, nt_outer);
                 unsigned gid = subcomm.gang_num();
 
-                std::vector<stride_type> scatter_A(batch_M);
-                std::vector<stride_type> scatter_C(batch_M);
+                stride_vector scatter_A(batch_M);
+                stride_vector scatter_C(batch_M);
 
                 const T* A0 = nullptr;
                 const T* C0 = nullptr;

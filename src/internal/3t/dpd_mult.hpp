@@ -8,23 +8,23 @@ namespace tblis
 namespace internal
 {
 
+enum dpd_impl_t {BLOCKED, FULL};
+extern dpd_impl_t dpd_impl;
+
 template <typename T>
 void dpd_mult(const communicator& comm, const config& cfg,
               T alpha, bool conj_A, const dpd_varray_view<const T>& A,
-              const std::vector<unsigned>& idx_A_only,
-              const std::vector<unsigned>& idx_A_AB,
-              const std::vector<unsigned>& idx_A_AC,
-              const std::vector<unsigned>& idx_A_ABC,
+              const dim_vector& idx_A_AB,
+              const dim_vector& idx_A_AC,
+              const dim_vector& idx_A_ABC,
                        bool conj_B, const dpd_varray_view<const T>& B,
-              const std::vector<unsigned>& idx_B_only,
-              const std::vector<unsigned>& idx_B_AB,
-              const std::vector<unsigned>& idx_B_BC,
-              const std::vector<unsigned>& idx_B_ABC,
+              const dim_vector& idx_B_AB,
+              const dim_vector& idx_B_BC,
+              const dim_vector& idx_B_ABC,
               T  beta, bool conj_C, const dpd_varray_view<      T>& C,
-              const std::vector<unsigned>& idx_C_only,
-              const std::vector<unsigned>& idx_C_AC,
-              const std::vector<unsigned>& idx_C_BC,
-              const std::vector<unsigned>& idx_C_ABC);
+              const dim_vector& idx_C_AC,
+              const dim_vector& idx_C_BC,
+              const dim_vector& idx_C_ABC);
 
 }
 }

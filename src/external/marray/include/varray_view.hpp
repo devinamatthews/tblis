@@ -175,8 +175,8 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
         {
             MARRAY_ASSERT(perm.size() == dimension());
 
-            std::vector<len_type> len(len_);
-            std::vector<stride_type> stride(stride_);
+            len_vector len(len_);
+            stride_vector stride(stride_);
 
             auto it = perm.begin();
             for (unsigned i = 0;i < dimension();i++)
@@ -205,7 +205,7 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
         template <typename U, typename=detail::enable_if_container_of_t<U,unsigned>>
         void lower(const U& split_)
         {
-            std::vector<unsigned> split(split_.begin(), split_.end());
+            dim_vector split(split_.begin(), split_.end());
 
             MARRAY_ASSERT(split.size() < dimension());
 
@@ -216,8 +216,8 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
                 if (i != 0) MARRAY_ASSERT(split[i-1] <= split[i]);
             }
 
-            std::vector<len_type> len = len_;
-            std::vector<stride_type> stride = stride_;
+            len_vector len = len_;
+            stride_vector stride = stride_;
 
             for (unsigned i = 0;i < newdim;i++)
             {

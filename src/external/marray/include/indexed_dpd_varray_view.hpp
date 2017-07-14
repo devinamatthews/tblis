@@ -142,6 +142,7 @@ class indexed_dpd_varray_view : public indexed_dpd_varray_base<Type, indexed_dpd
         using base::indexed_irrep;
         using base::indexed_irreps;
         using base::irrep;
+        using base::dense_irrep;
         using base::num_irreps;
         using base::num_indices;
         using base::permutation;

@@ -105,6 +105,82 @@ T dot(const communicator& comm,
     return result;
 }
 
+template <typename T>
+void dot(const communicator& comm,
+         indexed_varray_view<const T> A, const label_type* idx_A,
+         indexed_varray_view<const T> B, const label_type* idx_B, T& result);
+
+template <typename T>
+void dot(indexed_varray_view<const T> A, const label_type* idx_A,
+         indexed_varray_view<const T> B, const label_type* idx_B, T& result)
+{
+    parallelize
+    (
+        [&](const communicator& comm)
+        {
+            dot(comm, A, idx_A, B, idx_B, result);
+        },
+        tblis_get_num_threads()
+    );
+}
+
+template <typename T>
+T dot(indexed_varray_view<const T> A, const label_type* idx_A,
+      indexed_varray_view<const T> B, const label_type* idx_B)
+{
+    T result;
+    dot(A, idx_A, B, idx_B, result);
+    return result;
+}
+
+template <typename T>
+T dot(const communicator& comm,
+      indexed_varray_view<const T> A, const label_type* idx_A,
+      indexed_varray_view<const T> B, const label_type* idx_B)
+{
+    T result;
+    dot(comm, A, idx_A, B, idx_B, result);
+    return result;
+}
+
+template <typename T>
+void dot(const communicator& comm,
+         indexed_dpd_varray_view<const T> A, const label_type* idx_A,
+         indexed_dpd_varray_view<const T> B, const label_type* idx_B, T& result);
+
+template <typename T>
+void dot(indexed_dpd_varray_view<const T> A, const label_type* idx_A,
+         indexed_dpd_varray_view<const T> B, const label_type* idx_B, T& result)
+{
+    parallelize
+    (
+        [&](const communicator& comm)
+        {
+            dot(comm, A, idx_A, B, idx_B, result);
+        },
+        tblis_get_num_threads()
+    );
+}
+
+template <typename T>
+T dot(indexed_dpd_varray_view<const T> A, const label_type* idx_A,
+      indexed_dpd_varray_view<const T> B, const label_type* idx_B)
+{
+    T result;
+    dot(A, idx_A, B, idx_B, result);
+    return result;
+}
+
+template <typename T>
+T dot(const communicator& comm,
+      indexed_dpd_varray_view<const T> A, const label_type* idx_A,
+      indexed_dpd_varray_view<const T> B, const label_type* idx_B)
+{
+    T result;
+    dot(comm, A, idx_A, B, idx_B, result);
+    return result;
+}
+
 #endif
 
 #ifdef __cplusplus

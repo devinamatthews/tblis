@@ -173,6 +173,7 @@ class indexed_varray : public indexed_varray_base<Type, indexed_varray<Type, All
         using base::cdata;
         using base::data;
         using base::indices;
+        using base::index;
         using base::dense_length;
         using base::dense_lengths;
         using base::indexed_length;

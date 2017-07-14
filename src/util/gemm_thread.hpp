@@ -20,7 +20,7 @@ struct gemm_thread_config
 
 template <typename T>
 gemm_thread_config make_gemm_thread_config(const config& cfg,
-    int nthread, len_type m, len_type n, len_type k)
+    int nthread, len_type m, len_type n, len_type)
 {
     int ic_nt, jc_nt, ir_nt, jr_nt;
 

@@ -11,16 +11,255 @@
 #include <initializer_list>
 #include <string>
 
+namespace MArray
+{
+    template <typename T, size_t N>
+    short_vector<T,N> operator+(const short_vector<T,N>& lhs,
+                                const short_vector<T,N>& rhs)
+    {
+        short_vector<T,N> res;
+        res.reserve(lhs.size() + rhs.size());
+        res.insert(res.end(), lhs.begin(), lhs.end());
+        res.insert(res.end(), rhs.begin(), rhs.end());
+        return res;
+    }
+}
+
 namespace tblis
 {
 
 namespace detail
 {
 
-template <typename T>
-std::vector<unsigned> relative_permutation(const T& a, const T& b)
+template <typename T, typename U>
+void block_to_full(const dpd_varray_view<T>& A, varray<U>& A2)
 {
-    std::vector<unsigned> perm; perm.reserve(a.size());
+    unsigned nirrep = A.num_irreps();
+    unsigned ndim_A = A.dimension();
+
+    len_vector len_A(ndim_A);
+    matrix<len_type> off_A({ndim_A, nirrep});
+    for (unsigned i = 0;i < ndim_A;i++)
+    {
+        for (unsigned irrep = 0;irrep < nirrep;irrep++)
+        {
+            off_A[i][irrep] = len_A[i];
+            len_A[i] += A.length(i, irrep);
+        }
+    }
+    A2.reset(len_A);
+
+    A.for_each_block(
+    [&](const varray_view<T>& local_A, const irrep_vector& irreps_A)
+    {
+        varray_view<U> local_A2 = A2;
+
+        for (unsigned i = 0;i < ndim_A;i++)
+        {
+            local_A2.length(i, local_A.length(i));
+            local_A2.shift(i, off_A[i][irreps_A[i]]);
+        }
+
+        local_A2 = local_A;
+    });
+}
+
+template <typename T, typename U>
+void block_to_full(const indexed_varray_view<T>& A, varray<U>& A2)
+{
+    unsigned ndim_A = A.dimension();
+    unsigned dense_ndim_A = A.dense_dimension();
+    unsigned idx_ndim_A = A.indexed_dimension();
+
+    A2.reset(A.lengths());
+    dim_vector split = range(1,dense_ndim_A);
+
+    A.for_each_index(
+    [&](const varray_view<T>& local_A, const len_vector& idx_A)
+    {
+        varray_view<U> local_A2 = A2;
+
+        for (unsigned i = dense_ndim_A;i < ndim_A;i++)
+        {
+            local_A2.shift(i, idx_A[i-dense_ndim_A]);
+        }
+        local_A2.lower(split);
+
+        local_A2 = local_A;
+    });
+}
+
+template <typename T, typename U>
+void block_to_full(const indexed_dpd_varray_view<T>& A, varray<U>& A2)
+{
+    unsigned nirrep = A.num_irreps();
+    unsigned ndim_A = A.dimension();
+    unsigned dense_ndim_A = A.dense_dimension();
+    unsigned idx_ndim_A = A.indexed_dimension();
+
+    len_vector len_A(ndim_A);
+    matrix<len_type> off_A({ndim_A, nirrep});
+    for (unsigned i = 0;i < ndim_A;i++)
+    {
+        for (unsigned irrep = 0;irrep < nirrep;irrep++)
+        {
+            off_A[i][irrep] = len_A[i];
+            len_A[i] += A.length(i, irrep);
+        }
+    }
+    A2.reset(len_A);
+    dim_vector split = range(1,dense_ndim_A);
+
+    A.for_each_index(
+    [&](const dpd_varray_view<T>& Ai, const len_vector& idx_A)
+    {
+        Ai.for_each_block(
+        [&](const varray_view<T>& local_A, const irrep_vector& irreps_A)
+        {
+            varray_view<U> local_A2 = A2;
+
+            for (unsigned i = 0;i < dense_ndim_A;i++)
+            {
+                local_A2.length(i, local_A.length(i));
+                local_A2.shift(i, off_A[i][irreps_A[i]]);
+            }
+            for (unsigned i = dense_ndim_A;i < ndim_A;i++)
+            {
+                local_A2.shift(i, idx_A[i-dense_ndim_A] +
+                    off_A[i][A.indexed_irrep(i-dense_ndim_A)]);
+            }
+            local_A2.lower(split);
+
+            local_A2 = local_A;
+        });
+    });
+}
+
+template <typename T, typename U>
+void full_to_block(const varray<U>& A2, const dpd_varray_view<T>& A)
+{
+    unsigned nirrep = A.num_irreps();
+    unsigned ndim_A = A.dimension();
+
+    len_vector len_A(ndim_A);
+    matrix<len_type> off_A({ndim_A, nirrep});
+    for (unsigned i = 0;i < ndim_A;i++)
+    {
+        for (unsigned irrep = 0;irrep < nirrep;irrep++)
+        {
+            off_A[i][irrep] = len_A[i];
+            len_A[i] += A.length(i, irrep);
+        }
+    }
+
+    A.for_each_block(
+    [&](const varray_view<T>& local_A, const irrep_vector& irreps_A)
+    {
+        varray_view<const U> local_A2 = A2;
+
+        for (unsigned i = 0;i < ndim_A;i++)
+        {
+            local_A2.length(i, local_A.length(i));
+            local_A2.shift(i, off_A[i][irreps_A[i]]);
+        }
+
+        local_A = local_A2;
+    });
+}
+
+template <typename T, typename U>
+void full_to_block(const varray<U>& A2, const indexed_varray_view<T>& A)
+{
+    unsigned ndim_A = A.dimension();
+    unsigned dense_ndim_A = A.dense_dimension();
+    unsigned idx_ndim_A = A.indexed_dimension();
+
+    dim_vector split = range(1,dense_ndim_A);
+
+    A.for_each_index(
+    [&](const varray_view<T>& local_A, const len_vector& idx_A)
+    {
+        varray_view<const U> local_A2 = A2;
+
+        for (unsigned i = dense_ndim_A;i < ndim_A;i++)
+        {
+            local_A2.shift(i, idx_A[i-dense_ndim_A]);
+        }
+        local_A2.lower(split);
+
+        local_A = local_A2;
+    });
+}
+
+template <typename T, typename U>
+void full_to_block(const varray<U>& A2, const indexed_dpd_varray_view<T>& A)
+{
+    unsigned nirrep = A.num_irreps();
+    unsigned ndim_A = A.dimension();
+    unsigned dense_ndim_A = A.dense_dimension();
+    unsigned idx_ndim_A = A.indexed_dimension();
+
+    len_vector len_A(ndim_A);
+    matrix<len_type> off_A({ndim_A, nirrep});
+    for (unsigned i = 0;i < ndim_A;i++)
+    {
+        for (unsigned irrep = 0;irrep < nirrep;irrep++)
+        {
+            off_A[i][irrep] = len_A[i];
+            len_A[i] += A.length(i, irrep);
+        }
+    }
+    dim_vector split = range(1,dense_ndim_A);
+
+    A.for_each_index(
+    [&](const dpd_varray_view<T>& Ai, const len_vector& idx_A)
+    {
+        Ai.for_each_block(
+        [&](const varray_view<T>& local_A, const irrep_vector& irreps_A)
+        {
+            varray_view<const U> local_A2 = A2;
+
+            for (unsigned i = 0;i < dense_ndim_A;i++)
+            {
+                local_A2.length(i, local_A.length(i));
+                local_A2.shift(i, off_A[i][irreps_A[i]]);
+            }
+            for (unsigned i = dense_ndim_A;i < ndim_A;i++)
+            {
+                local_A2.shift(i, idx_A[i-dense_ndim_A] +
+                    off_A[i][A.indexed_irrep(i-dense_ndim_A)]);
+            }
+            local_A2.lower(split);
+
+            local_A = local_A2;
+        });
+    });
+}
+
+template <typename T>
+bool is_block_empty(const dpd_varray_view<T>& A, const irrep_vector& irreps)
+{
+    for (unsigned i = 0;i < A.dimension();i++)
+    {
+        if (!A.length(i, irreps[i])) return true;
+    }
+    return false;
+}
+
+template <typename T>
+bool is_block_empty(const indexed_dpd_varray_view<T>& A, const irrep_vector& irreps)
+{
+    for (unsigned i = 0;i < A.dense_dimension();i++)
+    {
+        if (!A.dense_length(i, irreps[i])) return true;
+    }
+    return false;
+}
+
+template <typename T>
+dim_vector relative_permutation(const T& a, const T& b)
+{
+    dim_vector perm; perm.reserve(a.size());
 
     for (auto& e : b)
     {
@@ -40,8 +279,8 @@ inline unsigned assign_irrep(unsigned dim, unsigned irrep)
 
 template <typename... Args>
 unsigned assign_irrep(unsigned dim, unsigned irrep,
-                      std::vector<unsigned>& irreps,
-                      const std::vector<unsigned>& idx,
+                      irrep_vector& irreps,
+                      const dim_vector& idx,
                       Args&... args)
 {
     irreps[idx[dim]] = irrep;
@@ -84,9 +323,9 @@ inline sort_by_idx_helper sort_by_idx(const label_type* idx)
 template <unsigned N>
 struct sort_by_stride_helper
 {
-    std::array<const std::vector<stride_type>*, N> strides;
+    std::array<const stride_vector*, N> strides;
 
-    sort_by_stride_helper(std::initializer_list<const std::vector<stride_type>*> ilist)
+    sort_by_stride_helper(std::initializer_list<const stride_vector*> ilist)
     {
         TBLIS_ASSERT(ilist.size() == N);
         std::copy_n(ilist.begin(), N, strides.begin());
@@ -117,9 +356,9 @@ size_t check_sizes(const T& arg, const Ts&... args)
 }
 
 template <typename... Strides>
-std::vector<unsigned> sort_by_stride(const Strides&... strides)
+dim_vector sort_by_stride(const Strides&... strides)
 {
-    std::vector<unsigned> idx = range(static_cast<unsigned>(check_sizes(strides...)));
+    dim_vector idx = range(static_cast<unsigned>(check_sizes(strides...)));
     std::sort(idx.begin(), idx.end(), sort_by_stride_helper<sizeof...(Strides)>{&strides...});
     return idx;
 }
@@ -157,10 +396,10 @@ bool are_congruent_along(const varray_view<const T>& A,
     return true;
 }
 
-inline bool are_compatible(const std::vector<len_type>& len_A,
-                           const std::vector<stride_type>& stride_A,
-                           const std::vector<len_type>& len_B,
-                           const std::vector<stride_type>& stride_B)
+inline bool are_compatible(const len_vector& len_A,
+                           const stride_vector& stride_A,
+                           const len_vector& len_B,
+                           const stride_vector& stride_B)
 {
     TBLIS_ASSERT(len_A.size() == stride_A.size());
     auto dims_A = detail::sort_by_stride(stride_A);
@@ -223,7 +462,7 @@ template <size_t I, size_t N, typename... Strides>
 struct are_contiguous_helper
 {
     bool operator()(std::tuple<Strides...>& strides,
-                    const std::vector<len_type>& lengths,
+                    const len_vector& lengths,
                     unsigned i, unsigned im1)
     {
         return std::get<I>(strides)[i] == std::get<I>(strides)[im1]*lengths[im1] &&
@@ -235,7 +474,7 @@ template <size_t N, typename... Strides>
 struct are_contiguous_helper<N, N, Strides...>
 {
     bool operator()(std::tuple<Strides...>&,
-                    const std::vector<len_type>&,
+                    const len_vector&,
                     unsigned, unsigned)
     {
         return true;
@@ -244,7 +483,7 @@ struct are_contiguous_helper<N, N, Strides...>
 
 template <typename... Strides>
 bool are_contiguous(std::tuple<Strides...>& strides,
-                    const std::vector<len_type>& lengths,
+                    const len_vector& lengths,
                     unsigned i, unsigned im1)
 {
     return are_contiguous_helper<0, sizeof...(Strides), Strides...>()(strides, lengths, i, im1);
@@ -278,9 +517,9 @@ void push_back_strides(std::tuple<Strides&...>& strides,
 template <size_t I, size_t N, typename... Strides>
 struct are_compatible_helper
 {
-    bool operator()(const std::vector<len_type>& len_A,
+    bool operator()(const len_vector& len_A,
                     const std::tuple<Strides...>& stride_A,
-                    const std::vector<len_type>& len_B,
+                    const len_vector& len_B,
                     const std::tuple<Strides&...>& stride_B)
     {
         return are_compatible(len_A, std::get<I>(stride_A),
@@ -293,9 +532,9 @@ struct are_compatible_helper
 template <size_t N, typename... Strides>
 struct are_compatible_helper<N, N, Strides...>
 {
-    bool operator()(const std::vector<len_type>&,
+    bool operator()(const len_vector&,
                     const std::tuple<Strides...>&,
-                    const std::vector<len_type>&,
+                    const len_vector&,
                     const std::tuple<Strides&...>&)
     {
         return true;
@@ -303,9 +542,9 @@ struct are_compatible_helper<N, N, Strides...>
 };
 
 template <typename... Strides>
-bool are_compatible(const std::vector<len_type>& len_A,
+bool are_compatible(const len_vector& len_A,
                     const std::tuple<Strides...>& stride_A,
-                    const std::vector<len_type>& len_B,
+                    const len_vector& len_B,
                     const std::tuple<Strides&...>& stride_B)
 {
     return are_compatible_helper<0, sizeof...(Strides), Strides...>()(
@@ -315,7 +554,7 @@ bool are_compatible(const std::vector<len_type>& len_A,
 }
 
 template <typename... Strides>
-void fold(std::vector<len_type>& lengths, std::vector<label_type>& idx,
+void fold(len_vector& lengths, label_vector& idx,
           Strides&... _strides)
 {
     std::tuple<Strides&...> strides(_strides...);
@@ -323,8 +562,8 @@ void fold(std::vector<len_type>& lengths, std::vector<label_type>& idx,
     auto ndim = lengths.size();
     auto inds = detail::sort_by_stride(std::get<0>(strides));
 
-    std::vector<label_type> oldidx;
-    std::vector<len_type> oldlengths;
+    label_vector oldidx;
+    len_vector oldlengths;
     std::tuple<Strides...> oldstrides;
 
     oldidx.swap(idx);
@@ -353,15 +592,15 @@ inline void diagonal(unsigned& ndim,
                      const len_type* len_in,
                      const stride_type* stride_in,
                      const label_type* idx_in,
-                     std::vector<len_type>& len_out,
-                     std::vector<stride_type>& stride_out,
-                     std::vector<label_type>& idx_out)
+                     len_vector& len_out,
+                     stride_vector& stride_out,
+                     label_vector& idx_out)
 {
     len_out.reserve(ndim);
     stride_out.reserve(ndim);
     idx_out.reserve(ndim);
 
-    std::vector<unsigned> inds = range(ndim);
+    dim_vector inds = range(ndim);
     stl_ext::sort(inds, detail::sort_by_idx(idx_in));
 
     unsigned ndim_in = ndim;
@@ -371,7 +610,7 @@ inline void diagonal(unsigned& ndim,
     {
         if (i == 0 || idx_in[inds[i]] != idx_in[inds[i-1]])
         {
-            if (len_in[inds[i]] != 1)
+            if (len_in[inds[i]] != 1 || (i == ndim_in-1 && ndim == 0))
             {
                 len_out.push_back(len_in[inds[i]]);
                 stride_out.push_back(stride_in[inds[i]]);

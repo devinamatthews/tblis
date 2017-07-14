@@ -211,12 +211,12 @@ int main(int argc, char** argv)
     cout << "Using mt19937 with seed " << seed << endl;
     rand_engine.seed(seed);
 
-    std::vector<len_type> vs(g,v);
-    std::vector<len_type> os(g,o);
+    len_vector vs(g,v);
+    len_vector os(g,o);
 
     if (g > 1)
     {
-        std::vector<len_type> splits(g-1);
+        len_vector splits(g-1);
         for (len_type& split : splits) split = random_number<len_type>(v);
         sort(splits);
 

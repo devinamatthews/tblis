@@ -21,18 +21,18 @@ impl_t impl = BLIS_BASED;
 
 template <typename T>
 void contract_blas(const communicator& comm, const config& cfg,
-                   const std::vector<len_type>& len_AB,
-                   const std::vector<len_type>& len_AC,
-                   const std::vector<len_type>& len_BC,
+                   const len_vector& len_AB,
+                   const len_vector& len_AC,
+                   const len_vector& len_BC,
                    T alpha, const T* A,
-                   const std::vector<stride_type>& stride_A_AB,
-                   const std::vector<stride_type>& stride_A_AC,
+                   const stride_vector& stride_A_AB,
+                   const stride_vector& stride_A_AC,
                             const T* B,
-                   const std::vector<stride_type>& stride_B_AB,
-                   const std::vector<stride_type>& stride_B_BC,
+                   const stride_vector& stride_B_AB,
+                   const stride_vector& stride_B_BC,
                    T  beta,       T* C,
-                   const std::vector<stride_type>& stride_C_AC,
-                   const std::vector<stride_type>& stride_C_BC)
+                   const stride_vector& stride_C_AC,
+                   const stride_vector& stride_C_BC)
 {
     varray<T> ar, br, cr;
 
@@ -73,18 +73,18 @@ void contract_blas(const communicator& comm, const config& cfg,
 
 template <typename T>
 void contract_ref(const communicator& comm, const config& cfg,
-                  const std::vector<len_type>& len_AB,
-                  const std::vector<len_type>& len_AC,
-                  const std::vector<len_type>& len_BC,
+                  const len_vector& len_AB,
+                  const len_vector& len_AC,
+                  const len_vector& len_BC,
                   T alpha, const T* A,
-                  const std::vector<stride_type>& stride_A_AB,
-                  const std::vector<stride_type>& stride_A_AC,
+                  const stride_vector& stride_A_AB,
+                  const stride_vector& stride_A_AC,
                            const T* B,
-                  const std::vector<stride_type>& stride_B_AB,
-                  const std::vector<stride_type>& stride_B_BC,
+                  const stride_vector& stride_B_AB,
+                  const stride_vector& stride_B_BC,
                   T  beta,       T* C,
-                  const std::vector<stride_type>& stride_C_AC,
-                  const std::vector<stride_type>& stride_C_BC)
+                  const stride_vector& stride_C_AC,
+                  const stride_vector& stride_C_BC)
 {
     (void)cfg;
 
@@ -140,18 +140,18 @@ void contract_ref(const communicator& comm, const config& cfg,
 
 template <typename T>
 void contract_blis(const communicator& comm, const config& cfg,
-                   const std::vector<len_type>& len_AB,
-                   const std::vector<len_type>& len_AC,
-                   const std::vector<len_type>& len_BC,
+                   const len_vector& len_AB,
+                   const len_vector& len_AC,
+                   const len_vector& len_BC,
                    T alpha, const T* A,
-                   const std::vector<stride_type>& stride_A_AB,
-                   const std::vector<stride_type>& stride_A_AC,
+                   const stride_vector& stride_A_AB,
+                   const stride_vector& stride_A_AC,
                             const T* B,
-                   const std::vector<stride_type>& stride_B_AB,
-                   const std::vector<stride_type>& stride_B_BC,
+                   const stride_vector& stride_B_AB,
+                   const stride_vector& stride_B_BC,
                    T  beta,       T* C,
-                   const std::vector<stride_type>& stride_C_AC,
-                   const std::vector<stride_type>& stride_C_BC)
+                   const stride_vector& stride_C_AC,
+                   const stride_vector& stride_C_BC)
 {
     auto reorder_AC = detail::sort_by_stride(stride_C_AC, stride_A_AC);
     auto reorder_BC = detail::sort_by_stride(stride_C_BC, stride_B_BC);
@@ -206,44 +206,38 @@ void contract_blis(const communicator& comm, const config& cfg,
 
 #define FOREACH_TYPE(T) \
 template void contract_blis(const communicator& comm, const config& cfg, \
-                            const std::vector<len_type>& len_AB, \
-                            const std::vector<len_type>& len_AC, \
-                            const std::vector<len_type>& len_BC, \
+                            const len_vector& len_AB, \
+                            const len_vector& len_AC, \
+                            const len_vector& len_BC, \
                             T alpha, const T* A, \
-                            const std::vector<stride_type>& stride_A_AB, \
-                            const std::vector<stride_type>& stride_A_AC, \
+                            const stride_vector& stride_A_AB, \
+                            const stride_vector& stride_A_AC, \
                                      const T* B, \
-                            const std::vector<stride_type>& stride_B_AB, \
-                            const std::vector<stride_type>& stride_B_BC, \
+                            const stride_vector& stride_B_AB, \
+                            const stride_vector& stride_B_BC, \
                             T  beta,       T* C, \
-                            const std::vector<stride_type>& stride_C_AC, \
-                            const std::vector<stride_type>& stride_C_BC);
+                            const stride_vector& stride_C_AC, \
+                            const stride_vector& stride_C_BC);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void mult_blas(const communicator& comm, const config& cfg,
-               const std::vector<len_type>& len_A,
-               const std::vector<len_type>& len_B,
-               const std::vector<len_type>& len_C,
-               const std::vector<len_type>& len_AB,
-               const std::vector<len_type>& len_AC,
-               const std::vector<len_type>& len_BC,
-               const std::vector<len_type>& len_ABC,
+               const len_vector& len_AB,
+               const len_vector& len_AC,
+               const len_vector& len_BC,
+               const len_vector& len_ABC,
                T alpha, const T* A,
-               const std::vector<stride_type>& stride_A_A,
-               const std::vector<stride_type>& stride_A_AB,
-               const std::vector<stride_type>& stride_A_AC,
-               const std::vector<stride_type>& stride_A_ABC,
+               const stride_vector& stride_A_AB,
+               const stride_vector& stride_A_AC,
+               const stride_vector& stride_A_ABC,
                         const T* B,
-               const std::vector<stride_type>& stride_B_B,
-               const std::vector<stride_type>& stride_B_AB,
-               const std::vector<stride_type>& stride_B_BC,
-               const std::vector<stride_type>& stride_B_ABC,
+               const stride_vector& stride_B_AB,
+               const stride_vector& stride_B_BC,
+               const stride_vector& stride_B_ABC,
                T  beta,       T* C,
-               const std::vector<stride_type>& stride_C_C,
-               const std::vector<stride_type>& stride_C_AC,
-               const std::vector<stride_type>& stride_C_BC,
-               const std::vector<stride_type>& stride_C_ABC)
+               const stride_vector& stride_C_AC,
+               const stride_vector& stride_C_BC,
+               const stride_vector& stride_C_ABC)
 {
     varray<T> ar, br, cr;
 
@@ -266,22 +260,22 @@ void mult_blas(const communicator& comm, const config& cfg,
 
         while (it.next(A, B, C))
         {
-            add(comm, cfg, len_A, {}, ar.lengths(),
-                T(1), false,         A, stride_A_A, stride_A_AC+stride_A_AB,
-                T(0), false, ar.data(),         {},             ar.strides());
+            add(comm, cfg, {}, {}, ar.lengths(),
+                T(1), false,         A, {}, stride_A_AC+stride_A_AB,
+                T(0), false, ar.data(), {},             ar.strides());
 
-            add(comm, cfg, len_B, {}, br.lengths(),
-                T(1), false,         B, stride_B_B, stride_B_AB+stride_B_BC,
-                T(0), false, br.data(),         {},             br.strides());
+            add(comm, cfg, {}, {}, br.lengths(),
+                T(1), false,         B, {}, stride_B_AB+stride_B_BC,
+                T(0), false, br.data(), {},             br.strides());
 
             mult(comm, cfg, cm.length(0), cm.length(1), am.length(1),
                  alpha, false, am.data(), am.stride(0), am.stride(1),
                         false, bm.data(), bm.stride(0), bm.stride(1),
                   T(0), false, cm.data(), cm.stride(0), cm.stride(1));
 
-            add(comm, cfg, {}, len_C, cr.lengths(),
-                T(1), false, cr.data(),         {},            cr.strides(),
-                beta, false,         C, stride_C_C, stride_C_AC+stride_C_BC);
+            add(comm, cfg, {}, {}, cr.lengths(),
+                T(1), false, cr.data(), {},            cr.strides(),
+                beta, false,         C, {}, stride_C_AC+stride_C_BC);
         }
     },
     ar, br, cr);
@@ -289,34 +283,25 @@ void mult_blas(const communicator& comm, const config& cfg,
 
 template <typename T>
 void mult_ref(const communicator& comm, const config& cfg,
-              const std::vector<len_type>& len_A,
-              const std::vector<len_type>& len_B,
-              const std::vector<len_type>& len_C,
-              const std::vector<len_type>& len_AB,
-              const std::vector<len_type>& len_AC,
-              const std::vector<len_type>& len_BC,
-              const std::vector<len_type>& len_ABC,
+              const len_vector& len_AB,
+              const len_vector& len_AC,
+              const len_vector& len_BC,
+              const len_vector& len_ABC,
               T alpha, const T* A,
-              const std::vector<stride_type>& stride_A_A,
-              const std::vector<stride_type>& stride_A_AB,
-              const std::vector<stride_type>& stride_A_AC,
-              const std::vector<stride_type>& stride_A_ABC,
+              const stride_vector& stride_A_AB,
+              const stride_vector& stride_A_AC,
+              const stride_vector& stride_A_ABC,
                        const T* B,
-              const std::vector<stride_type>& stride_B_B,
-              const std::vector<stride_type>& stride_B_AB,
-              const std::vector<stride_type>& stride_B_BC,
-              const std::vector<stride_type>& stride_B_ABC,
+              const stride_vector& stride_B_AB,
+              const stride_vector& stride_B_BC,
+              const stride_vector& stride_B_ABC,
               T  beta,       T* C,
-              const std::vector<stride_type>& stride_C_C,
-              const std::vector<stride_type>& stride_C_AC,
-              const std::vector<stride_type>& stride_C_BC,
-              const std::vector<stride_type>& stride_C_ABC)
+              const stride_vector& stride_C_AC,
+              const stride_vector& stride_C_BC,
+              const stride_vector& stride_C_ABC)
 {
     (void)cfg;
 
-    viterator<1> iter_A(len_A, stride_A_A);
-    viterator<1> iter_B(len_B, stride_B_B);
-    viterator<1> iter_C(len_C, stride_C_C);
     viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
     viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
     viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
@@ -340,36 +325,18 @@ void mult_ref(const communicator& comm, const config& cfg,
 
                 while (iter_AB.next(A, B))
                 {
-                    T temp_A = T();
-                    while (iter_A.next(A))
-                    {
-                        temp_A += *A;
-                    }
-
-                    T temp_B = T();
-                    while (iter_B.next(B))
-                    {
-                        temp_B += *B;
-                    }
-
-                    temp += temp_A*temp_B;
+                    temp += (*A)*(*B);
                 }
 
                 temp *= alpha;
 
                 if (beta == T(0))
                 {
-                    while (iter_C.next(C))
-                    {
-                        *C = temp;
-                    }
+                    *C = temp;
                 }
                 else
                 {
-                    while (iter_C.next(C))
-                    {
-                        *C = temp + beta*(*C);
-                    }
+                    *C = temp + beta*(*C);
                 }
             }
         }
@@ -378,15 +345,15 @@ void mult_ref(const communicator& comm, const config& cfg,
 
 template <typename T>
 void outer_prod_blas(const communicator& comm, const config& cfg,
-                     const std::vector<len_type>& len_AC,
-                     const std::vector<len_type>& len_BC,
+                     const len_vector& len_AC,
+                     const len_vector& len_BC,
                      T alpha, const T* A,
-                     const std::vector<stride_type>& stride_A_AC,
+                     const stride_vector& stride_A_AC,
                               const T* B,
-                     const std::vector<stride_type>& stride_B_BC,
+                     const stride_vector& stride_B_BC,
                      T  beta,       T* C,
-                     const std::vector<stride_type>& stride_C_AC,
-                     const std::vector<stride_type>& stride_C_BC)
+                     const stride_vector& stride_C_AC,
+                     const stride_vector& stride_C_BC)
 {
     varray<T> ar, br, cr;
 
@@ -427,15 +394,15 @@ void outer_prod_blas(const communicator& comm, const config& cfg,
 
 template <typename T>
 void outer_prod_ref(const communicator& comm, const config& cfg,
-                    const std::vector<len_type>& len_AC,
-                    const std::vector<len_type>& len_BC,
+                    const len_vector& len_AC,
+                    const len_vector& len_BC,
                     T alpha, const T* A,
-                    const std::vector<stride_type>& stride_A_AC,
+                    const stride_vector& stride_A_AC,
                              const T* B,
-                    const std::vector<stride_type>& stride_B_BC,
+                    const stride_vector& stride_B_BC,
                     T  beta,       T* C,
-                    const std::vector<stride_type>& stride_C_AC,
-                    const std::vector<stride_type>& stride_C_BC)
+                    const stride_vector& stride_C_AC,
+                    const stride_vector& stride_C_BC)
 {
     (void)cfg;
 
@@ -485,19 +452,19 @@ void outer_prod_ref(const communicator& comm, const config& cfg,
 
 template <typename T>
 void weight_blas(const communicator& comm, const config& cfg,
-                 const std::vector<len_type>& len_AC,
-                 const std::vector<len_type>& len_BC,
-                 const std::vector<len_type>& len_ABC,
+                 const len_vector& len_AC,
+                 const len_vector& len_BC,
+                 const len_vector& len_ABC,
                  T alpha, const T* A,
-                 const std::vector<stride_type>& stride_A_AC,
-                 const std::vector<stride_type>& stride_A_ABC,
+                 const stride_vector& stride_A_AC,
+                 const stride_vector& stride_A_ABC,
                           const T* B,
-                 const std::vector<stride_type>& stride_B_BC,
-                 const std::vector<stride_type>& stride_B_ABC,
+                 const stride_vector& stride_B_BC,
+                 const stride_vector& stride_B_ABC,
                  T  beta,       T* C,
-                 const std::vector<stride_type>& stride_C_AC,
-                 const std::vector<stride_type>& stride_C_BC,
-                 const std::vector<stride_type>& stride_C_ABC)
+                 const stride_vector& stride_C_AC,
+                 const stride_vector& stride_C_BC,
+                 const stride_vector& stride_C_ABC)
 {
     varray<T> ar, br, cr;
 
@@ -543,19 +510,19 @@ void weight_blas(const communicator& comm, const config& cfg,
 
 template <typename T>
 void weight_ref(const communicator& comm, const config& cfg,
-                const std::vector<len_type>& len_AC,
-                const std::vector<len_type>& len_BC,
-                const std::vector<len_type>& len_ABC,
+                const len_vector& len_AC,
+                const len_vector& len_BC,
+                const len_vector& len_ABC,
                 T alpha, const T* A,
-                const std::vector<stride_type>& stride_A_AC,
-                const std::vector<stride_type>& stride_A_ABC,
+                const stride_vector& stride_A_AC,
+                const stride_vector& stride_A_ABC,
                          const T* B,
-                const std::vector<stride_type>& stride_B_BC,
-                const std::vector<stride_type>& stride_B_ABC,
+                const stride_vector& stride_B_BC,
+                const stride_vector& stride_B_ABC,
                 T  beta,       T* C,
-                const std::vector<stride_type>& stride_C_AC,
-                const std::vector<stride_type>& stride_C_BC,
-                const std::vector<stride_type>& stride_C_ABC)
+                const stride_vector& stride_C_AC,
+                const stride_vector& stride_C_BC,
+                const stride_vector& stride_C_ABC)
 {
     (void)cfg;
 
@@ -595,146 +562,100 @@ void weight_ref(const communicator& comm, const config& cfg,
 
 template <typename T>
 void mult(const communicator& comm, const config& cfg,
-          const std::vector<len_type>& len_A,
-          const std::vector<len_type>& len_B,
-          const std::vector<len_type>& len_C,
-          const std::vector<len_type>& len_AB,
-          const std::vector<len_type>& len_AC,
-          const std::vector<len_type>& len_BC,
-          const std::vector<len_type>& len_ABC,
+          const len_vector& len_AB,
+          const len_vector& len_AC,
+          const len_vector& len_BC,
+          const len_vector& len_ABC,
           T alpha, bool conj_A, const T* A,
-          const std::vector<stride_type>& stride_A_A,
-          const std::vector<stride_type>& stride_A_AB,
-          const std::vector<stride_type>& stride_A_AC,
-          const std::vector<stride_type>& stride_A_ABC,
+          const stride_vector& stride_A_AB,
+          const stride_vector& stride_A_AC,
+          const stride_vector& stride_A_ABC,
                    bool conj_B, const T* B,
-          const std::vector<stride_type>& stride_B_B,
-          const std::vector<stride_type>& stride_B_AB,
-          const std::vector<stride_type>& stride_B_BC,
-          const std::vector<stride_type>& stride_B_ABC,
+          const stride_vector& stride_B_AB,
+          const stride_vector& stride_B_BC,
+          const stride_vector& stride_B_ABC,
           T  beta, bool conj_C,       T* C,
-          const std::vector<stride_type>& stride_C_C,
-          const std::vector<stride_type>& stride_C_AC,
-          const std::vector<stride_type>& stride_C_BC,
-          const std::vector<stride_type>& stride_C_ABC)
+          const stride_vector& stride_C_AC,
+          const stride_vector& stride_C_BC,
+          const stride_vector& stride_C_ABC)
 {
     TBLIS_ASSERT(!conj_A && !conj_B && !conj_C);
 
-    if (len_A.empty() && len_B.empty() && len_C.empty() &&
-        (len_AB.empty() || len_ABC.empty()))
+    if (len_AB.empty() && len_ABC.empty())
     {
-        if (len_AB.empty())
+        if (impl == REFERENCE)
         {
-            if (len_ABC.empty())
-            {
-                if (len_AC.empty())
-                {
-                    internal::add(comm, cfg, len_B, len_C, len_BC,
-                                  alpha, conj_B, B, stride_B_B, stride_B_BC,
-                                   beta, conj_C, C, stride_C_C, stride_C_BC);
-                }
-                else if (len_BC.empty())
-                {
-                    internal::add(comm, cfg, len_A, len_C, len_AC,
-                                  alpha, conj_A, A, stride_A_A, stride_A_AC,
-                                   beta, conj_C, C, stride_C_C, stride_C_AC);
-                }
-                else
-                {
-                    if (impl == REFERENCE)
-                    {
-                        outer_prod_ref(comm, cfg, len_AC, len_BC,
-                                       alpha, A, stride_A_AC,
-                                              B, stride_B_BC,
-                                        beta, C, stride_C_AC, stride_C_BC);
-                    }
-                    else
-                    {
-                        outer_prod_blas(comm, cfg, len_AC, len_BC,
-                                        alpha, A, stride_A_AC,
-                                               B, stride_B_BC,
-                                         beta, C, stride_C_AC, stride_C_BC);
-                    }
-                }
-            }
-            else
-            {
-                if (impl == REFERENCE || len_AC.empty() || len_BC.empty())
-                {
-                    weight_ref(comm, cfg, len_AC, len_BC, len_ABC,
-                               alpha, A, stride_A_AC, stride_A_ABC,
-                                      B, stride_B_BC, stride_B_ABC,
-                                beta, C, stride_C_AC, stride_C_BC, stride_C_ABC);
-                }
-                else
-                {
-                    weight_blas(comm, cfg, len_AC, len_BC, len_ABC,
-                                alpha, A, stride_A_AC, stride_A_ABC,
-                                       B, stride_B_BC, stride_B_ABC,
-                                 beta, C, stride_C_AC, stride_C_BC, stride_C_ABC);
-                }
-            }
+            outer_prod_ref(comm, cfg, len_AC, len_BC,
+                           alpha, A, stride_A_AC,
+                                  B, stride_B_BC,
+                            beta, C, stride_C_AC, stride_C_BC);
         }
         else
         {
-            if (len_AC.empty() && len_BC.empty())
-            {
-                internal::dot(comm, cfg, len_A, len_B, len_AB,
-                              conj_A, A, stride_A_A, stride_A_AB,
-                              conj_B, B, stride_B_B, stride_B_AB,
-                              *C);
-            }
-            else
-            {
-                if (impl == REFERENCE)
-                {
-                    contract_ref(comm, cfg, len_AB, len_AC, len_BC,
-                                 alpha, A, stride_A_AB, stride_A_AC,
-                                        B, stride_B_AB, stride_B_BC,
-                                  beta, C, stride_C_AC, stride_C_BC);
-                }
-                else if (impl == BLAS_BASED)
-                {
-                    contract_blas(comm, cfg, len_AB, len_AC, len_BC,
-                                  alpha, A, stride_A_AB, stride_A_AC,
-                                         B, stride_B_AB, stride_B_BC,
-                                   beta, C, stride_C_AC, stride_C_BC);
-                }
-                else
-                {
-                    contract_blis(comm, cfg, len_AB, len_AC, len_BC,
-                                  alpha, A, stride_A_AB, stride_A_AC,
-                                         B, stride_B_AB, stride_B_BC,
-                                   beta, C, stride_C_AC, stride_C_BC);
-                }
-            }
+            outer_prod_blas(comm, cfg, len_AC, len_BC,
+                            alpha, A, stride_A_AC,
+                                   B, stride_B_BC,
+                             beta, C, stride_C_AC, stride_C_BC);
+        }
+    }
+    else if (len_AB.empty())
+    {
+        if (impl == REFERENCE || len_AC.empty() || len_BC.empty())
+        {
+            weight_ref(comm, cfg, len_AC, len_BC, len_ABC,
+                       alpha, A, stride_A_AC, stride_A_ABC,
+                              B, stride_B_BC, stride_B_ABC,
+                        beta, C, stride_C_AC, stride_C_BC, stride_C_ABC);
+        }
+        else
+        {
+            weight_blas(comm, cfg, len_AC, len_BC, len_ABC,
+                        alpha, A, stride_A_AC, stride_A_ABC,
+                               B, stride_B_BC, stride_B_ABC,
+                         beta, C, stride_C_AC, stride_C_BC, stride_C_ABC);
+        }
+    }
+    else if (len_ABC.empty())
+    {
+        if (impl == REFERENCE)
+        {
+            contract_ref(comm, cfg, len_AB, len_AC, len_BC,
+                         alpha, A, stride_A_AB, stride_A_AC,
+                                B, stride_B_AB, stride_B_BC,
+                          beta, C, stride_C_AC, stride_C_BC);
+        }
+        else if (impl == BLAS_BASED)
+        {
+            contract_blas(comm, cfg, len_AB, len_AC, len_BC,
+                          alpha, A, stride_A_AB, stride_A_AC,
+                                 B, stride_B_AB, stride_B_BC,
+                           beta, C, stride_C_AC, stride_C_BC);
+        }
+        else
+        {
+            contract_blis(comm, cfg, len_AB, len_AC, len_BC,
+                          alpha, A, stride_A_AB, stride_A_AC,
+                                 B, stride_B_AB, stride_B_BC,
+                           beta, C, stride_C_AC, stride_C_BC);
         }
     }
     else
     {
-        if (impl == REFERENCE || len_AB.size()+len_AC.size() == 0 ||
-                                 len_AB.size()+len_BC.size() == 0 ||
-                                 len_AC.size()+len_BC.size() == 0)
+        if (impl == REFERENCE)
         {
-            mult_ref(comm, cfg, len_A, len_B, len_C,
+            mult_ref(comm, cfg,
                      len_AB, len_AC, len_BC, len_ABC,
-                     alpha, A, stride_A_A, stride_A_AB,
-                               stride_A_AC, stride_A_ABC,
-                            B, stride_B_B, stride_B_AB,
-                               stride_B_BC, stride_B_ABC,
-                      beta, C, stride_C_C, stride_C_AC,
-                               stride_C_BC, stride_C_ABC);
+                     alpha, A, stride_A_AB, stride_A_AC, stride_A_ABC,
+                            B, stride_B_AB, stride_B_BC, stride_B_ABC,
+                      beta, C, stride_C_AC, stride_C_BC, stride_C_ABC);
         }
         else
         {
-            mult_blas(comm, cfg, len_A, len_B, len_C,
+            mult_blas(comm, cfg,
                       len_AB, len_AC, len_BC, len_ABC,
-                      alpha, A, stride_A_A, stride_A_AB,
-                                stride_A_AC, stride_A_ABC,
-                             B, stride_B_B, stride_B_AB,
-                                stride_B_BC, stride_B_ABC,
-                       beta, C, stride_C_C, stride_C_AC,
-                                stride_C_BC, stride_C_ABC);
+                      alpha, A, stride_A_AB, stride_A_AC, stride_A_ABC,
+                             B, stride_B_AB, stride_B_BC, stride_B_ABC,
+                       beta, C, stride_C_AC, stride_C_BC, stride_C_ABC);
         }
     }
 
@@ -743,28 +664,22 @@ void mult(const communicator& comm, const config& cfg,
 
 #define FOREACH_TYPE(T) \
 template void mult(const communicator& comm, const config& cfg, \
-                   const std::vector<len_type>& len_A, \
-                   const std::vector<len_type>& len_B, \
-                   const std::vector<len_type>& len_C, \
-                   const std::vector<len_type>& len_AB, \
-                   const std::vector<len_type>& len_AC, \
-                   const std::vector<len_type>& len_BC, \
-                   const std::vector<len_type>& len_ABC, \
+                   const len_vector& len_AB, \
+                   const len_vector& len_AC, \
+                   const len_vector& len_BC, \
+                   const len_vector& len_ABC, \
                    T alpha, bool conj_A, const T* A, \
-                   const std::vector<stride_type>& stride_A_A, \
-                   const std::vector<stride_type>& stride_A_AB, \
-                   const std::vector<stride_type>& stride_A_AC, \
-                   const std::vector<stride_type>& stride_A_ABC, \
+                   const stride_vector& stride_A_AB, \
+                   const stride_vector& stride_A_AC, \
+                   const stride_vector& stride_A_ABC, \
                             bool conj_B, const T* B, \
-                   const std::vector<stride_type>& stride_B_B, \
-                   const std::vector<stride_type>& stride_B_AB, \
-                   const std::vector<stride_type>& stride_B_BC, \
-                   const std::vector<stride_type>& stride_B_ABC, \
+                   const stride_vector& stride_B_AB, \
+                   const stride_vector& stride_B_BC, \
+                   const stride_vector& stride_B_ABC, \
                    T  beta, bool conj_C,       T* C, \
-                   const std::vector<stride_type>& stride_C_C, \
-                   const std::vector<stride_type>& stride_C_AC, \
-                   const std::vector<stride_type>& stride_C_BC, \
-                   const std::vector<stride_type>& stride_C_ABC);
+                   const stride_vector& stride_C_AC, \
+                   const stride_vector& stride_C_BC, \
+                   const stride_vector& stride_C_ABC);
 #include "configs/foreach_type.h"
 
 }

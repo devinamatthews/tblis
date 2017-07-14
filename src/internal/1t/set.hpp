@@ -12,8 +12,8 @@ namespace internal
     
 template <typename T>
 void set(const communicator& comm, const config& cfg,
-         const std::vector<len_type>& len_A,
-         T alpha, T* A, const std::vector<stride_type>& stride_A);
+         const len_vector& len_A,
+         T alpha, T* A, const stride_vector& stride_A);
              
 }
 }

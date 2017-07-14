@@ -60,7 +60,7 @@ void init(indexed_varray<T>& A, const string& dense, const string& batch)
     unsigned n = dense.size();
     unsigned m = batch.size();
 
-    vector<len_type> len;
+    len_vector len;
     for (auto c : dense+batch)
         len.push_back(tolower(c) >= 'a' && tolower(c) <= 'h' ? v :
                       tolower(c) >= 'i' && tolower(c) <= 'p' ? o : len.back());
@@ -84,7 +84,7 @@ void init(indexed_varray<T>& A, const string& dense, const string& batch)
         i = j;
     }
 
-    vector<len_type> cur_idx(m);
+    len_vector cur_idx(m);
     for (unsigned i = 0;i < m;i++)
     {
         if (i == 0 || batch[i] != '=')

@@ -4,24 +4,6 @@
 using namespace std;
 using namespace MArray;
 
-template <typename T, unsigned... Sizes>
-struct arrays_helper;
-
-template <typename T, unsigned Size1, unsigned Size2>
-struct arrays_helper<T, Size1, Size2>
-{
-    typedef array<vector<T>,Size1> type;
-};
-
-template <typename T, unsigned Size1, unsigned Size2, unsigned Size3>
-struct arrays_helper<T, Size1, Size2, Size3>
-{
-    typedef array<array<vector<T>,Size2>,Size1> type;
-};
-
-template <typename T, unsigned... Sizes>
-using arrays = typename arrays_helper<T, Sizes...>::type;
-
 static array<dpd_layout,6> layouts =
 {{
     PREFIX_ROW_MAJOR,
@@ -32,17 +14,17 @@ static array<dpd_layout,6> layouts =
     BALANCED_COLUMN_MAJOR,
 }};
 
-static arrays<unsigned,6,4> perms =
+static array<dim_vector,6> perms =
     {{{3,2,1,0}, {0,1,2,3}, {3,2,1,0}, {0,1,2,3}, {3,2,1,0}, {0,1,2,3}}};
 
-static arrays<unsigned,8,4> irreps =
+static array<irrep_vector,8> irreps =
     {{{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {1,1,1,0},
       {0,0,0,1}, {1,1,0,1}, {1,0,1,1}, {0,1,1,1}}};
-static arrays<len_type,8,4> lengths =
+static array<len_vector,8> lengths =
     {{{1,2,1,3}, {3,2,1,3}, {3,2,2,3}, {1,2,2,3},
       {3,2,1,4}, {1,2,1,4}, {1,2,2,4}, {3,2,2,4}}};
 
-static arrays<stride_type,6,8,4> strides =
+static array<array<stride_vector,8>,6> strides =
 {{
     {{{42,11, 3, 1}, {42,11, 3, 1}, {42,10, 3, 1}, {42,10, 3, 1},
       {42,10, 4, 1}, {42,10, 4, 1}, {42,11, 4, 1}, {42,11, 4, 1}}},
@@ -58,7 +40,7 @@ static arrays<stride_type,6,8,4> strides =
       { 1, 3, 8, 8}, { 1, 1, 8, 8}, { 1, 1, 8,16}, { 1, 3, 8,16}}}
 }};
 
-static arrays<stride_type,6,8> offsets =
+static array<stride_vector,6> offsets =
 {{
      {126, 20,  4,152,  0,148,129, 23},
      {  0,  2,  8, 14, 72, 78, 80, 82},
@@ -74,7 +56,7 @@ static arrays<stride_type,6,8> offsets =
     EXPECT_EQ(nullptr, v.data()); \
     EXPECT_EQ(0u, v.irrep()); \
     EXPECT_EQ(0u, v.num_irreps()); \
-    EXPECT_EQ((std::vector<unsigned>{}), v.permutation()); \
+    EXPECT_EQ((dim_vector{}), v.permutation()); \
     EXPECT_EQ((matrix<len_type>{}), v.lengths());
 
 #define CHECK_DPD_MARRAY(v,j) \
@@ -215,8 +197,8 @@ TEST(dpd_varray, permute)
         for (unsigned i = 0;i < 8;i++)
         {
             SCOPED_TRACE(i);
-            std::vector<len_type> len(4);
-            std::vector<stride_type> stride(4);
+            len_vector len(4);
+            stride_vector stride(4);
             for (unsigned k = 0;k < 4;k++)
             {
                 len[k] = lengths[i][perms2[1][k]];
@@ -238,8 +220,8 @@ TEST(dpd_varray, permute)
         for (unsigned i = 0;i < 8;i++)
         {
             SCOPED_TRACE(i);
-            std::vector<len_type> len(4);
-            std::vector<stride_type> stride(4);
+            len_vector len(4);
+            stride_vector stride(4);
             for (unsigned k = 0;k < 4;k++)
             {
                 len[k] = lengths[i][perms2[1][k]];
@@ -265,7 +247,7 @@ TEST(dpd_varray, block_iteration)
 
         visited = {};
         v1.for_each_block(
-        [&](varray_view<double>&& v3, const std::vector<unsigned>& irreps)
+        [&](varray_view<double>&& v3, const irrep_vector& irreps)
         {
             EXPECT_EQ(irreps.size(), 3u);
             unsigned i = irreps[0];
@@ -328,7 +310,7 @@ TEST(dpd_varray, element_iteration)
 
         visited = {};
         v1.for_each_element(
-        [&](double& v, const std::vector<unsigned>& irreps, const std::vector<len_type>& pos)
+        [&](double& v, const irrep_vector& irreps, const len_vector& pos)
         {
             EXPECT_EQ(irreps.size(), 3u);
             EXPECT_EQ(pos.size(), 3u);
@@ -397,13 +379,13 @@ TEST(dpd_varray, swap)
     EXPECT_EQ(data2, v1.data());
     EXPECT_EQ(0u, v1.irrep());
     EXPECT_EQ(2u, v1.num_irreps());
-    EXPECT_EQ((std::vector<unsigned>{0, 1, 2}), v1.permutation());
+    EXPECT_EQ((dim_vector{0, 1, 2}), v1.permutation());
     EXPECT_EQ((matrix<len_type>{{1, 1}, {6, 3}, {2, 4}}), v1.lengths());
 
     EXPECT_EQ(data1, v2.data());
     EXPECT_EQ(1u, v2.irrep());
     EXPECT_EQ(2u, v2.num_irreps());
-    EXPECT_EQ((std::vector<unsigned>{2, 1, 0}), v2.permutation());
+    EXPECT_EQ((dim_vector{2, 1, 0}), v2.permutation());
     EXPECT_EQ((matrix<len_type>{{2, 3}, {2, 1}, {5, 3}}), v2.lengths());
 
     swap(v2, v1);
@@ -411,12 +393,12 @@ TEST(dpd_varray, swap)
     EXPECT_EQ(data1, v1.data());
     EXPECT_EQ(1u, v1.irrep());
     EXPECT_EQ(2u, v1.num_irreps());
-    EXPECT_EQ((std::vector<unsigned>{2, 1, 0}), v1.permutation());
+    EXPECT_EQ((dim_vector{2, 1, 0}), v1.permutation());
     EXPECT_EQ((matrix<len_type>{{2, 3}, {2, 1}, {5, 3}}), v1.lengths());
 
     EXPECT_EQ(data2, v2.data());
     EXPECT_EQ(0u, v2.irrep());
     EXPECT_EQ(2u, v2.num_irreps());
-    EXPECT_EQ((std::vector<unsigned>{0, 1, 2}), v2.permutation());
+    EXPECT_EQ((dim_vector{0, 1, 2}), v2.permutation());
     EXPECT_EQ((matrix<len_type>{{1, 1}, {6, 3}, {2, 4}}), v2.lengths());
 }

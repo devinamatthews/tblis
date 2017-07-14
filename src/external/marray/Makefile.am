@@ -17,7 +17,6 @@ bin_test_SOURCES = test/dpd_marray_view.cxx \
                    test/miterator.cxx \
                    test/range.cxx \
                    test/short_vector.cxx \
-                   test/utility.cxx \
                    test/varray_view.cxx \
                    test/varray.cxx \
                    third_party/gtest/gtest_main.cc \

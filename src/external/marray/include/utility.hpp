@@ -22,6 +22,8 @@
 #define MARRAY_ASSERT(e)
 #endif
 
+#include "short_vector.hpp"
+
 namespace MArray
 {
 
@@ -49,6 +51,12 @@ typedef MARRAY_LEN_TYPE len_type;
 #endif
 
 typedef MARRAY_STRIDE_TYPE stride_type;
+
+typedef short_vector<len_type,8> len_vector;
+typedef short_vector<stride_type,8> stride_vector;
+typedef short_vector<unsigned,8> dim_vector;
+typedef short_vector<len_type,8> index_vector;
+typedef short_vector<unsigned,8> irrep_vector;
 
 #ifndef MARRAY_DEFAULT_LAYOUT
 #define MARRAY_DEFAULT_LAYOUT ROW_MAJOR
@@ -150,9 +158,9 @@ namespace detail
         return ip;
     }
 
-    inline std::vector<unsigned> inverse_permutation(const std::vector<unsigned>& p)
+    inline dim_vector inverse_permutation(const dim_vector& p)
     {
-        std::vector<unsigned> ip(p.size());
+        dim_vector ip(p.size());
         for (unsigned i = 0;i < p.size();i++) ip[p[i]] = i;
         return ip;
     }
@@ -320,352 +328,73 @@ namespace detail
     template <typename T, typename... Cs>
     struct are_containers_of : are_containers_of_helper<T, Cs...> {};
 
-    template <typename T, size_t N, typename C>
-    struct is_array_of : std::false_type {};
+    template <typename Iterator>
+    void inc_offsets_helper(unsigned i, Iterator) {}
 
-    template <typename T, size_t N>
-    struct is_array_of<T, N, std::array<T,N>> : std::true_type {};
-
-    template <typename T, size_t N, typename C, typename... Cs>
-    struct are_arrays_of_helper;
-
-    template <typename T, size_t N, typename C>
-    struct are_arrays_of_helper<T, N, C> : is_array_of<T, N, C> {};
-
-    template <typename T, size_t N, typename C, typename... Cs>
-    struct are_arrays_of_helper
-    : std::conditional<is_array_of<T, N, C>::value,
-                       are_arrays_of_helper<T, N, Cs...>,
-                       std::false_type>::type {};
-
-    template <typename T, size_t N, typename... Cs>
-    struct are_arrays_of;
-
-    template <typename T, size_t N>
-    struct are_arrays_of<T, N> : std::true_type {};
-
-    template <typename T, size_t N, typename... Cs>
-    struct are_arrays_of : are_arrays_of_helper<T, N, Cs...> {};
-
-    template <typename T, typename C>
-    struct is_vector_of : std::false_type {};
-
-    template <typename T>
-    struct is_vector_of<T, std::vector<T>> : std::true_type {};
-
-    template <typename T, typename C, typename... Cs>
-    struct are_vectors_of_helper;
-
-    template <typename T, typename C>
-    struct are_vectors_of_helper<T, C> : is_vector_of<T, C> {};
-
-    template <typename T, typename C, typename... Cs>
-    struct are_vectors_of_helper
-    : std::conditional<is_vector_of<T, C>::value,
-                       are_vectors_of_helper<T, Cs...>,
-                       std::false_type>::type {};
-
-    template <typename T, typename... Cs>
-    struct are_vectors_of;
-
-    template <typename T>
-    struct are_vectors_of<T> : std::true_type {};
-
-    template <typename T, typename... Cs>
-    struct are_vectors_of : are_vectors_of_helper<T, Cs...> {};
-
-    template <size_t NDim, size_t N, size_t I, typename... Offsets>
-    struct inc_offsets_helper;
-
-    template <size_t NDim>
-    struct inc_offsets_helper<NDim, 0, 1>
+    template <typename Iterator, typename Offset, typename... Offsets>
+    void inc_offsets_helper(unsigned i, Iterator it, Offset& off0,
+                            Offsets&... off)
     {
-        template <typename stride_type>
-        inc_offsets_helper(unsigned,
-                           const std::array<std::array<stride_type,NDim>,0>&) {}
+        off0 += (*it)[i];
+        inc_offsets_helper(i, ++it, off...);
+    }
 
-        template <typename stride_type>
-        inc_offsets_helper(unsigned,
-                           const std::array<std::vector<stride_type>,0>&) {}
-    };
-
-    template <size_t NDim, size_t N, typename Offset>
-    struct inc_offsets_helper<NDim, N, N, Offset>
+    template <typename Strides, typename... Offsets>
+    void inc_offsets(unsigned i, const Strides& strides, Offsets&... off)
     {
-        template <typename stride_type>
-        inc_offsets_helper(unsigned i,
-                           Offset& off0,
-                           const std::array<std::array<stride_type,NDim>,N>& strides)
-        {
-            off0 += strides[N-1][i];
-        }
+        inc_offsets_helper(i, strides.begin(), off...);
+    }
 
-        template <typename stride_type>
-        inc_offsets_helper(unsigned i,
-                           Offset& off0,
-                           const std::array<std::vector<stride_type>,N>& strides)
-        {
-            off0 += strides[N-1][i];
-        }
-    };
+    template <typename Pos, typename Iterator>
+    void dec_offsets_helper(unsigned i, const Pos&, Iterator) {}
 
-    template <size_t NDim, size_t N, size_t I, typename Offset, typename... Offsets>
-    struct inc_offsets_helper<NDim, N, I, Offset, Offsets...>
+    template <typename Pos, typename Iterator, typename Offset, typename... Offsets>
+    void dec_offsets_helper(unsigned i, const Pos& pos, Iterator it,
+                             Offset& off0, Offsets&... off)
     {
-        template <typename stride_type>
-        inc_offsets_helper(unsigned i,
-                           Offset& off0, Offsets&... off,
-                           const std::array<std::array<stride_type,NDim>,N>& strides)
-        {
-            off0 += strides[I-1][i];
-            inc_offsets_helper<NDim, N, I+1, Offsets...>(i, off..., strides);
-        }
+        off0 -= pos[i]*(*it)[i];
+        dec_offsets_helper(i, pos, ++it, off...);
+    }
 
-        template <typename stride_type>
-        inc_offsets_helper(unsigned i,
-                           Offset& off0, Offsets&... off,
-                           const std::array<std::vector<stride_type>,N>& strides)
-        {
-            off0 += strides[I-1][i];
-            inc_offsets_helper<0, N, I+1, Offsets...>(i, off..., strides);
-        }
-    };
-
-    template <typename stride_type, size_t NDim, size_t N, typename... Offsets>
-    void inc_offsets(unsigned i,
-                     const std::array<std::array<stride_type,NDim>,N>& strides,
+    template <typename Pos, typename Strides, typename... Offsets>
+    void dec_offsets(unsigned i, const Pos& pos, const Strides& strides,
                      Offsets&... off)
     {
-        inc_offsets_helper<NDim, N, 1, Offsets...>(i, off..., strides);
+        dec_offsets_helper(i, pos, strides.begin(), off...);
     }
 
-    template <typename stride_type, size_t N, typename... Offsets>
-    void inc_offsets(unsigned i,
-                     const std::array<std::vector<stride_type>,N>& strides,
-                     Offsets&... off)
+    template <typename Pos, typename Iterator>
+    void move_offsets_helper(const Pos&, Iterator) {}
+
+    template <typename Pos, typename Iterator, typename Offset, typename... Offsets>
+    void move_offsets_helper(const Pos& pos, Iterator it,
+                             Offset& off0, Offsets&... off)
     {
-        inc_offsets_helper<0, N, 1, Offsets...>(i, off..., strides);
+        for (unsigned i = 0;i < pos.size();i++) off0 += pos[i]*(*it)[i];
+        move_offsets_helper(pos, ++it, off...);
     }
 
-    template <size_t NDim, size_t N, size_t I, typename... Offsets>
-    struct dec_offsets_helper;
-
-    template <size_t NDim>
-    struct dec_offsets_helper<NDim, 0, 1>
+    template <typename Pos, typename Strides, typename... Offsets>
+    void move_offsets(const Pos& pos, const Strides& strides,
+                      Offsets&... off)
     {
-        template <typename len_type, typename stride_type>
-        dec_offsets_helper(unsigned,
-                           const std::array<len_type,NDim>&,
-                           const std::array<std::array<stride_type,NDim>,0>&) {}
-
-        template <typename len_type, typename stride_type>
-        dec_offsets_helper(unsigned,
-                           const std::vector<len_type>&,
-                           const std::array<std::vector<stride_type>,0>&) {}
-    };
-
-    template <size_t NDim, size_t N, typename Offset>
-    struct dec_offsets_helper<NDim, N, N, Offset>
-    {
-        template <typename len_type, typename stride_type>
-        dec_offsets_helper(unsigned i,
-                           Offset& off0,
-                           const std::array<len_type,NDim>& pos,
-                           const std::array<std::array<stride_type,NDim>,N>& strides)
-        {
-            off0 -= pos[i]*strides[N-1][i];
-        }
-
-        template <typename len_type, typename stride_type>
-        dec_offsets_helper(unsigned i,
-                           Offset& off0,
-                           const std::vector<len_type>& pos,
-                           const std::array<std::vector<stride_type>,N>& strides)
-        {
-            off0 -= pos[i]*strides[N-1][i];
-        }
-    };
-
-    template <size_t NDim, size_t N, size_t I, typename Offset, typename... Offsets>
-    struct dec_offsets_helper<NDim, N, I, Offset, Offsets...>
-    {
-        template <typename len_type, typename stride_type>
-        dec_offsets_helper(unsigned i,
-                           Offset& off0, Offsets&... off,
-                           const std::array<len_type,NDim>& pos,
-                           const std::array<std::array<stride_type,NDim>,N>& strides)
-        {
-            off0 -= pos[i]*strides[I-1][i];
-            dec_offsets_helper<NDim, N, I+1, Offsets...>(i, off..., pos, strides);
-        }
-
-        template <typename len_type, typename stride_type>
-        dec_offsets_helper(unsigned i,
-                           Offset& off0, Offsets&... off,
-                           const std::vector<len_type>& pos,
-                           const std::array<std::vector<stride_type>,N>& strides)
-        {
-            off0 -= pos[i]*strides[I-1][i];
-            dec_offsets_helper<0, N, I+1, Offsets...>(i, off..., pos, strides);
-        }
-    };
-
-    template <typename len_type, typename stride_type, size_t NDim, size_t N, typename... Offsets>
-    void dec_offsets(unsigned i,
-                     const std::array<len_type,NDim>& pos,
-                     const std::array<std::array<stride_type,NDim>,N>& strides,
-                     Offsets&... off)
-    {
-        dec_offsets_helper<NDim, N, 1, Offsets...>(i, off..., pos, strides);
+        move_offsets_helper(pos, strides.begin(), off...);
     }
 
-    template <typename len_type, typename stride_type, size_t N, typename... Offsets>
-    void dec_offsets(unsigned i,
-                     const std::vector<len_type>& pos,
-                     const std::array<std::vector<stride_type>,N>& strides,
-                     Offsets&... off)
+    template <typename Iterator>
+    void set_strides_helper(Iterator) {}
+
+    template <typename Iterator, typename Stride, typename... Strides>
+    void set_strides_helper(Iterator it, const Stride& stride, const Strides&... strides)
     {
-        dec_offsets_helper<0, N, 1, Offsets...>(i, off..., pos, strides);
+        std::copy(stride.begin(), stride.end(), it->begin());
+        set_strides_helper(++it, strides...);
     }
 
-    template <size_t NDim, size_t N, size_t I, typename... Offsets>
-    struct move_offsets_helper;
-
-    template <size_t NDim>
-    struct move_offsets_helper<NDim, 0, 1>
+    template <typename Strides_, typename... Strides>
+    void set_strides(Strides_& strides_, const Strides&... strides)
     {
-        template <typename len_type, typename stride_type>
-        move_offsets_helper(const std::array<len_type,NDim>&,
-                            const std::array<std::array<stride_type,NDim>,0>&) {}
-
-        template <typename len_type, typename stride_type>
-        move_offsets_helper(const std::vector<len_type>&,
-                            const std::array<std::vector<stride_type>,0>&) {}
-    };
-
-    template <size_t NDim, size_t N, typename Offset>
-    struct move_offsets_helper<NDim, N, N, Offset>
-    {
-        template <typename len_type, typename stride_type>
-        move_offsets_helper(Offset& off0,
-                           const std::array<len_type,NDim>& pos,
-                           const std::array<std::array<stride_type,NDim>,N>& strides)
-        {
-            for (unsigned i = 0;i < pos.size();i++) off0 += pos[i]*strides[N-1][i];
-        }
-
-        template <typename len_type, typename stride_type>
-        move_offsets_helper(Offset& off0,
-                           const std::vector<len_type>& pos,
-                           const std::array<std::vector<stride_type>,N>& strides)
-        {
-            for (unsigned i = 0;i < pos.size();i++) off0 += pos[i]*strides[N-1][i];
-        }
-    };
-
-    template <size_t NDim, size_t N, size_t I, typename Offset, typename... Offsets>
-    struct move_offsets_helper<NDim, N, I, Offset, Offsets...>
-    {
-        template <typename len_type, typename stride_type>
-        move_offsets_helper(Offset& off0, Offsets&... off,
-                           const std::array<len_type,NDim>& pos,
-                           const std::array<std::array<stride_type,NDim>,N>& strides)
-        {
-            for (unsigned i = 0;i < pos.size();i++) off0 += pos[i]*strides[I-1][i];
-            move_offsets_helper<NDim, N, I+1, Offsets...>(off..., pos, strides);
-        }
-
-        template <typename len_type, typename stride_type>
-        move_offsets_helper(Offset& off0, Offsets&... off,
-                           const std::vector<len_type>& pos,
-                           const std::array<std::vector<stride_type>,N>& strides)
-        {
-            for (unsigned i = 0;i < pos.size();i++) off0 += pos[i]*strides[I-1][i];
-            move_offsets_helper<0, N, I+1, Offsets...>(off..., pos, strides);
-        }
-    };
-
-    template <typename len_type, typename stride_type, size_t NDim, size_t N, typename... Offsets>
-    void move_offsets(const std::array<len_type,NDim>& pos,
-                     const std::array<std::array<stride_type,NDim>,N>& strides,
-                     Offsets&... off)
-    {
-        move_offsets_helper<NDim, N, 1, Offsets...>(off..., pos, strides);
-    }
-
-    template <typename len_type, typename stride_type, size_t N, typename... Offsets>
-    void move_offsets(const std::vector<len_type>& pos,
-                     const std::array<std::vector<stride_type>,N>& strides,
-                     Offsets&... off)
-    {
-        move_offsets_helper<0, N, 1, Offsets...>(off..., pos, strides);
-    }
-
-    template <size_t NDim, size_t N, size_t I, typename... Strides>
-    struct set_strides_helper;
-
-    template <size_t NDim>
-    struct set_strides_helper<NDim, 0, 1>
-    {
-        template <typename stride_type>
-        set_strides_helper(std::array<std::array<stride_type,NDim>,0>&) {}
-
-        template <typename stride_type>
-        set_strides_helper(std::array<std::vector<stride_type>,0>&) {}
-    };
-
-    template <size_t NDim, size_t N, typename Stride>
-    struct set_strides_helper<NDim, N, N, Stride>
-    {
-        template <typename stride_type>
-        set_strides_helper(const Stride& stride0,
-                           std::array<std::array<stride_type,NDim>,N>& strides_)
-        {
-            assert(stride0.size() == NDim);
-            std::copy_n(stride0.begin(), NDim, strides_[N-1].begin());
-        }
-
-        template <typename stride_type>
-        set_strides_helper(const Stride& stride0,
-                           std::array<std::vector<stride_type>,N>& strides_)
-        {
-            strides_[N-1].assign(stride0.begin(), stride0.end());
-        }
-    };
-
-    template <size_t NDim, size_t N, size_t I, typename Stride, typename... Strides>
-    struct set_strides_helper<NDim, N, I, Stride, Strides...>
-    {
-        template <typename stride_type>
-        set_strides_helper(const Stride& stride0, const Strides&... strides,
-                           std::array<std::array<stride_type,NDim>,N>& strides_)
-        {
-            assert(stride0.size() == NDim);
-            std::copy_n(stride0.begin(), NDim, strides_[I-1].begin());
-            set_strides_helper<NDim, N, I+1, Strides...>(strides..., strides_);
-        }
-
-        template <typename stride_type>
-        set_strides_helper(const Stride& stride0, const Strides&... strides,
-                           std::array<std::vector<stride_type>,N>& strides_)
-        {
-            strides_[I-1].assign(stride0.begin(), stride0.end());
-            set_strides_helper<0, N, I+1, Strides...>(strides..., strides_);
-        }
-    };
-
-    template <typename stride_type, size_t NDim, size_t N, typename... Strides>
-    void set_strides(std::array<std::array<stride_type,NDim>,N>& strides_,
-                     const Strides&... strides)
-    {
-        set_strides_helper<NDim, N, 1, Strides...>(strides..., strides_);
-    }
-
-    template <typename stride_type, size_t N, typename... Strides>
-    void set_strides(std::array<std::vector<stride_type>,N>& strides_,
-                     const Strides&... strides)
-    {
-        set_strides_helper<0, N, 1, Strides...>(strides..., strides_);
+        set_strides_helper(strides_.begin(), strides...);
     }
 
     template <typename T, T... S> struct integer_sequence {};
@@ -697,42 +426,6 @@ namespace detail
 
     template <typename T, T N>
     using static_range = typename static_range_helper<T, N>::type;
-}
-
-/*
- * Create a vector from the specified elements, where the type of the vector
- * is taken from the first element.
- */
-template <typename T, typename... Args>
-std::vector<typename std::decay<T>::type>
-make_vector(T&& t, Args&&... args)
-{
-    return {{std::forward<T>(t), std::forward<Args>(args)...}};
-}
-
-/*
- * Create an array from the specified elements, where the type of the array
- * is taken from the first element.
- */
-template <typename T, typename... Args>
-std::array<typename std::decay<T>::type, sizeof...(Args)+1>
-make_array(T&& t, Args&&... args)
-{
-    return {{std::forward<T>(t), std::forward<Args>(args)...}};
-}
-
-template <typename... Old, typename New>
-std::tuple<Old..., detail::decay_t<New>>
-push_back(const std::tuple<Old...>& x, New&& y)
-{
-    return std::tuple_cat(x, std::make_tuple(std::forward<New>(y)));
-}
-
-template <typename... Old, typename New>
-std::tuple<Old..., detail::decay_t<New>>
-push_back(std::tuple<Old...>&& x, New&& y)
-{
-    return std::tuple_cat(std::move(x), std::make_tuple(std::forward<New>(y)));
 }
 
 }

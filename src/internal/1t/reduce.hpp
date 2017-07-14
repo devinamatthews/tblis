@@ -12,8 +12,8 @@ namespace internal
 
 template <typename T>
 void reduce(const communicator& comm, const config& cfg, reduce_t op,
-            const std::vector<len_type>& len_A,
-            const T* A, const std::vector<stride_type>& stride_A,
+            const len_vector& len_A,
+            const T* A, const stride_vector& stride_A,
             T& result, len_type& idx);
 
 }

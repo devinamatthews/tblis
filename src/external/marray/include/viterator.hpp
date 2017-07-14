@@ -127,7 +127,7 @@ class viterator
             return pos_[dim];
         }
 
-        const std::vector<len_type>& position() const
+        const len_vector& position() const
         {
             return pos_;
         }
@@ -137,7 +137,7 @@ class viterator
             return len_[dim];
         }
 
-        const std::vector<len_type>& lengths() const
+        const len_vector& lengths() const
         {
             return len_;
         }
@@ -147,7 +147,7 @@ class viterator
             return strides_[i][dim];
         }
 
-        const std::vector<stride_type>& strides(unsigned i) const
+        const stride_vector& strides(unsigned i) const
         {
             return strides_[i];
         }
@@ -170,17 +170,26 @@ class viterator
 
     private:
         size_t ndim_ = 0;
-        std::vector<len_type> pos_;
-        std::vector<len_type> len_;
-        std::array<std::vector<stride_type>,N> strides_;
+        len_vector pos_;
+        len_vector len_;
+        std::array<stride_vector,N> strides_;
         bool first_ = true;
         bool empty_ = true;
 };
 
-template <typename len_type, typename... Strides,
+template <typename Length, typename... Strides,
           typename=detail::enable_if_t<detail::are_containers_of<stride_type, Strides...>::value>>
 viterator<sizeof...(Strides)>
-make_iterator(const std::vector<len_type>& len,
+make_iterator(const std::vector<Length>& len,
+              const Strides&... strides)
+{
+    return {len, strides...};
+}
+
+template <typename... Strides,
+          typename=detail::enable_if_t<detail::are_containers_of<stride_type, Strides...>::value>>
+viterator<sizeof...(Strides)>
+make_iterator(const len_vector& len,
               const Strides&... strides)
 {
     return {len, strides...};

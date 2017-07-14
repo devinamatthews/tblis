@@ -12,8 +12,8 @@ namespace internal
 
 template <typename T>
 void scale(const communicator& comm, const config& cfg,
-           const std::vector<len_type>& len_A,
-           T alpha, bool conj_A, T* A, const std::vector<stride_type>& stride_A);
+           const len_vector& len_A,
+           T alpha, bool conj_A, T* A, const stride_vector& stride_A);
 
 }
 }

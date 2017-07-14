@@ -12,7 +12,7 @@ namespace internal
 
 template <typename T>
 void dpd_reduce(const communicator& comm, const config& cfg, reduce_t op,
-                const dpd_varray_view<const T>& A, const std::vector<unsigned>&,
+                const dpd_varray_view<const T>& A, const dim_vector&,
                 T& result, len_type& idx);
 
 }

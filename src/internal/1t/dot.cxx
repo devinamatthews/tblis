@@ -9,19 +9,13 @@ namespace internal
 
 template <typename T>
 void dot(const communicator& comm, const config& cfg,
-         const std::vector<len_type>& len_A,
-         const std::vector<len_type>& len_B,
-         const std::vector<len_type>& len_AB,
-         bool conj_A, const T* A, const std::vector<stride_type>& stride_A,
-                                  const std::vector<stride_type>& stride_A_AB,
-         bool conj_B, const T* B, const std::vector<stride_type>& stride_B,
-                                  const std::vector<stride_type>& stride_B_AB,
+         const len_vector& len_AB,
+         bool conj_A, const T* A, const stride_vector& stride_A_AB,
+         bool conj_B, const T* B, const stride_vector& stride_B_AB,
          T& result)
 {
     (void)cfg;
 
-    viterator<1> iter_A(len_A, stride_A);
-    viterator<1> iter_B(len_B, stride_B);
     viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
 
     len_type n = stl_ext::prod(len_AB);
@@ -38,20 +32,7 @@ void dot(const communicator& comm, const config& cfg,
     for (len_type i = n_min;i < n_max;i++)
     {
         iter_AB.next(A, B);
-
-        T sum_A = T();
-        T sum_B = T();
-        while (iter_A.next(A)) sum_A += *A;
-        while (iter_B.next(B)) sum_B += *B;
-
-        if (conj_B)
-        {
-            local_result += sum_A*conj(sum_B);
-        }
-        else
-        {
-            local_result += sum_A*sum_B;
-        }
+        local_result += (*A)*(conj_B ? conj(*B) : *B);
     }
 
     len_type dummy = 0;
@@ -64,13 +45,9 @@ void dot(const communicator& comm, const config& cfg,
 
 #define FOREACH_TYPE(T) \
 template void dot(const communicator& comm, const config& cfg, \
-                  const std::vector<len_type>& len_A, \
-                  const std::vector<len_type>& len_B, \
-                  const std::vector<len_type>& len_AB, \
-                  bool conj_A, const T* A, const std::vector<stride_type>& stride_A, \
-                                           const std::vector<stride_type>& stride_A_AB, \
-                  bool conj_B, const T* B, const std::vector<stride_type>& stride_B, \
-                                           const std::vector<stride_type>& stride_B_AB, \
+                  const len_vector& len_AB, \
+                  bool conj_A, const T* A, const stride_vector& stride_A_AB, \
+                  bool conj_B, const T* B, const stride_vector& stride_B_AB, \
                   T& result);
 #include "configs/foreach_type.h"
 

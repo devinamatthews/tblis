@@ -45,10 +45,11 @@ struct thread_configuration
             hwloc_topology_init(&topo);
             hwloc_topology_load(topo);
 
-            int depth = hwloc_get_type_depth(topo, HWLOC_OBJ_CORE);
+            int depth = hwloc_get_cache_type_depth(topo, 1, HWLOC_OBJ_CACHE_DATA);
             if (depth != HWLOC_TYPE_DEPTH_UNKNOWN)
             {
                 num_threads = hwloc_get_nbobjs_by_depth(topo, depth);
+                printf("nt: %d\n", num_threads);
             }
 
             hwloc_topology_destroy(topo);

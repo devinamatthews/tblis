@@ -26,8 +26,8 @@ inline unsigned assign_irrep(unsigned dim, unsigned irrep)
 
 template <typename... Args>
 unsigned assign_irrep(unsigned dim, unsigned irrep,
-                      std::vector<unsigned>& irreps,
-                      const std::vector<unsigned>& idx,
+                      irrep_vector& irreps,
+                      const dim_vector& idx,
                       Args&... args)
 {
     irreps[idx[dim]] = irrep;
@@ -53,14 +53,14 @@ void assign_irreps(unsigned ndim, unsigned irrep, unsigned nirrep,
 template <typename T>
 void dpd_contract_block(const communicator& comm, const config& cfg,
                         T alpha, dpd_varray_view<const T> A,
-                        std::vector<unsigned> idx_A_AB,
-                        std::vector<unsigned> idx_A_AC,
+                        dim_vector idx_A_AB,
+                        dim_vector idx_A_AC,
                                  dpd_varray_view<const T> B,
-                        std::vector<unsigned> idx_B_AB,
-                        std::vector<unsigned> idx_B_BC,
+                        dim_vector idx_B_AB,
+                        dim_vector idx_B_BC,
                         T beta_, dpd_varray_view<      T> C,
-                        std::vector<unsigned> idx_C_AC,
-                        std::vector<unsigned> idx_C_BC)
+                        dim_vector idx_C_AC,
+                        dim_vector idx_C_BC)
 {
     using stl_ext::intersection;
     using stl_ext::exclusion;
@@ -77,21 +77,21 @@ void dpd_contract_block(const communicator& comm, const config& cfg,
     unsigned ndim_BC = (ndim_B+ndim_C-ndim_A)/2;
     unsigned ndim_AB = (ndim_A+ndim_B-ndim_C)/2;
 
-    std::vector<len_type> len_A(ndim_A);
+    len_vector len_A(ndim_A);
     for (unsigned i = 0;i < ndim_A;i++)
     {
         for (unsigned irrep = 0;irrep < nirrep;irrep++)
             len_A[i] += A.length(i, irrep);
     }
 
-    std::vector<len_type> len_B(ndim_B);
+    len_vector len_B(ndim_B);
     for (unsigned i = 0;i < ndim_B;i++)
     {
         for (unsigned irrep = 0;irrep < nirrep;irrep++)
             len_B[i] += B.length(i, irrep);
     }
 
-    std::vector<len_type> len_C(ndim_C);
+    len_vector len_C(ndim_C);
     for (unsigned i = 0;i < ndim_C;i++)
     {
         for (unsigned irrep = 0;irrep < nirrep;irrep++)
@@ -99,21 +99,21 @@ void dpd_contract_block(const communicator& comm, const config& cfg,
     }
 
     auto iperm_A = detail::inverse_permutation(A.permutation());
-    std::vector<stride_type> stride_A(ndim_A, 1);
+    stride_vector stride_A(ndim_A, 1);
     for (unsigned i = 1;i < ndim_A;i++)
     {
         stride_A[iperm_A[i]] = stride_A[iperm_A[i-1]]*len_A[iperm_A[i-1]];
     }
 
     auto iperm_B = detail::inverse_permutation(B.permutation());
-    std::vector<stride_type> stride_B(ndim_B, 1);
+    stride_vector stride_B(ndim_B, 1);
     for (unsigned i = 1;i < ndim_B;i++)
     {
         stride_B[iperm_B[i]] = stride_B[iperm_B[i-1]]*len_B[iperm_B[i-1]];
     }
 
     auto iperm_C = detail::inverse_permutation(C.permutation());
-    std::vector<stride_type> stride_C(ndim_C, 1);
+    stride_vector stride_C(ndim_C, 1);
     for (unsigned i = 1;i < ndim_C;i++)
     {
         stride_C[iperm_C[i]] = stride_C[iperm_C[i-1]]*len_C[iperm_C[i-1]];
@@ -236,9 +236,9 @@ void dpd_contract_block(const communicator& comm, const config& cfg,
 
 #endif //TBLIS_ENABLE_TBB
 
-                std::vector<unsigned> irreps_A(ndim_A);
-                std::vector<unsigned> irreps_B(ndim_B);
-                std::vector<unsigned> irreps_C(ndim_C);
+                irrep_vector irreps_A(ndim_A);
+                irrep_vector irreps_B(ndim_B);
+                irrep_vector irreps_C(ndim_C);
 
                 assign_irreps(ndim_AC, irrep_AC, nirrep, block_AC,
                               irreps_A, idx_A_AC, irreps_C, idx_C_AC);
@@ -296,27 +296,27 @@ void dpd_contract_block(const communicator& comm, const config& cfg,
 template <typename T>
 void dpd_mult_ref(const communicator& comm, const config& cfg,
                   T alpha, const dpd_varray_view<const T>& A,
-                  const std::vector<unsigned>& idx_A_only,
-                  const std::vector<unsigned>& idx_A_AB,
-                  const std::vector<unsigned>& idx_A_AC,
-                  const std::vector<unsigned>& idx_A_ABC,
+                  const dim_vector& idx_A_only,
+                  const dim_vector& idx_A_AB,
+                  const dim_vector& idx_A_AC,
+                  const dim_vector& idx_A_ABC,
                            const dpd_varray_view<const T>& B,
-                  const std::vector<unsigned>& idx_B_only,
-                  const std::vector<unsigned>& idx_B_AB,
-                  const std::vector<unsigned>& idx_B_BC,
-                  const std::vector<unsigned>& idx_B_ABC,
+                  const dim_vector& idx_B_only,
+                  const dim_vector& idx_B_AB,
+                  const dim_vector& idx_B_BC,
+                  const dim_vector& idx_B_ABC,
                   T  beta, const dpd_varray_view<      T>& C,
-                  const std::vector<unsigned>& idx_C_only,
-                  const std::vector<unsigned>& idx_C_AC,
-                  const std::vector<unsigned>& idx_C_BC,
-                  const std::vector<unsigned>& idx_C_ABC)
+                  const dim_vector& idx_C_only,
+                  const dim_vector& idx_C_AC,
+                  const dim_vector& idx_C_BC,
+                  const dim_vector& idx_C_ABC)
 {
     unsigned nirrep = A.num_irreps();
     unsigned ndim_A = A.dimension();
     unsigned ndim_B = B.dimension();
     unsigned ndim_C = C.dimension();
 
-    std::vector<len_type> len_A(ndim_A);
+    len_vector len_A(ndim_A);
     matrix<len_type> off_A({ndim_A, nirrep});
     for (unsigned i = 0;i < ndim_A;i++)
     {
@@ -327,7 +327,7 @@ void dpd_mult_ref(const communicator& comm, const config& cfg,
         }
     }
 
-    std::vector<len_type> len_B(ndim_B);
+    len_vector len_B(ndim_B);
     matrix<len_type> off_B({ndim_B, nirrep});
     for (unsigned i = 0;i < ndim_B;i++)
     {
@@ -338,7 +338,7 @@ void dpd_mult_ref(const communicator& comm, const config& cfg,
         }
     }
 
-    std::vector<len_type> len_C(ndim_C);
+    len_vector len_C(ndim_C);
     matrix<len_type> off_C({ndim_C, nirrep});
     for (unsigned i = 0;i < ndim_C;i++)
     {
@@ -361,7 +361,7 @@ void dpd_mult_ref(const communicator& comm, const config& cfg,
             C2.reset(len_C);
 
             A.for_each_block(
-            [&](const varray_view<T>& local_A, const std::vector<unsigned>& irreps_A)
+            [&](const varray_view<T>& local_A, const irrep_vector& irreps_A)
             {
                 varray_view<T> local_A2 = A2;
 
@@ -375,7 +375,7 @@ void dpd_mult_ref(const communicator& comm, const config& cfg,
             });
 
             B.for_each_block(
-            [&](const varray_view<T>& local_B, const std::vector<unsigned>& irreps_B)
+            [&](const varray_view<T>& local_B, const irrep_vector& irreps_B)
             {
                 varray_view<T> local_B2 = B2;
 
@@ -389,7 +389,7 @@ void dpd_mult_ref(const communicator& comm, const config& cfg,
             });
 
             C.for_each_block(
-            [&](const varray_view<T>& local_C, const std::vector<unsigned>& irreps_C)
+            [&](const varray_view<T>& local_C, const irrep_vector& irreps_C)
             {
                 varray_view<T> local_C2 = C2;
 
@@ -431,7 +431,7 @@ void dpd_mult_ref(const communicator& comm, const config& cfg,
         if (comm.master())
         {
             C.for_each_block(
-            [&](const varray_view<T>& local_C, const std::vector<unsigned>& irreps_C)
+            [&](const varray_view<T>& local_C, const irrep_vector& irreps_C)
             {
                 varray_view<T> local_C2 = C2;
 
@@ -451,20 +451,20 @@ void dpd_mult_ref(const communicator& comm, const config& cfg,
 template <typename T>
 void dpd_mult_block(const communicator& comm, const config& cfg,
                     T alpha, dpd_varray_view<const T> A,
-                    std::vector<unsigned> idx_A_only,
-                    std::vector<unsigned> idx_A_AB,
-                    std::vector<unsigned> idx_A_AC,
-                    std::vector<unsigned> idx_A_ABC,
+                    dim_vector idx_A_only,
+                    dim_vector idx_A_AB,
+                    dim_vector idx_A_AC,
+                    dim_vector idx_A_ABC,
                              dpd_varray_view<const T> B,
-                    std::vector<unsigned> idx_B_only,
-                    std::vector<unsigned> idx_B_AB,
-                    std::vector<unsigned> idx_B_BC,
-                    std::vector<unsigned> idx_B_ABC,
+                    dim_vector idx_B_only,
+                    dim_vector idx_B_AB,
+                    dim_vector idx_B_BC,
+                    dim_vector idx_B_ABC,
                     T beta_, dpd_varray_view<      T> C,
-                    std::vector<unsigned> idx_C_only,
-                    std::vector<unsigned> idx_C_AC,
-                    std::vector<unsigned> idx_C_BC,
-                    std::vector<unsigned> idx_C_ABC)
+                    dim_vector idx_C_only,
+                    dim_vector idx_C_AC,
+                    dim_vector idx_C_BC,
+                    dim_vector idx_C_ABC)
 {
     using stl_ext::intersection;
     using stl_ext::exclusion;
@@ -485,21 +485,21 @@ void dpd_mult_block(const communicator& comm, const config& cfg,
     unsigned ndim_AB = idx_A_AB.size();
     unsigned ndim_ABC = idx_A_ABC.size();
 
-    std::vector<len_type> len_A(ndim_A);
+    len_vector len_A(ndim_A);
     for (unsigned i = 0;i < ndim_A;i++)
     {
         for (unsigned irrep = 0;irrep < nirrep;irrep++)
             len_A[i] += A.length(i, irrep);
     }
 
-    std::vector<len_type> len_B(ndim_B);
+    len_vector len_B(ndim_B);
     for (unsigned i = 0;i < ndim_B;i++)
     {
         for (unsigned irrep = 0;irrep < nirrep;irrep++)
             len_B[i] += B.length(i, irrep);
     }
 
-    std::vector<len_type> len_C(ndim_C);
+    len_vector len_C(ndim_C);
     for (unsigned i = 0;i < ndim_C;i++)
     {
         for (unsigned irrep = 0;irrep < nirrep;irrep++)
@@ -507,21 +507,21 @@ void dpd_mult_block(const communicator& comm, const config& cfg,
     }
 
     auto iperm_A = detail::inverse_permutation(A.permutation());
-    std::vector<stride_type> stride_A(ndim_A, 1);
+    stride_vector stride_A(ndim_A, 1);
     for (unsigned i = 1;i < ndim_A;i++)
     {
         stride_A[iperm_A[i]] = stride_A[iperm_A[i-1]]*len_A[iperm_A[i-1]];
     }
 
     auto iperm_B = detail::inverse_permutation(B.permutation());
-    std::vector<stride_type> stride_B(ndim_B, 1);
+    stride_vector stride_B(ndim_B, 1);
     for (unsigned i = 1;i < ndim_B;i++)
     {
         stride_B[iperm_B[i]] = stride_B[iperm_B[i-1]]*len_B[iperm_B[i-1]];
     }
 
     auto iperm_C = detail::inverse_permutation(C.permutation());
-    std::vector<stride_type> stride_C(ndim_C, 1);
+    stride_vector stride_C(ndim_C, 1);
     for (unsigned i = 1;i < ndim_C;i++)
     {
         stride_C[iperm_C[i]] = stride_C[iperm_C[i-1]]*len_C[iperm_C[i-1]];
@@ -612,9 +612,9 @@ void dpd_mult_block(const communicator& comm, const config& cfg,
     if (nblock_AB > 1) nblock_AB /= nirrep;
     if (nblock_ABC > 1) nblock_ABC /= nirrep;
 
-    std::vector<unsigned> irreps_A(ndim_A);
-    std::vector<unsigned> irreps_B(ndim_B);
-    std::vector<unsigned> irreps_C(ndim_C);
+    irrep_vector irreps_A(ndim_A);
+    irrep_vector irreps_B(ndim_B);
+    irrep_vector irreps_C(ndim_C);
 
     for (unsigned irrep_ABC = 0;irrep_ABC < nirrep;irrep_ABC++)
     {
@@ -724,21 +724,21 @@ void dpd_mult_block(const communicator& comm, const config& cfg,
 
 template <typename T>
 void dpd_mult(const communicator& comm, const config& cfg,
-              T alpha, const dpd_varray_view<const T>& A,
-              const std::vector<unsigned>& idx_A_only,
-              const std::vector<unsigned>& idx_A_AB,
-              const std::vector<unsigned>& idx_A_AC,
-              const std::vector<unsigned>& idx_A_ABC,
-                       const dpd_varray_view<const T>& B,
-              const std::vector<unsigned>& idx_B_only,
-              const std::vector<unsigned>& idx_B_AB,
-              const std::vector<unsigned>& idx_B_BC,
-              const std::vector<unsigned>& idx_B_ABC,
-              T  beta, const dpd_varray_view<      T>& C,
-              const std::vector<unsigned>& idx_C_only,
-              const std::vector<unsigned>& idx_C_AC,
-              const std::vector<unsigned>& idx_C_BC,
-              const std::vector<unsigned>& idx_C_ABC)
+              T alpha, bool conj_A, const dpd_varray_view<const T>& A,
+              const dim_vector& idx_A_only,
+              const dim_vector& idx_A_AB,
+              const dim_vector& idx_A_AC,
+              const dim_vector& idx_A_ABC,
+                       bool conj_B, const dpd_varray_view<const T>& B,
+              const dim_vector& idx_B_only,
+              const dim_vector& idx_B_AB,
+              const dim_vector& idx_B_BC,
+              const dim_vector& idx_B_ABC,
+              T  beta, bool conj_C, const dpd_varray_view<      T>& C,
+              const dim_vector& idx_C_only,
+              const dim_vector& idx_C_AC,
+              const dim_vector& idx_C_BC,
+              const dim_vector& idx_C_ABC)
 {
     TBLIS_ASSERT(!conj_A && !conj_B && !conj_C);
 
@@ -770,21 +770,21 @@ void dpd_mult(const communicator& comm, const config& cfg,
 
 #define FOREACH_TYPE(T) \
 template void dpd_mult(const communicator& comm, const config& cfg, \
-                       T alpha, const dpd_varray_view<const T>& A, \
-                       const std::vector<unsigned>& idx_A_only, \
-                       const std::vector<unsigned>& idx_A_AB, \
-                       const std::vector<unsigned>& idx_A_AC, \
-                       const std::vector<unsigned>& idx_A_ABC, \
-                                const dpd_varray_view<const T>& B, \
-                       const std::vector<unsigned>& idx_B_only, \
-                       const std::vector<unsigned>& idx_B_AB, \
-                       const std::vector<unsigned>& idx_B_BC, \
-                       const std::vector<unsigned>& idx_B_ABC, \
-                       T  beta, const dpd_varray_view<      T>& C, \
-                       const std::vector<unsigned>& idx_C_only, \
-                       const std::vector<unsigned>& idx_C_AC, \
-                       const std::vector<unsigned>& idx_C_BC, \
-                       const std::vector<unsigned>& idx_C_ABC);
+                       T alpha, bool conj_A, const dpd_varray_view<const T>& A, \
+                       const dim_vector& idx_A_only, \
+                       const dim_vector& idx_A_AB, \
+                       const dim_vector& idx_A_AC, \
+                       const dim_vector& idx_A_ABC, \
+                                bool conj_B, const dpd_varray_view<const T>& B, \
+                       const dim_vector& idx_B_only, \
+                       const dim_vector& idx_B_AB, \
+                       const dim_vector& idx_B_BC, \
+                       const dim_vector& idx_B_ABC, \
+                       T  beta, bool conj_C, const dpd_varray_view<      T>& C, \
+                       const dim_vector& idx_C_only, \
+                       const dim_vector& idx_C_AC, \
+                       const dim_vector& idx_C_BC, \
+                       const dim_vector& idx_C_ABC);
 #include "configs/foreach_type.h"
 
 }

@@ -72,11 +72,7 @@ class dynamic_task_set
         template <typename Func>
         void visit(int task, Func&& f)
         {
-            group_.run(
-            [=]
-            {
-                const_cast<Func&>(f)(single, task);
-            });
+            group_.run([=] { const_cast<Func&>(f)(single); });
         }
 
     protected:
@@ -90,10 +86,10 @@ class dynamic_task_set
 {
     public:
         dynamic_task_set(const communicator& comm, int ntask, len_type nwork)
-        : comm_(comm)
+        : comm_(comm), ntask_(ntask)
         {
             if (comm_.master()) slots_ = new slot<>[ntask];
-            comm_.broadcast_value_nowait(slots_);
+            comm_.broadcast_value(slots_);
 
             int nt = max_num_threads(comm_);
             int nt_outer, nt_inner;
@@ -113,14 +109,14 @@ class dynamic_task_set
         template <typename Func>
         void visit(int task, Func&& f)
         {
-            if (slots_[task].try_fill(subcomm_.gang_num()))
-                f(subcomm_, task);
+            if (slots_[task].try_fill(subcomm_.gang_num())) f(subcomm_);
         }
 
     protected:
         const communicator& comm_;
         communicator subcomm_;
         slot<>* slots_ = nullptr;
+        int ntask_;
         static len_type inout_ratio;
 };
 
@@ -160,7 +156,8 @@ void reduce(const communicator& comm, reduce_t op, T& value, len_type& idx)
         return;
     }
 
-    std::vector<std::pair<T,len_type>> vals(comm.num_threads());
+    std::vector<std::pair<T,len_type>> vals;
+    if (comm.master()) vals.resize(comm.num_threads());
 
     comm.broadcast(
     [&](std::vector<std::pair<T,len_type>>& vals)

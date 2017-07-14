@@ -12,15 +12,15 @@ namespace internal
 
 template <typename T>
 void add(const communicator& comm, const config& cfg,
-         const std::vector<len_type>& len_A,
-         const std::vector<len_type>& len_B,
-         const std::vector<len_type>& len_AB,
+         const len_vector& len_A,
+         const len_vector& len_B,
+         const len_vector& len_AB,
          T alpha, bool conj_A, const T* A,
-         const std::vector<stride_type>& stride_A,
-         const std::vector<stride_type>& stride_A_AB,
+         const stride_vector& stride_A,
+         const stride_vector& stride_A_AB,
          T  beta, bool conj_B,       T* B,
-         const std::vector<stride_type>& stride_B,
-         const std::vector<stride_type>& stride_B_AB);
+         const stride_vector& stride_B,
+         const stride_vector& stride_B_AB);
 
 }
 }

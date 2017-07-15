@@ -2,18 +2,18 @@
 
 #include "util/macros.h"
 #include "util/tensor.hpp"
-#include "internal/1t/add.hpp"
-#include "internal/1t/scale.hpp"
-#include "internal/1t/set.hpp"
-#include "internal/1t/dpd_add.hpp"
-#include "internal/1t/dpd_scale.hpp"
-#include "internal/1t/dpd_set.hpp"
-#include "internal/1t/indexed_add.hpp"
-#include "internal/1t/indexed_scale.hpp"
-#include "internal/1t/indexed_set.hpp"
-#include "internal/1t/indexed_dpd_add.hpp"
-#include "internal/1t/indexed_dpd_scale.hpp"
-#include "internal/1t/indexed_dpd_set.hpp"
+#include "internal/1t/dense/add.hpp"
+#include "internal/1t/dense/scale.hpp"
+#include "internal/1t/dense/set.hpp"
+#include "internal/1t/dpd/add.hpp"
+#include "internal/1t/dpd/scale.hpp"
+#include "internal/1t/dpd/set.hpp"
+#include "internal/1t/indexed/add.hpp"
+#include "internal/1t/indexed/scale.hpp"
+#include "internal/1t/indexed/set.hpp"
+#include "internal/1t/indexed_dpd/add.hpp"
+#include "internal/1t/indexed_dpd/scale.hpp"
+#include "internal/1t/indexed_dpd/set.hpp"
 
 namespace tblis
 {
@@ -148,20 +148,20 @@ void add(const communicator& comm,
     {
         if (beta == T(0))
         {
-            internal::dpd_set<T>(comm, get_default_config(),
-                                 beta, B, idx_B_B+idx_B_AB);
+            internal::set<T>(comm, get_default_config(),
+                             beta, B, idx_B_B+idx_B_AB);
         }
         else
         {
-            internal::dpd_scale<T>(comm, get_default_config(),
-                                   beta, false, B, idx_B_B+idx_B_AB);
+            internal::scale<T>(comm, get_default_config(),
+                               beta, false, B, idx_B_B+idx_B_AB);
         }
     }
     else
     {
-        internal::dpd_add<T>(comm, get_default_config(),
-                             alpha, false, A, idx_A_A, idx_A_AB,
-                              beta, false, B, idx_B_B, idx_B_AB);
+        internal::add<T>(comm, get_default_config(),
+                         alpha, false, A, idx_A_A, idx_A_AB,
+                          beta, false, B, idx_B_B, idx_B_AB);
     }
 }
 
@@ -219,20 +219,20 @@ void add(const communicator& comm,
     {
         if (beta == T(0))
         {
-            internal::indexed_set<T>(comm, get_default_config(),
-                                     beta, B, idx_B_B+idx_B_AB);
+            internal::set<T>(comm, get_default_config(),
+                             beta, B, idx_B_B+idx_B_AB);
         }
         else
         {
-            internal::indexed_scale<T>(comm, get_default_config(),
-                                       beta, false, B, idx_B_B+idx_B_AB);
+            internal::scale<T>(comm, get_default_config(),
+                               beta, false, B, idx_B_B+idx_B_AB);
         }
     }
     else
     {
-        internal::indexed_add<T>(comm, get_default_config(),
-                                 alpha, false, A, idx_A_A, idx_A_AB,
-                                  beta, false, B, idx_B_B, idx_B_AB);
+        internal::add<T>(comm, get_default_config(),
+                         alpha, false, A, idx_A_A, idx_A_AB,
+                          beta, false, B, idx_B_B, idx_B_AB);
     }
 }
 
@@ -296,20 +296,20 @@ void add(const communicator& comm,
     {
         if (beta == T(0))
         {
-            internal::indexed_dpd_set<T>(comm, get_default_config(),
-                                         beta, B, idx_B_B+idx_B_AB);
+            internal::set<T>(comm, get_default_config(),
+                             beta, B, idx_B_B+idx_B_AB);
         }
         else
         {
-            internal::indexed_dpd_scale<T>(comm, get_default_config(),
-                                           beta, false, B, idx_B_B+idx_B_AB);
+            internal::scale<T>(comm, get_default_config(),
+                               beta, false, B, idx_B_B+idx_B_AB);
         }
     }
     else
     {
-        internal::indexed_dpd_add<T>(comm, get_default_config(),
-                                     alpha, false, A, idx_A_A, idx_A_AB,
-                                      beta, false, B, idx_B_B, idx_B_AB);
+        internal::add<T>(comm, get_default_config(),
+                         alpha, false, A, idx_A_A, idx_A_AB,
+                          beta, false, B, idx_B_B, idx_B_AB);
     }
 }
 

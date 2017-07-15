@@ -2,10 +2,10 @@
 
 #include "util/macros.h"
 #include "util/tensor.hpp"
-#include "internal/1t/reduce.hpp"
-#include "internal/1t/dpd_reduce.hpp"
-#include "internal/1t/indexed_reduce.hpp"
-#include "internal/1t/indexed_dpd_reduce.hpp"
+#include "internal/1t/dense/reduce.hpp"
+#include "internal/1t/dpd/reduce.hpp"
+#include "internal/1t/indexed/reduce.hpp"
+#include "internal/1t/indexed_dpd/reduce.hpp"
 
 namespace tblis
 {
@@ -72,8 +72,8 @@ void reduce(const communicator& comm, reduce_t op,
 
     dim_vector idx_A_A = range(ndim_A);
 
-    internal::dpd_reduce<T>(comm, get_default_config(), op,
-                            A, idx_A_A, result, idx);
+    internal::reduce<T>(comm, get_default_config(), op,
+                        A, idx_A_A, result, idx);
 }
 
 #define FOREACH_TYPE(T) \
@@ -95,8 +95,8 @@ void reduce(const communicator& comm, reduce_t op,
 
     dim_vector idx_A_A = range(ndim_A);
 
-    internal::indexed_reduce<T>(comm, get_default_config(), op,
-                                A, idx_A_A, result, idx);
+    internal::reduce<T>(comm, get_default_config(), op,
+                        A, idx_A_A, result, idx);
 }
 
 #define FOREACH_TYPE(T) \
@@ -119,8 +119,8 @@ void reduce(const communicator& comm, reduce_t op,
 
     dim_vector idx_A_A = range(ndim_A);
 
-    internal::indexed_dpd_reduce<T>(comm, get_default_config(), op,
-                                    A, idx_A_A, result, idx);
+    internal::reduce<T>(comm, get_default_config(), op,
+                        A, idx_A_A, result, idx);
 }
 
 #define FOREACH_TYPE(T) \

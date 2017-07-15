@@ -2,18 +2,18 @@
 
 #include "util/macros.h"
 #include "util/tensor.hpp"
-#include "internal/1t/scale.hpp"
-#include "internal/1t/set.hpp"
-#include "internal/3t/mult.hpp"
-#include "internal/1t/dpd_scale.hpp"
-#include "internal/1t/dpd_set.hpp"
-#include "internal/3t/dpd_mult.hpp"
-#include "internal/1t/indexed_scale.hpp"
-#include "internal/1t/indexed_set.hpp"
-#include "internal/3t/indexed_mult.hpp"
-#include "internal/1t/indexed_dpd_scale.hpp"
-#include "internal/1t/indexed_dpd_set.hpp"
-#include "internal/3t/indexed_dpd_mult.hpp"
+#include "internal/1t/dense/scale.hpp"
+#include "internal/1t/dense/set.hpp"
+#include "internal/3t/dense/mult.hpp"
+#include "internal/1t/dpd/scale.hpp"
+#include "internal/1t/dpd/set.hpp"
+#include "internal/3t/dpd/mult.hpp"
+#include "internal/1t/indexed/scale.hpp"
+#include "internal/1t/indexed/set.hpp"
+#include "internal/3t/indexed/mult.hpp"
+#include "internal/1t/indexed_dpd/scale.hpp"
+#include "internal/1t/indexed_dpd/set.hpp"
+#include "internal/3t/indexed_dpd/mult.hpp"
 
 namespace tblis
 {
@@ -246,21 +246,21 @@ void mult(const communicator& comm,
     {
         if (beta == T(0))
         {
-            internal::dpd_set(comm, get_default_config(),
-                              beta, C, range_C);
+            internal::set(comm, get_default_config(),
+                          beta, C, range_C);
         }
         else if (beta != T(1))
         {
-            internal::dpd_scale(comm, get_default_config(),
-                                beta, false, C, range_C);
+            internal::scale(comm, get_default_config(),
+                            beta, false, C, range_C);
         }
     }
     else
     {
-        internal::dpd_mult(comm, get_default_config(),
-                           alpha, false, A, idx_A_AB, idx_A_AC, idx_A_ABC,
-                                  false, B, idx_B_AB, idx_B_BC, idx_B_ABC,
-                            beta, false, C, idx_C_AC, idx_C_BC, idx_C_ABC);
+        internal::mult(comm, get_default_config(),
+                       alpha, false, A, idx_A_AB, idx_A_AC, idx_A_ABC,
+                              false, B, idx_B_AB, idx_B_BC, idx_B_ABC,
+                        beta, false, C, idx_C_AC, idx_C_BC, idx_C_ABC);
     }
 }
 
@@ -360,21 +360,21 @@ void mult(const communicator& comm,
     {
         if (beta == T(0))
         {
-            internal::indexed_set(comm, get_default_config(),
-                                  beta, C, range_C);
+            internal::set(comm, get_default_config(),
+                          beta, C, range_C);
         }
         else if (beta != T(1))
         {
-            internal::indexed_scale(comm, get_default_config(),
-                                    beta, false, C, range_C);
+            internal::scale(comm, get_default_config(),
+                            beta, false, C, range_C);
         }
     }
     else
     {
-        internal::indexed_mult(comm, get_default_config(),
-                               alpha, A, idx_A_AB, idx_A_AC, idx_A_ABC,
-                                      B, idx_B_AB, idx_B_BC, idx_C_ABC,
-                                beta, C, idx_C_AC, idx_C_BC, idx_B_ABC);
+        internal::mult(comm, get_default_config(),
+                       alpha, A, idx_A_AB, idx_A_AC, idx_A_ABC,
+                              B, idx_B_AB, idx_B_BC, idx_C_ABC,
+                        beta, C, idx_C_AC, idx_C_BC, idx_B_ABC);
     }
 }
 
@@ -490,21 +490,21 @@ void mult(const communicator& comm,
     {
         if (beta == T(0))
         {
-            internal::indexed_dpd_set(comm, get_default_config(),
-                                      beta, C, range_C);
+            internal::set(comm, get_default_config(),
+                          beta, C, range_C);
         }
         else if (beta != T(1))
         {
-            internal::indexed_dpd_scale(comm, get_default_config(),
-                                        beta, false, C, range_C);
+            internal::scale(comm, get_default_config(),
+                            beta, false, C, range_C);
         }
     }
     else
     {
-        internal::indexed_dpd_mult(comm, get_default_config(),
-                                   alpha, A, idx_A_AB, idx_A_AC, idx_A_ABC,
-                                          B, idx_B_AB, idx_B_BC, idx_C_ABC,
-                                    beta, C, idx_C_AC, idx_C_BC, idx_B_ABC);
+        internal::mult(comm, get_default_config(),
+                       alpha, A, idx_A_AB, idx_A_AC, idx_A_ABC,
+                              B, idx_B_AB, idx_B_BC, idx_C_ABC,
+                        beta, C, idx_C_AC, idx_C_BC, idx_B_ABC);
     }
 }
 

@@ -2,10 +2,10 @@
 
 #include "util/macros.h"
 #include "util/tensor.hpp"
-#include "internal/1t/dot.hpp"
-#include "internal/1t/dpd_dot.hpp"
-#include "internal/1t/indexed_dot.hpp"
-#include "internal/1t/indexed_dpd_dot.hpp"
+#include "internal/1t/dense/dot.hpp"
+#include "internal/1t/dpd/dot.hpp"
+#include "internal/1t/indexed/dot.hpp"
+#include "internal/1t/indexed_dpd/dot.hpp"
 
 namespace tblis
 {
@@ -108,9 +108,9 @@ void dot(const communicator& comm,
         }
     }
 
-    internal::dpd_dot<T>(comm, get_default_config(),
-                         false, A, idx_A_AB,
-                         false, B, idx_B_AB, result);
+    internal::dot<T>(comm, get_default_config(),
+                     false, A, idx_A_AB,
+                     false, B, idx_B_AB, result);
 }
 
 #define FOREACH_TYPE(T) \
@@ -157,9 +157,9 @@ void dot(const communicator& comm,
                      B.length(idx_B_AB[i]));
     }
 
-    internal::indexed_dot<T>(comm, get_default_config(),
-                             false, A, idx_A_AB,
-                             false, B, idx_B_AB, result);
+    internal::dot<T>(comm, get_default_config(),
+                     false, A, idx_A_AB,
+                     false, B, idx_B_AB, result);
 }
 
 #define FOREACH_TYPE(T) \
@@ -212,9 +212,9 @@ void dot(const communicator& comm,
         }
     }
 
-    internal::indexed_dpd_dot<T>(comm, get_default_config(),
-                                 false, A, idx_A_AB,
-                                 false, B, idx_B_AB, result);
+    internal::dot<T>(comm, get_default_config(),
+                     false, A, idx_A_AB,
+                     false, B, idx_B_AB, result);
 }
 
 #define FOREACH_TYPE(T) \

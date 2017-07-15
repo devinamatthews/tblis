@@ -2,10 +2,10 @@
 
 #include "util/macros.h"
 #include "util/tensor.hpp"
-#include "internal/1t/set.hpp"
-#include "internal/1t/dpd_set.hpp"
-#include "internal/1t/indexed_set.hpp"
-#include "internal/1t/indexed_dpd_set.hpp"
+#include "internal/1t/dense/set.hpp"
+#include "internal/1t/dpd/set.hpp"
+#include "internal/1t/indexed/set.hpp"
+#include "internal/1t/indexed_dpd/set.hpp"
 
 namespace tblis
 {
@@ -53,7 +53,7 @@ void set(const communicator& comm,
 
     dim_vector idx_A_A = range(ndim_A);
 
-    internal::dpd_set<T>(comm, get_default_config(), alpha, A, idx_A_A);
+    internal::set<T>(comm, get_default_config(), alpha, A, idx_A_A);
 }
 
 #define FOREACH_TYPE(T) \
@@ -73,7 +73,7 @@ void set(const communicator& comm,
 
     dim_vector idx_A_A = range(ndim_A);
 
-    internal::indexed_set<T>(comm, get_default_config(), alpha, A, idx_A_A);
+    internal::set<T>(comm, get_default_config(), alpha, A, idx_A_A);
 }
 
 #define FOREACH_TYPE(T) \
@@ -94,7 +94,7 @@ void set(const communicator& comm,
 
     dim_vector idx_A_A = range(ndim_A);
 
-    internal::indexed_dpd_set<T>(comm, get_default_config(), alpha, A, idx_A_A);
+    internal::set<T>(comm, get_default_config(), alpha, A, idx_A_A);
 }
 
 #define FOREACH_TYPE(T) \

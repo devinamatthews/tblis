@@ -39,6 +39,17 @@ void tblis_tensor_add(const tblis_comm* comm, const tblis_config* cfg,
     label_vector idx_B;
     diagonal(ndim_B, B->len, B->stride, idx_B_, len_B, stride_B, idx_B);
 
+    if (idx_A.empty() || idx_B.empty())
+    {
+        len_A.push_back(1);
+        len_B.push_back(1);
+        stride_A.push_back(0);
+        stride_B.push_back(0);
+        label_type idx = detail::free_idx(idx_A, idx_B);
+        idx_A.push_back(idx);
+        idx_B.push_back(idx);
+    }
+
     auto idx_AB = stl_ext::intersection(idx_A, idx_B);
     auto len_AB = stl_ext::select_from(len_A, idx_A, idx_AB);
     TBLIS_ASSERT(len_AB == stl_ext::select_from(len_B, idx_B, idx_AB));

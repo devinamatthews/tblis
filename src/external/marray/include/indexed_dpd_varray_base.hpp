@@ -129,14 +129,13 @@ class indexed_dpd_varray_base
                           nirrep == 4 || nirrep == 8);
 
             unsigned num_idx = ptr.length();
-            MARRAY_ASSERT(num_idx > 0);
             MARRAY_ASSERT(idx.length(0) == num_idx);
 
             unsigned total_ndim = detail::length(len, 0);
             unsigned idx_ndim = idx_irrep.size();
             unsigned dense_ndim = total_ndim - idx_ndim;
             MARRAY_ASSERT(total_ndim > idx_ndim);
-            MARRAY_ASSERT(idx_ndim > 0);
+            MARRAY_ASSERT(idx_ndim > 0 || num_idx == 1);
             MARRAY_ASSERT(idx.length(1) == idx_ndim);
             MARRAY_ASSERT(detail::length(len, 1) == nirrep);
 
@@ -179,7 +178,7 @@ class indexed_dpd_varray_base
 
             for (len_type i = 0;i < num_indices();i++)
             {
-                std::copy_n(&idx_[i][0], ndim, indices.data());
+                std::copy_n(idx_[i].data(), ndim, indices.data());
                 detail::call(std::forward<Func>(f),
                              View(dense_irrep_, nirrep_, len, const_cast<Ptr>(data_[i]), layout_),
                              indices);
@@ -233,7 +232,7 @@ class indexed_dpd_varray_base
 
                 while (it1.next())
                 {
-                    irreps[0] = irrep_;
+                    irreps[0] = dense_irrep_;
                     for (unsigned i = 1;i < dense_ndim;i++)
                     {
                         irreps[0] ^= irreps[i] = it1.position()[i-1];
@@ -242,6 +241,10 @@ class indexed_dpd_varray_base
                     cptr = data_[i];
                     detail::get_block(iperm, irreps, len_, dense_size_,
                                       layout_, len, cptr, stride);
+
+                    bool skip = false;
+                    for (auto l : len) if (l == 0) skip = true;
+                    if (skip) continue;
 
                     Ptr ptr = const_cast<Ptr>(cptr);
                     for (bool done = false;!done;)
@@ -292,7 +295,7 @@ class indexed_dpd_varray_base
             {
                 while (it1.next())
                 {
-                    irreps[0] = irrep_;
+                    irreps[0] = dense_irrep_;
                     for (unsigned i = 1;i < DenseNDim;i++)
                     {
                         irreps[0] ^= irreps[i] = it1.position()[i-1];

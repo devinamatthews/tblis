@@ -24,6 +24,13 @@ void tblis_tensor_set(const tblis_comm* comm, const tblis_config* cfg,
     label_vector idx_A;
     diagonal(ndim_A, A->len, A->stride, idx_A_, len_A, stride_A, idx_A);
 
+    if (idx_A.empty())
+    {
+        len_A.push_back(1);
+        stride_A.push_back(0);
+        idx_A.push_back(0);
+    }
+
     fold(len_A, idx_A, stride_A);
 
     TBLIS_WITH_TYPE_AS(A->type, T,

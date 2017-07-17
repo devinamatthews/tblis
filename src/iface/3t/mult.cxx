@@ -47,6 +47,20 @@ void tblis_tensor_mult(const tblis_comm* comm, const tblis_config* cfg,
     label_vector idx_C;
     diagonal(ndim_C, C->len, C->stride, idx_C_, len_C, stride_C, idx_C);
 
+    if (idx_A.empty() || idx_B.empty() || idx_C.empty())
+    {
+        len_A.push_back(1);
+        len_B.push_back(1);
+        len_C.push_back(1);
+        stride_A.push_back(0);
+        stride_B.push_back(0);
+        stride_C.push_back(0);
+        label_type idx = detail::free_idx(idx_A, idx_B, idx_C);
+        idx_A.push_back(idx);
+        idx_B.push_back(idx);
+        idx_C.push_back(idx);
+    }
+
     auto idx_ABC = stl_ext::intersection(idx_A, idx_B, idx_C);
     auto len_ABC = stl_ext::select_from(len_A, idx_A, idx_ABC);
     TBLIS_ASSERT(len_ABC == stl_ext::select_from(len_B, idx_B, idx_ABC));

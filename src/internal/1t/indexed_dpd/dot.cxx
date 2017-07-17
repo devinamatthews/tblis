@@ -50,13 +50,12 @@ void dot_block(const communicator& comm, const config& cfg,
 
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
 
-    unsigned irrep_AB = A.irrep();
-    unsigned nblock_AB = group_AB.dense_nblock;
-    stride_type dense_AB = group_AB.dense_size;
-
     irrep_vector irreps_A(A.dense_dimension());
     irrep_vector irreps_B(B.dense_dimension());
     assign_irreps(group_AB, irreps_A, irreps_B);
+
+    unsigned irrep_AB = A.irrep();
+    for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
 
     group_indices<1> indices_A(A, group_AB, 0);
     group_indices<1> indices_B(B, group_AB, 1);
@@ -66,7 +65,7 @@ void dot_block(const communicator& comm, const config& cfg,
     auto dpd_A = A[0];
     auto dpd_B = B[0];
 
-    dynamic_task_set tasks(comm, nidx_B*nblock_AB, dense_AB);
+    dynamic_task_set tasks(comm, nidx_B*group_AB.dense_nblock, group_AB.dense_size);
 
     stride_type idx_A = 0;
     stride_type idx_B = 0;
@@ -90,7 +89,7 @@ void dot_block(const communicator& comm, const config& cfg,
         }
         else
         {
-            for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
+            for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
             {
                 assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
                                       irreps_A, group_AB.dense_idx[0],

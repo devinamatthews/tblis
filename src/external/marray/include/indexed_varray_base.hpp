@@ -26,6 +26,8 @@ set_idx(const U& idx_in, V& idx)
     unsigned ndim = idx_in.size();
     unsigned nidx = idx_in.begin()->size();
 
+    if (nidx == 0) return;
+
     auto it = idx_in.begin();
 
     for (unsigned i = 0;i < ndim;i++)
@@ -41,6 +43,8 @@ set_idx(const U& idx_in, V& idx)
 {
     unsigned ndim = idx_in.length(0);
     unsigned nidx = idx_in.length(1);
+
+    if (nidx == 0) return;
 
     for (unsigned i = 0;i < ndim;i++)
     {
@@ -124,7 +128,7 @@ class indexed_varray_base
             unsigned idx_dim = idx.length(1);
             unsigned dense_dim = total_dim - idx_dim;
             MARRAY_ASSERT(total_dim > idx_dim);
-            MARRAY_ASSERT(idx_dim > 0);
+            MARRAY_ASSERT(idx_dim > 0 || num_idx == 1);
 
             data_.reset(ptr);
             idx_.reset(idx);
@@ -144,11 +148,11 @@ class indexed_varray_base
             MARRAY_ASSERT(num_idx > 0);
             MARRAY_ASSERT(idx.length(0) == num_idx);
 
-            unsigned dense_dim = stride.size();
+            unsigned total_dim = len.size();
             unsigned idx_dim = idx.length(1);
-            MARRAY_ASSERT(dense_dim > 0);
-            MARRAY_ASSERT(idx_dim > 0);
-            MARRAY_ASSERT(len.size() = dense_dim + idx_dim);
+            unsigned dense_dim = total_dim - idx_dim;
+            MARRAY_ASSERT(total_dim > idx_dim);
+            MARRAY_ASSERT(idx_dim > 0 || num_idx == 1);
 
             data_.reset(ptr);
             idx_.reset(idx);
@@ -173,7 +177,7 @@ class indexed_varray_base
 
             for (len_type i = 0;i < num_indices();i++)
             {
-                std::copy_n(&idx_[i][0], ndim, indices.data());
+                std::copy_n(idx_[i].data(), ndim, indices.data());
                 detail::call(std::forward<Func>(f),
                              View(dense_len_, const_cast<Ptr>(data_[i]), dense_stride_),
                              indices);

@@ -94,13 +94,6 @@ void contract_block(const communicator& comm, const config& cfg,
     dpd_index_group<2> group_AC(A, idx_A_AC, C, idx_C_AC);
     dpd_index_group<2> group_BC(B, idx_B_BC, C, idx_C_BC);
 
-    unsigned nblock_AB = group_AB.dense_nblock;
-    unsigned nblock_AC = group_AC.dense_nblock;
-    unsigned nblock_BC = group_BC.dense_nblock;
-    stride_type dense_AB = group_AB.dense_size;
-    stride_type dense_AC = group_AC.dense_size;
-    stride_type dense_BC = group_BC.dense_size;
-
     irrep_vector irreps_A(A.dense_dimension());
     irrep_vector irreps_B(B.dense_dimension());
     irrep_vector irreps_C(C.dense_dimension());
@@ -119,8 +112,8 @@ void contract_block(const communicator& comm, const config& cfg,
     auto dpd_B = B[0];
     auto dpd_C = C[0];
 
-    dynamic_task_set tasks(comm, nidx_C*nblock_AC*nblock_BC,
-                           dense_AB*dense_AC*dense_BC);
+    dynamic_task_set tasks(comm, nidx_C*group_AC.dense_nblock*group_BC.dense_nblock,
+                           group_AB.dense_size*group_AC.dense_size*group_BC.dense_size);
 
     stride_type idx = 0;
     stride_type idx_A = 0;
@@ -132,14 +125,17 @@ void contract_block(const communicator& comm, const config& cfg,
         {
             for (unsigned irrep_AC = 0;irrep_AC < nirrep;irrep_AC++)
             {
+                for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
+
                 unsigned irrep_BC = C.irrep()^irrep_AC;
+                for (auto irrep : group_BC.batch_irrep) irrep_BC ^= irrep;
 
-                if (ndim_AC == 0 && irrep_AC != 0) continue;
-                if (ndim_BC == 0 && irrep_BC != 0) continue;
+                if (group_AC.dense_ndim == 0 && irrep_AC != 0) continue;
+                if (group_BC.dense_ndim == 0 && irrep_BC != 0) continue;
 
-                for (stride_type block_AC = 0;block_AC < nblock_AC;block_AC++)
+                for (stride_type block_AC = 0;block_AC < group_AC.dense_nblock;block_AC++)
                 {
-                    for (stride_type block_BC = 0;block_BC < nblock_BC;block_BC++)
+                    for (stride_type block_BC = 0;block_BC < group_BC.dense_nblock;block_BC++)
                     {
                         tasks.visit(idx++,
                         [&,idx_C,irrep_AC,irrep_BC,block_AC,block_BC]
@@ -219,14 +215,19 @@ void contract_block(const communicator& comm, const config& cfg,
 
             for (unsigned irrep_AB = 0;irrep_AB < nirrep;irrep_AB++)
             {
+                for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
+
                 unsigned irrep_AC = A.irrep()^irrep_AB;
+                for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
+
                 unsigned irrep_BC = B.irrep()^irrep_AB;
+                for (auto irrep : group_BC.batch_irrep) irrep_BC ^= irrep;
 
-                if (ndim_AC == 0 && irrep_AC != 0) continue;
-                if (ndim_BC == 0 && irrep_BC != 0) continue;
+                if (group_AC.dense_ndim == 0 && irrep_AC != 0) continue;
+                if (group_BC.dense_ndim == 0 && irrep_BC != 0) continue;
 
-                for (stride_type block_AC = 0;block_AC < nblock_AC;block_AC++)
-                for (stride_type block_BC = 0;block_BC < nblock_BC;block_BC++)
+                for (stride_type block_AC = 0;block_AC < group_AC.dense_nblock;block_AC++)
+                for (stride_type block_BC = 0;block_BC < group_BC.dense_nblock;block_BC++)
                 {
                     tasks.visit(idx++,
                     [&,idx_A,irreps_A,idx_B,irreps_B,idx_C,irreps_C,
@@ -240,13 +241,13 @@ void contract_block(const communicator& comm, const config& cfg,
                         auto local_irreps_C = irreps_C;
                         auto local_beta = beta;
 
-                        assign_irreps(ndim_AC, irrep_AC, nirrep, block_AC,
-                                      local_irreps_A, idx_A_AC,
-                                      local_irreps_C, idx_C_AC);
+                        assign_irreps(group_AC.dense_ndim, irrep_AC, nirrep, block_AC,
+                                      local_irreps_A, group_AC.dense_idx[0],
+                                      local_irreps_C, group_AC.dense_idx[1]);
 
-                        assign_irreps(ndim_BC, irrep_BC, nirrep, block_BC,
-                                      local_irreps_B, idx_B_BC,
-                                      local_irreps_C, idx_C_BC);
+                        assign_irreps(group_BC.dense_ndim, irrep_BC, nirrep, block_BC,
+                                      local_irreps_B, group_BC.dense_idx[0],
+                                      local_irreps_C, group_BC.dense_idx[1]);
 
                         if (is_block_empty(dpd_C, local_irreps_C)) return;
 
@@ -271,13 +272,13 @@ void contract_block(const communicator& comm, const config& cfg,
                             local_beta = T(1);
                         }
 
-                        if (ndim_AB != 0 || irrep_AB == 0)
+                        if (group_AB.dense_ndim != 0 || irrep_AB == 0)
                         {
-                            for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
+                            for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
                             {
-                                assign_irreps(ndim_AB, irrep_AB, nirrep, block_AB,
-                                              local_irreps_A, idx_A_AB,
-                                              local_irreps_B, idx_B_AB);
+                                assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
+                                              local_irreps_A, group_AB.dense_idx[0],
+                                              local_irreps_B, group_AB.dense_idx[1]);
 
                                 if (is_block_empty(dpd_A, local_irreps_A)) return;
 
@@ -388,15 +389,6 @@ void mult_block(const communicator& comm, const config& cfg,
     dpd_index_group<2> group_AC(A, idx_A_AC, C, idx_C_AC);
     dpd_index_group<2> group_BC(B, idx_B_BC, C, idx_C_BC);
 
-    unsigned nblock_ABC = group_ABC.dense_nblock;
-    unsigned nblock_AB = group_AB.dense_nblock;
-    unsigned nblock_AC = group_AC.dense_nblock;
-    unsigned nblock_BC = group_BC.dense_nblock;
-    stride_type dense_ABC = group_ABC.dense_size;
-    stride_type dense_AB = group_AB.dense_size;
-    stride_type dense_AC = group_AC.dense_size;
-    stride_type dense_BC = group_BC.dense_size;
-
     irrep_vector irreps_A(A.dense_dimension());
     irrep_vector irreps_B(B.dense_dimension());
     irrep_vector irreps_C(C.dense_dimension());
@@ -416,8 +408,8 @@ void mult_block(const communicator& comm, const config& cfg,
     auto dpd_B = B[0];
     auto dpd_C = C[0];
 
-    dynamic_task_set tasks(comm, nidx_C*nblock_AC*nblock_BC*nblock_ABC,
-                           dense_AB*dense_AC*dense_BC*dense_ABC);
+    dynamic_task_set tasks(comm, nidx_C*group_AC.dense_nblock*group_BC.dense_nblock*group_ABC.dense_nblock,
+                           group_AB.dense_size*group_AC.dense_size*group_BC.dense_size*group_ABC.dense_size);
 
     stride_type idx = 0;
     stride_type idx_A = 0;
@@ -425,6 +417,7 @@ void mult_block(const communicator& comm, const config& cfg,
     stride_type idx_C = 0;
 
     unsigned irrep_ABC = A.irrep()^B.irrep()^C.irrep();
+    for (auto irrep : group_ABC.batch_irrep) irrep_ABC ^= irrep;
 
     auto scale_C = [&](stride_type idx_C)
     {
@@ -432,16 +425,19 @@ void mult_block(const communicator& comm, const config& cfg,
         {
             for (unsigned irrep_AC = 0;irrep_AC < nirrep;irrep_AC++)
             {
+                for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
+
                 unsigned irrep_BC = C.irrep()^irrep_AC^irrep_ABC;
+                for (auto irrep : group_BC.batch_irrep) irrep_BC ^= irrep;
 
-                if (ndim_AC == 0 && irrep_AC != 0) continue;
-                if (ndim_BC == 0 && irrep_BC != 0) continue;
+                if (group_AC.dense_ndim == 0 && irrep_AC != 0) continue;
+                if (group_BC.dense_ndim == 0 && irrep_BC != 0) continue;
 
-                for (stride_type block_ABC = 0;block_ABC < nblock_ABC;block_ABC++)
+                for (stride_type block_ABC = 0;block_ABC < group_ABC.dense_nblock;block_ABC++)
                 {
-                    for (stride_type block_AC = 0;block_AC < nblock_AC;block_AC++)
+                    for (stride_type block_AC = 0;block_AC < group_AC.dense_nblock;block_AC++)
                     {
-                        for (stride_type block_BC = 0;block_BC < nblock_BC;block_BC++)
+                        for (stride_type block_BC = 0;block_BC < group_BC.dense_nblock;block_BC++)
                         {
                             tasks.visit(idx++,
                             [&,idx_C,irreps_C,irrep_AC,irrep_BC,block_AC,block_BC,block_ABC]
@@ -580,15 +576,20 @@ void mult_block(const communicator& comm, const config& cfg,
 
                 for (unsigned irrep_AB = 0;irrep_AB < nirrep;irrep_AB++)
                 {
+                    for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
+
                     unsigned irrep_AC = A.irrep()^irrep_AB^irrep_ABC;
+                    for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
+
                     unsigned irrep_BC = B.irrep()^irrep_AB^irrep_ABC;
+                    for (auto irrep : group_BC.batch_irrep) irrep_BC ^= irrep;
 
-                    if (ndim_AC == 0 && irrep_AC != 0) continue;
-                    if (ndim_BC == 0 && irrep_BC != 0) continue;
+                    if (group_AC.dense_ndim == 0 && irrep_AC != 0) continue;
+                    if (group_BC.dense_ndim == 0 && irrep_BC != 0) continue;
 
-                    for (stride_type block_ABC = 0;block_ABC < nblock_AC;block_ABC++)
-                    for (stride_type block_AC = 0;block_AC < nblock_AC;block_AC++)
-                    for (stride_type block_BC = 0;block_BC < nblock_BC;block_BC++)
+                    for (stride_type block_ABC = 0;block_ABC < group_AC.dense_nblock;block_ABC++)
+                    for (stride_type block_AC = 0;block_AC < group_AC.dense_nblock;block_AC++)
+                    for (stride_type block_BC = 0;block_BC < group_BC.dense_nblock;block_BC++)
                     {
                         tasks.visit(idx++,
                         [&,idx_A,idx_B,idx_C,next_A_AB,next_B_AB,
@@ -607,13 +608,13 @@ void mult_block(const communicator& comm, const config& cfg,
                                           local_irreps_B, idx_B_ABC,
                                           local_irreps_C, idx_C_ABC);
 
-                            assign_irreps(ndim_AC, irrep_AC, nirrep, block_AC,
-                                          local_irreps_A, idx_A_AC,
-                                          local_irreps_C, idx_C_AC);
+                            assign_irreps(group_AC.dense_ndim, irrep_AC, nirrep, block_AC,
+                                          local_irreps_A, group_AC.dense_idx[0],
+                                          local_irreps_C, group_AC.dense_idx[1]);
 
-                            assign_irreps(ndim_BC, irrep_BC, nirrep, block_BC,
-                                          local_irreps_B, idx_B_BC,
-                                          local_irreps_C, idx_C_BC);
+                            assign_irreps(group_BC.dense_ndim, irrep_BC, nirrep, block_BC,
+                                          local_irreps_B, group_BC.dense_idx[0],
+                                          local_irreps_C, group_BC.dense_idx[1]);
 
                             if (is_block_empty(dpd_C, local_irreps_C)) return;
 
@@ -639,13 +640,13 @@ void mult_block(const communicator& comm, const config& cfg,
                                 local_beta = T(1);
                             }
 
-                            if (ndim_AB != 0 || irrep_AB == 0)
+                            if (group_AB.dense_ndim != 0 || irrep_AB == 0)
                             {
-                                for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
+                                for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
                                 {
-                                    assign_irreps(ndim_AB, irrep_AB, nirrep, block_AB,
-                                                  local_irreps_A, idx_A_AB,
-                                                  local_irreps_B, idx_B_AB);
+                                    assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
+                                                  local_irreps_A, group_AB.dense_idx[0],
+                                                  local_irreps_B, group_AB.dense_idx[1]);
 
                                     if (is_block_empty(dpd_A, local_irreps_A)) continue;
 

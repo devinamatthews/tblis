@@ -188,8 +188,9 @@ class marray_slice
         operator[](const range_t<I>& x) const
         {
             static_assert(DimsLeft, "No more dimensions to index");
-            MARRAY_ASSERT(x.front() <= x.back());
-            MARRAY_ASSERT(x.front() >= 0 && x.back() <= len_[NextDim]);
+            MARRAY_ASSERT(x.front() >= 0);
+            MARRAY_ASSERT(x.size() >= 0);
+            MARRAY_ASSERT(x.front()+x.size() <= len_[NextDim]);
             return {*this, x};
         }
 

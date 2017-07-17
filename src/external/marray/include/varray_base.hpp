@@ -157,8 +157,9 @@ class varray_base
                        stride_vector& stride,
                        const range_t<I>& arg, Args&&... args) const
         {
-            MARRAY_ASSERT(arg.front() <= arg.back());
-            MARRAY_ASSERT(arg.front() >= 0 && arg.back() < len_[Dim]);
+            MARRAY_ASSERT(arg.front() >= 0);
+            MARRAY_ASSERT(arg.size() >= 0);
+            MARRAY_ASSERT(arg.front()+arg.size() <= len_[Dim]);
             ptr += arg.front()*stride_[Dim];
             len.push_back(arg.size());
             stride.push_back(arg.step()*stride_[Dim]);

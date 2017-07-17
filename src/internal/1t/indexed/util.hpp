@@ -18,18 +18,19 @@ void block_to_full(const indexed_varray_view<T>& A, varray<U>& A2)
     unsigned idx_ndim_A = A.indexed_dimension();
 
     A2.reset(A.lengths());
-    dim_vector split = range(1,dense_ndim_A);
+
+    auto dense_stride_A2 = A2.strides();
+    dense_stride_A2.resize(dense_ndim_A);
 
     A.for_each_index(
     [&](const varray_view<T>& local_A, const len_vector& idx_A)
     {
-        varray_view<U> local_A2 = A2;
+        auto data_A2 = A2.data();
 
         for (unsigned i = dense_ndim_A;i < ndim_A;i++)
-        {
-            local_A2.shift(i, idx_A[i-dense_ndim_A]);
-        }
-        local_A2.lower(split);
+            data_A2 += idx_A[i-dense_ndim_A]*A2.stride(i);
+
+        varray_view<U> local_A2(local_A.lengths(), data_A2, dense_stride_A2);
 
         local_A2 = local_A;
     });
@@ -42,18 +43,18 @@ void full_to_block(const varray<U>& A2, const indexed_varray_view<T>& A)
     unsigned dense_ndim_A = A.dense_dimension();
     unsigned idx_ndim_A = A.indexed_dimension();
 
-    dim_vector split = range(1,dense_ndim_A);
+    auto dense_stride_A2 = A2.strides();
+    dense_stride_A2.resize(dense_ndim_A);
 
     A.for_each_index(
     [&](const varray_view<T>& local_A, const len_vector& idx_A)
     {
-        varray_view<const U> local_A2 = A2;
+        auto data_A2 = A2.data();
 
         for (unsigned i = dense_ndim_A;i < ndim_A;i++)
-        {
-            local_A2.shift(i, idx_A[i-dense_ndim_A]);
-        }
-        local_A2.lower(split);
+            data_A2 += idx_A[i-dense_ndim_A]*A2.stride(i);
+
+        varray_view<const U> local_A2(local_A.lengths(), data_A2, dense_stride_A2);
 
         local_A = local_A2;
     });
@@ -101,7 +102,7 @@ void assign_mixed_or_batch_idx_helper(unsigned i, unsigned pos, unsigned j,
                                       const indexed_varray_view<T>& A,
                                       const dim_vector& idx_A, const Args&... args)
 {
-    group.batch_len[pos] = A.dense_length(idx_A[i]);
+    group.batch_len[pos] = A.length(idx_A[i]);
 
     if (idx_A[i] < A.dense_dimension())
     {

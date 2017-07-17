@@ -1013,8 +1013,9 @@ class marray_base
         marray_slice<ctype, NDim, 1, slice_dim>
         operator[](const range_t<I>& x) const
         {
-            MARRAY_ASSERT(x.front() <= x.back());
-            MARRAY_ASSERT(x.front() >= 0 && x.back() <= len_[0]);
+            MARRAY_ASSERT(x.size() >= 0);
+            MARRAY_ASSERT(x.front() >= 0);
+            MARRAY_ASSERT(x.front()+x.size() <= len_[0]);
             return {*this, x};
         }
 
@@ -1022,8 +1023,9 @@ class marray_base
         marray_slice<Type, NDim, 1, slice_dim>
         operator[](const range_t<I>& x)
         {
-            MARRAY_ASSERT(x.front() <= x.back());
-            MARRAY_ASSERT(x.front() >= 0 && x.back() <= len_[0]);
+            MARRAY_ASSERT(x.size() >= 0);
+            MARRAY_ASSERT(x.front() >= 0);
+            MARRAY_ASSERT(x.front()+x.size() <= len_[0]);
             return {*this, x};
         }
 

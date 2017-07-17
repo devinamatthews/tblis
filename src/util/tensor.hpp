@@ -31,6 +31,35 @@ namespace tblis
 namespace detail
 {
 
+inline label_type free_idx(label_vector idx)
+{
+    if (idx.empty()) return 0;
+
+    stl_ext::sort(idx);
+
+    if (idx[0] > 0) return 0;
+
+    for (unsigned i = 1;i < idx.size();i++)
+    {
+        if (idx[i] > idx[i-1]+1) return idx[i-1]+1;
+    }
+
+    return idx.back()+1;
+}
+
+inline label_type free_idx(const label_vector& idx_A,
+                           const label_vector& idx_B)
+{
+    return free_idx(stl_ext::union_of(idx_A, idx_B));
+}
+
+inline label_type free_idx(const label_vector& idx_A,
+                           const label_vector& idx_B,
+                           const label_vector& idx_C)
+{
+    return free_idx(stl_ext::union_of(idx_A, idx_B, idx_C));
+}
+
 template <typename T>
 dim_vector relative_permutation(const T& a, const T& b)
 {
@@ -354,7 +383,7 @@ inline void diagonal(unsigned& ndim,
     {
         if (i == 0 || idx_in[inds[i]] != idx_in[inds[i-1]])
         {
-            if (len_in[inds[i]] != 1 || (i == ndim_in-1 && ndim == 0))
+            if (len_in[inds[i]] != 1)
             {
                 len_out.push_back(len_in[inds[i]]);
                 stride_out.push_back(stride_in[inds[i]]);

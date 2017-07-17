@@ -64,17 +64,16 @@ void trace_block(const communicator& comm, const config& cfg,
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
     dpd_index_group<1> group_A(A, idx_A_A);
 
-    unsigned irrep_AB = B.irrep();
-    unsigned irrep_A = A.irrep()^B.irrep();
-    unsigned nblock_AB = group_AB.dense_nblock;
-    unsigned nblock_A = group_A.dense_nblock;
-    stride_type dense_AB = group_AB.dense_size;
-    stride_type dense_A = group_A.dense_size;
-
     irrep_vector irreps_A(A.dense_dimension());
     irrep_vector irreps_B(B.dense_dimension());
     assign_irreps(group_AB, irreps_A, irreps_B);
     assign_irreps(group_A, irreps_A);
+
+    unsigned irrep_AB = B.irrep();
+    for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
+
+    unsigned irrep_A = A.irrep()^B.irrep();
+    for (auto irrep : group_A.batch_irrep) irrep_A ^= irrep;
 
     group_indices<2> indices_A(A, group_AB, 0, group_A, 0);
     group_indices<1> indices_B(B, group_AB, 1);
@@ -84,7 +83,7 @@ void trace_block(const communicator& comm, const config& cfg,
     auto dpd_A = A[0];
     auto dpd_B = B[0];
 
-    dynamic_task_set tasks(comm, nidx_B*nblock_AB, dense_AB);
+    dynamic_task_set tasks(comm, nidx_B*group_AB.dense_nblock, group_AB.dense_size);
 
     stride_type task = 0;
     stride_type idx_A = 0;
@@ -100,7 +99,7 @@ void trace_block(const communicator& comm, const config& cfg,
         {
             if (beta != T(1) || (is_complex<T>::value && conj_B))
             {
-                for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
+                for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
                 {
                     tasks.visit(task++,
                     [&,idx_B,block_AB](const communicator& subcomm)
@@ -142,7 +141,7 @@ void trace_block(const communicator& comm, const config& cfg,
             }
             while (next_A < nidx_A && indices_A[idx_A].key[0] == indices_B[idx_B].key[0]);
 
-            for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
+            for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
             {
                 tasks.visit(task++,
                 [&,idx_A,idx_B,block_AB,next_A](const communicator& subcomm)
@@ -153,7 +152,7 @@ void trace_block(const communicator& comm, const config& cfg,
                     auto local_beta = beta;
                     auto local_conj_B = conj_B;
 
-                    for (stride_type block_A = 0;block_A < nblock_A;block_A++)
+                    for (stride_type block_A = 0;block_A < group_A.dense_nblock;block_A++)
                     {
                         assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
                                       local_irreps_A, group_AB.dense_idx[0],
@@ -231,7 +230,7 @@ void trace_block(const communicator& comm, const config& cfg,
     {
         while (idx_B < nidx_B)
         {
-            for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
+            for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
             {
                 tasks.visit(task++,
                 [&,idx_B,block_AB](const communicator& subcomm)
@@ -278,17 +277,16 @@ void replicate_block(const communicator& comm, const config& cfg,
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
     dpd_index_group<1> group_B(B, idx_B_B);
 
-    unsigned irrep_AB = A.irrep();
-    unsigned irrep_B = A.irrep()^B.irrep();
-    unsigned nblock_AB = group_AB.dense_nblock;
-    unsigned nblock_B = group_B.dense_nblock;
-    stride_type dense_AB = group_AB.dense_size;
-    stride_type dense_B = group_B.dense_size;
-
     irrep_vector irreps_A(A.dense_dimension());
     irrep_vector irreps_B(B.dense_dimension());
     assign_irreps(group_AB, irreps_A, irreps_B);
     assign_irreps(group_B, irreps_B);
+
+    unsigned irrep_AB = A.irrep();
+    for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
+
+    unsigned irrep_B = B.irrep()^irrep_AB;
+    for (auto irrep : group_B.batch_irrep) irrep_B ^= irrep;
 
     group_indices<1> indices_A(A, group_AB, 0);
     group_indices<2> indices_B(B, group_AB, 1, group_B, 0);
@@ -298,7 +296,8 @@ void replicate_block(const communicator& comm, const config& cfg,
     auto dpd_A = A[0];
     auto dpd_B = B[0];
 
-    dynamic_task_set tasks(comm, nidx_B*nblock_AB*nblock_B, dense_AB*dense_B);
+    dynamic_task_set tasks(comm, nidx_B*group_AB.dense_nblock*group_B.dense_nblock,
+                           group_AB.dense_size*group_B.dense_size);
 
     stride_type task = 0;
     stride_type idx_A = 0;
@@ -314,9 +313,9 @@ void replicate_block(const communicator& comm, const config& cfg,
         {
             if (beta != T(1) || (is_complex<T>::value && conj_B))
             {
-                for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
+                for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
                 {
-                    for (stride_type block_B = 0;block_B < nblock_B;block_B++)
+                    for (stride_type block_B = 0;block_B < group_B.dense_nblock;block_B++)
                     {
                         tasks.visit(task++,
                         [&,idx_B,block_AB,block_B](const communicator& subcomm)
@@ -356,9 +355,9 @@ void replicate_block(const communicator& comm, const config& cfg,
         {
             do
             {
-                for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
+                for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
                 {
-                    for (stride_type block_B = 0;block_B < nblock_B;block_B++)
+                    for (stride_type block_B = 0;block_B < group_B.dense_nblock;block_B++)
                     {
                         tasks.visit(task++,
                         [&,idx_A,idx_B,block_AB,block_B](const communicator& subcomm)
@@ -441,9 +440,9 @@ void replicate_block(const communicator& comm, const config& cfg,
     {
         while (idx_B < nidx_B)
         {
-            for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
+            for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
             {
-                for (stride_type block_B = 0;block_B < nblock_B;block_B++)
+                for (stride_type block_B = 0;block_B < group_B.dense_nblock;block_B++)
                 {
                     tasks.visit(task++,
                     [&,idx_B,block_AB,block_B](const communicator& subcomm)
@@ -492,13 +491,12 @@ void transpose_block(const communicator& comm, const config& cfg,
 
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
 
-    unsigned irrep_AB = A.irrep();
-    unsigned nblock_AB = group_AB.dense_nblock;
-    stride_type dense_AB = group_AB.dense_size;
-
     irrep_vector irreps_A(A.dense_dimension());
     irrep_vector irreps_B(B.dense_dimension());
     assign_irreps(group_AB, irreps_A, irreps_B);
+
+    unsigned irrep_AB = A.irrep();
+    for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
 
     group_indices<1> indices_A(A, group_AB, 0);
     group_indices<1> indices_B(B, group_AB, 1);
@@ -508,7 +506,7 @@ void transpose_block(const communicator& comm, const config& cfg,
     auto dpd_A = A[0];
     auto dpd_B = B[0];
 
-    dynamic_task_set tasks(comm, nidx_B*nblock_AB, dense_AB);
+    dynamic_task_set tasks(comm, nidx_B*group_AB.dense_nblock, group_AB.dense_size);
 
     stride_type task = 0;
     stride_type idx_A = 0;
@@ -524,7 +522,7 @@ void transpose_block(const communicator& comm, const config& cfg,
         {
             if (beta != T(1) || (is_complex<T>::value && conj_B))
             {
-                for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
+                for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
                 {
                     tasks.visit(task++,
                     [&,idx_B,block_AB](const communicator& subcomm)
@@ -558,7 +556,7 @@ void transpose_block(const communicator& comm, const config& cfg,
         }
         else
         {
-            for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
+            for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
             {
                 tasks.visit(task++,
                 [&,idx_A,idx_B,block_AB](const communicator& subcomm)
@@ -628,14 +626,14 @@ void transpose_block(const communicator& comm, const config& cfg,
     {
         while (idx_B < nidx_B)
         {
-            for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
+            for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
             {
                 tasks.visit(task++,
                 [&,idx_B,block_AB](const communicator& subcomm)
                 {
                     auto local_irreps_B = irreps_B;
 
-                    assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
+                    assign_irreps(group_AB.dense_ndim, group_AB.dense_size, nirrep, block_AB,
                                   local_irreps_B, group_AB.dense_idx[1]);
 
                     if (is_block_empty(dpd_B, local_irreps_B)) return;

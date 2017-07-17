@@ -145,6 +145,23 @@ using index_sequence_for = make_index_sequence<sizeof...(T)>;
 
 class communicator
 {
+    protected:
+        template <typename Func, typename... Args>
+        struct broadcast_from_internal
+        {
+            template <size_t... I>
+            broadcast_from_internal(const communicator& comm, unsigned root,
+                                    Func&& func, Args&&... args,
+                                    detail::index_sequence<I...>)
+            {
+                std::tuple<Args&&...> refs(std::forward<Args>(args)...);
+                auto ptr = &refs;
+                tci_comm_bcast_nowait(comm, reinterpret_cast<void**>(&ptr), root);
+                func(std::get<I>(*ptr)...);
+                comm.barrier();
+            }
+        };
+
     public:
         communicator()
         {
@@ -207,7 +224,8 @@ class communicator
         void broadcast_from(unsigned root, Func&& func, Args&&... args) const
         {
             broadcast_from_internal<Func, Args...>
-                (root, std::forward<Func>(func), std::forward<Args>(args)...,
+                (*this, root, std::forward<Func>(func),
+                 std::forward<Args>(args)...,
                  detail::index_sequence_for<Args...>{});
         }
 
@@ -319,17 +337,6 @@ class communicator
 
     protected:
         tci_comm _comm;
-
-        template <typename Func, typename... Args, size_t... I>
-        void broadcast_from_internal(unsigned root, Func&& func, Args&&... args,
-                                     detail::index_sequence<I...>) const
-        {
-            std::tuple<Args&&...> refs(std::forward<Args>(args)...);
-            auto ptr = &refs;
-            tci_comm_bcast_nowait(*this, reinterpret_cast<void**>(&ptr), root);
-            func(std::get<I>(*ptr)...);
-            barrier();
-        }
 };
 
 }

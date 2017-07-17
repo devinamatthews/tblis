@@ -63,8 +63,8 @@ void dot_block(const communicator& comm, const config& cfg,
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
 
-    auto dpd_A = A(0);
-    auto dpd_B = B(0);
+    auto dpd_A = A[0];
+    auto dpd_B = B[0];
 
     dynamic_task_set tasks(comm, nidx_B*nblock_AB, dense_AB);
 
@@ -126,12 +126,12 @@ void dot_block(const communicator& comm, const config& cfg,
 }
 
 template <typename T>
-void dpd_dot(const communicator& comm, const config& cfg,
-             bool conj_A, const indexed_dpd_varray_view<const T>& A,
-             const dim_vector& idx_A_AB,
-             bool conj_B, const indexed_dpd_varray_view<const T>& B,
-             const dim_vector& idx_B_AB,
-             T& result)
+void dot(const communicator& comm, const config& cfg,
+         bool conj_A, const indexed_dpd_varray_view<const T>& A,
+         const dim_vector& idx_A_AB,
+         bool conj_B, const indexed_dpd_varray_view<const T>& B,
+         const dim_vector& idx_B_AB,
+         T& result)
 {
     if (A.irrep() != B.irrep())
     {
@@ -159,12 +159,12 @@ void dpd_dot(const communicator& comm, const config& cfg,
 }
 
 #define FOREACH_TYPE(T) \
-template void dpd_dot(const communicator& comm, const config& cfg, \
-                      bool conj_A, const indexed_dpd_varray_view<const T>& A, \
-                      const dim_vector& idx_A_AB, \
-                      bool conj_B, const indexed_dpd_varray_view<const T>& B, \
-                      const dim_vector& idx_B_AB, \
-                      T& result);
+template void dot(const communicator& comm, const config& cfg, \
+                  bool conj_A, const indexed_dpd_varray_view<const T>& A, \
+                  const dim_vector& idx_A_AB, \
+                  bool conj_B, const indexed_dpd_varray_view<const T>& B, \
+                  const dim_vector& idx_B_AB, \
+                  T& result);
 #include "configs/foreach_type.h"
 
 }

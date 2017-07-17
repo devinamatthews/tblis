@@ -20,25 +20,32 @@ void tblis_matrix_add(const tblis_comm* comm, const tblis_config* cfg,
 
     TBLIS_WITH_TYPE_AS(A->type, T,
     {
-        if (A->alpha<T>() == T(0))
+        parallelize_if(
+        [&](const communicator& comm)
         {
-            if (B->alpha<T>() == T(0))
+            if (A->alpha<T>() == T(0))
             {
-                parallelize_if(internal::set<T>, comm, get_config(cfg), A->m, A->n,
-                               T(0), static_cast<T*>(B->data), B->rs, B->cs);
+                if (B->alpha<T>() == T(0))
+                {
+                    internal::set<T>(comm, get_config(cfg), A->m, A->n,
+                                     T(0), static_cast<T*>(B->data), B->rs, B->cs);
+                }
+                else if (B->alpha<T>() != T(1) || (is_complex<T>::value && B->conj))
+                {
+                    internal::scale<T>(comm, get_config(cfg), A->m, A->n,
+                                       B->alpha<T>(), B->conj,
+                                       static_cast<T*>(B->data), B->rs, B->cs);
+                }
             }
             else
             {
-                parallelize_if(internal::scale<T>, comm, get_config(cfg), A->m, A->n,
-                               B->alpha<T>(), B->conj, static_cast<T*>(B->data), B->rs, B->cs);
+                internal::add<T>(comm, get_config(cfg), A->m, A->n,
+                                 A->alpha<T>(), A->conj,
+                                 static_cast<const T*>(A->data), A->rs, A->cs,
+                                 B->alpha<T>(), B->conj,
+                                 static_cast<      T*>(B->data), B->rs, B->cs);
             }
-        }
-        else
-        {
-            parallelize_if(internal::add<T>, comm, get_config(cfg), A->m, A->n,
-                           A->alpha<T>(), A->conj, static_cast<const T*>(A->data), A->rs, A->cs,
-                           B->alpha<T>(), B->conj,       static_cast<T*>(B->data), B->rs, B->cs);
-        }
+        }, comm);
 
         B->alpha<T>() = T(1);
         B->conj = false;

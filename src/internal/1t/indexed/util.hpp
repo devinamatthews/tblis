@@ -2,6 +2,7 @@
 #define _TBLIS_INTERNAL_1T_INDEXED_UTIL_HPP_
 
 #include "util/basic_types.h"
+#include "util/tensor.hpp"
 #include "internal/3t/dpd/mult.hpp"
 
 namespace tblis
@@ -74,7 +75,7 @@ void assign_dense_idx_helper(unsigned, unsigned, index_group<N>&) {}
 
 template <unsigned N, typename T, typename... Args>
 void assign_dense_idx_helper(unsigned i, unsigned j, index_group<N>& group,
-                             const indexed_varray<T>& A,
+                             const indexed_varray_view<T>& A,
                              const dim_vector& idx_A, const Args&... args)
 {
     if (j == 0) group.dense_len.push_back(A.dense_length(idx_A[i]));
@@ -84,7 +85,7 @@ void assign_dense_idx_helper(unsigned i, unsigned j, index_group<N>& group,
 
 template <unsigned N, typename T, typename... Args>
 void assign_dense_idx(unsigned i, index_group<N>& group,
-                      const indexed_varray<T>& A,
+                      const indexed_varray_view<T>& A,
                       const dim_vector& idx_A, const Args&... args)
 {
     assign_dense_idx_helper(i, 0, group, A, idx_A, args...);
@@ -92,15 +93,15 @@ void assign_dense_idx(unsigned i, index_group<N>& group,
 
 template <unsigned N>
 void assign_mixed_or_batch_idx_helper(unsigned, unsigned, unsigned,
-                                      dpd_index_group<N>&) {}
+                                      index_group<N>&) {}
 
 template <unsigned N, typename T, typename... Args>
 void assign_mixed_or_batch_idx_helper(unsigned i, unsigned pos, unsigned j,
-                                      dpd_index_group<N>& group,
-                                      const indexed_dpd_varray_view<T>& A,
+                                      index_group<N>& group,
+                                      const indexed_varray_view<T>& A,
                                       const dim_vector& idx_A, const Args&... args)
 {
-    group.batch_len[pos] = A.dense_len(idx_A[i]);
+    group.batch_len[pos] = A.dense_length(idx_A[i]);
 
     if (idx_A[i] < A.dense_dimension())
     {
@@ -120,8 +121,8 @@ void assign_mixed_or_batch_idx_helper(unsigned i, unsigned pos, unsigned j,
 
 template <unsigned N, typename T, typename... Args>
 void assign_mixed_or_batch_idx(unsigned i, unsigned pos,
-                               dpd_index_group<N>& group,
-                               const indexed_dpd_varray<T>& A,
+                               index_group<N>& group,
+                               const indexed_varray_view<T>& A,
                                const dim_vector& idx_A, const Args&... args)
 {
     assign_mixed_or_batch_idx_helper(i, pos, 0, group,
@@ -159,7 +160,7 @@ struct index_group
     }
 
     template <typename T, typename... Args>
-    index_group(const indexed_varray<T>& A, const dim_vector& idx_A,
+    index_group(const indexed_varray_view<T>& A, const dim_vector& idx_A,
                 const Args&... args)
     {
         batch_len.resize(idx_A.size());
@@ -210,7 +211,7 @@ void get_mixed_lengths(len_vector& len, dim_vector& off,
         len.push_back(group.batch_len[j]);
     }
 
-    get_mixed_lengths(len, args...);
+    get_mixed_lengths(len, off, args...);
 }
 
 template <unsigned I, size_t N, typename Array>
@@ -294,7 +295,7 @@ struct group_indices : std::vector<index_set<N>>
         dim_vector mixed_off;
         get_mixed_lengths(mixed_len, mixed_off, args...);
 
-        reserve(A.num_indices()*stl_ext::prod(mixed_len));
+        this->reserve(A.num_indices()*stl_ext::prod(mixed_len));
 
         viterator<0> iter(mixed_len);
         for (len_type i = 0;i < A.num_indices();i++)
@@ -319,7 +320,7 @@ struct group_indices : std::vector<index_set<N>>
                     }
                 }
 
-                push_back(idx);
+                this->push_back(idx);
             }
         }
 
@@ -334,22 +335,22 @@ struct group_indices : std::vector<index_set<N>>
 template <unsigned I, unsigned N>
 void get_local_offset_helper(const len_vector& idx, const index_group<N>& group) {}
 
-template <unsigned I, unsigned N, typename T, typename... Args>
+template <unsigned I, unsigned N, typename... Args>
 void get_local_offset_helper(const len_vector& idx, const index_group<N>& group,
-                             stride_type& off, unsigned i, const Args&... args)
+                             stride_type& off, unsigned i, Args&&... args)
 {
     off = 0;
     for (unsigned j = 0;j < group.mixed_pos[i].size();j++)
-        off += idx[group.mixed_pos[i][j]]*group.mixed_stride[j];
+        off += idx[group.mixed_pos[i][j]]*group.mixed_stride[i][j];
 
-    get_local_offset_helper<I+1>(idx, group, args...);
+    get_local_offset_helper<I+1>(idx, group, std::forward<Args>(args)...);
 }
 
 template <unsigned N, typename... Args>
 void get_local_offset(const len_vector& idx, const index_group<N>& group,
-                      const Args&... args)
+                      Args&&... args)
 {
-    get_local_offset_helper<0>(idx, group, args...);
+    get_local_offset_helper<0>(idx, group, std::forward<Args>(args)...);
 }
 
 }

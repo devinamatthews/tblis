@@ -29,16 +29,19 @@ void tblis_tensor_reduce(const tblis_comm* comm, const tblis_config* cfg,
 
     TBLIS_WITH_TYPE_AS(A->type, T,
     {
-        T* data_A = static_cast<T*>(A->data);
-
         if (A->alpha<T>() < T(0))
         {
             if (op == REDUCE_MIN) op = REDUCE_MAX;
             else if (op == REDUCE_MAX) op = REDUCE_MIN;
         }
 
-        parallelize_if(internal::reduce<T>, comm, get_config(cfg), op, len_A,
-                       static_cast<const T*>(A->data), stride_A, result->get<T>(), *idx);
+        parallelize_if(
+        [&](const communicator& comm)
+        {
+            internal::reduce<T>(comm, get_config(cfg), op, len_A,
+                                static_cast<const T*>(A->data), stride_A,
+                                result->get<T>(), *idx);
+        }, comm);
 
         if (A->conj)
         {

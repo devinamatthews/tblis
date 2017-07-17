@@ -105,34 +105,37 @@ void tblis_tensor_mult(const tblis_comm* comm, const tblis_config* cfg,
         T* data_B = static_cast<T*>(B->data);
         T* data_C = static_cast<T*>(C->data);
 
-        if (alpha == T(0))
+        parallelize_if(
+        [&](const communicator& comm)
         {
-            if (beta == T(0))
+            if (alpha == T(0))
             {
-                parallelize_if(internal::set<T>, comm, get_config(cfg),
-                               len_AC+len_BC+len_ABC,
-                               T(0), data_C,
-                               stride_C_AC+stride_C_BC+stride_C_ABC);
+                if (beta == T(0))
+                {
+                    internal::set<T>(comm, get_config(cfg),
+                                     len_AC+len_BC+len_ABC, T(0), data_C,
+                                     stride_C_AC+stride_C_BC+stride_C_ABC);
+                }
+                else if (beta != T(1) || (is_complex<T>::value && C->conj))
+                {
+                    internal::scale<T>(comm, get_config(cfg),
+                                       len_AC+len_BC+len_ABC,
+                                       beta, C->conj, data_C,
+                                       stride_C_AC+stride_C_BC+stride_C_ABC);
+                }
             }
-            else if (beta != T(1) || (is_complex<T>::value && C->conj))
+            else
             {
-                parallelize_if(internal::scale<T>, comm, get_config(cfg),
-                               len_AC+len_BC+len_ABC,
-                               beta, C->conj, data_C,
-                               stride_C_AC+stride_C_BC+stride_C_ABC);
+                internal::mult<T>(comm, get_config(cfg),
+                                  len_AB, len_AC, len_BC, len_ABC,
+                                  alpha, A->conj, data_A,
+                                  stride_A_AB, stride_A_AC, stride_A_ABC,
+                                         B->conj, data_B,
+                                  stride_B_AB, stride_B_BC, stride_B_ABC,
+                                   beta, C->conj, data_C,
+                                  stride_C_AC, stride_C_BC, stride_C_ABC);
             }
-        }
-        else
-        {
-            parallelize_if(internal::mult<T>, comm, get_config(cfg),
-                           len_AB, len_AC, len_BC, len_ABC,
-                           alpha, A->conj, data_A,
-                           stride_A_AB, stride_A_AC, stride_A_ABC,
-                                  B->conj, data_B,
-                           stride_B_AB, stride_B_BC, stride_B_ABC,
-                            beta, C->conj, data_C,
-                           stride_C_AC, stride_C_BC, stride_C_ABC);
-        }
+        }, comm);
 
         C->alpha<T>() = T(1);
         C->conj = false;
@@ -372,9 +375,9 @@ void mult(const communicator& comm,
     else
     {
         internal::mult(comm, get_default_config(),
-                       alpha, A, idx_A_AB, idx_A_AC, idx_A_ABC,
-                              B, idx_B_AB, idx_B_BC, idx_C_ABC,
-                        beta, C, idx_C_AC, idx_C_BC, idx_B_ABC);
+                       alpha, false, A, idx_A_AB, idx_A_AC, idx_A_ABC,
+                              false, B, idx_B_AB, idx_B_BC, idx_C_ABC,
+                        beta, false, C, idx_C_AC, idx_C_BC, idx_B_ABC);
     }
 }
 
@@ -502,9 +505,9 @@ void mult(const communicator& comm,
     else
     {
         internal::mult(comm, get_default_config(),
-                       alpha, A, idx_A_AB, idx_A_AC, idx_A_ABC,
-                              B, idx_B_AB, idx_B_BC, idx_C_ABC,
-                        beta, C, idx_C_AC, idx_C_BC, idx_B_ABC);
+                       alpha, false, A, idx_A_AB, idx_A_AC, idx_A_ABC,
+                              false, B, idx_B_AB, idx_B_BC, idx_C_ABC,
+                        beta, false, C, idx_C_AC, idx_C_BC, idx_B_ABC);
     }
 }
 

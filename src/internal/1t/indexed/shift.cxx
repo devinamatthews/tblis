@@ -23,7 +23,7 @@ void shift(const communicator& comm, const config& cfg,
 
 #define FOREACH_TYPE(T) \
 template void shift(const communicator& comm, const config& cfg, \
-                    T alpha, T beta, bool conj_A, const dpd_varray_view<T>& A, \
+                    T alpha, T beta, bool conj_A, const indexed_varray_view<T>& A, \
                     const dim_vector&);
 #include "configs/foreach_type.h"
 

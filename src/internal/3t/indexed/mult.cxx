@@ -110,7 +110,7 @@ void contract_block(const communicator& comm, const config& cfg,
                 tasks.visit(idx++,
                 [&,idx_C](const communicator& subcomm)
                 {
-                    auto data_C = C.data(0) + indices_C[idx_C].offset[0];
+                    auto data_C = C.data(0) + indices_C[idx_C].offset;
 
                     if (beta == T(0))
                     {
@@ -151,7 +151,7 @@ void contract_block(const communicator& comm, const config& cfg,
                         tasks.visit(idx++,
                         [&,idx_C](const communicator& subcomm)
                         {
-                            auto data_C = C.data(0) + indices_C[idx_C].offset[0];
+                            auto data_C = C.data(0) + indices_C[idx_C].offset;
 
                             if (beta == T(0))
                             {
@@ -177,15 +177,19 @@ void contract_block(const communicator& comm, const config& cfg,
                            indices_B[idx_B].key[0] == indices_C[idx_C].key[1]);
 
                     tasks.visit(idx++,
-                    [&,idx_A,idx_B,idx_C,next_A,next_B,beta]
+                    [&,idx_A,idx_B,idx_C,next_A,next_B]
                     (const communicator& subcomm)
                     {
+                        auto local_idx_A = idx_A;
+                        auto local_idx_B = idx_B;
+                        auto local_beta = beta;
+
                         stride_type off_A_AC, off_C_AC;
-                        get_local_offset(indices_A[idx_A].idx[0], group_AC,
+                        get_local_offset(indices_A[local_idx_A].idx[0], group_AC,
                                          off_A_AC, 0, off_C_AC, 1);
 
                         stride_type off_B_BC, off_C_BC;
-                        get_local_offset(indices_B[idx_B].idx[0], group_BC,
+                        get_local_offset(indices_B[local_idx_B].idx[0], group_BC,
                                          off_B_BC, 0, off_C_BC, 1);
 
                         auto data_C = C.data(0) + indices_C[idx_C].offset;
@@ -193,40 +197,40 @@ void contract_block(const communicator& comm, const config& cfg,
                         if (!group_AC.mixed_pos[1].empty() ||
                             !group_BC.mixed_pos[1].empty())
                         {
-                            if (beta == T(0))
+                            if (local_beta == T(0))
                             {
                                 set(comm, cfg, C.dense_lengths(),
-                                    beta, data_C, C.dense_strides());
+                                    local_beta, data_C, C.dense_strides());
                             }
-                            else if (beta != T(1))
+                            else if (local_beta != T(1))
                             {
                                 scale(comm, cfg, C.dense_lengths(),
-                                      beta, false, data_C, C.dense_strides());
+                                      local_beta, false, data_C, C.dense_strides());
                             }
 
-                            beta = T(1);
+                            local_beta = T(1);
                         }
 
                         data_C += off_C_AC + off_C_BC;
 
-                        while (idx_A < next_A && idx_B < next_B)
+                        while (local_idx_A < next_A && local_idx_B < next_B)
                         {
-                            if (indices_A[idx_A].key[1] < indices_B[idx_B].key[1])
+                            if (indices_A[local_idx_A].key[1] < indices_B[local_idx_B].key[1])
                             {
-                                idx_A++;
+                                local_idx_A++;
                             }
-                            else if (indices_A[idx_A].key[1] > indices_B[idx_B].key[1])
+                            else if (indices_A[local_idx_A].key[1] > indices_B[local_idx_B].key[1])
                             {
-                                idx_B++;
+                                local_idx_A++;
                             }
                             else
                             {
                                 stride_type off_A_AB, off_B_AB;
-                                get_local_offset(indices_A[idx_A].idx[0], group_AB,
+                                get_local_offset(indices_A[local_idx_A].idx[0], group_AB,
                                                  off_A_AB, 0, off_B_AB, 1);
 
-                                auto data_A = A.data(0) + indices_A[idx_A].offset + off_A_AB + off_A_AC;
-                                auto data_B = B.data(0) + indices_B[idx_B].offset + off_B_AB + off_B_BC;
+                                auto data_A = A.data(0) + indices_A[local_idx_A].offset + off_A_AB + off_A_AC;
+                                auto data_B = B.data(0) + indices_B[local_idx_B].offset + off_B_AB + off_B_BC;
 
                                 mult(subcomm, cfg,
                                      group_AC.dense_len,
@@ -236,24 +240,24 @@ void contract_block(const communicator& comm, const config& cfg,
                                                            group_AB.dense_stride[0], {},
                                             false, data_B, group_BC.dense_stride[0],
                                                            group_AB.dense_stride[1], {},
-                                      beta, false, data_C, group_AC.dense_stride[1],
+                                local_beta, false, data_C, group_AC.dense_stride[1],
                                                            group_BC.dense_stride[1], {});
 
-                                beta = T(1);
+                                local_beta = T(1);
                             }
                         }
 
                         data_C -= off_C_AC + off_C_BC;
 
-                        if (beta == T(0))
+                        if (local_beta == T(0))
                         {
                             set(comm, cfg, C.dense_lengths(),
-                                beta, data_C, C.dense_strides());
+                                local_beta, data_C, C.dense_strides());
                         }
-                        else if (beta != T(1))
+                        else if (local_beta != T(1))
                         {
                             scale(comm, cfg, C.dense_lengths(),
-                                  beta, false, data_C, C.dense_strides());
+                                  local_beta, false, data_C, C.dense_strides());
                         }
                     });
 
@@ -343,7 +347,7 @@ void mult_block(const communicator& comm, const config& cfg,
                     tasks.visit(idx++,
                     [&,idx_C](const communicator& subcomm)
                     {
-                        auto data_C = C.data(0) + indices_C[idx_C].offset[0];
+                        auto data_C = C.data(0) + indices_C[idx_C].offset;
 
                         if (beta == T(0))
                         {
@@ -374,7 +378,7 @@ void mult_block(const communicator& comm, const config& cfg,
                     tasks.visit(idx++,
                     [&,idx_C](const communicator& subcomm)
                     {
-                        auto data_C = C.data(0) + indices_C[idx_C].offset[0];
+                        auto data_C = C.data(0) + indices_C[idx_C].offset;
 
                         if (beta == T(0))
                         {
@@ -406,7 +410,7 @@ void mult_block(const communicator& comm, const config& cfg,
                     tasks.visit(idx++,
                     [&,idx_C](const communicator& subcomm)
                     {
-                        auto data_C = C.data(0) + indices_C[idx_C].offset[0];
+                        auto data_C = C.data(0) + indices_C[idx_C].offset;
 
                         if (beta == T(0))
                         {
@@ -454,7 +458,7 @@ void mult_block(const communicator& comm, const config& cfg,
                             tasks.visit(idx++,
                             [&,idx_C](const communicator& subcomm)
                             {
-                                auto data_C = C.data(0) + indices_C[idx_C].offset[0];
+                                auto data_C = C.data(0) + indices_C[idx_C].offset;
 
                                 if (beta == T(0))
                                 {
@@ -495,7 +499,7 @@ void mult_block(const communicator& comm, const config& cfg,
                                     tasks.visit(idx++,
                                     [&,idx_C](const communicator& subcomm)
                                     {
-                                        auto data_C = C.data(0) + indices_C[idx_C].offset[0];
+                                        auto data_C = C.data(0) + indices_C[idx_C].offset;
 
                                         if (beta == T(0))
                                         {
@@ -524,16 +528,20 @@ void mult_block(const communicator& comm, const config& cfg,
                                 [&,idx_A,idx_B,idx_C,next_A_AB,next_B_AB,beta]
                                 (const communicator& subcomm)
                                 {
+                                    auto local_idx_A = idx_A;
+                                    auto local_idx_B = idx_B;
+                                    auto local_beta = beta;
+
                                     stride_type off_A_ABC, off_B_ABC, off_C_ABC;
-                                    get_local_offset(indices_A[idx_A].idx[0], group_ABC,
+                                    get_local_offset(indices_A[local_idx_A].idx[0], group_ABC,
                                                      off_A_ABC, 0, off_B_ABC, 1, off_C_ABC, 2);
 
                                     stride_type off_A_AC, off_C_AC;
-                                    get_local_offset(indices_A[idx_A].idx[1], group_AC,
+                                    get_local_offset(indices_A[local_idx_A].idx[1], group_AC,
                                                      off_A_AC, 0, off_C_AC, 1);
 
                                     stride_type off_B_BC, off_C_BC;
-                                    get_local_offset(indices_B[idx_B].idx[1], group_BC,
+                                    get_local_offset(indices_B[local_idx_B].idx[1], group_BC,
                                                      off_B_BC, 0, off_C_BC, 1);
 
                                     auto data_C = C.data(0) + indices_C[idx_C].offset;
@@ -541,40 +549,40 @@ void mult_block(const communicator& comm, const config& cfg,
                                     if (!group_AC.mixed_pos[1].empty() ||
                                         !group_BC.mixed_pos[1].empty())
                                     {
-                                        if (beta == T(0))
+                                        if (local_beta == T(0))
                                         {
                                             set(comm, cfg, C.dense_lengths(),
-                                                beta, data_C, C.dense_strides());
+                                                local_beta, data_C, C.dense_strides());
                                         }
-                                        else if (beta != T(1))
+                                        else if (local_beta != T(1))
                                         {
                                             scale(comm, cfg, C.dense_lengths(),
-                                                  beta, false, data_C, C.dense_strides());
+                                                  local_beta, false, data_C, C.dense_strides());
                                         }
 
-                                        beta = T(1);
+                                        local_beta = T(1);
                                     }
 
                                     data_C += off_C_AC + off_C_BC + off_C_ABC;
 
-                                    while (idx_A < next_A_AB && idx_B < next_B_AB)
+                                    while (local_idx_A < next_A_AB && local_idx_B < next_B_AB)
                                     {
-                                        if (indices_A[idx_A].key[2] < indices_B[idx_B].key[2])
+                                        if (indices_A[local_idx_A].key[2] < indices_B[local_idx_B].key[2])
                                         {
-                                            idx_A++;
+                                            local_idx_A++;
                                         }
-                                        else if (indices_A[idx_A].key[2] > indices_B[idx_B].key[2])
+                                        else if (indices_A[local_idx_A].key[2] > indices_B[local_idx_B].key[2])
                                         {
-                                            idx_B++;
+                                            local_idx_B++;
                                         }
                                         else
                                         {
                                             stride_type off_A_AB, off_B_AB;
-                                            get_local_offset(indices_A[idx_A].idx[1], group_AB,
+                                            get_local_offset(indices_A[local_idx_A].idx[1], group_AB,
                                                              off_A_AB, 0, off_B_AB, 1);
 
-                                            auto data_A = A.data(0) + indices_A[idx_A].offset + off_A_AB + off_A_AC + off_A_ABC;
-                                            auto data_B = B.data(0) + indices_B[idx_B].offset + off_B_AB + off_B_BC + off_B_ABC;
+                                            auto data_A = A.data(0) + indices_A[local_idx_A].offset + off_A_AB + off_A_AC + off_A_ABC;
+                                            auto data_B = B.data(0) + indices_B[local_idx_B].offset + off_B_AB + off_B_BC + off_B_ABC;
 
                                             mult(subcomm, cfg,
                                                  group_AC.dense_len,
@@ -587,25 +595,25 @@ void mult_block(const communicator& comm, const config& cfg,
                                                         false, data_B, group_BC.dense_stride[0],
                                                                        group_AB.dense_stride[1],
                                                                        group_ABC.dense_stride[1],
-                                                  beta, false, data_C, group_AC.dense_stride[1],
+                                            local_beta, false, data_C, group_AC.dense_stride[1],
                                                                        group_BC.dense_stride[1],
                                                                        group_ABC.dense_stride[2]);
 
-                                            beta = T(1);
+                                            local_beta = T(1);
                                         }
                                     }
 
                                     data_C -= off_C_AC + off_C_BC + off_C_ABC;
 
-                                    if (beta == T(0))
+                                    if (local_beta == T(0))
                                     {
                                         set(comm, cfg, C.dense_lengths(),
-                                            beta, data_C, C.dense_strides());
+                                            local_beta, data_C, C.dense_strides());
                                     }
-                                    else if (beta != T(1))
+                                    else if (local_beta != T(1))
                                     {
                                         scale(comm, cfg, C.dense_lengths(),
-                                              beta, false, data_C, C.dense_strides());
+                                              local_beta, false, data_C, C.dense_strides());
                                     }
                                 });
 

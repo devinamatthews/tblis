@@ -16,8 +16,13 @@ void tblis_matrix_set(const tblis_comm* comm, const tblis_config* cfg,
 
     TBLIS_WITH_TYPE_AS(A->type, T,
     {
-        parallelize_if(internal::set<T>, comm, get_config(cfg), A->m, A->n,
-                       alpha->get<T>(), static_cast<T*>(A->data), A->rs, A->cs);
+        parallelize_if(
+        [&](const communicator& comm)
+        {
+            internal::set<T>(comm, get_config(cfg), A->m, A->n,
+                             alpha->get<T>(),
+                             static_cast<T*>(A->data), A->rs, A->cs);
+        }, comm);
 
         A->alpha<T>() = T(1);
         A->conj = false;

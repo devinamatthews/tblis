@@ -18,24 +18,31 @@ void tblis_matrix_shift(const tblis_comm* comm, const tblis_config* cfg,
 
     TBLIS_WITH_TYPE_AS(A->type, T,
     {
-        if (A->alpha<T>() == T(0))
+        parallelize_if(
+        [&](const communicator& comm)
         {
-            parallelize_if(internal::set<T>, comm, get_config(cfg), A->m, A->n,
-                           alpha->get<T>(), static_cast<T*>(A->data), A->rs, A->cs);
-        }
-        else if (alpha->get<T>() == T(0))
-        {
-            if (A->alpha<T>() != T(1) || (is_complex<T>::value && A->conj))
-            {
-                parallelize_if(internal::scale<T>, comm, get_config(cfg), A->m, A->n,
-                               A->alpha<T>(), A->conj, static_cast<T*>(A->data), A->rs, A->cs);
-            }
-        }
-        else
-        {
-            parallelize_if(internal::shift<T>, comm, get_config(cfg), A->m, A->n,
-                           alpha->get<T>(), A->alpha<T>(), A->conj, static_cast<T*>(A->data), A->rs, A->cs);
-        }
+           if (A->alpha<T>() == T(0))
+           {
+               internal::set<T>(comm, get_config(cfg), A->m, A->n,
+                                alpha->get<T>(),
+                                static_cast<T*>(A->data), A->rs, A->cs);
+           }
+           else if (alpha->get<T>() == T(0))
+           {
+               if (A->alpha<T>() != T(1) || (is_complex<T>::value && A->conj))
+               {
+                   internal::scale<T>(comm, get_config(cfg), A->m, A->n,
+                                      A->alpha<T>(), A->conj,
+                                      static_cast<T*>(A->data), A->rs, A->cs);
+               }
+           }
+           else
+           {
+               internal::shift<T>(comm, get_config(cfg), A->m, A->n,
+                                  alpha->get<T>(), A->alpha<T>(), A->conj,
+                                  static_cast<T*>(A->data), A->rs, A->cs);
+           }
+        }, comm);
 
         A->alpha<T>() = T(1);
         A->conj = false;

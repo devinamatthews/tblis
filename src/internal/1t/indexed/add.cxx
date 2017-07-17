@@ -1,6 +1,8 @@
 #include "util.hpp"
 #include "add.hpp"
 #include "internal/1t/dense/add.hpp"
+#include "internal/1t/dense/scale.hpp"
+#include "internal/1t/dense/set.hpp"
 
 namespace tblis
 {
@@ -83,7 +85,7 @@ void trace_block(const communicator& comm, const config& cfg,
                 tasks.visit(idx++,
                 [&,idx_B](const communicator& subcomm)
                 {
-                    auto data_B = B.data(0) + indices_B[idx_B].offset[0];
+                    auto data_B = B.data(0) + indices_B[idx_B].offset;
 
                     if (beta == T(0))
                     {
@@ -98,7 +100,7 @@ void trace_block(const communicator& comm, const config& cfg,
                 });
             }
 
-            idx_B++
+            idx_B++;
         }
         else
         {
@@ -113,11 +115,15 @@ void trace_block(const communicator& comm, const config& cfg,
             tasks.visit(idx++,
             [&,idx_A,idx_B,next_A,beta,conj_B](const communicator& subcomm)
             {
+                auto local_idx_A = idx_A;
+                auto local_beta = beta;
+                auto local_conj_B = conj_B;
+
                 stride_type off_A_AB, off_B_AB;
                 get_local_offset(indices_A[idx_A].idx[0], group_AB,
                                  off_A_AB, 0, off_B_AB, 1);
 
-                auto data_B = B.data(0) + indices_B[idx_B].offset[0];
+                auto data_B = B.data(0) + indices_B[idx_B].offset;
 
                 if (!group_AB.mixed_pos[1].empty())
                 {
@@ -134,26 +140,25 @@ void trace_block(const communicator& comm, const config& cfg,
                     else if (beta != T(1) || (is_complex<T>::value && conj_B))
                     {
                         scale(subcomm, cfg, B.dense_lengths(),
-                              beta, conj_B, data_B, B.dense_strides());
+                              local_beta, local_conj_B, data_B, B.dense_strides());
                     }
 
                     data_B += off_B_AB;
 
-                    beta = T(1);
-                    conj_B = false;
+                    local_beta = T(1);
+                    local_conj_B = false;
                 }
 
-                for (;idx_A < next_A;idx_A++)
+                for (auto local_idx_A = idx_A;local_idx_A < next_A;local_idx_A++)
                 {
-                    auto data_A = A.data(0) + indices_A[idx_A].offset[0] + off_A_AB;
+                    auto data_A = A.data(0) + indices_A[local_idx_A].offset + off_A_AB;
 
                     add(subcomm, cfg, group_A.dense_len, {}, group_AB.dense_len,
-                        alpha, conj_A, data_A, group_A.dense_stride[0],
-                                               group_AB.dense_stride[0],
-                         beta, conj_B, data_B, {}, group_AB.dense_stride[1]);
+                        alpha, conj_A, data_A, group_A.dense_stride[0], group_AB.dense_stride[0],
+                        local_beta, local_conj_B, data_B, {}, group_AB.dense_stride[1]);
 
-                    beta = T(1);
-                    conj_B = false;
+                    local_beta = T(1);
+                    local_conj_B = false;
                 }
             });
 
@@ -169,7 +174,7 @@ void trace_block(const communicator& comm, const config& cfg,
             tasks.visit(idx++,
             [&,idx_B](const communicator& subcomm)
             {
-                auto data_B = B.data(0) + indices_B[idx_B].offset[0];
+                auto data_B = B.data(0) + indices_B[idx_B].offset;
 
                 if (beta == T(0))
                 {
@@ -224,7 +229,7 @@ void replicate_block(const communicator& comm, const config& cfg,
                 tasks.visit(idx++,
                 [&,idx_B](const communicator& subcomm)
                 {
-                    auto data_B = B.data(0) + indices_B[idx_B].offset[0];
+                    auto data_B = B.data(0) + indices_B[idx_B].offset;
 
                     if (beta == T(0))
                     {
@@ -239,7 +244,7 @@ void replicate_block(const communicator& comm, const config& cfg,
                 });
             }
 
-            idx_B++
+            idx_B++;
         }
         else
         {
@@ -252,8 +257,8 @@ void replicate_block(const communicator& comm, const config& cfg,
                     get_local_offset(indices_A[idx_A].idx[0], group_AB,
                                      off_A_AB, 0, off_B_AB, 1);
 
-                    auto data_A = A.data(0) + indices_A[idx_A].offset[0] + off_A_AB;
-                    auto data_B = B.data(0) + indices_B[idx_B].offset[0];
+                    auto data_A = A.data(0) + indices_A[idx_A].offset + off_A_AB;
+                    auto data_B = B.data(0) + indices_B[idx_B].offset;
 
                     if (!group_AB.mixed_pos[1].empty())
                     {
@@ -304,7 +309,7 @@ void replicate_block(const communicator& comm, const config& cfg,
             tasks.visit(idx++,
             [&,idx_B](const communicator& subcomm)
             {
-                auto data_B = B.data(0) + indices_B[idx_B].offset[0];
+                auto data_B = B.data(0) + indices_B[idx_B].offset;
 
                 if (beta == T(0))
                 {
@@ -356,7 +361,7 @@ void transpose_block(const communicator& comm, const config& cfg,
                 tasks.visit(idx++,
                 [&,idx_B](const communicator& subcomm)
                 {
-                    auto data_B = B.data(0) + indices_B[idx_B].offset[0];
+                    auto data_B = B.data(0) + indices_B[idx_B].offset;
 
                     if (beta == T(0))
                     {
@@ -371,7 +376,7 @@ void transpose_block(const communicator& comm, const config& cfg,
                 });
             }
 
-            idx_B++
+            idx_B++;
         }
         else
         {
@@ -382,8 +387,8 @@ void transpose_block(const communicator& comm, const config& cfg,
                 get_local_offset(indices_A[idx_A].idx[0], group_AB,
                                  off_A_AB, 0, off_B_AB, 1);
 
-                auto data_A = A.data(0) + indices_A[idx_A].offset[0] + off_A_AB;
-                auto data_B = B.data(0) + indices_B[idx_B].offset[0];
+                auto data_A = A.data(0) + indices_A[idx_A].offset + off_A_AB;
+                auto data_B = B.data(0) + indices_B[idx_B].offset;
 
                 if (!group_AB.mixed_pos[1].empty())
                 {
@@ -429,7 +434,7 @@ void transpose_block(const communicator& comm, const config& cfg,
             tasks.visit(idx++,
             [&,idx_B](const communicator& subcomm)
             {
-                auto data_B = B.data(0) + indices_B[idx_B].offset[0];
+                auto data_B = B.data(0) + indices_B[idx_B].offset;
 
                 if (beta == T(0))
                 {

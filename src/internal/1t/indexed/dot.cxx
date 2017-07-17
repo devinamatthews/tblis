@@ -74,8 +74,8 @@ void dot_block(const communicator& comm, const config& cfg,
             get_local_offset(indices_A[idx_A].idx[0], group_AB,
                              off_A_AB, 0, off_B_AB, 1);
 
-            auto data_A = A.data() + indices_A[idx_A].offset + off_A_AB;
-            auto data_B = B.data() + indices_B[idx_B].offset + off_B_AB;
+            auto data_A = A.data(0) + indices_A[idx_A].offset + off_A_AB;
+            auto data_B = B.data(0) + indices_B[idx_B].offset + off_B_AB;
 
             T block_result;
             dot(comm, cfg, group_AB.dense_len,

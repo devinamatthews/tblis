@@ -21,7 +21,7 @@ void reduce(const communicator& comm, const config& cfg, reduce_t op,
     [&](const dpd_varray_view<const T>& local_A)
     {
         reduce(comm, cfg, op, local_A, idx_A_A, block_result, block_idx);
-        block_idx += local_A.data() - A.data();
+        block_idx += local_A.data() - A.data(0);
 
         if (comm.master())
         {

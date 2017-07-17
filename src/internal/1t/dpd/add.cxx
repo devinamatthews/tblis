@@ -289,48 +289,48 @@ void transpose_block(const communicator& comm, const config& cfg,
 }
 
 template <typename T>
-void dpd_add(const communicator& comm, const config& cfg,
-             T alpha, bool conj_A, const dpd_varray_view<const T>& A,
-             const dim_vector& idx_A_A,
-             const dim_vector& idx_A_AB,
-             T  beta, bool conj_B, const dpd_varray_view<      T>& B,
-             const dim_vector& idx_B_B,
-             const dim_vector& idx_B_AB)
+void add(const communicator& comm, const config& cfg,
+         T alpha, bool conj_A, const dpd_varray_view<const T>& A,
+         const dim_vector& idx_A_A,
+         const dim_vector& idx_A_AB,
+         T  beta, bool conj_B, const dpd_varray_view<      T>& B,
+         const dim_vector& idx_B_B,
+         const dim_vector& idx_B_AB)
 {
     if (dpd_impl == FULL)
     {
-        dpd_add_full(comm, cfg,
-                     alpha, conj_A, A, idx_A_A, idx_A_AB,
-                      beta, conj_B, B, idx_B_B, idx_B_AB);
+        add_full(comm, cfg,
+                 alpha, conj_A, A, idx_A_A, idx_A_AB,
+                  beta, conj_B, B, idx_B_B, idx_B_AB);
     }
     else if (!idx_A_A.empty())
     {
-        dpd_trace_block(comm, cfg,
-                        alpha, conj_A, A, idx_A_A, idx_A_AB,
-                         beta, conj_B, B, idx_B_AB);
+        trace_block(comm, cfg,
+                    alpha, conj_A, A, idx_A_A, idx_A_AB,
+                     beta, conj_B, B, idx_B_AB);
     }
     else if (!idx_B_B.empty())
     {
-        dpd_replicate_block(comm, cfg,
-                            alpha, conj_A, A, idx_A_AB,
-                             beta, conj_B, B, idx_B_B, idx_B_AB);
+        replicate_block(comm, cfg,
+                        alpha, conj_A, A, idx_A_AB,
+                         beta, conj_B, B, idx_B_B, idx_B_AB);
     }
     else
     {
-        dpd_transpose_block(comm, cfg,
-                            alpha, conj_A, A, idx_A_AB,
-                             beta, conj_B, B, idx_B_AB);
+        transpose_block(comm, cfg,
+                        alpha, conj_A, A, idx_A_AB,
+                         beta, conj_B, B, idx_B_AB);
     }
 }
 
 #define FOREACH_TYPE(T) \
-template void dpd_add(const communicator& comm, const config& cfg, \
-                      T alpha, bool conj_A, const dpd_varray_view<const T>& A, \
-                      const dim_vector& idx_A, \
-                      const dim_vector& idx_A_AB, \
-                      T  beta, bool conj_B, const dpd_varray_view<      T>& B, \
-                      const dim_vector& idx_B, \
-                      const dim_vector& idx_B_AB);
+template void add(const communicator& comm, const config& cfg, \
+                  T alpha, bool conj_A, const dpd_varray_view<const T>& A, \
+                  const dim_vector& idx_A, \
+                  const dim_vector& idx_A_AB, \
+                  T  beta, bool conj_B, const dpd_varray_view<      T>& B, \
+                  const dim_vector& idx_B, \
+                  const dim_vector& idx_B_AB);
 #include "configs/foreach_type.h"
 
 }

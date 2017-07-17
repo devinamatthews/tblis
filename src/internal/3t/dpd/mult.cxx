@@ -7,6 +7,10 @@
 #include "util/gemm_thread.hpp"
 #include "util/tensor.hpp"
 
+#include "matrix/tensor_matrix.hpp"
+
+#include "nodes/gemm.hpp"
+
 #include <atomic>
 
 namespace tblis

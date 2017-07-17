@@ -230,7 +230,7 @@ void reduce(const communicator& comm, reduce_t op, T& value, len_type& idx)
 }
 
 template <typename Func, typename... Args>
-void parallelize_if(Func f, const tblis_comm* _comm, Args&&... args)
+void parallelize_if(const Func& f, const tblis_comm* _comm, Args&&... args)
 {
     if (_comm)
     {

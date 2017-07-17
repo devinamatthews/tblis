@@ -133,6 +133,7 @@ class indexed_dpd_varray_view : public indexed_dpd_varray_base<Type, indexed_dpd
         using base::cdata;
         using base::data;
         using base::indices;
+        using base::index;
         using base::dense_length;
         using base::dense_lengths;
         using base::indexed_length;

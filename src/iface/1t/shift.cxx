@@ -37,27 +37,30 @@ void tblis_tensor_shift(const tblis_comm* comm, const tblis_config* cfg,
 
     TBLIS_WITH_TYPE_AS(A->type, T,
     {
-        T* data_A = static_cast<T*>(A->data);
-
-        if (A->alpha<T>() == T(0))
+        parallelize_if(
+        [&](const communicator& comm)
         {
-            parallelize_if(internal::set<T>, comm, get_config(cfg), len_A,
-                           alpha->get<T>(), static_cast<T*>(A->data), stride_A);
-        }
-        else if (alpha->get<T>() == T(0))
-        {
-            if (A->alpha<T>() != T(1) || (is_complex<T>::value && A->conj))
+            if (A->alpha<T>() == T(0))
             {
-                parallelize_if(internal::scale<T>, comm, get_config(cfg), len_A,
-                               A->alpha<T>(), A->conj, static_cast<T*>(A->data), stride_A);
+                internal::set<T>(comm, get_config(cfg), len_A,
+                                 T(0), static_cast<T*>(A->data), stride_A);
             }
-        }
-        else
-        {
-            parallelize_if(internal::shift<T>, comm, get_config(cfg), len_A,
-                           alpha->get<T>(), A->alpha<T>(), A->conj,
-                           static_cast<T*>(A->data), stride_A);
-        }
+            else if (alpha->get<T>() == T(0))
+            {
+                if (A->alpha<T>() != T(1) || (is_complex<T>::value && A->conj))
+                {
+                    internal::scale<T>(comm, get_config(cfg), len_A,
+                                       A->alpha<T>(), A->conj,
+                                       static_cast<T*>(A->data), stride_A);
+                }
+            }
+            else
+            {
+                internal::shift<T>(comm, get_config(cfg), len_A,
+                                   alpha->get<T>(), A->alpha<T>(), A->conj,
+                                   static_cast<T*>(A->data), stride_A);
+            }
+        }, comm);
 
         A->alpha<T>() = T(1);
         A->conj = false;

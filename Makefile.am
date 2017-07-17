@@ -40,23 +40,43 @@ lib_libtblis_la_SOURCES = \
     src/internal/1m/set.cxx \
     src/internal/1m/shift.cxx \
 	\
-    src/internal/1t/add.cxx \
-    src/internal/1t/dot.cxx \
-    src/internal/1t/reduce.cxx \
-    src/internal/1t/scale.cxx \
-    src/internal/1t/set.cxx \
-    src/internal/1t/shift.cxx \
-    src/internal/1t/dpd_add.cxx \
-    src/internal/1t/dpd_dot.cxx \
-    src/internal/1t/dpd_reduce.cxx \
-    src/internal/1t/dpd_scale.cxx \
-    src/internal/1t/dpd_set.cxx \
-    src/internal/1t/dpd_shift.cxx \
+    src/internal/1t/dense/add.cxx \
+    src/internal/1t/dense/dot.cxx \
+    src/internal/1t/dense/reduce.cxx \
+    src/internal/1t/dense/scale.cxx \
+    src/internal/1t/dense/set.cxx \
+    src/internal/1t/dense/shift.cxx \
+    \
+    src/internal/1t/dpd/add.cxx \
+    src/internal/1t/dpd/dot.cxx \
+    src/internal/1t/dpd/reduce.cxx \
+    src/internal/1t/dpd/scale.cxx \
+    src/internal/1t/dpd/set.cxx \
+    src/internal/1t/dpd/shift.cxx \
+    \
+    src/internal/1t/indexed/add.cxx \
+    src/internal/1t/indexed/dot.cxx \
+    src/internal/1t/indexed/reduce.cxx \
+    src/internal/1t/indexed/scale.cxx \
+    src/internal/1t/indexed/set.cxx \
+    src/internal/1t/indexed/shift.cxx \
+    \
+    src/internal/1t/indexed_dpd/add.cxx \
+    src/internal/1t/indexed_dpd/dot.cxx \
+    src/internal/1t/indexed_dpd/reduce.cxx \
+    src/internal/1t/indexed_dpd/scale.cxx \
+    src/internal/1t/indexed_dpd/set.cxx \
+    src/internal/1t/indexed_dpd/shift.cxx \
     \
     src/internal/3m/mult.cxx \
     \
-    src/internal/3t/mult.cxx \
-    src/internal/3t/dpd_mult.cxx \
+    src/internal/3t/dense/mult.cxx \
+    \
+    src/internal/3t/dpd/mult.cxx \
+    \
+    src/internal/3t/indexed/mult.cxx \
+    \
+    src/internal/3t/indexed_dpd/mult.cxx \
     \
     src/configs/configs.cxx \
     \

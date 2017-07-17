@@ -5,8 +5,8 @@
 
 #include "nodes/gemm.hpp"
 
-#include "internal/1t/add.hpp"
-#include "internal/1t/dot.hpp"
+#include "internal/1t/dense/add.hpp"
+#include "internal/1t/dense/dot.hpp"
 #include "internal/3m/mult.hpp"
 
 namespace tblis

@@ -49,14 +49,14 @@ void tblis_tensor_dot(const tblis_comm* comm, const tblis_config* cfg,
 
     TBLIS_WITH_TYPE_AS(A->type, T,
     {
-        T* data_A = static_cast<T*>(A->data);
-        T* data_B = static_cast<T*>(B->data);
-
-        parallelize_if(internal::dot<T>, comm, get_config(cfg),
-                       len_AB,
-                       A->conj, data_A, stride_A_AB,
-                       B->conj, data_B, stride_B_AB,
-                       result->get<T>());
+        parallelize_if(
+        [&](const communicator& comm)
+        {
+            internal::dot<T>(comm, get_config(cfg), len_AB,
+                             A->conj, static_cast<T*>(A->data), stride_A_AB,
+                             B->conj, static_cast<T*>(B->data), stride_B_AB,
+                             result->get<T>());
+        }, comm);
 
         result->get<T>() *= A->alpha<T>()*B->alpha<T>();
     })

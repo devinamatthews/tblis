@@ -15,7 +15,7 @@ void set(const communicator& comm, const config& cfg,
     A.for_each_index(
     [&](const dpd_varray_view<T>& local_A)
     {
-        dpd_set<T>(comm, cfg, alpha, local_A, idx_A_A);
+        set(comm, cfg, alpha, local_A, idx_A_A);
     });
 }
 

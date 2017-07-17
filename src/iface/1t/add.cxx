@@ -64,28 +64,34 @@ void tblis_tensor_add(const tblis_comm* comm, const tblis_config* cfg,
         T* data_A = static_cast<T*>(A->data);
         T* data_B = static_cast<T*>(B->data);
 
-        if (A->alpha<T>() == T(0))
+        parallelize_if(
+        [&](const communicator& comm)
         {
-            if (B->alpha<T>() == T(0))
+            if (A->alpha<T>() == T(0))
             {
-                parallelize_if(internal::set<T>, comm, get_config(cfg),
-                               len_B_only+len_AB,
-                               T(0), data_B, stride_B_only+stride_B_AB);
+                if (B->alpha<T>() == T(0))
+                {
+                    internal::set<T>(comm, get_config(cfg), len_B_only+len_AB,
+                                     T(0), data_B, stride_B_only+stride_B_AB);
+                }
+                else if (B->alpha<T>() != T(1) || (is_complex<T>::value && B->conj))
+                {
+                    internal::scale<T>(comm, get_config(cfg),
+                                       len_B_only+len_AB,
+                                       B->alpha<T>(), B->conj, data_B,
+                                       stride_B_only+stride_B_AB);
+                }
             }
-            else if (B->alpha<T>() != T(1) || (is_complex<T>::value && B->conj))
+            else
             {
-                parallelize_if(internal::scale<T>, comm, get_config(cfg),
-                               len_B_only+len_AB,
-                               B->alpha<T>(), B->conj, data_B, stride_B_only+stride_B_AB);
+                internal::add<T>(comm, get_config(cfg),
+                                 len_A_only, len_B_only, len_AB,
+                                 A->alpha<T>(), A->conj, data_A,
+                                 stride_A_only, stride_A_AB,
+                                 B->alpha<T>(), B->conj, data_B,
+                                 stride_B_only, stride_B_AB);
             }
-        }
-        else
-        {
-            parallelize_if(internal::add<T>, comm, get_config(cfg),
-                           len_A_only, len_B_only, len_AB,
-                           A->alpha<T>(), A->conj, data_A, stride_A_only, stride_A_AB,
-                           B->alpha<T>(), B->conj, data_B, stride_B_only, stride_B_AB);
-        }
+        }, comm);
 
         B->alpha<T>() = T(1);
         B->conj = false;

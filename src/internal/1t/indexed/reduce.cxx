@@ -1,5 +1,5 @@
 #include "reduce.hpp"
-#include "internal/1t/reduce.hpp"
+#include "internal/1t/dense/reduce.hpp"
 
 #include "util/tensor.hpp"
 
@@ -13,9 +13,6 @@ void reduce(const communicator& comm, const config& cfg, reduce_t op,
             const indexed_varray_view<const T>& A, const dim_vector& idx_A_A,
             T& result, len_type& idx)
 {
-    unsigned nirrep = A.num_irreps();
-    unsigned ndim = A.dimension();
-
     T local_result, block_result;
     len_type local_idx, block_idx;
     reduce_init(op, local_result, local_idx);
@@ -25,7 +22,7 @@ void reduce(const communicator& comm, const config& cfg, reduce_t op,
     {
         reduce(comm, cfg, op, local_A.lengths(), local_A.data(),
                local_A.strides(), block_result, block_idx);
-        block_idx += local_A.data() - A.data();
+        block_idx += local_A.data() - A.data(0);
 
         if (comm.master())
         {

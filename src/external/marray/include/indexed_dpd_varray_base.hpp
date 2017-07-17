@@ -574,6 +574,13 @@ class indexed_dpd_varray_base
             return idx_[idx];
         }
 
+        len_type index(len_type idx, len_type dim) const
+        {
+            MARRAY_ASSERT(0 <= idx && idx < num_indices());
+            MARRAY_ASSERT(dim < indexed_dimension());
+            return idx_[idx][dim];
+        }
+
         len_type dense_length(unsigned dim, unsigned irrep) const
         {
             MARRAY_ASSERT(dim < dense_dimension());

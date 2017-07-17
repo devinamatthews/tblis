@@ -26,7 +26,10 @@ class short_vector
         typedef std::reverse_iterator<iterator> reverse_iterator;
         typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
-        explicit short_vector(const Allocator& alloc = Allocator())
+        short_vector()
+        : _size(0), _alloc(Allocator(), _local_data()) {}
+
+        explicit short_vector(const Allocator& alloc)
         : _size(0), _alloc(alloc, _local_data()) {}
 
         short_vector(size_type count, const T& value,
@@ -96,6 +99,8 @@ class short_vector
                 other._size = 0;
                 other._alloc._data = other._local_data();
             }
+
+            std::vector<int> a;
         }
 
         short_vector(std::initializer_list<T> init,

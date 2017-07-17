@@ -28,10 +28,13 @@ void tblis_tensor_set(const tblis_comm* comm, const tblis_config* cfg,
 
     TBLIS_WITH_TYPE_AS(A->type, T,
     {
-        T* data_A = static_cast<T*>(A->data);
-
-        parallelize_if(internal::set<T>, comm, get_config(cfg), len_A,
-                       alpha->get<T>(), static_cast<T*>(A->data), stride_A);
+        parallelize_if(
+        [&](const communicator& comm)
+        {
+            internal::set<T>(comm, get_config(cfg), len_A,
+                             alpha->get<T>(),
+                             static_cast<T*>(A->data), stride_A);
+        }, comm);
 
         A->alpha<T>() = T(1);
         A->conj = false;

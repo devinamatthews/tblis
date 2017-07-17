@@ -488,7 +488,13 @@ class const_scatter_matrix_view
         }
 
         template <typename U>
-        void permute(const std::array<U, 2>& perm)
+        void permute(std::initializer_list<U> perm)
+        {
+            permute<std::initializer_list<U>>(perm);
+        }
+
+        template <typename U>
+        void permute(const U& perm)
         {
             TBLIS_ASSERT((perm[0] == 0 && perm[1] == 1) ||
                    (perm[0] == 1 && perm[1] == 0));
@@ -503,7 +509,13 @@ class const_scatter_matrix_view
         }
 
         template <typename U>
-        const_scatter_matrix_view<T> permuted(const std::array<U, 2>& perm) const
+        const_scatter_matrix_view<T> permuted(std::initializer_list<U> perm) const
+        {
+            return permuted<std::initializer_list<U>>(perm);
+        }
+
+        template <typename U>
+        const_scatter_matrix_view<T> permuted(const U& perm) const
         {
             const_scatter_matrix_view<T> r(*this);
             r.permute(perm);
@@ -512,12 +524,12 @@ class const_scatter_matrix_view
 
         void permute(unsigned p0, unsigned p1)
         {
-            permute(make_array(p0, p1));
+            permute({p0, p1});
         }
 
         const_scatter_matrix_view<T> permuted(unsigned p0, unsigned p1) const
         {
-            return permuted(make_array(p0, p1));
+            return permuted({p0, p1});
         }
 
         void transpose()
@@ -781,7 +793,13 @@ class scatter_matrix_view : protected const_scatter_matrix_view<T>
         }
 
         template <typename U>
-        void rotate(const std::array<U, 2>& shift) const
+        void rotate(std::initializer_list<U> shift) const
+        {
+            rotate<std::initializer_list<U>>(shift);
+        }
+
+        template <typename U>
+        void rotate(const U& shift) const
         {
             rotate_dim(0, shift[0]);
             rotate_dim(1, shift[1]);
@@ -789,7 +807,7 @@ class scatter_matrix_view : protected const_scatter_matrix_view<T>
 
         void rotate(stride_type s0, stride_type s1) const
         {
-            rotate(make_array(s0, s1));
+            rotate({s0, s1});
         }
 
         detail::scatter_matrix_ref<T> operator[](len_type i) const

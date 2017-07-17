@@ -2,6 +2,7 @@
 #define _TBLIS_INTERNAL_1T_INDEXED_DPD_UTIL_HPP_
 
 #include "util/basic_types.h"
+#include "internal/1t/dpd/util.hpp"
 #include "internal/1t/indexed/util.hpp"
 #include "internal/3t/dpd/mult.hpp"
 
@@ -101,46 +102,6 @@ void full_to_block(const varray<U>& A2, const indexed_dpd_varray_view<T>& A)
     });
 }
 
-template <unsigned I, size_t N>
-void dense_total_lengths_and_strides_helper(std::array<len_vector,N>&,
-                                            std::array<stride_vector,N>&) {}
-
-template <unsigned I, size_t N, typename T, typename... Args>
-void dense_total_lengths_and_strides_helper(std::array<len_vector,N>& len,
-                                            std::array<stride_vector,N>& stride,
-                                            const indexed_dpd_varray_view<T>& A,
-                                            const dim_vector&, const Args&... args)
-{
-    unsigned ndim = A.dense_dimension();
-    unsigned nirrep = A.num_irreps();
-
-    len[I].resize(ndim);
-    stride[I].resize(ndim);
-
-    for (unsigned j = 0;j < ndim;j++)
-    {
-        for (unsigned irrep = 0;irrep < nirrep;irrep++)
-            len[I][j] += A.length(j, irrep);
-    }
-
-    auto iperm = detail::inverse_permutation(A.permutation());
-    stride[I][iperm[0]] = 1;
-    for (unsigned j = 1;j < ndim;j++)
-    {
-        stride[I][iperm[j]] = stride[I][iperm[j-1]] * len[I][iperm[j-1]];
-    }
-
-    dense_total_lengths_and_stride_helper<I+1>(len, stride, args...);
-}
-
-template <size_t N, typename... Args>
-void dense_total_lengths_and_strides(std::array<len_vector,N>& len,
-                                     std::array<stride_vector,N>& stride,
-                                     const Args&... args)
-{
-    dense_total_lengths_and_stride_helper<0>(len, stride, args...);
-}
-
 template <unsigned N> struct dpd_index_group;
 
 template <unsigned N>
@@ -148,7 +109,7 @@ void assign_dense_idx_helper(unsigned, unsigned, dpd_index_group<N>&) {}
 
 template <unsigned N, typename T, typename... Args>
 void assign_dense_idx_helper(unsigned i, unsigned j, dpd_index_group<N>& group,
-                             const indexed_dpd_varray<T>& A,
+                             const indexed_dpd_varray_view<T>& A,
                              const dim_vector& idx_A, const Args&... args)
 {
     group.dense_idx[j].push_back(idx_A[i]);
@@ -157,7 +118,7 @@ void assign_dense_idx_helper(unsigned i, unsigned j, dpd_index_group<N>& group,
 
 template <unsigned N, typename T, typename... Args>
 void assign_dense_idx(unsigned i, dpd_index_group<N>& group,
-                      const indexed_dpd_varray<T>& A,
+                      const indexed_dpd_varray_view<T>& A,
                       const dim_vector& idx_A, const Args&... args)
 {
     assign_dense_idx_helper(i, 0, group, A, idx_A, args...);
@@ -196,7 +157,7 @@ void assign_mixed_or_batch_idx_helper(unsigned i, unsigned pos, unsigned j,
 template <unsigned N, typename T, typename... Args>
 void assign_mixed_or_batch_idx(unsigned i, unsigned pos,
                                dpd_index_group<N>& group,
-                               const indexed_dpd_varray<T>& A,
+                               const indexed_dpd_varray_view<T>& A,
                                const dim_vector& idx_A, const Args&... args)
 {
     assign_mixed_or_batch_idx_helper(i, pos, 0, group,
@@ -230,7 +191,7 @@ struct dpd_index_group
     }
 
     template <typename T, typename... Args>
-    dpd_index_group(const indexed_dpd_varray<T>& A, const dim_vector& idx_A,
+    dpd_index_group(const indexed_dpd_varray_view<T>& A, const dim_vector& idx_A,
                     const Args&... args)
     {
         unsigned nirrep = A.num_irreps();
@@ -285,25 +246,25 @@ struct dpd_index_group
     }
 };
 
-template <unsigned N>
-void assign_irreps_helper(unsigned i, const dpd_index_group<N>&) {}
+template <unsigned I, unsigned N>
+void assign_irreps_helper(const dpd_index_group<N>&) {}
 
-template <unsigned N, typename... Args>
-void assign_irreps_helper(unsigned i, const dpd_index_group<N>& group,
+template <unsigned I, unsigned N, typename... Args>
+void assign_irreps_helper(const dpd_index_group<N>& group,
                           irrep_vector& irreps, Args&... args)
 {
-    for (unsigned j = 0;j < group.mixed_idx[i].size();j++)
+    for (unsigned j = 0;j < group.mixed_idx[I].size();j++)
     {
-        irreps[group.mixed_idx[i][j]] = group.batch_irrep[group.mixed_pos[i][j]];
+        irreps[group.mixed_idx[I][j]] = group.batch_irrep[group.mixed_pos[I][j]];
     }
 
-    assign_irreps_helper(i+1, group, args...);
+    assign_irreps_helper<I+1>(group, args...);
 }
 
 template <unsigned N, typename... Args>
 void assign_irreps(const dpd_index_group<N>& group, Args&... args)
 {
-    assign_irreps_helper(0, group, args...);
+    assign_irreps_helper<0>(group, args...);
 }
 
 template <unsigned I, unsigned N>
@@ -315,8 +276,8 @@ template <unsigned I, unsigned N, typename T, typename... Args>
 void get_local_geometry_helper(const len_vector& idx,
                                const dpd_index_group<N>& group,
                                len_vector& len,  const varray_view<T>& local_A,
-                               stride_type& off, stride_type& stride,
-                               unsigned i, const Args&... args)
+                               stride_type& off, stride_vector& stride,
+                               unsigned i, Args&&... args)
 {
     if (I == 0)
         len = stl_ext::select_from(local_A.lengths(), group.dense_idx[I]);
@@ -327,14 +288,14 @@ void get_local_geometry_helper(const len_vector& idx,
     for (unsigned j = 0;j < group.mixed_idx[i].size();j++)
         off += idx[group.mixed_pos[i][j]]*local_A.stride(group.mixed_idx[i][j]);
 
-    get_local_geometry_helper<I+1>(idx, group, len, args...);
+    get_local_geometry_helper<I+1>(idx, group, len, std::forward<Args>(args)...);
 }
 
 template <unsigned N, typename... Args>
 void get_local_geometry(const len_vector& idx, const dpd_index_group<N>& group,
-                        len_vector& len, const Args&... args)
+                        len_vector& len, Args&&... args)
 {
-    get_local_geometry_helper<0>(idx, group, len, args...);
+    get_local_geometry_helper<0>(idx, group, len, std::forward<Args>(args)...);
 }
 
 }

@@ -2,6 +2,7 @@
 #define _TBLIS_INTERNAL_1T_DPD_UTIL_HPP_
 
 #include "util/basic_types.h"
+#include "util/tensor.hpp"
 #include "internal/3t/dpd/mult.hpp"
 
 namespace tblis
@@ -72,6 +73,46 @@ void full_to_block(const varray<U>& A2, const dpd_varray_view<T>& A)
 
         local_A = local_A2;
     });
+}
+
+template <unsigned I, size_t N>
+void dense_total_lengths_and_strides_helper(std::array<len_vector,N>&,
+                                            std::array<stride_vector,N>&) {}
+
+template <unsigned I, size_t N, typename Array, typename... Args>
+void dense_total_lengths_and_strides_helper(std::array<len_vector,N>& len,
+                                            std::array<stride_vector,N>& stride,
+                                            const Array& A,
+                                            const dim_vector&, const Args&... args)
+{
+    unsigned ndim = A.permutation().size();
+    unsigned nirrep = A.num_irreps();
+
+    len[I].resize(ndim);
+    stride[I].resize(ndim);
+
+    for (unsigned j = 0;j < ndim;j++)
+    {
+        for (unsigned irrep = 0;irrep < nirrep;irrep++)
+            len[I][j] += A.length(j, irrep);
+    }
+
+    auto iperm = detail::inverse_permutation(A.permutation());
+    stride[I][iperm[0]] = 1;
+    for (unsigned j = 1;j < ndim;j++)
+    {
+        stride[I][iperm[j]] = stride[I][iperm[j-1]] * len[I][iperm[j-1]];
+    }
+
+    dense_total_lengths_and_strides_helper<I+1>(len, stride, args...);
+}
+
+template <size_t N, typename... Args>
+void dense_total_lengths_and_strides(std::array<len_vector,N>& len,
+                                     std::array<stride_vector,N>& stride,
+                                     const Args&... args)
+{
+    dense_total_lengths_and_strides_helper<0>(len, stride, args...);
 }
 
 template <typename T>

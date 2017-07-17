@@ -204,19 +204,21 @@ class range_t
 template <typename T>
 range_t<T> range(T to)
 {
-    return {0, to, 1};
+    return {T(0), to, T(1)};
 }
 
 template <typename T, typename U>
 range_t<typename std::common_type<T,U>::type> range(T from, U to)
 {
-    return {from, to, 1};
+    typedef typename std::common_type<T,U>::type V;
+    return {(V)from, (V)to, V(1)};
 }
 
 template <typename T, typename U, typename V>
 range_t<typename std::common_type<T,U,V>::type> range(T from, U to, V delta)
 {
-    return {from, to, delta};
+    typedef typename std::common_type<T,U,V>::type W;
+    return {(W)from, (W)to, (W)delta};
 }
 
 }

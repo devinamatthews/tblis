@@ -25,6 +25,7 @@ class viterator
         {
             for (unsigned i = 0;i < ndim_;i++) if (len[i] == 0) empty_ = true;
             std::copy_n(len.begin(), ndim_, len_.begin());
+            for (unsigned i = 0;i < N;i++) strides_[i].resize(len.size());
             detail::set_strides(strides_, strides...);
         }
 

@@ -27,7 +27,7 @@ using namespace tblis::internal;
 using namespace tblis::detail;
 using namespace tblis::slice;
 
-#define INFO_OR_PRINT(...) INFO(__VA_ARGS__); cout << __VA_ARGS__ << endl;
+#define INFO_OR_PRINT(...) INFO(__VA_ARGS__); //cout << __VA_ARGS__ << endl;
 
 namespace MArray
 {
@@ -2334,20 +2334,20 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dot, R, T, all_types)
 
     auto neps = prod(A.lengths());
 
-    C.reset(B);
-    add<T>(T(1.0), A, idx_A.data(), T(0.0), C, idx_B.data());
+    C.reset(A);
+    add<T>(T(1.0), A, idx_A.data(), T(0.0), C, idx_A.data());
     C.for_each_element([](T& e) { e = tblis::conj(e); });
     T ref_val = reduce<T>(REDUCE_NORM_2, A, idx_A.data()).first;
-    T calc_val = dot<T>(A, idx_A.data(), C, idx_B.data());
+    T calc_val = dot<T>(A, idx_A.data(), C, idx_A.data());
     check("NRM2", ref_val*ref_val, calc_val, neps);
 
     C = T(1);
     ref_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
-    calc_val = dot<T>(A, idx_A.data(), C, idx_B.data());
+    calc_val = dot<T>(A, idx_A.data(), C, idx_A.data());
     check("UNIT", ref_val, calc_val, neps);
 
     C = T(0);
-    calc_val = dot<T>(A, idx_A.data(), C, idx_B.data());
+    calc_val = dot<T>(A, idx_A.data(), C, idx_A.data());
     check("ZERO", calc_val, neps);
 
     dpd_impl = FULL;
@@ -2381,20 +2381,20 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_dot, R, T, all_types)
 
     auto neps = dpd_varray<T>::size(A.irrep(), A.lengths());
 
-    C.reset(B);
-    add<T>(T(1.0), A, idx_A.data(), T(0.0), C, idx_B.data());
+    C.reset(A);
+    add<T>(T(1.0), A, idx_A.data(), T(0.0), C, idx_A.data());
     C.for_each_element([](T& e) { e = tblis::conj(e); });
     T ref_val = reduce<T>(REDUCE_NORM_2, A, idx_A.data()).first;
-    T calc_val = dot<T>(A, idx_A.data(), C, idx_B.data());
+    T calc_val = dot<T>(A, idx_A.data(), C, idx_A.data());
     check("NRM2", ref_val*ref_val, calc_val, neps);
 
     C = T(1);
     ref_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
-    calc_val = dot<T>(A, idx_A.data(), C, idx_B.data());
+    calc_val = dot<T>(A, idx_A.data(), C, idx_A.data());
     check("UNIT", ref_val, calc_val, neps);
 
     C = T(0);
-    calc_val = dot<T>(A, idx_A.data(), C, idx_B.data());
+    calc_val = dot<T>(A, idx_A.data(), C, idx_A.data());
     check("ZERO", calc_val, neps);
 
     dpd_impl = FULL;
@@ -2433,6 +2433,9 @@ void random_mult(stride_type N, T&& A, label_vector& idx_A,
     while (ndim_AB < 0 ||
            ndim_AC < 0 ||
            ndim_BC < 0 ||
+           ndim_AB+ndim_AC <= 0 ||
+           ndim_AB+ndim_BC <= 0 ||
+           ndim_AC+ndim_BC <= 0 ||
            (ndim_A+ndim_B-ndim_C-ndim_ABC)%2 != 0);
 
     random_tensors(N,
@@ -2524,6 +2527,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_mult, R, T, all_types)
     }
 
     impl = BLAS_BASED;
+    impl = BLIS_BASED;
     D.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
@@ -3256,7 +3260,7 @@ int main(int argc, char **argv)
                             {0, 0, 0, 0}};
 
 
-    vector<const char*> catch_argv = {"tblis::test", "-d", "yes"};
+    vector<const char*> catch_argv = {"tblis::test", "-d", "yes", "-a"};
 
     int arg;
     int index;

@@ -33,6 +33,8 @@ void block_to_full(const dpd_varray_view<T>& A, varray<U>& A2)
     {
         varray_view<U> local_A2 = A2;
 
+        auto old = local_A2.data();
+
         for (unsigned i = 0;i < ndim_A;i++)
         {
             local_A2.length(i, local_A.length(i));

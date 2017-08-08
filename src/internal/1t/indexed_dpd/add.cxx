@@ -1,10 +1,8 @@
 #include "util.hpp"
 #include "add.hpp"
+#include "set.hpp"
+#include "scale.hpp"
 #include "internal/1t/dense/add.hpp"
-#include "internal/1t/dense/scale.hpp"
-#include "internal/1t/dense/set.hpp"
-
-#include "util/tensor.hpp"
 
 namespace tblis
 {
@@ -89,6 +87,15 @@ void trace_block(const communicator& comm, const config& cfg,
     stride_type idx_A = 0;
     stride_type idx_B = 0;
 
+    if (beta == T(0))
+    {
+        set(comm, cfg, T(0), B, range(B.dense_dimension()));
+    }
+    else if (beta != T(1) || (is_complex<T>::value && conj_B))
+    {
+        scale(comm, cfg, beta, conj_B, B, range(B.dense_dimension()));
+    }
+
     while (idx_A < nidx_A && idx_B < nidx_B)
     {
         if (indices_A[idx_A].key[0] < indices_B[idx_B].key[0])
@@ -97,38 +104,6 @@ void trace_block(const communicator& comm, const config& cfg,
         }
         else if (indices_A[idx_A].key[0] > indices_B[idx_B].key[0])
         {
-            if (beta != T(1) || (is_complex<T>::value && conj_B))
-            {
-                for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
-                {
-                    tasks.visit(task++,
-                    [&,idx_B,block_AB](const communicator& subcomm)
-                    {
-                        auto local_irreps_B = irreps_B;
-
-                        assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
-                                      local_irreps_B, group_AB.dense_idx[1]);
-
-                        if (is_block_empty(dpd_B, local_irreps_B)) return;
-
-                        auto local_B = dpd_B(local_irreps_B);
-
-                        auto data_B = local_B.data() + indices_B[idx_B].offset;
-
-                        if (beta == T(0))
-                        {
-                            set(subcomm, cfg, local_B.lengths(),
-                                T(0), data_B, local_B.strides());
-                        }
-                        else
-                        {
-                            scale(subcomm, cfg, local_B.lengths(),
-                                  beta, conj_B, data_B, local_B.strides());
-                        }
-                    });
-                }
-            }
-
             idx_B++;
         }
         else
@@ -149,23 +124,23 @@ void trace_block(const communicator& comm, const config& cfg,
                     auto local_idx_A = idx_A;
                     auto local_irreps_A = irreps_A;
                     auto local_irreps_B = irreps_B;
-                    auto local_beta = beta;
-                    auto local_conj_B = conj_B;
+
+                    assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
+                                  local_irreps_A, group_AB.dense_idx[0],
+                                  local_irreps_B, group_AB.dense_idx[1]);
+
+                    if (is_block_empty(dpd_B, local_irreps_B)) return;
+
+                    auto local_B = dpd_B(local_irreps_B);
 
                     for (stride_type block_A = 0;block_A < group_A.dense_nblock;block_A++)
                     {
-                        assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
-                                      local_irreps_A, group_AB.dense_idx[0],
-                                      local_irreps_B, group_AB.dense_idx[1]);
-
                         assign_irreps(group_A.dense_ndim, irrep_A, nirrep, block_A,
                                       local_irreps_A, group_A.dense_idx[0]);
 
                         if (is_block_empty(dpd_A, local_irreps_A)) continue;
-                        if (is_block_empty(dpd_B, local_irreps_B)) continue;
 
                         auto local_A = dpd_A(local_irreps_A);
-                        auto local_B = dpd_B(local_irreps_B);
 
                         len_vector len_AB;
                         stride_vector stride_A_AB, stride_B_AB;
@@ -180,31 +155,7 @@ void trace_block(const communicator& comm, const config& cfg,
                         get_local_geometry(indices_A[idx_A].idx[1], group_A, len_A,
                                            local_A, off_A_A, stride_A_A, 0);
 
-                        auto data_B = local_B.data() + indices_B[idx_B].offset;
-
-                        if (!group_AB.mixed_idx[1].empty())
-                        {
-                            //
-                            // Pre-scale B since we will only by adding to a
-                            // portion of it
-                            //
-
-                            if (beta == T(0))
-                            {
-                                set(subcomm, cfg, local_B.lengths(),
-                                    T(0), data_B, local_B.strides());
-                            }
-                            else if (beta != T(1) || (is_complex<T>::value && conj_B))
-                            {
-                                scale(subcomm, cfg, local_B.lengths(),
-                                      local_beta, local_conj_B, data_B, local_B.strides());
-                            }
-
-                            data_B += off_B_AB;
-
-                            local_beta = T(1);
-                            local_conj_B = false;
-                        }
+                        auto data_B = local_B.data() + indices_B[idx_B].offset + off_B_AB;
 
                         for (auto local_idx_A = idx_A;local_idx_A < next_A;local_idx_A++)
                         {
@@ -212,53 +163,13 @@ void trace_block(const communicator& comm, const config& cfg,
 
                             add(subcomm, cfg, len_A, {}, len_AB,
                                 alpha, conj_A, data_A, stride_A_A, stride_A_AB,
-                                local_beta, local_conj_B, data_B, {}, stride_B_AB);
-
-                            local_beta = T(1);
-                            local_conj_B = false;
+                                T(1), false, data_B, {}, stride_B_AB);
                         }
                     }
                 });
             }
 
             idx_A = next_A;
-            idx_B++;
-        }
-    }
-
-    if (beta != T(1) || (is_complex<T>::value && conj_B))
-    {
-        while (idx_B < nidx_B)
-        {
-            for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
-            {
-                tasks.visit(task++,
-                [&,idx_B,block_AB](const communicator& subcomm)
-                {
-                    auto local_irreps_B = irreps_B;
-
-                    assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
-                                  local_irreps_B, group_AB.dense_idx[1]);
-
-                    if (is_block_empty(dpd_B, local_irreps_B)) return;
-
-                    auto local_B = dpd_B(local_irreps_B);
-
-                    auto data_B = local_B.data() + indices_B[idx_B].offset;
-
-                    if (beta == T(0))
-                    {
-                        set(subcomm, cfg, local_B.lengths(),
-                            T(0), data_B, local_B.strides());
-                    }
-                    else
-                    {
-                        scale(subcomm, cfg, local_B.lengths(),
-                              beta, conj_B, data_B, local_B.strides());
-                    }
-                });
-            }
-
             idx_B++;
         }
     }
@@ -303,6 +214,15 @@ void replicate_block(const communicator& comm, const config& cfg,
     stride_type idx_A = 0;
     stride_type idx_B = 0;
 
+    if (beta == T(0))
+    {
+        set(comm, cfg, T(0), B, range(B.dense_dimension()));
+    }
+    else if (beta != T(1) || (is_complex<T>::value && conj_B))
+    {
+        scale(comm, cfg, beta, conj_B, B, range(B.dense_dimension()));
+    }
+
     while (idx_A < nidx_A && idx_B < nidx_B)
     {
         if (indices_A[idx_A].key[0] < indices_B[idx_B].key[0])
@@ -311,44 +231,6 @@ void replicate_block(const communicator& comm, const config& cfg,
         }
         else if (indices_A[idx_A].key[0] > indices_B[idx_B].key[0])
         {
-            if (beta != T(1) || (is_complex<T>::value && conj_B))
-            {
-                for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
-                {
-                    for (stride_type block_B = 0;block_B < group_B.dense_nblock;block_B++)
-                    {
-                        tasks.visit(task++,
-                        [&,idx_B,block_AB,block_B](const communicator& subcomm)
-                        {
-                            auto local_irreps_B = irreps_B;
-
-                            assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
-                                          local_irreps_B, group_AB.dense_idx[1]);
-
-                            assign_irreps(group_B.dense_ndim, irrep_B, nirrep, block_B,
-                                          local_irreps_B, group_B.dense_idx[0]);
-
-                            if (is_block_empty(dpd_B, local_irreps_B)) return;
-
-                            auto local_B = dpd_B(local_irreps_B);
-
-                            auto data_B = local_B.data() + indices_B[idx_B].offset;
-
-                            if (beta == T(0))
-                            {
-                                set(subcomm, cfg, local_B.lengths(),
-                                    T(0), data_B, local_B.strides());
-                            }
-                            else
-                            {
-                                scale(subcomm, cfg, local_B.lengths(),
-                                      beta, conj_B, data_B, local_B.strides());
-                            }
-                        });
-                    }
-                }
-            }
-
             idx_B++;
         }
         else
@@ -392,38 +274,11 @@ void replicate_block(const communicator& comm, const config& cfg,
                                                local_B, off_B_B, stride_B_B, 0);
 
                             auto data_A = local_A.data() + indices_A[idx_A].offset + off_A_AB;
-                            auto data_B = local_B.data() + indices_B[idx_B].offset;
+                            auto data_B = local_B.data() + indices_B[idx_B].offset + off_B_AB;
 
-                            if (!group_AB.mixed_idx[1].empty())
-                            {
-                                //
-                                // Pre-scale B since we will only by adding to a
-                                // portion of it
-                                //
-
-                                if (beta == T(0))
-                                {
-                                    set(subcomm, cfg, local_B.lengths(),
-                                        T(0), data_B, local_B.strides());
-                                }
-                                else if (beta != T(1) || (is_complex<T>::value && conj_B))
-                                {
-                                    scale(subcomm, cfg, local_B.lengths(),
-                                          beta, conj_B, data_B, local_B.strides());
-                                }
-
-                                data_B += off_B_AB;
-
-                                add(subcomm, cfg, {}, len_B, len_AB,
-                                    alpha, conj_A, data_A, {}, stride_A_AB,
-                                     T(1),  false, data_B, stride_B_B, stride_B_AB);
-                            }
-                            else
-                            {
-                                add(subcomm, cfg, {}, len_B, len_AB,
-                                    alpha, conj_A, data_A, {}, stride_A_AB,
-                                     beta, conj_B, data_B, stride_B_B, stride_B_AB);
-                            }
+                            add(subcomm, cfg, {}, len_B, len_AB,
+                                alpha, conj_A, data_A, {}, stride_A_AB,
+                                 T(1), false, data_B, stride_B_B, stride_B_AB);
                         });
                     }
                 }
@@ -433,49 +288,6 @@ void replicate_block(const communicator& comm, const config& cfg,
             while (idx_B < nidx_B && indices_A[idx_A].key[0] == indices_B[idx_B].key[0]);
 
             idx_A++;
-        }
-    }
-
-    if (beta != T(1) || (is_complex<T>::value && conj_B))
-    {
-        while (idx_B < nidx_B)
-        {
-            for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
-            {
-                for (stride_type block_B = 0;block_B < group_B.dense_nblock;block_B++)
-                {
-                    tasks.visit(task++,
-                    [&,idx_B,block_AB,block_B](const communicator& subcomm)
-                    {
-                        auto local_irreps_B = irreps_B;
-
-                        assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
-                                      local_irreps_B, group_AB.dense_idx[1]);
-
-                        assign_irreps(group_B.dense_ndim, irrep_B, nirrep, block_B,
-                                      local_irreps_B, group_B.dense_idx[0]);
-
-                        if (is_block_empty(dpd_B, local_irreps_B)) return;
-
-                        auto local_B = dpd_B(local_irreps_B);
-
-                        auto data_B = local_B.data() + indices_B[idx_B].offset;
-
-                        if (beta == T(0))
-                        {
-                            set(subcomm, cfg, local_B.lengths(),
-                                T(0), data_B, local_B.strides());
-                        }
-                        else
-                        {
-                            scale(subcomm, cfg, local_B.lengths(),
-                                  beta, conj_B, data_B, local_B.strides());
-                        }
-                    });
-                }
-            }
-
-            idx_B++;
         }
     }
 }
@@ -512,6 +324,15 @@ void transpose_block(const communicator& comm, const config& cfg,
     stride_type idx_A = 0;
     stride_type idx_B = 0;
 
+    if (beta == T(0))
+    {
+        set(comm, cfg, T(0), B, range(B.dense_dimension()));
+    }
+    else if (beta != T(1) || (is_complex<T>::value && conj_B))
+    {
+        scale(comm, cfg, beta, conj_B, B, range(B.dense_dimension()));
+    }
+
     while (idx_A < nidx_A && idx_B < nidx_B)
     {
         if (indices_A[idx_A].key[0] < indices_B[idx_B].key[0])
@@ -520,38 +341,6 @@ void transpose_block(const communicator& comm, const config& cfg,
         }
         else if (indices_A[idx_A].key[0] > indices_B[idx_B].key[0])
         {
-            if (beta != T(1) || (is_complex<T>::value && conj_B))
-            {
-                for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
-                {
-                    tasks.visit(task++,
-                    [&,idx_B,block_AB](const communicator& subcomm)
-                    {
-                        auto local_irreps_B = irreps_B;
-
-                        assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
-                                      local_irreps_B, group_AB.dense_idx[1]);
-
-                        if (is_block_empty(dpd_B, local_irreps_B)) return;
-
-                        auto local_B = dpd_B(local_irreps_B);
-
-                        auto data_B = local_B.data() + indices_B[idx_B].offset;
-
-                        if (beta == T(0))
-                        {
-                            set(subcomm, cfg, local_B.lengths(),
-                                T(0), data_B, local_B.strides());
-                        }
-                        else
-                        {
-                            scale(subcomm, cfg, local_B.lengths(),
-                                  beta, conj_B, data_B, local_B.strides());
-                        }
-                    });
-                }
-            }
-
             idx_B++;
         }
         else
@@ -569,7 +358,6 @@ void transpose_block(const communicator& comm, const config& cfg,
                                   local_irreps_B, group_AB.dense_idx[1]);
 
                     if (is_block_empty(dpd_A, local_irreps_A)) return;
-                    if (is_block_empty(dpd_B, local_irreps_B)) return;
 
                     auto local_A = dpd_A(local_irreps_A);
                     auto local_B = dpd_B(local_irreps_B);
@@ -582,79 +370,15 @@ void transpose_block(const communicator& comm, const config& cfg,
                                        local_B, off_B_AB, stride_B_AB, 1);
 
                     auto data_A = local_A.data() + indices_A[idx_A].offset + off_A_AB;
-                    auto data_B = local_B.data() + indices_B[idx_B].offset;
+                    auto data_B = local_B.data() + indices_B[idx_B].offset + off_B_AB;
 
-                    if (!group_AB.mixed_idx[1].empty())
-                    {
-                        //
-                        // Pre-scale B since we will only by adding to a
-                        // portion of it
-                        //
-
-                        if (beta == T(0))
-                        {
-                            set(subcomm, cfg, local_B.lengths(),
-                                T(0), data_B, local_B.strides());
-                        }
-                        else if (beta != T(1) || (is_complex<T>::value && conj_B))
-                        {
-                            scale(subcomm, cfg, local_B.lengths(),
-                                  beta, conj_B, data_B, local_B.strides());
-                        }
-
-                        data_B += off_B_AB;
-
-                        add(subcomm, cfg, {}, {}, len_AB,
-                            alpha, conj_A, data_A, {}, stride_A_AB,
-                             T(1),  false, data_B, {}, stride_B_AB);
-                    }
-                    else
-                    {
-                        add(subcomm, cfg, {}, {}, len_AB,
-                            alpha, conj_A, data_A, {}, stride_A_AB,
-                             beta, conj_B, data_B, {}, stride_B_AB);
-                    }
+                    add(subcomm, cfg, {}, {}, len_AB,
+                        alpha, conj_A, data_A, {}, stride_A_AB,
+                         T(1), false, data_B, {}, stride_B_AB);
                 });
             }
 
             idx_A++;
-            idx_B++;
-        }
-    }
-
-    if (beta != T(1) || (is_complex<T>::value && conj_B))
-    {
-        while (idx_B < nidx_B)
-        {
-            for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
-            {
-                tasks.visit(task++,
-                [&,idx_B,block_AB](const communicator& subcomm)
-                {
-                    auto local_irreps_B = irreps_B;
-
-                    assign_irreps(group_AB.dense_ndim, group_AB.dense_size, nirrep, block_AB,
-                                  local_irreps_B, group_AB.dense_idx[1]);
-
-                    if (is_block_empty(dpd_B, local_irreps_B)) return;
-
-                    auto local_B = dpd_B(local_irreps_B);
-
-                    auto data_B = local_B.data() + indices_B[idx_B].offset;
-
-                    if (beta == T(0))
-                    {
-                        set(subcomm, cfg, local_B.lengths(),
-                            T(0), data_B, local_B.strides());
-                    }
-                    else
-                    {
-                        scale(subcomm, cfg, local_B.lengths(),
-                              beta, conj_B, data_B, local_B.strides());
-                    }
-                });
-            }
-
             idx_B++;
         }
     }

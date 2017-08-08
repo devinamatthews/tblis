@@ -119,58 +119,14 @@ void contract_block(const communicator& comm, const config& cfg,
     stride_type idx_A = 0;
     stride_type idx_C = 0;
 
-    auto scale_C = [&](stride_type idx_C)
+    if (beta == T(0))
     {
-        if (beta != T(1))
-        {
-            for (unsigned irrep_AC = 0;irrep_AC < nirrep;irrep_AC++)
-            {
-                for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
-
-                unsigned irrep_BC = C.irrep()^irrep_AC;
-                for (auto irrep : group_BC.batch_irrep) irrep_BC ^= irrep;
-
-                if (group_AC.dense_ndim == 0 && irrep_AC != 0) continue;
-                if (group_BC.dense_ndim == 0 && irrep_BC != 0) continue;
-
-                for (stride_type block_AC = 0;block_AC < group_AC.dense_nblock;block_AC++)
-                {
-                    for (stride_type block_BC = 0;block_BC < group_BC.dense_nblock;block_BC++)
-                    {
-                        tasks.visit(idx++,
-                        [&,idx_C,irrep_AC,irrep_BC,block_AC,block_BC]
-                        (const communicator& subcomm)
-                        {
-                            auto local_irreps_C = irreps_C;
-
-                            assign_irreps(group_AC.dense_ndim, irrep_AC, nirrep, block_AC,
-                                          local_irreps_C, group_AC.dense_idx[1]);
-
-                            assign_irreps(group_BC.dense_ndim, irrep_BC, nirrep, block_BC,
-                                          local_irreps_C, group_BC.dense_idx[1]);
-
-                            if (is_block_empty(dpd_C, local_irreps_C)) return;
-
-                            auto local_C = dpd_C(local_irreps_C);
-
-                            auto data_C = local_C.data() + indices_C[idx_C].offset;
-
-                            if (beta == T(0))
-                            {
-                                set(subcomm, cfg, local_C.lengths(),
-                                    T(0), data_C, local_C.strides());
-                            }
-                            else
-                            {
-                                scale(subcomm, cfg, local_C.lengths(),
-                                      beta, false, data_C, local_C.strides());
-                            }
-                        });
-                    }
-                }
-            }
-        }
-    };
+        set(comm, cfg, T(0), C, range(C.dense_dimension()));
+    }
+    else if (beta != T(1))
+    {
+        scale(comm, cfg, beta, false, C, range(C.dense_dimension()));
+    }
 
     while (idx_A < nidx_A && idx_C < nidx_C)
     {
@@ -181,7 +137,7 @@ void contract_block(const communicator& comm, const config& cfg,
         }
         else if (indices_A[idx_A].key[0] > indices_C[idx_C].key[0])
         {
-            scale_C(idx_C++);
+            idx_C++;
             continue;
         }
 
@@ -203,7 +159,7 @@ void contract_block(const communicator& comm, const config& cfg,
             }
             else if (indices_B[idx_B].key[0] > indices_C[idx_C].key[1])
             {
-                scale_C(idx_C++);
+                idx_C++;
                 continue;
             }
 
@@ -239,7 +195,6 @@ void contract_block(const communicator& comm, const config& cfg,
                         auto local_irreps_A = irreps_A;
                         auto local_irreps_B = irreps_B;
                         auto local_irreps_C = irreps_C;
-                        auto local_beta = beta;
 
                         assign_irreps(group_AC.dense_ndim, irrep_AC, nirrep, block_AC,
                                       local_irreps_A, group_AC.dense_idx[0],
@@ -252,25 +207,6 @@ void contract_block(const communicator& comm, const config& cfg,
                         if (is_block_empty(dpd_C, local_irreps_C)) return;
 
                         auto local_C = dpd_C(local_irreps_C);
-
-                        auto data_C = local_C.data() + indices_C[idx_C].offset;
-
-                        if (!group_AC.mixed_pos[1].empty() ||
-                            !group_BC.mixed_pos[1].empty())
-                        {
-                            if (local_beta == T(0))
-                            {
-                                set(comm, cfg, local_C.lengths(),
-                                    local_beta, data_C, local_C.strides());
-                            }
-                            else if (local_beta != T(1))
-                            {
-                                scale(comm, cfg, local_C.lengths(),
-                                      local_beta, false, data_C, local_C.strides());
-                            }
-
-                            local_beta = T(1);
-                        }
 
                         if (group_AB.dense_ndim != 0 || irrep_AB == 0)
                         {
@@ -299,7 +235,7 @@ void contract_block(const communicator& comm, const config& cfg,
                                                    local_B, off_B_BC, stride_B_BC, 0,
                                                    local_C, off_C_BC, stride_C_BC, 1);
 
-                                data_C += off_C_AC + off_C_BC;
+                                auto data_C = local_C.data() + indices_C[idx_C].offset + off_C_AC + off_C_BC;
 
                                 while (local_idx_A < next_A && local_idx_B < next_B)
                                 {
@@ -327,25 +263,10 @@ void contract_block(const communicator& comm, const config& cfg,
                                              len_AC, len_BC, len_AB, {},
                                              alpha, false, data_A, stride_A_AC, stride_A_AB, {},
                                                     false, data_B, stride_B_BC, stride_B_AB, {},
-                                        local_beta, false, data_C, stride_C_AC, stride_C_BC, {});
-
-                                        local_beta = T(1);
+                                              T(1), false, data_C, stride_C_AC, stride_C_BC, {});
                                     }
                                 }
-
-                                data_C -= off_C_AC + off_C_BC;
                             }
-                        }
-
-                        if (local_beta == T(0))
-                        {
-                            set(comm, cfg, local_C.lengths(),
-                                local_beta, data_C, local_C.strides());
-                        }
-                        else if (local_beta != T(1))
-                        {
-                            scale(comm, cfg, local_C.lengths(),
-                                  local_beta, false, data_C, local_C.strides());
                         }
                     });
                 }
@@ -358,8 +279,6 @@ void contract_block(const communicator& comm, const config& cfg,
         idx_A = next_A;
         idx_C++;
     }
-
-    while (idx_C < nidx_C) scale_C(idx_C++);
 }
 
 template <typename T>
@@ -416,67 +335,17 @@ void mult_block(const communicator& comm, const config& cfg,
     stride_type idx_B0 = 0;
     stride_type idx_C = 0;
 
+    if (beta == T(0))
+    {
+        set(comm, cfg, T(0), C, range(C.dense_dimension()));
+    }
+    else if (beta != T(1))
+    {
+        scale(comm, cfg, beta, false, C, range(C.dense_dimension()));
+    }
+
     unsigned irrep_ABC = A.irrep()^B.irrep()^C.irrep();
     for (auto irrep : group_ABC.batch_irrep) irrep_ABC ^= irrep;
-
-    auto scale_C = [&](stride_type idx_C)
-    {
-        if (beta != T(1))
-        {
-            for (unsigned irrep_AC = 0;irrep_AC < nirrep;irrep_AC++)
-            {
-                for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
-
-                unsigned irrep_BC = C.irrep()^irrep_AC^irrep_ABC;
-                for (auto irrep : group_BC.batch_irrep) irrep_BC ^= irrep;
-
-                if (group_AC.dense_ndim == 0 && irrep_AC != 0) continue;
-                if (group_BC.dense_ndim == 0 && irrep_BC != 0) continue;
-
-                for (stride_type block_ABC = 0;block_ABC < group_ABC.dense_nblock;block_ABC++)
-                {
-                    for (stride_type block_AC = 0;block_AC < group_AC.dense_nblock;block_AC++)
-                    {
-                        for (stride_type block_BC = 0;block_BC < group_BC.dense_nblock;block_BC++)
-                        {
-                            tasks.visit(idx++,
-                            [&,idx_C,irreps_C,irrep_AC,irrep_BC,block_AC,block_BC,block_ABC]
-                            (const communicator& subcomm)
-                            {
-                                auto local_irreps_C = irreps_C;
-
-                                assign_irreps(group_ABC.dense_ndim, irrep_ABC, nirrep, block_ABC,
-                                              local_irreps_C, group_ABC.dense_idx[2]);
-
-                                assign_irreps(group_AC.dense_ndim, irrep_AC, nirrep, block_AC,
-                                              local_irreps_C, group_AC.dense_idx[1]);
-
-                                assign_irreps(group_BC.dense_ndim, irrep_BC, nirrep, block_BC,
-                                              local_irreps_C, group_BC.dense_idx[1]);
-
-                                if (is_block_empty(dpd_C, local_irreps_C)) return;
-
-                                auto local_C = dpd_C(local_irreps_C);
-
-                                auto data_C = local_C.data() + indices_C[idx_C].offset;
-
-                                if (beta == T(0))
-                                {
-                                    set(subcomm, cfg, local_C.lengths(),
-                                        T(0), data_C, local_C.strides());
-                                }
-                                else
-                                {
-                                    scale(subcomm, cfg, local_C.lengths(),
-                                          beta, false, data_C, local_C.strides());
-                                }
-                            });
-                        }
-                    }
-                }
-            }
-        }
-    };
 
     while (idx_A < nidx_A && idx_B0 < nidx_B && idx_C < nidx_C)
     {
@@ -488,7 +357,7 @@ void mult_block(const communicator& comm, const config& cfg,
             }
             else
             {
-                scale_C(idx_C++);
+                idx_C++;
             }
             continue;
         }
@@ -500,7 +369,7 @@ void mult_block(const communicator& comm, const config& cfg,
             }
             else
             {
-                scale_C(idx_C++);
+                idx_C++;
             }
             continue;
         }
@@ -513,7 +382,7 @@ void mult_block(const communicator& comm, const config& cfg,
         }
         else if (indices_A[idx_A].key[0] > indices_C[idx_C].key[0])
         {
-            scale_C(idx_C++);
+            idx_C++;
             continue;
         }
 
@@ -542,7 +411,7 @@ void mult_block(const communicator& comm, const config& cfg,
             }
             else if (indices_A[idx_A].key[1] > indices_C[idx_C].key[1])
             {
-                scale_C(idx_C++);
+                idx_C++;
                 continue;
             }
 
@@ -564,7 +433,7 @@ void mult_block(const communicator& comm, const config& cfg,
                 }
                 else if (indices_B[idx_B].key[1] > indices_C[idx_C].key[2])
                 {
-                    scale_C(idx_C++);
+                    idx_C++;
                     continue;
                 }
 
@@ -601,7 +470,6 @@ void mult_block(const communicator& comm, const config& cfg,
                             auto local_irreps_A = irreps_A;
                             auto local_irreps_B = irreps_B;
                             auto local_irreps_C = irreps_C;
-                            auto local_beta = beta;
 
                             assign_irreps(ndim_ABC, irrep_ABC, nirrep, block_ABC,
                                           local_irreps_A, idx_A_ABC,
@@ -619,26 +487,6 @@ void mult_block(const communicator& comm, const config& cfg,
                             if (is_block_empty(dpd_C, local_irreps_C)) return;
 
                             auto local_C = dpd_C(local_irreps_C);
-
-                            auto data_C = local_C.data() + indices_C[idx_C].offset;
-
-                            if (!group_AC.mixed_pos[1].empty() ||
-                                !group_BC.mixed_pos[1].empty() ||
-                                !group_ABC.mixed_pos[2].empty())
-                            {
-                                if (local_beta == T(0))
-                                {
-                                    set(comm, cfg, local_C.lengths(),
-                                        local_beta, data_C, local_C.strides());
-                                }
-                                else if (local_beta != T(1))
-                                {
-                                    scale(comm, cfg, local_C.lengths(),
-                                          local_beta, false, data_C, local_C.strides());
-                                }
-
-                                local_beta = T(1);
-                            }
 
                             if (group_AB.dense_ndim != 0 || irrep_AB == 0)
                             {
@@ -675,7 +523,8 @@ void mult_block(const communicator& comm, const config& cfg,
                                                        local_B, off_B_BC, stride_B_BC, 0,
                                                        local_C, off_C_BC, stride_C_BC, 1);
 
-                                    data_C += off_C_AC + off_C_BC + off_C_ABC;
+                                    auto data_C = local_C.data() + indices_C[idx_C].offset +
+                                        off_C_AC + off_C_BC + off_C_ABC;
 
                                     while (local_idx_A < next_A_AB && local_idx_B < next_B_AB)
                                     {
@@ -705,25 +554,10 @@ void mult_block(const communicator& comm, const config& cfg,
                                                  len_AC, len_BC, len_AB, len_ABC,
                                                  alpha, false, data_A, stride_A_AC, stride_A_AB, stride_A_ABC,
                                                         false, data_B, stride_B_BC, stride_B_AB, stride_B_ABC,
-                                            local_beta, false, data_C, stride_C_AC, stride_C_BC, stride_C_ABC);
-
-                                            local_beta = T(1);
+                                                  T(1), false, data_C, stride_C_AC, stride_C_BC, stride_C_ABC);
                                         }
                                     }
-
-                                    data_C -= off_C_AC + off_C_BC + off_C_ABC;
                                 }
-                            }
-
-                            if (local_beta == T(0))
-                            {
-                                set(comm, cfg, local_C.lengths(),
-                                    local_beta, data_C, local_C.strides());
-                            }
-                            else if (local_beta != T(1))
-                            {
-                                scale(comm, cfg, local_C.lengths(),
-                                      local_beta, false, data_C, local_C.strides());
                             }
                         });
                     }
@@ -741,8 +575,6 @@ void mult_block(const communicator& comm, const config& cfg,
         idx_B0 = next_B_ABC;
         idx_C = next_C_ABC;
     }
-
-    while (idx_C < nidx_C) scale_C(idx_C++);
 }
 
 template <typename T>

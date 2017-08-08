@@ -212,8 +212,15 @@ void contract_block(const communicator& comm, const config& cfg,
                     if (is_block_empty(C, irreps_C)) return;
 
                     auto local_C = C(irreps_C);
-                    tensor_matrix<T> ct(local_C, idx_C_AC, idx_C_BC);
                     T beta = beta_;
+
+                    auto len_AC = stl_ext::select_from(local_C.lengths(), idx_C_AC);
+                    auto len_BC = stl_ext::select_from(local_C.lengths(), idx_C_BC);
+                    auto stride_C_AC = stl_ext::select_from(local_C.strides(), idx_C_AC);
+                    auto stride_C_BC = stl_ext::select_from(local_C.strides(), idx_C_BC);
+
+                    tensor_matrix<T> ct(len_AC, len_BC, local_C.data(),
+                                        stride_C_AC, stride_C_BC);
 
                     if (ndim_AB != 0 || irrep_AB == 0)
                     {
@@ -227,8 +234,20 @@ void contract_block(const communicator& comm, const config& cfg,
 
                             if (is_block_empty(A, irreps_A)) continue;
 
-                            tensor_matrix<T> at(A(irreps_A), idx_A_AC, idx_A_AB);
-                            tensor_matrix<T> bt(B(irreps_B), idx_B_AB, idx_B_BC);
+                            auto local_A = A(irreps_A);
+                            auto local_B = B(irreps_B);
+
+                            auto len_AB = stl_ext::select_from(local_A.lengths(), idx_A_AB);
+                            auto stride_A_AB = stl_ext::select_from(local_A.strides(), idx_A_AB);
+                            auto stride_A_AC = stl_ext::select_from(local_A.strides(), idx_A_AC);
+                            auto stride_B_AB = stl_ext::select_from(local_B.strides(), idx_B_AB);
+                            auto stride_B_BC = stl_ext::select_from(local_B.strides(), idx_B_BC);
+
+                            tensor_matrix<T> at(len_AC, len_AB, const_cast<T*>(local_A.data()),
+                                                stride_A_AC, stride_A_AB);
+
+                            tensor_matrix<T> bt(len_AB, len_BC, const_cast<T*>(local_B.data()),
+                                                stride_B_AB, stride_B_BC);
 
                             if (subcomm.master())
                                 flops += 2*ct.length(0)*ct.length(1)*at.length(1);

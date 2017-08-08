@@ -1,6 +1,8 @@
 #include "util.hpp"
 #include "add.hpp"
 #include "internal/1t/dense/add.hpp"
+#include "internal/1t/dense/scale.hpp"
+#include "internal/1t/dense/set.hpp"
 
 namespace tblis
 {
@@ -115,6 +117,9 @@ void trace_block(const communicator& comm, const config& cfg,
         auto len_AB = stl_ext::select_from(local_B.lengths(), idx_B_AB);
         auto stride_B_AB = stl_ext::select_from(local_B.strides(), idx_B_AB);
 
+        auto local_beta = beta;
+        auto local_conj_B = conj_B;
+
         for (stride_type block_A = 0;block_A < nblock_A;block_A++)
         {
             assign_irreps(ndim_A_only, irrep_A, nirrep, block_A,
@@ -130,9 +135,21 @@ void trace_block(const communicator& comm, const config& cfg,
 
             add(comm, cfg, len_A_only, {}, len_AB,
                 alpha, conj_A, local_A.data(), stride_A_A, stride_A_AB,
-                 beta, conj_B, local_B.data(), {}, stride_B_AB);
+           local_beta, local_conj_B, local_B.data(), {}, stride_B_AB);
 
-            beta = T(1);
+            local_beta = T(1);
+            local_conj_B = false;
+        }
+
+        if (local_beta == T(0))
+        {
+            set(comm, cfg, local_B.lengths(),
+                T(0), local_B.data(), local_B.strides());
+        }
+        else if (local_beta != T(1) || (is_complex<T>::value && local_conj_B))
+        {
+            scale(comm, cfg, local_B.lengths(),
+                  local_beta, local_conj_B, local_B.data(), local_B.strides());
         }
     }
 }
@@ -221,6 +238,44 @@ void replicate_block(const communicator& comm, const config& cfg,
             add(comm, cfg, {}, len_B_only, len_AB,
                 alpha, conj_A, local_A.data(), {}, stride_A_AB,
                  beta, conj_B, local_B.data(), stride_B_B, stride_B_AB);
+        }
+    }
+
+    if (beta != T(1) || (is_complex<T>::value && conj_B))
+    {
+        for (irrep_AB = 0;irrep_AB < nirrep;irrep_AB++)
+        {
+            if (irrep_AB == A.irrep()) continue;
+
+            irrep_B = B.irrep()^irrep_AB;
+
+            for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
+            {
+                assign_irreps(ndim_AB, irrep_AB, nirrep, block_AB,
+                              irreps_B, idx_B_AB);
+
+
+                for (stride_type block_B = 0;block_B < nblock_B;block_B++)
+                {
+                    assign_irreps(ndim_B_only, irrep_B, nirrep, block_B,
+                                  irreps_B, idx_B_B);
+
+                    if (is_block_empty(B, irreps_B)) continue;
+
+                    auto local_B = B(irreps_B);
+
+                    if (beta == T(0))
+                    {
+                        set(comm, cfg, local_B.lengths(),
+                            T(0), local_B.data(), local_B.strides());
+                    }
+                    else
+                    {
+                        scale(comm, cfg, local_B.lengths(),
+                              beta, conj_B, local_B.data(), local_B.strides());
+                    }
+                }
+            }
         }
     }
 }

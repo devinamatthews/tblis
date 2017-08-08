@@ -92,11 +92,10 @@ void dot_block(const communicator& comm, const config& cfg,
             for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
             {
                 assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
-                                      irreps_A, group_AB.dense_idx[0],
-                                      irreps_B, group_AB.dense_idx[1]);
+                              irreps_A, group_AB.dense_idx[0],
+                              irreps_B, group_AB.dense_idx[1]);
 
                 if (is_block_empty(dpd_A, irreps_A)) continue;
-                if (is_block_empty(dpd_B, irreps_B)) continue;
 
                 auto local_A = dpd_A(irreps_A);
                 auto local_B = dpd_B(irreps_B);

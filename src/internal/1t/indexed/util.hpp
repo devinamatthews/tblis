@@ -341,8 +341,11 @@ void get_local_offset_helper(const len_vector& idx, const index_group<N>& group,
                              stride_type& off, unsigned i, Args&&... args)
 {
     off = 0;
+
     for (unsigned j = 0;j < group.mixed_pos[i].size();j++)
+    {
         off += idx[group.mixed_pos[i][j]]*group.mixed_stride[i][j];
+    }
 
     get_local_offset_helper<I+1>(idx, group, std::forward<Args>(args)...);
 }

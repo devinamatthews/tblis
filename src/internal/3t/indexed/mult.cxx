@@ -332,6 +332,8 @@ void mult_block(const communicator& comm, const config& cfg,
     stride_type idx_B0 = 0;
     stride_type idx_C = 0;
 
+    //TODO: set or scale
+
     while (idx_A < nidx_A && idx_B0 < nidx_B && idx_C < nidx_C)
     {
         if (indices_A[idx_A].key[0] < indices_B[idx_B0].key[0])
@@ -342,26 +344,6 @@ void mult_block(const communicator& comm, const config& cfg,
             }
             else
             {
-                if (beta != T(1))
-                {
-                    tasks.visit(idx++,
-                    [&,idx_C](const communicator& subcomm)
-                    {
-                        auto data_C = C.data(0) + indices_C[idx_C].offset;
-
-                        if (beta == T(0))
-                        {
-                            set(subcomm, cfg, C.dense_lengths(),
-                                T(0), data_C, C.dense_strides());
-                        }
-                        else
-                        {
-                            scale(subcomm, cfg, C.dense_lengths(),
-                                  beta, false, data_C, C.dense_strides());
-                        }
-                    });
-                }
-
                 idx_C++;
             }
         }
@@ -373,26 +355,6 @@ void mult_block(const communicator& comm, const config& cfg,
             }
             else
             {
-                if (beta != T(1))
-                {
-                    tasks.visit(idx++,
-                    [&,idx_C](const communicator& subcomm)
-                    {
-                        auto data_C = C.data(0) + indices_C[idx_C].offset;
-
-                        if (beta == T(0))
-                        {
-                            set(subcomm, cfg, C.dense_lengths(),
-                                T(0), data_C, C.dense_strides());
-                        }
-                        else
-                        {
-                            scale(subcomm, cfg, C.dense_lengths(),
-                                  beta, false, data_C, C.dense_strides());
-                        }
-                    });
-                }
-
                 idx_C++;
             }
         }
@@ -405,26 +367,6 @@ void mult_block(const communicator& comm, const config& cfg,
             }
             else if (indices_A[idx_A].key[0] > indices_C[idx_C].key[0])
             {
-                if (beta != T(1))
-                {
-                    tasks.visit(idx++,
-                    [&,idx_C](const communicator& subcomm)
-                    {
-                        auto data_C = C.data(0) + indices_C[idx_C].offset;
-
-                        if (beta == T(0))
-                        {
-                            set(subcomm, cfg, C.dense_lengths(),
-                                T(0), data_C, C.dense_strides());
-                        }
-                        else
-                        {
-                            scale(subcomm, cfg, C.dense_lengths(),
-                                  beta, false, data_C, C.dense_strides());
-                        }
-                    });
-                }
-
                 idx_C++;
             }
             else
@@ -453,26 +395,6 @@ void mult_block(const communicator& comm, const config& cfg,
                     }
                     else if (indices_A[idx_A].key[1] > indices_C[idx_C].key[1])
                     {
-                        if (beta != T(1))
-                        {
-                            tasks.visit(idx++,
-                            [&,idx_C](const communicator& subcomm)
-                            {
-                                auto data_C = C.data(0) + indices_C[idx_C].offset;
-
-                                if (beta == T(0))
-                                {
-                                    set(subcomm, cfg, C.dense_lengths(),
-                                        T(0), data_C, C.dense_strides());
-                                }
-                                else
-                                {
-                                    scale(subcomm, cfg, C.dense_lengths(),
-                                          beta, false, data_C, C.dense_strides());
-                                }
-                            });
-                        }
-
                         idx_C++;
                     }
                     else
@@ -494,26 +416,6 @@ void mult_block(const communicator& comm, const config& cfg,
                             }
                             else if (indices_B[idx_B].key[1] > indices_C[idx_C].key[2])
                             {
-                                if (beta != T(1))
-                                {
-                                    tasks.visit(idx++,
-                                    [&,idx_C](const communicator& subcomm)
-                                    {
-                                        auto data_C = C.data(0) + indices_C[idx_C].offset;
-
-                                        if (beta == T(0))
-                                        {
-                                            set(subcomm, cfg, C.dense_lengths(),
-                                                T(0), data_C, C.dense_strides());
-                                        }
-                                        else
-                                        {
-                                            scale(subcomm, cfg, C.dense_lengths(),
-                                                  beta, false, data_C, C.dense_strides());
-                                        }
-                                    });
-                                }
-
                                 idx_C++;
                             }
                             else
@@ -525,12 +427,11 @@ void mult_block(const communicator& comm, const config& cfg,
                                        indices_B[next_B_AB].key[1] == indices_B[idx_B].key[1]);
 
                                 tasks.visit(idx++,
-                                [&,idx_A,idx_B,idx_C,next_A_AB,next_B_AB,beta]
+                                [&,idx_A,idx_B,idx_C,next_A_AB,next_B_AB]
                                 (const communicator& subcomm)
                                 {
                                     auto local_idx_A = idx_A;
                                     auto local_idx_B = idx_B;
-                                    auto local_beta = beta;
 
                                     stride_type off_A_ABC, off_B_ABC, off_C_ABC;
                                     get_local_offset(indices_A[local_idx_A].idx[0], group_ABC,
@@ -544,26 +445,7 @@ void mult_block(const communicator& comm, const config& cfg,
                                     get_local_offset(indices_B[local_idx_B].idx[1], group_BC,
                                                      off_B_BC, 0, off_C_BC, 1);
 
-                                    auto data_C = C.data(0) + indices_C[idx_C].offset;
-
-                                    if (!group_AC.mixed_pos[1].empty() ||
-                                        !group_BC.mixed_pos[1].empty())
-                                    {
-                                        if (local_beta == T(0))
-                                        {
-                                            set(comm, cfg, C.dense_lengths(),
-                                                local_beta, data_C, C.dense_strides());
-                                        }
-                                        else if (local_beta != T(1))
-                                        {
-                                            scale(comm, cfg, C.dense_lengths(),
-                                                  local_beta, false, data_C, C.dense_strides());
-                                        }
-
-                                        local_beta = T(1);
-                                    }
-
-                                    data_C += off_C_AC + off_C_BC + off_C_ABC;
+                                    auto data_C = C.data(0) + indices_C[idx_C].offset + off_C_AC + off_C_BC + off_C_ABC;
 
                                     while (local_idx_A < next_A_AB && local_idx_B < next_B_AB)
                                     {
@@ -595,25 +477,10 @@ void mult_block(const communicator& comm, const config& cfg,
                                                         false, data_B, group_BC.dense_stride[0],
                                                                        group_AB.dense_stride[1],
                                                                        group_ABC.dense_stride[1],
-                                            local_beta, false, data_C, group_AC.dense_stride[1],
+                                                  T(1), false, data_C, group_AC.dense_stride[1],
                                                                        group_BC.dense_stride[1],
                                                                        group_ABC.dense_stride[2]);
-
-                                            local_beta = T(1);
                                         }
-                                    }
-
-                                    data_C -= off_C_AC + off_C_BC + off_C_ABC;
-
-                                    if (local_beta == T(0))
-                                    {
-                                        set(comm, cfg, C.dense_lengths(),
-                                            local_beta, data_C, C.dense_strides());
-                                    }
-                                    else if (local_beta != T(1))
-                                    {
-                                        scale(comm, cfg, C.dense_lengths(),
-                                              local_beta, false, data_C, C.dense_strides());
                                     }
                                 });
 
@@ -632,29 +499,6 @@ void mult_block(const communicator& comm, const config& cfg,
                 idx_C = next_C_ABC;
             }
         }
-    }
-
-    while (idx_C < nidx_C)
-    {
-        tasks.visit(idx++,
-        [&,idx_C]
-        (const communicator& subcomm)
-        {
-            auto data_C = C.data(0) + indices_C[idx_C].offset;
-
-            if (beta == T(0))
-            {
-                set(comm, cfg, C.dense_lengths(),
-                    beta, data_C, C.dense_strides());
-            }
-            else if (beta != T(1))
-            {
-                scale(comm, cfg, C.dense_lengths(),
-                      beta, false, data_C, C.dense_strides());
-            }
-        });
-
-        idx_C++;
     }
 }
 

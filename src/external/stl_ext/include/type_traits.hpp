@@ -188,10 +188,11 @@ using enable_if_non_const_pointer = enable_if<is_non_const_pointer<T>::value,U>;
 template <typename T, typename U=void>
 using enable_if_non_const_pointer_t = typename enable_if_non_const_pointer<T,U>::type;
 
-template <typename T, typename U=void>
-struct enable_if_exists { typedef U type; };
-template <typename T, typename U=void>
-using enable_if_exists_t = typename enable_if_exists<T,U>::type;
+
+template <typename...>
+struct enable_if_exists { typedef void type; };
+template <typename... Args>
+using enable_if_exists_t = typename enable_if_exists<Args...>::type;
 
 template <typename T, typename U> using is_similar = is_same<remove_cv_t<T>,remove_cv_t<U>>;
 template <typename T, typename U>

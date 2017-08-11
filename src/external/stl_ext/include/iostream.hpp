@@ -445,6 +445,25 @@ struct printos_printer<N, N, Args...>
     }
 };
 
+template <typename T, typename=void>
+struct is_container : std::false_type {};
+template <typename T>
+struct is_container<T, enable_if_exists_t<typename T::value_type,
+                                          typename T::iterator>>
+    : std::true_type {};
+
+template <typename T, typename=void>
+struct is_map : std::false_type {};
+template <typename T>
+struct is_map<T, enable_if_exists_t<typename T::key_type,
+                                    typename T::mapped_type>>
+    : std::true_type {};
+
+template <typename T>
+struct is_string : std::false_type {};
+template <typename T>
+struct is_string<std::basic_string<T>> : std::true_type {};
+
 }
 }
 
@@ -461,35 +480,63 @@ std::ostream& operator<<(std::ostream& os, const stl_ext::detail::printos_helper
 template <typename... Args>
 std::ostream& operator<<(std::ostream& os, const std::tuple<Args...>& t)
 {
-    os << '{';
+    os << '(';
     stl_ext::detail::print_tuple_helper<sizeof...(Args), Args...>(os, t);
-    os << '}';
+    os << ')';
     return os;
 }
 
 template <typename T, typename U>
 std::ostream& operator<<(std::ostream& os, const std::pair<T, U>& t)
 {
-    os << '{' << t.first << ", " << t.second << '}';
+    os << '(' << t.first << ", " << t.second << ')';
     return os;
 }
 
 template <typename T>
-std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
+stl_ext::enable_if_t<stl_ext::detail::is_map<T>::value, std::ostream&>
+operator<<(std::ostream& os, const T& v)
 {
+    auto it0 = v.begin();
+    auto it1 = v.end();
+    os << "{";
+    if (it0 != it1)
+    {
+        os << it0->first << ": " << it0->second;
+        for (++it0;it0 != it1;++it0)
+            os << ", " << it0->first << ": " << it0->second;
+    }
+    os << "}";
+    return os;
+}
+
+template <typename T>
+stl_ext::enable_if_t<stl_ext::detail::is_container<T>::value &&
+                     !stl_ext::detail::is_map<T>::value &&
+                     !stl_ext::detail::is_string<T>::value, std::ostream&>
+operator<<(std::ostream& os, const T& v)
+{
+    auto it0 = v.begin();
+    auto it1 = v.end();
     os << "[";
-    if (!v.empty()) os << v[0];
-    for (size_t i = 1;i < v.size();i++) os << ", " << v[i];
+    if (it0 != it1)
+    {
+        os << *it0;
+        for (++it0;it0 != it1;++it0) os << ", " << *it0;
+    }
     os << "]";
     return os;
 }
 
 template <typename T, size_t N>
-std::ostream& operator<<(std::ostream& os, const std::array<T,N>& v)
+std::ostream& operator<<(std::ostream& os, const T v[N])
 {
     os << "[";
-    if (N) os << v[0];
-    for (int i = 1;i < N;i++) os << ", " << v[i];
+    if (N)
+    {
+        os << v[0];
+        for (int i = 1;i < N;i++) os << ", " << v[i];
+    }
     os << "]";
     return os;
 }

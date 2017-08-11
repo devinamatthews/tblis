@@ -57,6 +57,12 @@ void dot_block(const communicator& comm, const config& cfg,
     unsigned irrep_AB = A.irrep();
     for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
 
+    if (group_AB.dense_ndim == 0 && irrep_AB != 0)
+    {
+        if (comm.master()) result = 0;
+        return;
+    }
+
     group_indices<1> indices_A(A, group_AB, 0);
     group_indices<1> indices_B(B, group_AB, 1);
     auto nidx_A = indices_A.size();
@@ -136,6 +142,21 @@ void dot(const communicator& comm, const config& cfg,
         if (comm.master()) result = 0;
         comm.barrier();
         return;
+    }
+
+    for (unsigned i = 0;i < idx_A_AB.size();i++)
+    {
+        if (idx_A_AB[i] >= A.dense_dimension() &&
+            idx_B_AB[i] >= B.dense_dimension())
+        {
+            if (A.indexed_irrep(idx_A_AB[i] - A.dense_dimension()) !=
+                B.indexed_irrep(idx_B_AB[i] - B.dense_dimension()))
+            {
+                if (comm.master()) result = 0;
+                comm.barrier();
+                return;
+            }
+        }
     }
 
     if (dpd_impl == FULL)

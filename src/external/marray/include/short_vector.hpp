@@ -215,11 +215,13 @@ class short_vector
 
         reference operator[](size_type pos)
         {
+            MARRAY_ASSERT(pos < size());
             return data()[pos];
         }
 
         const_reference operator[](size_type pos) const
         {
+            MARRAY_ASSERT(pos < size());
             return data()[pos];
         }
 

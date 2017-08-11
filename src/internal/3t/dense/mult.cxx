@@ -24,13 +24,13 @@ void contract_blas(const communicator& comm, const config& cfg,
                    const len_vector& len_AB,
                    const len_vector& len_AC,
                    const len_vector& len_BC,
-                   T alpha, const T* A,
+                   T alpha, bool conj_A, const T* A,
                    const stride_vector& stride_A_AB,
                    const stride_vector& stride_A_AC,
-                            const T* B,
+                            bool conj_B, const T* B,
                    const stride_vector& stride_B_AB,
                    const stride_vector& stride_B_BC,
-                   T  beta,       T* C,
+                   T  beta, bool conj_C,       T* C,
                    const stride_vector& stride_C_AC,
                    const stride_vector& stride_C_BC)
 {
@@ -52,12 +52,12 @@ void contract_blas(const communicator& comm, const config& cfg,
         matricize<T>(cr, cm, static_cast<unsigned>(len_AC.size()));
 
         add(comm, cfg, {}, {}, ar.lengths(),
-            T(1), false,         A, {}, stride_A_AC+stride_A_AB,
-            T(0), false, ar.data(), {},            ar.strides());
+            T(1), conj_A,         A, {}, stride_A_AC+stride_A_AB,
+            T(0),  false, ar.data(), {},            ar.strides());
 
         add(comm, cfg, {}, {}, br.lengths(),
-            T(1), false,         B, {}, stride_B_AB+stride_B_BC,
-            T(0), false, br.data(), {},            br.strides());
+            T(1), conj_B,         B, {}, stride_B_AB+stride_B_BC,
+            T(0),  false, br.data(), {},            br.strides());
 
         mult(comm, cfg, cm.length(0), cm.length(1), am.length(1),
              alpha, false, am.data(), am.stride(0), am.stride(1),
@@ -65,77 +65,10 @@ void contract_blas(const communicator& comm, const config& cfg,
               T(0), false, cm.data(), cm.stride(0), cm.stride(1));
 
         add(comm, cfg, {}, {}, cr.lengths(),
-            T(1), false, cr.data(), {},            cr.strides(),
-            beta, false,         C, {}, stride_C_AC+stride_C_BC);
+            T(1),  false, cr.data(), {},            cr.strides(),
+            beta, conj_C,         C, {}, stride_C_AC+stride_C_BC);
     },
     ar, br, cr);
-}
-
-template <typename T>
-void contract_ref(const communicator& comm, const config& cfg,
-                  const len_vector& len_AB,
-                  const len_vector& len_AC,
-                  const len_vector& len_BC,
-                  T alpha, const T* A,
-                  const stride_vector& stride_A_AB,
-                  const stride_vector& stride_A_AC,
-                           const T* B,
-                  const stride_vector& stride_B_AB,
-                  const stride_vector& stride_B_BC,
-                  T  beta,       T* C,
-                  const stride_vector& stride_C_AC,
-                  const stride_vector& stride_C_BC)
-{
-    (void)cfg;
-
-    viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
-    viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
-    viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
-    len_type m = stl_ext::prod(len_AC);
-    len_type n = stl_ext::prod(len_BC);
-
-    len_type m_min, m_max, n_min, n_max;
-    std::tie(m_min, m_max, std::ignore,
-             n_min, n_max, std::ignore) = comm.distribute_over_threads_2d(m, n);
-
-    const T* A0 = A;
-    const T* B0 = B;
-          T* C0 = C;
-
-    iter_AC.position(m_min, A0, C0);
-
-    for (len_type i = m_min;i < m_max;i++)
-    {
-        iter_AC.next(A0, C0);
-
-        A = A0;
-        B = B0;
-        C = C0;
-
-        iter_BC.position(n_min, B, C);
-
-        for (len_type j = n_min;j < n_max;j++)
-        {
-            iter_BC.next(B, C);
-
-            T temp = T();
-
-            while (iter_AB.next(A, B))
-            {
-                temp += (*A)*(*B);
-            }
-            temp *= alpha;
-
-            if (beta == T(0))
-            {
-                *C = temp;
-            }
-            else
-            {
-                *C = temp + beta*(*C);
-            }
-        }
-    }
 }
 
 template <typename T>
@@ -143,16 +76,19 @@ void contract_blis(const communicator& comm, const config& cfg,
                    const len_vector& len_AB,
                    const len_vector& len_AC,
                    const len_vector& len_BC,
-                   T alpha, const T* A,
+                   T alpha, bool conj_A, const T* A,
                    const stride_vector& stride_A_AB,
                    const stride_vector& stride_A_AC,
-                            const T* B,
+                            bool conj_B, const T* B,
                    const stride_vector& stride_B_AB,
                    const stride_vector& stride_B_BC,
-                   T  beta,       T* C,
+                   T  beta, bool conj_C,       T* C,
                    const stride_vector& stride_C_AC,
                    const stride_vector& stride_C_BC)
 {
+    //TODO
+    TBLIS_ASSERT(!conj_A && !conj_B && !conj_C);
+
     auto reorder_AC = detail::sort_by_stride(stride_C_AC, stride_A_AC);
     auto reorder_BC = detail::sort_by_stride(stride_C_BC, stride_B_BC);
     auto reorder_AB = detail::sort_by_stride(stride_A_AB, stride_B_AB);
@@ -209,13 +145,13 @@ template void contract_blis(const communicator& comm, const config& cfg, \
                             const len_vector& len_AB, \
                             const len_vector& len_AC, \
                             const len_vector& len_BC, \
-                            T alpha, const T* A, \
+                            T alpha, bool conj_A, const T* A, \
                             const stride_vector& stride_A_AB, \
                             const stride_vector& stride_A_AC, \
-                                     const T* B, \
+                                     bool conj_B, const T* B, \
                             const stride_vector& stride_B_AB, \
                             const stride_vector& stride_B_BC, \
-                            T  beta,       T* C, \
+                            T  beta, bool conj_C,       T* C, \
                             const stride_vector& stride_C_AC, \
                             const stride_vector& stride_C_BC);
 #include "configs/foreach_type.h"
@@ -226,15 +162,15 @@ void mult_blas(const communicator& comm, const config& cfg,
                const len_vector& len_AC,
                const len_vector& len_BC,
                const len_vector& len_ABC,
-               T alpha, const T* A,
+               T alpha, bool conj_A, const T* A,
                const stride_vector& stride_A_AB,
                const stride_vector& stride_A_AC,
                const stride_vector& stride_A_ABC,
-                        const T* B,
+                        bool conj_B, const T* B,
                const stride_vector& stride_B_AB,
                const stride_vector& stride_B_BC,
                const stride_vector& stride_B_ABC,
-               T  beta,       T* C,
+               T  beta, bool conj_C,       T* C,
                const stride_vector& stride_C_AC,
                const stride_vector& stride_C_BC,
                const stride_vector& stride_C_ABC)
@@ -261,12 +197,12 @@ void mult_blas(const communicator& comm, const config& cfg,
         while (it.next(A, B, C))
         {
             add(comm, cfg, {}, {}, ar.lengths(),
-                T(1), false,         A, {}, stride_A_AC+stride_A_AB,
-                T(0), false, ar.data(), {},             ar.strides());
+                T(1), conj_A,         A, {}, stride_A_AC+stride_A_AB,
+                T(0),  false, ar.data(), {},            ar.strides());
 
             add(comm, cfg, {}, {}, br.lengths(),
-                T(1), false,         B, {}, stride_B_AB+stride_B_BC,
-                T(0), false, br.data(), {},             br.strides());
+                T(1), conj_B,         B, {}, stride_B_AB+stride_B_BC,
+                T(0),  false, br.data(), {},            br.strides());
 
             mult(comm, cfg, cm.length(0), cm.length(1), am.length(1),
                  alpha, false, am.data(), am.stride(0), am.stride(1),
@@ -274,8 +210,8 @@ void mult_blas(const communicator& comm, const config& cfg,
                   T(0), false, cm.data(), cm.stride(0), cm.stride(1));
 
             add(comm, cfg, {}, {}, cr.lengths(),
-                T(1), false, cr.data(), {},            cr.strides(),
-                beta, false,         C, {}, stride_C_AC+stride_C_BC);
+                T(1),  false, cr.data(), {},             cr.strides(),
+                beta, conj_C,         C, {}, stride_C_AC+stride_C_BC);
         }
     },
     ar, br, cr);
@@ -287,15 +223,15 @@ void mult_ref(const communicator& comm, const config& cfg,
               const len_vector& len_AC,
               const len_vector& len_BC,
               const len_vector& len_ABC,
-              T alpha, const T* A,
+              T alpha, bool conj_A, const T* A,
               const stride_vector& stride_A_AB,
               const stride_vector& stride_A_AC,
               const stride_vector& stride_A_ABC,
-                       const T* B,
+                       bool conj_B, const T* B,
               const stride_vector& stride_B_AB,
               const stride_vector& stride_B_BC,
               const stride_vector& stride_B_ABC,
-              T  beta,       T* C,
+              T  beta, bool conj_C,       T* C,
               const stride_vector& stride_C_AC,
               const stride_vector& stride_C_BC,
               const stride_vector& stride_C_ABC)
@@ -323,11 +259,14 @@ void mult_ref(const communicator& comm, const config& cfg,
             {
                 T temp = T();
 
+                TBLIS_SPECIAL_CASE(conj_A,
+                TBLIS_SPECIAL_CASE(conj_B,
                 while (iter_AB.next(A, B))
                 {
-                    temp += (*A)*(*B);
+                    temp += (conj_A ? conj(*A) : *A)*
+                            (conj_B ? conj(*B) : *B);
                 }
-
+                ))
                 temp *= alpha;
 
                 if (beta == T(0))
@@ -336,7 +275,7 @@ void mult_ref(const communicator& comm, const config& cfg,
                 }
                 else
                 {
-                    *C = temp + beta*(*C);
+                    *C = temp + beta*(conj_C ? conj(*C) : *C);
                 }
             }
         }
@@ -344,14 +283,63 @@ void mult_ref(const communicator& comm, const config& cfg,
 }
 
 template <typename T>
+void mult_vec(const communicator& comm, const config& cfg,
+              const len_vector& len_ABC,
+              T alpha, bool conj_A, const T* A,
+              const stride_vector& stride_A_ABC,
+                       bool conj_B, const T* B,
+              const stride_vector& stride_B_ABC,
+              T  beta, bool conj_C,       T* C,
+              const stride_vector& stride_C_ABC)
+{
+    (void)cfg;
+
+    viterator<3> iter_ABC(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
+    len_type n = stl_ext::prod(len_ABC);
+
+    len_type n_min, n_max;
+    std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(n);
+
+    iter_ABC.position(n_min, A, B, C);
+
+    if (beta == T(0))
+    {
+        TBLIS_SPECIAL_CASE(conj_A,
+        TBLIS_SPECIAL_CASE(conj_B,
+        for (len_type i = n_min;i < n_max;i++)
+        {
+            iter_ABC.next(A, B, C);
+
+            *C = alpha*(conj_A ? conj(*A) : *A)*
+                       (conj_B ? conj(*B) : *B);
+        }
+        ))
+    }
+    else
+    {
+        TBLIS_SPECIAL_CASE(conj_A,
+        TBLIS_SPECIAL_CASE(conj_B,
+        for (len_type i = n_min;i < n_max;i++)
+        {
+            iter_ABC.next(A, B, C);
+
+            *C = alpha*(conj_A ? conj(*A) : *A)*
+                       (conj_B ? conj(*B) : *B) +
+                  beta*(conj_C ? conj(*C) : *C);
+        }
+        ))
+    }
+}
+
+template <typename T>
 void outer_prod_blas(const communicator& comm, const config& cfg,
                      const len_vector& len_AC,
                      const len_vector& len_BC,
-                     T alpha, const T* A,
+                     T alpha, bool conj_A, const T* A,
                      const stride_vector& stride_A_AC,
-                              const T* B,
+                              bool conj_B, const T* B,
                      const stride_vector& stride_B_BC,
-                     T  beta,       T* C,
+                     T  beta, bool conj_C,       T* C,
                      const stride_vector& stride_C_AC,
                      const stride_vector& stride_C_BC)
 {
@@ -373,12 +361,12 @@ void outer_prod_blas(const communicator& comm, const config& cfg,
         matricize<T>(cr, cm, static_cast<unsigned>(len_AC.size()));
 
         add(comm, cfg, {}, {}, ar.lengths(),
-            T(1), false,         A, {},  stride_A_AC,
-            T(0), false, ar.data(), {}, ar.strides());
+            T(1), conj_A,         A, {},  stride_A_AC,
+            T(0),  false, ar.data(), {}, ar.strides());
 
         add(comm, cfg, {}, {}, br.lengths(),
-            T(1), false,         B, {},  stride_B_BC,
-            T(0), false, br.data(), {}, br.strides());
+            T(1), conj_B,         B, {},  stride_B_BC,
+            T(0),  false, br.data(), {}, br.strides());
 
         mult(comm, cfg, cm.length(0), cm.length(1), am.length(1),
              alpha, false, am.data(), am.stride(0), am.stride(1),
@@ -386,68 +374,10 @@ void outer_prod_blas(const communicator& comm, const config& cfg,
               T(0), false, cm.data(), cm.stride(0), cm.stride(1));
 
         add(comm, cfg, {}, {}, cr.lengths(),
-            T(1), false, cr.data(), {},             cr.strides(),
-            beta, false,         C, {}, stride_C_AC+stride_C_BC);
+            T(1),  false, cr.data(), {},            cr.strides(),
+            beta, conj_C,         C, {}, stride_C_AC+stride_C_BC);
     },
     ar, br, cr);
-}
-
-template <typename T>
-void outer_prod_ref(const communicator& comm, const config& cfg,
-                    const len_vector& len_AC,
-                    const len_vector& len_BC,
-                    T alpha, const T* A,
-                    const stride_vector& stride_A_AC,
-                             const T* B,
-                    const stride_vector& stride_B_BC,
-                    T  beta,       T* C,
-                    const stride_vector& stride_C_AC,
-                    const stride_vector& stride_C_BC)
-{
-    (void)cfg;
-
-    viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
-    viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
-    len_type m = stl_ext::prod(len_AC);
-    len_type n = stl_ext::prod(len_BC);
-
-    len_type m_min, m_max, n_min, n_max;
-    std::tie(m_min, m_max, std::ignore,
-             n_min, n_max, std::ignore) = comm.distribute_over_threads_2d(m, n);
-
-    const T* A0 = A;
-    const T* B0 = B;
-          T* C0 = C;
-
-    iter_AC.position(m_min, A0, C0);
-
-    for (len_type i = m_min;i < m_max;i++)
-    {
-        iter_AC.next(A0, C0);
-
-        A = A0;
-        B = B0;
-        C = C0;
-
-        iter_BC.position(n_min, B, C);
-
-        if (beta == T(0))
-        {
-            for (len_type j = n_min;j < n_max;j++)
-            {
-                iter_BC.next(B, C);
-                *C = alpha*(*A)*(*B);
-            }
-        }
-        else
-        {
-            for (len_type j = n_min;j < n_max;j++)
-            {
-                iter_BC.next(B, C);
-                *C = alpha*(*A)*(*B) + beta*(*C);
-            }
-        }
-    }
 }
 
 template <typename T>
@@ -455,13 +385,13 @@ void weight_blas(const communicator& comm, const config& cfg,
                  const len_vector& len_AC,
                  const len_vector& len_BC,
                  const len_vector& len_ABC,
-                 T alpha, const T* A,
+                 T alpha, bool conj_A, const T* A,
                  const stride_vector& stride_A_AC,
                  const stride_vector& stride_A_ABC,
-                          const T* B,
+                          bool conj_B, const T* B,
                  const stride_vector& stride_B_BC,
                  const stride_vector& stride_B_ABC,
-                 T  beta,       T* C,
+                 T  beta, bool conj_C,       T* C,
                  const stride_vector& stride_C_AC,
                  const stride_vector& stride_C_BC,
                  const stride_vector& stride_C_ABC)
@@ -488,12 +418,12 @@ void weight_blas(const communicator& comm, const config& cfg,
         while (it.next(A, B, C))
         {
             add(comm, cfg, {}, {}, ar.lengths(),
-                T(1), false,         A, {},  stride_A_AC,
-                T(0), false, ar.data(), {}, ar.strides());
+                T(1), conj_A,         A, {},  stride_A_AC,
+                T(0),  false, ar.data(), {}, ar.strides());
 
             add(comm, cfg, {}, {}, br.lengths(),
-                T(1), false,         B, {},  stride_B_BC,
-                T(0), false, br.data(), {}, br.strides());
+                T(1), conj_B,         B, {},  stride_B_BC,
+                T(0),  false, br.data(), {}, br.strides());
 
             mult(comm, cfg, cm.length(0), cm.length(1), am.length(1),
                  alpha, false, am.data(), am.stride(0), am.stride(1),
@@ -501,63 +431,11 @@ void weight_blas(const communicator& comm, const config& cfg,
                   T(0), false, cm.data(), cm.stride(0), cm.stride(1));
 
             add(comm, cfg, {}, {}, cr.lengths(),
-                T(1), false, cr.data(), {},             cr.strides(),
-                beta, false,         C, {}, stride_C_AC+stride_C_BC);
+                T(1),  false, cr.data(), {},            cr.strides(),
+                beta, conj_C,         C, {}, stride_C_AC+stride_C_BC);
         }
     },
     ar, br, cr);
-}
-
-template <typename T>
-void weight_ref(const communicator& comm, const config& cfg,
-                const len_vector& len_AC,
-                const len_vector& len_BC,
-                const len_vector& len_ABC,
-                T alpha, const T* A,
-                const stride_vector& stride_A_AC,
-                const stride_vector& stride_A_ABC,
-                         const T* B,
-                const stride_vector& stride_B_BC,
-                const stride_vector& stride_B_ABC,
-                T  beta,       T* C,
-                const stride_vector& stride_C_AC,
-                const stride_vector& stride_C_BC,
-                const stride_vector& stride_C_ABC)
-{
-    (void)cfg;
-
-    viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
-    viterator<2> iter_BC(len_BC, stride_B_BC, stride_C_BC);
-    viterator<3> iter_ABC(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
-    len_type n = stl_ext::prod(len_ABC);
-
-    len_type n_min, n_max;
-    std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(n);
-
-    iter_ABC.position(n_min, A, B, C);
-
-    for (len_type i = n_min;i < n_max;i++)
-    {
-        iter_ABC.next(A, B, C);
-
-        while (iter_AC.next(A, C))
-        {
-            if (beta == T(0))
-            {
-                while (iter_BC.next(B, C))
-                {
-                    *C = alpha*(*A)*(*B);
-                }
-            }
-            else
-            {
-                while (iter_BC.next(B, C))
-                {
-                    *C = alpha*(*A)*(*B) + beta*(*C);
-                }
-            }
-        }
-    }
 }
 
 template <typename T>
@@ -579,84 +457,143 @@ void mult(const communicator& comm, const config& cfg,
           const stride_vector& stride_C_BC,
           const stride_vector& stride_C_ABC)
 {
-    TBLIS_ASSERT(!conj_A && !conj_B && !conj_C);
+    if (impl == REFERENCE)
+    {
+        mult_ref(comm, cfg,
+                 len_AB, len_AC, len_BC, len_ABC,
+                 alpha, conj_A, A, stride_A_AB, stride_A_AC, stride_A_ABC,
+                        conj_B, B, stride_B_AB, stride_B_BC, stride_B_ABC,
+                  beta, conj_C, C, stride_C_AC, stride_C_BC, stride_C_ABC);
+        return;
+    }
 
-    if (len_AB.empty() && len_ABC.empty())
+    enum
     {
-        if (impl == REFERENCE)
-        {
-            outer_prod_ref(comm, cfg, len_AC, len_BC,
-                           alpha, A, stride_A_AC,
-                                  B, stride_B_BC,
-                            beta, C, stride_C_AC, stride_C_BC);
-        }
-        else
-        {
+        HAS_NONE = 0x0,
+        HAS_AB   = 0x1,
+        HAS_AC   = 0x2,
+        HAS_BC   = 0x4,
+        HAS_ABC  = 0x8
+    };
+
+    int groups = (len_AB.empty()  ? 0 : HAS_AB ) +
+                 (len_AC.empty()  ? 0 : HAS_AC ) +
+                 (len_BC.empty()  ? 0 : HAS_BC ) +
+                 (len_ABC.empty() ? 0 : HAS_ABC);
+
+    T sum;
+    viterator<3> iter_ABC(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
+
+    switch (groups)
+    {
+        case HAS_NONE:
+            if (beta == T(0))
+            {
+                *C = alpha*(conj_A ? conj(*A) : *A)*
+                           (conj_B ? conj(*B) : *B);
+            }
+            else
+            {
+                *C = alpha*(conj_A ? conj(*A) : *A)*
+                           (conj_B ? conj(*B) : *B) +
+                      beta*(conj_C ? conj(*C) : *C);
+            }
+            break;
+        case HAS_AB:
+            dot(comm, cfg, len_AB, conj_A, A, stride_A_AB,
+                                   conj_B, B, stride_B_AB, sum);
+            if (beta == T(0))
+            {
+                *C = alpha*sum;
+            }
+            else
+            {
+                *C = alpha*sum + beta*(conj_C ? conj(*C) : *C);
+            }
+            break;
+        case HAS_AC:
+            add(comm, cfg, {}, {}, len_AC, alpha*(conj_B ? conj(*B) : *B),
+                conj_A, A, {}, stride_A_AC, beta, conj_C, C, {}, stride_C_AC);
+            break;
+        case HAS_BC:
+            add(comm, cfg, {}, {}, len_BC, alpha*(conj_A ? conj(*A) : *A),
+                conj_B, B, {}, stride_B_BC, beta, conj_C, C, {}, stride_C_BC);
+            break;
+        case HAS_ABC:
+            mult_vec(comm, cfg, len_ABC,
+                     alpha, conj_A, A, stride_A_ABC,
+                            conj_B, B, stride_B_ABC,
+                      beta, conj_C, C, stride_C_ABC);
+            break;
+        case HAS_AC+HAS_BC:
             outer_prod_blas(comm, cfg, len_AC, len_BC,
-                            alpha, A, stride_A_AC,
-                                   B, stride_B_BC,
-                             beta, C, stride_C_AC, stride_C_BC);
-        }
-    }
-    else if (len_AB.empty())
-    {
-        if (impl == REFERENCE || len_AC.empty() || len_BC.empty())
-        {
-            weight_ref(comm, cfg, len_AC, len_BC, len_ABC,
-                       alpha, A, stride_A_AC, stride_A_ABC,
-                              B, stride_B_BC, stride_B_ABC,
-                        beta, C, stride_C_AC, stride_C_BC, stride_C_ABC);
-        }
-        else
-        {
+                            alpha, conj_A, A, stride_A_AC,
+                                   conj_B, B, stride_B_BC,
+                             beta, conj_C, C, stride_C_AC, stride_C_BC);
+            break;
+        //TODO: gemv
+        case HAS_AB+HAS_AC:
+        case HAS_AB+HAS_BC:
+        case HAS_AB+HAS_AC+HAS_BC:
+            if (impl == BLAS_BASED)
+            {
+                contract_blas(comm, cfg, len_AB, len_AC, len_BC,
+                              alpha, conj_A, A, stride_A_AB, stride_A_AC,
+                                     conj_B, B, stride_B_AB, stride_B_BC,
+                               beta, conj_C, C, stride_C_AC, stride_C_BC);
+            }
+            else
+            {
+                contract_blis(comm, cfg, len_AB, len_AC, len_BC,
+                              alpha, conj_A, A, stride_A_AB, stride_A_AC,
+                                     conj_B, B, stride_B_AB, stride_B_BC,
+                               beta, conj_C, C, stride_C_AC, stride_C_BC);
+            }
+            break;
+        case HAS_AB+HAS_ABC:
+            while (iter_ABC.next(A, B, C))
+            {
+                dot(comm, cfg, len_AB, conj_A, A, stride_A_AB,
+                                       conj_B, B, stride_B_AB, sum);
+                if (beta == T(0))
+                {
+                    *C = alpha*sum;
+                }
+                else
+                {
+                    *C = alpha*sum + beta*(conj_C ? conj(*C) : *C);
+                }
+            }
+            break;
+        case HAS_AC+HAS_ABC:
+            while (iter_ABC.next(A, B, C))
+            {
+                add(comm, cfg, {}, {}, len_AC, alpha*(conj_B ? conj(*B) : *B),
+                    conj_A, A, {}, stride_A_AC, beta, conj_C, C, {}, stride_C_AC);
+            }
+            break;
+        case HAS_BC+HAS_ABC:
+            while (iter_ABC.next(A, B, C))
+            {
+                add(comm, cfg, {}, {}, len_BC, alpha*(conj_A ? conj(*A) : *A),
+                    conj_B, B, {}, stride_B_BC, beta, conj_C, C, {}, stride_C_BC);
+            }
+            break;
+        case HAS_AC+HAS_BC+HAS_ABC:
             weight_blas(comm, cfg, len_AC, len_BC, len_ABC,
-                        alpha, A, stride_A_AC, stride_A_ABC,
-                               B, stride_B_BC, stride_B_ABC,
-                         beta, C, stride_C_AC, stride_C_BC, stride_C_ABC);
-        }
-    }
-    else if (len_ABC.empty())
-    {
-        if (impl == REFERENCE)
-        {
-            contract_ref(comm, cfg, len_AB, len_AC, len_BC,
-                         alpha, A, stride_A_AB, stride_A_AC,
-                                B, stride_B_AB, stride_B_BC,
-                          beta, C, stride_C_AC, stride_C_BC);
-        }
-        else if (impl == BLAS_BASED)
-        {
-            contract_blas(comm, cfg, len_AB, len_AC, len_BC,
-                          alpha, A, stride_A_AB, stride_A_AC,
-                                 B, stride_B_AB, stride_B_BC,
-                           beta, C, stride_C_AC, stride_C_BC);
-        }
-        else
-        {
-            contract_blis(comm, cfg, len_AB, len_AC, len_BC,
-                          alpha, A, stride_A_AB, stride_A_AC,
-                                 B, stride_B_AB, stride_B_BC,
-                           beta, C, stride_C_AC, stride_C_BC);
-        }
-    }
-    else
-    {
-        if (impl == REFERENCE)
-        {
-            mult_ref(comm, cfg,
-                     len_AB, len_AC, len_BC, len_ABC,
-                     alpha, A, stride_A_AB, stride_A_AC, stride_A_ABC,
-                            B, stride_B_AB, stride_B_BC, stride_B_ABC,
-                      beta, C, stride_C_AC, stride_C_BC, stride_C_ABC);
-        }
-        else
-        {
+                        alpha, conj_A, A, stride_A_AC, stride_A_ABC,
+                               conj_B, B, stride_B_BC, stride_B_ABC,
+                         beta, conj_C, C, stride_C_AC, stride_C_BC, stride_C_ABC);
+            break;
+        case HAS_AB+HAS_AC+HAS_ABC:
+        case HAS_AB+HAS_BC+HAS_ABC:
+        case HAS_AB+HAS_AC+HAS_BC+HAS_ABC:
             mult_blas(comm, cfg,
                       len_AB, len_AC, len_BC, len_ABC,
-                      alpha, A, stride_A_AB, stride_A_AC, stride_A_ABC,
-                             B, stride_B_AB, stride_B_BC, stride_B_ABC,
-                       beta, C, stride_C_AC, stride_C_BC, stride_C_ABC);
-        }
+                      alpha, conj_A, A, stride_A_AB, stride_A_AC, stride_A_ABC,
+                             conj_B, B, stride_B_AB, stride_B_BC, stride_B_ABC,
+                       beta, conj_C, C, stride_C_AC, stride_C_BC, stride_C_ABC);
+            break;
     }
 
     comm.barrier();

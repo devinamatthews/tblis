@@ -1,4 +1,6 @@
 #include "add.hpp"
+#include "reduce.hpp"
+#include "shift.hpp"
 
 #include "util/tensor.hpp"
 
@@ -31,6 +33,48 @@ void add(const communicator& comm, const config& cfg,
     auto stride_B = stl_ext::permuted(stride_B_, perm_B);
     auto stride_A_AB = stl_ext::permuted(stride_A_AB_, perm_AB);
     auto stride_B_AB = stl_ext::permuted(stride_B_AB_, perm_AB);
+
+    //
+    // Scalar intermediate
+    //
+    if (len_AB.empty())
+    {
+        if (!len_A.empty())
+        {
+            T sum;
+            len_type idx;
+            reduce(comm, cfg, REDUCE_SUM, len_A, A, stride_A, sum, idx);
+
+            if (beta == T(0))
+            {
+                *B = alpha*(conj_A ? conj(sum) : sum);
+            }
+            else
+            {
+                *B = alpha*(conj_A ? conj(sum) : sum) +
+                      beta*(conj_B ? conj( *B) :  *B);
+            }
+        }
+        else if (!len_B.empty())
+        {
+            shift(comm, cfg, len_B, alpha*(conj_A ? conj(*A) : *A),
+                  beta, conj_B, B, stride_B);
+        }
+        else
+        {
+            if (beta == T(0))
+            {
+                *B = alpha*(conj_A ? conj(*A) : *A);
+            }
+            else
+            {
+                *B = alpha*(conj_A ? conj(*A) : *A) +
+                      beta*(conj_B ? conj(*B) : *B);
+            }
+        }
+
+        return;
+    }
 
     if (!len_A.empty())
     {
@@ -93,7 +137,7 @@ void add(const communicator& comm, const config& cfg,
             ))
         }
     }
-    else if (!len_AB.empty())
+    else
     {
         //TODO transpose ukr
 
@@ -139,19 +183,6 @@ void add(const communicator& comm, const config& cfg,
                                     alpha, conj_A, A, stride_A0,
                                      beta, conj_B, B, stride_B0);
             }
-        }
-    }
-    else
-    {
-        if (beta == T(0))
-        {
-            cfg.copy_ukr.call<T>(1, alpha, conj_A, A, 0,
-                                                   B, 0);
-        }
-        else
-        {
-            cfg.add_ukr.call<T>(1, alpha, conj_A, A, 0,
-                                    beta, conj_B, B, 0);
         }
     }
 

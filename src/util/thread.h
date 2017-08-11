@@ -94,7 +94,7 @@ class dynamic_task_set
             int nt = max_num_threads(comm_);
             int nt_outer, nt_inner;
             std::tie(nt_outer, nt_inner) =
-                partition_2x2(nt, inout_ratio*ntask, ntask,
+                partition_2x2(nt, inout_ratio*nwork, ntask,
                               nwork, nt);
 
             subcomm_ = comm_.gang(TCI_EVENLY, nt_outer);
@@ -109,6 +109,7 @@ class dynamic_task_set
         template <typename Func>
         void visit(int task, Func&& f)
         {
+            TBLIS_ASSERT(task >= 0 && task < ntask_);
             if (slots_[task].try_fill(subcomm_.gang_num())) f(subcomm_);
         }
 

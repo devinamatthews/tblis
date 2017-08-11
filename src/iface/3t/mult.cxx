@@ -398,8 +398,8 @@ void mult(const communicator& comm,
     {
         internal::mult(comm, get_default_config(),
                        alpha, false, A, idx_A_AB, idx_A_AC, idx_A_ABC,
-                              false, B, idx_B_AB, idx_B_BC, idx_C_ABC,
-                        beta, false, C, idx_C_AC, idx_C_BC, idx_B_ABC);
+                              false, B, idx_B_AB, idx_B_BC, idx_B_ABC,
+                        beta, false, C, idx_C_AC, idx_C_BC, idx_C_ABC);
     }
 }
 
@@ -528,8 +528,8 @@ void mult(const communicator& comm,
     {
         internal::mult(comm, get_default_config(),
                        alpha, false, A, idx_A_AB, idx_A_AC, idx_A_ABC,
-                              false, B, idx_B_AB, idx_B_BC, idx_C_ABC,
-                        beta, false, C, idx_C_AC, idx_C_BC, idx_B_ABC);
+                              false, B, idx_B_AB, idx_B_BC, idx_B_ABC,
+                        beta, false, C, idx_C_AC, idx_C_BC, idx_C_ABC);
     }
 }
 

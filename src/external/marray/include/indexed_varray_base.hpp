@@ -80,6 +80,7 @@ class indexed_varray_base
         len_vector dense_len_;
         len_vector idx_len_;
         stride_vector dense_stride_;
+        std::vector<Type> factor_;
 
         /***********************************************************************
          *
@@ -94,6 +95,7 @@ class indexed_varray_base
             dense_len_.clear();
             idx_len_.clear();
             dense_stride_.clear();
+            factor_.clear();
         }
 
         template <typename U, bool O, typename D,
@@ -114,6 +116,7 @@ class indexed_varray_base
             dense_len_ = other.dense_len_;
             idx_len_ = other.idx_len_;
             dense_stride_ = other.dense_stride_;
+            factor_ = other.factor_;
         }
 
         template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
@@ -135,6 +138,7 @@ class indexed_varray_base
             dense_len_.assign(len.begin(), std::next(len.begin(),dense_dim));
             idx_len_.assign(std::next(len.begin(),dense_dim), len.end());
             dense_stride_ = varray_view<Type>::strides(dense_len_, layout);
+            factor_.assign(num_idx, Type(1));
         }
 
         template <typename U, typename V,

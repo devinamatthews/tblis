@@ -145,6 +145,10 @@ void assign_mixed_or_batch_idx_helper(unsigned i, unsigned pos,
         group.batch_idx[I].push_back(idx);
         group.batch_pos[I].push_back(pos);
 
+        TBLIS_ASSERT(group.batch_irrep[pos] == -1 ||
+                     group.batch_irrep[pos] == A.indexed_irrep(idx));
+        TBLIS_ASSERT(group.batch_len[pos] == -1 ||
+                     group.batch_len[pos] == A.indexed_length(idx));
         group.batch_irrep[pos] = A.indexed_irrep(idx);
         group.batch_len[pos] = A.indexed_length(idx);
     }
@@ -194,8 +198,8 @@ struct dpd_index_group
     {
         unsigned nirrep = A.num_irreps();
 
-        batch_len.resize(idx_A.size());
-        batch_irrep.resize(idx_A.size());
+        batch_len.resize(idx_A.size(), -1);
+        batch_irrep.resize(idx_A.size(), -1);
 
         for (unsigned i = 0;i < idx_A.size();i++)
         {
@@ -216,7 +220,7 @@ struct dpd_index_group
         batch_stride.resize(batch_ndim);
         batch_irrep.resize(batch_ndim);
 
-        batch_stride[0] = 1;
+        if (batch_ndim > 0) batch_stride[0] = 1;
         for (unsigned i = 1;i < batch_ndim;i++)
             batch_stride[i] = batch_stride[i-1]*batch_len[i-1];
 

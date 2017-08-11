@@ -29,16 +29,49 @@ using namespace tblis::slice;
 
 #define INFO_OR_PRINT(...) INFO(__VA_ARGS__); //cout << __VA_ARGS__ << endl;
 
-namespace MArray
-{
+#define TENSOR_INFO(t) \
+INFO_OR_PRINT("len_" #t "    = " << t.lengths()); \
+INFO_OR_PRINT("stride_" #t " = " << t.strides()); \
+INFO_OR_PRINT("idx_" #t "    = " << idx_##t);
 
-template <typename T, size_t N, typename Allocator>
-ostream& operator<<(ostream& os, const short_vector<T, N, Allocator>& v)
-{
-    return os << vector<T>(v.begin(), v.end());
-}
+#define DPD_TENSOR_INFO(t) \
+INFO_OR_PRINT("irrep_" #t " = " << t.irrep()); \
+INFO_OR_PRINT("len_" #t "   = \n" << t.lengths()); \
+INFO_OR_PRINT("idx_" #t "   = " << idx_##t);
 
-}
+#define INDEXED_TENSOR_INFO(t) \
+INFO_OR_PRINT("dense len_" #t "    = " << t.dense_lengths()); \
+INFO_OR_PRINT("dense stride_" #t " = " << t.dense_strides()); \
+INFO_OR_PRINT("idx len_" #t "      = " << t.indexed_lengths()); \
+INFO_OR_PRINT("data_" #t "         = \n" << t.data()); \
+INFO_OR_PRINT("indices_" #t "      = \n" << t.indices()); \
+INFO_OR_PRINT("idx_" #t "          = " << idx_##t);
+
+#define INDEXED_DPD_TENSOR_INFO(t) \
+INFO_OR_PRINT("irrep_" #t "       = " << t.irrep()); \
+INFO_OR_PRINT("dense irrep_" #t " = " << t.dense_irrep()); \
+INFO_OR_PRINT("dense len_" #t "   = \n" << t.dense_lengths()); \
+INFO_OR_PRINT("idx irrep_" #t "   = " << t.indexed_irreps()); \
+INFO_OR_PRINT("idx len_" #t "     = " << t.indexed_lengths()); \
+INFO_OR_PRINT("data_" #t "        = \n" << t.data()); \
+INFO_OR_PRINT("indices_" #t "     = \n" << t.indices()); \
+INFO_OR_PRINT("idx_" #t "         = " << idx_##t);
+
+#define PRINT_TENSOR(t) \
+cout << "\n" #t ":\n"; \
+t.for_each_element( \
+[](auto& e, auto& pos) \
+{ \
+    cout << pos << " " << e << endl; \
+});
+
+#define PRINT_DPD_TENSOR(t) \
+cout << "\n" #t ":\n"; \
+t.for_each_element( \
+[](auto& e, auto& irreps, auto& pos) \
+{ \
+    cout << irreps << " " << pos << " " << e << endl; \
+});
 
 template <typename T> const string& type_name();
 
@@ -136,7 +169,7 @@ template <typename T> static void TBLIS_PASTE(__replicated_templated_test_case_b
 constexpr static int ulp_factor = 32;
 
 static stride_type N = 1024*1024;
-static int R = 10;
+static int R = 50;
 typedef types<float, double, scomplex, dcomplex> all_types;
 
 enum index_type
@@ -230,7 +263,14 @@ void random_matrix(stride_type N, len_type m_min, len_type n_min, matrix<T>& t)
     len_type m = (m_min > 0 ? m_min : random_number<len_type>(1, len[0]));
     len_type n = (n_min > 0 ? n_min : random_number<len_type>(1, len[1]));
 
-    t.reset({m, n});
+    if (random_choice())
+    {
+        t.reset({m, n}, COLUMN_MAJOR);
+    }
+    else
+    {
+        t.reset({m, n}, ROW_MAJOR);
+    }
 
     T* data = t.data();
     miterator<2> it(t.lengths(), t.strides());
@@ -264,21 +304,9 @@ void random_gemm(stride_type N, matrix<T>& A,
     len_type n = random_number<len_type>(1, lrint(floor(sqrt(N/sizeof(T)))));
     len_type k = random_number<len_type>(1, lrint(floor(sqrt(N/sizeof(T)))));
 
-    //m += (MR<T>::value-1)-(m-1)%MR<T>::value;
-    //n += (NR<T>::value-1)-(n-1)%NR<T>::value;
-    //k += (KR<T>::value-1)-(k-1)%KR<T>::value;
-
-    //m = 3;
-    //n = 3;
-    //k = 3;
-
-    //engine.seed(0);
-
     random_matrix(N, m, k, A);
     random_matrix(N, k, n, B);
     random_matrix(N, m, n, C);
-
-    //printf("%.15f %.15f\n", (double)real(tblis_normfm(A)), (double)real(tblis_normfm(B)));
 }
 
 /*
@@ -883,7 +911,18 @@ void random_tensors(stride_type N,
         idx_irrep_B.resize(ndim_B-dense_ndim_B);
         for (unsigned i = dense_ndim_B;i < ndim_B;i++)
         {
-            idx_irrep_B[i-dense_ndim_B] = random_number(nirrep-1);
+            bool found = false;
+            for (unsigned j = dense_ndim_A;j < ndim_A;j++)
+            {
+                if (idx_B[i] == idx_A[j])
+                {
+                    idx_irrep_B[i-dense_ndim_B] = idx_irrep_A[j-dense_ndim_A];
+                    found = true;
+                }
+            }
+
+            if (!found)
+                idx_irrep_B[i-dense_ndim_B] = random_number(nirrep-1);
             idx_len_B[i-dense_ndim_B] = len_B[i][idx_irrep_B[i-dense_ndim_B]];
         }
     }
@@ -1401,7 +1440,18 @@ void random_tensors(stride_type N,
         idx_irrep_B.resize(ndim_B-dense_ndim_B);
         for (unsigned i = dense_ndim_B;i < ndim_B;i++)
         {
-            idx_irrep_B[i-dense_ndim_B] = random_number(nirrep-1);
+            bool found = false;
+            for (unsigned j = dense_ndim_A;j < ndim_A;j++)
+            {
+                if (idx_B[i] == idx_A[j])
+                {
+                    idx_irrep_B[i-dense_ndim_B] = idx_irrep_A[j-dense_ndim_A];
+                    found = true;
+                }
+            }
+
+            if (!found)
+                idx_irrep_B[i-dense_ndim_B] = random_number(nirrep-1);
             idx_len_B[i-dense_ndim_B] = len_B[i][idx_irrep_B[i-dense_ndim_B]];
         }
 
@@ -1411,7 +1461,26 @@ void random_tensors(stride_type N,
         idx_irrep_C.resize(ndim_C-dense_ndim_C);
         for (unsigned i = dense_ndim_C;i < ndim_C;i++)
         {
-            idx_irrep_C[i-dense_ndim_C] = random_number(nirrep-1);
+            bool found = false;
+            for (unsigned j = dense_ndim_A;j < ndim_A;j++)
+            {
+                if (idx_C[i] == idx_A[j])
+                {
+                    idx_irrep_C[i-dense_ndim_C] = idx_irrep_A[j-dense_ndim_A];
+                    found = true;
+                }
+            }
+            for (unsigned j = dense_ndim_B;j < ndim_B;j++)
+            {
+                if (idx_C[i] == idx_B[j])
+                {
+                    idx_irrep_C[i-dense_ndim_C] = idx_irrep_B[j-dense_ndim_B];
+                    found = true;
+                }
+            }
+
+            if (!found)
+                idx_irrep_C[i-dense_ndim_C] = random_number(nirrep-1);
             idx_len_C[i-dense_ndim_C] = len_C[i][idx_irrep_C[i-dense_ndim_C]];
         }
     }
@@ -1497,8 +1566,7 @@ REPLICATED_TEMPLATED_TEST_CASE(reduce, R, T, all_types)
     random_tensor(100, A);
     label_vector idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
-    INFO_OR_PRINT("len    = " << A.lengths());
-    INFO_OR_PRINT("stride = " << A.strides());
+    TENSOR_INFO(A);
 
     auto NA = prod(A.lengths());
 
@@ -1528,8 +1596,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_reduce, R, T, all_types)
     random_tensor(100, A);
     label_vector idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
-    INFO_OR_PRINT("irrep = " << A.irrep());
-    INFO_OR_PRINT("len   = \n" << A.lengths());
+    DPD_TENSOR_INFO(A);
 
     auto NA = dpd_varray<T>::size(A.irrep(), A.lengths());
 
@@ -1559,9 +1626,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_reduce, R, T, all_types)
     random_tensor(100, A);
     label_vector idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
-    INFO_OR_PRINT("dense len    = " << A.dense_lengths());
-    INFO_OR_PRINT("dense stride = " << A.dense_strides());
-    INFO_OR_PRINT("idx len      = " << A.indexed_lengths());
+    INDEXED_TENSOR_INFO(A);
 
     auto NA = prod(A.dense_lengths())*A.num_indices();
 
@@ -1591,11 +1656,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_reduce, R, T, all_types)
     random_tensor(100, A);
     label_vector idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
-    INFO_OR_PRINT("irrep       = " << A.irrep());
-    INFO_OR_PRINT("dense irrep = " << A.dense_irrep());
-    INFO_OR_PRINT("dense len   = \n" << A.lengths());
-    INFO_OR_PRINT("idx irreps  = " << A.indexed_irreps());
-    INFO_OR_PRINT("idx len     = " << A.indexed_lengths());
+    INDEXED_DPD_TENSOR_INFO(A);
 
     auto NA = dpd_varray<T>::size(A.dense_irrep(), A.dense_lengths())*A.num_indices();
 
@@ -1625,8 +1686,7 @@ REPLICATED_TEMPLATED_TEST_CASE(scale, R, T, all_types)
     random_tensor(100, A);
     label_vector idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
-    INFO_OR_PRINT("len    = " << A.lengths());
-    INFO_OR_PRINT("stride = " << A.strides());
+    TENSOR_INFO(A);
 
     auto neps = prod(A.lengths());
 
@@ -1654,8 +1714,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_scale, R, T, all_types)
     random_tensor(100, A);
     label_vector idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
-    INFO_OR_PRINT("irrep = " << A.irrep());
-    INFO_OR_PRINT("len   = \n" << A.lengths());
+    DPD_TENSOR_INFO(A);
 
     auto neps = dpd_varray<T>::size(A.irrep(), A.lengths());
 
@@ -1683,9 +1742,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_scale, R, T, all_types)
     random_tensor(100, A);
     label_vector idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
-    INFO_OR_PRINT("dense len    = " << A.dense_lengths());
-    INFO_OR_PRINT("dense stride = " << A.dense_strides());
-    INFO_OR_PRINT("idx len      = " << A.indexed_lengths());
+    INDEXED_TENSOR_INFO(A);
 
     auto neps = prod(A.lengths());
 
@@ -1713,11 +1770,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_scale, R, T, all_types)
     random_tensor(100, A);
     label_vector idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
-    INFO_OR_PRINT("irrep       = " << A.irrep());
-    INFO_OR_PRINT("dense irrep = " << A.dense_irrep());
-    INFO_OR_PRINT("dense len   = \n" << A.lengths());
-    INFO_OR_PRINT("idx irreps  = " << A.indexed_irreps());
-    INFO_OR_PRINT("idx len     = " << A.indexed_lengths());
+    INDEXED_DPD_TENSOR_INFO(A);
 
     auto neps = dpd_varray<T>::size(A.irrep(), A.lengths());
 
@@ -1771,12 +1824,8 @@ REPLICATED_TEMPLATED_TEST_CASE(trace, R, T, all_types)
 
     random_trace(1000, A, idx_A, B, idx_B);
 
-    INFO_OR_PRINT("len_A    = " << A.lengths());
-    INFO_OR_PRINT("stride_A = " << A.strides());
-    INFO_OR_PRINT("idx_A    = " << idx_A);
-    INFO_OR_PRINT("len_B    = " << B.lengths());
-    INFO_OR_PRINT("stride_B = " << B.strides());
-    INFO_OR_PRINT("idx_B    = " << idx_B);
+    TENSOR_INFO(A);
+    TENSOR_INFO(B);
 
     auto neps = prod(A.lengths());
 
@@ -1796,12 +1845,8 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_trace, R, T, all_types)
 
     random_trace(1000, A, idx_A, B, idx_B);
 
-    INFO_OR_PRINT("irrep_A = " << A.irrep());
-    INFO_OR_PRINT("len_A   = \n" << A.lengths());
-    INFO_OR_PRINT("idx_A   = " << idx_A);
-    INFO_OR_PRINT("irrep_B = " << B.irrep());
-    INFO_OR_PRINT("len_B   = \n" << B.lengths());
-    INFO_OR_PRINT("idx_B   = " << idx_B);
+    DPD_TENSOR_INFO(A);
+    DPD_TENSOR_INFO(B);
 
     auto neps = dpd_varray<T>::size(A.irrep(), A.lengths());
 
@@ -1828,14 +1873,8 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_trace, R, T, all_types)
 
     random_trace(1000, A, idx_A, B, idx_B);
 
-    INFO_OR_PRINT("dense len_A    = " << A.dense_lengths());
-    INFO_OR_PRINT("dense stride_A = " << A.dense_strides());
-    INFO_OR_PRINT("idx len_A      = " << A.indexed_lengths());
-    INFO_OR_PRINT("idx_A          = " << idx_A);
-    INFO_OR_PRINT("dense len_B    = " << B.dense_lengths());
-    INFO_OR_PRINT("dense stride_B = " << B.dense_strides());
-    INFO_OR_PRINT("idx len_B      = " << B.indexed_lengths());
-    INFO_OR_PRINT("idx_B          = " << idx_B);
+    INDEXED_TENSOR_INFO(A);
+    INDEXED_TENSOR_INFO(B);
 
     auto neps = prod(A.lengths());
 
@@ -1862,18 +1901,8 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_trace, R, T, all_types)
 
     random_trace(1000, A, idx_A, B, idx_B);
 
-    INFO_OR_PRINT("irrep_A       = " << A.irrep());
-    INFO_OR_PRINT("dense irrep_A = " << A.dense_irrep());
-    INFO_OR_PRINT("dense len_A   = \n" << A.dense_lengths());
-    INFO_OR_PRINT("idx irrep_A   = " << A.indexed_irreps());
-    INFO_OR_PRINT("idx len_A     = " << A.indexed_lengths());
-    INFO_OR_PRINT("idx_A         = " << idx_A);
-    INFO_OR_PRINT("irrep_B       = " << B.irrep());
-    INFO_OR_PRINT("dense irrep_B = " << B.dense_irrep());
-    INFO_OR_PRINT("dense len_B   = \n" << B.dense_lengths());
-    INFO_OR_PRINT("idx irrep_B   = " << B.indexed_irreps());
-    INFO_OR_PRINT("idx len_B     = " << B.indexed_lengths());
-    INFO_OR_PRINT("idx_B         = " << idx_B);
+    INDEXED_DPD_TENSOR_INFO(A);
+    INDEXED_DPD_TENSOR_INFO(B);
 
     auto neps = dpd_varray<T>::size(A.irrep(), A.lengths());
 
@@ -1926,12 +1955,8 @@ REPLICATED_TEMPLATED_TEST_CASE(replicate, R, T, all_types)
 
     random_replicate(1000, A, idx_A, B, idx_B);
 
-    INFO_OR_PRINT("len_A    = " << A.lengths());
-    INFO_OR_PRINT("stride_A = " << A.strides());
-    INFO_OR_PRINT("idx_A    = " << idx_A);
-    INFO_OR_PRINT("len_B    = " << B.lengths());
-    INFO_OR_PRINT("stride_B = " << B.strides());
-    INFO_OR_PRINT("idx_B    = " << idx_B);
+    TENSOR_INFO(A);
+    TENSOR_INFO(B);
 
     auto idx_B_only = exclusion(idx_B, idx_A);
     stride_type NB = prod(select_from(B.lengths(), idx_B, idx_B_only));
@@ -1958,11 +1983,8 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_replicate, R, T, all_types)
 
     random_replicate(1000, A, idx_A, B, idx_B);
 
-    INFO_OR_PRINT("len_A   = \n" << A.lengths());
-    INFO_OR_PRINT("idx_A   = " << idx_A);
-    INFO_OR_PRINT("irrep_B = " << B.irrep());
-    INFO_OR_PRINT("len_B   = \n" << B.lengths());
-    INFO_OR_PRINT("idx_B   = " << idx_B);
+    DPD_TENSOR_INFO(A);
+    DPD_TENSOR_INFO(B);
 
     auto neps = dpd_varray<T>::size(B.irrep(), B.lengths());
 
@@ -1989,14 +2011,8 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_replicate, R, T, all_types)
 
     random_replicate(1000, A, idx_A, B, idx_B);
 
-    INFO_OR_PRINT("dense len_A    = " << A.dense_lengths());
-    INFO_OR_PRINT("dense stride_A = " << A.dense_strides());
-    INFO_OR_PRINT("idx len_A      = " << A.indexed_lengths());
-    INFO_OR_PRINT("idx_A          = " << idx_A);
-    INFO_OR_PRINT("dense len_B    = " << B.dense_lengths());
-    INFO_OR_PRINT("dense stride_B = " << B.dense_strides());
-    INFO_OR_PRINT("idx len_B      = " << B.indexed_lengths());
-    INFO_OR_PRINT("idx_B          = " << idx_B);
+    INDEXED_TENSOR_INFO(A);
+    INDEXED_TENSOR_INFO(B);
 
     auto neps = prod(B.lengths());
 
@@ -2023,18 +2039,8 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_replicate, R, T, all_types)
 
     random_replicate(1000, A, idx_A, B, idx_B);
 
-    INFO_OR_PRINT("irrep_A       = " << A.irrep());
-    INFO_OR_PRINT("dense irrep_A = " << A.dense_irrep());
-    INFO_OR_PRINT("dense len_A   = \n" << A.dense_lengths());
-    INFO_OR_PRINT("idx irrep_A   = " << A.indexed_irreps());
-    INFO_OR_PRINT("idx len_A     = " << A.indexed_lengths());
-    INFO_OR_PRINT("idx_A         = " << idx_A);
-    INFO_OR_PRINT("irrep_B       = " << B.irrep());
-    INFO_OR_PRINT("dense irrep_B = " << B.dense_irrep());
-    INFO_OR_PRINT("dense len_B   = \n" << B.dense_lengths());
-    INFO_OR_PRINT("idx irrep_B   = " << B.indexed_irreps());
-    INFO_OR_PRINT("idx len_B     = " << B.indexed_lengths());
-    INFO_OR_PRINT("idx_B         = " << idx_B);
+    INDEXED_DPD_TENSOR_INFO(A);
+    INDEXED_DPD_TENSOR_INFO(B);
 
     auto neps = dpd_varray<T>::size(B.irrep(), B.lengths());
 
@@ -2082,9 +2088,9 @@ REPLICATED_TEMPLATED_TEST_CASE(transpose, R, T, all_types)
     unsigned ndim = A.dimension();
     auto perm = relative_permutation(idx_A, idx_B);
 
-    INFO_OR_PRINT("len    = " << A.lengths());
-    INFO_OR_PRINT("stride = " << A.strides());
-    INFO_OR_PRINT("perm   = " << perm);
+    TENSOR_INFO(A);
+    TENSOR_INFO(B);
+    INFO_OR_PRINT("perm = " << perm);
 
     auto neps = prod(A.lengths());
 
@@ -2129,11 +2135,8 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_transpose, R, T, all_types)
 
     random_transpose(1000, A, idx_A, B, idx_B);
 
-    INFO_OR_PRINT("len_A   = \n" << A.lengths());
-    INFO_OR_PRINT("idx_A   = " << idx_A);
-    INFO_OR_PRINT("irrep_B = " << B.irrep());
-    INFO_OR_PRINT("len_B   = \n" << B.lengths());
-    INFO_OR_PRINT("idx_B   = " << idx_B);
+    DPD_TENSOR_INFO(A);
+    DPD_TENSOR_INFO(B);
 
     auto neps = dpd_varray<T>::size(B.irrep(), B.lengths());
 
@@ -2160,14 +2163,8 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_transpose, R, T, all_types)
 
     random_transpose(1000, A, idx_A, B, idx_B);
 
-    INFO_OR_PRINT("dense len_A    = " << A.dense_lengths());
-    INFO_OR_PRINT("dense stride_A = " << A.dense_strides());
-    INFO_OR_PRINT("idx len_A      = " << A.indexed_lengths());
-    INFO_OR_PRINT("idx_A          = " << idx_A);
-    INFO_OR_PRINT("dense len_B    = " << B.dense_lengths());
-    INFO_OR_PRINT("dense stride_B = " << B.dense_strides());
-    INFO_OR_PRINT("idx len_B      = " << B.indexed_lengths());
-    INFO_OR_PRINT("idx_B          = " << idx_B);
+    INDEXED_TENSOR_INFO(A);
+    INDEXED_TENSOR_INFO(B);
 
     auto neps = prod(B.lengths());
 
@@ -2194,18 +2191,8 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_transpose, R, T, all_types)
 
     random_transpose(1000, A, idx_A, B, idx_B);
 
-    INFO_OR_PRINT("irrep_A       = " << A.irrep());
-    INFO_OR_PRINT("dense irrep_A = " << A.dense_irrep());
-    INFO_OR_PRINT("dense len_A   = \n" << A.dense_lengths());
-    INFO_OR_PRINT("idx irrep_A   = " << A.indexed_irreps());
-    INFO_OR_PRINT("idx len_A     = " << A.indexed_lengths());
-    INFO_OR_PRINT("idx_A         = " << idx_A);
-    INFO_OR_PRINT("irrep_B       = " << B.irrep());
-    INFO_OR_PRINT("dense irrep_B = " << B.dense_irrep());
-    INFO_OR_PRINT("dense len_B   = \n" << B.dense_lengths());
-    INFO_OR_PRINT("idx irrep_B   = " << B.indexed_irreps());
-    INFO_OR_PRINT("idx len_B     = " << B.indexed_lengths());
-    INFO_OR_PRINT("idx_B         = " << idx_B);
+    INDEXED_DPD_TENSOR_INFO(A);
+    INDEXED_DPD_TENSOR_INFO(B);
 
     auto neps = dpd_varray<T>::size(B.irrep(), B.lengths());
 
@@ -2250,12 +2237,8 @@ REPLICATED_TEMPLATED_TEST_CASE(dot, R, T, all_types)
 
     random_dot(1000, A, idx_A, B, idx_B);
 
-    INFO_OR_PRINT("len_A    = " << A.lengths());
-    INFO_OR_PRINT("stride_A = " << A.strides());
-    INFO_OR_PRINT("idx_A    = " << idx_A);
-    INFO_OR_PRINT("len_B    = " << B.lengths());
-    INFO_OR_PRINT("stride_B = " << B.strides());
-    INFO_OR_PRINT("idx_B    = " << idx_B);
+    TENSOR_INFO(A);
+    TENSOR_INFO(B);
 
     auto neps = prod(A.lengths());
 
@@ -2282,12 +2265,8 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_dot, R, T, all_types)
 
     random_dot(1000, A, idx_A, B, idx_B);
 
-    INFO_OR_PRINT("irrep_A = " << A.irrep());
-    INFO_OR_PRINT("len_A   = \n" << A.lengths());
-    INFO_OR_PRINT("idx_A   = " << idx_A);
-    INFO_OR_PRINT("irrep_B = " << B.irrep());
-    INFO_OR_PRINT("len_B   = \n" << B.lengths());
-    INFO_OR_PRINT("idx_B   = " << idx_B);
+    DPD_TENSOR_INFO(A);
+    DPD_TENSOR_INFO(B);
 
     auto neps = dpd_varray<T>::size(A.irrep(), A.lengths());
 
@@ -2323,14 +2302,8 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dot, R, T, all_types)
 
     random_dot(1000, A, idx_A, B, idx_B);
 
-    INFO_OR_PRINT("dense len_A    = " << A.dense_lengths());
-    INFO_OR_PRINT("dense stride_A = " << A.dense_strides());
-    INFO_OR_PRINT("idx len_A      = " << A.indexed_lengths());
-    INFO_OR_PRINT("idx_A          = " << idx_A);
-    INFO_OR_PRINT("dense len_B    = " << B.dense_lengths());
-    INFO_OR_PRINT("dense stride_B = " << B.dense_strides());
-    INFO_OR_PRINT("idx len_B      = " << B.indexed_lengths());
-    INFO_OR_PRINT("idx_B          = " << idx_B);
+    INDEXED_TENSOR_INFO(A);
+    INDEXED_TENSOR_INFO(B);
 
     auto neps = prod(A.lengths());
 
@@ -2366,18 +2339,8 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_dot, R, T, all_types)
 
     random_dot(1000, A, idx_A, B, idx_B);
 
-    INFO_OR_PRINT("irrep_A       = " << A.irrep());
-    INFO_OR_PRINT("dense irrep_A = " << A.dense_irrep());
-    INFO_OR_PRINT("dense len_A   = \n" << A.dense_lengths());
-    INFO_OR_PRINT("idx irrep_A   = " << A.indexed_irreps());
-    INFO_OR_PRINT("idx len_A     = " << A.indexed_lengths());
-    INFO_OR_PRINT("idx_A         = " << idx_A);
-    INFO_OR_PRINT("irrep_B       = " << B.irrep());
-    INFO_OR_PRINT("dense irrep_B = " << B.dense_irrep());
-    INFO_OR_PRINT("dense len_B   = \n" << B.dense_lengths());
-    INFO_OR_PRINT("idx irrep_B   = " << B.indexed_irreps());
-    INFO_OR_PRINT("idx len_B     = " << B.indexed_lengths());
-    INFO_OR_PRINT("idx_B         = " << idx_B);
+    INDEXED_DPD_TENSOR_INFO(A);
+    INDEXED_DPD_TENSOR_INFO(B);
 
     auto neps = dpd_varray<T>::size(A.irrep(), A.lengths());
 
@@ -2456,15 +2419,9 @@ REPLICATED_TEMPLATED_TEST_CASE(mult, R, T, all_types)
 
     random_mult(N, A, idx_A, B, idx_B, C, idx_C);
 
-    INFO_OR_PRINT("len_A    = " << A.lengths());
-    INFO_OR_PRINT("stride_A = " << A.strides());
-    INFO_OR_PRINT("idx_A    = " << idx_A);
-    INFO_OR_PRINT("len_B    = " << B.lengths());
-    INFO_OR_PRINT("stride_B = " << B.strides());
-    INFO_OR_PRINT("idx_B    = " << idx_B);
-    INFO_OR_PRINT("len_C    = " << C.lengths());
-    INFO_OR_PRINT("stride_C = " << C.strides());
-    INFO_OR_PRINT("idx_C    = " << idx_C);
+    TENSOR_INFO(A);
+    TENSOR_INFO(B);
+    TENSOR_INFO(C);
 
     auto idx_AB = exclusion(intersection(idx_A, idx_B), idx_C);
     auto neps = prod(select_from(A.lengths(), idx_A, idx_AB))*prod(C.lengths());
@@ -2492,15 +2449,9 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_mult, R, T, all_types)
 
     random_mult(N, A, idx_A, B, idx_B, C, idx_C);
 
-    INFO_OR_PRINT("irrep_A = " << A.irrep());
-    INFO_OR_PRINT("len_A   = \n" << A.lengths());
-    INFO_OR_PRINT("idx_A   = " << idx_A);
-    INFO_OR_PRINT("irrep_B = " << B.irrep());
-    INFO_OR_PRINT("len_B   = \n" << B.lengths());
-    INFO_OR_PRINT("idx_B   = " << idx_B);
-    INFO_OR_PRINT("irrep_C = " << C.irrep());
-    INFO_OR_PRINT("len_C   = \n" << C.lengths());
-    INFO_OR_PRINT("idx_C   = " << idx_C);
+    DPD_TENSOR_INFO(A);
+    DPD_TENSOR_INFO(B);
+    DPD_TENSOR_INFO(C);
 
     auto idx_ABC = intersection(idx_A, idx_B, idx_C);
     auto idx_AB = exclusion(intersection(idx_A, idx_B), idx_C);
@@ -2550,18 +2501,9 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_mult, R, T, all_types)
 
     random_mult(N, A, idx_A, B, idx_B, C, idx_C);
 
-    INFO_OR_PRINT("dense len_A    = " << A.dense_lengths());
-    INFO_OR_PRINT("dense stride_A = " << A.dense_strides());
-    INFO_OR_PRINT("idx len_A      = " << A.indexed_lengths());
-    INFO_OR_PRINT("idx_A          = " << idx_A);
-    INFO_OR_PRINT("dense len_B    = " << B.dense_lengths());
-    INFO_OR_PRINT("dense stride_B = " << B.dense_strides());
-    INFO_OR_PRINT("idx len_B      = " << B.indexed_lengths());
-    INFO_OR_PRINT("idx_B          = " << idx_B);
-    INFO_OR_PRINT("dense len_C    = " << C.dense_lengths());
-    INFO_OR_PRINT("dense stride_C = " << C.dense_strides());
-    INFO_OR_PRINT("idx len_C      = " << C.indexed_lengths());
-    INFO_OR_PRINT("idx_C          = " << idx_C);
+    INDEXED_TENSOR_INFO(A);
+    INDEXED_TENSOR_INFO(B);
+    INDEXED_TENSOR_INFO(C);
 
     auto idx_AB = exclusion(intersection(idx_A, idx_B), idx_C);
     auto neps = prod(select_from(A.lengths(), idx_A, idx_AB))*prod(C.lengths());
@@ -2589,24 +2531,9 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_mult, R, T, all_types)
 
     random_mult(N, A, idx_A, B, idx_B, C, idx_C);
 
-    INFO_OR_PRINT("irrep_A       = " << A.irrep());
-    INFO_OR_PRINT("dense irrep_A = " << A.dense_irrep());
-    INFO_OR_PRINT("dense len_A   = \n" << A.dense_lengths());
-    INFO_OR_PRINT("idx irrep_A   = " << A.indexed_irreps());
-    INFO_OR_PRINT("idx len_A     = " << A.indexed_lengths());
-    INFO_OR_PRINT("idx_A         = " << idx_A);
-    INFO_OR_PRINT("irrep_B       = " << B.irrep());
-    INFO_OR_PRINT("dense irrep_B = " << B.dense_irrep());
-    INFO_OR_PRINT("dense len_B   = \n" << B.dense_lengths());
-    INFO_OR_PRINT("idx irrep_B   = " << B.indexed_irreps());
-    INFO_OR_PRINT("idx len_B     = " << B.indexed_lengths());
-    INFO_OR_PRINT("idx_B         = " << idx_B);
-    INFO_OR_PRINT("irrep_C       = " << C.irrep());
-    INFO_OR_PRINT("dense irrep_C = " << C.dense_irrep());
-    INFO_OR_PRINT("dense len_C   = \n" << C.dense_lengths());
-    INFO_OR_PRINT("idx irrep_C   = " << C.indexed_irreps());
-    INFO_OR_PRINT("idx len_C     = " << C.indexed_lengths());
-    INFO_OR_PRINT("idx_C         = " << idx_C);
+    INDEXED_DPD_TENSOR_INFO(A);
+    INDEXED_DPD_TENSOR_INFO(B);
+    INDEXED_DPD_TENSOR_INFO(C);
 
     auto idx_ABC = intersection(idx_A, idx_B, idx_C);
     auto idx_AB = exclusion(intersection(idx_A, idx_B), idx_C);
@@ -2691,15 +2618,9 @@ REPLICATED_TEMPLATED_TEST_CASE(contract, R, T, all_types)
 
     T scale(10.0*random_unit<T>());
 
-    INFO_OR_PRINT("len_A    = " << A.lengths());
-    INFO_OR_PRINT("stride_A = " << A.strides());
-    INFO_OR_PRINT("idx_A    = " << idx_A);
-    INFO_OR_PRINT("len_B    = " << B.lengths());
-    INFO_OR_PRINT("stride_B = " << B.strides());
-    INFO_OR_PRINT("idx_B    = " << idx_B);
-    INFO_OR_PRINT("len_C    = " << C.lengths());
-    INFO_OR_PRINT("stride_C = " << C.strides());
-    INFO_OR_PRINT("idx_C    = " << idx_C);
+    TENSOR_INFO(A);
+    TENSOR_INFO(B);
+    TENSOR_INFO(C);
 
     auto idx_AB = intersection(idx_A, idx_B);
     auto neps = prod(select_from(A.lengths(), idx_A, idx_AB))*prod(C.lengths());
@@ -2736,15 +2657,9 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_contract, R, T, all_types)
 
     random_contract(N, A, idx_A, B, idx_B, C, idx_C);
 
-    INFO_OR_PRINT("irrep_A = " << A.irrep());
-    INFO_OR_PRINT("len_A   = \n" << A.lengths());
-    INFO_OR_PRINT("idx_A   = " << idx_A);
-    INFO_OR_PRINT("irrep_B = " << B.irrep());
-    INFO_OR_PRINT("len_B   = \n" << B.lengths());
-    INFO_OR_PRINT("idx_B   = " << idx_B);
-    INFO_OR_PRINT("irrep_C = " << C.irrep());
-    INFO_OR_PRINT("len_C   = \n" << C.lengths());
-    INFO_OR_PRINT("idx_C   = " << idx_C);
+    DPD_TENSOR_INFO(A);
+    DPD_TENSOR_INFO(B);
+    DPD_TENSOR_INFO(C);
 
     auto idx_AB = intersection(idx_A, idx_B);
     auto idx_AC = intersection(idx_A, idx_C);
@@ -2789,18 +2704,9 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_contract, R, T, all_types)
 
     random_contract(N, A, idx_A, B, idx_B, C, idx_C);
 
-    INFO_OR_PRINT("dense len_A    = " << A.dense_lengths());
-    INFO_OR_PRINT("dense stride_A = " << A.dense_strides());
-    INFO_OR_PRINT("idx len_A      = " << A.indexed_lengths());
-    INFO_OR_PRINT("idx_A          = " << idx_A);
-    INFO_OR_PRINT("dense len_B    = " << B.dense_lengths());
-    INFO_OR_PRINT("dense stride_B = " << B.dense_strides());
-    INFO_OR_PRINT("idx len_B      = " << B.indexed_lengths());
-    INFO_OR_PRINT("idx_B          = " << idx_B);
-    INFO_OR_PRINT("dense len_C    = " << C.dense_lengths());
-    INFO_OR_PRINT("dense stride_C = " << C.dense_strides());
-    INFO_OR_PRINT("idx len_C      = " << C.indexed_lengths());
-    INFO_OR_PRINT("idx_C          = " << idx_C);
+    INDEXED_TENSOR_INFO(A);
+    INDEXED_TENSOR_INFO(B);
+    INDEXED_TENSOR_INFO(C);
 
     auto idx_AB = intersection(idx_A, idx_B);
     auto neps = prod(select_from(A.lengths(), idx_A, idx_AB))*prod(C.lengths());
@@ -2828,24 +2734,9 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_contract, R, T, all_types)
 
     random_contract(N, A, idx_A, B, idx_B, C, idx_C);
 
-    INFO_OR_PRINT("irrep_A       = " << A.irrep());
-    INFO_OR_PRINT("dense irrep_A = " << A.dense_irrep());
-    INFO_OR_PRINT("dense len_A   = \n" << A.dense_lengths());
-    INFO_OR_PRINT("idx irrep_A   = " << A.indexed_irreps());
-    INFO_OR_PRINT("idx len_A     = " << A.indexed_lengths());
-    INFO_OR_PRINT("idx_A         = " << idx_A);
-    INFO_OR_PRINT("irrep_B       = " << B.irrep());
-    INFO_OR_PRINT("dense irrep_B = " << B.dense_irrep());
-    INFO_OR_PRINT("dense len_B   = \n" << B.dense_lengths());
-    INFO_OR_PRINT("idx irrep_B   = " << B.indexed_irreps());
-    INFO_OR_PRINT("idx len_B     = " << B.indexed_lengths());
-    INFO_OR_PRINT("idx_B         = " << idx_B);
-    INFO_OR_PRINT("irrep_C       = " << C.irrep());
-    INFO_OR_PRINT("dense irrep_C = " << C.dense_irrep());
-    INFO_OR_PRINT("dense len_C   = \n" << C.dense_lengths());
-    INFO_OR_PRINT("idx irrep_C   = " << C.indexed_irreps());
-    INFO_OR_PRINT("idx len_C     = " << C.indexed_lengths());
-    INFO_OR_PRINT("idx_C         = " << idx_C);
+    INDEXED_DPD_TENSOR_INFO(A);
+    INDEXED_DPD_TENSOR_INFO(B);
+    INDEXED_DPD_TENSOR_INFO(C);
 
     auto idx_AB = intersection(idx_A, idx_B);
     auto idx_AC = intersection(idx_A, idx_C);
@@ -2924,15 +2815,9 @@ REPLICATED_TEMPLATED_TEST_CASE(weight, R, T, all_types)
 
     random_weight(N, A, idx_A, B, idx_B, C, idx_C);
 
-    INFO_OR_PRINT("len_A    = " << A.lengths());
-    INFO_OR_PRINT("stride_A = " << A.strides());
-    INFO_OR_PRINT("idx_A    = " << idx_A);
-    INFO_OR_PRINT("len_B    = " << B.lengths());
-    INFO_OR_PRINT("stride_B = " << B.strides());
-    INFO_OR_PRINT("idx_B    = " << idx_B);
-    INFO_OR_PRINT("len_C    = " << C.lengths());
-    INFO_OR_PRINT("stride_C = " << C.strides());
-    INFO_OR_PRINT("idx_C    = " << idx_C);
+    TENSOR_INFO(A);
+    TENSOR_INFO(B);
+    TENSOR_INFO(C);
 
     auto neps = prod(C.lengths());
 
@@ -2961,15 +2846,9 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_weight, R, T, all_types)
 
     random_weight(N, A, idx_A, B, idx_B, C, idx_C);
 
-    INFO_OR_PRINT("irrep_A = " << A.irrep());
-    INFO_OR_PRINT("len_A   = \n" << A.lengths());
-    INFO_OR_PRINT("idx_A   = " << idx_A);
-    INFO_OR_PRINT("irrep_B = " << B.irrep());
-    INFO_OR_PRINT("len_B   = \n" << B.lengths());
-    INFO_OR_PRINT("idx_B   = " << idx_B);
-    INFO_OR_PRINT("irrep_C = " << C.irrep());
-    INFO_OR_PRINT("len_C   = \n" << C.lengths());
-    INFO_OR_PRINT("idx_C   = " << idx_C);
+    DPD_TENSOR_INFO(A);
+    DPD_TENSOR_INFO(B);
+    DPD_TENSOR_INFO(C);
 
     auto neps = dpd_varray<T>::size(C.irrep(), C.lengths());
 
@@ -2996,18 +2875,9 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_weight, R, T, all_types)
 
     random_weight(N, A, idx_A, B, idx_B, C, idx_C);
 
-    INFO_OR_PRINT("dense len_A    = " << A.dense_lengths());
-    INFO_OR_PRINT("dense stride_A = " << A.dense_strides());
-    INFO_OR_PRINT("idx len_A      = " << A.indexed_lengths());
-    INFO_OR_PRINT("idx_A          = " << idx_A);
-    INFO_OR_PRINT("dense len_B    = " << B.dense_lengths());
-    INFO_OR_PRINT("dense stride_B = " << B.dense_strides());
-    INFO_OR_PRINT("idx len_B      = " << B.indexed_lengths());
-    INFO_OR_PRINT("idx_B          = " << idx_B);
-    INFO_OR_PRINT("dense len_C    = " << C.dense_lengths());
-    INFO_OR_PRINT("dense stride_C = " << C.dense_strides());
-    INFO_OR_PRINT("idx len_C      = " << C.indexed_lengths());
-    INFO_OR_PRINT("idx_C          = " << idx_C);
+    INDEXED_TENSOR_INFO(A);
+    INDEXED_TENSOR_INFO(B);
+    INDEXED_TENSOR_INFO(C);
 
     auto neps = prod(C.lengths());
 
@@ -3034,24 +2904,9 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_weight, R, T, all_types)
 
     random_weight(N, A, idx_A, B, idx_B, C, idx_C);
 
-    INFO_OR_PRINT("irrep_A       = " << A.irrep());
-    INFO_OR_PRINT("dense irrep_A = " << A.dense_irrep());
-    INFO_OR_PRINT("dense len_A   = \n" << A.dense_lengths());
-    INFO_OR_PRINT("idx irrep_A   = " << A.indexed_irreps());
-    INFO_OR_PRINT("idx len_A     = " << A.indexed_lengths());
-    INFO_OR_PRINT("idx_A         = " << idx_A);
-    INFO_OR_PRINT("irrep_B       = " << B.irrep());
-    INFO_OR_PRINT("dense irrep_B = " << B.dense_irrep());
-    INFO_OR_PRINT("dense len_B   = \n" << B.dense_lengths());
-    INFO_OR_PRINT("idx irrep_B   = " << B.indexed_irreps());
-    INFO_OR_PRINT("idx len_B     = " << B.indexed_lengths());
-    INFO_OR_PRINT("idx_B         = " << idx_B);
-    INFO_OR_PRINT("irrep_C       = " << C.irrep());
-    INFO_OR_PRINT("dense irrep_C = " << C.dense_irrep());
-    INFO_OR_PRINT("dense len_C   = \n" << C.dense_lengths());
-    INFO_OR_PRINT("idx irrep_C   = " << C.indexed_irreps());
-    INFO_OR_PRINT("idx len_C     = " << C.indexed_lengths());
-    INFO_OR_PRINT("idx_C         = " << idx_C);
+    INDEXED_DPD_TENSOR_INFO(A);
+    INDEXED_DPD_TENSOR_INFO(B);
+    INDEXED_DPD_TENSOR_INFO(C);
 
     auto neps = dpd_varray<T>::size(C.irrep(), C.lengths());
 
@@ -3105,15 +2960,9 @@ REPLICATED_TEMPLATED_TEST_CASE(outer_prod, R, T, all_types)
 
     random_outer_prod(N, A, idx_A, B, idx_B, C, idx_C);
 
-    INFO_OR_PRINT("len_A    = " << A.lengths());
-    INFO_OR_PRINT("stride_A = " << A.strides());
-    INFO_OR_PRINT("idx_A    = " << idx_A);
-    INFO_OR_PRINT("len_B    = " << B.lengths());
-    INFO_OR_PRINT("stride_B = " << B.strides());
-    INFO_OR_PRINT("idx_B    = " << idx_B);
-    INFO_OR_PRINT("len_C    = " << C.lengths());
-    INFO_OR_PRINT("stride_C = " << C.strides());
-    INFO_OR_PRINT("idx_C    = " << idx_C);
+    TENSOR_INFO(A);
+    TENSOR_INFO(B);
+    TENSOR_INFO(C);
 
     auto neps = prod(C.lengths());
 
@@ -3142,15 +2991,9 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_outer_prod, R, T, all_types)
 
     random_outer_prod(N, A, idx_A, B, idx_B, C, idx_C);
 
-    INFO_OR_PRINT("irrep_A = " << A.irrep());
-    INFO_OR_PRINT("len_A   = \n" << A.lengths());
-    INFO_OR_PRINT("idx_A   = " << idx_A);
-    INFO_OR_PRINT("irrep_B = " << B.irrep());
-    INFO_OR_PRINT("len_B   = \n" << B.lengths());
-    INFO_OR_PRINT("idx_B   = " << idx_B);
-    INFO_OR_PRINT("irrep_C = " << C.irrep());
-    INFO_OR_PRINT("len_C   = \n" << C.lengths());
-    INFO_OR_PRINT("idx_C   = " << idx_C);
+    DPD_TENSOR_INFO(A);
+    DPD_TENSOR_INFO(B);
+    DPD_TENSOR_INFO(C);
 
     auto neps = dpd_varray<T>::size(C.irrep(), C.lengths());
 
@@ -3177,18 +3020,9 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_outer_prod, R, T, all_types)
 
     random_outer_prod(N, A, idx_A, B, idx_B, C, idx_C);
 
-    INFO_OR_PRINT("dense len_A    = " << A.dense_lengths());
-    INFO_OR_PRINT("dense stride_A = " << A.dense_strides());
-    INFO_OR_PRINT("idx len_A      = " << A.indexed_lengths());
-    INFO_OR_PRINT("idx_A          = " << idx_A);
-    INFO_OR_PRINT("dense len_B    = " << B.dense_lengths());
-    INFO_OR_PRINT("dense stride_B = " << B.dense_strides());
-    INFO_OR_PRINT("idx len_B      = " << B.indexed_lengths());
-    INFO_OR_PRINT("idx_B          = " << idx_B);
-    INFO_OR_PRINT("dense len_C    = " << C.dense_lengths());
-    INFO_OR_PRINT("dense stride_C = " << C.dense_strides());
-    INFO_OR_PRINT("idx len_C      = " << C.indexed_lengths());
-    INFO_OR_PRINT("idx_C          = " << idx_C);
+    INDEXED_TENSOR_INFO(A);
+    INDEXED_TENSOR_INFO(B);
+    INDEXED_TENSOR_INFO(C);
 
     auto neps = prod(C.lengths());
 
@@ -3215,24 +3049,9 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_outer_prod, R, T, all_types)
 
     random_outer_prod(N, A, idx_A, B, idx_B, C, idx_C);
 
-    INFO_OR_PRINT("irrep_A       = " << A.irrep());
-    INFO_OR_PRINT("dense irrep_A = " << A.dense_irrep());
-    INFO_OR_PRINT("dense len_A   = \n" << A.dense_lengths());
-    INFO_OR_PRINT("idx irrep_A   = " << A.indexed_irreps());
-    INFO_OR_PRINT("idx len_A     = " << A.indexed_lengths());
-    INFO_OR_PRINT("idx_A         = " << idx_A);
-    INFO_OR_PRINT("irrep_B       = " << B.irrep());
-    INFO_OR_PRINT("dense irrep_B = " << B.dense_irrep());
-    INFO_OR_PRINT("dense len_B   = \n" << B.dense_lengths());
-    INFO_OR_PRINT("idx irrep_B   = " << B.indexed_irreps());
-    INFO_OR_PRINT("idx len_B     = " << B.indexed_lengths());
-    INFO_OR_PRINT("idx_B         = " << idx_B);
-    INFO_OR_PRINT("irrep_C       = " << C.irrep());
-    INFO_OR_PRINT("dense irrep_C = " << C.dense_irrep());
-    INFO_OR_PRINT("dense len_C   = \n" << C.dense_lengths());
-    INFO_OR_PRINT("idx irrep_C   = " << C.indexed_irreps());
-    INFO_OR_PRINT("idx len_C     = " << C.indexed_lengths());
-    INFO_OR_PRINT("idx_C         = " << idx_C);
+    INDEXED_DPD_TENSOR_INFO(A);
+    INDEXED_DPD_TENSOR_INFO(B);
+    INDEXED_DPD_TENSOR_INFO(C);
 
     auto neps = dpd_varray<T>::size(C.irrep(), C.lengths());
 

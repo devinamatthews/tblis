@@ -71,17 +71,17 @@ bool is_idx_dense(unsigned i, const Array& A,
 
 template <unsigned N> struct index_group;
 
-template <unsigned N>
-void assign_dense_idx_helper(unsigned, unsigned, index_group<N>&) {}
+template <unsigned I, unsigned N>
+void assign_dense_idx_helper(unsigned, index_group<N>&) {}
 
-template <unsigned N, typename T, typename... Args>
-void assign_dense_idx_helper(unsigned i, unsigned j, index_group<N>& group,
+template <unsigned I, unsigned N, typename T, typename... Args>
+void assign_dense_idx_helper(unsigned i, index_group<N>& group,
                              const indexed_varray_view<T>& A,
                              const dim_vector& idx_A, const Args&... args)
 {
-    if (j == 0) group.dense_len.push_back(A.dense_length(idx_A[i]));
-    group.dense_stride[j].push_back(A.dense_stride(idx_A[i]));
-    assign_dense_idx_helper(i, j+1, group, args...);
+    TBLIS_ASSERT(group.dense_len.back() == A.dense_length(idx_A[i]));
+    group.dense_stride[I].push_back(A.dense_stride(idx_A[i]));
+    assign_dense_idx_helper<I+1>(i, group, args...);
 }
 
 template <unsigned N, typename T, typename... Args>
@@ -89,7 +89,8 @@ void assign_dense_idx(unsigned i, index_group<N>& group,
                       const indexed_varray_view<T>& A,
                       const dim_vector& idx_A, const Args&... args)
 {
-    assign_dense_idx_helper(i, 0, group, A, idx_A, args...);
+    group.dense_len.push_back(A.dense_length(idx_A[i]));
+    assign_dense_idx_helper<0>(i, group, A, idx_A, args...);
 }
 
 template <unsigned N>
@@ -184,18 +185,18 @@ struct index_group
         batch_len.resize(batch_ndim);
         batch_stride.resize(batch_ndim);
 
-        batch_stride[0] = 1;
+        if (batch_ndim > 0) batch_stride[0] = 1;
         for (unsigned i = 1;i < batch_ndim;i++)
             batch_stride[i] = batch_stride[i-1]*batch_len[i-1];
 
-        fold(detail::static_range<unsigned, N>{});
+        //fold(detail::static_range<unsigned, N>{});
 
-        auto reorder = sort_by_stride(detail::static_range<unsigned, N>{});
+        //auto reorder = sort_by_stride(detail::static_range<unsigned, N>{});
 
-        stl_ext::permute(dense_len, reorder);
+        //stl_ext::permute(dense_len, reorder);
 
-        for (unsigned i = 0;i < N;i++)
-            stl_ext::permute(dense_stride[i], reorder);
+        //for (unsigned i = 0;i < N;i++)
+        //    stl_ext::permute(dense_stride[i], reorder);
     }
 };
 
@@ -342,8 +343,15 @@ void get_local_offset_helper(const len_vector& idx, const index_group<N>& group,
 {
     off = 0;
 
+    TBLIS_ASSERT(i < group.mixed_pos.size());
+    TBLIS_ASSERT(i < group.mixed_stride.size());
+    TBLIS_ASSERT(group.mixed_pos[i].size() ==
+                 group.mixed_stride[i].size());
+
     for (unsigned j = 0;j < group.mixed_pos[i].size();j++)
     {
+        TBLIS_ASSERT(group.mixed_pos[i][j] >= 0);
+        TBLIS_ASSERT(group.mixed_pos[i][j] < idx.size());
         off += idx[group.mixed_pos[i][j]]*group.mixed_stride[i][j];
     }
 

@@ -80,6 +80,9 @@ def cpp_flag(compiler):
                            'is needed!')
 
 def autoconf():
+    """
+    A simple program to run the autotools configure and make in a python-friendly directory
+    """
 
     for folder in [build_dir, tblis_build_dir]:
         if not os.path.exists(folder):
@@ -135,6 +138,7 @@ class BuildExt(build_ext):
 
     if sys.platform == 'darwin':
         c_opts['unix'] += ['-stdlib=libc++', '-mmacosx-version-min=10.7']
+        c_opts['unix'] += ['-Wno-reorder', '-Wno-unused-variable']
 
     def build_extensions(self):
 

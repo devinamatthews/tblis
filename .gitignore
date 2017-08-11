@@ -28,3 +28,16 @@ stamp-h1
 libtool
 Makefile
 tblis_config.h
+
+# Python ignore
+*.so
+MANIFEST
+*.py[cod]
+*.egg-info
+.DS_Store
+_build
+_generate
+build
+
+# General
+*.swp

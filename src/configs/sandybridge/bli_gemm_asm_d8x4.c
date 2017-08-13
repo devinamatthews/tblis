@@ -1,6 +1,6 @@
 /*
 
-   BLIS    
+   BLIS
    An object-based framework for developing high-performance BLAS-like
    libraries.
 
@@ -1698,6 +1698,8 @@ void bli_dgemm_asm_8x4
     "                                            \n\t"
     "                                            \n\t"
     ".DDONE:                                     \n\t"
+    "                                            \n\t"
+   // "vzeroupper                                  \n\t"
     "                                            \n\t"
 
     : // output operands (none)

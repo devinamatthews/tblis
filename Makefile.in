@@ -321,8 +321,8 @@ am_lib_libtblis_la_OBJECTS = src/iface/1v/add.lo src/iface/1v/dot.lo \
 	src/internal/1t/reduce.lo src/internal/1t/scale.lo \
 	src/internal/1t/set.lo src/internal/3m/mult.lo \
 	src/internal/3t/mult.lo src/configs/configs.lo \
-	src/util/basic_types.lo src/util/cpuid.lo src/util/random.lo \
-	src/util/thread.lo
+	src/util/basic_types.lo src/util/configs.lo src/util/cpuid.lo \
+	src/util/random.lo src/util/thread.lo
 lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
 @ENABLE_BLAS_TRUE@am__EXEEXT_1 = bin/bench$(EXEEXT) \
 @ENABLE_BLAS_TRUE@	bin/batched_bench$(EXEEXT)
@@ -680,6 +680,7 @@ lib_libtblis_la_SOURCES = \
     src/configs/configs.cxx \
     \
     src/util/basic_types.cxx \
+    src/util/configs.cxx \
     src/util/cpuid.cxx \
     src/util/random.cxx \
     src/util/thread.cxx
@@ -690,6 +691,7 @@ utilinclude_HEADERS = \
 	\
 	src/util/assert.h \
 	src/util/basic_types.h \
+	src/util/configs.h \
 	src/util/thread.h
 
 memoryincludedir = $(pkgincludedir)/memory
@@ -1239,6 +1241,8 @@ src/util/$(DEPDIR)/$(am__dirstamp):
 	@: > src/util/$(DEPDIR)/$(am__dirstamp)
 src/util/basic_types.lo: src/util/$(am__dirstamp) \
 	src/util/$(DEPDIR)/$(am__dirstamp)
+src/util/configs.lo: src/util/$(am__dirstamp) \
+	src/util/$(DEPDIR)/$(am__dirstamp)
 src/util/cpuid.lo: src/util/$(am__dirstamp) \
 	src/util/$(DEPDIR)/$(am__dirstamp)
 src/util/random.lo: src/util/$(am__dirstamp) \
@@ -1393,6 +1397,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/3m/$(DEPDIR)/mult.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/3t/$(DEPDIR)/mult.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/basic_types.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/configs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/cpuid.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/random.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/thread.Plo@am__quote@

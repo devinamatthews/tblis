@@ -1,6 +1,8 @@
 #ifndef _TBLIS_HPP_
 #define _TBLIS_HPP_
 
+#include "util/configs.h"
+
 #include "iface/1v/add.h"
 #include "iface/1v/dot.h"
 #include "iface/1v/reduce.h"

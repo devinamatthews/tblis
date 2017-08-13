@@ -659,6 +659,8 @@ FOREACH_TYPE
 FOREACH_CONFIG_AND_TYPE
 FOREACH_CONFIG
 INCLUDE_CONFIGS
+ENABLE_RYZEN_FALSE
+ENABLE_RYZEN_TRUE
 ENABLE_SANDYBRIDGE_FALSE
 ENABLE_SANDYBRIDGE_TRUE
 ENABLE_REFERENCE_FALSE
@@ -673,6 +675,8 @@ ENABLE_LOONGSON3A_FALSE
 ENABLE_LOONGSON3A_TRUE
 ENABLE_KNL_FALSE
 ENABLE_KNL_TRUE
+ENABLE_SKX_FALSE
+ENABLE_SKX_TRUE
 ENABLE_HASWELL_FALSE
 ENABLE_HASWELL_TRUE
 ENABLE_CORE2_FALSE
@@ -1480,15 +1484,13 @@ Optional Features:
 
                           possible values are:
 
-                          armv7a, armv8a, bgq, bulldozer, excavator, cortex-a15,
-                          cortex-a9, core2, haswell, knl, loongson3a, mic,
-                          piledriver, power7, reference, sandybridge, auto
+                          reference, bulldozer, piledriver, excavator, ryzen,
+                          core2, sandybridge, haswell, skx, knl, auto
 
                           the following meta-configurations are also available:
 
-                          intel = core2,sandybridge,haswell,knl
-                          arm = armv7a,armv8a,cortex-a9,cortex-a15
-                          amd = bulldozer,piledriver,excavator
+                          intel = core2,sandybridge,haswell,skx,knl
+                          amd = bulldozer,piledriver,excavator,ryzen
                           x86 = intel,amd
   --enable-shared[=PKGS]  build shared libraries [default=yes]
   --enable-static[=PKGS]  build static libraries [default=yes]
@@ -6224,6 +6226,15 @@ _ACEOF
 #
 # Determine configurations to build
 #
+# Supported:
+#
+# reference, bulldozer, piledriver, excavator, ryzen, core2, sandybridge,
+# haswell, skx, knl, auto
+#
+# Possible with porting from BLIS:
+#
+# armv7a, armv8a, bgq, cortex-a15, cortex-a9, power7, loongson3a, mic
+#
 
 # Check whether --enable-config was given.
 if test "${enable_config+set}" = set; then :
@@ -6236,41 +6247,7 @@ fi
 if echo $enable_config | grep -q auto; then
     enable_config=
     using_default_configs=yes
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __MIC__ defined" >&5
-$as_echo_n "checking for __MIC__ defined... " >&6; }
-if ${ac_cv_defined___MIC__+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  #ifdef __MIC__
-  int ok;
-  #else
-  choke me
-  #endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  ac_cv_defined___MIC__=yes
-else
-  ac_cv_defined___MIC__=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined___MIC__" >&5
-$as_echo "$ac_cv_defined___MIC__" >&6; }
-if test $ac_cv_defined___MIC__ != "no"; then :
-  enable_config=mic
-fi
+#    AC_CHECK_DEFINE([__MIC__], [enable_config=mic])
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __x86_64__ defined" >&5
 $as_echo_n "checking for __x86_64__ defined... " >&6; }
@@ -6411,391 +6388,17 @@ $as_echo "$ac_cv_defined__M_IX86" >&6; }
 if test $ac_cv_defined__M_IX86 != "no"; then :
   enable_config=x86
 fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __aarch64__ defined" >&5
-$as_echo_n "checking for __aarch64__ defined... " >&6; }
-if ${ac_cv_defined___aarch64__+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  #ifdef __aarch64__
-  int ok;
-  #else
-  choke me
-  #endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  ac_cv_defined___aarch64__=yes
-else
-  ac_cv_defined___aarch64__=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined___aarch64__" >&5
-$as_echo "$ac_cv_defined___aarch64__" >&6; }
-if test $ac_cv_defined___aarch64__ != "no"; then :
-  enable_config=arm
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __arm__ defined" >&5
-$as_echo_n "checking for __arm__ defined... " >&6; }
-if ${ac_cv_defined___arm__+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  #ifdef __arm__
-  int ok;
-  #else
-  choke me
-  #endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  ac_cv_defined___arm__=yes
-else
-  ac_cv_defined___arm__=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined___arm__" >&5
-$as_echo "$ac_cv_defined___arm__" >&6; }
-if test $ac_cv_defined___arm__ != "no"; then :
-  enable_config=arm
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for _M_ARM defined" >&5
-$as_echo_n "checking for _M_ARM defined... " >&6; }
-if ${ac_cv_defined__M_ARM+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  #ifdef _M_ARM
-  int ok;
-  #else
-  choke me
-  #endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  ac_cv_defined__M_ARM=yes
-else
-  ac_cv_defined__M_ARM=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined__M_ARM" >&5
-$as_echo "$ac_cv_defined__M_ARM" >&6; }
-if test $ac_cv_defined__M_ARM != "no"; then :
-  enable_config=arm
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __powerpc64__ defined" >&5
-$as_echo_n "checking for __powerpc64__ defined... " >&6; }
-if ${ac_cv_defined___powerpc64__+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  #ifdef __powerpc64__
-  int ok;
-  #else
-  choke me
-  #endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  ac_cv_defined___powerpc64__=yes
-else
-  ac_cv_defined___powerpc64__=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined___powerpc64__" >&5
-$as_echo "$ac_cv_defined___powerpc64__" >&6; }
-if test $ac_cv_defined___powerpc64__ != "no"; then :
-  enable_config=power7
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __ppc64__ defined" >&5
-$as_echo_n "checking for __ppc64__ defined... " >&6; }
-if ${ac_cv_defined___ppc64__+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  #ifdef __ppc64__
-  int ok;
-  #else
-  choke me
-  #endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  ac_cv_defined___ppc64__=yes
-else
-  ac_cv_defined___ppc64__=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined___ppc64__" >&5
-$as_echo "$ac_cv_defined___ppc64__" >&6; }
-if test $ac_cv_defined___ppc64__ != "no"; then :
-  enable_config=power7
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __PPC64__ defined" >&5
-$as_echo_n "checking for __PPC64__ defined... " >&6; }
-if ${ac_cv_defined___PPC64__+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  #ifdef __PPC64__
-  int ok;
-  #else
-  choke me
-  #endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  ac_cv_defined___PPC64__=yes
-else
-  ac_cv_defined___PPC64__=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined___PPC64__" >&5
-$as_echo "$ac_cv_defined___PPC64__" >&6; }
-if test $ac_cv_defined___PPC64__ != "no"; then :
-  enable_config=power7
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __powerpc__ defined" >&5
-$as_echo_n "checking for __powerpc__ defined... " >&6; }
-if ${ac_cv_defined___powerpc__+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  #ifdef __powerpc__
-  int ok;
-  #else
-  choke me
-  #endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  ac_cv_defined___powerpc__=yes
-else
-  ac_cv_defined___powerpc__=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined___powerpc__" >&5
-$as_echo "$ac_cv_defined___powerpc__" >&6; }
-if test $ac_cv_defined___powerpc__ != "no"; then :
-  enable_config=power7
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __ppc__ defined" >&5
-$as_echo_n "checking for __ppc__ defined... " >&6; }
-if ${ac_cv_defined___ppc__+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  #ifdef __ppc__
-  int ok;
-  #else
-  choke me
-  #endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  ac_cv_defined___ppc__=yes
-else
-  ac_cv_defined___ppc__=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined___ppc__" >&5
-$as_echo "$ac_cv_defined___ppc__" >&6; }
-if test $ac_cv_defined___ppc__ != "no"; then :
-  enable_config=power7
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __PPC__ defined" >&5
-$as_echo_n "checking for __PPC__ defined... " >&6; }
-if ${ac_cv_defined___PPC__+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  #ifdef __PPC__
-  int ok;
-  #else
-  choke me
-  #endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  ac_cv_defined___PPC__=yes
-else
-  ac_cv_defined___PPC__=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined___PPC__" >&5
-$as_echo "$ac_cv_defined___PPC__" >&6; }
-if test $ac_cv_defined___PPC__ != "no"; then :
-  enable_config=power7
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __bgq__ defined" >&5
-$as_echo_n "checking for __bgq__ defined... " >&6; }
-if ${ac_cv_defined___bgq__+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  #ifdef __bgq__
-  int ok;
-  #else
-  choke me
-  #endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  ac_cv_defined___bgq__=yes
-else
-  ac_cv_defined___bgq__=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined___bgq__" >&5
-$as_echo "$ac_cv_defined___bgq__" >&6; }
-if test $ac_cv_defined___bgq__ != "no"; then :
-  enable_config=bgq
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __mips defined" >&5
-$as_echo_n "checking for __mips defined... " >&6; }
-if ${ac_cv_defined___mips+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  #ifdef __mips
-  int ok;
-  #else
-  choke me
-  #endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  ac_cv_defined___mips=yes
-else
-  ac_cv_defined___mips=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined___mips" >&5
-$as_echo "$ac_cv_defined___mips" >&6; }
-if test $ac_cv_defined___mips != "no"; then :
-  enable_config=loongson3a
-fi
+#    AC_CHECK_DEFINE([__aarch64__], [enable_config=arm])
+#    AC_CHECK_DEFINE([__arm__], [enable_config=arm])
+#    AC_CHECK_DEFINE([_M_ARM], [enable_config=arm])
+#    AC_CHECK_DEFINE([__powerpc64__], [enable_config=power7])
+#    AC_CHECK_DEFINE([__ppc64__], [enable_config=power7])
+#    AC_CHECK_DEFINE([__PPC64__], [enable_config=power7])
+#    AC_CHECK_DEFINE([__powerpc__], [enable_config=power7])
+#    AC_CHECK_DEFINE([__ppc__], [enable_config=power7])
+#    AC_CHECK_DEFINE([__PPC__], [enable_config=power7])
+#    AC_CHECK_DEFINE([__bgq__], [enable_config=bgq])
+#    AC_CHECK_DEFINE([__mips], [enable_config=loongson3a])
 fi
 
 if ( echo $enable_config | grep -qv reference ) && test x$using_default_configs = xyes; then
@@ -6803,9 +6406,8 @@ if ( echo $enable_config | grep -qv reference ) && test x$using_default_configs 
 fi
 
 configs=`echo $enable_config | sed 's/x86/intel,amd/' \
-                             | sed 's/intel/core2,sandybridge,haswell,knl/' \
-                             | sed 's/arm/armv7a,armv8a,cortex-a9,cortex-a15/' \
-                             | sed 's/amd/bulldozer,piledriver,excavator/' \
+                             | sed 's/intel/core2,sandybridge,haswell,skx,knl/' \
+                             | sed 's/amd/bulldozer,piledriver,excavator,ryzen/' \
                              | sed 's/,/ /g'`
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking compiler vendor" >&5
@@ -6849,12 +6451,30 @@ else
 $as_echo "$cc_major.$cc_minor.$cc_revision" >&6; }
 fi
 
+#
+# Compiler requirements:
+#
+# General: icc 15+, gcc 4.7+, clang 3.3+
+#
+# bulldozer: any
+# piledriver: any
+# excavator: gcc 4.9+, clang 3.5+
+# ryzen: gcc 6.0+, clang 4.0+
+#
+# core2: any
+# sandybridge: any
+# haswell: any
+# knl: icc 14.1+, gcc 5.0+, clang 3.5+
+# skx: icc 15.1+, gcc 6.0+, clang 3.9+
+#
 if test x"$cc_vendor" = xicc; then
     if test $cc_major -lt 15; then
         as_fn_error $? "Unsupported compiler version." "$LINENO" 5
     fi
-    if test $cc_major -lt 16; then
-        configs=`echo $configs | sed 's/ *knl */ /'`
+    if test $cc_major -eq 15; then
+        if test $cc_revision -lt 1; then
+            configs=`echo $configs | sed 's/ *skx */ /'`
+        fi
     fi
 elif test x"$cc_vendor" = xgcc; then
     if test $cc_major -lt 4; then
@@ -6869,6 +6489,10 @@ elif test x"$cc_vendor" = xgcc; then
         fi
         configs=`echo $configs | sed 's/ *knl */ /'`
     fi
+    if test $cc_major -lt 6; then
+        configs=`echo $configs | sed 's/ *skx */ /' \
+                               | sed 's/ *ryzen */ /'`
+    fi
 elif test x"$cc_vendor" = xclang; then
     if test $cc_major -lt 3; then
         as_fn_error $? "Unsupported compiler version." "$LINENO" 5
@@ -6881,6 +6505,12 @@ elif test x"$cc_vendor" = xclang; then
             configs=`echo $configs | sed 's/ *knl */ /' \
                                    | sed 's/ *excavator */ /'`
         fi
+        if test $cc_minor -lt 9; then
+            configs=`echo $configs | sed 's/ *skx */ /'`
+        fi
+    fi
+    if test $cc_major -lt 4; then
+        configs=`echo $configs | sed 's/ *ryzen */ /'`
     fi
 fi
 
@@ -6920,7 +6550,7 @@ $as_echo "$as_me: WARNING: AVX cannot be compiled; disabling sandybridge configu
     fi
 fi
 
-if ( echo $configs | $EGREP -q 'haswell|piledriver|excavator' ); then
+if ( echo $configs | $EGREP -q 'haswell|piledriver|excavator|skx' ); then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether inline FMA3 can be compiled" >&5
 $as_echo_n "checking whether inline FMA3 can be compiled... " >&6; }
     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -6949,11 +6579,13 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_fma3" >&5
 $as_echo "$enable_fma3" >&6; }
     if test "x$enable_fma3" = xno; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: FMA3 cannot be compiled; disabling haswell, piledriver, and excavator configurations" >&5
-$as_echo "$as_me: WARNING: FMA3 cannot be compiled; disabling haswell, piledriver, and excavator configurations" >&2;}
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: FMA3 cannot be compiled; disabling haswell, piledriver, excavator, skx, and ryzen configurations" >&5
+$as_echo "$as_me: WARNING: FMA3 cannot be compiled; disabling haswell, piledriver, excavator, skx, and ryzen configurations" >&2;}
         configs=`echo $configs | sed 's/ *haswell */ /' \
                                | sed 's/ *piledriver */ /' \
-                               | sed 's/ *excavator */ /'`
+                               | sed 's/ *excavator */ /' \
+                               | sed 's/ *skx */ /' \
+                               | sed 's/ *ryzen */ /'`
     fi
 fi
 
@@ -6992,7 +6624,7 @@ $as_echo "$as_me: WARNING: FMA4 cannot be compiled; disabling bulldozer configur
     fi
 fi
 
-if ( echo $configs | grep -q knl ); then
+if ( echo $configs | $EGREP -q 'knl|skx' ); then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether inline AVX-512F can be compiled" >&5
 $as_echo_n "checking whether inline AVX-512F can be compiled... " >&6; }
     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -7022,9 +6654,10 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_avx512f" >&5
 $as_echo "$enable_avx512f" >&6; }
     if test "x$enable_avx512f" = xno; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: AVX-512F cannot be compiled; disabling knl configuration" >&5
-$as_echo "$as_me: WARNING: AVX-512F cannot be compiled; disabling knl configuration" >&2;}
-        configs=`echo $configs | sed 's/ *knl */ /'`
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: AVX-512F cannot be compiled; disabling knl and skx configurations" >&5
+$as_echo "$as_me: WARNING: AVX-512F cannot be compiled; disabling knl and skx configurations" >&2;}
+        configs=`echo $configs | sed 's/ *knl */ /' \
+                               | sed 's/ *skx */ /'`
     fi
 fi
 
@@ -7127,6 +6760,14 @@ else
   ENABLE_HASWELL_FALSE=
 fi
 
+ if echo $configs | grep -q skx; then
+  ENABLE_SKX_TRUE=
+  ENABLE_SKX_FALSE='#'
+else
+  ENABLE_SKX_TRUE='#'
+  ENABLE_SKX_FALSE=
+fi
+
  if echo $configs | grep -q knl; then
   ENABLE_KNL_TRUE=
   ENABLE_KNL_FALSE='#'
@@ -7181,6 +6822,14 @@ fi
 else
   ENABLE_SANDYBRIDGE_TRUE='#'
   ENABLE_SANDYBRIDGE_FALSE=
+fi
+
+ if echo $configs | grep -q ryzen; then
+  ENABLE_RYZEN_TRUE=
+  ENABLE_RYZEN_FALSE='#'
+else
+  ENABLE_RYZEN_TRUE='#'
+  ENABLE_RYZEN_FALSE=
 fi
 
 
@@ -18342,6 +17991,10 @@ if test -z "${ENABLE_HASWELL_TRUE}" && test -z "${ENABLE_HASWELL_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_HASWELL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${ENABLE_SKX_TRUE}" && test -z "${ENABLE_SKX_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_SKX\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${ENABLE_KNL_TRUE}" && test -z "${ENABLE_KNL_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_KNL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -18368,6 +18021,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_SANDYBRIDGE_TRUE}" && test -z "${ENABLE_SANDYBRIDGE_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_SANDYBRIDGE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_RYZEN_TRUE}" && test -z "${ENABLE_RYZEN_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_RYZEN\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

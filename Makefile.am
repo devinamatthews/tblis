@@ -177,6 +177,19 @@ lib_libexcavator_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
 lib_libexcavator_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
 endif
 
+if ENABLE_RYZEN
+noinst_LTLIBRARIES += lib/libryzen.la
+lib_libtblis_la_LIBADD += lib/libryzen.la
+if !ENABLE_HASWELL
+lib_libryzen_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
+					      src/configs/ryzen/config.cxx
+else
+lib_libryzen_la_SOURCES = src/configs/ryzen/config.cxx
+endif
+lib_libryzen_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=znver1 -mfpmath=sse
+lib_libryzen_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=znver1 -mfpmath=sse
+endif
+
 #
 # Intel architectures
 #
@@ -249,6 +262,19 @@ else
 lib_libknl_la_CFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse
 lib_libknl_la_CXXFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse
 endif
+endif
+endif
+
+if ENABLE_SKX
+noinst_LTLIBRARIES += lib/libskx.la
+lib_libtblis_la_LIBADD += lib/libskx.la
+lib_libskx_la_SOURCES = src/configs/skx/config.cxx
+if ENABLE_INTEL_COMPILER
+lib_libskx_la_CFLAGS = -O3 -xCORE-AVX512
+lib_libskx_la_CXXFLAGS = -O3 -xCORE-AVX512
+else
+lib_libskx_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
+lib_libskx_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
 endif
 endif
 

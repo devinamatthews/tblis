@@ -16,6 +16,8 @@ enum {FEATURE_MASK_SSE3     = (1u<< 0), //CPUID[EAX=1]:ECX[0]
       FEATURE_MASK_AVX512F  = (1u<<16), //CPUID[EAX=7,ECX=0]:EBX[16]
       FEATURE_MASK_AVX512PF = (1u<<26), //CPUID[EAX=7,ECX=0]:EBX[26]
       FEATURE_MASK_AVX512DQ = (1u<<17), //CPUID[EAX=7,ECX=0]:EBX[17]
+      FEATURE_MASK_AVX512BW = (1u<<30), //CPUID[EAX=7,ECX=0]:EBX[30]
+      FEATURE_MASK_AVX512VL = (1u<<31), //CPUID[EAX=7,ECX=0]:EBX[31]
       FEATURE_MASK_XGETBV   = (1u<<26)|
                               (1u<<27), //CPUID[EAX=1]:ECX[27:26]
       XGETBV_MASK_XMM       = 0x02u,     //XCR0[1]
@@ -75,6 +77,8 @@ int get_cpu_type(int& family, int& model, int& features)
         if (check_features(ebx, FEATURE_MASK_AVX512F)) features |= FEATURE_AVX512F;
         if (check_features(ebx, FEATURE_MASK_AVX512PF)) features |= FEATURE_AVX512PF;
         if (check_features(ebx, FEATURE_MASK_AVX512DQ)) features |= FEATURE_AVX512DQ;
+        if (check_features(ebx, FEATURE_MASK_AVX512BW)) features |= FEATURE_AVX512BW;
+        if (check_features(ebx, FEATURE_MASK_AVX512VL)) features |= FEATURE_AVX512VL;
     }
 
     if (cpuid_max_ext >= 0x80000001u)
@@ -145,7 +149,9 @@ int get_cpu_type(int& family, int& model, int& features)
         {
             features &= ~(FEATURE_AVX512F|
                           FEATURE_AVX512PF|
-                          FEATURE_AVX512DQ);
+                          FEATURE_AVX512DQ|
+                          FEATURE_AVX512BW|
+                          FEATURE_AVX512VL);
         }
 
         if (!check_features(eax, XGETBV_MASK_XMM|

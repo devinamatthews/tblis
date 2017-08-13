@@ -101,20 +101,24 @@ host_triplet = @host@
 @ENABLE_PILEDRIVER_TRUE@am__append_6 = lib/libpiledriver.la
 @ENABLE_EXCAVATOR_TRUE@am__append_7 = lib/libexcavator.la
 @ENABLE_EXCAVATOR_TRUE@am__append_8 = lib/libexcavator.la
+@ENABLE_RYZEN_TRUE@am__append_9 = lib/libryzen.la
+@ENABLE_RYZEN_TRUE@am__append_10 = lib/libryzen.la
 
 #
 # Intel architectures
 #
-@ENABLE_CORE2_TRUE@am__append_9 = lib/libcore2.la
-@ENABLE_CORE2_TRUE@am__append_10 = lib/libcore2.la
-@ENABLE_SANDYBRIDGE_TRUE@am__append_11 = lib/libsandybridge.la
-@ENABLE_SANDYBRIDGE_TRUE@am__append_12 = lib/libsandybridge.la
-@ENABLE_HASWELL_TRUE@am__append_13 = lib/libhaswell.la
-@ENABLE_HASWELL_TRUE@am__append_14 = lib/libhaswell.la
-@ENABLE_KNL_TRUE@am__append_15 = lib/libknl.la
-@ENABLE_KNL_TRUE@am__append_16 = lib/libknl.la
+@ENABLE_CORE2_TRUE@am__append_11 = lib/libcore2.la
+@ENABLE_CORE2_TRUE@am__append_12 = lib/libcore2.la
+@ENABLE_SANDYBRIDGE_TRUE@am__append_13 = lib/libsandybridge.la
+@ENABLE_SANDYBRIDGE_TRUE@am__append_14 = lib/libsandybridge.la
+@ENABLE_HASWELL_TRUE@am__append_15 = lib/libhaswell.la
+@ENABLE_HASWELL_TRUE@am__append_16 = lib/libhaswell.la
+@ENABLE_KNL_TRUE@am__append_17 = lib/libknl.la
+@ENABLE_KNL_TRUE@am__append_18 = lib/libknl.la
+@ENABLE_SKX_TRUE@am__append_19 = lib/libskx.la
+@ENABLE_SKX_TRUE@am__append_20 = lib/libskx.la
 noinst_PROGRAMS = bin/test$(EXEEXT) $(am__EXEEXT_1)
-@ENABLE_BLAS_TRUE@am__append_17 = bin/bench bin/batched_bench
+@ENABLE_BLAS_TRUE@am__append_21 = bin/bench bin/batched_bench
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_blas.m4 \
@@ -289,6 +293,19 @@ lib_libreference_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(lib_libreference_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 @ENABLE_REFERENCE_TRUE@am_lib_libreference_la_rpath =
+lib_libryzen_la_LIBADD =
+am__lib_libryzen_la_SOURCES_DIST =  \
+	src/configs/haswell/bli_gemm_asm_d6x8.c \
+	src/configs/ryzen/config.cxx
+@ENABLE_HASWELL_FALSE@@ENABLE_RYZEN_TRUE@am_lib_libryzen_la_OBJECTS = src/configs/haswell/lib_libryzen_la-bli_gemm_asm_d6x8.lo \
+@ENABLE_HASWELL_FALSE@@ENABLE_RYZEN_TRUE@	src/configs/ryzen/lib_libryzen_la-config.lo
+@ENABLE_HASWELL_TRUE@@ENABLE_RYZEN_TRUE@am_lib_libryzen_la_OBJECTS = src/configs/ryzen/lib_libryzen_la-config.lo
+lib_libryzen_la_OBJECTS = $(am_lib_libryzen_la_OBJECTS)
+lib_libryzen_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(lib_libryzen_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
+@ENABLE_RYZEN_TRUE@am_lib_libryzen_la_rpath =
 lib_libsandybridge_la_LIBADD =
 am__lib_libsandybridge_la_SOURCES_DIST =  \
 	src/configs/sandybridge/bli_gemm_asm_d8x4.c \
@@ -301,10 +318,21 @@ lib_libsandybridge_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(lib_libsandybridge_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 @ENABLE_SANDYBRIDGE_TRUE@am_lib_libsandybridge_la_rpath =
+lib_libskx_la_LIBADD =
+am__lib_libskx_la_SOURCES_DIST = src/configs/skx/config.cxx
+@ENABLE_SKX_TRUE@am_lib_libskx_la_OBJECTS =  \
+@ENABLE_SKX_TRUE@	src/configs/skx/lib_libskx_la-config.lo
+lib_libskx_la_OBJECTS = $(am_lib_libskx_la_OBJECTS)
+lib_libskx_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(lib_libskx_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
+	-o $@
+@ENABLE_SKX_TRUE@am_lib_libskx_la_rpath =
 lib_libtblis_la_DEPENDENCIES = src/external/tci/lib/libtci.la \
 	$(am__append_2) $(am__append_4) $(am__append_6) \
 	$(am__append_8) $(am__append_10) $(am__append_12) \
-	$(am__append_14) $(am__append_16)
+	$(am__append_14) $(am__append_16) $(am__append_18) \
+	$(am__append_20)
 am_lib_libtblis_la_OBJECTS = src/iface/1v/add.lo src/iface/1v/dot.lo \
 	src/iface/1v/reduce.lo src/iface/1v/scale.lo \
 	src/iface/1v/set.lo src/iface/1m/add.lo src/iface/1m/dot.lo \
@@ -392,10 +420,10 @@ am__v_CXXLD_1 =
 SOURCES = $(lib_libbulldozer_la_SOURCES) $(lib_libcore2_la_SOURCES) \
 	$(lib_libexcavator_la_SOURCES) $(lib_libhaswell_la_SOURCES) \
 	$(lib_libknl_la_SOURCES) $(lib_libpiledriver_la_SOURCES) \
-	$(lib_libreference_la_SOURCES) \
-	$(lib_libsandybridge_la_SOURCES) $(lib_libtblis_la_SOURCES) \
-	$(bin_batched_bench_SOURCES) $(bin_bench_SOURCES) \
-	$(bin_test_SOURCES)
+	$(lib_libreference_la_SOURCES) $(lib_libryzen_la_SOURCES) \
+	$(lib_libsandybridge_la_SOURCES) $(lib_libskx_la_SOURCES) \
+	$(lib_libtblis_la_SOURCES) $(bin_batched_bench_SOURCES) \
+	$(bin_bench_SOURCES) $(bin_test_SOURCES)
 DIST_SOURCES = $(am__lib_libbulldozer_la_SOURCES_DIST) \
 	$(am__lib_libcore2_la_SOURCES_DIST) \
 	$(am__lib_libexcavator_la_SOURCES_DIST) \
@@ -403,9 +431,11 @@ DIST_SOURCES = $(am__lib_libbulldozer_la_SOURCES_DIST) \
 	$(am__lib_libknl_la_SOURCES_DIST) \
 	$(am__lib_libpiledriver_la_SOURCES_DIST) \
 	$(am__lib_libreference_la_SOURCES_DIST) \
+	$(am__lib_libryzen_la_SOURCES_DIST) \
 	$(am__lib_libsandybridge_la_SOURCES_DIST) \
-	$(lib_libtblis_la_SOURCES) $(bin_batched_bench_SOURCES) \
-	$(bin_bench_SOURCES) $(bin_test_SOURCES)
+	$(am__lib_libskx_la_SOURCES_DIST) $(lib_libtblis_la_SOURCES) \
+	$(bin_batched_bench_SOURCES) $(bin_bench_SOURCES) \
+	$(bin_test_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -764,11 +794,13 @@ stl_extinclude_HEADERS = \
 
 noinst_LTLIBRARIES = $(am__append_1) $(am__append_3) $(am__append_5) \
 	$(am__append_7) $(am__append_9) $(am__append_11) \
-	$(am__append_13) $(am__append_15)
+	$(am__append_13) $(am__append_15) $(am__append_17) \
+	$(am__append_19)
 lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la \
 	$(am__append_2) $(am__append_4) $(am__append_6) \
 	$(am__append_8) $(am__append_10) $(am__append_12) \
-	$(am__append_14) $(am__append_16)
+	$(am__append_14) $(am__append_16) $(am__append_18) \
+	$(am__append_20)
 @ENABLE_REFERENCE_TRUE@lib_libreference_la_SOURCES = src/configs/reference/config.cxx
 @ENABLE_REFERENCE_TRUE@lib_libreference_la_CFLAGS = -O3
 @ENABLE_REFERENCE_TRUE@lib_libreference_la_CXXFLAGS = -O3
@@ -788,6 +820,12 @@ lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la \
 @ENABLE_EXCAVATOR_TRUE@@ENABLE_PILEDRIVER_TRUE@lib_libexcavator_la_SOURCES = src/configs/excavator/config.cxx
 @ENABLE_EXCAVATOR_TRUE@lib_libexcavator_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
 @ENABLE_EXCAVATOR_TRUE@lib_libexcavator_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
+@ENABLE_HASWELL_FALSE@@ENABLE_RYZEN_TRUE@lib_libryzen_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
+@ENABLE_HASWELL_FALSE@@ENABLE_RYZEN_TRUE@					      src/configs/ryzen/config.cxx
+
+@ENABLE_HASWELL_TRUE@@ENABLE_RYZEN_TRUE@lib_libryzen_la_SOURCES = src/configs/ryzen/config.cxx
+@ENABLE_RYZEN_TRUE@lib_libryzen_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=znver1 -mfpmath=sse
+@ENABLE_RYZEN_TRUE@lib_libryzen_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=znver1 -mfpmath=sse
 @ENABLE_CORE2_TRUE@lib_libcore2_la_SOURCES = src/configs/core2/bli_gemm_asm_d4x4.c \
 @ENABLE_CORE2_TRUE@					     src/configs/core2/config.cxx
 
@@ -828,6 +866,11 @@ lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la \
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_FALSE@lib_libknl_la_CXXFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_TRUE@lib_libknl_la_CXXFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse -Wa,-march=knl
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_KNL_TRUE@lib_libknl_la_CXXFLAGS = -O3 -xMIC-AVX512
+@ENABLE_SKX_TRUE@lib_libskx_la_SOURCES = src/configs/skx/config.cxx
+@ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SKX_TRUE@lib_libskx_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
+@ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SKX_TRUE@lib_libskx_la_CFLAGS = -O3 -xCORE-AVX512
+@ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SKX_TRUE@lib_libskx_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
+@ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SKX_TRUE@lib_libskx_la_CXXFLAGS = -O3 -xCORE-AVX512
 bin_test_SOURCES = test/test.cxx
 bin_bench_SOURCES = test/bench.cxx
 bin_batched_bench_SOURCES = test/batched_bench.cxx
@@ -1080,6 +1123,21 @@ src/configs/reference/lib_libreference_la-config.lo:  \
 
 lib/libreference.la: $(lib_libreference_la_OBJECTS) $(lib_libreference_la_DEPENDENCIES) $(EXTRA_lib_libreference_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CXXLD)$(lib_libreference_la_LINK) $(am_lib_libreference_la_rpath) $(lib_libreference_la_OBJECTS) $(lib_libreference_la_LIBADD) $(LIBS)
+src/configs/haswell/lib_libryzen_la-bli_gemm_asm_d6x8.lo:  \
+	src/configs/haswell/$(am__dirstamp) \
+	src/configs/haswell/$(DEPDIR)/$(am__dirstamp)
+src/configs/ryzen/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/ryzen
+	@: > src/configs/ryzen/$(am__dirstamp)
+src/configs/ryzen/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/ryzen/$(DEPDIR)
+	@: > src/configs/ryzen/$(DEPDIR)/$(am__dirstamp)
+src/configs/ryzen/lib_libryzen_la-config.lo:  \
+	src/configs/ryzen/$(am__dirstamp) \
+	src/configs/ryzen/$(DEPDIR)/$(am__dirstamp)
+
+lib/libryzen.la: $(lib_libryzen_la_OBJECTS) $(lib_libryzen_la_DEPENDENCIES) $(EXTRA_lib_libryzen_la_DEPENDENCIES) lib/$(am__dirstamp)
+	$(AM_V_CXXLD)$(lib_libryzen_la_LINK) $(am_lib_libryzen_la_rpath) $(lib_libryzen_la_OBJECTS) $(lib_libryzen_la_LIBADD) $(LIBS)
 src/configs/sandybridge/$(am__dirstamp):
 	@$(MKDIR_P) src/configs/sandybridge
 	@: > src/configs/sandybridge/$(am__dirstamp)
@@ -1095,6 +1153,18 @@ src/configs/sandybridge/lib_libsandybridge_la-config.lo:  \
 
 lib/libsandybridge.la: $(lib_libsandybridge_la_OBJECTS) $(lib_libsandybridge_la_DEPENDENCIES) $(EXTRA_lib_libsandybridge_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CXXLD)$(lib_libsandybridge_la_LINK) $(am_lib_libsandybridge_la_rpath) $(lib_libsandybridge_la_OBJECTS) $(lib_libsandybridge_la_LIBADD) $(LIBS)
+src/configs/skx/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/skx
+	@: > src/configs/skx/$(am__dirstamp)
+src/configs/skx/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/skx/$(DEPDIR)
+	@: > src/configs/skx/$(DEPDIR)/$(am__dirstamp)
+src/configs/skx/lib_libskx_la-config.lo:  \
+	src/configs/skx/$(am__dirstamp) \
+	src/configs/skx/$(DEPDIR)/$(am__dirstamp)
+
+lib/libskx.la: $(lib_libskx_la_OBJECTS) $(lib_libskx_la_DEPENDENCIES) $(EXTRA_lib_libskx_la_DEPENDENCIES) lib/$(am__dirstamp)
+	$(AM_V_CXXLD)$(lib_libskx_la_LINK) $(am_lib_libskx_la_rpath) $(lib_libskx_la_OBJECTS) $(lib_libskx_la_LIBADD) $(LIBS)
 src/iface/1v/$(am__dirstamp):
 	@$(MKDIR_P) src/iface/1v
 	@: > src/iface/1v/$(am__dirstamp)
@@ -1303,8 +1373,12 @@ mostlyclean-compile:
 	-rm -f src/configs/piledriver/*.lo
 	-rm -f src/configs/reference/*.$(OBJEXT)
 	-rm -f src/configs/reference/*.lo
+	-rm -f src/configs/ryzen/*.$(OBJEXT)
+	-rm -f src/configs/ryzen/*.lo
 	-rm -f src/configs/sandybridge/*.$(OBJEXT)
 	-rm -f src/configs/sandybridge/*.lo
+	-rm -f src/configs/skx/*.$(OBJEXT)
+	-rm -f src/configs/skx/*.lo
 	-rm -f src/iface/1m/*.$(OBJEXT)
 	-rm -f src/iface/1m/*.lo
 	-rm -f src/iface/1t/*.$(OBJEXT)
@@ -1344,6 +1418,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d8x6.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/haswell/$(DEPDIR)/lib_libryzen_la-bli_gemm_asm_d6x8.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_12x16.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_24x8.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_30x8.Plo@am__quote@
@@ -1356,8 +1431,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/reference/$(DEPDIR)/lib_libreference_la-config.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/ryzen/$(DEPDIR)/lib_libryzen_la-config.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_asm_d8x4.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx/$(DEPDIR)/lib_libskx_la-config.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/iface/1m/$(DEPDIR)/add.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/iface/1m/$(DEPDIR)/dot.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/iface/1m/$(DEPDIR)/reduce.Plo@am__quote@
@@ -1536,6 +1613,13 @@ src/configs/piledriver/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo: src/configs/pi
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libpiledriver_la_CFLAGS) $(CFLAGS) -c -o src/configs/piledriver/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo `test -f 'src/configs/piledriver/bli_gemm_asm_d8x3.c' || echo '$(srcdir)/'`src/configs/piledriver/bli_gemm_asm_d8x3.c
 
+src/configs/haswell/lib_libryzen_la-bli_gemm_asm_d6x8.lo: src/configs/haswell/bli_gemm_asm_d6x8.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libryzen_la_CFLAGS) $(CFLAGS) -MT src/configs/haswell/lib_libryzen_la-bli_gemm_asm_d6x8.lo -MD -MP -MF src/configs/haswell/$(DEPDIR)/lib_libryzen_la-bli_gemm_asm_d6x8.Tpo -c -o src/configs/haswell/lib_libryzen_la-bli_gemm_asm_d6x8.lo `test -f 'src/configs/haswell/bli_gemm_asm_d6x8.c' || echo '$(srcdir)/'`src/configs/haswell/bli_gemm_asm_d6x8.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/haswell/$(DEPDIR)/lib_libryzen_la-bli_gemm_asm_d6x8.Tpo src/configs/haswell/$(DEPDIR)/lib_libryzen_la-bli_gemm_asm_d6x8.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/haswell/bli_gemm_asm_d6x8.c' object='src/configs/haswell/lib_libryzen_la-bli_gemm_asm_d6x8.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libryzen_la_CFLAGS) $(CFLAGS) -c -o src/configs/haswell/lib_libryzen_la-bli_gemm_asm_d6x8.lo `test -f 'src/configs/haswell/bli_gemm_asm_d6x8.c' || echo '$(srcdir)/'`src/configs/haswell/bli_gemm_asm_d6x8.c
+
 src/configs/sandybridge/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo: src/configs/sandybridge/bli_gemm_asm_d8x4.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libsandybridge_la_CFLAGS) $(CFLAGS) -MT src/configs/sandybridge/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo -MD -MP -MF src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_asm_d8x4.Tpo -c -o src/configs/sandybridge/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo `test -f 'src/configs/sandybridge/bli_gemm_asm_d8x4.c' || echo '$(srcdir)/'`src/configs/sandybridge/bli_gemm_asm_d8x4.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_asm_d8x4.Tpo src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_asm_d8x4.Plo
@@ -1616,12 +1700,26 @@ src/configs/reference/lib_libreference_la-config.lo: src/configs/reference/confi
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libreference_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/reference/lib_libreference_la-config.lo `test -f 'src/configs/reference/config.cxx' || echo '$(srcdir)/'`src/configs/reference/config.cxx
 
+src/configs/ryzen/lib_libryzen_la-config.lo: src/configs/ryzen/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libryzen_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/ryzen/lib_libryzen_la-config.lo -MD -MP -MF src/configs/ryzen/$(DEPDIR)/lib_libryzen_la-config.Tpo -c -o src/configs/ryzen/lib_libryzen_la-config.lo `test -f 'src/configs/ryzen/config.cxx' || echo '$(srcdir)/'`src/configs/ryzen/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/ryzen/$(DEPDIR)/lib_libryzen_la-config.Tpo src/configs/ryzen/$(DEPDIR)/lib_libryzen_la-config.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/ryzen/config.cxx' object='src/configs/ryzen/lib_libryzen_la-config.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libryzen_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/ryzen/lib_libryzen_la-config.lo `test -f 'src/configs/ryzen/config.cxx' || echo '$(srcdir)/'`src/configs/ryzen/config.cxx
+
 src/configs/sandybridge/lib_libsandybridge_la-config.lo: src/configs/sandybridge/config.cxx
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libsandybridge_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/sandybridge/lib_libsandybridge_la-config.lo -MD -MP -MF src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config.Tpo -c -o src/configs/sandybridge/lib_libsandybridge_la-config.lo `test -f 'src/configs/sandybridge/config.cxx' || echo '$(srcdir)/'`src/configs/sandybridge/config.cxx
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config.Tpo src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config.Plo
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/sandybridge/config.cxx' object='src/configs/sandybridge/lib_libsandybridge_la-config.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libsandybridge_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/sandybridge/lib_libsandybridge_la-config.lo `test -f 'src/configs/sandybridge/config.cxx' || echo '$(srcdir)/'`src/configs/sandybridge/config.cxx
+
+src/configs/skx/lib_libskx_la-config.lo: src/configs/skx/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/skx/lib_libskx_la-config.lo -MD -MP -MF src/configs/skx/$(DEPDIR)/lib_libskx_la-config.Tpo -c -o src/configs/skx/lib_libskx_la-config.lo `test -f 'src/configs/skx/config.cxx' || echo '$(srcdir)/'`src/configs/skx/config.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/skx/$(DEPDIR)/lib_libskx_la-config.Tpo src/configs/skx/$(DEPDIR)/lib_libskx_la-config.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/skx/config.cxx' object='src/configs/skx/lib_libskx_la-config.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/skx/lib_libskx_la-config.lo `test -f 'src/configs/skx/config.cxx' || echo '$(srcdir)/'`src/configs/skx/config.cxx
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -1638,7 +1736,9 @@ clean-libtool:
 	-rm -rf src/configs/knl/.libs src/configs/knl/_libs
 	-rm -rf src/configs/piledriver/.libs src/configs/piledriver/_libs
 	-rm -rf src/configs/reference/.libs src/configs/reference/_libs
+	-rm -rf src/configs/ryzen/.libs src/configs/ryzen/_libs
 	-rm -rf src/configs/sandybridge/.libs src/configs/sandybridge/_libs
+	-rm -rf src/configs/skx/.libs src/configs/skx/_libs
 	-rm -rf src/iface/1m/.libs src/iface/1m/_libs
 	-rm -rf src/iface/1t/.libs src/iface/1t/_libs
 	-rm -rf src/iface/1v/.libs src/iface/1v/_libs
@@ -2210,8 +2310,12 @@ distclean-generic:
 	-rm -f src/configs/piledriver/$(am__dirstamp)
 	-rm -f src/configs/reference/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/configs/reference/$(am__dirstamp)
+	-rm -f src/configs/ryzen/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/configs/ryzen/$(am__dirstamp)
 	-rm -f src/configs/sandybridge/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/configs/sandybridge/$(am__dirstamp)
+	-rm -f src/configs/skx/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/configs/skx/$(am__dirstamp)
 	-rm -f src/iface/1m/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/iface/1m/$(am__dirstamp)
 	-rm -f src/iface/1t/$(DEPDIR)/$(am__dirstamp)
@@ -2247,7 +2351,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/iface/1m/$(DEPDIR) src/iface/1t/$(DEPDIR) src/iface/1v/$(DEPDIR) src/iface/3m/$(DEPDIR) src/iface/3t/$(DEPDIR) src/internal/1m/$(DEPDIR) src/internal/1t/$(DEPDIR) src/internal/1v/$(DEPDIR) src/internal/3m/$(DEPDIR) src/internal/3t/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
+	-rm -rf src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/ryzen/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/configs/skx/$(DEPDIR) src/iface/1m/$(DEPDIR) src/iface/1t/$(DEPDIR) src/iface/1v/$(DEPDIR) src/iface/3m/$(DEPDIR) src/iface/3t/$(DEPDIR) src/internal/1m/$(DEPDIR) src/internal/1t/$(DEPDIR) src/internal/1v/$(DEPDIR) src/internal/3m/$(DEPDIR) src/internal/3t/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -2300,7 +2404,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/iface/1m/$(DEPDIR) src/iface/1t/$(DEPDIR) src/iface/1v/$(DEPDIR) src/iface/3m/$(DEPDIR) src/iface/3t/$(DEPDIR) src/internal/1m/$(DEPDIR) src/internal/1t/$(DEPDIR) src/internal/1v/$(DEPDIR) src/internal/3m/$(DEPDIR) src/internal/3t/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
+	-rm -rf src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/ryzen/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/configs/skx/$(DEPDIR) src/iface/1m/$(DEPDIR) src/iface/1t/$(DEPDIR) src/iface/1v/$(DEPDIR) src/iface/3m/$(DEPDIR) src/iface/3t/$(DEPDIR) src/internal/1m/$(DEPDIR) src/internal/1t/$(DEPDIR) src/internal/1v/$(DEPDIR) src/internal/3m/$(DEPDIR) src/internal/3t/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

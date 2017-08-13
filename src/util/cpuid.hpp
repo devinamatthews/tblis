@@ -21,17 +21,19 @@ namespace tblis
 {
 
 enum {VENDOR_INTEL, VENDOR_AMD, VENDOR_UNKNOWN};
-enum {FEATURE_SSE3     = 0x001,
-      FEATURE_SSSE3    = 0x002,
-      FEATURE_SSE41    = 0x004,
-      FEATURE_SSE42    = 0x008,
-      FEATURE_AVX      = 0x010,
-      FEATURE_AVX2     = 0x020,
-      FEATURE_FMA3     = 0x040,
-      FEATURE_FMA4     = 0x080,
-      FEATURE_AVX512F  = 0x100,
-      FEATURE_AVX512PF = 0x200,
-      FEATURE_AVX512DQ = 0x400};
+enum {FEATURE_SSE3     = 0x0001,
+      FEATURE_SSSE3    = 0x0002,
+      FEATURE_SSE41    = 0x0004,
+      FEATURE_SSE42    = 0x0008,
+      FEATURE_AVX      = 0x0010,
+      FEATURE_AVX2     = 0x0020,
+      FEATURE_FMA3     = 0x0040,
+      FEATURE_FMA4     = 0x0080,
+      FEATURE_AVX512F  = 0x0100,
+      FEATURE_AVX512PF = 0x0200,
+      FEATURE_AVX512DQ = 0x0400,
+      FEATURE_AVX512BW = 0x0800,
+      FEATURE_AVX512VL = 0x1000};
 
 int get_cpu_type(int& family, int& model, int& features);
 

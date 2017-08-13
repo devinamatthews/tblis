@@ -142,6 +142,15 @@ AC_DEFINE_UNQUOTED([LABEL_TYPE], [$label_type], [label_type])
 #
 # Determine configurations to build
 #
+# Supported:
+#
+# reference, bulldozer, piledriver, excavator, ryzen, core2, sandybridge,
+# haswell, skx, knl, auto
+#
+# Possible with porting from BLIS:
+#
+# armv7a, armv8a, bgq, cortex-a15, cortex-a9, power7, loongson3a, mic
+#
 
 AC_ARG_ENABLE([config],
 [  --enable-config=...    a comma-separated list of configurations
@@ -149,37 +158,35 @@ AC_ARG_ENABLE([config],
   
                           possible values are:
                           
-                          armv7a, armv8a, bgq, bulldozer, excavator, cortex-a15,
-                          cortex-a9, core2, haswell, knl, loongson3a, mic,
-                          piledriver, power7, reference, sandybridge, auto
+                          reference, bulldozer, piledriver, excavator, ryzen,
+                          core2, sandybridge, haswell, skx, knl, auto
 
                           the following meta-configurations are also available:
  
-                          intel = core2,sandybridge,haswell,knl
-                          arm = armv7a,armv8a,cortex-a9,cortex-a15
-                          amd = bulldozer,piledriver,excavator
+                          intel = core2,sandybridge,haswell,skx,knl
+                          amd = bulldozer,piledriver,excavator,ryzen
                           x86 = intel,amd],
               [], [enable_config=auto])
 
 if echo $enable_config | grep -q auto; then
     enable_config=
     using_default_configs=yes
-    AC_CHECK_DEFINE([__MIC__], [enable_config=mic])
+#    AC_CHECK_DEFINE([__MIC__], [enable_config=mic])
     AC_CHECK_DEFINE([__x86_64__], [enable_config=x86])
     AC_CHECK_DEFINE([_M_X64], [enable_config=x86])
     AC_CHECK_DEFINE([__i386], [enable_config=x86])
     AC_CHECK_DEFINE([_M_IX86], [enable_config=x86])
-    AC_CHECK_DEFINE([__aarch64__], [enable_config=arm])
-    AC_CHECK_DEFINE([__arm__], [enable_config=arm])
-    AC_CHECK_DEFINE([_M_ARM], [enable_config=arm])
-    AC_CHECK_DEFINE([__powerpc64__], [enable_config=power7])
-    AC_CHECK_DEFINE([__ppc64__], [enable_config=power7])
-    AC_CHECK_DEFINE([__PPC64__], [enable_config=power7])
-    AC_CHECK_DEFINE([__powerpc__], [enable_config=power7])
-    AC_CHECK_DEFINE([__ppc__], [enable_config=power7])
-    AC_CHECK_DEFINE([__PPC__], [enable_config=power7])
-    AC_CHECK_DEFINE([__bgq__], [enable_config=bgq])
-    AC_CHECK_DEFINE([__mips], [enable_config=loongson3a])
+#    AC_CHECK_DEFINE([__aarch64__], [enable_config=arm])
+#    AC_CHECK_DEFINE([__arm__], [enable_config=arm])
+#    AC_CHECK_DEFINE([_M_ARM], [enable_config=arm])
+#    AC_CHECK_DEFINE([__powerpc64__], [enable_config=power7])
+#    AC_CHECK_DEFINE([__ppc64__], [enable_config=power7])
+#    AC_CHECK_DEFINE([__PPC64__], [enable_config=power7])
+#    AC_CHECK_DEFINE([__powerpc__], [enable_config=power7])
+#    AC_CHECK_DEFINE([__ppc__], [enable_config=power7])
+#    AC_CHECK_DEFINE([__PPC__], [enable_config=power7])
+#    AC_CHECK_DEFINE([__bgq__], [enable_config=bgq])
+#    AC_CHECK_DEFINE([__mips], [enable_config=loongson3a])
 fi
                              
 if ( echo $enable_config | grep -qv reference ) && test x$using_default_configs = xyes; then
@@ -187,9 +194,8 @@ if ( echo $enable_config | grep -qv reference ) && test x$using_default_configs 
 fi
 
 configs=`echo $enable_config | sed 's/x86/intel,amd/' \
-                             | sed 's/intel/core2,sandybridge,haswell,knl/' \
-                             | sed 's/arm/armv7a,armv8a,cortex-a9,cortex-a15/' \
-                             | sed 's/amd/bulldozer,piledriver,excavator/' \
+                             | sed 's/intel/core2,sandybridge,haswell,skx,knl/' \
+                             | sed 's/amd/bulldozer,piledriver,excavator,ryzen/' \
                              | sed 's/,/ /g'`
 
 AC_MSG_CHECKING([compiler vendor])
@@ -228,12 +234,30 @@ else
     AC_MSG_RESULT([$cc_major.$cc_minor.$cc_revision])
 fi
 
+#
+# Compiler requirements:
+#
+# General: icc 15+, gcc 4.7+, clang 3.3+
+#
+# bulldozer: any
+# piledriver: any
+# excavator: gcc 4.9+, clang 3.5+
+# ryzen: gcc 6.0+, clang 4.0+
+#
+# core2: any
+# sandybridge: any
+# haswell: any
+# knl: icc 14.1+, gcc 5.0+, clang 3.5+
+# skx: icc 15.1+, gcc 6.0+, clang 3.9+
+#
 if test x"$cc_vendor" = xicc; then
     if test $cc_major -lt 15; then
         AC_MSG_ERROR([Unsupported compiler version.])
     fi
-    if test $cc_major -lt 16; then
-        configs=`echo $configs | sed 's/ *knl */ /'`
+    if test $cc_major -eq 15; then
+        if test $cc_revision -lt 1; then
+            configs=`echo $configs | sed 's/ *skx */ /'`
+        fi
     fi
 elif test x"$cc_vendor" = xgcc; then
     if test $cc_major -lt 4; then
@@ -248,6 +272,10 @@ elif test x"$cc_vendor" = xgcc; then
         fi
         configs=`echo $configs | sed 's/ *knl */ /'`
     fi
+    if test $cc_major -lt 6; then
+        configs=`echo $configs | sed 's/ *skx */ /' \
+                               | sed 's/ *ryzen */ /'`
+    fi
 elif test x"$cc_vendor" = xclang; then
     if test $cc_major -lt 3; then
         AC_MSG_ERROR([Unsupported compiler version.])
@@ -260,6 +288,12 @@ elif test x"$cc_vendor" = xclang; then
             configs=`echo $configs | sed 's/ *knl */ /' \
                                    | sed 's/ *excavator */ /'`
         fi
+        if test $cc_minor -lt 9; then
+            configs=`echo $configs | sed 's/ *skx */ /'`
+        fi
+    fi
+    if test $cc_major -lt 4; then
+        configs=`echo $configs | sed 's/ *ryzen */ /'`
     fi
 fi
 
@@ -281,7 +315,7 @@ if ( echo $configs | grep -q sandybridge ); then
     fi
 fi
 
-if ( echo $configs | $EGREP -q 'haswell|piledriver|excavator' ); then
+if ( echo $configs | $EGREP -q 'haswell|piledriver|excavator|skx' ); then
     AC_MSG_CHECKING([whether inline FMA3 can be compiled])
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
         __asm__ __volatile__
@@ -293,10 +327,12 @@ if ( echo $configs | $EGREP -q 'haswell|piledriver|excavator' ); then
         [enable_fma3=yes], [enable_fma3=no])
     AC_MSG_RESULT([$enable_fma3])
     if test "x$enable_fma3" = xno; then
-        AC_MSG_WARN([FMA3 cannot be compiled; disabling haswell, piledriver, and excavator configurations])
+        AC_MSG_WARN([FMA3 cannot be compiled; disabling haswell, piledriver, excavator, skx, and ryzen configurations])
         configs=`echo $configs | sed 's/ *haswell */ /' \
                                | sed 's/ *piledriver */ /' \
-                               | sed 's/ *excavator */ /'`
+                               | sed 's/ *excavator */ /' \
+                               | sed 's/ *skx */ /' \
+                               | sed 's/ *ryzen */ /'`
     fi
 fi
 
@@ -317,7 +353,7 @@ if ( echo $configs | grep -q bulldozer ); then
     fi
 fi
 
-if ( echo $configs | grep -q knl ); then
+if ( echo $configs | $EGREP -q 'knl|skx' ); then
     AC_MSG_CHECKING([whether inline AVX-512F can be compiled])
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
         __asm__ __volatile__
@@ -330,8 +366,9 @@ if ( echo $configs | grep -q knl ); then
         [enable_avx512f=yes], [enable_avx512f=no])
     AC_MSG_RESULT([$enable_avx512f])
     if test "x$enable_avx512f" = xno; then
-        AC_MSG_WARN([AVX-512F cannot be compiled; disabling knl configuration])
-        configs=`echo $configs | sed 's/ *knl */ /'`
+        AC_MSG_WARN([AVX-512F cannot be compiled; disabling knl and skx configurations])
+        configs=`echo $configs | sed 's/ *knl */ /' \
+                               | sed 's/ *skx */ /'`
     fi
 fi
 
@@ -355,6 +392,7 @@ AM_CONDITIONAL(ENABLE_CORTEX_A15, [echo $configs | grep -q cortex-a15])
 AM_CONDITIONAL(ENABLE_CORTEX_A9, [echo $configs | grep -q cortex-a9])
 AM_CONDITIONAL(ENABLE_CORE2, [echo $configs | grep -q core2])
 AM_CONDITIONAL(ENABLE_HASWELL, [echo $configs | grep -q haswell])
+AM_CONDITIONAL(ENABLE_SKX, [echo $configs | grep -q skx])
 AM_CONDITIONAL(ENABLE_KNL, [echo $configs | grep -q knl])
 AM_CONDITIONAL(ENABLE_LOONGSON3A, [echo $configs | grep -q loongson3a])
 AM_CONDITIONAL(ENABLE_MIC, [echo $configs | grep -q mic])
@@ -362,6 +400,7 @@ AM_CONDITIONAL(ENABLE_PILEDRIVER, [echo $configs | grep -q piledriver])
 AM_CONDITIONAL(ENABLE_POWER7, [echo $configs | grep -q power7])
 AM_CONDITIONAL(ENABLE_REFERENCE, [echo $configs | grep -q reference])
 AM_CONDITIONAL(ENABLE_SANDYBRIDGE, [echo $configs | grep -q sandybridge])
+AM_CONDITIONAL(ENABLE_RYZEN, [echo $configs | grep -q ryzen])
 
 include_configs=""
 for config in $configs; do

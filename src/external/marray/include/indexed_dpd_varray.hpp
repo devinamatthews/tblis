@@ -35,6 +35,7 @@ class indexed_dpd_varray : public indexed_dpd_varray_base<Type, indexed_dpd_varr
         using base::dense_irrep_;
         using base::nirrep_;
         using base::layout_;
+        using base::factor_;
         row<pointer> real_data_;
         matrix<len_type> real_idx_;
         struct : Allocator { stride_type size = 0; } storage_;
@@ -198,6 +199,8 @@ class indexed_dpd_varray : public indexed_dpd_varray_base<Type, indexed_dpd_varr
         using base::operator[];
         using base::cdata;
         using base::data;
+        using base::factors;
+        using base::factor;
         using base::indices;
         using base::index;
         using base::dense_length;

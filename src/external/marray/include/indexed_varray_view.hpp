@@ -21,6 +21,7 @@ class indexed_varray_view : public indexed_varray_base<Type, indexed_varray_view
         using base::dense_len_;
         using base::idx_len_;
         using base::dense_stride_;
+        using base::factor_;
 
         template <typename U> using initializer_matrix =
             std::initializer_list<std::initializer_list<U>>;
@@ -112,6 +113,8 @@ class indexed_varray_view : public indexed_varray_base<Type, indexed_varray_view
         using base::operator[];
         using base::cdata;
         using base::data;
+        using base::factors;
+        using base::factor;
         using base::indices;
         using base::index;
         using base::dense_length;
@@ -126,6 +129,11 @@ class indexed_varray_view : public indexed_varray_base<Type, indexed_varray_view
         using base::dimension;
         using base::dense_dimension;
         using base::indexed_dimension;
+
+        Type& factor(len_type idx)
+        {
+            return const_cast<Type&>(const_cast<const indexed_varray_view&>(*this).factor(idx));
+        }
 
         /***********************************************************************
          *

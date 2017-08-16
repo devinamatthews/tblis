@@ -20,11 +20,8 @@ void dot_full(const communicator& comm, const config& cfg,
     comm.broadcast(
     [&](varray<T>& A2, varray<T>& B2)
     {
-        if (comm.master())
-        {
-            block_to_full(A, A2);
-            block_to_full(B, B2);
-        }
+        block_to_full(comm, cfg, A, A2);
+        block_to_full(comm, cfg, B, B2);
 
         auto len_AB = stl_ext::select_from(A2.lengths(), idx_A_AB);
         auto stride_A_AB = stl_ext::select_from(A2.strides(), idx_A_AB);
@@ -48,8 +45,8 @@ void dot_block(const communicator& comm, const config& cfg,
 {
     index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
 
-    group_indices<1> indices_A(A, group_AB, 0);
-    group_indices<1> indices_B(B, group_AB, 1);
+    group_indices<T, 1> indices_A(A, group_AB, 0);
+    group_indices<T, 1> indices_B(B, group_AB, 1);
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
 
@@ -63,31 +60,39 @@ void dot_block(const communicator& comm, const config& cfg,
         if (indices_A[idx_A].key[0] < indices_B[idx_B].key[0])
         {
             idx_A++;
+            continue;
         }
         else if (indices_A[idx_A].key[0] > indices_B[idx_B].key[0])
         {
             idx_B++;
+            continue;
         }
-        else
+
+        auto factor = indices_A[idx_A].factor*indices_B[idx_B].factor;
+        if (factor == T(0))
         {
-            stride_type off_A_AB, off_B_AB;
-            get_local_offset(indices_A[idx_A].idx[0], group_AB,
-                             off_A_AB, 0, off_B_AB, 1);
-
-            auto data_A = A.data(0) + indices_A[idx_A].offset + off_A_AB;
-            auto data_B = B.data(0) + indices_B[idx_B].offset + off_B_AB;
-
-            T block_result;
-            dot(comm, cfg, group_AB.dense_len,
-                conj_A, data_A, group_AB.dense_stride[0],
-                conj_B, data_B, group_AB.dense_stride[1],
-                block_result);
-
-            local_result += block_result;
-
             idx_A++;
             idx_B++;
+            continue;
         }
+
+        stride_type off_A_AB, off_B_AB;
+        get_local_offset(indices_A[idx_A].idx[0], group_AB,
+                         off_A_AB, 0, off_B_AB, 1);
+
+        auto data_A = A.data(0) + indices_A[idx_A].offset + off_A_AB;
+        auto data_B = B.data(0) + indices_B[idx_B].offset + off_B_AB;
+
+        T block_result;
+        dot(comm, cfg, group_AB.dense_len,
+            conj_A, data_A, group_AB.dense_stride[0],
+            conj_B, data_B, group_AB.dense_stride[1],
+            block_result);
+
+        local_result += factor*block_result;
+
+        idx_A++;
+        idx_B++;
     }
 
     if (comm.master()) result = local_result;

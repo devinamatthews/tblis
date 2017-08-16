@@ -26,6 +26,7 @@ class indexed_dpd_varray_view : public indexed_dpd_varray_base<Type, indexed_dpd
         using base::dense_irrep_;
         using base::nirrep_;
         using base::layout_;
+        using base::factor_;
 
         template <typename U> using initializer_matrix =
             std::initializer_list<std::initializer_list<U>>;
@@ -132,6 +133,8 @@ class indexed_dpd_varray_view : public indexed_dpd_varray_base<Type, indexed_dpd
         using base::operator[];
         using base::cdata;
         using base::data;
+        using base::factors;
+        using base::factor;
         using base::indices;
         using base::index;
         using base::dense_length;
@@ -150,6 +153,11 @@ class indexed_dpd_varray_view : public indexed_dpd_varray_base<Type, indexed_dpd
         using base::dimension;
         using base::dense_dimension;
         using base::indexed_dimension;
+
+        Type& factor(len_type idx)
+        {
+            return const_cast<Type&>(const_cast<const indexed_dpd_varray_view&>(*this).factor(idx));
+        }
 
         /***********************************************************************
          *

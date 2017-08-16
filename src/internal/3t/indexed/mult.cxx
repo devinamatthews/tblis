@@ -45,12 +45,9 @@ void mult_full(const communicator& comm, const config& cfg,
     comm.broadcast(
     [&](varray<T>& A2, varray<T>& B2, varray<T>& C2)
     {
-        if (comm.master())
-        {
-            block_to_full(A, A2);
-            block_to_full(B, B2);
-            block_to_full(C, C2);
-        }
+        block_to_full(comm, cfg, A, A2);
+        block_to_full(comm, cfg, B, B2);
+        block_to_full(comm, cfg, C, C2);
 
         auto len_AB = stl_ext::select_from(A2.lengths(), idx_A_AB);
         auto len_AC = stl_ext::select_from(C2.lengths(), idx_C_AC);
@@ -69,12 +66,9 @@ void mult_full(const communicator& comm, const config& cfg,
         mult(comm, cfg, len_AB, len_AC, len_BC, len_ABC,
              alpha, conj_A, A2.data(), stride_A_AB, stride_A_AC, stride_A_ABC,
                     conj_B, B2.data(), stride_B_AB, stride_B_BC, stride_B_ABC,
-              T(1),  false, C2.data(), stride_C_AC, stride_C_BC, stride_C_ABC);
+              T(0),  false, C2.data(), stride_C_AC, stride_C_BC, stride_C_ABC);
 
-        if (comm.master())
-        {
-            full_to_block(C2, C);
-        }
+        full_to_block(comm, cfg, C2, C);
     },
     A2, B2, C2);
 }
@@ -95,9 +89,9 @@ void contract_block(const communicator& comm, const config& cfg,
     index_group<2> group_AC(A, idx_A_AC, C, idx_C_AC);
     index_group<2> group_BC(B, idx_B_BC, C, idx_C_BC);
 
-    group_indices<2> indices_A(A, group_AC, 0, group_AB, 0);
-    group_indices<2> indices_B(B, group_BC, 0, group_AB, 1);
-    group_indices<2> indices_C(C, group_AC, 1, group_BC, 1);
+    group_indices<T, 2> indices_A(A, group_AC, 0, group_AB, 0);
+    group_indices<T, 2> indices_B(B, group_BC, 0, group_AB, 1);
+    group_indices<T, 2> indices_C(C, group_AC, 1, group_BC, 1);
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
     auto nidx_C = indices_C.size();
@@ -151,6 +145,13 @@ void contract_block(const communicator& comm, const config& cfg,
             while (next_B < nidx_B &&
                    indices_B[idx_B].key[0] == indices_C[idx_C].key[1]);
 
+            if (indices_C[idx_C].factor == T(0))
+            {
+                idx_B = next_B;
+                idx_C++;
+                continue;
+            }
+
             tasks.visit(idx++,
             [&,idx_A,idx_B,idx_C,next_A,next_B]
             (const communicator& subcomm)
@@ -181,6 +182,16 @@ void contract_block(const communicator& comm, const config& cfg,
                         continue;
                     }
 
+                    auto factor = alpha*indices_A[local_idx_A].factor*
+                                        indices_B[local_idx_B].factor*
+                                        indices_C[idx_C].factor;
+                    if (factor == T(0))
+                    {
+                        local_idx_A++;
+                        local_idx_B++;
+                        continue;
+                    }
+
                     stride_type off_A_AB, off_B_AB;
                     get_local_offset(indices_A[local_idx_A].idx[1], group_AB,
                                      off_A_AB, 0, off_B_AB, 1);
@@ -192,12 +203,12 @@ void contract_block(const communicator& comm, const config& cfg,
                          group_AB.dense_len,
                          group_AC.dense_len,
                          group_BC.dense_len, {},
-                         alpha, conj_A, data_A, group_AB.dense_stride[0],
-                                                group_AC.dense_stride[0], {},
-                                conj_B, data_B, group_AB.dense_stride[1],
-                                                group_BC.dense_stride[0], {},
-                          T(1),  false, data_C, group_AC.dense_stride[1],
-                                                group_BC.dense_stride[1], {});
+                         factor, conj_A, data_A, group_AB.dense_stride[0],
+                                                 group_AC.dense_stride[0], {},
+                                 conj_B, data_B, group_AB.dense_stride[1],
+                                                 group_BC.dense_stride[0], {},
+                           T(1),  false, data_C, group_AC.dense_stride[1],
+                                                 group_BC.dense_stride[1], {});
 
                     local_idx_A++;
                     local_idx_B++;
@@ -233,9 +244,9 @@ void mult_block(const communicator& comm, const config& cfg,
     index_group<2> group_AC(A, idx_A_AC, C, idx_C_AC);
     index_group<2> group_BC(B, idx_B_BC, C, idx_C_BC);
 
-    group_indices<3> indices_A(A, group_ABC, 0, group_AC, 0, group_AB, 0);
-    group_indices<3> indices_B(B, group_ABC, 1, group_BC, 0, group_AB, 1);
-    group_indices<3> indices_C(C, group_ABC, 2, group_AC, 1, group_BC, 1);
+    group_indices<T, 3> indices_A(A, group_ABC, 0, group_AC, 0, group_AB, 0);
+    group_indices<T, 3> indices_B(B, group_ABC, 1, group_BC, 0, group_AB, 1);
+    group_indices<T, 3> indices_C(C, group_ABC, 2, group_AC, 1, group_BC, 1);
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
     auto nidx_C = indices_C.size();
@@ -345,6 +356,13 @@ void mult_block(const communicator& comm, const config& cfg,
                 while (next_B_AB < next_B_ABC &&
                        indices_B[next_B_AB].key[1] == indices_B[idx_B].key[1]);
 
+                if (indices_C[idx_C].factor == T(0))
+                {
+                    idx_B = next_B_AB;
+                    idx_C++;
+                    continue;
+                }
+
                 tasks.visit(idx++,
                 [&,idx_A,idx_B,idx_C,next_A_AB,next_B_AB]
                 (const communicator& subcomm)
@@ -379,6 +397,16 @@ void mult_block(const communicator& comm, const config& cfg,
                             continue;
                         }
 
+                        auto factor = alpha*indices_A[local_idx_A].factor*
+                                            indices_B[local_idx_B].factor*
+                                            indices_C[idx_C].factor;
+                        if (factor == T(0))
+                        {
+                            local_idx_A++;
+                            local_idx_B++;
+                            continue;
+                        }
+
                         stride_type off_A_AB, off_B_AB;
                         get_local_offset(indices_A[local_idx_A].idx[2], group_AB,
                                          off_A_AB, 0, off_B_AB, 1);
@@ -391,15 +419,15 @@ void mult_block(const communicator& comm, const config& cfg,
                              group_AC.dense_len,
                              group_BC.dense_len,
                              group_ABC.dense_len,
-                             alpha, conj_A, data_A, group_AB.dense_stride[0],
-                                                    group_AC.dense_stride[0],
-                                                    group_ABC.dense_stride[0],
-                                    conj_B, data_B, group_AB.dense_stride[1],
-                                                    group_BC.dense_stride[0],
-                                                    group_ABC.dense_stride[1],
-                              T(1),  false, data_C, group_AC.dense_stride[1],
-                                                    group_BC.dense_stride[1],
-                                                    group_ABC.dense_stride[2]);
+                             factor, conj_A, data_A, group_AB.dense_stride[0],
+                                                     group_AC.dense_stride[0],
+                                                     group_ABC.dense_stride[0],
+                                     conj_B, data_B, group_AB.dense_stride[1],
+                                                     group_BC.dense_stride[0],
+                                                     group_ABC.dense_stride[1],
+                               T(1),  false, data_C, group_AC.dense_stride[1],
+                                                     group_BC.dense_stride[1],
+                                                     group_ABC.dense_stride[2]);
 
                         local_idx_A++;
                         local_idx_B++;

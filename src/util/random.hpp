@@ -98,6 +98,12 @@ bool random_choice()
     return random_number(1);
 }
 
+template <typename T>
+T random_choice(std::initializer_list<T> options)
+{
+    return *(options.begin()+random_number(options.size()-1));
+}
+
 /*
  * Returns a random choice from a set of objects with non-negative weights w,
  * which do not need to sum to unity.

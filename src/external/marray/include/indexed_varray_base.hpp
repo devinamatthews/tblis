@@ -80,7 +80,7 @@ class indexed_varray_base
         len_vector dense_len_;
         len_vector idx_len_;
         stride_vector dense_stride_;
-        std::vector<Type> factor_;
+        std::vector<typename std::remove_const<Type>::type> factor_;
 
         /***********************************************************************
          *
@@ -163,6 +163,7 @@ class indexed_varray_base
             dense_len_.assign(len.begin(), std::next(len.begin(),dense_dim));
             idx_len_.assign(std::next(len.begin(),dense_dim), len.end());
             dense_stride_.assign(stride.begin(), stride.end());
+            factor_.assign(num_idx, Type(1));
         }
 
         /***********************************************************************
@@ -531,6 +532,17 @@ class indexed_varray_base
         {
             MARRAY_ASSERT(0 <= idx && idx < num_indices());
             return data_[idx];
+        }
+
+        const std::vector<Type>& factors() const
+        {
+            return factor_;
+        }
+
+        const Type& factor(len_type idx) const
+        {
+            MARRAY_ASSERT(0 <= idx && idx < num_indices());
+            return factor_[idx];
         }
 
         const matrix_view<const len_type>& indices() const

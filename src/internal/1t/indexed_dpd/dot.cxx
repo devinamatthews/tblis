@@ -20,11 +20,8 @@ void dot_full(const communicator& comm, const config& cfg,
     comm.broadcast(
     [&](varray<T>& A2, varray<T>& B2)
     {
-        if (comm.master())
-        {
-            block_to_full(A, A2);
-            block_to_full(B, B2);
-        }
+        block_to_full(comm, cfg, A, A2);
+        block_to_full(comm, cfg, B, B2);
 
         auto len_AB = stl_ext::select_from(A2.lengths(), idx_A_AB);
         auto stride_A_AB = stl_ext::select_from(A2.strides(), idx_A_AB);
@@ -63,8 +60,8 @@ void dot_block(const communicator& comm, const config& cfg,
         return;
     }
 
-    group_indices<1> indices_A(A, group_AB, 0);
-    group_indices<1> indices_B(B, group_AB, 1);
+    group_indices<T, 1> indices_A(A, group_AB, 0);
+    group_indices<T, 1> indices_B(B, group_AB, 1);
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
 
@@ -88,42 +85,50 @@ void dot_block(const communicator& comm, const config& cfg,
         if (indices_A[idx_A].key[0] < indices_B[idx_B].key[0])
         {
             idx_A++;
+            continue;
         }
         else if (indices_A[idx_A].key[0] > indices_B[idx_B].key[0])
         {
             idx_B++;
+            continue;
         }
-        else
+
+        auto factor = indices_A[idx_A].factor*indices_B[idx_B].factor;
+        if (factor == T(0))
         {
-            for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
-            {
-                assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
-                              irreps_A, group_AB.dense_idx[0],
-                              irreps_B, group_AB.dense_idx[1]);
-
-                if (is_block_empty(dpd_A, irreps_A)) continue;
-
-                auto local_A = dpd_A(irreps_A);
-                auto local_B = dpd_B(irreps_B);
-
-                get_local_geometry(indices_A[idx_A].idx[0], group_AB, len_AB,
-                                   local_A, off_A_AB, stride_A_AB, 0,
-                                   local_B, off_B_AB, stride_B_AB, 1);
-
-                auto data_A = local_A.data() + indices_A[idx_A].offset + off_A_AB;
-                auto data_B = local_B.data() + indices_B[idx_B].offset + off_B_AB;
-
-                dot(comm, cfg, len_AB,
-                    conj_A, data_A, stride_A_AB,
-                    conj_B, data_B, stride_B_AB,
-                    block_result);
-
-                local_result += block_result;
-            }
-
             idx_A++;
             idx_B++;
+            continue;
         }
+
+        for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
+        {
+            assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
+                          irreps_A, group_AB.dense_idx[0],
+                          irreps_B, group_AB.dense_idx[1]);
+
+            if (is_block_empty(dpd_A, irreps_A)) continue;
+
+            auto local_A = dpd_A(irreps_A);
+            auto local_B = dpd_B(irreps_B);
+
+            get_local_geometry(indices_A[idx_A].idx[0], group_AB, len_AB,
+                               local_A, off_A_AB, stride_A_AB, 0,
+                               local_B, off_B_AB, stride_B_AB, 1);
+
+            auto data_A = local_A.data() + indices_A[idx_A].offset + off_A_AB;
+            auto data_B = local_B.data() + indices_B[idx_B].offset + off_B_AB;
+
+            dot(comm, cfg, len_AB,
+                conj_A, data_A, stride_A_AB,
+                conj_B, data_B, stride_B_AB,
+                block_result);
+
+            local_result += factor*block_result;
+        }
+
+        idx_A++;
+        idx_B++;
     }
 
     if (comm.master()) result = local_result;

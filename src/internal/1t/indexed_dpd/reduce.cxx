@@ -17,9 +17,14 @@ void reduce(const communicator& comm, const config& cfg, reduce_t op,
     len_type local_idx, block_idx;
     reduce_init(op, local_result, local_idx);
 
-    A.for_each_index(
-    [&](const dpd_varray_view<const T>& local_A)
+    auto local_A = A[0];
+    auto diff = local_A.data() - A.data(0);
+
+    for (len_type i = 0;i < A.num_indices();i++)
     {
+        local_A.data(A.data(i) + diff);
+        auto factor = A.factor(i);
+
         reduce(comm, cfg, op, local_A, idx_A_A, block_result, block_idx);
         block_idx += local_A.data() - A.data(0);
 
@@ -27,46 +32,46 @@ void reduce(const communicator& comm, const config& cfg, reduce_t op,
         {
             if (op == REDUCE_SUM || op == REDUCE_SUM_ABS)
             {
-                local_result += block_result;
+                local_result += factor*block_result;
             }
             else if (op == REDUCE_MAX)
             {
-                if (block_result > local_result)
+                if (factor*block_result > local_result)
                 {
-                    local_result = block_result;
+                    local_result = factor*block_result;
                     local_idx = block_idx;
                 }
             }
             else if (op == REDUCE_MAX_ABS)
             {
-                if (std::abs(block_result) > std::abs(local_result))
+                if (std::abs(factor*block_result) > local_result)
                 {
-                    local_result = block_result;
+                    local_result = std::abs(factor*block_result);
                     local_idx = block_idx;
                 }
             }
             else if (op == REDUCE_MIN)
             {
-                if (block_result < local_result)
+                if (factor*block_result < local_result)
                 {
-                    local_result = block_result;
+                    local_result = factor*block_result;
                     local_idx = block_idx;
                 }
             }
             else if (op == REDUCE_MIN_ABS)
             {
-                if (std::abs(block_result) < std::abs(local_result))
+                if (std::abs(factor*block_result) < local_result)
                 {
-                    local_result = block_result;
+                    local_result = std::abs(factor*block_result);
                     local_idx = block_idx;
                 }
             }
             else if (op == REDUCE_NORM_2)
             {
-                local_result += block_result*block_result;
+                local_result += norm2(factor*block_result);
             }
         }
-    });
+    }
 
     if (comm.master())
     {

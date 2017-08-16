@@ -48,6 +48,7 @@ class indexed_dpd_varray_base
         unsigned dense_irrep_ = 0;
         unsigned nirrep_ = 0;
         dpd_layout layout_ = DEFAULT;
+        std::vector<typename std::remove_const<Type>::type> factor_;
 
         /***********************************************************************
          *
@@ -67,6 +68,7 @@ class indexed_dpd_varray_base
             dense_irrep_ = 0;
             nirrep_ = 0;
             layout_ = DEFAULT;
+            factor_.clear();
         }
 
         template <typename U, bool O, typename D,
@@ -92,6 +94,7 @@ class indexed_dpd_varray_base
             dense_irrep_ = other.dense_irrep_;
             nirrep_ = other.nirrep_;
             layout_ = other.layout_;
+            factor_ = other.factor_;
         }
 
         void reset(unsigned irrep, unsigned nirrep,
@@ -149,6 +152,7 @@ class indexed_dpd_varray_base
             len_.reset({total_ndim, nirrep}, ROW_MAJOR);
             dense_size_.reset({2*dense_ndim, nirrep}, ROW_MAJOR);
             perm_.resize(dense_ndim);
+            factor_.assign(num_idx, Type(1));
 
             detail::set_len(len, len_, perm_, layout_);
             detail::set_size(irrep_, len_, dense_size_, layout_);
@@ -564,6 +568,17 @@ class indexed_dpd_varray_base
         {
             MARRAY_ASSERT(0 <= idx && idx < num_indices());
             return data_[idx];
+        }
+
+        const std::vector<Type>& factors() const
+        {
+            return factor_;
+        }
+
+        const Type& factor(len_type idx) const
+        {
+            MARRAY_ASSERT(0 <= idx && idx < num_indices());
+            return factor_[idx];
         }
 
         const matrix_view<const len_type>& indices() const

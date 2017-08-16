@@ -12,7 +12,8 @@ namespace internal
 {
 
 template <typename T, typename U>
-void block_to_full(const indexed_dpd_varray_view<T>& A, varray<U>& A2)
+void block_to_full(const communicator& comm, const config& cfg,
+                   const indexed_dpd_varray_view<T>& A, varray<U>& A2)
 {
     unsigned nirrep = A.num_irreps();
     unsigned ndim_A = A.dimension();
@@ -29,35 +30,42 @@ void block_to_full(const indexed_dpd_varray_view<T>& A, varray<U>& A2)
             len_A[i] += A.length(i, irrep);
         }
     }
-    A2.reset(len_A);
+
+    if (comm.master()) A2.reset(len_A);
+    comm.barrier();
 
     auto dense_stride_A2 = A2.strides();
     dense_stride_A2.resize(dense_ndim_A);
 
-    A.for_each_index(
-    [&](const dpd_varray_view<T>& Ai, const len_vector& idx_A)
+    A[0].for_each_block(
+    [&](const varray_view<T>& local_A, const irrep_vector& irreps_A)
     {
-        Ai.for_each_block(
-        [&](const varray_view<T>& local_A, const irrep_vector& irreps_A)
-        {
-            auto data_A2 = A2.data();
+        auto& dense_len_A = local_A.lengths();
+        auto& dense_stride_A = local_A.strides();
 
+        for (len_type i = 0;i < A.num_indices();i++)
+        {
+            auto data_A = local_A.data() + (A.data(i) - A.data(0));
+            auto factor_A = A.factor(i);
+            auto idx_A = A.indices(i);
+
+            auto data_A2 = A2.data();
             for (unsigned i = 0;i < dense_ndim_A;i++)
                 data_A2 += off_A[i][irreps_A[i]]*A2.stride(i);
-
             for (unsigned i = dense_ndim_A;i < ndim_A;i++)
                 data_A2 += (idx_A[i-dense_ndim_A] +
                     off_A[i][A.indexed_irrep(i-dense_ndim_A)])*A2.stride(i);
 
-            varray_view<U> local_A2(local_A.lengths(), data_A2, dense_stride_A2);
-
-            local_A2 = local_A;
-        });
+            add<U>(comm, cfg, {}, {}, dense_len_A,
+                   factor_A, false,  data_A, {},  dense_stride_A,
+                          0, false, data_A2, {}, dense_stride_A2);
+        }
     });
 }
 
 template <typename T, typename U>
-void full_to_block(const varray<U>& A2, const indexed_dpd_varray_view<T>& A)
+void full_to_block(const communicator& comm, const config& cfg,
+                   const varray<U>& A2, const indexed_dpd_varray_view<T>& A)
 {
     unsigned nirrep = A.num_irreps();
     unsigned ndim_A = A.dimension();
@@ -78,25 +86,29 @@ void full_to_block(const varray<U>& A2, const indexed_dpd_varray_view<T>& A)
     auto dense_stride_A2 = A2.strides();
     dense_stride_A2.resize(dense_ndim_A);
 
-    A.for_each_index(
-    [&](const dpd_varray_view<T>& Ai, const len_vector& idx_A)
+    A[0].for_each_block(
+    [&](const varray_view<T>& local_A, const irrep_vector& irreps_A)
     {
-        Ai.for_each_block(
-        [&](const varray_view<T>& local_A, const irrep_vector& irreps_A)
-        {
-            auto data_A2 = A2.data();
+        auto& dense_len_A = local_A.lengths();
+        auto& dense_stride_A = local_A.strides();
 
+        for (len_type i = 0;i < A.num_indices();i++)
+        {
+            auto data_A = local_A.data() + (A.data(i) - A.data(0));
+            auto factor_A = A.factor(i);
+            auto idx_A = A.indices(i);
+
+            auto data_A2 = A2.data();
             for (unsigned i = 0;i < dense_ndim_A;i++)
                 data_A2 += off_A[i][irreps_A[i]]*A2.stride(i);
-
             for (unsigned i = dense_ndim_A;i < ndim_A;i++)
                 data_A2 += (idx_A[i-dense_ndim_A] +
                     off_A[i][A.indexed_irrep(i-dense_ndim_A)])*A2.stride(i);
 
-            varray_view<const U> local_A2(local_A.lengths(), data_A2, dense_stride_A2);
-
-            local_A = local_A2;
-        });
+            add<U>(comm, cfg, {}, {}, dense_len_A,
+                   factor_A, false, data_A2, {}, dense_stride_A2,
+                          1, false,  data_A, {},  dense_stride_A);
+        }
     });
 }
 

@@ -30,6 +30,7 @@ class indexed_varray : public indexed_varray_base<Type, indexed_varray<Type, All
         using base::dense_len_;
         using base::idx_len_;
         using base::dense_stride_;
+        using base::factor_;
         row<pointer> real_data_;
         matrix<len_type> real_idx_;
         layout layout_ = DEFAULT;
@@ -172,6 +173,8 @@ class indexed_varray : public indexed_varray_base<Type, indexed_varray<Type, All
         using base::operator[];
         using base::cdata;
         using base::data;
+        using base::factors;
+        using base::factor;
         using base::indices;
         using base::index;
         using base::dense_length;

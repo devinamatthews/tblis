@@ -23,11 +23,8 @@ void add_full(const communicator& comm, const config& cfg,
     comm.broadcast(
     [&](varray<T>& A2, varray<T>& B2)
     {
-        if (comm.master())
-        {
-            block_to_full(A, A2);
-            block_to_full(B, B2);
-        }
+        block_to_full(comm, cfg, A, A2);
+        block_to_full(comm, cfg, B, B2);
 
         auto len_A = stl_ext::select_from(A2.lengths(), idx_A_A);
         auto len_B = stl_ext::select_from(B2.lengths(), idx_B_B);
@@ -39,12 +36,9 @@ void add_full(const communicator& comm, const config& cfg,
 
         add(comm, cfg, len_A, len_B, len_AB,
             alpha, conj_A, A2.data(), stride_A_A, stride_A_AB,
-             T(1),  false, B2.data(), stride_B_B, stride_B_AB);
+             T(0),  false, B2.data(), stride_B_B, stride_B_AB);
 
-        if (comm.master())
-        {
-            full_to_block(B2, B);
-        }
+        full_to_block(comm, cfg, B2, B);
     },
     A2, B2);
 }
@@ -60,8 +54,8 @@ void trace_block(const communicator& comm, const config& cfg,
     index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
     index_group<1> group_A(A, idx_A_A);
 
-    group_indices<2> indices_A(A, group_AB, 0, group_A, 0);
-    group_indices<1> indices_B(B, group_AB, 1);
+    group_indices<T, 2> indices_A(A, group_AB, 0, group_A, 0);
+    group_indices<T, 1> indices_B(B, group_AB, 1);
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
 
@@ -102,12 +96,15 @@ void trace_block(const communicator& comm, const config& cfg,
 
             for (auto local_idx_A = idx_A;local_idx_A < next_A;local_idx_A++)
             {
+                auto factor = alpha*indices_A[local_idx_A].factor*indices_B[idx_B].factor;
+                if (factor == T(0)) continue;
+
                 auto data_A = A.data(0) + indices_A[local_idx_A].offset + off_A_AB;
 
                 add(subcomm, cfg, group_A.dense_len, {}, group_AB.dense_len,
-                    alpha, conj_A, data_A, group_A.dense_stride[0],
-                                           group_AB.dense_stride[0],
-                     T(1),  false, data_B, {}, group_AB.dense_stride[1]);
+                    factor, conj_A, data_A, group_A.dense_stride[0],
+                                            group_AB.dense_stride[0],
+                      T(1),  false, data_B, {}, group_AB.dense_stride[1]);
             }
         });
 
@@ -127,8 +124,8 @@ void replicate_block(const communicator& comm, const config& cfg,
     index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
     index_group<1> group_B(B, idx_B_B);
 
-    group_indices<1> indices_A(A, group_AB, 0);
-    group_indices<2> indices_B(B, group_AB, 1, group_B, 0);
+    group_indices<T, 1> indices_A(A, group_AB, 0);
+    group_indices<T, 2> indices_B(B, group_AB, 1, group_B, 0);
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
 
@@ -157,8 +154,15 @@ void replicate_block(const communicator& comm, const config& cfg,
 
         do
         {
+            auto factor = alpha*indices_A[idx_A].factor*indices_B[idx_B].factor;
+            if (factor == T(0))
+            {
+                idx_B++;
+                continue;
+            }
+
             tasks.visit(idx++,
-            [&,idx_A,idx_B](const communicator& subcomm)
+            [&,idx_A,idx_B,factor](const communicator& subcomm)
             {
                 stride_type off_A_AB, off_B_AB;
                 get_local_offset(indices_A[idx_A].idx[0], group_AB,
@@ -166,11 +170,10 @@ void replicate_block(const communicator& comm, const config& cfg,
 
                 auto data_A = A.data(0) + indices_A[idx_A].offset + off_A_AB;
                 auto data_B = B.data(0) + indices_B[idx_B].offset + off_B_AB;
-
                 add(subcomm, cfg, {}, group_B.dense_len, group_AB.dense_len,
-                    alpha, conj_A, data_A, {}, group_AB.dense_stride[0],
-                     T(1),  false, data_B, group_B.dense_stride[0],
-                                           group_AB.dense_stride[1]);
+                    factor, conj_A, data_A, {}, group_AB.dense_stride[0],
+                      T(1),  false, data_B, group_B.dense_stride[0],
+                                            group_AB.dense_stride[1]);
             });
 
             idx_B++;
@@ -190,8 +193,8 @@ void transpose_block(const communicator& comm, const config& cfg,
 {
     index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
 
-    group_indices<1> indices_A(A, group_AB, 0);
-    group_indices<1> indices_B(B, group_AB, 1);
+    group_indices<T, 1> indices_A(A, group_AB, 0);
+    group_indices<T, 1> indices_B(B, group_AB, 1);
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
 
@@ -214,9 +217,18 @@ void transpose_block(const communicator& comm, const config& cfg,
             continue;
         }
 
-        tasks.visit(idx++,
-        [&,idx_A,idx_B](const communicator& subcomm)
+        auto factor = alpha*indices_A[idx_A].factor*indices_B[idx_B].factor;
+        if (factor == T(0))
         {
+            idx_A++;
+            idx_B++;
+            continue;
+        }
+
+        tasks.visit(idx++,
+        [&,idx_A,idx_B,factor](const communicator& subcomm)
+        {
+
             stride_type off_A_AB, off_B_AB;
             get_local_offset(indices_A[idx_A].idx[0], group_AB,
                              off_A_AB, 0, off_B_AB, 1);
@@ -225,8 +237,8 @@ void transpose_block(const communicator& comm, const config& cfg,
             auto data_B = B.data(0) + indices_B[idx_B].offset + off_B_AB;
 
             add(subcomm, cfg, {}, {}, group_AB.dense_len,
-                alpha, conj_A, data_A, {}, group_AB.dense_stride[0],
-                 T(1),  false, data_B, {}, group_AB.dense_stride[1]);
+                factor, conj_A, data_A, {}, group_AB.dense_stride[0],
+                  T(1),  false, data_B, {}, group_AB.dense_stride[1]);
         });
 
         idx_A++;

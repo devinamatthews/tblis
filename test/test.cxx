@@ -573,10 +573,12 @@ void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, i
     random_lengths(N/sizeof(T), d, len_min, len_A);
 
     unsigned dense_d = random_number(1u, d);
-    auto idxs_A = random_indices(len_vector(len_A.begin()+dense_d, len_A.end()), 0.1);
+    auto idxs_A = random_indices(len_vector(len_A.begin()+dense_d, len_A.end()), 0.5);
 
     A.reset(len_A, idxs_A);
     randomize_tensor(A);
+    for (len_type i = 0;i < A.num_indices();i++)
+        const_cast<T&>(A.factor(i)) = random_choice({1.0, 0.5, 0.0});
 }
 
 template <typename T>
@@ -616,6 +618,8 @@ void random_tensor(stride_type N, unsigned d, unsigned nirrep, const vector<len_
 
     A.reset(irrep_A, nirrep, len_A, idx_irrep_A, idxs_A);
     randomize_tensor(A);
+    for (len_type i = 0;i < A.num_indices();i++)
+        const_cast<T&>(A.factor(i)) = random_choice({1.0, 0.5, 0.0});
 }
 
 template <typename T>
@@ -836,14 +840,18 @@ void random_tensors(stride_type N,
     unsigned dense_ndim_A = random_number(1u, ndim_AB+ndim_A_only);
     unsigned dense_ndim_B = random_number(1u, ndim_AB+ndim_B_only);
 
-    auto idxs_A = random_indices(len_vector(len_A.begin()+dense_ndim_A, len_A.end()), 0.1);
-    auto idxs_B = random_indices(len_vector(len_B.begin()+dense_ndim_B, len_B.end()), 0.1);
+    auto idxs_A = random_indices(len_vector(len_A.begin()+dense_ndim_A, len_A.end()), 0.5);
+    auto idxs_B = random_indices(len_vector(len_B.begin()+dense_ndim_B, len_B.end()), 0.5);
 
     A.reset(len_A, idxs_A);
     B.reset(len_B, idxs_B);
 
     randomize_tensor(A);
     randomize_tensor(B);
+    for (len_type i = 0;i < A.num_indices();i++)
+        const_cast<T&>(A.factor(i)) = random_choice({1.0, 0.5, 0.0});
+    for (len_type i = 0;i < B.num_indices();i++)
+        const_cast<T&>(B.factor(i)) = random_choice({1.0, 0.5, 0.0});
 }
 
 template <typename T>
@@ -928,13 +936,17 @@ void random_tensors(stride_type N,
     }
     while (prod(idx_len_A) == 0 || prod(idx_len_B) == 0);
 
-    auto idxs_A = random_indices(idx_len_A, 0.1);
-    auto idxs_B = random_indices(idx_len_B, 0.1);
+    auto idxs_A = random_indices(idx_len_A, 0.5);
+    auto idxs_B = random_indices(idx_len_B, 0.5);
 
     A.reset(irrep_A, nirrep, len_A, idx_irrep_A, idxs_A);
     B.reset(irrep_B, nirrep, len_B, idx_irrep_B, idxs_B);
     randomize_tensor(A);
     randomize_tensor(B);
+    for (len_type i = 0;i < A.num_indices();i++)
+        const_cast<T&>(A.factor(i)) = random_choice({1.0, 0.5, 0.0});
+    for (len_type i = 0;i < B.num_indices();i++)
+        const_cast<T&>(B.factor(i)) = random_choice({1.0, 0.5, 0.0});
 }
 
 void random_lengths(stride_type N,
@@ -1328,9 +1340,9 @@ void random_tensors(stride_type N,
     unsigned dense_ndim_B = random_number(1u, ndim_ABC+ndim_AB+ndim_BC+ndim_B_only);
     unsigned dense_ndim_C = random_number(1u, ndim_ABC+ndim_AC+ndim_BC+ndim_C_only);
 
-    auto idxs_A = random_indices(len_vector(len_A.begin()+dense_ndim_A, len_A.end()), 0.1);
-    auto idxs_B = random_indices(len_vector(len_B.begin()+dense_ndim_B, len_B.end()), 0.1);
-    auto idxs_C = random_indices(len_vector(len_C.begin()+dense_ndim_C, len_C.end()), 0.1);
+    auto idxs_A = random_indices(len_vector(len_A.begin()+dense_ndim_A, len_A.end()), 0.5);
+    auto idxs_B = random_indices(len_vector(len_B.begin()+dense_ndim_B, len_B.end()), 0.5);
+    auto idxs_C = random_indices(len_vector(len_C.begin()+dense_ndim_C, len_C.end()), 0.5);
 
     A.reset(len_A, idxs_A);
     B.reset(len_B, idxs_B);
@@ -1339,6 +1351,12 @@ void random_tensors(stride_type N,
     randomize_tensor(A);
     randomize_tensor(B);
     randomize_tensor(C);
+    for (len_type i = 0;i < A.num_indices();i++)
+        const_cast<T&>(A.factor(i)) = random_choice({1.0, 0.5, 0.0});
+    for (len_type i = 0;i < B.num_indices();i++)
+        const_cast<T&>(B.factor(i)) = random_choice({1.0, 0.5, 0.0});
+    for (len_type i = 0;i < C.num_indices();i++)
+        const_cast<T&>(C.factor(i)) = random_choice({1.0, 0.5, 0.0});
 }
 
 template <typename T>
@@ -1486,9 +1504,9 @@ void random_tensors(stride_type N,
     }
     while (prod(idx_len_A) == 0 || prod(idx_len_B) == 0 || prod(idx_len_C) == 0);
 
-    auto idxs_A = random_indices(idx_len_A, 0.1);
-    auto idxs_B = random_indices(idx_len_B, 0.1);
-    auto idxs_C = random_indices(idx_len_C, 0.1);
+    auto idxs_A = random_indices(idx_len_A, 0.5);
+    auto idxs_B = random_indices(idx_len_B, 0.5);
+    auto idxs_C = random_indices(idx_len_C, 0.5);
 
     A.reset(irrep_A, nirrep, len_A, idx_irrep_A, idxs_A);
     B.reset(irrep_B, nirrep, len_B, idx_irrep_B, idxs_B);
@@ -1497,6 +1515,12 @@ void random_tensors(stride_type N,
     randomize_tensor(A);
     randomize_tensor(B);
     randomize_tensor(C);
+    for (len_type i = 0;i < A.num_indices();i++)
+        const_cast<T&>(A.factor(i)) = random_choice({1.0, 0.5, 0.0});
+    for (len_type i = 0;i < B.num_indices();i++)
+        const_cast<T&>(B.factor(i)) = random_choice({1.0, 0.5, 0.0});
+    for (len_type i = 0;i < C.num_indices();i++)
+        const_cast<T&>(C.factor(i)) = random_choice({1.0, 0.5, 0.0});
 }
 
 static map<reduce_t, string> ops =
@@ -1600,23 +1624,19 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_reduce, R, T, all_types)
 
     auto NA = dpd_varray<T>::size(A.irrep(), A.lengths());
 
-    T ref_val, blas_val;
-    stride_type ref_idx, blas_idx;
-
-    T* data = A.data();
+    T ref_val, calc_val;
+    stride_type ref_idx, calc_idx;
 
     for (auto op : ops)
     {
+        dpd_impl = dpd_impl_t::FULL;
         reduce<T>(op.first, A, idx_A.data(), ref_val, ref_idx);
 
-        reduce_ref<T>(op.first, NA, data, blas_val, blas_idx);
+        dpd_impl = dpd_impl_t::BLOCKED;
+        reduce<T>(op.first, A, idx_A.data(), calc_val, calc_idx);
 
-        check(op.second, ref_idx, blas_idx, ref_val, blas_val, NA);
+        check(op.second, ref_idx, calc_idx, ref_val, calc_val, NA);
     }
-
-    A = T(1);
-    reduce<T>(REDUCE_SUM, A, idx_A.data(), ref_val, ref_idx);
-    check("COUNT", ref_val, NA, NA);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_reduce, R, T, all_types)
@@ -1630,23 +1650,19 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_reduce, R, T, all_types)
 
     auto NA = prod(A.dense_lengths())*A.num_indices();
 
-    T ref_val, blas_val;
-    stride_type ref_idx, blas_idx;
-
-    T* data = A.data(0);
+    T ref_val, calc_val;
+    stride_type ref_idx, calc_idx;
 
     for (auto op : ops)
     {
+        dpd_impl = dpd_impl_t::FULL;
         reduce<T>(op.first, A, idx_A.data(), ref_val, ref_idx);
 
-        reduce_ref<T>(op.first, NA, data, blas_val, blas_idx);
+        dpd_impl = dpd_impl_t::BLOCKED;
+        reduce<T>(op.first, A, idx_A.data(), calc_val, calc_idx);
 
-        check(op.second, ref_idx, blas_idx, ref_val, blas_val, NA);
+        check(op.second, ref_idx, calc_idx, ref_val, calc_val, NA);
     }
-
-    A = T(1);
-    reduce<T>(REDUCE_SUM, A, idx_A.data(), ref_val, ref_idx);
-    check("COUNT", ref_val, NA, NA);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_reduce, R, T, all_types)
@@ -1660,23 +1676,19 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_reduce, R, T, all_types)
 
     auto NA = dpd_varray<T>::size(A.dense_irrep(), A.dense_lengths())*A.num_indices();
 
-    T ref_val, blas_val;
-    stride_type ref_idx, blas_idx;
-
-    T* data = A.data(0);
+    T ref_val, calc_val;
+    stride_type ref_idx, calc_idx;
 
     for (auto op : ops)
     {
+        dpd_impl = dpd_impl_t::FULL;
         reduce<T>(op.first, A, idx_A.data(), ref_val, ref_idx);
 
-        reduce_ref<T>(op.first, NA, data, blas_val, blas_idx);
+        dpd_impl = dpd_impl_t::BLOCKED;
+        reduce<T>(op.first, A, idx_A.data(), calc_val, calc_idx);
 
-        check(op.second, ref_idx, blas_idx, ref_val, blas_val, NA);
+        check(op.second, ref_idx, calc_idx, ref_val, calc_val, NA);
     }
-
-    A = T(1);
-    reduce<T>(REDUCE_SUM, A, idx_A.data(), ref_val, ref_idx);
-    check("COUNT", ref_val, NA, NA);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(scale, R, T, all_types)
@@ -1709,86 +1721,91 @@ REPLICATED_TEMPLATED_TEST_CASE(scale, R, T, all_types)
 
 REPLICATED_TEMPLATED_TEST_CASE(dpd_scale, R, T, all_types)
 {
-    dpd_varray<T> A;
+    dpd_varray<T> A, B, C;
 
     random_tensor(100, A);
     label_vector idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
     DPD_TENSOR_INFO(A);
 
-    auto neps = dpd_varray<T>::size(A.irrep(), A.lengths());
+    auto NA = dpd_varray<T>::size(A.irrep(), A.lengths());
 
     T ref_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
 
     T scale(10.0*random_unit<T>());
 
-    tblis::scale<T>(scale, A, idx_A.data());
-    T calc_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
-    check("RANDOM", ref_val, calc_val/scale, neps);
+    dpd_impl = dpd_impl_t::FULL;
+    B.reset(A);
+    auto vB = A.view(); vB.data(B.data());
+    tblis::scale<T>(scale, vB, idx_A.data());
 
-    tblis::scale<T>(T(1.0), A, idx_A.data());
-    calc_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
-    check("UNIT", ref_val, calc_val/scale, neps);
+    dpd_impl = dpd_impl_t::BLOCKED;
+    C.reset(A);
+    auto vC = A.view(); vC.data(C.data());
+    tblis::scale<T>(scale, vC, idx_A.data());
 
-    tblis::scale<T>(T(0.0), A, idx_A.data());
-    calc_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
-    check("ZERO", calc_val, neps);
+    add<T>(T(-1), B, idx_A.data(), T(1), C, idx_A.data());
+    T error = reduce<T>(REDUCE_NORM_2, C, idx_A.data()).first;
+
+    check("BLOCKED", error, scale*NA);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_scale, R, T, all_types)
 {
-    indexed_varray<T> A;
+    indexed_varray<T> A, B, C;
 
     random_tensor(100, A);
     label_vector idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
     INDEXED_TENSOR_INFO(A);
 
-    auto neps = prod(A.lengths());
+    auto NA = prod(A.lengths());
 
     T ref_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
 
     T scale(10.0*random_unit<T>());
 
-    tblis::scale<T>(scale, A, idx_A.data());
-    T calc_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
-    check("RANDOM", ref_val, calc_val/scale, neps);
+    dpd_impl = dpd_impl_t::FULL;
+    B.reset(A);
+    tblis::scale<T>(scale, B, idx_A.data());
 
-    tblis::scale<T>(T(1.0), A, idx_A.data());
-    calc_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
-    check("UNIT", ref_val, calc_val/scale, neps);
+    dpd_impl = dpd_impl_t::BLOCKED;
+    C.reset(A);
+    tblis::scale<T>(scale, C, idx_A.data());
 
-    tblis::scale<T>(T(0.0), A, idx_A.data());
-    calc_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
-    check("ZERO", calc_val, neps);
+    add<T>(T(-1), B, idx_A.data(), T(1), C, idx_A.data());
+    T error = reduce<T>(REDUCE_NORM_2, C, idx_A.data()).first;
+
+    check("BLOCKED", error, scale*NA);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_scale, R, T, all_types)
 {
-    indexed_dpd_varray<T> A;
+    indexed_dpd_varray<T> A, B, C;
 
     random_tensor(100, A);
     label_vector idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
     INDEXED_DPD_TENSOR_INFO(A);
 
-    auto neps = dpd_varray<T>::size(A.irrep(), A.lengths());
+    auto NA = dpd_varray<T>::size(A.irrep(), A.lengths());
 
     T ref_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
 
     T scale(10.0*random_unit<T>());
 
-    tblis::scale<T>(scale, A, idx_A.data());
-    T calc_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
-    check("RANDOM", ref_val, calc_val/scale, neps);
+    dpd_impl = dpd_impl_t::FULL;
+    B.reset(A);
+    tblis::scale<T>(scale, B, idx_A.data());
 
-    tblis::scale<T>(T(1.0), A, idx_A.data());
-    calc_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
-    check("UNIT", ref_val, calc_val/scale, neps);
+    dpd_impl = dpd_impl_t::BLOCKED;
+    C.reset(A);
+    tblis::scale<T>(scale, C, idx_A.data());
 
-    tblis::scale<T>(T(0.0), A, idx_A.data());
-    calc_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
-    check("ZERO", calc_val, neps);
+    add<T>(T(-1), B, idx_A.data(), T(1), C, idx_A.data());
+    T error = reduce<T>(REDUCE_NORM_2, C, idx_A.data()).first;
+
+    check("BLOCKED", error, scale*NA);
 }
 
 /*
@@ -1852,7 +1869,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_trace, R, T, all_types)
 
     T scale(10.0*random_unit<T>());
 
-    dpd_impl = FULL;
+    dpd_impl = dpd_impl_t::FULL;
     C.reset(B);
     add<T>(scale, A, idx_A.data(), scale, C, idx_B.data());
 
@@ -1880,7 +1897,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_trace, R, T, all_types)
 
     T scale(10.0*random_unit<T>());
 
-    dpd_impl = FULL;
+    dpd_impl = dpd_impl_t::FULL;
     C.reset(B);
     add<T>(scale, A, idx_A.data(), scale, C, idx_B.data());
 
@@ -1908,7 +1925,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_trace, R, T, all_types)
 
     T scale(10.0*random_unit<T>());
 
-    dpd_impl = FULL;
+    dpd_impl = dpd_impl_t::FULL;
     C.reset(B);
     add<T>(scale, A, idx_A.data(), scale, C, idx_B.data());
 
@@ -1990,7 +2007,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_replicate, R, T, all_types)
 
     T scale(10.0*random_unit<T>());
 
-    dpd_impl = FULL;
+    dpd_impl = dpd_impl_t::FULL;
     C.reset(B);
     add<T>(scale, A, idx_A.data(), scale, C, idx_B.data());
 
@@ -2018,7 +2035,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_replicate, R, T, all_types)
 
     T scale(10.0*random_unit<T>());
 
-    dpd_impl = FULL;
+    dpd_impl = dpd_impl_t::FULL;
     C.reset(B);
     add<T>(scale, A, idx_A.data(), scale, C, idx_B.data());
 
@@ -2046,7 +2063,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_replicate, R, T, all_types)
 
     T scale(10.0*random_unit<T>());
 
-    dpd_impl = FULL;
+    dpd_impl = dpd_impl_t::FULL;
     C.reset(B);
     add<T>(scale, A, idx_A.data(), scale, C, idx_B.data());
 
@@ -2142,7 +2159,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_transpose, R, T, all_types)
 
     T scale(10.0*random_unit<T>());
 
-    dpd_impl = FULL;
+    dpd_impl = dpd_impl_t::FULL;
     C.reset(B);
     add<T>(scale, A, idx_A.data(), scale, C, idx_B.data());
 
@@ -2170,7 +2187,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_transpose, R, T, all_types)
 
     T scale(10.0*random_unit<T>());
 
-    dpd_impl = FULL;
+    dpd_impl = dpd_impl_t::FULL;
     C.reset(B);
     add<T>(scale, A, idx_A.data(), scale, C, idx_B.data());
 
@@ -2198,7 +2215,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_transpose, R, T, all_types)
 
     T scale(10.0*random_unit<T>());
 
-    dpd_impl = FULL;
+    dpd_impl = dpd_impl_t::FULL;
     C.reset(B);
     add<T>(scale, A, idx_A.data(), scale, C, idx_B.data());
 
@@ -2286,7 +2303,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_dot, R, T, all_types)
     calc_val = dot<T>(A, idx_A.data(), C, idx_B.data());
     check("ZERO", calc_val, neps);
 
-    dpd_impl = FULL;
+    dpd_impl = dpd_impl_t::FULL;
     ref_val = dot<T>(A, idx_A.data(), B, idx_B.data());
 
     dpd_impl = dpd_impl_t::BLOCKED;
@@ -2323,7 +2340,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dot, R, T, all_types)
     calc_val = dot<T>(A, idx_A.data(), C, idx_A.data());
     check("ZERO", calc_val, neps);
 
-    dpd_impl = FULL;
+    dpd_impl = dpd_impl_t::FULL;
     ref_val = dot<T>(A, idx_A.data(), B, idx_B.data());
 
     dpd_impl = dpd_impl_t::BLOCKED;
@@ -2360,7 +2377,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_dot, R, T, all_types)
     calc_val = dot<T>(A, idx_A.data(), C, idx_A.data());
     check("ZERO", calc_val, neps);
 
-    dpd_impl = FULL;
+    dpd_impl = dpd_impl_t::FULL;
     ref_val = dot<T>(A, idx_A.data(), B, idx_B.data());
 
     dpd_impl = dpd_impl_t::BLOCKED;

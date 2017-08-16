@@ -3,6 +3,7 @@
 
 #include "util/basic_types.h"
 #include "util/tensor.hpp"
+#include "internal/1t/dense/add.hpp"
 #include "internal/3t/dpd/mult.hpp"
 
 namespace tblis
@@ -11,53 +12,64 @@ namespace internal
 {
 
 template <typename T, typename U>
-void block_to_full(const indexed_varray_view<T>& A, varray<U>& A2)
+void block_to_full(const communicator& comm, const config& cfg,
+                   const indexed_varray_view<T>& A, varray<U>& A2)
 {
     unsigned ndim_A = A.dimension();
     unsigned dense_ndim_A = A.dense_dimension();
-    unsigned idx_ndim_A = A.indexed_dimension();
 
-    A2.reset(A.lengths());
+    if (comm.master()) A2.reset(A.lengths());
+    comm.barrier();
+
+    auto dense_len_A = A.dense_lengths();
+    auto dense_stride_A = A.dense_strides();
 
     auto dense_stride_A2 = A2.strides();
     dense_stride_A2.resize(dense_ndim_A);
 
-    A.for_each_index(
-    [&](const varray_view<T>& local_A, const len_vector& idx_A)
+    for (len_type i = 0;i < A.num_indices();i++)
     {
-        auto data_A2 = A2.data();
+        auto data_A = A.data(i);
+        auto factor_A = A.factor(i);
+        auto idx_A = A.indices(i);
 
+        auto data_A2 = A2.data();
         for (unsigned i = dense_ndim_A;i < ndim_A;i++)
             data_A2 += idx_A[i-dense_ndim_A]*A2.stride(i);
 
-        varray_view<U> local_A2(local_A.lengths(), data_A2, dense_stride_A2);
-
-        local_A2 = local_A;
-    });
+        add<U>(comm, cfg, {}, {}, dense_len_A,
+               factor_A, false,  data_A, {},  dense_stride_A,
+                      0, false, data_A2, {}, dense_stride_A2);
+    }
 }
 
 template <typename T, typename U>
-void full_to_block(const varray<U>& A2, const indexed_varray_view<T>& A)
+void full_to_block(const communicator& comm, const config& cfg,
+                   const varray<U>& A2, const indexed_varray_view<T>& A)
 {
     unsigned ndim_A = A.dimension();
     unsigned dense_ndim_A = A.dense_dimension();
-    unsigned idx_ndim_A = A.indexed_dimension();
+
+    auto dense_len_A = A.dense_lengths();
+    auto dense_stride_A = A.dense_strides();
 
     auto dense_stride_A2 = A2.strides();
     dense_stride_A2.resize(dense_ndim_A);
 
-    A.for_each_index(
-    [&](const varray_view<T>& local_A, const len_vector& idx_A)
+    for (len_type i = 0;i < A.num_indices();i++)
     {
-        auto data_A2 = A2.data();
+        auto data_A = A.data(i);
+        auto factor_A = A.factor(i);
+        auto idx_A = A.indices(i);
 
+        auto data_A2 = A2.data();
         for (unsigned i = dense_ndim_A;i < ndim_A;i++)
             data_A2 += idx_A[i-dense_ndim_A]*A2.stride(i);
 
-        varray_view<const U> local_A2(local_A.lengths(), data_A2, dense_stride_A2);
-
-        local_A = local_A2;
-    });
+        add<U>(comm, cfg, {}, {}, dense_len_A,
+               factor_A, false, data_A2, {}, dense_stride_A2,
+                      1, false,  data_A, {},  dense_stride_A);
+    }
 }
 
 inline bool is_idx_dense(unsigned) { return true; }
@@ -279,16 +291,17 @@ void set_mixed_indices(std::array<len_vector,N>& idx,
     set_mixed_indices_helper<0>(idx, stride, iter, off, args...);
 }
 
-template <unsigned N>
+template <typename T, unsigned N>
 struct index_set
 {
     std::array<stride_type,N> key;
     std::array<len_vector,N> idx;
     stride_type offset;
+    T factor;
 };
 
-template <unsigned N>
-struct group_indices : std::vector<index_set<N>>
+template <typename T, unsigned N>
+struct group_indices : std::vector<index_set<T, N>>
 {
     template <typename Array, typename... Args>
     group_indices(const Array& A, const Args&... args)
@@ -302,12 +315,13 @@ struct group_indices : std::vector<index_set<N>>
         viterator<0> iter(mixed_len);
         for (len_type i = 0;i < A.num_indices();i++)
         {
-            index_set<N> idx;
+            index_set<T, N> idx;
             std::array<stride_vector,N> idx_stride;
 
             set_batch_indices(idx.idx, idx_stride, A, i, args...);
 
             idx.offset = A.data(i) - A.data(0);
+            idx.factor = A.factor(i);
 
             while (iter.next())
             {
@@ -327,7 +341,7 @@ struct group_indices : std::vector<index_set<N>>
         }
 
         stl_ext::sort(*this,
-                      [](const index_set<N>& a, const index_set<N>& b)
+                      [](const index_set<T, N>& a, const index_set<T, N>& b)
                       {
                           return a.key < b.key;
                       });

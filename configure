@@ -6625,6 +6625,10 @@ $as_echo "$as_me: WARNING: FMA4 cannot be compiled; disabling bulldozer configur
 fi
 
 if ( echo $configs | $EGREP -q 'knl|skx' ); then
+    CPPFLAGS_save="$CPPFLAGS"
+    if test `uname -s` = Darwin; then
+        CPPFLAGS="$CPPFLAGS -Wa,-march=knl"
+    fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether inline AVX-512F can be compiled" >&5
 $as_echo_n "checking whether inline AVX-512F can be compiled... " >&6; }
     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -6659,6 +6663,7 @@ $as_echo "$as_me: WARNING: AVX-512F cannot be compiled; disabling knl and skx co
         configs=`echo $configs | sed 's/ *knl */ /' \
                                | sed 's/ *skx */ /'`
     fi
+    CPPFLAGS="$CPPFLAGS_save"
 fi
 
  if test x"$cc_vendor" = xicc; then

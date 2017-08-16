@@ -354,6 +354,10 @@ if ( echo $configs | grep -q bulldozer ); then
 fi
 
 if ( echo $configs | $EGREP -q 'knl|skx' ); then
+    CPPFLAGS_save="$CPPFLAGS"
+    if test `uname -s` = Darwin; then
+        CPPFLAGS="$CPPFLAGS -Wa,-march=knl"
+    fi
     AC_MSG_CHECKING([whether inline AVX-512F can be compiled])
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
         __asm__ __volatile__
@@ -370,6 +374,7 @@ if ( echo $configs | $EGREP -q 'knl|skx' ); then
         configs=`echo $configs | sed 's/ *knl */ /' \
                                | sed 's/ *skx */ /'`
     fi
+    CPPFLAGS="$CPPFLAGS_save"
 fi
 
 AM_CONDITIONAL(ENABLE_INTEL_COMPILER, [test x"$cc_vendor" = xicc])

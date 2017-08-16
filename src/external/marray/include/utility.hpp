@@ -17,7 +17,7 @@
 #include <ostream>
 
 #ifdef MARRAY_ENABLE_ASSERTS
-#define MARRAY_ASSERT(e) std::assert(e)
+#define MARRAY_ASSERT(e) assert(e)
 #else
 #define MARRAY_ASSERT(e)
 #endif

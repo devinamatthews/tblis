@@ -303,14 +303,19 @@ endif
 if ENABLE_SKX
 noinst_LTLIBRARIES += lib/libskx.la
 lib_libtblis_la_LIBADD += lib/libskx.la
-lib_libskx_la_SOURCES = src/configs/knl/bli_dgemm_opt_24x8_knl.c \
+lib_libskx_la_SOURCES = src/configs/skx/bli_dgemm_opt_24x8_knl.c \
 					    src/configs/skx/config.cxx
 if ENABLE_INTEL_COMPILER
 lib_libskx_la_CFLAGS = -O3 -xCORE-AVX512
 lib_libskx_la_CXXFLAGS = -O3 -xCORE-AVX512
 else
+if IS_OSX
+lib_libskx_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
+lib_libskx_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
+else
 lib_libskx_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
 lib_libskx_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
+endif
 endif
 endif
 

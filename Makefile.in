@@ -778,7 +778,6 @@ pkginclude_HEADERS = src/tblis.h src/tblis_config.h
 utilincludedir = $(pkgincludedir)/util
 utilinclude_HEADERS = \
 	\
-	src/util/assert.h \
 	src/util/basic_types.h \
 	src/util/configs.h \
 	src/util/thread.h

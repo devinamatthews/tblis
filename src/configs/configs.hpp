@@ -203,6 +203,8 @@ const config& get_default_config();
 
 const config& get_config(const tblis_config* cfg);
 
+const config& get_config(const std::string& name);
+
 }
 
 #endif

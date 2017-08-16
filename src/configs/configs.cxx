@@ -58,4 +58,21 @@ const config& get_config(const tblis_config* cfg)
     return (cfg ? *reinterpret_cast<const config*>(cfg) : get_default_config());
 }
 
+const config& get_config(const std::string& name)
+{
+    for (int cfg = 0;cfg < num_configs;cfg++)
+    {
+        if (configs[cfg]->name == name)
+        {
+            if (configs[cfg]->check() == -1)
+                tblis_abort_with_message(nullptr,
+                    "tblis: Configuration %s cannot be used!", name.c_str());
+            return *configs[cfg];
+        }
+    }
+
+    tblis_abort_with_message(nullptr,
+        "tblis: No configuration named %s!", name.c_str());
+}
+
 }

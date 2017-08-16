@@ -81,6 +81,7 @@ lib_libtblis_la_SOURCES = \
     src/configs/configs.cxx \
     \
     src/util/basic_types.cxx \
+    src/util/configs.cxx \
     src/util/cpuid.cxx \
     src/util/random.cxx \
     src/util/thread.cxx
@@ -92,6 +93,7 @@ utilinclude_HEADERS = \
 	\
 	src/util/assert.h \
 	src/util/basic_types.h \
+	src/util/configs.h \
 	src/util/thread.h
 
 memoryincludedir = $(pkgincludedir)/memory

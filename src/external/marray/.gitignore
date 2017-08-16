@@ -4,6 +4,10 @@
 *.lo
 *.so
 *.dSYM
+bin
+lib
+*.gcda
+*.gcno
 .libs
 .dirstamp
 libtool

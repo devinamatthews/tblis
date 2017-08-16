@@ -60,7 +60,7 @@ int tci_barrier_node_wait(tci_barrier_node* barrier)
         barrier->nchildren)
     {
         if (barrier->parent) tci_barrier_node_wait(barrier->parent);
-        barrier->nwaiting = 0;
+        __atomic_store_n(&barrier->nwaiting, 0, __ATOMIC_RELAXED);
         __atomic_fetch_add(&barrier->step, 1, __ATOMIC_RELEASE);
     }
     else

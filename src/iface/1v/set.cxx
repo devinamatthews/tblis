@@ -16,8 +16,13 @@ void tblis_vector_set(const tblis_comm* comm, const tblis_config* cfg,
 
     TBLIS_WITH_TYPE_AS(A->type, T,
     {
-        parallelize_if(internal::set<T>, comm, get_config(cfg), A->n,
-                       alpha->get<T>(), static_cast<T*>(A->data), A->inc);
+        parallelize_if(
+        [&](const communicator& comm)
+        {
+            internal::set<T>(comm, get_config(cfg), A->n,
+                             alpha->get<T>(),
+                             static_cast<T*>(A->data), A->inc);
+        }, comm);
 
         A->alpha<T>() = T(1);
         A->conj = false;

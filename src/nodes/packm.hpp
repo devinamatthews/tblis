@@ -24,8 +24,7 @@ struct pack_row_panel
 {
     static constexpr bool Trans = Mat == matrix_constants::MAT_B;
 
-    template <typename Communicator>
-    void operator()(Communicator& comm, const config& cfg,
+    void operator()(const communicator& comm, const config& cfg,
                     matrix_view<T>& A, matrix_view<T>& Ap) const
     {
         const len_type MR = (!Trans ? cfg.gemm_mr.def<T>()
@@ -96,8 +95,7 @@ struct pack_row_panel
 
     }
 
-    template <typename Communicator>
-    void operator()(Communicator& comm, const config& cfg,
+    void operator()(const communicator& comm, const config& cfg,
                     const_scatter_matrix_view<T>& A, matrix_view<T>& Ap) const
     {
         const len_type MR = (!Trans ? cfg.gemm_mr.def<T>()
@@ -200,8 +198,7 @@ struct pack_row_panel
 #endif //TBLIS_ENABLE_TBB
     }
 
-    template <typename Communicator>
-    void operator()(Communicator& comm, const config& cfg,
+    void operator()(const communicator& comm, const config& cfg,
                     block_scatter_matrix<T> A_, matrix_view<T>& Ap) const
     {
         const len_type MR = (!Trans ? cfg.gemm_mr.def<T>()
@@ -210,8 +207,8 @@ struct pack_row_panel
                                     : cfg.gemm_nr.extent<T>());
         const len_type KR = cfg.gemm_kr.def<T>();
 
-        TBLIS_ASSERT(A.block_size(0) == (!Trans ? MR : KR));
-        TBLIS_ASSERT(A.block_size(1) == (!Trans ? KR : MR));
+        TBLIS_ASSERT(A_.block_size(0) == (!Trans ? MR : KR));
+        TBLIS_ASSERT(A_.block_size(1) == (!Trans ? KR : MR));
 
         const len_type m_a = A_.length( Trans);
         const len_type k_a = A_.length(!Trans);
@@ -306,8 +303,8 @@ template <typename Pack, int Mat> struct pack_and_run;
 template <typename Pack>
 struct pack_and_run<Pack, matrix_constants::MAT_A>
 {
-    template <typename Run, typename T, typename Communicator, typename MatrixA, typename MatrixB, typename MatrixC, typename MatrixP>
-    pack_and_run(Run& run, Communicator& comm, const config& cfg,
+    template <typename Run, typename T, typename MatrixA, typename MatrixB, typename MatrixC, typename MatrixP>
+    pack_and_run(Run& run, const communicator& comm, const config& cfg,
                  T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C, MatrixP& P)
     {
         Pack()(comm, cfg, A, P);
@@ -320,8 +317,8 @@ struct pack_and_run<Pack, matrix_constants::MAT_A>
 template <typename Pack>
 struct pack_and_run<Pack, matrix_constants::MAT_B>
 {
-    template <typename Run, typename T, typename Communicator, typename MatrixA, typename MatrixB, typename MatrixC, typename MatrixP>
-    pack_and_run(Run& run, Communicator& comm, const config& cfg,
+    template <typename Run, typename T, typename MatrixA, typename MatrixB, typename MatrixC, typename MatrixP>
+    pack_and_run(Run& run, const communicator& comm, const config& cfg,
                  T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C, MatrixP& P)
     {
         Pack()(comm, cfg, B, P);
@@ -343,8 +340,8 @@ struct pack
     pack(const pack& other)
     : child(other.child) {}
 
-    template <typename T, typename Communicator, typename MatrixA, typename MatrixB, typename MatrixC>
-    void operator()(Communicator& comm, const config& cfg,
+    template <typename T, typename MatrixA, typename MatrixB, typename MatrixC>
+    void operator()(const communicator& comm, const config& cfg,
                     T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         using namespace matrix_constants;
@@ -365,7 +362,7 @@ struct pack
                 pack_ptr = pack_buffer.get();
             }
 
-            comm.broadcast(pack_ptr);
+            comm.broadcast_value(pack_ptr);
         }
 
         matrix_view<T> P({!Trans ? m_p : k_p,

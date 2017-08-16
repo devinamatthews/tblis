@@ -26,9 +26,9 @@ void tblis_tensor_mult(const tblis_comm* comm, const tblis_config* cfg,
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 template <typename T>
-void mult(T alpha, const_tensor_view<T> A, const label_type* idx_A,
-                   const_tensor_view<T> B, const label_type* idx_B,
-          T  beta,       tensor_view<T> C, const label_type* idx_C)
+void mult(T alpha, varray_view<const T> A, const label_type* idx_A,
+                   varray_view<const T> B, const label_type* idx_B,
+          T  beta,       varray_view<T> C, const label_type* idx_C)
 {
     tblis_tensor A_s(alpha, A);
     tblis_tensor B_s(B);
@@ -38,29 +38,79 @@ void mult(T alpha, const_tensor_view<T> A, const label_type* idx_A,
 }
 
 template <typename T>
-void mult(single_t,
-          T alpha, const_tensor_view<T> A, const label_type* idx_A,
-                   const_tensor_view<T> B, const label_type* idx_B,
-          T  beta,       tensor_view<T> C, const label_type* idx_C)
-{
-    tblis_tensor A_s(alpha, A);
-    tblis_tensor B_s(B);
-    tblis_tensor C_s(beta, C);
-
-    tblis_tensor_mult(tblis_single, nullptr, &A_s, idx_A, &B_s, idx_B, &C_s, idx_C);
-}
-
-template <typename T>
 void mult(const communicator& comm,
-          T alpha, const_tensor_view<T> A, const label_type* idx_A,
-                   const_tensor_view<T> B, const label_type* idx_B,
-          T  beta,       tensor_view<T> C, const label_type* idx_C)
+          T alpha, varray_view<const T> A, const label_type* idx_A,
+                   varray_view<const T> B, const label_type* idx_B,
+          T  beta,       varray_view<T> C, const label_type* idx_C)
 {
     tblis_tensor A_s(alpha, A);
     tblis_tensor B_s(B);
     tblis_tensor C_s(beta, C);
 
     tblis_tensor_mult(comm, nullptr, &A_s, idx_A, &B_s, idx_B, &C_s, idx_C);
+}
+
+template <typename T>
+void mult(const communicator& comm,
+          T alpha, dpd_varray_view<const T> A, const label_type* idx_A,
+                   dpd_varray_view<const T> B, const label_type* idx_B,
+          T  beta, dpd_varray_view<      T> C, const label_type* idx_C);
+
+template <typename T>
+void mult(T alpha, dpd_varray_view<const T> A, const label_type* idx_A,
+                   dpd_varray_view<const T> B, const label_type* idx_B,
+          T  beta, dpd_varray_view<      T> C, const label_type* idx_C)
+{
+    parallelize
+    (
+        [&](const communicator& comm)
+        {
+            mult(comm, alpha, A, idx_A, B, idx_B, beta, C, idx_C);
+        },
+        tblis_get_num_threads()
+    );
+}
+
+template <typename T>
+void mult(const communicator& comm,
+          T alpha, indexed_varray_view<const T> A, const label_type* idx_A,
+                   indexed_varray_view<const T> B, const label_type* idx_B,
+          T  beta, indexed_varray_view<      T> C, const label_type* idx_C);
+
+template <typename T>
+void mult(T alpha, indexed_varray_view<const T> A, const label_type* idx_A,
+                   indexed_varray_view<const T> B, const label_type* idx_B,
+          T  beta, indexed_varray_view<      T> C, const label_type* idx_C)
+{
+    parallelize
+    (
+        [&](const communicator& comm)
+        {
+            mult(comm, alpha, A, idx_A, B, idx_B, beta, C, idx_C);
+        },
+        tblis_get_num_threads()
+    );
+}
+
+template <typename T>
+void mult(const communicator& comm,
+          T alpha, indexed_dpd_varray_view<const T> A, const label_type* idx_A,
+                   indexed_dpd_varray_view<const T> B, const label_type* idx_B,
+          T  beta, indexed_dpd_varray_view<      T> C, const label_type* idx_C);
+
+template <typename T>
+void mult(T alpha, indexed_dpd_varray_view<const T> A, const label_type* idx_A,
+                   indexed_dpd_varray_view<const T> B, const label_type* idx_B,
+          T  beta, indexed_dpd_varray_view<      T> C, const label_type* idx_C)
+{
+    parallelize
+    (
+        [&](const communicator& comm)
+        {
+            mult(comm, alpha, A, idx_A, B, idx_B, beta, C, idx_C);
+        },
+        tblis_get_num_threads()
+    );
 }
 
 #endif

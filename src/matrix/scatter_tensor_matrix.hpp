@@ -25,7 +25,7 @@ class scatter_tensor_matrix
         std::array<len_type, 2> offset_;
         std::array<len_type, 2> leading_len_;
         std::array<stride_type, 2> leading_stride_;
-        std::array<MArray::viterator<>, 2> iterator_;
+        std::array<viterator<>, 2> iterator_;
         std::array<len_type, 2> scatter_len_;
         std::array<scatter_type, 2> scatter_;
 
@@ -46,14 +46,14 @@ class scatter_tensor_matrix
         }
 
         template <typename U, typename V, typename W, typename X>
-        scatter_tensor_matrix(const std::vector<U>& dense_len_m,
+        scatter_tensor_matrix(const U& dense_len_m,
                               len_type scatter_len_m,
-                              const std::vector<V>& dense_len_n,
+                              const V& dense_len_n,
                               len_type scatter_len_n,
                               pointer ptr,
-                              const std::vector<W>& stride_m,
+                              const W& stride_m,
                               scatter_type scatter_m,
-                              const std::vector<X>& stride_n,
+                              const X& stride_n,
                               scatter_type scatter_n)
         {
             reset(dense_len_m, scatter_len_m, dense_len_n, scatter_len_n,
@@ -73,8 +73,8 @@ class scatter_tensor_matrix
             leading_len_[1] = 0;
             leading_stride_[0] = 0;
             leading_stride_[1] = 0;
-            iterator_[0] = MArray::viterator<>();
-            iterator_[1] = MArray::viterator<>();
+            iterator_[0] = viterator<>();
+            iterator_[1] = viterator<>();
             scatter_len_[0] = 0;
             scatter_len_[1] = 0;
             scatter_[0] = nullptr;
@@ -124,14 +124,14 @@ class scatter_tensor_matrix
         }
 
         template <typename U, typename V, typename W, typename X>
-        void reset(const std::vector<U>& dense_len_m,
+        void reset(const U& dense_len_m,
                    len_type scatter_len_m,
-                   const std::vector<V>& dense_len_n,
+                   const V& dense_len_n,
                    len_type scatter_len_n,
                    pointer ptr,
-                   const std::vector<W>& stride_m,
+                   const W& stride_m,
                    scatter_type scatter_m,
-                   const std::vector<X>& stride_n,
+                   const X& stride_n,
                    scatter_type scatter_n)
         {
             TBLIS_ASSERT(dense_len_m.size() == stride_m.size());
@@ -145,8 +145,8 @@ class scatter_tensor_matrix
             offset_[0] = 0;
             offset_[1] = 0;
 
-            std::vector<len_type> len_m_, len_n_;
-            std::vector<stride_type> stride_m_, stride_n_;
+            len_vector len_m_, len_n_;
+            stride_vector stride_m_, stride_n_;
             if (!dense_len_m.empty()) len_m_.assign(dense_len_m.begin()+1, dense_len_m.end());
             if (!dense_len_n.empty()) len_n_.assign(dense_len_n.begin()+1, dense_len_n.end());
             if (!stride_m.empty()) stride_m_.assign(stride_m.begin()+1, stride_m.end());
@@ -155,8 +155,8 @@ class scatter_tensor_matrix
             for (len_type len : len_m_) dense_len_[0] *= len;
             for (len_type len : len_n_) dense_len_[1] *= len;
 
-            iterator_[0] = MArray::viterator<>(len_m_, stride_m_);
-            iterator_[1] = MArray::viterator<>(len_n_, stride_n_);
+            iterator_[0] = viterator<>(len_m_, stride_m_);
+            iterator_[1] = viterator<>(len_n_, stride_n_);
 
             scatter_len_[0] = scatter_len_m;
             scatter_len_[1] = scatter_len_n;

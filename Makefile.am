@@ -6,18 +6,21 @@ lib_libtblis_la_SOURCES = \
     src/iface/1v/reduce.cxx \
     src/iface/1v/scale.cxx \
     src/iface/1v/set.cxx \
+    src/iface/1v/shift.cxx \
     \
     src/iface/1m/add.cxx \
     src/iface/1m/dot.cxx \
     src/iface/1m/reduce.cxx \
     src/iface/1m/scale.cxx \
     src/iface/1m/set.cxx \
+    src/iface/1m/shift.cxx \
 	\
     src/iface/1t/add.cxx \
     src/iface/1t/dot.cxx \
     src/iface/1t/reduce.cxx \
     src/iface/1t/scale.cxx \
     src/iface/1t/set.cxx \
+    src/iface/1t/shift.cxx \
     \
     src/iface/3m/mult.cxx \
     \
@@ -28,26 +31,57 @@ lib_libtblis_la_SOURCES = \
     src/internal/1v/reduce.cxx \
     src/internal/1v/scale.cxx \
     src/internal/1v/set.cxx \
+    src/internal/1v/shift.cxx \
     \
     src/internal/1m/add.cxx \
     src/internal/1m/dot.cxx \
     src/internal/1m/reduce.cxx \
     src/internal/1m/scale.cxx \
     src/internal/1m/set.cxx \
+    src/internal/1m/shift.cxx \
 	\
-    src/internal/1t/add.cxx \
-    src/internal/1t/dot.cxx \
-    src/internal/1t/reduce.cxx \
-    src/internal/1t/scale.cxx \
-    src/internal/1t/set.cxx \
+    src/internal/1t/dense/add.cxx \
+    src/internal/1t/dense/dot.cxx \
+    src/internal/1t/dense/reduce.cxx \
+    src/internal/1t/dense/scale.cxx \
+    src/internal/1t/dense/set.cxx \
+    src/internal/1t/dense/shift.cxx \
+    \
+    src/internal/1t/dpd/add.cxx \
+    src/internal/1t/dpd/dot.cxx \
+    src/internal/1t/dpd/reduce.cxx \
+    src/internal/1t/dpd/scale.cxx \
+    src/internal/1t/dpd/set.cxx \
+    src/internal/1t/dpd/shift.cxx \
+    \
+    src/internal/1t/indexed/add.cxx \
+    src/internal/1t/indexed/dot.cxx \
+    src/internal/1t/indexed/reduce.cxx \
+    src/internal/1t/indexed/scale.cxx \
+    src/internal/1t/indexed/set.cxx \
+    src/internal/1t/indexed/shift.cxx \
+    \
+    src/internal/1t/indexed_dpd/add.cxx \
+    src/internal/1t/indexed_dpd/dot.cxx \
+    src/internal/1t/indexed_dpd/reduce.cxx \
+    src/internal/1t/indexed_dpd/scale.cxx \
+    src/internal/1t/indexed_dpd/set.cxx \
+    src/internal/1t/indexed_dpd/shift.cxx \
     \
     src/internal/3m/mult.cxx \
     \
-    src/internal/3t/mult.cxx \
+    src/internal/3t/dense/mult.cxx \
+    \
+    src/internal/3t/dpd/mult.cxx \
+    \
+    src/internal/3t/indexed/mult.cxx \
+    \
+    src/internal/3t/indexed_dpd/mult.cxx \
     \
     src/configs/configs.cxx \
     \
     src/util/basic_types.cxx \
+    src/util/configs.cxx \
     src/util/cpuid.cxx \
     src/util/random.cxx \
     src/util/thread.cxx
@@ -59,6 +93,7 @@ utilinclude_HEADERS = \
 	\
 	src/util/assert.h \
 	src/util/basic_types.h \
+	src/util/configs.h \
 	src/util/thread.h
 
 memoryincludedir = $(pkgincludedir)/memory
@@ -177,17 +212,17 @@ lib_libexcavator_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
 lib_libexcavator_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
 endif
 
-if ENABLE_RYZEN
-noinst_LTLIBRARIES += lib/libryzen.la
-lib_libtblis_la_LIBADD += lib/libryzen.la
+if ENABLE_ZEN
+noinst_LTLIBRARIES += lib/libzen.la
+lib_libtblis_la_LIBADD += lib/libzen.la
 if !ENABLE_HASWELL
-lib_libryzen_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
-					      src/configs/ryzen/config.cxx
+lib_libzen_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
+					    src/configs/zen/config.cxx
 else
-lib_libryzen_la_SOURCES = src/configs/ryzen/config.cxx
+lib_libzen_la_SOURCES = src/configs/zen/config.cxx
 endif
-lib_libryzen_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=znver1 -mfpmath=sse
-lib_libryzen_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=znver1 -mfpmath=sse
+lib_libzen_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=znver1 -mfpmath=sse
+lib_libzen_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=znver1 -mfpmath=sse
 endif
 
 #
@@ -268,7 +303,8 @@ endif
 if ENABLE_SKX
 noinst_LTLIBRARIES += lib/libskx.la
 lib_libtblis_la_LIBADD += lib/libskx.la
-lib_libskx_la_SOURCES = src/configs/skx/config.cxx
+lib_libskx_la_SOURCES = src/configs/knl/bli_dgemm_opt_24x8_knl.c \
+					    src/configs/skx/config.cxx
 if ENABLE_INTEL_COMPILER
 lib_libskx_la_CFLAGS = -O3 -xCORE-AVX512
 lib_libskx_la_CXXFLAGS = -O3 -xCORE-AVX512
@@ -282,7 +318,7 @@ endif
 #noinst_LTLIBRARIES += lib/libmic.la
 #lib_libtblis_la_LIBADD += lib/libmic.la
 #lib_libmic_la_SOURCES = src/external/blis/config/mic/kernels/3/bli_dgemm_opt_30x8.c \
-#					    src/external/blis/config/mic/kernels/3/bli_sgemm_opt_30x16.c
+#					     src/external/blis/config/mic/kernels/3/bli_sgemm_opt_30x16.c
 #lib_libmic_la_CFLAGS = -Isrc/external/blis/config/mic -fasm-blocks
 #endif
 
@@ -354,11 +390,12 @@ endif
 
 noinst_PROGRAMS = bin/test
 if ENABLE_BLAS
-noinst_PROGRAMS += bin/bench bin/batched_bench
+noinst_PROGRAMS += bin/bench bin/batched_bench bin/dpd_bench
 endif
 bin_test_SOURCES = test/test.cxx
 bin_bench_SOURCES = test/bench.cxx
 bin_batched_bench_SOURCES = test/batched_bench.cxx
+bin_dpd_bench_SOURCES = test/dpd_bench.cxx
 
 VPATH += $(srcdir)
 
@@ -369,3 +406,6 @@ AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la
 bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 bin_batched_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
+bin_dpd_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
+
+DISTCLEANFILES = src/tblis_config.h

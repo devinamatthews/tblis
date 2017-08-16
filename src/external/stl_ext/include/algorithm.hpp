@@ -316,6 +316,58 @@ T intersection(T v1, Ts&&... vs)
 }
 
 template <typename T>
+T& unite(T& v1, T v2)
+{
+    T v3;
+
+    sort(v1);
+    sort(v2);
+
+    auto i1 = v1.begin();
+    auto i2 = v2.begin();
+    auto i3 = std::back_inserter(v3);
+    while (i1 != v1.end() && i2 != v2.end())
+    {
+        if (*i1 < *i2)
+        {
+            *i3 = *i1;
+            ++i1;
+        }
+        else if (*i2 < *i1)
+        {
+            *i3 = *i2;
+            ++i2;
+        }
+        else
+        {
+            *i3 = *i1;
+            ++i1;
+            ++i2;
+        }
+        ++i3;
+    }
+    v1.swap(v3);
+
+    return v1;
+}
+
+template <typename T, typename U, typename... Ts>
+enable_if_t<(sizeof...(Ts) > 0),T&>
+unite(T& v1, U&& v2, Ts&&... vs)
+{
+    unite(v1, std::forward<U>(v2));
+    unite(v1, std::forward<Ts>(vs)...);
+    return v1;
+}
+
+template <typename T, typename... Ts>
+T union_of(T v1, Ts&&... vs)
+{
+    unite(v1, std::forward<Ts>(vs)...);
+    return v1;
+}
+
+template <typename T>
 T& exclude(T& v1, T v2)
 {
     sort(v1);
@@ -482,6 +534,14 @@ T select_from(const T& v, const U& s, const U& match)
         }
     }
 
+    return v2;
+}
+
+template <typename T, typename U>
+T select_from(const T& v, const U& idx)
+{
+    T v2; v2.reserve(idx.size());
+    for (auto& i : idx) v2.push_back(v[i]);
     return v2;
 }
 

@@ -1,5 +1,6 @@
+#include "../skx/config.hpp"
+
 #include "util/cpuid.hpp"
-#include "config.hpp"
 
 namespace tblis
 {
@@ -18,6 +19,6 @@ int skx_check()
     return 3;
 }
 
-//TBLIS_CONFIG_INSTANTIATE(skx);
+TBLIS_CONFIG_INSTANTIATE(skx_knl);
 
 }

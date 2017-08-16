@@ -90,8 +90,78 @@ void tci_comm_distribute_over_threads_2d(tci_comm* comm,
 namespace tci
 {
 
+namespace detail
+{
+
+#if __cplusplus >= 201402l && 0
+
+using std::index_sequence;
+using std::index_sequence_for;
+
+#else
+
+template <size_t... S>
+struct index_sequence
+{
+    typedef size_t value_type;
+    static constexpr size_t size() noexcept { return sizeof...(S); }
+};
+
+template <typename, typename> struct concat_sequences;
+
+template <size_t... S, size_t... R>
+struct concat_sequences<index_sequence<S...>, index_sequence<R...>>
+{
+    typedef index_sequence<S..., (R+sizeof...(S))...> type;
+};
+
+template <size_t N, typename=void> struct make_index_sequence_helper;
+
+template <size_t N> struct make_index_sequence_helper<N, typename std::enable_if<N==0>::type>
+{
+    typedef index_sequence<> type;
+};
+
+template <size_t N> struct make_index_sequence_helper<N, typename std::enable_if<N==1>::type>
+{
+    typedef index_sequence<0> type;
+};
+
+template <size_t N> struct make_index_sequence_helper<N, typename std::enable_if<(N>1)>::type>
+{
+    typedef typename concat_sequences<typename make_index_sequence_helper<(N+1)/2>::type,
+                                      typename make_index_sequence_helper<N/2>::type>::type type;
+};
+
+template <size_t N>
+using make_index_sequence = typename make_index_sequence_helper<N>::type;
+
+template <typename... T>
+using index_sequence_for = make_index_sequence<sizeof...(T)>;
+
+#endif
+
+}
+
 class communicator
 {
+    protected:
+        template <typename Func, typename... Args>
+        struct broadcast_from_internal
+        {
+            template <size_t... I>
+            broadcast_from_internal(const communicator& comm, unsigned root,
+                                    Func&& func, Args&&... args,
+                                    detail::index_sequence<I...>)
+            {
+                std::tuple<Args&&...> refs(std::forward<Args>(args)...);
+                auto ptr = &refs;
+                tci_comm_bcast_nowait(comm, reinterpret_cast<void**>(&ptr), root);
+                func(std::get<I>(*ptr)...);
+                comm.barrier();
+            }
+        };
+
     public:
         communicator()
         {
@@ -150,16 +220,38 @@ class communicator
             return _comm.gid;
         }
 
-        template <typename T>
-        void broadcast(T*& object, unsigned root=0) const
+        template <typename Func, typename... Args>
+        void broadcast_from(unsigned root, Func&& func, Args&&... args) const
         {
-            tci_comm_bcast(*this, reinterpret_cast<void**>(&object), root);
+            broadcast_from_internal<Func, Args...>
+                (*this, root, std::forward<Func>(func),
+                 std::forward<Args>(args)...,
+                 detail::index_sequence_for<Args...>{});
         }
 
-        template <typename T>
-        void broadcast_nowait(T*& object, unsigned root=0) const
+        template <typename Func, typename... Args>
+        void broadcast(Func&& func, Args&&... args) const
         {
-            tci_comm_bcast_nowait(*this, reinterpret_cast<void**>(&object), root);
+            broadcast_from(0, std::forward<Func>(func),
+                           std::forward<Args>(args)...);
+        }
+
+        template <typename Arg>
+        void broadcast_value_from(unsigned root, Arg& arg) const
+        {
+            unsigned tid = thread_num();
+            broadcast_from(root,
+            [&](Arg& master)
+            {
+                if (tid != root) arg = master;
+            },
+            arg);
+        }
+
+        template <typename Arg>
+        void broadcast_value(Arg& arg) const
+        {
+            broadcast_value_from(0, arg);
         }
 
         communicator gang(int type, unsigned n, unsigned bs=0) const

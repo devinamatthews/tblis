@@ -659,8 +659,8 @@ FOREACH_TYPE
 FOREACH_CONFIG_AND_TYPE
 FOREACH_CONFIG
 INCLUDE_CONFIGS
-ENABLE_RYZEN_FALSE
-ENABLE_RYZEN_TRUE
+ENABLE_ZEN_FALSE
+ENABLE_ZEN_TRUE
 ENABLE_SANDYBRIDGE_FALSE
 ENABLE_SANDYBRIDGE_TRUE
 ENABLE_REFERENCE_FALSE
@@ -1484,13 +1484,13 @@ Optional Features:
 
                           possible values are:
 
-                          reference, bulldozer, piledriver, excavator, ryzen,
+                          reference, bulldozer, piledriver, excavator, zen,
                           core2, sandybridge, haswell, skx, knl, auto
 
                           the following meta-configurations are also available:
 
                           intel = core2,sandybridge,haswell,skx,knl
-                          amd = bulldozer,piledriver,excavator,ryzen
+                          amd = bulldozer,piledriver,excavator,zen
                           x86 = intel,amd
   --enable-shared[=PKGS]  build shared libraries [default=yes]
   --enable-static[=PKGS]  build static libraries [default=yes]
@@ -6228,7 +6228,7 @@ _ACEOF
 #
 # Supported:
 #
-# reference, bulldozer, piledriver, excavator, ryzen, core2, sandybridge,
+# reference, bulldozer, piledriver, excavator, zen, core2, sandybridge,
 # haswell, skx, knl, auto
 #
 # Possible with porting from BLIS:
@@ -6407,7 +6407,7 @@ fi
 
 configs=`echo $enable_config | sed 's/x86/intel,amd/' \
                              | sed 's/intel/core2,sandybridge,haswell,skx,knl/' \
-                             | sed 's/amd/bulldozer,piledriver,excavator,ryzen/' \
+                             | sed 's/amd/bulldozer,piledriver,excavator,zen/' \
                              | sed 's/,/ /g'`
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking compiler vendor" >&5
@@ -6459,7 +6459,7 @@ fi
 # bulldozer: any
 # piledriver: any
 # excavator: gcc 4.9+, clang 3.5+
-# ryzen: gcc 6.0+, clang 4.0+
+# zen: gcc 6.0+, clang 4.0+
 #
 # core2: any
 # sandybridge: any
@@ -6491,7 +6491,7 @@ elif test x"$cc_vendor" = xgcc; then
     fi
     if test $cc_major -lt 6; then
         configs=`echo $configs | sed 's/ *skx */ /' \
-                               | sed 's/ *ryzen */ /'`
+                               | sed 's/ *zen */ /'`
     fi
 elif test x"$cc_vendor" = xclang; then
     if test $cc_major -lt 3; then
@@ -6510,7 +6510,7 @@ elif test x"$cc_vendor" = xclang; then
         fi
     fi
     if test $cc_major -lt 4; then
-        configs=`echo $configs | sed 's/ *ryzen */ /'`
+        configs=`echo $configs | sed 's/ *zen */ /'`
     fi
 fi
 
@@ -6579,13 +6579,13 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_fma3" >&5
 $as_echo "$enable_fma3" >&6; }
     if test "x$enable_fma3" = xno; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: FMA3 cannot be compiled; disabling haswell, piledriver, excavator, skx, and ryzen configurations" >&5
-$as_echo "$as_me: WARNING: FMA3 cannot be compiled; disabling haswell, piledriver, excavator, skx, and ryzen configurations" >&2;}
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: FMA3 cannot be compiled; disabling haswell, piledriver, excavator, skx, and zen configurations" >&5
+$as_echo "$as_me: WARNING: FMA3 cannot be compiled; disabling haswell, piledriver, excavator, skx, and zen configurations" >&2;}
         configs=`echo $configs | sed 's/ *haswell */ /' \
                                | sed 's/ *piledriver */ /' \
                                | sed 's/ *excavator */ /' \
                                | sed 's/ *skx */ /' \
-                               | sed 's/ *ryzen */ /'`
+                               | sed 's/ *zen */ /'`
     fi
 fi
 
@@ -6824,12 +6824,12 @@ else
   ENABLE_SANDYBRIDGE_FALSE=
 fi
 
- if echo $configs | grep -q ryzen; then
-  ENABLE_RYZEN_TRUE=
-  ENABLE_RYZEN_FALSE='#'
+ if echo $configs | grep -q zen; then
+  ENABLE_ZEN_TRUE=
+  ENABLE_ZEN_FALSE='#'
 else
-  ENABLE_RYZEN_TRUE='#'
-  ENABLE_RYZEN_FALSE=
+  ENABLE_ZEN_TRUE='#'
+  ENABLE_ZEN_FALSE=
 fi
 
 
@@ -18023,8 +18023,8 @@ if test -z "${ENABLE_SANDYBRIDGE_TRUE}" && test -z "${ENABLE_SANDYBRIDGE_FALSE}"
   as_fn_error $? "conditional \"ENABLE_SANDYBRIDGE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${ENABLE_RYZEN_TRUE}" && test -z "${ENABLE_RYZEN_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_RYZEN\" was never defined.
+if test -z "${ENABLE_ZEN_TRUE}" && test -z "${ENABLE_ZEN_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_ZEN\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

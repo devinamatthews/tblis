@@ -41,6 +41,88 @@ namespace tblis
 
 using namespace tci;
 
+extern tci::communicator single;
+
+inline int max_num_threads(const communicator& comm)
+{
+    (void)comm;
+    #if TBLIS_ENABLE_TBB
+    #if TBB_INTERFACE_VERSION >= 9100
+        return tbb::this_task_arena::max_concurrency();
+    #else //TBB_INTERFACE_VERSION >= 9100
+        return tblis_get_num_threads();
+    #endif //TBB_INTERFACE_VERSION >= 9100
+    #else //TBLIS_ENABLE_TBB
+        return comm.num_threads();
+    #endif //TBLIS_ENABLE_TBB
+}
+
+#if TBLIS_ENABLE_TBB
+
+class dynamic_task_set
+{
+    public:
+        dynamic_task_set(const communicator&, int, len_type) {}
+
+        ~dynamic_task_set()
+        {
+            group_.wait();
+        }
+
+        template <typename Func>
+        void visit(int task, Func&& f)
+        {
+            group_.run([=] { const_cast<Func&>(f)(single); });
+        }
+
+    protected:
+        tbb::task_group group_;
+        static len_type inout_ratio;
+};
+
+#else //TBLIS_ENABLE_TBB
+
+class dynamic_task_set
+{
+    public:
+        dynamic_task_set(const communicator& comm, int ntask, len_type nwork)
+        : comm_(comm), ntask_(ntask)
+        {
+            if (comm_.master()) slots_ = new slot<>[ntask];
+            comm_.broadcast_value(slots_);
+
+            int nt = max_num_threads(comm_);
+            int nt_outer, nt_inner;
+            std::tie(nt_outer, nt_inner) =
+                partition_2x2(nt, inout_ratio*nwork, ntask,
+                              nwork, nt);
+
+            subcomm_ = comm_.gang(TCI_EVENLY, nt_outer);
+        }
+
+        ~dynamic_task_set()
+        {
+            comm_.barrier();
+            if (slots_) delete[] slots_;
+        }
+
+        template <typename Func>
+        void visit(int task, Func&& f)
+        {
+            TBLIS_ASSERT(task >= 0 && task < ntask_);
+            if (slots_[task].try_fill(subcomm_.gang_num())) f(subcomm_);
+        }
+
+    protected:
+        const communicator& comm_;
+        communicator subcomm_;
+        slot<>* slots_ = nullptr;
+        int ntask_;
+        static len_type inout_ratio;
+};
+
+#endif //TBLIS_ENABLE_TBB
+
 template <typename T>
 void reduce_init(reduce_t op, T& value, len_type& idx)
 {
@@ -75,20 +157,15 @@ void reduce(const communicator& comm, reduce_t op, T& value, len_type& idx)
         return;
     }
 
-    std::pair<T,len_type>* vals;
-    std::vector<std::pair<T,len_type>> val_buffer;
+    std::vector<std::pair<T,len_type>> vals;
+    if (comm.master()) vals.resize(comm.num_threads());
 
-    if (comm.master())
+    comm.broadcast(
+    [&](std::vector<std::pair<T,len_type>>& vals)
     {
-        val_buffer.resize(comm.num_threads());
-        vals = val_buffer.data();
-    }
-
-    comm.broadcast_nowait(vals);
-
-    vals[comm.thread_num()] = {value, idx};
-
-    comm.barrier();
+        vals[comm.thread_num()] = {value, idx};
+    },
+    vals);
 
     if (comm.master())
     {
@@ -145,18 +222,16 @@ void reduce(const communicator& comm, reduce_t op, T& value, len_type& idx)
             }
             vals[0].first = std::sqrt(vals[0].first);
         }
+
+        value = vals[0].first;
+        idx = vals[0].second;
     }
-
-    comm.barrier();
-
-    value = vals[0].first;
-    idx = vals[0].second;
 
     comm.barrier();
 }
 
 template <typename Func, typename... Args>
-void parallelize_if(Func f, const tblis_comm* _comm, Args&&... args)
+void parallelize_if(const Func& f, const tblis_comm* _comm, Args&&... args)
 {
     if (_comm)
     {

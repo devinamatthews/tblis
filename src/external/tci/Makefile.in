@@ -136,7 +136,8 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 lib_libtci_la_LIBADD =
 am__dirstamp = $(am__leading_dot)dirstamp
 am_lib_libtci_la_OBJECTS = tci/barrier.lo tci/communicator.lo \
-	tci/context.lo tci/mutex.lo tci/parallel.lo tci/work_item.lo
+	tci/context.lo tci/mutex.lo tci/parallel.lo tci/slot.lo \
+	tci/work_item.lo
 lib_libtci_la_OBJECTS = $(am_lib_libtci_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -358,6 +359,7 @@ lib_libtci_la_SOURCES = tci/barrier.c \
 						tci/context.c \
 						tci/mutex.c \
 						tci/parallel.c \
+						tci/slot.c \
 						tci/work_item.c
 
 nobase_include_HEADERS = tci.h \
@@ -367,6 +369,7 @@ nobase_include_HEADERS = tci.h \
                          tci/context.h \
                          tci/mutex.h \
                          tci/parallel.h \
+                         tci/slot.h \
                          tci/work_item.h \
                          tci/yield.h
 
@@ -457,6 +460,7 @@ tci/communicator.lo: tci/$(am__dirstamp) tci/$(DEPDIR)/$(am__dirstamp)
 tci/context.lo: tci/$(am__dirstamp) tci/$(DEPDIR)/$(am__dirstamp)
 tci/mutex.lo: tci/$(am__dirstamp) tci/$(DEPDIR)/$(am__dirstamp)
 tci/parallel.lo: tci/$(am__dirstamp) tci/$(DEPDIR)/$(am__dirstamp)
+tci/slot.lo: tci/$(am__dirstamp) tci/$(DEPDIR)/$(am__dirstamp)
 tci/work_item.lo: tci/$(am__dirstamp) tci/$(DEPDIR)/$(am__dirstamp)
 lib/$(am__dirstamp):
 	@$(MKDIR_P) lib
@@ -478,6 +482,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tci/$(DEPDIR)/context.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tci/$(DEPDIR)/mutex.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tci/$(DEPDIR)/parallel.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tci/$(DEPDIR)/slot.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tci/$(DEPDIR)/work_item.Plo@am__quote@
 
 .c.o:

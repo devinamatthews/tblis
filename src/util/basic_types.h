@@ -1,6 +1,7 @@
 #ifndef _TBLIS_BASIC_TYPES_H_
 #define _TBLIS_BASIC_TYPES_H_
 
+#include <unistd.h>
 #include <string.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -24,11 +25,19 @@
 
 #include "../external/stl_ext/include/complex.hpp"
 
-#define MARRAY_DEFAULT_LAYOUT COLUMN_MAJOR
-#undef assert
-#define assert TBLIS_ASSERT
+#ifdef TBLIS_DEBUG
+#define MARRAY_ENABLE_ASSERTS
+#endif
+
+#define MARRAY_LEN_TYPE TBLIS_LEN_TYPE
+#define MARRAY_STRIDE_TYPE TBLIS_STRIDE_TYPE
+
 #include "../external/marray/include/varray.hpp"
 #include "../external/marray/include/marray.hpp"
+#include "../external/marray/include/dpd_varray.hpp"
+#include "../external/marray/include/dpd_marray.hpp"
+#include "../external/marray/include/indexed_varray.hpp"
+#include "../external/marray/include/indexed_dpd_varray.hpp"
 
 #endif
 
@@ -69,6 +78,19 @@ typedef struct fake_dcomplex { double real, imag; } fake_dcomplex;
 
 #ifdef __cplusplus
 
+namespace detail
+{
+
+template <typename T> struct label_vector_type
+{ typedef MArray::short_vector<T,8> type; };
+
+template <> struct label_vector_type<char>
+{ typedef std::string type; };
+
+}
+
+typedef typename detail::label_vector_type<label_type>::type label_vector;
+
 typedef std::complex<float> scomplex;
 typedef std::complex<double> dcomplex;
 
@@ -86,17 +108,18 @@ typedef fake_dcomplex dcomplex;
 
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
+using namespace MArray;
+namespace detail { using namespace MArray::detail; }
+namespace slice { using namespace MArray::slice; }
+
+template <typename T, typename Allocator=std::allocator<T>>
+using tensor = MArray::varray<T, Allocator>;
+
 template <typename T> struct type_tag;
 template <> struct type_tag<   float> { static constexpr type_t value =    TYPE_FLOAT; };
 template <> struct type_tag<  double> { static constexpr type_t value =   TYPE_DOUBLE; };
 template <> struct type_tag<scomplex> { static constexpr type_t value = TYPE_SCOMPLEX; };
 template <> struct type_tag<dcomplex> { static constexpr type_t value = TYPE_DCOMPLEX; };
-
-struct single_t
-{
-    constexpr single_t() {}
-};
-constexpr single_t single;
 
 using stl_ext::enable_if_t;
 using stl_ext::enable_if_integral_t;
@@ -117,47 +140,6 @@ T conj(bool conjugate, T val)
     return (conjugate ? conj(val) : val);
 }
 
-template <typename T>
-using const_tensor_view = MArray::const_varray_view<T>;
-
-template <typename T>
-using tensor_view = MArray::varray_view<T>;
-
-template <typename T, typename Allocator=aligned_allocator<T,64>>
-using tensor = MArray::varray<T, Allocator>;
-
-using MArray::const_marray_view;
-using MArray::marray_view;
-
-template <typename T, unsigned ndim, typename Allocator=aligned_allocator<T,64>>
-using marray = MArray::marray<T, ndim, Allocator>;
-
-using MArray::const_matrix_view;
-using MArray::matrix_view;
-
-template <typename T, typename Allocator=aligned_allocator<T,64>>
-using matrix = MArray::matrix<T, Allocator>;
-
-using MArray::const_row_view;
-using MArray::row_view;
-
-template <typename T, typename Allocator=aligned_allocator<T,64>>
-using row = MArray::row<T, Allocator>;
-
-using MArray::Layout;
-using MArray::COLUMN_MAJOR;
-using MArray::ROW_MAJOR;
-using MArray::DEFAULT;
-
-using MArray::uninitialized_t;
-using MArray::uninitialized;
-
-using MArray::make_array;
-using MArray::make_vector;
-
-using MArray::range_t;
-using MArray::range;
-
 namespace matrix_constants
 {
     enum {MAT_A, MAT_B, MAT_C};
@@ -168,7 +150,6 @@ namespace matrix_constants
 
 typedef struct tblis_scalar
 {
-    type_t type;
     union scalar
     {
         float s;
@@ -180,7 +161,7 @@ typedef struct tblis_scalar
         scomplex c;
         dcomplex z;
 #endif
-        
+
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
         scalar(float    v) : s(v) {}
         scalar(double   v) : d(v) {}
@@ -188,14 +169,15 @@ typedef struct tblis_scalar
         scalar(dcomplex v) : z(v) {}
 #endif
     } data;
+    type_t type;
 
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
-    tblis_scalar() : type(TYPE_DOUBLE), data(1.0) {}
+    tblis_scalar() : data(1.0), type(TYPE_DOUBLE) {}
 
     template <typename T>
     tblis_scalar(T value)
-    : type(type_tag<T>::value), data(value) {}
+    : data(value), type(type_tag<T>::value) {}
 
     template <typename T>
     T& get();
@@ -280,12 +262,22 @@ typedef struct tblis_vector
       n(n), inc(inc), scalar(alpha) {}
 
     template <typename T>
-    tblis_vector(const_row_view<T> view)
+    tblis_vector(const row_view<const T>& view)
     : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(view.data()))),
       n(view.length()), inc(view.stride()), scalar(T(1)) {}
 
     template <typename T>
-    tblis_vector(T alpha, const_row_view<T> view)
+    tblis_vector(const row_view<T>& view)
+    : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(view.data()))),
+      n(view.length()), inc(view.stride()), scalar(T(1)) {}
+
+    template <typename T>
+    tblis_vector(T alpha, const row_view<const T>& view)
+    : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(view.data()))),
+      n(view.length()), inc(view.stride()), scalar(alpha) {}
+
+    template <typename T>
+    tblis_vector(T alpha, const row_view<T>& view)
     : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(view.data()))),
       n(view.length()), inc(view.stride()), scalar(alpha) {}
 
@@ -379,12 +371,22 @@ typedef struct tblis_matrix
       m(m), n(n), rs(rs), cs(rs), scalar(alpha) {}
 
     template <typename T>
-    tblis_matrix(const_matrix_view<T> view)
+    tblis_matrix(const matrix_view<const T>& view)
     : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(view.data()))),
       m(view.length(0)), n(view.length(1)), rs(view.stride(0)), cs(view.stride(1)), scalar(T(1)) {}
 
     template <typename T>
-    tblis_matrix(T alpha, const_matrix_view<T> view)
+    tblis_matrix(const matrix_view<T>& view)
+    : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(view.data()))),
+      m(view.length(0)), n(view.length(1)), rs(view.stride(0)), cs(view.stride(1)), scalar(T(1)) {}
+
+    template <typename T>
+    tblis_matrix(T alpha, const matrix_view<const T>& view)
+    : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(view.data()))),
+      m(view.length(0)), n(view.length(1)), rs(view.stride(0)), cs(view.stride(1)), scalar(alpha) {}
+
+    template <typename T>
+    tblis_matrix(T alpha, const matrix_view<T>& view)
     : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(view.data()))),
       m(view.length(0)), n(view.length(1)), rs(view.stride(0)), cs(view.stride(1)), scalar(alpha) {}
 
@@ -480,26 +482,26 @@ typedef struct tblis_tensor
       stride(nullptr) {}
 
     template <typename T>
-    tblis_tensor(const_tensor_view<T>& view)
+    tblis_tensor(varray_view<const T>& view)
     : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(view.data()))),
       ndim(view.dimension()), len(const_cast<len_type*>(view.lengths().data())),
       stride(const_cast<stride_type*>(view.strides().data())), scalar(T(1)) {}
 
     template <typename T>
-    tblis_tensor(tensor_view<T>& view)
-    : type(type_tag<T>::value), conj(false), data(static_cast<void*>(view.data())),
+    tblis_tensor(varray_view<T>& view)
+    : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(view.data()))),
       ndim(view.dimension()), len(const_cast<len_type*>(view.lengths().data())),
       stride(const_cast<stride_type*>(view.strides().data())), scalar(T(1)) {}
 
     template <typename T>
-    tblis_tensor(T alpha, const_tensor_view<T>& view)
+    tblis_tensor(T alpha, varray_view<const T>& view)
     : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(view.data()))),
       ndim(view.dimension()), len(const_cast<len_type*>(view.lengths().data())),
       stride(const_cast<stride_type*>(view.strides().data())), scalar(alpha) {}
 
     template <typename T>
-    tblis_tensor(T alpha, tensor_view<T>& view)
-    : type(type_tag<T>::value), conj(false), data(static_cast<void*>(view.data())),
+    tblis_tensor(T alpha, varray_view<T>& view)
+    : type(type_tag<T>::value), conj(false), data(static_cast<void*>(const_cast<T*>(view.data()))),
       ndim(view.dimension()), len(const_cast<len_type*>(view.lengths().data())),
       stride(const_cast<stride_type*>(view.strides().data())), scalar(alpha) {}
 

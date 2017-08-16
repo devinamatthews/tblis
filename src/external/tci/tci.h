@@ -6,6 +6,7 @@
 #include "tci/context.h"
 #include "tci/mutex.h"
 #include "tci/parallel.h"
+#include "tci/slot.h"
 #include "tci/work_item.h"
 #include "tci/yield.h"
 

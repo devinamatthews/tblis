@@ -89,7 +89,7 @@ class MemoryPool
 
         void flush()
         {
-            std::lock_guard<mutex> guard(_lock);
+            std::lock_guard<tci::mutex> guard(_lock);
 
             for (auto& entry : _free_list)
             {
@@ -105,7 +105,7 @@ class MemoryPool
     protected:
         void* acquire(size_t& size, size_t alignment)
         {
-            std::lock_guard<mutex> guard(_lock);
+            std::lock_guard<tci::mutex> guard(_lock);
 
             alignment = std::max(alignment, _align);
             void* ptr = NULL;
@@ -155,14 +155,14 @@ class MemoryPool
 
         void release(void* ptr, size_t size)
         {
-            std::lock_guard<mutex> guard(_lock);
+            std::lock_guard<tci::mutex> guard(_lock);
 
             TBLIS_ASSERT(ptr);
             _free_list.emplace_front(ptr, size);
         }
 
         std::list<std::pair<void*,size_t>> _free_list;
-        mutex _lock;
+        tci::mutex _lock;
         size_t _align;
 };
 

@@ -4,6 +4,7 @@ lib_libtci_la_SOURCES = tci/barrier.c \
 						tci/context.c \
 						tci/mutex.c \
 						tci/parallel.c \
+						tci/slot.c \
 						tci/work_item.c
 						
 nobase_include_HEADERS = tci.h \
@@ -13,6 +14,7 @@ nobase_include_HEADERS = tci.h \
                          tci/context.h \
                          tci/mutex.h \
                          tci/parallel.h \
+                         tci/slot.h \
                          tci/work_item.h \
                          tci/yield.h
 

@@ -11,11 +11,70 @@
 #include <initializer_list>
 #include <string>
 
+namespace MArray
+{
+    template <typename T, size_t N>
+    short_vector<T,N> operator+(const short_vector<T,N>& lhs,
+                                const short_vector<T,N>& rhs)
+    {
+        short_vector<T,N> res;
+        res.reserve(lhs.size() + rhs.size());
+        res.insert(res.end(), lhs.begin(), lhs.end());
+        res.insert(res.end(), rhs.begin(), rhs.end());
+        return res;
+    }
+}
+
 namespace tblis
 {
 
 namespace detail
 {
+
+inline label_type free_idx(label_vector idx)
+{
+    if (idx.empty()) return 0;
+
+    stl_ext::sort(idx);
+
+    if (idx[0] > 0) return 0;
+
+    for (unsigned i = 1;i < idx.size();i++)
+    {
+        if (idx[i] > idx[i-1]+1) return idx[i-1]+1;
+    }
+
+    return idx.back()+1;
+}
+
+inline label_type free_idx(const label_vector& idx_A,
+                           const label_vector& idx_B)
+{
+    return free_idx(stl_ext::union_of(idx_A, idx_B));
+}
+
+inline label_type free_idx(const label_vector& idx_A,
+                           const label_vector& idx_B,
+                           const label_vector& idx_C)
+{
+    return free_idx(stl_ext::union_of(idx_A, idx_B, idx_C));
+}
+
+template <typename T>
+dim_vector relative_permutation(const T& a, const T& b)
+{
+    dim_vector perm; perm.reserve(a.size());
+
+    for (auto& e : b)
+    {
+        for (unsigned i = 0;i < a.size();i++)
+        {
+            if (a[i] == e) perm.push_back(i);
+        }
+    }
+
+    return perm;
+}
 
 struct sort_by_idx_helper
 {
@@ -37,9 +96,9 @@ inline sort_by_idx_helper sort_by_idx(const label_type* idx)
 template <unsigned N>
 struct sort_by_stride_helper
 {
-    std::array<const std::vector<stride_type>*, N> strides;
+    std::array<const stride_vector*, N> strides;
 
-    sort_by_stride_helper(std::initializer_list<const std::vector<stride_type>*> ilist)
+    sort_by_stride_helper(std::initializer_list<const stride_vector*> ilist)
     {
         TBLIS_ASSERT(ilist.size() == N);
         std::copy_n(ilist.begin(), N, strides.begin());
@@ -70,16 +129,16 @@ size_t check_sizes(const T& arg, const Ts&... args)
 }
 
 template <typename... Strides>
-std::vector<unsigned> sort_by_stride(const Strides&... strides)
+dim_vector sort_by_stride(const Strides&... strides)
 {
-    std::vector<unsigned> idx = MArray::range(static_cast<unsigned>(check_sizes(strides...)));
+    dim_vector idx = range(static_cast<unsigned>(check_sizes(strides...)));
     std::sort(idx.begin(), idx.end(), sort_by_stride_helper<sizeof...(Strides)>{&strides...});
     return idx;
 }
 
 template <typename T>
-bool are_congruent_along(const const_tensor_view<T>& A,
-                         const const_tensor_view<T>& B, unsigned dim)
+bool are_congruent_along(const varray_view<const T>& A,
+                         const varray_view<const T>& B, unsigned dim)
 {
     if (A.dimension() < B.dimension()) swap(A, B);
 
@@ -110,10 +169,10 @@ bool are_congruent_along(const const_tensor_view<T>& A,
     return true;
 }
 
-inline bool are_compatible(const std::vector<len_type>& len_A,
-                           const std::vector<stride_type>& stride_A,
-                           const std::vector<len_type>& len_B,
-                           const std::vector<stride_type>& stride_B)
+inline bool are_compatible(const len_vector& len_A,
+                           const stride_vector& stride_A,
+                           const len_vector& len_B,
+                           const stride_vector& stride_B)
 {
     TBLIS_ASSERT(len_A.size() == stride_A.size());
     auto dims_A = detail::sort_by_stride(stride_A);
@@ -128,8 +187,8 @@ inline bool are_compatible(const std::vector<len_type>& len_A,
     if (stl_ext::prod(len_Ar) != stl_ext::prod(len_Br))
         return false;
 
-    MArray::viterator<> it_A(len_Ar, stride_Ar);
-    MArray::viterator<> it_B(len_Br, stride_Br);
+    viterator<> it_A(len_Ar, stride_Ar);
+    viterator<> it_B(len_Br, stride_Br);
 
     stride_type off_A = 0, off_B = 0;
     while (it_A.next(off_A) + it_B.next(off_B))
@@ -139,8 +198,8 @@ inline bool are_compatible(const std::vector<len_type>& len_A,
 }
 
 template <typename T>
-bool are_compatible(const const_tensor_view<T>& A,
-                    const const_tensor_view<T>& B)
+bool are_compatible(const varray_view<const T>& A,
+                    const varray_view<const T>& B)
 {
     return A.data() == B.data() &&
         are_compatible(A.lengths(), A.strides(),
@@ -176,7 +235,7 @@ template <size_t I, size_t N, typename... Strides>
 struct are_contiguous_helper
 {
     bool operator()(std::tuple<Strides...>& strides,
-                    const std::vector<len_type>& lengths,
+                    const len_vector& lengths,
                     unsigned i, unsigned im1)
     {
         return std::get<I>(strides)[i] == std::get<I>(strides)[im1]*lengths[im1] &&
@@ -188,7 +247,7 @@ template <size_t N, typename... Strides>
 struct are_contiguous_helper<N, N, Strides...>
 {
     bool operator()(std::tuple<Strides...>&,
-                    const std::vector<len_type>&,
+                    const len_vector&,
                     unsigned, unsigned)
     {
         return true;
@@ -197,7 +256,7 @@ struct are_contiguous_helper<N, N, Strides...>
 
 template <typename... Strides>
 bool are_contiguous(std::tuple<Strides...>& strides,
-                    const std::vector<len_type>& lengths,
+                    const len_vector& lengths,
                     unsigned i, unsigned im1)
 {
     return are_contiguous_helper<0, sizeof...(Strides), Strides...>()(strides, lengths, i, im1);
@@ -231,9 +290,9 @@ void push_back_strides(std::tuple<Strides&...>& strides,
 template <size_t I, size_t N, typename... Strides>
 struct are_compatible_helper
 {
-    bool operator()(const std::vector<len_type>& len_A,
+    bool operator()(const len_vector& len_A,
                     const std::tuple<Strides...>& stride_A,
-                    const std::vector<len_type>& len_B,
+                    const len_vector& len_B,
                     const std::tuple<Strides&...>& stride_B)
     {
         return are_compatible(len_A, std::get<I>(stride_A),
@@ -246,9 +305,9 @@ struct are_compatible_helper
 template <size_t N, typename... Strides>
 struct are_compatible_helper<N, N, Strides...>
 {
-    bool operator()(const std::vector<len_type>&,
+    bool operator()(const len_vector&,
                     const std::tuple<Strides...>&,
-                    const std::vector<len_type>&,
+                    const len_vector&,
                     const std::tuple<Strides&...>&)
     {
         return true;
@@ -256,9 +315,9 @@ struct are_compatible_helper<N, N, Strides...>
 };
 
 template <typename... Strides>
-bool are_compatible(const std::vector<len_type>& len_A,
+bool are_compatible(const len_vector& len_A,
                     const std::tuple<Strides...>& stride_A,
-                    const std::vector<len_type>& len_B,
+                    const len_vector& len_B,
                     const std::tuple<Strides&...>& stride_B)
 {
     return are_compatible_helper<0, sizeof...(Strides), Strides...>()(
@@ -268,7 +327,7 @@ bool are_compatible(const std::vector<len_type>& len_A,
 }
 
 template <typename... Strides>
-void fold(std::vector<len_type>& lengths, std::vector<label_type>& idx,
+void fold(len_vector& lengths, label_vector& idx,
           Strides&... _strides)
 {
     std::tuple<Strides&...> strides(_strides...);
@@ -276,8 +335,8 @@ void fold(std::vector<len_type>& lengths, std::vector<label_type>& idx,
     auto ndim = lengths.size();
     auto inds = detail::sort_by_stride(std::get<0>(strides));
 
-    std::vector<label_type> oldidx;
-    std::vector<len_type> oldlengths;
+    label_vector oldidx;
+    len_vector oldlengths;
     std::tuple<Strides...> oldstrides;
 
     oldidx.swap(idx);
@@ -306,15 +365,15 @@ inline void diagonal(unsigned& ndim,
                      const len_type* len_in,
                      const stride_type* stride_in,
                      const label_type* idx_in,
-                     std::vector<len_type>& len_out,
-                     std::vector<stride_type>& stride_out,
-                     std::vector<label_type>& idx_out)
+                     len_vector& len_out,
+                     stride_vector& stride_out,
+                     label_vector& idx_out)
 {
     len_out.reserve(ndim);
     stride_out.reserve(ndim);
     idx_out.reserve(ndim);
 
-    std::vector<unsigned> inds = MArray::range(ndim);
+    dim_vector inds = range(ndim);
     stl_ext::sort(inds, detail::sort_by_idx(idx_in));
 
     unsigned ndim_in = ndim;
@@ -342,8 +401,8 @@ inline void diagonal(unsigned& ndim,
 }
 
 template <typename T>
-void matricize(const_tensor_view<T>  A,
-               const_matrix_view<T>& AM, unsigned split)
+void matricize(varray_view<const T>  A,
+               matrix_view<const T>& AM, unsigned split)
 {
     unsigned ndim = A.dimension();
     TBLIS_ASSERT(split <= ndim);
@@ -405,10 +464,10 @@ void matricize(const_tensor_view<T>  A,
 }
 
 template <typename T>
-void matricize(tensor_view<T>  A,
+void matricize(varray_view<T>  A,
                matrix_view<T>& AM, unsigned split)
 {
-    matricize<T>(A, reinterpret_cast<const_matrix_view<T>&>(AM), split);
+    matricize<T>(A, reinterpret_cast<matrix_view<const T>&>(AM), split);
 }
 
 }

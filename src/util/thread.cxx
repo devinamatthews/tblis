@@ -22,13 +22,16 @@ namespace
 
 struct thread_configuration
 {
-    unsigned num_threads;
+    unsigned num_threads = 1;
 
     thread_configuration()
-    : num_threads(1)
     {
-        const char* str = getenv("TBLIS_NUM_THREADS");
+        const char* str = nullptr;
+
+#if !TBLIS_ENABLE_TBB
+        str = getenv("TBLIS_NUM_THREADS");
         if (!str) str = getenv("OMP_NUM_THREADS");
+#endif //!TBLIS_ENABLE_TBB
 
         if (str)
         {
@@ -42,10 +45,11 @@ struct thread_configuration
             hwloc_topology_init(&topo);
             hwloc_topology_load(topo);
 
-            int depth = hwloc_get_type_depth(topo, HWLOC_OBJ_CORE);
+            int depth = hwloc_get_cache_type_depth(topo, 1, HWLOC_OBJ_CACHE_DATA);
             if (depth != HWLOC_TYPE_DEPTH_UNKNOWN)
             {
                 num_threads = hwloc_get_nbobjs_by_depth(topo, depth);
+                printf("nt: %d\n", num_threads);
             }
 
             hwloc_topology_destroy(topo);
@@ -85,6 +89,15 @@ thread_configuration& get_thread_configuration()
     static thread_configuration cfg;
     return cfg;
 }
+
+}
+
+namespace tblis
+{
+
+tci::communicator single;
+
+len_type dynamic_task_set::inout_ratio = 200000;
 
 }
 

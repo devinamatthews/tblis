@@ -1,6 +1,9 @@
 #ifndef _TBLIS_MACROS_H_
 #define _TBLIS_MACROS_H_
 
+#define TBLIS_PASTE_(x,y) x##y
+#define TBLIS_PASTE(x,y) TBLIS_PASTE_(x,y)
+
 #define TBLIS_WITH_TYPE_AS(type, T, ...) \
 if ((type) == TYPE_FLOAT) \
 { \

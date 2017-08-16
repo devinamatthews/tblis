@@ -24,7 +24,7 @@ void tblis_tensor_set(const tblis_comm* comm, const tblis_config* cfg,
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 template <typename T>
-void set(T alpha, tensor_view<T> A, const label_type* idx_A)
+void set(T alpha, varray_view<T> A, const label_type* idx_A)
 {
     tblis_scalar alpha_s(alpha);
     tblis_tensor A_s(A);
@@ -33,21 +33,63 @@ void set(T alpha, tensor_view<T> A, const label_type* idx_A)
 }
 
 template <typename T>
-void set(single_t, T alpha, tensor_view<T> A, const label_type* idx_A)
-{
-    tblis_scalar alpha_s(alpha);
-    tblis_tensor A_s(A);
-
-    tblis_tensor_set(tblis_single, nullptr, &alpha_s, &A_s, idx_A);
-}
-
-template <typename T>
-void set(const communicator& comm, T alpha, tensor_view<T> A, const label_type* idx_A)
+void set(const communicator& comm, T alpha, varray_view<T> A, const label_type* idx_A)
 {
     tblis_scalar alpha_s(alpha);
     tblis_tensor A_s(A);
 
     tblis_tensor_set(comm, nullptr, &alpha_s, &A_s, idx_A);
+}
+
+template <typename T>
+void set(const communicator& comm,
+         T alpha, dpd_varray_view<T> A, const label_type* idx_A);
+
+template <typename T>
+void set(T alpha, dpd_varray_view<T> A, const label_type* idx_A)
+{
+    parallelize
+    (
+        [&](const communicator& comm)
+        {
+            set(comm, alpha, A, idx_A);
+        },
+        tblis_get_num_threads()
+    );
+}
+
+template <typename T>
+void set(const communicator& comm,
+         T alpha, indexed_varray_view<T> A, const label_type* idx_A);
+
+template <typename T>
+void set(T alpha, indexed_varray_view<T> A, const label_type* idx_A)
+{
+    parallelize
+    (
+        [&](const communicator& comm)
+        {
+            set(comm, alpha, A, idx_A);
+        },
+        tblis_get_num_threads()
+    );
+}
+
+template <typename T>
+void set(const communicator& comm,
+         T alpha, indexed_dpd_varray_view<T> A, const label_type* idx_A);
+
+template <typename T>
+void set(T alpha, indexed_dpd_varray_view<T> A, const label_type* idx_A)
+{
+    parallelize
+    (
+        [&](const communicator& comm)
+        {
+            set(comm, alpha, A, idx_A);
+        },
+        tblis_get_num_threads()
+    );
 }
 
 #endif

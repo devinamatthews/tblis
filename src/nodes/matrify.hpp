@@ -18,8 +18,8 @@ namespace detail
     extern MemoryPool BuffersForScatter;
 }
 
-template <typename Communicator, typename MatrixA>
-void block_scatter(Communicator& comm, MatrixA& A,
+template <typename MatrixA>
+void block_scatter(const communicator& comm, MatrixA& A,
                    stride_type* rscat, len_type MB, stride_type* rbs,
                    stride_type* cscat, len_type NB, stride_type* cbs)
 {
@@ -50,8 +50,8 @@ template <int Mat> struct matrify_and_run;
 
 template <> struct matrify_and_run<matrix_constants::MAT_A>
 {
-    template <typename T, typename Parent, typename Communicator, typename MatrixA, typename MatrixB, typename MatrixC>
-    matrify_and_run(len_type MB, len_type NB, Parent& parent, Communicator& comm, const config& cfg,
+    template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
+    matrify_and_run(len_type MB, len_type NB, Parent& parent, const communicator& comm, const config& cfg,
                     T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         //block_scatter(comm, A, parent.rscat, MB, parent.rbs,
@@ -70,8 +70,8 @@ template <> struct matrify_and_run<matrix_constants::MAT_A>
 
 template <> struct matrify_and_run<matrix_constants::MAT_B>
 {
-    template <typename T, typename Parent, typename Communicator, typename MatrixA, typename MatrixB, typename MatrixC>
-    matrify_and_run(len_type MB, len_type NB, Parent& parent, Communicator& comm, const config& cfg,
+    template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
+    matrify_and_run(len_type MB, len_type NB, Parent& parent, const communicator& comm, const config& cfg,
                     T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         //block_scatter(comm, B, parent.rscat, MB, parent.rbs,
@@ -90,8 +90,8 @@ template <> struct matrify_and_run<matrix_constants::MAT_B>
 
 template <> struct matrify_and_run<matrix_constants::MAT_C>
 {
-    template <typename T, typename Parent, typename Communicator, typename MatrixA, typename MatrixB, typename MatrixC>
-    matrify_and_run(len_type MB, len_type NB, Parent& parent, Communicator& comm, const config& cfg,
+    template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
+    matrify_and_run(len_type MB, len_type NB, Parent& parent, const communicator& comm, const config& cfg,
                     T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         //block_scatter(comm, C, parent.rscat, MB, parent.rbs,
@@ -123,8 +123,8 @@ struct matrify
     matrify(const matrify& other)
     : child(other.child) {}
 
-    template <typename T, typename Communicator, typename MatrixA, typename MatrixB, typename MatrixC>
-    void operator()(Communicator& comm, const config& cfg,
+    template <typename T, typename MatrixA, typename MatrixB, typename MatrixC>
+    void operator()(const communicator& comm, const config& cfg,
                     T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         using namespace matrix_constants;
@@ -145,7 +145,7 @@ struct matrify
                 rscat = scat_buffer.get<stride_type>();
             }
 
-            comm.broadcast(rscat);
+            comm.broadcast_value(rscat);
 
             cscat = rscat+m;
             rbs = cscat+n;
@@ -193,8 +193,8 @@ struct matrify_and_pack : matrify_and_pack_sibling<Mat, MB, NB, Pool, Child>::ty
     using Sib::rbs;
     using Sib::cbs;
 
-    template <typename T, typename Communicator, typename MatrixA, typename MatrixB, typename MatrixC>
-    void operator()(Communicator& comm, const config& cfg,
+    template <typename T, typename MatrixA, typename MatrixB, typename MatrixC>
+    void operator()(const communicator& comm, const config& cfg,
                     T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         using namespace matrix_constants;
@@ -221,7 +221,7 @@ struct matrify_and_pack : matrify_and_pack_sibling<Mat, MB, NB, Pool, Child>::ty
                 pack_ptr = pack_buffer.get();
             }
 
-            comm.broadcast(pack_ptr);
+            comm.broadcast_value(pack_ptr);
 
             rscat = convert_and_align<T,stride_type>(static_cast<T*>(pack_ptr) + m*n);
             cscat = rscat+m;

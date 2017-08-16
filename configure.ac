@@ -144,7 +144,7 @@ AC_DEFINE_UNQUOTED([LABEL_TYPE], [$label_type], [label_type])
 #
 # Supported:
 #
-# reference, bulldozer, piledriver, excavator, ryzen, core2, sandybridge,
+# reference, bulldozer, piledriver, excavator, zen, core2, sandybridge,
 # haswell, skx, knl, auto
 #
 # Possible with porting from BLIS:
@@ -158,13 +158,13 @@ AC_ARG_ENABLE([config],
   
                           possible values are:
                           
-                          reference, bulldozer, piledriver, excavator, ryzen,
+                          reference, bulldozer, piledriver, excavator, zen,
                           core2, sandybridge, haswell, skx, knl, auto
 
                           the following meta-configurations are also available:
  
                           intel = core2,sandybridge,haswell,skx,knl
-                          amd = bulldozer,piledriver,excavator,ryzen
+                          amd = bulldozer,piledriver,excavator,zen
                           x86 = intel,amd],
               [], [enable_config=auto])
 
@@ -195,7 +195,7 @@ fi
 
 configs=`echo $enable_config | sed 's/x86/intel,amd/' \
                              | sed 's/intel/core2,sandybridge,haswell,skx,knl/' \
-                             | sed 's/amd/bulldozer,piledriver,excavator,ryzen/' \
+                             | sed 's/amd/bulldozer,piledriver,excavator,zen/' \
                              | sed 's/,/ /g'`
 
 AC_MSG_CHECKING([compiler vendor])
@@ -242,7 +242,7 @@ fi
 # bulldozer: any
 # piledriver: any
 # excavator: gcc 4.9+, clang 3.5+
-# ryzen: gcc 6.0+, clang 4.0+
+# zen: gcc 6.0+, clang 4.0+
 #
 # core2: any
 # sandybridge: any
@@ -274,7 +274,7 @@ elif test x"$cc_vendor" = xgcc; then
     fi
     if test $cc_major -lt 6; then
         configs=`echo $configs | sed 's/ *skx */ /' \
-                               | sed 's/ *ryzen */ /'`
+                               | sed 's/ *zen */ /'`
     fi
 elif test x"$cc_vendor" = xclang; then
     if test $cc_major -lt 3; then
@@ -293,7 +293,7 @@ elif test x"$cc_vendor" = xclang; then
         fi
     fi
     if test $cc_major -lt 4; then
-        configs=`echo $configs | sed 's/ *ryzen */ /'`
+        configs=`echo $configs | sed 's/ *zen */ /'`
     fi
 fi
 
@@ -327,12 +327,12 @@ if ( echo $configs | $EGREP -q 'haswell|piledriver|excavator|skx' ); then
         [enable_fma3=yes], [enable_fma3=no])
     AC_MSG_RESULT([$enable_fma3])
     if test "x$enable_fma3" = xno; then
-        AC_MSG_WARN([FMA3 cannot be compiled; disabling haswell, piledriver, excavator, skx, and ryzen configurations])
+        AC_MSG_WARN([FMA3 cannot be compiled; disabling haswell, piledriver, excavator, skx, and zen configurations])
         configs=`echo $configs | sed 's/ *haswell */ /' \
                                | sed 's/ *piledriver */ /' \
                                | sed 's/ *excavator */ /' \
                                | sed 's/ *skx */ /' \
-                               | sed 's/ *ryzen */ /'`
+                               | sed 's/ *zen */ /'`
     fi
 fi
 
@@ -400,7 +400,7 @@ AM_CONDITIONAL(ENABLE_PILEDRIVER, [echo $configs | grep -q piledriver])
 AM_CONDITIONAL(ENABLE_POWER7, [echo $configs | grep -q power7])
 AM_CONDITIONAL(ENABLE_REFERENCE, [echo $configs | grep -q reference])
 AM_CONDITIONAL(ENABLE_SANDYBRIDGE, [echo $configs | grep -q sandybridge])
-AM_CONDITIONAL(ENABLE_RYZEN, [echo $configs | grep -q ryzen])
+AM_CONDITIONAL(ENABLE_ZEN, [echo $configs | grep -q zen])
 
 include_configs=""
 for config in $configs; do

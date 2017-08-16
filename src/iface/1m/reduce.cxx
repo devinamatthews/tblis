@@ -23,8 +23,13 @@ void tblis_matrix_reduce(const tblis_comm* comm, const tblis_config* cfg,
             else if (op == REDUCE_MAX) op = REDUCE_MIN;
         }
 
-        parallelize_if(internal::reduce<T>, comm, get_config(cfg), op, A->m, A->n,
-                       static_cast<const T*>(A->data), A->rs, A->cs, result->get<T>(), *idx);
+        parallelize_if(
+        [&](const communicator& comm)
+        {
+            internal::reduce<T>(comm, get_config(cfg), op, A->m, A->n,
+                                static_cast<const T*>(A->data), A->rs, A->cs,
+                                result->get<T>(), *idx);
+        }, comm);
 
         if (A->conj)
         {

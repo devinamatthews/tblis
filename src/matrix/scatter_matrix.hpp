@@ -158,7 +158,7 @@ namespace detail
             const_scatter_matrix_slice(const const_scatter_matrix_slice& other) = default;
 
             template <typename I>
-            const_scatter_matrix_slice(const const_scatter_matrix_view<T>& array, const MArray::range_t<I>& r)
+            const_scatter_matrix_slice(const const_scatter_matrix_view<T>& array, const range_t<I>& r)
             : array_(const_cast<base&>(static_cast<const base&>(array))),
               idx_(array.stride_[1] == 0 ? array.scatter_[1][r.front()] : r.front()*array.stride_[1]),
               len_(r.size()), cscat_(array.stride_[1] == 0 ? array.scatter_[1]+r.front() : nullptr) {}
@@ -168,7 +168,7 @@ namespace detail
         public:
 
             template <typename I>
-            const_scatter_matrix_view<T> operator[](const MArray::range_t<I>& x) const
+            const_scatter_matrix_view<T> operator[](const range_t<I>& x) const
             {
                 TBLIS_ASSERT(x.front() <= x.back() && x.front() >= 0 && x.back() <= array_.len_[0]);
 
@@ -188,18 +188,18 @@ namespace detail
                 }
             }
 
-            const_scatter_matrix_view<T> operator[](MArray::slice::all_t) const
+            const_scatter_matrix_view<T> operator[](all_t) const
             {
                 return *this;
             }
 
             template <typename I>
-            const_scatter_matrix_view<T> operator()(const MArray::range_t<I>& x) const
+            const_scatter_matrix_view<T> operator()(const range_t<I>& x) const
             {
                 return (*this)[x];
             }
 
-            const_scatter_matrix_view<T> operator()(MArray::slice::all_t x) const
+            const_scatter_matrix_view<T> operator()(all_t x) const
             {
                 return (*this)[x];
             }
@@ -271,7 +271,7 @@ namespace detail
                 return {parent::operator[](x)};
             }
 
-            scatter_matrix_view<T> operator[](MArray::slice::all_t x)
+            scatter_matrix_view<T> operator[](all_t x)
             {
                 return {parent::operator[](x)};
             }
@@ -284,7 +284,7 @@ namespace detail
                 return (*this)[x];
             }
 
-            scatter_matrix_view<T> operator()(MArray::slice::all_t x)
+            scatter_matrix_view<T> operator()(all_t x)
             {
                 return (*this)[x];
             }
@@ -488,7 +488,13 @@ class const_scatter_matrix_view
         }
 
         template <typename U>
-        void permute(const std::array<U, 2>& perm)
+        void permute(std::initializer_list<U> perm)
+        {
+            permute<std::initializer_list<U>>(perm);
+        }
+
+        template <typename U>
+        void permute(const U& perm)
         {
             TBLIS_ASSERT((perm[0] == 0 && perm[1] == 1) ||
                    (perm[0] == 1 && perm[1] == 0));
@@ -503,7 +509,13 @@ class const_scatter_matrix_view
         }
 
         template <typename U>
-        const_scatter_matrix_view<T> permuted(const std::array<U, 2>& perm) const
+        const_scatter_matrix_view<T> permuted(std::initializer_list<U> perm) const
+        {
+            return permuted<std::initializer_list<U>>(perm);
+        }
+
+        template <typename U>
+        const_scatter_matrix_view<T> permuted(const U& perm) const
         {
             const_scatter_matrix_view<T> r(*this);
             r.permute(perm);
@@ -512,12 +524,12 @@ class const_scatter_matrix_view
 
         void permute(unsigned p0, unsigned p1)
         {
-            permute(MArray::make_array(p0, p1));
+            permute({p0, p1});
         }
 
         const_scatter_matrix_view<T> permuted(unsigned p0, unsigned p1) const
         {
-            return permuted(MArray::make_array(p0, p1));
+            return permuted({p0, p1});
         }
 
         void transpose()
@@ -537,19 +549,19 @@ class const_scatter_matrix_view
         }
 
         template <typename I>
-        detail::const_scatter_matrix_slice<T> operator[](const MArray::range_t<I>& x) const
+        detail::const_scatter_matrix_slice<T> operator[](const range_t<I>& x) const
         {
             TBLIS_ASSERT(x.front() >= 0 && x.back() <= len_[0]);
             return {*this, x};
         }
 
-        detail::const_scatter_matrix_slice<T> operator[](MArray::slice::all_t) const
+        detail::const_scatter_matrix_slice<T> operator[](all_t) const
         {
-            return {*this, MArray::range(len_[0])};
+            return {*this, range(len_[0])};
         }
 
         template <typename I0, typename I1, typename=
-            stl_ext::enable_if_t<MArray::detail::are_indices_or_slices<I0, I1>::value>>
+            stl_ext::enable_if_t<detail::are_indices_or_slices<I0, I1>::value>>
         auto operator()(I0&& i0, I1&& i1) const ->
         decltype((*this)[i0][i1])
         {
@@ -781,7 +793,13 @@ class scatter_matrix_view : protected const_scatter_matrix_view<T>
         }
 
         template <typename U>
-        void rotate(const std::array<U, 2>& shift) const
+        void rotate(std::initializer_list<U> shift) const
+        {
+            rotate<std::initializer_list<U>>(shift);
+        }
+
+        template <typename U>
+        void rotate(const U& shift) const
         {
             rotate_dim(0, shift[0]);
             rotate_dim(1, shift[1]);
@@ -789,7 +807,7 @@ class scatter_matrix_view : protected const_scatter_matrix_view<T>
 
         void rotate(stride_type s0, stride_type s1) const
         {
-            rotate(make_array(s0, s1));
+            rotate({s0, s1});
         }
 
         detail::scatter_matrix_ref<T> operator[](len_type i) const
@@ -803,13 +821,13 @@ class scatter_matrix_view : protected const_scatter_matrix_view<T>
             return base::operator[](x);
         }
 
-        detail::scatter_matrix_slice<T> operator[](MArray::slice::all_t x) const
+        detail::scatter_matrix_slice<T> operator[](all_t x) const
         {
             return base::operator[](x);
         }
 
         template <typename I0, typename I1, typename=
-            stl_ext::enable_if_t<MArray::detail::are_indices_or_slices<I0, I1>::value>>
+            stl_ext::enable_if_t<detail::are_indices_or_slices<I0, I1>::value>>
         auto operator()(I0&& i0, I1&& i1) const ->
         decltype((*this)[i0][i1])
         {

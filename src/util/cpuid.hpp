@@ -4,9 +4,7 @@
 #include <cstring>
 #include <cstdio>
 
-#include "assert.h"
 #include "basic_types.h"
-#include "tblis_config.h"
 
 inline bool check_features(int have, int want)
 {

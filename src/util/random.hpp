@@ -3,7 +3,6 @@
 
 #include <random>
 
-#include "assert.h"
 #include "basic_types.h"
 
 namespace tblis

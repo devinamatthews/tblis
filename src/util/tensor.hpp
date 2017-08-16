@@ -1,15 +1,14 @@
 #ifndef _TBLIS_UTIL_TENSOR_HPP_
 #define _TBLIS_UTIL_TENSOR_HPP_
 
+#include <initializer_list>
+#include <string>
+
 #include "util/basic_types.h"
-#include "util/assert.h"
 
 #include "external/stl_ext/include/algorithm.hpp"
 #include "external/stl_ext/include/type_traits.hpp"
 #include "external/stl_ext/include/vector.hpp"
-
-#include <initializer_list>
-#include <string>
 
 namespace MArray
 {

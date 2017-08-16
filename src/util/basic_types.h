@@ -150,7 +150,6 @@ namespace matrix_constants
 
 typedef struct tblis_scalar
 {
-    type_t type;
     union scalar
     {
         float s;
@@ -170,14 +169,15 @@ typedef struct tblis_scalar
         scalar(dcomplex v) : z(v) {}
 #endif
     } data;
+    type_t type;
 
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
-    tblis_scalar() : type(TYPE_DOUBLE), data(1.0) {}
+    tblis_scalar() : data(1.0), type(TYPE_DOUBLE) {}
 
     template <typename T>
     tblis_scalar(T value)
-    : type(type_tag<T>::value), data(value) {}
+    : data(value), type(type_tag<T>::value) {}
 
     template <typename T>
     T& get();

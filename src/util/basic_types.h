@@ -6,10 +6,13 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <sys/types.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
 
 #include "../tblis_config.h"
-
-#include "assert.h"
 
 #ifdef __cplusplus
 #include <complex>
@@ -581,6 +584,41 @@ void tblis_init_tensor_z(tblis_tensor* t,
 
 #ifdef __cplusplus
 }
+#endif
+
+#define TBLIS_STRINGIZE_(...) #__VA_ARGS__
+#define TBLIS_STRINGIZE(...) TBLIS_STRINGIZE_(__VA_ARGS__)
+#define TBLIS_CONCAT_(x,y) x##y
+#define TBLIS_CONCAT(x,y) TBLIS_CONCAT_(x,y)
+#define TBLIS_FIRST_ARG(arg,...) arg
+
+inline void __attribute__((format(printf, 2, 3),noreturn))
+tblis_abort_with_message(const char* cond, const char* fmt, ...)
+{
+    if (strlen(fmt) == 0)
+    {
+        fprintf(stderr, "%s", cond);
+    }
+    else
+    {
+        va_list args;
+        va_start(args, fmt);
+        vfprintf(stderr, fmt, args);
+        va_end(args);
+    }
+    fprintf(stderr, "\n");
+    abort();
+}
+
+#ifdef TBLIS_DEBUG
+
+#define TBLIS_ASSERT(x,...) ((x) ? (void)(x) : \
+    tblis_abort_with_message(TBLIS_STRINGIZE(x), "" __VA_ARGS__))
+
+#else
+
+#define TBLIS_ASSERT(...) {}
+
 #endif
 
 #endif

@@ -1,9 +1,6 @@
 #ifndef _TBLIS_MEMORY_POOL_HPP_
 #define _TBLIS_MEMORY_POOL_HPP_
 
-#include "util/thread.h"
-#include "util/assert.h"
-
 #include <mutex>
 #include <list>
 #include <cstdlib>
@@ -12,6 +9,8 @@
 #if TBLIS_HAVE_HBWMALLOC_H
 #include <hbwmalloc.h>
 #endif
+
+#include "util/thread.h"
 
 namespace tblis
 {

@@ -43,7 +43,7 @@ struct partition
                               Dim == DIM_N ? C.length(1) : B.length(0));
         const len_type m = std::min(m_u, m_v);
 
-        auto body = [&,this](int tid, Child& child, MatrixA& A, MatrixB& B, MatrixC& C)
+        auto body = [&,M_def](int tid, Child& child, MatrixA& A, MatrixB& B, MatrixC& C)
         {
             len_type m_first, m_last;
             std::tie(m_first, m_last, std::ignore) =

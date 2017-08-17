@@ -202,7 +202,7 @@
 //This is an array used for the scatter/gather instructions.
 static int64_t offsets[8] __attribute__((aligned(64))) = {0,1,2,3,4,5,6,7};
 
-void bli_dgemm_opt_24x8_knl(
+void bli_dgemm_opt_12x16_l2(
                              dim_t            k_,
                              double* restrict alpha,
                              double* restrict a,

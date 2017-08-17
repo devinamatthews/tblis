@@ -6666,6 +6666,45 @@ $as_echo "$as_me: WARNING: AVX-512F cannot be compiled; disabling knl and skx co
     CPPFLAGS="$CPPFLAGS_save"
 fi
 
+if ( echo $configs | $EGREP -q 'skx' ); then
+    CPPFLAGS_save="$CPPFLAGS"
+    if test `uname -s` = Darwin; then
+        CPPFLAGS="$CPPFLAGS -Wa,-march=skylake-avx512"
+    fi
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether inline AVX-512DQ can be compiled" >&5
+$as_echo_n "checking whether inline AVX-512DQ can be compiled... " >&6; }
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+        __asm__ __volatile__
+        (
+            "vpmullq %%zmm0, %%zmm0, %%zmm1 \n\t"
+            :::
+        );
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  enable_avx512dq=yes
+else
+  enable_avx512dq=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_avx512dq" >&5
+$as_echo "$enable_avx512dq" >&6; }
+    if test "x$enable_avx512dq" = xno; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: AVX-512DQ cannot be compiled; disabling skx configuration" >&5
+$as_echo "$as_me: WARNING: AVX-512DQ cannot be compiled; disabling skx configuration" >&2;}
+        configs=`echo $configs | sed 's/ *skx */ /'`
+    fi
+    CPPFLAGS="$CPPFLAGS_save"
+fi
+
  if test x"$cc_vendor" = xicc; then
   ENABLE_INTEL_COMPILER_TRUE=
   ENABLE_INTEL_COMPILER_FALSE='#'

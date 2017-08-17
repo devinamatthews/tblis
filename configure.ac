@@ -377,6 +377,27 @@ if ( echo $configs | $EGREP -q 'knl|skx' ); then
     CPPFLAGS="$CPPFLAGS_save"
 fi
 
+if ( echo $configs | $EGREP -q 'skx' ); then
+    CPPFLAGS_save="$CPPFLAGS"
+    if test `uname -s` = Darwin; then
+        CPPFLAGS="$CPPFLAGS -Wa,-march=skylake-avx512"
+    fi
+    AC_MSG_CHECKING([whether inline AVX-512DQ can be compiled])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
+        __asm__ __volatile__
+        (
+            "vpmullq %%zmm0, %%zmm0, %%zmm1 \n\t"
+            :::
+        );])],
+        [enable_avx512dq=yes], [enable_avx512dq=no])
+    AC_MSG_RESULT([$enable_avx512dq])
+    if test "x$enable_avx512dq" = xno; then
+        AC_MSG_WARN([AVX-512DQ cannot be compiled; disabling skx configuration])
+        configs=`echo $configs | sed 's/ *skx */ /'`
+    fi
+    CPPFLAGS="$CPPFLAGS_save"
+fi
+
 AM_CONDITIONAL(ENABLE_INTEL_COMPILER, [test x"$cc_vendor" = xicc])
 
 AM_CONDITIONAL(IS_OSX, [test `uname -s` = Darwin])

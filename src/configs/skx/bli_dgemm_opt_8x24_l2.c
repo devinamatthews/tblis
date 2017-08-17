@@ -202,16 +202,16 @@
 //This is an array used for the scatter/gather instructions.
 static int64_t offsets[8] __attribute__((aligned(64))) = {0,1,2,3,4,5,6,7};
 
-void bli_dgemm_opt_24x8_knl(
-                             dim_t            k_,
-                             double* restrict alpha,
-                             double* restrict a,
-                             double* restrict b,
-                             double* restrict beta,
-                             double* restrict c, inc_t rs_c_, inc_t cs_c_,
-                             auxinfo_t*       data,
-                             cntx_t* restrict cntx
-                           )
+void bli_dgemm_opt_8x24_l2(
+                            dim_t            k_,
+                            double* restrict alpha,
+                            double* restrict a,
+                            double* restrict b,
+                            double* restrict beta,
+                            double* restrict c, inc_t rs_c_, inc_t cs_c_,
+                            auxinfo_t*       data,
+                            cntx_t* restrict cntx
+                          )
 {
     (void)data;
     (void)cntx;

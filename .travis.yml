@@ -40,6 +40,7 @@ addons:
     - clang-3.9
     - libiomp-dev
     - libtbb-dev
+    - binutils
     
 install:
   - if [ "$CC" = "gcc" ] ; then export CC="gcc-6" CXX="g++-6"; fi

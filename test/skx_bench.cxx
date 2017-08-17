@@ -25,18 +25,18 @@ using namespace stl_ext;
 
 const config* configs[] =
 {
-    &skx_32x6_l1_config::instance(),
-    &skx_32x6_l2_config::instance(),
-    &skx_24x8_l1_config::instance(),
-    &skx_24x8_l2_config::instance(),
-    &skx_16x12_l1_config::instance(),
-    &skx_16x12_l2_config::instance(),
-    &skx_12x16_l1_config::instance(),
-    &skx_12x16_l2_config::instance(),
-    &skx_8x24_l1_config::instance(),
-    &skx_8x24_l2_config::instance(),
-    &skx_6x32_l1_config::instance(),
-    &skx_6x32_l2_config::instance(),
+    //&skx_32x6_l1_config::instance(),
+    //&skx_32x6_l2_config::instance(),
+    //&skx_24x8_l1_config::instance(),
+    //&skx_24x8_l2_config::instance(),
+    //&skx_16x12_l1_config::instance(),
+    //&skx_16x12_l2_config::instance(),
+    //&skx_12x16_l1_config::instance(),
+    //&skx_12x16_l2_config::instance(),
+    //&skx_8x24_l1_config::instance(),
+    //&skx_8x24_l2_config::instance(),
+    //&skx_6x32_l1_config::instance(),
+    //&skx_6x32_l2_config::instance(),
     &skx_knl_config::instance(),
 };
 constexpr auto num_configs = sizeof(configs)/sizeof(configs[0]);
@@ -257,22 +257,23 @@ void test_gemm(len_type m, len_type n, len_type k)
     B.for_each_element([](T& e) { e = random_unit<T>(); });
     C.for_each_element([](T& e) { e = random_unit<T>(); });
 
-    matrix<T> C_ref(C);
-
     tblis_matrix At(A.view());
     tblis_matrix Bt(B.view());
-    tblis_matrix Ct(C.view());
 
     printf("%ld %ld %ld\n", m, n, k);
 
     for (size_t i = 0;i < num_configs;i++)
     {
+        matrix<T> C_skx(C);
+        matrix<T> C_ref(C);
+        tblis_matrix Ct(C_skx.view());
+
         printf("%s: ", configs[i]->name);
 
         tblis_matrix_mult(tblis_single, *configs[i], &At, &Bt, &Ct);
         gemm_ref<T>(T(1), A, B, T(1), C_ref);
-        add<T>(T(-1), C_ref, T(1), C);
-        double err = reduce<T>(REDUCE_NORM_2, C).first;
+        add<T>(T(-1), C_ref, T(1), C_skx);
+        double err = reduce<T>(REDUCE_NORM_2, C_skx).first;
 
         printf("%e\n", err/(m*n*k));
     }

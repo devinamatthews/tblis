@@ -341,6 +341,9 @@ void bli_dgemm_opt_24x8_knl(
     SUBITER(30,1,0,RAX,R11,1)
     SUBITER(31,0,1,RAX,R11,1)
 
+    ADD(RAX, IMM(32*24*8))
+    ADD(RBX, IMM(32* 8*8))
+
     JMP(TAIL_LOOP)
     LABEL(K_SMALL)
 

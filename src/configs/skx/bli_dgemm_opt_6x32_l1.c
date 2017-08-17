@@ -101,7 +101,7 @@
 \
     LEA(RCX, MEM(RCX,RAX,1))
 
-#define UPDATE_C_BZ_ROW_SCATTERED(NUM) \
+#define UPDATE_C_BZ_ROW_SCATTERED(R1,R2,R3,R4) \
 \
     KXNORW(K(1), K(0), K(0)) \
     VMULPD(ZMM(R1), ZMM(R1), ZMM(0)) \
@@ -185,7 +185,7 @@
     VFMADD231PD(ZMM(27), ZMM(3), ZMM(4))  VFMADD231PD(ZMM(31), ZMM(3), ZMM(5))
 
 //This is an array used for the scatter/gather instructions.
-static int64_t offsets[8] __attribute__((aligned(64))) =
+static int64_t offsets[32] __attribute__((aligned(64))) =
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
      16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31};
 

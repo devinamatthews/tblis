@@ -110,9 +110,9 @@ TBLIS_BEGIN_CONFIG(skx_16x12_l1)
     TBLIS_CONFIG_GEMM_MR(_,    16, _, _)
     TBLIS_CONFIG_GEMM_NR(_,    12, _, _)
     TBLIS_CONFIG_GEMM_KR(_,     8, _, _)
-    TBLIS_CONFIG_GEMM_MC(_,   336, _, _)
+    TBLIS_CONFIG_GEMM_MC(_,   384, _, _)
     TBLIS_CONFIG_GEMM_NC(_, 14400, _, _)
-    TBLIS_CONFIG_GEMM_KC(_,    96, _, _)
+    TBLIS_CONFIG_GEMM_KC(_,   128, _, _)
 
     TBLIS_CONFIG_GEMM_UKR(_,
                           bli_dgemm_opt_12x16_l1,
@@ -152,9 +152,9 @@ TBLIS_BEGIN_CONFIG(skx_12x16_l1)
     TBLIS_CONFIG_GEMM_MR(_,    12, _, _)
     TBLIS_CONFIG_GEMM_NR(_,    16, _, _)
     TBLIS_CONFIG_GEMM_KR(_,     8, _, _)
-    TBLIS_CONFIG_GEMM_MC(_,   336, _, _)
+    TBLIS_CONFIG_GEMM_MC(_,   384, _, _)
     TBLIS_CONFIG_GEMM_NC(_, 14400, _, _)
-    TBLIS_CONFIG_GEMM_KC(_,    96, _, _)
+    TBLIS_CONFIG_GEMM_KC(_,   128, _, _)
 
     TBLIS_CONFIG_GEMM_UKR(_,
                           bli_dgemm_opt_12x16_l1,

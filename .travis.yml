@@ -38,6 +38,7 @@ addons:
     - g++-6
     - clang-3.9
     - libiomp-dev
+    - binutils
     
 install:
   - if [ "$CC" = "gcc" ] ; then export CC="gcc-6" CXX="g++-6"; fi

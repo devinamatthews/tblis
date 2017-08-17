@@ -117,7 +117,8 @@ host_triplet = @host@
 @ENABLE_KNL_TRUE@am__append_18 = lib/libknl.la
 @ENABLE_SKX_TRUE@am__append_19 = lib/libskx.la
 @ENABLE_SKX_TRUE@am__append_20 = lib/libskx.la
-noinst_PROGRAMS = bin/test$(EXEEXT) $(am__EXEEXT_1)
+noinst_PROGRAMS = bin/test$(EXEEXT) bin/skx_bench$(EXEEXT) \
+	$(am__EXEEXT_1)
 @ENABLE_BLAS_TRUE@am__append_21 = bin/bench bin/batched_bench bin/dpd_bench
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -411,6 +412,9 @@ bin_bench_DEPENDENCIES = lib/libtblis.la $(am__DEPENDENCIES_1)
 am_bin_dpd_bench_OBJECTS = test/dpd_bench.$(OBJEXT)
 bin_dpd_bench_OBJECTS = $(am_bin_dpd_bench_OBJECTS)
 bin_dpd_bench_DEPENDENCIES = lib/libtblis.la $(am__DEPENDENCIES_1)
+am_bin_skx_bench_OBJECTS = test/skx_bench.$(OBJEXT)
+bin_skx_bench_OBJECTS = $(am_bin_skx_bench_OBJECTS)
+bin_skx_bench_DEPENDENCIES = lib/libtblis.la
 am_bin_test_OBJECTS = test/test.$(OBJEXT)
 bin_test_OBJECTS = $(am_bin_test_OBJECTS)
 bin_test_DEPENDENCIES = lib/libtblis.la
@@ -473,7 +477,8 @@ SOURCES = $(lib_libbulldozer_la_SOURCES) $(lib_libcore2_la_SOURCES) \
 	$(lib_libsandybridge_la_SOURCES) $(lib_libskx_la_SOURCES) \
 	$(lib_libtblis_la_SOURCES) $(lib_libzen_la_SOURCES) \
 	$(bin_batched_bench_SOURCES) $(bin_bench_SOURCES) \
-	$(bin_dpd_bench_SOURCES) $(bin_test_SOURCES)
+	$(bin_dpd_bench_SOURCES) $(bin_skx_bench_SOURCES) \
+	$(bin_test_SOURCES)
 DIST_SOURCES = $(am__lib_libbulldozer_la_SOURCES_DIST) \
 	$(am__lib_libcore2_la_SOURCES_DIST) \
 	$(am__lib_libexcavator_la_SOURCES_DIST) \
@@ -485,7 +490,7 @@ DIST_SOURCES = $(am__lib_libbulldozer_la_SOURCES_DIST) \
 	$(am__lib_libskx_la_SOURCES_DIST) $(lib_libtblis_la_SOURCES) \
 	$(am__lib_libzen_la_SOURCES_DIST) $(bin_batched_bench_SOURCES) \
 	$(bin_bench_SOURCES) $(bin_dpd_bench_SOURCES) \
-	$(bin_test_SOURCES)
+	$(bin_skx_bench_SOURCES) $(bin_test_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -972,6 +977,7 @@ lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la \
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SKX_TRUE@@IS_OSX_TRUE@lib_libskx_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SKX_TRUE@lib_libskx_la_CXXFLAGS = -O3 -xCORE-AVX512
 bin_test_SOURCES = test/test.cxx
+bin_skx_bench_SOURCES = test/skx_bench.cxx
 bin_bench_SOURCES = test/bench.cxx
 bin_batched_bench_SOURCES = test/batched_bench.cxx
 bin_dpd_bench_SOURCES = test/dpd_bench.cxx
@@ -980,6 +986,7 @@ ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/util -I$(srcdir)/src/external/tci -Isrc/external/tci/tci
 AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la
+bin_skx_bench_LDADD = lib/libtblis.la
 bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 bin_batched_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 bin_dpd_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
@@ -1603,6 +1610,12 @@ test/dpd_bench.$(OBJEXT): test/$(am__dirstamp) \
 bin/dpd_bench$(EXEEXT): $(bin_dpd_bench_OBJECTS) $(bin_dpd_bench_DEPENDENCIES) $(EXTRA_bin_dpd_bench_DEPENDENCIES) bin/$(am__dirstamp)
 	@rm -f bin/dpd_bench$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(bin_dpd_bench_OBJECTS) $(bin_dpd_bench_LDADD) $(LIBS)
+test/skx_bench.$(OBJEXT): test/$(am__dirstamp) \
+	test/$(DEPDIR)/$(am__dirstamp)
+
+bin/skx_bench$(EXEEXT): $(bin_skx_bench_OBJECTS) $(bin_skx_bench_DEPENDENCIES) $(EXTRA_bin_skx_bench_DEPENDENCIES) bin/$(am__dirstamp)
+	@rm -f bin/skx_bench$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(bin_skx_bench_OBJECTS) $(bin_skx_bench_LDADD) $(LIBS)
 test/test.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 
@@ -1784,6 +1797,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/batched_bench.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/bench.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/dpd_bench.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/skx_bench.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/test.Po@am__quote@
 
 .c.o:

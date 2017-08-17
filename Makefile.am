@@ -404,11 +404,12 @@ endif
 #lib_libloongson3a_la_CFLAGS = -Isrc/external/blis/config/loongson3a -march=loongson3a -mtune=loongson3a
 #endif
 
-noinst_PROGRAMS = bin/test
+noinst_PROGRAMS = bin/test bin/skx_bench
 if ENABLE_BLAS
 noinst_PROGRAMS += bin/bench bin/batched_bench bin/dpd_bench
 endif
 bin_test_SOURCES = test/test.cxx
+bin_skx_bench_SOURCES = test/skx_bench.cxx
 bin_bench_SOURCES = test/bench.cxx
 bin_batched_bench_SOURCES = test/batched_bench.cxx
 bin_dpd_bench_SOURCES = test/dpd_bench.cxx
@@ -420,6 +421,7 @@ ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/util -I$(srcdir)/src/external/tci -Isrc/external/tci/tci
 AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la
+bin_skx_bench_LDADD = lib/libtblis.la
 bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 bin_batched_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 bin_dpd_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)

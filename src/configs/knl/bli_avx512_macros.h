@@ -12,9 +12,9 @@
 #define ASM(...) STRINGIFY(__VA_ARGS__) "\n\t"
 #define LABEL(label) STRINGIFY(label) ":\n\t"
 
-#define XMM(x) %% xmm##x
-#define YMM(x) %% ymm##x
-#define ZMM(x) %% zmm##x
+#define XMM(x) %%xmm##x
+#define YMM(x) %%ymm##x
+#define ZMM(x) %%zmm##x
 #define EAX %%eax
 #define EBX %%ebx
 #define ECX %%ecx
@@ -29,8 +29,8 @@
 #define RBP %%rbp
 #define RDI %%rdi
 #define RSI %%rsi
-#define K(x) %% k##x
-#define R(x) %% r##x
+#define K(x) %%k##x
+#define R(x) %%r##x
 #define R8 %%r8
 #define R9 %%r9
 #define R10 %%r10
@@ -39,7 +39,7 @@
 #define R13 %%r13
 #define R14 %%r14
 #define R15 %%r15
-#define RD(x) %% r##x##d
+#define RD(x) %%r##x##d
 #define R8D %%r8d
 #define R9D %%r9d
 #define R10D %%r10d
@@ -71,8 +71,8 @@
 #define MEM_1TO8(...) GET_MACRO(__VA_ARGS__,MEM_1TO8_4,MEM_1TO8_3,MEM_1TO8_2,MEM_1TO8_1)(__VA_ARGS__)
 #define MEM_1TO16(...) GET_MACRO(__VA_ARGS__,MEM_1TO16_4,MEM_1TO16_3,MEM_1TO16_2,MEM_1TO16_1)(__VA_ARGS__)
 
-#define MASK_K(n) %{%% k##n %}
-#define MASK_KZ(n) %{%% k##n %} %{z%}
+#define MASK_K(n) %{%%k##n%}
+#define MASK_KZ(n) %{%%k##n%}%{z%}
 #define KMOV(to,from) ASM(kmovw from, to)
 #define JKNZD(kreg,label) \
     ASM(kortestw kreg, kreg) \

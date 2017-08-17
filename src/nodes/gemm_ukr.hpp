@@ -134,6 +134,7 @@ struct gemm_micro_kernel
         const len_type MR = cfg.gemm_mr.def<T>();
         const len_type NR = cfg.gemm_nr.def<T>();
         const bool row_major = cfg.gemm_row_major.value<T>();
+        const bool flip_ukr = cfg.gemm_flip_ukr.value<T>();
         const len_type rs_ab = (row_major ? NR : 1);
         const len_type cs_ab = (row_major ? 1 : MR);
 
@@ -149,16 +150,32 @@ struct gemm_micro_kernel
 
         if (m == MR && n == NR)
         {
-            cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
-                                 &beta, p_c, rs_c, cs_c);
+            if (flip_ukr)
+            {
+                cfg.gemm_ukr.call<T>(k, &alpha, p_b, p_a,
+                                     &beta, p_c, cs_c, rs_c);
+            }
+            else
+            {
+                cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
+                                     &beta, p_c, rs_c, cs_c);
+            }
         }
         else
         {
             T p_ab[512] __attribute__((aligned(64)));
             static constexpr T zero = T(0);
 
-            cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
-                                 &zero, &p_ab[0], rs_ab, cs_ab);
+            if (flip_ukr)
+            {
+                cfg.gemm_ukr.call<T>(k, &alpha, p_b, p_a,
+                                     &zero, &p_ab[0], cs_ab, rs_ab);
+            }
+            else
+            {
+                cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
+                                     &zero, &p_ab[0], rs_ab, cs_ab);
+            }
 
             accum_utile(m, n, p_ab, rs_ab, cs_ab,
                         beta, p_c, rs_c, cs_c);
@@ -176,6 +193,7 @@ struct gemm_micro_kernel
         const len_type MR = cfg.gemm_mr.def<T>();
         const len_type NR = cfg.gemm_nr.def<T>();
         const bool row_major = cfg.gemm_row_major.value<T>();
+        const bool flip_ukr = cfg.gemm_flip_ukr.value<T>();
         const len_type rs_ab = (row_major ? NR : 1);
         const len_type cs_ab = (row_major ? 1 : MR);
 
@@ -193,16 +211,32 @@ struct gemm_micro_kernel
 
         if (m == MR && n == NR && rs_c != 0 && cs_c != 0)
         {
-            cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
-                                 &beta, p_c, rs_c, cs_c);
+            if (flip_ukr)
+            {
+                cfg.gemm_ukr.call<T>(k, &alpha, p_b, p_a,
+                                     &beta, p_c, cs_c, rs_c);
+            }
+            else
+            {
+                cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
+                                     &beta, p_c, rs_c, cs_c);
+            }
         }
         else
         {
             T p_ab[512] __attribute__((aligned(64)));
             static constexpr T zero = T(0);
 
-            cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
-                                 &zero, &p_ab[0], rs_ab, cs_ab);
+            if (flip_ukr)
+            {
+                cfg.gemm_ukr.call<T>(k, &alpha, p_b, p_a,
+                                     &zero, &p_ab[0], cs_ab, rs_ab);
+            }
+            else
+            {
+                cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
+                                     &zero, &p_ab[0], rs_ab, cs_ab);
+            }
 
             if (rs_c == 0 && cs_c == 0)
             {
@@ -238,6 +272,7 @@ struct gemm_micro_kernel
         const len_type MR = cfg.gemm_mr.def<T>();
         const len_type NR = cfg.gemm_nr.def<T>();
         const bool row_major = cfg.gemm_row_major.value<T>();
+        const bool flip_ukr = cfg.gemm_flip_ukr.value<T>();
         const len_type rs_ab = (row_major ? NR : 1);
         const len_type cs_ab = (row_major ? 1 : MR);
 
@@ -258,16 +293,32 @@ struct gemm_micro_kernel
 
         if (m == MR && n == NR && rs_c != 0 && cs_c != 0)
         {
-            cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
-                                 &beta, p_c, rs_c, cs_c);
+            if (flip_ukr)
+            {
+                cfg.gemm_ukr.call<T>(k, &alpha, p_b, p_a,
+                                     &beta, p_c, cs_c, rs_c);
+            }
+            else
+            {
+                cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
+                                     &beta, p_c, rs_c, cs_c);
+            }
         }
         else
         {
             T p_ab[512] __attribute__((aligned(64)));
             static constexpr T zero = T(0);
 
-            cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
-                                 &zero, &p_ab[0], rs_ab, cs_ab);
+            if (flip_ukr)
+            {
+                cfg.gemm_ukr.call<T>(k, &alpha, p_b, p_a,
+                                     &zero, &p_ab[0], cs_ab, rs_ab);
+            }
+            else
+            {
+                cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
+                                     &zero, &p_ab[0], rs_ab, cs_ab);
+            }
 
             if (rs_c == 0 && cs_c == 0)
             {

@@ -128,6 +128,7 @@ struct config
     microkernel<gemm_ukr_t> gemm_ukr;
 
     parameter<bool> gemm_row_major;
+    parameter<bool> gemm_flip_ukr;
 
     microkernel<pack_nn_ukr_t> pack_nn_mr_ukr;
     microkernel<pack_nn_ukr_t> pack_nn_nr_ukr;
@@ -177,6 +178,7 @@ struct config
       gemm_ukr(typename Traits::template gemm_ukr<float>()),
 
       gemm_row_major(typename Traits::template gemm_row_major<float>()),
+      gemm_flip_ukr(typename Traits::template gemm_flip_ukr<float>()),
 
       pack_nn_mr_ukr(typename Traits::template pack_nn_mr_ukr<float>()),
       pack_nn_nr_ukr(typename Traits::template pack_nn_nr_ukr<float>()),

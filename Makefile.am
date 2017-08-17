@@ -302,13 +302,7 @@ endif
 if ENABLE_SKX
 noinst_LTLIBRARIES += lib/libskx.la
 lib_libtblis_la_LIBADD += lib/libskx.la
-lib_libskx_la_SOURCES = src/configs/skx/bli_dgemm_opt_32x6_l1.c \
-					    src/configs/skx/bli_dgemm_opt_32x6_l2.c \
-					    src/configs/skx/bli_dgemm_opt_24x8_l1.c \
-					    src/configs/skx/bli_dgemm_opt_24x8_l2.c \
-					    src/configs/skx/bli_dgemm_opt_16x12_l1.c \
-					    src/configs/skx/bli_dgemm_opt_16x12_l2.c \
-					    src/configs/skx/bli_dgemm_opt_12x16_l1.c \
+lib_libskx_la_SOURCES = src/configs/skx/bli_dgemm_opt_12x16_l1.c \
 					    src/configs/skx/bli_dgemm_opt_12x16_l2.c \
 					    src/configs/skx/bli_dgemm_opt_8x24_l1.c \
 					    src/configs/skx/bli_dgemm_opt_8x24_l2.c \

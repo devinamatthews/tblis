@@ -398,9 +398,12 @@ endif
 #lib_libloongson3a_la_CFLAGS = -Isrc/external/blis/config/loongson3a -march=loongson3a -mtune=loongson3a
 #endif
 
-noinst_PROGRAMS = bin/test bin/skx_bench
+noinst_PROGRAMS = bin/test
 if ENABLE_BLAS
 noinst_PROGRAMS += bin/bench bin/batched_bench bin/dpd_bench
+endif
+if ENABLE_SKX
+noinst_PROGRAMS = bin/skx_bench
 endif
 bin_test_SOURCES = test/test.cxx
 bin_skx_bench_SOURCES = test/skx_bench.cxx

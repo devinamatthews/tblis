@@ -25,17 +25,17 @@ using namespace stl_ext;
 
 const config* configs[] =
 {
-    //&skx_32x6_l1_config::instance(),
+    &skx_32x6_l1_config::instance(),
     //&skx_32x6_l2_config::instance(),
-    //&skx_24x8_l1_config::instance(),
+    &skx_24x8_l1_config::instance(),
     //&skx_24x8_l2_config::instance(),
-    //&skx_16x12_l1_config::instance(),
+    &skx_16x12_l1_config::instance(),
     //&skx_16x12_l2_config::instance(),
-    //&skx_12x16_l1_config::instance(),
+    &skx_12x16_l1_config::instance(),
     //&skx_12x16_l2_config::instance(),
-    //&skx_8x24_l1_config::instance(),
+    &skx_8x24_l1_config::instance(),
     //&skx_8x24_l2_config::instance(),
-    //&skx_6x32_l1_config::instance(),
+    &skx_6x32_l1_config::instance(),
     //&skx_6x32_l2_config::instance(),
     &skx_knl_config::instance(),
 };
@@ -272,10 +272,11 @@ void test_gemm(len_type m, len_type n, len_type k)
 
         tblis_matrix_mult(tblis_single, *configs[i], &At, &Bt, &Ct);
         gemm_ref<T>(T(1), A, B, T(1), C_ref);
+
         add<T>(T(-1), C_ref, T(1), C_skx);
         double err = reduce<T>(REDUCE_NORM_2, C_skx).first;
 
-        printf("%e\n", err/(m*n*k));
+        printf("%e\n", err/max(m*n*k,len_type(1)));
     }
 
     printf("\n");

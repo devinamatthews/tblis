@@ -142,10 +142,6 @@
 //
 #define SUBITER(n) \
 \
-    VMOVAPD(ZMM(0), MEM(RBX,(24*n+ 0)*8)) \
-    VMOVAPD(ZMM(1), MEM(RBX,(24*n+ 8)*8)) \
-    VMOVAPD(ZMM(2), MEM(RBX,(24*n+16)*8)) \
-    \
     VBROADCASTSD(ZMM(4), MEM(RAX,(8*n+0)*8)) \
     VBROADCASTSD(ZMM(5), MEM(RAX,(8*n+1)*8)) \
     VFMADD231PD(ZMM( 8), ZMM(0), ZMM(4))  VFMADD231PD(ZMM(11), ZMM(0), ZMM(5)) \
@@ -168,7 +164,11 @@
     VBROADCASTSD(ZMM(5), MEM(RAX,(8*n+7)*8)) \
     VFMADD231PD(ZMM(26), ZMM(0), ZMM(4))  VFMADD231PD(ZMM(29), ZMM(0), ZMM(5)) \
     VFMADD231PD(ZMM(27), ZMM(1), ZMM(4))  VFMADD231PD(ZMM(30), ZMM(1), ZMM(5)) \
-    VFMADD231PD(ZMM(28), ZMM(2), ZMM(4))  VFMADD231PD(ZMM(31), ZMM(2), ZMM(5))
+    VFMADD231PD(ZMM(28), ZMM(2), ZMM(4))  VFMADD231PD(ZMM(31), ZMM(2), ZMM(5)) \
+    \
+    VMOVAPD(ZMM(0), MEM(RBX,(24*n+ 0)*8)) \
+    VMOVAPD(ZMM(1), MEM(RBX,(24*n+ 8)*8)) \
+    VMOVAPD(ZMM(2), MEM(RBX,(24*n+16)*8))
 
 //This is an array used for the scatter/gather instructions.
 static int64_t offsets[24] __attribute__((aligned(64))) =
@@ -251,6 +251,9 @@ void bli_dgemm_opt_8x24_l1(
         DEC(RDI)
 
     JNZ(MAIN_LOOP)
+
+    TEST(RSI, RSI)
+    JZ(POSTACCUM)
 
     LOOP_ALIGN
     LABEL(TAIL_LOOP)

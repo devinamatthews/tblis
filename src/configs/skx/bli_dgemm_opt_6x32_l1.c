@@ -37,7 +37,7 @@
 
 #include "../knl/bli_avx512_macros.h"
 
-#define A_L1_PREFETCH_DIST 3 //should be multiple of 3
+#define A_L1_PREFETCH_DIST 4 //should be multiple of 4
 
 #define LOOP_ALIGN ALIGN16
 
@@ -158,11 +158,6 @@
 //
 #define SUBITER(n) \
 \
-    VMOVAPD(ZMM(0), MEM(RBX,(32*n+ 0)*8)) \
-    VMOVAPD(ZMM(1), MEM(RBX,(32*n+ 8)*8)) \
-    VMOVAPD(ZMM(2), MEM(RBX,(32*n+16)*8)) \
-    VMOVAPD(ZMM(3), MEM(RBX,(32*n+24)*8)) \
-    \
     VBROADCASTSD(ZMM(4), MEM(RAX,(6*n+0)*8)) \
     VBROADCASTSD(ZMM(5), MEM(RAX,(6*n+1)*8)) \
     VFMADD231PD(ZMM( 8), ZMM(0), ZMM(4))  VFMADD231PD(ZMM(12), ZMM(0), ZMM(5)) \
@@ -182,7 +177,12 @@
     VFMADD231PD(ZMM(24), ZMM(0), ZMM(4))  VFMADD231PD(ZMM(28), ZMM(0), ZMM(5)) \
     VFMADD231PD(ZMM(25), ZMM(1), ZMM(4))  VFMADD231PD(ZMM(29), ZMM(1), ZMM(5)) \
     VFMADD231PD(ZMM(26), ZMM(2), ZMM(4))  VFMADD231PD(ZMM(30), ZMM(2), ZMM(5)) \
-    VFMADD231PD(ZMM(27), ZMM(3), ZMM(4))  VFMADD231PD(ZMM(31), ZMM(3), ZMM(5))
+    VFMADD231PD(ZMM(27), ZMM(3), ZMM(4))  VFMADD231PD(ZMM(31), ZMM(3), ZMM(5)) \
+    \
+    VMOVAPD(ZMM(0), MEM(RBX,(32*n+ 0)*8)) \
+    VMOVAPD(ZMM(1), MEM(RBX,(32*n+ 8)*8)) \
+    VMOVAPD(ZMM(2), MEM(RBX,(32*n+16)*8)) \
+    VMOVAPD(ZMM(3), MEM(RBX,(32*n+24)*8))
 
 //This is an array used for the scatter/gather instructions.
 static int64_t offsets[32] __attribute__((aligned(64))) =
@@ -264,6 +264,9 @@ void bli_dgemm_opt_6x32_l1(
         DEC(RDI)
 
     JNZ(MAIN_LOOP)
+
+    TEST(RSI, RSI)
+    JZ(POSTACCUM)
 
     LOOP_ALIGN
     LABEL(TAIL_LOOP)

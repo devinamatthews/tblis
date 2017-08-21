@@ -403,7 +403,7 @@ if ENABLE_BLAS
 noinst_PROGRAMS += bin/bench bin/batched_bench bin/dpd_bench
 endif
 if ENABLE_SKX
-noinst_PROGRAMS = bin/skx_bench
+noinst_PROGRAMS += bin/skx_bench
 endif
 bin_test_SOURCES = test/test.cxx
 bin_skx_bench_SOURCES = test/skx_bench.cxx

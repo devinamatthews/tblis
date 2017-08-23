@@ -254,7 +254,7 @@ void bli_dgemm_opt_24x8_knl(
     JZ(POSTACCUM)
 
     CMP(RSI, IMM(64))
-    JL(K_SMALL)
+    JLE(K_SMALL)
 
     PREFETCH_C_L2
 

@@ -26,17 +26,17 @@ using namespace stl_ext;
 const config* configs[] =
 {
     &skx_32x6_l1_config::instance(),
-    //&skx_32x6_l2_config::instance(),
+    &skx_32x6_l2_config::instance(),
     &skx_24x8_l1_config::instance(),
-    //&skx_24x8_l2_config::instance(),
+    &skx_24x8_l2_config::instance(),
     &skx_16x12_l1_config::instance(),
-    //&skx_16x12_l2_config::instance(),
+    &skx_16x12_l2_config::instance(),
     &skx_12x16_l1_config::instance(),
-    //&skx_12x16_l2_config::instance(),
+    &skx_12x16_l2_config::instance(),
     &skx_8x24_l1_config::instance(),
-    //&skx_8x24_l2_config::instance(),
+    &skx_8x24_l2_config::instance(),
     &skx_6x32_l1_config::instance(),
-    //&skx_6x32_l2_config::instance(),
+    &skx_6x32_l2_config::instance(),
     &skx_knl_config::instance(),
 };
 constexpr auto num_configs = sizeof(configs)/sizeof(configs[0]);
@@ -271,6 +271,7 @@ void test_gemm(len_type m, len_type n, len_type k)
         printf("%s: ", configs[i]->name);
 
         tblis_matrix_mult(tblis_single, *configs[i], &At, &Bt, &Ct);
+
         gemm_ref<T>(T(1), A, B, T(1), C_ref);
 
         add<T>(T(-1), C_ref, T(1), C_skx);

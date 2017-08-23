@@ -21,7 +21,7 @@ class miterator
         miterator(const Len& len, const Strides&... strides)
         : pos_{}, first_(true), empty_(false)
         {
-            assert(len.size() == NDim);
+            MARRAY_ASSERT(len.size() == NDim);
             for (unsigned i = 0;i < NDim;i++) if (len[i] == 0) empty_ = true;
             std::copy_n(len.begin(), NDim, len_.begin());
             detail::set_strides(strides_, strides...);
@@ -90,7 +90,7 @@ class miterator
                 pos_[i] = pos%len_[i];
                 pos = pos/len_[i];
             }
-            assert(pos == 0);
+            MARRAY_ASSERT(pos == 0);
 
             position(pos_, off...);
         }
@@ -102,13 +102,13 @@ class miterator
         {
             if (empty_) return;
 
-            assert(pos.size() == NDim);
+            MARRAY_ASSERT(pos.size() == NDim);
 
             std::copy_n(pos.begin(), NDim, pos_.begin());
 
             for (size_t i = 0;i < NDim;i++)
             {
-                assert(pos_[i] >= 0 && pos_[i] < len_[i]);
+                MARRAY_ASSERT(pos_[i] >= 0 && pos_[i] < len_[i]);
             }
 
             detail::move_offsets(pos_, strides_, off...);

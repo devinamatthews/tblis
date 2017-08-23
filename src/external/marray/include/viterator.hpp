@@ -92,7 +92,7 @@ class viterator
                 pos_[i] = pos%len_[i];
                 pos = pos/len_[i];
             }
-            assert(pos == 0);
+            MARRAY_ASSERT(pos == 0);
 
             position(pos_, off...);
         }
@@ -104,13 +104,13 @@ class viterator
         {
             if (empty_) return;
 
-            assert(pos.size() == ndim_);
+            MARRAY_ASSERT(pos.size() == ndim_);
 
             pos_.assign(pos.begin(), pos.end());
 
             for (size_t i = 0;i < ndim_;i++)
             {
-                assert(pos_[i] >= 0 && pos_[i] < len_[i]);
+                MARRAY_ASSERT(pos_[i] >= 0 && pos_[i] < len_[i]);
             }
 
             detail::move_offsets(pos_, strides_, off...);

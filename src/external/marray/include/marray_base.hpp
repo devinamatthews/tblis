@@ -59,15 +59,15 @@ struct initializer_type
 };
 
 template <typename Func, typename Arg, typename... Args>
-auto call(Func&& f, Arg&& arg, Args&&... args)
--> detail::enable_if_t<std::is_same<decltype(f(std::forward<Arg>(arg), std::forward<Args>(args)...)),void>::value>
+detail::enable_if_t<sizeof...(Args) && std::is_same<decltype(std::declval<Func&&>()(std::declval<Arg&&>(), std::declval<Args&&>()...)),void>::value>
+call(Func&& f, Arg&& arg, Args&&... args)
 {
     f(std::forward<Arg>(arg), std::forward<Args>(args)...);
 }
 
 template <typename Func, typename Arg, typename... Args>
-auto call(Func&& f, Arg&& arg, Args&&... args)
--> detail::enable_if_t<std::is_same<decltype(f(std::forward<Arg>(arg))),void>::value>
+detail::enable_if_t<std::is_same<decltype(std::declval<Func&&>()(std::declval<Arg&&>())),void>::value>
+call(Func&& f, Arg&& arg, Args&&... args)
 {
     f(std::forward<Arg>(arg));
 }

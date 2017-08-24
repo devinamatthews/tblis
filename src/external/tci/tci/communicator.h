@@ -151,8 +151,8 @@ class communicator
         {
             template <size_t... I>
             broadcast_from_internal(const communicator& comm, unsigned root,
-                                    Func&& func, Args&&... args,
-                                    detail::index_sequence<I...>)
+                                    Func&& func, detail::index_sequence<I...>,
+                                    Args&&... args)
             {
                 std::tuple<Args&&...> refs(std::forward<Args>(args)...);
                 auto ptr = &refs;
@@ -225,8 +225,8 @@ class communicator
         {
             broadcast_from_internal<Func, Args...>
                 (*this, root, std::forward<Func>(func),
-                 std::forward<Args>(args)...,
-                 detail::index_sequence_for<Args...>{});
+                 detail::index_sequence_for<Args...>{},
+                 std::forward<Args>(args)...);
         }
 
         template <typename Func, typename... Args>

@@ -237,9 +237,9 @@ class indexed_dpd_varray_base
                 while (it1.next())
                 {
                     irreps[0] = dense_irrep_;
-                    for (unsigned i = 1;i < dense_ndim;i++)
+                    for (unsigned j = 1;j < dense_ndim;j++)
                     {
-                        irreps[0] ^= irreps[i] = it1.position()[i-1];
+                        irreps[0] ^= irreps[j] = it1.position()[j-1];
                     }
 
                     cptr = data_[i];

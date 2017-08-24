@@ -464,6 +464,8 @@ void bli_dgemm_opt_12x16_l2(
 
     LABEL(END)
 
+    VZEROUPPER()
+
     : // output operands
     : // input operands
       [k]         "m" (k),

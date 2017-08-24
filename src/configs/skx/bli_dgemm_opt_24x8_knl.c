@@ -465,6 +465,8 @@ void bli_dgemm_opt_24x8_knl(
 
     LABEL(END)
 
+    VZEROUPPER()
+
     : // output operands
     : // input operands
       [k]         "m" (k),

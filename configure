@@ -815,7 +815,7 @@ enable_maintainer_mode
 enable_dependency_tracking
 with_blas
 with_memkind
-with_memloc
+with_hwloc
 enable_thread_model
 enable_threading
 with_length_type
@@ -1503,7 +1503,7 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-blas=<lib>       use BLAS library <lib>
   --without-memkind       do not attempt to link with the memkind library
-  --without-memloc        do not attempt to link with the memloc library
+  --without-hwloc         do not attempt to link with the hwloc library
   --with-length-type[=type]
                           use 'type' for the default index length type
                           [default=ptrdiff_t]
@@ -5740,13 +5740,13 @@ fi
 #
 
 
-# Check whether --with-memloc was given.
-if test "${with_memloc+set}" = set; then :
-  withval=$with_memloc;
+# Check whether --with-hwloc was given.
+if test "${with_hwloc+set}" = set; then :
+  withval=$with_hwloc;
 fi
 
 
-if test "x$with_memloc" != "xno"; then
+if test "x$with_hwloc" != "xno"; then
     for ac_header in hwloc.h
 do :
   ac_fn_cxx_check_header_mongrel "$LINENO" "hwloc.h" "ac_cv_header_hwloc_h" "$ac_includes_default"

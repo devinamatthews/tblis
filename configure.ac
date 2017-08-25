@@ -45,10 +45,10 @@ fi
 # Check for hwloc
 #
 
-AC_ARG_WITH([memloc], AS_HELP_STRING([--without-memloc],
-    [do not attempt to link with the memloc library]))
+AC_ARG_WITH([hwloc], AS_HELP_STRING([--without-hwloc],
+    [do not attempt to link with the hwloc library]))
     
-if test "x$with_memloc" != "xno"; then
+if test "x$with_hwloc" != "xno"; then
     AC_CHECK_HEADERS([hwloc.h])
     AC_SEARCH_LIBS([hwloc_topology_init], [hwloc])
 fi

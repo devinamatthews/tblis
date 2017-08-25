@@ -33,15 +33,25 @@ AC_DEFINE_UNQUOTED([TOPDIR], [$topdir], [The top source directory.])
 # Check for memkind
 #
 
-AC_CHECK_HEADERS([hbwmalloc.h memkind.h])
-AC_SEARCH_LIBS([hbw_malloc], [memkind])
+AC_ARG_WITH([memkind], AS_HELP_STRING([--without-memkind],
+    [do not attempt to link with the memkind library]))
+    
+if test "x$with_memkind" != "xno"; then
+    AC_CHECK_HEADERS([hbwmalloc.h memkind.h])
+    AC_SEARCH_LIBS([hbw_malloc], [memkind])
+fi
 
 #
 # Check for hwloc
 #
 
-AC_CHECK_HEADERS([hwloc.h])
-AC_SEARCH_LIBS([hwloc_topology_init], [hwloc])
+AC_ARG_WITH([memloc], AS_HELP_STRING([--without-memloc],
+    [do not attempt to link with the memloc library]))
+    
+if test "x$with_memloc" != "xno"; then
+    AC_CHECK_HEADERS([hwloc.h])
+    AC_SEARCH_LIBS([hwloc_topology_init], [hwloc])
+fi
 
 #
 # Check for lscpu

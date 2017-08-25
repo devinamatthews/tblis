@@ -814,6 +814,8 @@ enable_silent_rules
 enable_maintainer_mode
 enable_dependency_tracking
 with_blas
+with_memkind
+with_memloc
 enable_thread_model
 enable_threading
 with_length_type
@@ -1500,6 +1502,8 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-blas=<lib>       use BLAS library <lib>
+  --without-memkind       do not attempt to link with the memkind library
+  --without-memloc        do not attempt to link with the memloc library
   --with-length-type[=type]
                           use 'type' for the default index length type
                           [default=ptrdiff_t]
@@ -5389,7 +5393,15 @@ _ACEOF
 # Check for memkind
 #
 
-ac_ext=cpp
+
+# Check whether --with-memkind was given.
+if test "${with_memkind+set}" = set; then :
+  withval=$with_memkind;
+fi
+
+
+if test "x$with_memkind" != "xno"; then
+    ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -5665,7 +5677,7 @@ fi
 
 done
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing hbw_malloc" >&5
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing hbw_malloc" >&5
 $as_echo_n "checking for library containing hbw_malloc... " >&6; }
 if ${ac_cv_search_hbw_malloc+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -5721,12 +5733,21 @@ if test "$ac_res" != no; then :
 
 fi
 
+fi
 
 #
 # Check for hwloc
 #
 
-for ac_header in hwloc.h
+
+# Check whether --with-memloc was given.
+if test "${with_memloc+set}" = set; then :
+  withval=$with_memloc;
+fi
+
+
+if test "x$with_memloc" != "xno"; then
+    for ac_header in hwloc.h
 do :
   ac_fn_cxx_check_header_mongrel "$LINENO" "hwloc.h" "ac_cv_header_hwloc_h" "$ac_includes_default"
 if test "x$ac_cv_header_hwloc_h" = xyes; then :
@@ -5738,7 +5759,7 @@ fi
 
 done
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing hwloc_topology_init" >&5
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing hwloc_topology_init" >&5
 $as_echo_n "checking for library containing hwloc_topology_init... " >&6; }
 if ${ac_cv_search_hwloc_topology_init+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -5794,6 +5815,7 @@ if test "$ac_res" != no; then :
 
 fi
 
+fi
 
 #
 # Check for lscpu

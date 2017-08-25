@@ -401,9 +401,9 @@ endif
 noinst_PROGRAMS = bin/test
 if ENABLE_BLAS
 noinst_PROGRAMS += bin/bench bin/batched_bench bin/dpd_bench
-endif
 if ENABLE_SKX
 noinst_PROGRAMS += bin/skx_bench
+endif
 endif
 bin_test_SOURCES = test/test.cxx
 bin_skx_bench_SOURCES = test/skx_bench.cxx
@@ -418,7 +418,7 @@ ACLOCAL_AMFLAGS = -I m4
 AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/util -I$(srcdir)/src/external/tci -Isrc/external/tci/tci
 AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la
-bin_skx_bench_LDADD = lib/libtblis.la
+bin_skx_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 bin_batched_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 bin_dpd_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)

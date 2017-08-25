@@ -250,11 +250,8 @@ void bli_dgemm_opt_24x8_knl(
     VMOVAPD(YMM(30), YMM(8))
     VMOVAPD(YMM(31), YMM(8))
 
-    TEST(RSI, RSI)
-    JZ(POSTACCUM)
-
-    CMP(RSI, IMM(64))
-    JLE(K_SMALL)
+    CMP(RSI, IMM(32))
+    JL(K_SMALL)
 
     PREFETCH_C_L2
 
@@ -262,6 +259,7 @@ void bli_dgemm_opt_24x8_knl(
     AND(RSI, IMM(31))
     SAR(RDI, IMM(5))
     SUB(RDI, IMM(1))
+    JZ(SKIP_MAIN_LOOP)
 
     LOOP_ALIGN
     LABEL(MAIN_LOOP)
@@ -305,6 +303,7 @@ void bli_dgemm_opt_24x8_knl(
         SUB(RDI, IMM(1))
 
     JNZ(MAIN_LOOP)
+    LABEL(SKIP_MAIN_LOOP)
 
     PREFETCH_C_L1
 
@@ -344,10 +343,16 @@ void bli_dgemm_opt_24x8_knl(
     ADD(RAX, IMM(32*24*8))
     ADD(RBX, IMM(32* 8*8))
 
+    TEST(RSI, RSI)
+    JZ(POSTACCUM)
+
     JMP(TAIL_LOOP)
     LABEL(K_SMALL)
 
     PREFETCH_C_L1
+
+    TEST(RSI, RSI)
+    JZ(POSTACCUM)
 
     LOOP_ALIGN
     LABEL(TAIL_LOOP)

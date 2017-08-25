@@ -23,6 +23,45 @@ using namespace std;
 using namespace tblis;
 using namespace stl_ext;
 
+template <typename T>
+using gemm_p = void (*)(const char* transa, const char* transb,
+                        const int* m, const int* n, const int* k,
+                        const T* alpha, const T* A, const int* lda,
+                                        const T* B, const int* ldb,
+                        const T*  beta,       T* C, const int* ldc);
+
+template <typename T>
+using gemm_f = typename remove_pointer<gemm_p<T>>::type;
+
+extern "C"
+{
+
+gemm_f<   float> sgemm_;
+gemm_f<  double> dgemm_;
+gemm_f<scomplex> cgemm_;
+gemm_f<dcomplex> zgemm_;
+
+}
+
+template<typename T> struct gemm_ptr;
+template <> struct gemm_ptr<   float> { constexpr static gemm_p<   float> value = &sgemm_; };
+template <> struct gemm_ptr<  double> { constexpr static gemm_p<  double> value = &dgemm_; };
+template <> struct gemm_ptr<scomplex> { constexpr static gemm_p<scomplex> value = &cgemm_; };
+template <> struct gemm_ptr<dcomplex> { constexpr static gemm_p<dcomplex> value = &zgemm_; };
+
+template<typename T>
+void gemm(char transa, char transb,
+          int m, int n, int k,
+          T alpha, const T* A, int lda,
+                   const T* B, int ldb,
+          T  beta,       T* C, int ldc)
+{
+    gemm_ptr<T>::value(&transa, &transb, &m, &n, &k,
+                       &alpha, A, &lda,
+                               B, &ldb,
+                        &beta, C, &ldc);
+}
+
 const config* configs[] =
 {
     &skx_32x6_l1_config::instance(),
@@ -240,6 +279,15 @@ struct gemm_experiment
 
             printf("%e ", perf);
         }
+
+        double perf = gflops/run_kernel(R,
+        [&]
+        {
+            gemm<T>('N', 'N', m, n, k,
+                    1.0, A.data(), m, B.data(), k, 1.0, C.data(), m);
+        });
+
+        printf("%e ", perf);
 
         printf("\n");
         fflush(stdout);

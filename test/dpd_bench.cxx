@@ -18,7 +18,7 @@
 #include "util/time.hpp"
 #include "util/tensor.hpp"
 #include "util/random.hpp"
-#include "internal/3t/mult.hpp"
+#include "internal/3t/dense/mult.hpp"
 
 int check = 0;
 

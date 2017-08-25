@@ -17,7 +17,7 @@
 #include "util/time.hpp"
 #include "util/tensor.hpp"
 #include "util/random.hpp"
-#include "internal/3t/mult.hpp"
+#include "internal/3t/dense/mult.hpp"
 
 using namespace std;
 using namespace tblis;
@@ -286,11 +286,11 @@ struct random_contraction
 
         for (int i = 0;i < N;i++)
         {
-            len_vector len_m =
+            auto len_m =
                 random_product_constrained_sequence<len_type, ROUND_NEAREST>(random_number(1, 3), m);
-            len_vector len_n =
+            auto len_n =
                 random_product_constrained_sequence<len_type, ROUND_NEAREST>(random_number(1, 3), n);
-            len_vector len_k =
+            auto len_k =
                 random_product_constrained_sequence<len_type, ROUND_NEAREST>(random_number(1, 3), k);
 
             label_vector idx_A, idx_B, idx_C;

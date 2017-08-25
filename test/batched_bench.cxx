@@ -18,8 +18,7 @@
 #include "util/time.hpp"
 #include "util/tensor.hpp"
 #include "util/random.hpp"
-#include "internal/3t/mult.hpp"
-#include "tensor/batched_tensor_contract.hpp"
+#include "internal/3t/dense/mult.hpp"
 
 int dumb = 0;
 int check = 0;

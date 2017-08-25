@@ -400,7 +400,7 @@ endif
 
 noinst_PROGRAMS = bin/test
 if ENABLE_BLAS
-noinst_PROGRAMS += bin/bench bin/batched_bench bin/dpd_bench
+noinst_PROGRAMS += bin/bench #bin/batched_bench bin/dpd_bench
 if ENABLE_SKX
 noinst_PROGRAMS += bin/skx_bench
 endif

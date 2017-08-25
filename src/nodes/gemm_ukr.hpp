@@ -155,7 +155,7 @@ struct gemm_micro_kernel
         else
         {
             T p_ab[512] __attribute__((aligned(64)));
-            static constexpr T zero = T(0);
+            static const T zero = T(0);
 
             cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
                                  &zero, &p_ab[0], rs_ab, cs_ab);
@@ -199,7 +199,7 @@ struct gemm_micro_kernel
         else
         {
             T p_ab[512] __attribute__((aligned(64)));
-            static constexpr T zero = T(0);
+            static const T zero = T(0);
 
             cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
                                  &zero, &p_ab[0], rs_ab, cs_ab);
@@ -264,7 +264,7 @@ struct gemm_micro_kernel
         else
         {
             T p_ab[512] __attribute__((aligned(64)));
-            static constexpr T zero = T(0);
+            static const T zero = T(0);
 
             cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
                                  &zero, &p_ab[0], rs_ab, cs_ab);

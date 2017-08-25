@@ -164,7 +164,7 @@ struct gemm_micro_kernel
         else
         {
             T p_ab[512] __attribute__((aligned(64)));
-            static constexpr T zero = T(0);
+            static const T zero = T(0);
 
             if (flip_ukr)
             {
@@ -225,7 +225,7 @@ struct gemm_micro_kernel
         else
         {
             T p_ab[512] __attribute__((aligned(64)));
-            static constexpr T zero = T(0);
+            static const T zero = T(0);
 
             if (flip_ukr)
             {
@@ -307,7 +307,7 @@ struct gemm_micro_kernel
         else
         {
             T p_ab[512] __attribute__((aligned(64)));
-            static constexpr T zero = T(0);
+            static const T zero = T(0);
 
             if (flip_ukr)
             {

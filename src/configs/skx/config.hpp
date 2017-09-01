@@ -21,6 +21,17 @@ namespace tblis
 
 extern int skx_check();
 
+#define L2_BLOCK_SIZES \
+    TBLIS_CONFIG_GEMM_MC(_,   240, _, _) \
+    TBLIS_CONFIG_GEMM_NC(_,  5760, _, _) \
+    TBLIS_CONFIG_GEMM_KC_MAX(_, 384, _, _, \
+                             _, 480, _, _) \
+    TBLIS_CONFIG_M_THREAD_RATIO(_,3,_,_) \
+    TBLIS_CONFIG_N_THREAD_RATIO(_,2,_,_) \
+    TBLIS_CONFIG_MR_MAX_THREAD(_,1,_,_) \
+    TBLIS_CONFIG_NR_MAX_THREAD(_,4,_,_)
+
+
 TBLIS_BEGIN_CONFIG(skx_32x6_l1)
 
     TBLIS_CONFIG_GEMM_MR(_,    32, _, _)
@@ -47,9 +58,7 @@ TBLIS_BEGIN_CONFIG(skx_32x6_l2)
     TBLIS_CONFIG_GEMM_MR(_,    32, _, _)
     TBLIS_CONFIG_GEMM_NR(_,     6, _, _)
     TBLIS_CONFIG_GEMM_KR(_,     8, _, _)
-    TBLIS_CONFIG_GEMM_MC(_,   128, _, _)
-    TBLIS_CONFIG_GEMM_NC(_,  5760, _, _)
-    TBLIS_CONFIG_GEMM_KC(_,   336, _, _)
+    L2_BLOCK_SIZES
 
     TBLIS_CONFIG_GEMM_UKR(_,
                           bli_dgemm_opt_6x32_l2,
@@ -68,9 +77,9 @@ TBLIS_BEGIN_CONFIG(skx_24x8_l1)
     TBLIS_CONFIG_GEMM_MR(_,    24, _, _)
     TBLIS_CONFIG_GEMM_NR(_,     8, _, _)
     TBLIS_CONFIG_GEMM_KR(_,     8, _, _)
-    TBLIS_CONFIG_GEMM_MC(_,   336, _, _)
+    TBLIS_CONFIG_GEMM_MC(_,   768, _, _)
     TBLIS_CONFIG_GEMM_NC(_, 14400, _, _)
-    TBLIS_CONFIG_GEMM_KC(_,    96, _, _)
+    TBLIS_CONFIG_GEMM_KC(_,   128, _, _)
 
     TBLIS_CONFIG_GEMM_UKR(_,
                           bli_dgemm_opt_8x24_l1,
@@ -89,9 +98,7 @@ TBLIS_BEGIN_CONFIG(skx_24x8_l2)
     TBLIS_CONFIG_GEMM_MR(_,    24, _, _)
     TBLIS_CONFIG_GEMM_NR(_,     8, _, _)
     TBLIS_CONFIG_GEMM_KR(_,     8, _, _)
-    TBLIS_CONFIG_GEMM_MC(_,   144, _, _)
-    TBLIS_CONFIG_GEMM_NC(_,  5760, _, _)
-    TBLIS_CONFIG_GEMM_KC(_,   336, _, _)
+    L2_BLOCK_SIZES
 
     TBLIS_CONFIG_GEMM_UKR(_,
                           bli_dgemm_opt_8x24_l2,
@@ -131,9 +138,7 @@ TBLIS_BEGIN_CONFIG(skx_16x12_l2)
     TBLIS_CONFIG_GEMM_MR(_,    16, _, _)
     TBLIS_CONFIG_GEMM_NR(_,    12, _, _)
     TBLIS_CONFIG_GEMM_KR(_,     8, _, _)
-    TBLIS_CONFIG_GEMM_MC(_,   144, _, _)
-    TBLIS_CONFIG_GEMM_NC(_,  5760, _, _)
-    TBLIS_CONFIG_GEMM_KC(_,   336, _, _)
+    L2_BLOCK_SIZES
 
     TBLIS_CONFIG_GEMM_UKR(_,
                           bli_dgemm_opt_12x16_l2,
@@ -196,7 +201,7 @@ TBLIS_BEGIN_CONFIG(skx_8x24_l1)
     TBLIS_CONFIG_GEMM_KR(_,     8, _, _)
     TBLIS_CONFIG_GEMM_MC(_,   336, _, _)
     TBLIS_CONFIG_GEMM_NC(_, 14400, _, _)
-    TBLIS_CONFIG_GEMM_KC(_,    96, _, _)
+    TBLIS_CONFIG_GEMM_KC(_,   128, _, _)
 
     TBLIS_CONFIG_GEMM_UKR(_,
                           bli_dgemm_opt_8x24_l1,
@@ -294,7 +299,7 @@ TBLIS_BEGIN_CONFIG(skx_knl)
 
 TBLIS_END_CONFIG
 
-typedef skx_knl_config skx_config;
+typedef skx_16x12_l2_config skx_config;
 
 }
 

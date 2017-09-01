@@ -36,36 +36,15 @@
 #include <assert.h>
 
 #include "../knl/bli_avx512_macros.h"
+#include "common.h"
 
-#define PREFETCH_C_L2
-
-#define A_L1_PREFETCH_DIST 3
-
-/*The pointer of B is moved ahead by one iteration of k
-before the loop starts.Therefore, prefetching 3 k iterations
-ahead*/
-#define B_L1_PREFETCH_DIST 3
 #define CACHELINE_SIZE 64 //size of cache line in bytes
 
 /* During each subiteration, prefetching 3 cache lines of B
  * UNROLL factor ahead. 3 cache lines = 24 doubles (NR).
  * */
 #define PREFETCH_B_L1(n, k) \
-	PREFETCH(0, MEM(RBX, B_L1_PREFETCH_DIST*24*8 + (3*n+k)  * CACHELINE_SIZE))
-
-/* Preloading B for the first iteration of the main loop.
-	 * for subiter(1), subiter(2), and subiter(3) */
-#define PREFETCH_B_L1_1ITER \
-	PREFETCH(0, MEM(RBX                   )) \
-    PREFETCH(0, MEM(RBX,    CACHELINE_SIZE)) \
-	PREFETCH(0, MEM(RBX,  2*CACHELINE_SIZE)) \
-	PREFETCH(0, MEM(RBX,  3*CACHELINE_SIZE)) \
-    PREFETCH(0, MEM(RBX,  4*CACHELINE_SIZE)) \
-	PREFETCH(0, MEM(RBX,  5*CACHELINE_SIZE)) \
-	PREFETCH(0, MEM(RBX,  6*CACHELINE_SIZE)) \
-	PREFETCH(0, MEM(RBX,  7*CACHELINE_SIZE)) \
-    PREFETCH(0, MEM(RBX,  8*CACHELINE_SIZE))
-
+    PREFETCH(0, MEM(RBX, B_L1_PREFETCH_DIST*24*8 + (3*n+k)  * CACHELINE_SIZE))
 
 #define LOOP_ALIGN ALIGN16
 
@@ -137,34 +116,34 @@ ahead*/
 #undef PREFETCH_C_L2
 #define PREFETCH_C_L2 \
 \
-	PREFETCH(1, MEM(RCX,      0*64)) \
+    PREFETCH(1, MEM(RCX,      0*64)) \
     PREFETCH(1, MEM(RCX,      1*64)) \
     PREFETCH(1, MEM(RCX,      2*64)) \
-	\
+    \
     PREFETCH(1, MEM(RCX,R12,1,0*64)) \
     PREFETCH(1, MEM(RCX,R12,1,1*64)) \
     PREFETCH(1, MEM(RCX,R12,1,2*64)) \
-	\
+    \
     PREFETCH(1, MEM(RCX,R12,2,0*64)) \
     PREFETCH(1, MEM(RCX,R12,2,1*64)) \
     PREFETCH(1, MEM(RCX,R12,2,2*64)) \
-	\
+    \
     PREFETCH(1, MEM(RCX,R13,1,0*64)) \
     PREFETCH(1, MEM(RCX,R13,1,1*64)) \
     PREFETCH(1, MEM(RCX,R13,1,2*64)) \
-	\
+    \
     PREFETCH(1, MEM(RCX,R12,4,0*64)) \
     PREFETCH(1, MEM(RCX,R12,4,1*64)) \
     PREFETCH(1, MEM(RCX,R12,4,2*64)) \
-	\
+    \
     PREFETCH(1, MEM(RCX,R14,1,0*64)) \
     PREFETCH(1, MEM(RCX,R14,1,1*64)) \
     PREFETCH(1, MEM(RCX,R14,1,2*64)) \
-	\
+    \
     PREFETCH(1, MEM(RCX,R13,2,0*64)) \
     PREFETCH(1, MEM(RCX,R13,2,1*64)) \
     PREFETCH(1, MEM(RCX,R13,2,2*64)) \
-	\
+    \
     PREFETCH(1, MEM(RCX,R15,1,0*64)) \
     PREFETCH(1, MEM(RCX,R15,1,1*64)) \
     PREFETCH(1, MEM(RCX,R15,1,2*64))
@@ -212,27 +191,27 @@ ahead*/
 \
     VBROADCASTSD(ZMM(4), MEM(RAX,(8*n+0)*8)) \
     VBROADCASTSD(ZMM(5), MEM(RAX,(8*n+1)*8)) \
-	\
-	PREFETCH_B_L1(n,0) \
-	\
+    \
+    PREFETCH_B_L1(n,0) \
+    \
     VFMADD231PD(ZMM( 8), ZMM(0), ZMM(4))  VFMADD231PD(ZMM(11), ZMM(0), ZMM(5)) \
     VFMADD231PD(ZMM( 9), ZMM(1), ZMM(4))  VFMADD231PD(ZMM(12), ZMM(1), ZMM(5)) \
     VFMADD231PD(ZMM(10), ZMM(2), ZMM(4))  VFMADD231PD(ZMM(13), ZMM(2), ZMM(5)) \
     \
     VBROADCASTSD(ZMM(4), MEM(RAX,(8*n+2)*8)) \
     VBROADCASTSD(ZMM(5), MEM(RAX,(8*n+3)*8)) \
-	\
-	PREFETCH_B_L1(n,1) \
-	\
+    \
+    PREFETCH_B_L1(n,1) \
+    \
     VFMADD231PD(ZMM(14), ZMM(0), ZMM(4))  VFMADD231PD(ZMM(17), ZMM(0), ZMM(5)) \
     VFMADD231PD(ZMM(15), ZMM(1), ZMM(4))  VFMADD231PD(ZMM(18), ZMM(1), ZMM(5)) \
     VFMADD231PD(ZMM(16), ZMM(2), ZMM(4))  VFMADD231PD(ZMM(19), ZMM(2), ZMM(5)) \
     \
     VBROADCASTSD(ZMM(4), MEM(RAX,(8*n+4)*8)) \
     VBROADCASTSD(ZMM(5), MEM(RAX,(8*n+5)*8)) \
-	\
-	PREFETCH_B_L1(n,3) \
-	\
+    \
+    PREFETCH_B_L1(n,3) \
+    \
     VFMADD231PD(ZMM(20), ZMM(0), ZMM(4))  VFMADD231PD(ZMM(23), ZMM(0), ZMM(5)) \
     VFMADD231PD(ZMM(21), ZMM(1), ZMM(4))  VFMADD231PD(ZMM(24), ZMM(1), ZMM(5)) \
     VFMADD231PD(ZMM(22), ZMM(2), ZMM(4))  VFMADD231PD(ZMM(25), ZMM(2), ZMM(5)) \
@@ -303,19 +282,36 @@ void bli_dgemm_opt_8x24_l2(
     TEST(RSI, RSI)
     JZ(POSTACCUM)
 
+#ifdef PREFETCH_A_BEFORE
+    PREFETCH(0, MEM(RAX, 0*64))
+    PREFETCH(0, MEM(RAX, 1*64))
+    PREFETCH(0, MEM(RAX, 2*64))
+    PREFETCH(0, MEM(RAX, 3*64))
+#endif
 
-	PREFETCH_B_L1_1ITER
+#ifdef PREFETCH_B_BEFORE
+    PREFETCH(0, MEM(RBX, 0*64))
+    PREFETCH(0, MEM(RBX, 1*64))
+    PREFETCH(0, MEM(RBX, 2*64))
+    PREFETCH(0, MEM(RBX, 3*64))
+    PREFETCH(0, MEM(RBX, 4*64))
+    PREFETCH(0, MEM(RBX, 5*64))
+    PREFETCH(0, MEM(RBX, 6*64))
+    PREFETCH(0, MEM(RBX, 7*64))
+    PREFETCH(0, MEM(RBX, 8*64))
+    PREFETCH(0, MEM(RBX, 9*64))
+    PREFETCH(0, MEM(RBX,10*64))
+    PREFETCH(0, MEM(RBX,11*64))
+#endif
 
-	PREFETCH_C_L2
+    PREFETCH_C_L2
 
     MOV(RDI, RSI)
     AND(RSI, IMM(3))
     SAR(RDI, IMM(2))
-    JZ(TAIL_LOOP)
 
-	CMP(RDI, IMM(8)) // 8x4 = 32 iterations
-	JLE(K_SMALL)
-	SUB(RDI, IMM(8))
+    SUB(RDI, IMM(0+TAIL_NITER))
+    JLE(K_SMALL)
 
     LOOP_ALIGN
     LABEL(MAIN_LOOP)
@@ -336,15 +332,16 @@ void bli_dgemm_opt_8x24_l2(
 
     JNZ(MAIN_LOOP)
 
-	MOV(RDI, IMM(8))
+    LABEL(K_SMALL)
 
-	LABEL(K_SMALL)
+    PREFETCH_C_L1
 
-	PREFETCH_C_L1
+    ADD(RDI, IMM(0+TAIL_NITER))
+    JZ(TAIL_LOOP)
 
-	LOOP_ALIGN
-	LABEL(SMALL_LOOP)
-    	PREFETCH(0, MEM(RAX,A_L1_PREFETCH_DIST*8*8))
+    LOOP_ALIGN
+    LABEL(SMALL_LOOP)
+        PREFETCH(0, MEM(RAX,A_L1_PREFETCH_DIST*8*8))
         SUBITER(0)
         PREFETCH(0, MEM(RAX,A_L1_PREFETCH_DIST*8*8+64))
         SUBITER(1)
@@ -377,6 +374,30 @@ void bli_dgemm_opt_8x24_l2(
     JNZ(TAIL_LOOP)
 
     LABEL(POSTACCUM)
+
+#ifdef PREFETCH_AB_AFTER
+    MOV(R8, VAR(a))
+    PREFETCH(0, MEM(R8,0*64))
+    PREFETCH(0, MEM(R8,1*64))
+    PREFETCH(0, MEM(R8,2*64))
+    PREFETCH(0, MEM(R8,3*64))
+#endif
+
+#ifdef PREFETCH_B_AFTER
+    MOV(R9, VAR(b))
+    PREFETCH(0, MEM(R9, 0*64))
+    PREFETCH(0, MEM(R9, 1*64))
+    PREFETCH(0, MEM(R9, 2*64))
+    PREFETCH(0, MEM(R9, 3*64))
+    PREFETCH(0, MEM(R9, 4*64))
+    PREFETCH(0, MEM(R9, 5*64))
+    PREFETCH(0, MEM(R9, 6*64))
+    PREFETCH(0, MEM(R9, 7*64))
+    PREFETCH(0, MEM(R9, 8*64))
+    PREFETCH(0, MEM(R9, 9*64))
+    PREFETCH(0, MEM(R9,10*64))
+    PREFETCH(0, MEM(R9,11*64))
+#endif
 
     MOV(RAX, VAR(alpha))
     MOV(RBX, VAR(beta))

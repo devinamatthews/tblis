@@ -274,7 +274,7 @@ struct gemm_experiment
             double perf = gflops/run_kernel(R,
             [&]
             {
-                tblis_matrix_mult(tblis_single, *configs[i], &At, &Bt, &Ct);
+                tblis_matrix_mult(NULL, *configs[i], &At, &Bt, &Ct);
             });
 
             printf("%e ", perf);
@@ -368,6 +368,14 @@ int main(int argc, char** argv)
     test_gemm<double>(100, 100, 100);
 
     printf("Getting SKX DGEMM performance:\n");
+   
+    printf("              ");
+    for (int i = 0;i < num_configs;i++)
+    {
+        printf("%13s", configs[i]->name);
+    }
+    printf("\n");
+
     string line;
     while (getline(cin, line) && !line.empty())
     {

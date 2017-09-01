@@ -13,11 +13,11 @@
 #include <set>
 #include <map>
 
+#include "../src/configs/skx1/config.hpp"
 #include "tblis.h"
 #include "util/time.hpp"
 #include "util/tensor.hpp"
 #include "util/random.hpp"
-#include "configs/skx/config.hpp"
 
 using namespace std;
 using namespace tblis;

@@ -2,10 +2,12 @@
 
 #include "util/cpuid.hpp"
 
+extern int vpu_count();
+
 namespace tblis
 {
 
-int skx_check()
+int skx2_check()
 {
     int family, model, features;
     int vendor = get_cpu_type(family, model, features);
@@ -15,6 +17,8 @@ int skx_check()
                                   FEATURE_AVX512DQ|
                                   FEATURE_AVX512BW|
                                   FEATURE_AVX512VL)) return -1;
+
+    if (vpu_count() != 2) return -1;
 
     return 3;
 }

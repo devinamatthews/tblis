@@ -1,5 +1,5 @@
-#ifndef _TBLIS_CONFIGS_SKX_CONFIG_HPP_
-#define _TBLIS_CONFIGS_SKX_CONFIG_HPP_
+#ifndef _TBLIS_CONFIGS_SKX2_CONFIG_HPP_
+#define _TBLIS_CONFIGS_SKX2_CONFIG_HPP_
 
 #include "configs/config_builder.hpp"
 
@@ -19,7 +19,7 @@ EXTERN_GEMM_UKR(double, bli_dgemm_opt_24x8_knl);
 namespace tblis
 {
 
-extern int skx_check();
+extern int skx2_check();
 
 #define L2_BLOCK_SIZES \
     TBLIS_CONFIG_GEMM_MC(_,   240, _, _) \
@@ -299,7 +299,7 @@ TBLIS_BEGIN_CONFIG(skx_knl)
 
 TBLIS_END_CONFIG
 
-typedef skx_16x12_l2_config skx_config;
+typedef skx_16x12_l2_config skx2_config;
 
 }
 

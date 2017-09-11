@@ -232,7 +232,7 @@ if ENABLE_CORE2
 noinst_LTLIBRARIES += lib/libcore2.la
 lib_libtblis_la_LIBADD += lib/libcore2.la
 lib_libcore2_la_SOURCES = src/configs/core2/bli_gemm_asm_d4x4.c \
-					     src/configs/core2/config.cxx
+					      src/configs/core2/config.cxx
 if ENABLE_INTEL_COMPILER
 lib_libcore2_la_CFLAGS = -O3 -xSSSE3
 lib_libcore2_la_CXXFLAGS = -O3 -xSSSE3
@@ -246,7 +246,7 @@ if ENABLE_SANDYBRIDGE
 noinst_LTLIBRARIES += lib/libsandybridge.la
 lib_libtblis_la_LIBADD += lib/libsandybridge.la
 lib_libsandybridge_la_SOURCES = src/configs/sandybridge/bli_gemm_asm_d8x4.c \
-					           src/configs/sandybridge/config.cxx
+					            src/configs/sandybridge/config.cxx
 if ENABLE_INTEL_COMPILER
 lib_libsandybridge_la_CFLAGS = -O3 -xAVX
 lib_libsandybridge_la_CXXFLAGS = -O3 -xAVX
@@ -259,11 +259,11 @@ endif
 if ENABLE_HASWELL
 noinst_LTLIBRARIES += lib/libhaswell.la
 lib_libtblis_la_LIBADD += lib/libhaswell.la
-lib_libhaswell_la_SOURCES = src/configs/haswell/bli_gemm_asm_d12x4.c \
-						   src/configs/haswell/bli_gemm_asm_d8x6.c \
-						   src/configs/haswell/bli_gemm_asm_d6x8.c \
-						   src/configs/haswell/bli_gemm_asm_d4x12.c \
-					       src/configs/haswell/config.cxx
+lib_libhaswell_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
+					        src/configs/haswell/config.cxx
+#							src/configs/haswell/bli_gemm_asm_d12x4.c \
+#						    src/configs/haswell/bli_gemm_asm_d8x6.c \
+#						    src/configs/haswell/bli_gemm_asm_d4x12.c
 if ENABLE_INTEL_COMPILER
 lib_libhaswell_la_CFLAGS = -O3 -xCORE-AVX2
 lib_libhaswell_la_CXXFLAGS = -O3 -xCORE-AVX2
@@ -277,14 +277,14 @@ if ENABLE_KNL
 noinst_LTLIBRARIES += lib/libknl.la
 lib_libtblis_la_LIBADD += lib/libknl.la
 lib_libknl_la_SOURCES = src/configs/knl/bli_packm_opt_24x8.c \
-					   src/configs/knl/bli_packm_opt_30x8.c \
-					   src/configs/knl/bli_dgemm_opt_12x16.c \
-					   src/configs/knl/bli_dgemm_opt_24x8.c \
-					   src/configs/knl/bli_dgemm_opt_30x8.c \
-					   src/configs/knl/bli_dgemm_opt_8x24.c \
-					   src/configs/knl/bli_dgemm_opt_30x8_knc.c \
-					   src/configs/knl/bli_sgemm_opt_30x16_knc.c \
-					   src/configs/knl/config.cxx
+					    src/configs/knl/bli_dgemm_opt_24x8.c \
+					    src/configs/knl/bli_sgemm_opt_30x16_knc.c \
+					    src/configs/knl/config.cxx
+#						src/configs/knl/bli_packm_opt_30x8.c \
+#					    src/configs/knl/bli_dgemm_opt_12x16.c \
+#					    src/configs/knl/bli_dgemm_opt_30x8.c \
+#					    src/configs/knl/bli_dgemm_opt_8x24.c \
+#					    src/configs/knl/bli_dgemm_opt_30x8_knc.c
 if ENABLE_INTEL_COMPILER
 lib_libknl_la_CFLAGS = -O3 -xMIC-AVX512
 lib_libknl_la_CXXFLAGS = -O3 -xMIC-AVX512
@@ -299,27 +299,62 @@ endif
 endif
 endif
 
-if ENABLE_SKX
-noinst_LTLIBRARIES += lib/libskx.la
-lib_libtblis_la_LIBADD += lib/libskx.la
-lib_libskx_la_SOURCES = src/configs/skx/bli_dgemm_opt_12x16_l1.c \
-					    src/configs/skx/bli_dgemm_opt_12x16_l2.c \
-					    src/configs/skx/bli_dgemm_opt_8x24_l1.c \
-					    src/configs/skx/bli_dgemm_opt_8x24_l2.c \
-					    src/configs/skx/bli_dgemm_opt_6x32_l1.c \
-					    src/configs/skx/bli_dgemm_opt_6x32_l2.c \
-					    src/configs/skx/bli_dgemm_opt_24x8_knl.c \
-					    src/configs/skx/config.cxx
+if ENABLE_SKX1
+noinst_LTLIBRARIES += lib/libskx1.la
+lib_libtblis_la_LIBADD += lib/libskx1.la
+if !ENABLE_SKX2
+if !ENABLE_HASWELL
+lib_libskx1_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
+					     src/configs/skx2/vpu_count.cxx \
+					     src/configs/skx1/config.cxx
+else
+lib_libskx1_la_SOURCES = src/configs/skx2/vpu_count.cxx \
+					     src/configs/skx1/config.cxx
+endif
+else
+if !ENABLE_HASWELL
+lib_libskx1_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
+					     src/configs/skx1/config.cxx
+else
+lib_libskx1_la_SOURCES = src/configs/skx1/config.cxx
+endif
+endif
 if ENABLE_INTEL_COMPILER
-lib_libskx_la_CFLAGS = -O3 -xCORE-AVX512
-lib_libskx_la_CXXFLAGS = -O3 -xCORE-AVX512
+lib_libskx1_la_CFLAGS = -O3 -xCORE-AVX512
+lib_libskx1_la_CXXFLAGS = -O3 -xCORE-AVX512
 else
 if IS_OSX
-lib_libskx_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
-lib_libskx_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
+lib_libskx1_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
+lib_libskx1_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
 else
-lib_libskx_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
-lib_libskx_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
+lib_libskx1_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
+lib_libskx1_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
+endif
+endif
+endif
+
+if ENABLE_SKX2
+noinst_LTLIBRARIES += lib/libskx2.la
+lib_libtblis_la_LIBADD += lib/libskx2.la
+lib_libskx2_la_SOURCES = src/configs/skx2/bli_dgemm_opt_12x16_l2.c \
+					     src/configs/skx2/vpu_count.cxx \
+					     src/configs/skx2/config.cxx
+#                        src/configs/skx2/bli_dgemm_opt_12x16_l1.c \
+#					     src/configs/skx2/bli_dgemm_opt_8x24_l1.c \
+#					     src/configs/skx2/bli_dgemm_opt_8x24_l2.c \
+#					     src/configs/skx2/bli_dgemm_opt_6x32_l1.c \
+#					     src/configs/skx2/bli_dgemm_opt_6x32_l2.c \
+#					     src/configs/skx2/bli_dgemm_opt_24x8_knl.c
+if ENABLE_INTEL_COMPILER
+lib_libskx2_la_CFLAGS = -O3 -xCORE-AVX512
+lib_libskx2_la_CXXFLAGS = -O3 -xCORE-AVX512
+else
+if IS_OSX
+lib_libskx2_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
+lib_libskx2_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
+else
+lib_libskx2_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
+lib_libskx2_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
 endif
 endif
 endif
@@ -401,8 +436,12 @@ endif
 noinst_PROGRAMS = bin/test
 if ENABLE_BLAS
 noinst_PROGRAMS += bin/bench #bin/batched_bench bin/dpd_bench
-if ENABLE_SKX
+if ENABLE_SKX1
 noinst_PROGRAMS += bin/skx_bench
+else
+if ENABLE_SKX2
+noinst_PROGRAMS += bin/skx_bench
+endif
 endif
 endif
 bin_test_SOURCES = test/test.cxx

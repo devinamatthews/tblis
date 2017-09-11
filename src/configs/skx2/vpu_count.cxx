@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Intel Corp.
+ * Copyright 2017 Devin Matthews and Intel Corp.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -24,21 +24,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
+#include <cstdint>
+#include <string>
 
 #include <cpuid.h>
 
-#ifdef USE_STRNSTR
-#define STRSTR(haystack,needle) strnstr((haystack),(needle),sizeof(haystack))
-#else
-#define STRSTR(haystack,needle) strstr((haystack),(needle))
-#endif
-
-static void get_cpu_name(char cpu_name[48])
+static std::string get_cpu_name()
 {
+    char cpu_name[48] = {};
     uint32_t eax, ebx, ecx, edx;
 
     __cpuid(0x80000002u, eax, ebx, ecx, edx);
@@ -64,92 +57,46 @@ static void get_cpu_name(char cpu_name[48])
     *(uint32_t *)&cpu_name[32+4]  = ebx;
     *(uint32_t *)&cpu_name[32+8]  = ecx;
     *(uint32_t *)&cpu_name[32+12] = edx;
+
+    return std::string(cpu_name);
 }
 
-int vpu_count(void)
+int vpu_count()
 {
-    char cpu_name[48] = {0};
+    std::string name = get_cpu_name();
 
-    get_cpu_name(cpu_name);
-#ifdef DEBUG
-    printf("cpu_name = %s\n", cpu_name);
-#endif
+    if (name.find("Intel(R) Xeon(R)") != std::string::npos)
+    {
+        auto loc = name.find("Platinum");
+        if (loc == std::string::npos) loc = name.find("Gold");
+        if (loc == std::string::npos) loc = name.find("Silver");
+        if (loc == std::string::npos) loc = name.find("Bronze");
+        if (loc == std::string::npos) loc = name.find("W");
+        if (loc == std::string::npos) return -1;
 
-    const char skx[17]     = "Intel(R) Xeon(R)";
-    const char knl[29]     = "Intel(R) Xeon Phi(TM) CPU 72";
-    const char platinum[9] = "Platinum";
-    const char gold[5]     = "Gold";
-    const char silver[7]   = "Silver";
-    const char bronze[7]   = "Bronze";
-
-    const char * loc;
-
-    /* Xeon Phi 72xx aka KNL always has 2 VPU */
-    loc = STRSTR(cpu_name, knl);
-    if (loc != NULL) {
-        return 2;
+        auto sku = atoi(name.substr(loc+1, 4).c_str());
+        if      (8199 >= sku && sku >= 8100) return 2;
+        else if (6199 >= sku && sku >= 6100) return 2;
+        else if (sku == 5122)                return 2;
+        else if (5199 >= sku && sku >= 5100) return 1;
+        else if (4199 >= sku && sku >= 4100) return 1;
+        else if (3199 >= sku && sku >= 3100) return 1;
+        else if (2199 >= sku && sku >= 2120) return 2;
+        else if (2119 >= sku && sku >= 2100) return 1;
+        else return -1;
     }
-
-    /* FIXME: Add Core i9 X-series... */
-
-    /* If it is not Xeon, it doesn't have AVX-512 */
-    loc = STRSTR(cpu_name, skx);
-    if (loc == NULL) {
-        return 0;
+    else if (name.find("Intel(R) Core(TM) i9") != std::string::npos)
+    {
+        return 1;
     }
-
-    loc = STRSTR(cpu_name, platinum);
-    if (loc != NULL) {
-        char skustr[5] = {0};
-        memcpy(&skustr,loc+sizeof(platinum),4);
-        const int skunum = atoi(skustr);
-        if (8199 >= skunum && skunum >= 8100) {
-            return 2;
-        } else {
-            printf("%s %d does not exist.\n", platinum, skunum);
-        }
+    else if (name.find("Intel(R) Core(TM) i7") != std::string::npos)
+    {
+        if (name.find("7800X") != std::string::npos ||
+            name.find("7820X") != std::string::npos) return 1;
+        else return -1;
     }
-
-    loc = STRSTR(cpu_name, gold);
-    if (loc != NULL) {
-        char skustr[5] = {0};
-        memcpy(&skustr,loc+sizeof(gold),4);
-        const int skunum = atoi(skustr);
-        if (skunum == 5122) {
-            /* https://ark.intel.com/products/120475/Intel-Xeon-Gold-5122-Processor-16_5M-Cache-3_60-GHz */
-            return 2;
-        } else if (6199 >= skunum && skunum >= 6100) {
-            return 2;
-        } else if (5199 >= skunum && skunum >= 5100) {
-            return 1;
-        } else {
-            printf("%s %d does not exist.\n", gold, skunum);
-        }
+    else
+    {
+        return -1;
     }
-
-    loc = STRSTR(cpu_name, silver);
-    if (loc != NULL) {
-        char skustr[5] = {0};
-        memcpy(&skustr,loc+sizeof(silver),4);
-        const int skunum = atoi(skustr);
-        if (4199 >= skunum && skunum >= 4100) {
-            return 1;
-        } else {
-            printf("%s %d does not exist.\n", silver, skunum);
-        }
-    }
-
-    loc = STRSTR(cpu_name, bronze);
-    if (loc != NULL) {
-        char skustr[5] = {0};
-        memcpy(&skustr,loc+sizeof(bronze),4);
-        const int skunum = atoi(skustr);
-        if (3199 >= skunum && skunum >= 3100) {
-            return 1;
-        } else {
-            printf("%s %d does not exist.\n", bronze, skunum);
-        }
-    }
-
-    return 0;
 }

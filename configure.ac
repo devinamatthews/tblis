@@ -45,10 +45,10 @@ fi
 # Check for hwloc
 #
 
-AC_ARG_WITH([memloc], AS_HELP_STRING([--without-memloc],
-    [do not attempt to link with the memloc library]))
+AC_ARG_WITH([memloc], AS_HELP_STRING([--without-hwloc],
+    [do not attempt to link with the hwloc library]))
     
-if test "x$with_memloc" != "xno"; then
+if test "x$with_hwloc" != "xno"; then
     AC_CHECK_HEADERS([hwloc.h])
     AC_SEARCH_LIBS([hwloc_topology_init], [hwloc])
 fi
@@ -155,7 +155,7 @@ AC_DEFINE_UNQUOTED([LABEL_TYPE], [$label_type], [label_type])
 # Supported:
 #
 # reference, bulldozer, piledriver, excavator, zen, core2, sandybridge,
-# haswell, skx, knl, auto
+# haswell, skx1, skx2, knl, auto
 #
 # Possible with porting from BLIS:
 #
@@ -169,11 +169,11 @@ AC_ARG_ENABLE([config],
                           possible values are:
                           
                           reference, bulldozer, piledriver, excavator, zen,
-                          core2, sandybridge, haswell, skx, knl, auto
+                          core2, sandybridge, haswell, skx1, skx2, knl, auto
 
                           the following meta-configurations are also available:
  
-                          intel = core2,sandybridge,haswell,skx,knl
+                          intel = core2,sandybridge,haswell,skx1,skx2,knl
                           amd = bulldozer,piledriver,excavator,zen
                           x86 = intel,amd],
               [], [enable_config=auto])
@@ -204,7 +204,7 @@ if ( echo $enable_config | grep -qv reference ) && test x$using_default_configs 
 fi
 
 configs=`echo $enable_config | sed 's/x86/intel,amd/' \
-                             | sed 's/intel/core2,sandybridge,haswell,skx,knl/' \
+                             | sed 's/intel/core2,sandybridge,haswell,skx1,skx2,knl/' \
                              | sed 's/amd/bulldozer,piledriver,excavator,zen/' \
                              | sed 's/,/ /g'`
 
@@ -258,7 +258,7 @@ fi
 # sandybridge: any
 # haswell: any
 # knl: icc 14.1+, gcc 5.0+, clang 3.5+
-# skx: icc 15.1+, gcc 6.0+, clang 3.9+
+# skx[12]: icc 15.1+, gcc 6.0+, clang 3.9+
 #
 if test x"$cc_vendor" = xicc; then
     if test $cc_major -lt 15; then
@@ -266,7 +266,7 @@ if test x"$cc_vendor" = xicc; then
     fi
     if test $cc_major -eq 15; then
         if test $cc_revision -lt 1; then
-            configs=`echo $configs | sed 's/ *skx */ /'`
+            configs=`echo $configs | sed 's/ *skx[12] */ /'`
         fi
     fi
 elif test x"$cc_vendor" = xgcc; then
@@ -283,7 +283,7 @@ elif test x"$cc_vendor" = xgcc; then
         configs=`echo $configs | sed 's/ *knl */ /'`
     fi
     if test $cc_major -lt 6; then
-        configs=`echo $configs | sed 's/ *skx */ /' \
+        configs=`echo $configs | sed 's/ *skx[12] */ /' \
                                | sed 's/ *zen */ /'`
     fi
 elif test x"$cc_vendor" = xclang; then
@@ -299,7 +299,7 @@ elif test x"$cc_vendor" = xclang; then
                                    | sed 's/ *excavator */ /'`
         fi
         if test $cc_minor -lt 9; then
-            configs=`echo $configs | sed 's/ *skx */ /'`
+            configs=`echo $configs | sed 's/ *skx[12] */ /'`
         fi
     fi
     if test $cc_major -lt 4; then
@@ -341,7 +341,7 @@ if ( echo $configs | $EGREP -q 'haswell|piledriver|excavator|skx' ); then
         configs=`echo $configs | sed 's/ *haswell */ /' \
                                | sed 's/ *piledriver */ /' \
                                | sed 's/ *excavator */ /' \
-                               | sed 's/ *skx */ /' \
+                               | sed 's/ *skx[12] */ /' \
                                | sed 's/ *zen */ /'`
     fi
 fi
@@ -382,7 +382,7 @@ if ( echo $configs | $EGREP -q 'knl|skx' ); then
     if test "x$enable_avx512f" = xno; then
         AC_MSG_WARN([AVX-512F cannot be compiled; disabling knl and skx configurations])
         configs=`echo $configs | sed 's/ *knl */ /' \
-                               | sed 's/ *skx */ /'`
+                               | sed 's/ *skx[12] */ /'`
     fi
     CPPFLAGS="$CPPFLAGS_save"
 fi
@@ -403,7 +403,7 @@ if ( echo $configs | $EGREP -q 'skx' ); then
     AC_MSG_RESULT([$enable_avx512dq])
     if test "x$enable_avx512dq" = xno; then
         AC_MSG_WARN([AVX-512DQ cannot be compiled; disabling skx configuration])
-        configs=`echo $configs | sed 's/ *skx */ /'`
+        configs=`echo $configs | sed 's/ *skx[12] */ /'`
     fi
     CPPFLAGS="$CPPFLAGS_save"
 fi
@@ -428,7 +428,8 @@ AM_CONDITIONAL(ENABLE_CORTEX_A15, [echo $configs | grep -q cortex-a15])
 AM_CONDITIONAL(ENABLE_CORTEX_A9, [echo $configs | grep -q cortex-a9])
 AM_CONDITIONAL(ENABLE_CORE2, [echo $configs | grep -q core2])
 AM_CONDITIONAL(ENABLE_HASWELL, [echo $configs | grep -q haswell])
-AM_CONDITIONAL(ENABLE_SKX, [echo $configs | grep -q skx])
+AM_CONDITIONAL(ENABLE_SKX1, [echo $configs | grep -q skx1])
+AM_CONDITIONAL(ENABLE_SKX2, [echo $configs | grep -q skx2])
 AM_CONDITIONAL(ENABLE_KNL, [echo $configs | grep -q knl])
 AM_CONDITIONAL(ENABLE_LOONGSON3A, [echo $configs | grep -q loongson3a])
 AM_CONDITIONAL(ENABLE_MIC, [echo $configs | grep -q mic])

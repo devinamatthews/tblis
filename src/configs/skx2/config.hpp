@@ -49,7 +49,7 @@ TBLIS_BEGIN_CONFIG(skx_32x6_l1)
     TBLIS_CONFIG_GEMM_ROW_MAJOR(_, false, _, _)
     TBLIS_CONFIG_GEMM_FLIP_UKR(_, true, _, _)
 
-    TBLIS_CONFIG_CHECK(skx_check)
+    TBLIS_CONFIG_CHECK(skx2_check)
 
 TBLIS_END_CONFIG
 
@@ -68,7 +68,7 @@ TBLIS_BEGIN_CONFIG(skx_32x6_l2)
     TBLIS_CONFIG_GEMM_ROW_MAJOR(_, false, _, _)
     TBLIS_CONFIG_GEMM_FLIP_UKR(_, true, _, _)
 
-    TBLIS_CONFIG_CHECK(skx_check)
+    TBLIS_CONFIG_CHECK(skx2_check)
 
 TBLIS_END_CONFIG
 
@@ -89,7 +89,7 @@ TBLIS_BEGIN_CONFIG(skx_24x8_l1)
     TBLIS_CONFIG_GEMM_ROW_MAJOR(_, false, _, _)
     TBLIS_CONFIG_GEMM_FLIP_UKR(_, true, _, _)
 
-    TBLIS_CONFIG_CHECK(skx_check)
+    TBLIS_CONFIG_CHECK(skx2_check)
 
 TBLIS_END_CONFIG
 
@@ -108,7 +108,7 @@ TBLIS_BEGIN_CONFIG(skx_24x8_l2)
     TBLIS_CONFIG_GEMM_ROW_MAJOR(_, false, _, _)
     TBLIS_CONFIG_GEMM_FLIP_UKR(_, true, _, _)
 
-    TBLIS_CONFIG_CHECK(skx_check)
+    TBLIS_CONFIG_CHECK(skx2_check)
 
 TBLIS_END_CONFIG
 
@@ -129,7 +129,7 @@ TBLIS_BEGIN_CONFIG(skx_16x12_l1)
     TBLIS_CONFIG_GEMM_ROW_MAJOR(_, false, _, _)
     TBLIS_CONFIG_GEMM_FLIP_UKR(_, true, _, _)
 
-    TBLIS_CONFIG_CHECK(skx_check)
+    TBLIS_CONFIG_CHECK(skx2_check)
 
 TBLIS_END_CONFIG
 
@@ -148,7 +148,7 @@ TBLIS_BEGIN_CONFIG(skx_16x12_l2)
     TBLIS_CONFIG_GEMM_ROW_MAJOR(_, false, _, _)
     TBLIS_CONFIG_GEMM_FLIP_UKR(_, true, _, _)
 
-    TBLIS_CONFIG_CHECK(skx_check)
+    TBLIS_CONFIG_CHECK(skx2_check)
 
 TBLIS_END_CONFIG
 
@@ -169,7 +169,7 @@ TBLIS_BEGIN_CONFIG(skx_12x16_l1)
     TBLIS_CONFIG_GEMM_ROW_MAJOR(_, true, _, _)
     TBLIS_CONFIG_GEMM_FLIP_UKR(_, false, _, _)
 
-    TBLIS_CONFIG_CHECK(skx_check)
+    TBLIS_CONFIG_CHECK(skx2_check)
 
 TBLIS_END_CONFIG
 
@@ -190,7 +190,7 @@ TBLIS_BEGIN_CONFIG(skx_12x16_l2)
     TBLIS_CONFIG_GEMM_ROW_MAJOR(_, true, _, _)
     TBLIS_CONFIG_GEMM_FLIP_UKR(_, false, _, _)
 
-    TBLIS_CONFIG_CHECK(skx_check)
+    TBLIS_CONFIG_CHECK(skx2_check)
 
 TBLIS_END_CONFIG
 
@@ -211,7 +211,7 @@ TBLIS_BEGIN_CONFIG(skx_8x24_l1)
     TBLIS_CONFIG_GEMM_ROW_MAJOR(_, true, _, _)
     TBLIS_CONFIG_GEMM_FLIP_UKR(_, false, _, _)
 
-    TBLIS_CONFIG_CHECK(skx_check)
+    TBLIS_CONFIG_CHECK(skx2_check)
 
 TBLIS_END_CONFIG
 
@@ -232,7 +232,7 @@ TBLIS_BEGIN_CONFIG(skx_8x24_l2)
     TBLIS_CONFIG_GEMM_ROW_MAJOR(_, true, _, _)
     TBLIS_CONFIG_GEMM_FLIP_UKR(_, false, _, _)
 
-    TBLIS_CONFIG_CHECK(skx_check)
+    TBLIS_CONFIG_CHECK(skx2_check)
 
 TBLIS_END_CONFIG
 
@@ -253,7 +253,7 @@ TBLIS_BEGIN_CONFIG(skx_6x32_l1)
     TBLIS_CONFIG_GEMM_ROW_MAJOR(_, true, _, _)
     TBLIS_CONFIG_GEMM_FLIP_UKR(_, false, _, _)
 
-    TBLIS_CONFIG_CHECK(skx_check)
+    TBLIS_CONFIG_CHECK(skx2_check)
 
 TBLIS_END_CONFIG
 
@@ -274,7 +274,7 @@ TBLIS_BEGIN_CONFIG(skx_6x32_l2)
     TBLIS_CONFIG_GEMM_ROW_MAJOR(_, true, _, _)
     TBLIS_CONFIG_GEMM_FLIP_UKR(_, false, _, _)
 
-    TBLIS_CONFIG_CHECK(skx_check)
+    TBLIS_CONFIG_CHECK(skx2_check)
 
 TBLIS_END_CONFIG
 
@@ -295,7 +295,7 @@ TBLIS_BEGIN_CONFIG(skx_knl)
     TBLIS_CONFIG_GEMM_ROW_MAJOR(_, true, _, _)
     TBLIS_CONFIG_GEMM_FLIP_UKR(_, false, _, _)
 
-    TBLIS_CONFIG_CHECK(skx_check)
+    TBLIS_CONFIG_CHECK(skx2_check)
 
 TBLIS_END_CONFIG
 

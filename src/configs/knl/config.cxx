@@ -14,13 +14,15 @@ using bli_packm_func = typename std::remove_pointer<bli_packm_t<T>>::type;
 extern "C" bli_packm_func<double> bli_dpackm_30xk_opt;
 extern "C" bli_packm_func<double> bli_dpackm_24xk_opt;
 extern "C" bli_packm_func<double> bli_dpackm_8xk_opt;
+extern "C" bli_packm_func<float> bli_spackm_24xk_opt;
+extern "C" bli_packm_func<float> bli_spackm_16xk_opt;
 
 namespace tblis
 {
 
-void knl_packm_30xk(len_type m, len_type k,
-                    const double* p_a, stride_type rs_a, stride_type cs_a,
-                    double* p_ap)
+void knl_dpackm_30xk(len_type m, len_type k,
+                     const double* p_a, stride_type rs_a, stride_type cs_a,
+                     double* p_ap)
 {
     constexpr double one = 1.0;
 
@@ -35,9 +37,9 @@ void knl_packm_30xk(len_type m, len_type k,
     }
 }
 
-void knl_packm_24xk(len_type m, len_type k,
-                    const double* p_a, stride_type rs_a, stride_type cs_a,
-                    double* p_ap)
+void knl_dpackm_24xk(len_type m, len_type k,
+                     const double* p_a, stride_type rs_a, stride_type cs_a,
+                     double* p_ap)
 {
     constexpr double one = 1.0;
 
@@ -52,9 +54,9 @@ void knl_packm_24xk(len_type m, len_type k,
     }
 }
 
-void knl_packm_8xk(len_type m, len_type k,
-                   const double* p_a, stride_type rs_a, stride_type cs_a,
-                   double* p_ap)
+void knl_dpackm_8xk(len_type m, len_type k,
+                    const double* p_a, stride_type rs_a, stride_type cs_a,
+                    double* p_ap)
 {
     constexpr double one = 1.0;
 
@@ -65,6 +67,40 @@ void knl_packm_8xk(len_type m, len_type k,
     else
     {
         pack_nn_ukr_def<knl_d24x8_config, double, matrix_constants::MAT_B>
+            (m, k, p_a, rs_a, cs_a, p_ap);
+    }
+}
+
+void knl_spackm_24xk(len_type m, len_type k,
+                     const float* p_a, stride_type rs_a, stride_type cs_a,
+                     float* p_ap)
+{
+    constexpr float one = 1.0;
+
+    if (m == 24)
+    {
+        bli_spackm_24xk_opt(BLIS_NO_CONJUGATE, k, &one, p_a, rs_a, cs_a, p_ap, 24);
+    }
+    else
+    {
+        pack_nn_ukr_def<knl_d24x8_config, float, matrix_constants::MAT_A>
+            (m, k, p_a, rs_a, cs_a, p_ap);
+    }
+}
+
+void knl_spackm_16xk(len_type m, len_type k,
+                     const float* p_a, stride_type rs_a, stride_type cs_a,
+                     float* p_ap)
+{
+    constexpr float one = 1.0;
+
+    if (m == 16)
+    {
+        bli_spackm_16xk_opt(BLIS_NO_CONJUGATE, k, &one, p_a, rs_a, cs_a, p_ap, 16);
+    }
+    else
+    {
+        pack_nn_ukr_def<knl_d24x8_config, float, matrix_constants::MAT_B>
             (m, k, p_a, rs_a, cs_a, p_ap);
     }
 }

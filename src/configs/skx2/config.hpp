@@ -8,6 +8,7 @@ extern "C"
 
 EXTERN_GEMM_UKR(double, bli_dgemm_opt_12x16_l1);
 EXTERN_GEMM_UKR(double, bli_dgemm_opt_12x16_l2);
+EXTERN_GEMM_UKR(double, bli_sgemm_opt_12x32_l2);
 EXTERN_GEMM_UKR(double, bli_dgemm_opt_8x24_l1);
 EXTERN_GEMM_UKR(double, bli_dgemm_opt_8x24_l2);
 EXTERN_GEMM_UKR(double, bli_dgemm_opt_6x32_l1);
@@ -22,10 +23,10 @@ namespace tblis
 extern int skx2_check();
 
 #define L2_BLOCK_SIZES \
-    TBLIS_CONFIG_GEMM_MC(_,   240, _, _) \
-    TBLIS_CONFIG_GEMM_NC(_,  5760, _, _) \
-    TBLIS_CONFIG_GEMM_KC_MAX(_, 384, _, _, \
-                             _, 480, _, _) \
+    TBLIS_CONFIG_GEMM_MC( 480,   240, _, _) \
+    TBLIS_CONFIG_GEMM_NC(5760,  5760, _, _) \
+    TBLIS_CONFIG_GEMM_KC_MAX(384, 384, _, _, \
+                             480, 480, _, _) \
     TBLIS_CONFIG_M_THREAD_RATIO(_,3,_,_) \
     TBLIS_CONFIG_N_THREAD_RATIO(_,2,_,_) \
     TBLIS_CONFIG_MR_MAX_THREAD(_,1,_,_) \
@@ -135,18 +136,18 @@ TBLIS_END_CONFIG
 
 TBLIS_BEGIN_CONFIG(skx_16x12_l2)
 
-    TBLIS_CONFIG_GEMM_MR(_,    16, _, _)
-    TBLIS_CONFIG_GEMM_NR(_,    12, _, _)
-    TBLIS_CONFIG_GEMM_KR(_,     8, _, _)
+    TBLIS_CONFIG_GEMM_MR(32, 16, _, _)
+    TBLIS_CONFIG_GEMM_NR(12, 12, _, _)
+    TBLIS_CONFIG_GEMM_KR(16,  8, _, _)
     L2_BLOCK_SIZES
 
-    TBLIS_CONFIG_GEMM_UKR(_,
+    TBLIS_CONFIG_GEMM_UKR(bli_sgemm_opt_12x32_l2,
                           bli_dgemm_opt_12x16_l2,
                           _,
                           _)
 
-    TBLIS_CONFIG_GEMM_ROW_MAJOR(_, false, _, _)
-    TBLIS_CONFIG_GEMM_FLIP_UKR(_, true, _, _)
+    TBLIS_CONFIG_GEMM_ROW_MAJOR(false, false, _, _)
+    TBLIS_CONFIG_GEMM_FLIP_UKR(true, true, _, _)
 
     TBLIS_CONFIG_CHECK(skx2_check)
 

@@ -25,18 +25,18 @@ tblis_dtype = {
     numpy.dtype(numpy.complex128) : 3,
 }
 
-def _contract(subscripts, a, b, out=None):
+def _contract(subscripts, *tensors, **kwargs):
     subscripts = subscripts.replace(' ','')
     sub_idx = re.split(',|->', subscripts)
     indices  = ''.join(sub_idx)
-    c_dtype = numpy.result_type(a, b)
+    c_dtype = numpy.result_type(*tensors)
     if (not (',' in subscripts and '->' in subscripts) or
         any(indices.count(x)>2 for x in set(indices)) or
         numpy.issubdtype(c_dtype, numpy.integer)):
-        return numpy.einsum(subscripts, a, b)
+        return numpy.einsum(subscripts, *tensors)
 
-    a = numpy.asarray(a, dtype=c_dtype)
-    b = numpy.asarray(b, dtype=c_dtype)
+    a = numpy.asarray(tensors[0], dtype=c_dtype)
+    b = numpy.asarray(tensors[1], dtype=c_dtype)
 
     a_shape = a.shape
     b_shape = b.shape
@@ -52,6 +52,7 @@ def _contract(subscripts, a, b, out=None):
     ab_shape_dic.update(b_shape_dic)
     c_shape = tuple([ab_shape_dic[x] for x in c_descr])
 
+    out = getattr(kwargs, 'out', None)
     if out is None:
         c = numpy.zeros(c_shape, dtype=c_dtype)
     else:

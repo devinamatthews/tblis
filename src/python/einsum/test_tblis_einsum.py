@@ -116,6 +116,13 @@ class KnownValues(unittest.TestCase):
         self.assertTrue(c0.dtype == c1.dtype)
         self.assertTrue(abs(c0-c1).max() < 1e-13)
 
+    def test_1operand(self):
+        a = numpy.random.random((4,1,3,4)) + 1j
+        c0 = numpy.einsum('abca->bc', a)
+        c1 = einsum('abca->bc', a)
+        self.assertTrue(c0.dtype == c1.dtype)
+        self.assertTrue(abs(c0-c1).max() < 1e-13)
+
     def test_wrong_dimension(self):
         a = numpy.random.random((5,1,3,4))
         b = numpy.random.random((2,4,5,7))

@@ -317,9 +317,13 @@ lib_libskx2_la_LIBADD =
 am__lib_libskx2_la_SOURCES_DIST =  \
 	src/configs/skx2/bli_sgemm_opt_12x32_l2.c \
 	src/configs/skx2/bli_dgemm_opt_12x16_l2.c \
+	src/configs/skx2/bli_dgemm_opt_8x8_l1.c \
+	src/configs/skx2/bli_dgemm_opt_8x8_l2.c \
 	src/configs/skx2/vpu_count.cxx src/configs/skx2/config.cxx
 @ENABLE_SKX2_TRUE@am_lib_libskx2_la_OBJECTS = src/configs/skx2/lib_libskx2_la-bli_sgemm_opt_12x32_l2.lo \
 @ENABLE_SKX2_TRUE@	src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_12x16_l2.lo \
+@ENABLE_SKX2_TRUE@	src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_8x8_l1.lo \
+@ENABLE_SKX2_TRUE@	src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_8x8_l2.lo \
 @ENABLE_SKX2_TRUE@	src/configs/skx2/lib_libskx2_la-vpu_count.lo \
 @ENABLE_SKX2_TRUE@	src/configs/skx2/lib_libskx2_la-config.lo
 lib_libskx2_la_OBJECTS = $(am_lib_libskx2_la_OBJECTS)
@@ -950,6 +954,8 @@ lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la \
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SKX1_TRUE@lib_libskx1_la_CXXFLAGS = -O3 -xCORE-AVX512
 @ENABLE_SKX2_TRUE@lib_libskx2_la_SOURCES = src/configs/skx2/bli_sgemm_opt_12x32_l2.c \
 @ENABLE_SKX2_TRUE@					     src/configs/skx2/bli_dgemm_opt_12x16_l2.c \
+@ENABLE_SKX2_TRUE@					     src/configs/skx2/bli_dgemm_opt_8x8_l1.c \
+@ENABLE_SKX2_TRUE@					     src/configs/skx2/bli_dgemm_opt_8x8_l2.c \
 @ENABLE_SKX2_TRUE@					     src/configs/skx2/vpu_count.cxx \
 @ENABLE_SKX2_TRUE@					     src/configs/skx2/config.cxx
 
@@ -1248,6 +1254,12 @@ src/configs/skx2/lib_libskx2_la-bli_sgemm_opt_12x32_l2.lo:  \
 	src/configs/skx2/$(am__dirstamp) \
 	src/configs/skx2/$(DEPDIR)/$(am__dirstamp)
 src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_12x16_l2.lo:  \
+	src/configs/skx2/$(am__dirstamp) \
+	src/configs/skx2/$(DEPDIR)/$(am__dirstamp)
+src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_8x8_l1.lo:  \
+	src/configs/skx2/$(am__dirstamp) \
+	src/configs/skx2/$(DEPDIR)/$(am__dirstamp)
+src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_8x8_l2.lo:  \
 	src/configs/skx2/$(am__dirstamp) \
 	src/configs/skx2/$(DEPDIR)/$(am__dirstamp)
 src/configs/skx2/lib_libskx2_la-vpu_count.lo:  \
@@ -1663,6 +1675,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx1/$(DEPDIR)/lib_libskx1_la-config.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/lib_libskx1_la-vpu_count.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_dgemm_opt_12x16_l2.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_dgemm_opt_8x8_l1.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_dgemm_opt_8x8_l2.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_sgemm_opt_12x32_l2.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/lib_libskx2_la-vpu_count.Plo@am__quote@
@@ -1859,6 +1873,20 @@ src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_12x16_l2.lo: src/configs/skx2/bli_
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/skx2/bli_dgemm_opt_12x16_l2.c' object='src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_12x16_l2.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx2_la_CFLAGS) $(CFLAGS) -c -o src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_12x16_l2.lo `test -f 'src/configs/skx2/bli_dgemm_opt_12x16_l2.c' || echo '$(srcdir)/'`src/configs/skx2/bli_dgemm_opt_12x16_l2.c
+
+src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_8x8_l1.lo: src/configs/skx2/bli_dgemm_opt_8x8_l1.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx2_la_CFLAGS) $(CFLAGS) -MT src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_8x8_l1.lo -MD -MP -MF src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_dgemm_opt_8x8_l1.Tpo -c -o src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_8x8_l1.lo `test -f 'src/configs/skx2/bli_dgemm_opt_8x8_l1.c' || echo '$(srcdir)/'`src/configs/skx2/bli_dgemm_opt_8x8_l1.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_dgemm_opt_8x8_l1.Tpo src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_dgemm_opt_8x8_l1.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/skx2/bli_dgemm_opt_8x8_l1.c' object='src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_8x8_l1.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx2_la_CFLAGS) $(CFLAGS) -c -o src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_8x8_l1.lo `test -f 'src/configs/skx2/bli_dgemm_opt_8x8_l1.c' || echo '$(srcdir)/'`src/configs/skx2/bli_dgemm_opt_8x8_l1.c
+
+src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_8x8_l2.lo: src/configs/skx2/bli_dgemm_opt_8x8_l2.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx2_la_CFLAGS) $(CFLAGS) -MT src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_8x8_l2.lo -MD -MP -MF src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_dgemm_opt_8x8_l2.Tpo -c -o src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_8x8_l2.lo `test -f 'src/configs/skx2/bli_dgemm_opt_8x8_l2.c' || echo '$(srcdir)/'`src/configs/skx2/bli_dgemm_opt_8x8_l2.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_dgemm_opt_8x8_l2.Tpo src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_dgemm_opt_8x8_l2.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/skx2/bli_dgemm_opt_8x8_l2.c' object='src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_8x8_l2.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx2_la_CFLAGS) $(CFLAGS) -c -o src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_8x8_l2.lo `test -f 'src/configs/skx2/bli_dgemm_opt_8x8_l2.c' || echo '$(srcdir)/'`src/configs/skx2/bli_dgemm_opt_8x8_l2.c
 
 src/configs/haswell/lib_libzen_la-bli_gemm_asm_d6x8.lo: src/configs/haswell/bli_gemm_asm_d6x8.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libzen_la_CFLAGS) $(CFLAGS) -MT src/configs/haswell/lib_libzen_la-bli_gemm_asm_d6x8.lo -MD -MP -MF src/configs/haswell/$(DEPDIR)/lib_libzen_la-bli_gemm_asm_d6x8.Tpo -c -o src/configs/haswell/lib_libzen_la-bli_gemm_asm_d6x8.lo `test -f 'src/configs/haswell/bli_gemm_asm_d6x8.c' || echo '$(srcdir)/'`src/configs/haswell/bli_gemm_asm_d6x8.c

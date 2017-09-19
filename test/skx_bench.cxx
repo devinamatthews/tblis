@@ -13,7 +13,7 @@
 #include <set>
 #include <map>
 
-#include "../src/configs/skx1/config.hpp"
+#include "../src/configs/skx2/config.hpp"
 #include "tblis.h"
 #include "util/time.hpp"
 #include "util/tensor.hpp"
@@ -64,19 +64,23 @@ void gemm(char transa, char transb,
 
 const config* configs[] =
 {
-    &skx_32x6_l1_config::instance(),
-    &skx_32x6_l2_config::instance(),
-    &skx_24x8_l1_config::instance(),
-    &skx_24x8_l2_config::instance(),
-    &skx_16x12_l1_config::instance(),
+    //&skx_32x6_l1_config::instance(),
+    //&skx_32x6_l2_config::instance(),
+    //&skx_24x8_l1_config::instance(),
+    //&skx_24x8_l2_config::instance(),
+    //&skx_16x12_l1_config::instance(),
     &skx_16x12_l2_config::instance(),
-    &skx_12x16_l1_config::instance(),
-    &skx_12x16_l2_config::instance(),
-    &skx_8x24_l1_config::instance(),
-    &skx_8x24_l2_config::instance(),
-    &skx_6x32_l1_config::instance(),
-    &skx_6x32_l2_config::instance(),
-    &skx_knl_config::instance(),
+    //&skx_12x16_l1_config::instance(),
+    //&skx_12x16_l2_config::instance(),
+    //&skx_8x24_l1_config::instance(),
+    //&skx_8x24_l2_config::instance(),
+    //&skx_6x32_l1_config::instance(),
+    //&skx_6x32_l2_config::instance(),
+    //&skx_knl_config::instance(),
+    &skx_8x8_l1_config::instance(),
+    &skx_8x8_l2_config::instance(),
+    &skx_8x8_l1_flip_config::instance(),
+    &skx_8x8_l2_flip_config::instance(),
 };
 constexpr auto num_configs = sizeof(configs)/sizeof(configs[0]);
 
@@ -368,7 +372,7 @@ int main(int argc, char** argv)
     test_gemm<double>(100, 100, 100);
 
     printf("Getting SKX DGEMM performance:\n");
-   
+
     printf("              ");
     for (int i = 0;i < num_configs;i++)
     {

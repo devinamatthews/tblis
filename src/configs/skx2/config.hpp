@@ -300,6 +300,90 @@ TBLIS_BEGIN_CONFIG(skx_knl)
 
 TBLIS_END_CONFIG
 
+TBLIS_BEGIN_CONFIG(skx_8x8_l1)
+
+    TBLIS_CONFIG_GEMM_MR(_,     8, _, _)
+    TBLIS_CONFIG_GEMM_NR(_,     8, _, _)
+    TBLIS_CONFIG_GEMM_KR(_,     8, _, _)
+    TBLIS_CONFIG_GEMM_MC(_,   256, _, _)
+    TBLIS_CONFIG_GEMM_NC(_,  5760, _, _)
+    TBLIS_CONFIG_GEMM_KC(_,   256, _, _)
+
+    TBLIS_CONFIG_GEMM_UKR(_,
+                          bli_dgemm_opt_8x8_l1,
+                          _,
+                          _)
+
+    TBLIS_CONFIG_GEMM_ROW_MAJOR(_, true, _, _)
+    TBLIS_CONFIG_GEMM_FLIP_UKR(_, false, _, _)
+
+    TBLIS_CONFIG_CHECK(skx2_check)
+
+TBLIS_END_CONFIG
+
+TBLIS_BEGIN_CONFIG(skx_8x8_l2)
+
+    TBLIS_CONFIG_GEMM_MR(_,     8, _, _)
+    TBLIS_CONFIG_GEMM_NR(_,     8, _, _)
+    TBLIS_CONFIG_GEMM_KR(_,     8, _, _)
+    TBLIS_CONFIG_GEMM_MC(_,   256, _, _)
+    TBLIS_CONFIG_GEMM_NC(_,  5760, _, _)
+    TBLIS_CONFIG_GEMM_KC(_,   256, _, _)
+
+    TBLIS_CONFIG_GEMM_UKR(_,
+                          bli_dgemm_opt_8x8_l2,
+                          _,
+                          _)
+
+    TBLIS_CONFIG_GEMM_ROW_MAJOR(_, true, _, _)
+    TBLIS_CONFIG_GEMM_FLIP_UKR(_, false, _, _)
+
+    TBLIS_CONFIG_CHECK(skx2_check)
+
+TBLIS_END_CONFIG
+
+TBLIS_BEGIN_CONFIG(skx_8x8_l1_flip)
+
+    TBLIS_CONFIG_GEMM_MR(_,     8, _, _)
+    TBLIS_CONFIG_GEMM_NR(_,     8, _, _)
+    TBLIS_CONFIG_GEMM_KR(_,     8, _, _)
+    TBLIS_CONFIG_GEMM_MC(_,   256, _, _)
+    TBLIS_CONFIG_GEMM_NC(_,  5760, _, _)
+    TBLIS_CONFIG_GEMM_KC(_,   256, _, _)
+
+    TBLIS_CONFIG_GEMM_UKR(_,
+                          bli_dgemm_opt_8x8_l1,
+                          _,
+                          _)
+
+    TBLIS_CONFIG_GEMM_ROW_MAJOR(_, false, _, _)
+    TBLIS_CONFIG_GEMM_FLIP_UKR(_, true, _, _)
+
+    TBLIS_CONFIG_CHECK(skx2_check)
+
+TBLIS_END_CONFIG
+
+TBLIS_BEGIN_CONFIG(skx_8x8_l2_flip)
+
+    TBLIS_CONFIG_GEMM_MR(_,     8, _, _)
+    TBLIS_CONFIG_GEMM_NR(_,     8, _, _)
+    TBLIS_CONFIG_GEMM_KR(_,     8, _, _)
+    TBLIS_CONFIG_GEMM_MC(_,   256, _, _)
+    TBLIS_CONFIG_GEMM_NC(_,  5760, _, _)
+    TBLIS_CONFIG_GEMM_KC(_,   256, _, _)
+
+    TBLIS_CONFIG_GEMM_UKR(_,
+                          bli_dgemm_opt_8x8_l2,
+                          _,
+                          _)
+
+    TBLIS_CONFIG_GEMM_ROW_MAJOR(_, false, _, _)
+    TBLIS_CONFIG_GEMM_FLIP_UKR(_, true, _, _)
+
+    TBLIS_CONFIG_CHECK(skx2_check)
+
+TBLIS_END_CONFIG
+
 typedef skx_16x12_l2_config skx2_config;
 
 }

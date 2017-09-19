@@ -140,37 +140,37 @@
         PREFETCH_A_L2(n) \
 \
         VMOVAPS(ZMM(a), MEM(RBX,(n+1)*64)) \
-        VFMADD231PS(ZMM( 8), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 0)*4)) \
-        VFMADD231PS(ZMM( 9), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 1)*4)) \
-        VFMADD231PS(ZMM(10), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 2)*4)) \
+        VFMADD231PS(ZMM( 8), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+ 0)*4)) \
+        VFMADD231PS(ZMM( 9), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+ 1)*4)) \
+        VFMADD231PS(ZMM(10), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+ 2)*4)) \
         PREFETCH_A_L1_1(n) \
-        VFMADD231PS(ZMM(11), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 3)*4)) \
-        VFMADD231PS(ZMM(12), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 4)*4)) \
-        VFMADD231PS(ZMM(13), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 5)*4)) \
+        VFMADD231PS(ZMM(11), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+ 3)*4)) \
+        VFMADD231PS(ZMM(12), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+ 4)*4)) \
+        VFMADD231PS(ZMM(13), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+ 5)*4)) \
         PREFETCH_C_L1_1 \
-        VFMADD231PS(ZMM(14), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 6)*4)) \
-        VFMADD231PS(ZMM(15), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 7)*4)) \
-        VFMADD231PS(ZMM(16), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 8)*4)) \
+        VFMADD231PS(ZMM(14), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+ 6)*4)) \
+        VFMADD231PS(ZMM(15), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+ 7)*4)) \
+        VFMADD231PS(ZMM(16), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+ 8)*4)) \
         PREFETCH_A_L1_2(n) \
-        VFMADD231PS(ZMM(17), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+ 9)*4)) \
-        VFMADD231PS(ZMM(18), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+10)*4)) \
-        VFMADD231PS(ZMM(19), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+11)*4)) \
+        VFMADD231PS(ZMM(17), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+ 9)*4)) \
+        VFMADD231PS(ZMM(18), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+10)*4)) \
+        VFMADD231PS(ZMM(19), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+11)*4)) \
         PREFETCH_C_L1_2 \
-        VFMADD231PS(ZMM(20), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+12)*4)) \
-        VFMADD231PS(ZMM(21), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+13)*4)) \
-        VFMADD231PS(ZMM(22), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+14)*4)) \
+        VFMADD231PS(ZMM(20), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+12)*4)) \
+        VFMADD231PS(ZMM(21), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+13)*4)) \
+        VFMADD231PS(ZMM(22), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+14)*4)) \
         PREFETCH_C_L1_3 \
-        VFMADD231PS(ZMM(23), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+15)*4)) \
-        VFMADD231PS(ZMM(24), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+16)*4)) \
-        VFMADD231PS(ZMM(25), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+17)*4)) \
+        VFMADD231PS(ZMM(23), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+15)*4)) \
+        VFMADD231PS(ZMM(24), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+16)*4)) \
+        VFMADD231PS(ZMM(25), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+17)*4)) \
         PREFETCH_B_L1(n) \
-        VFMADD231PS(ZMM(26), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+18)*4)) \
-        VFMADD231PS(ZMM(27), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+19)*4)) \
-        VFMADD231PS(ZMM(28), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+20)*4)) \
+        VFMADD231PS(ZMM(26), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+18)*4)) \
+        VFMADD231PS(ZMM(27), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+19)*4)) \
+        VFMADD231PS(ZMM(28), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+20)*4)) \
         PREFETCH_B_L2(n) \
-        VFMADD231PS(ZMM(29), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+21)*4)) \
-        VFMADD231PS(ZMM(30), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+22)*4)) \
-        VFMADD231PS(ZMM(31), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+23)*4))
+        VFMADD231PS(ZMM(29), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+21)*4)) \
+        VFMADD231PS(ZMM(30), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+22)*4)) \
+        VFMADD231PS(ZMM(31), ZMM(b), MEM_1TO16(__VA_ARGS__,((n%%4)*24+23)*4))
 
 //This is an array used for the scatter/gather instructions.
 static int32_t offsets[32] __attribute__((aligned(64))) =

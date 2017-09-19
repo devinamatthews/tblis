@@ -65,6 +65,8 @@ int vpu_count()
 {
     std::string name = get_cpu_name();
 
+    return 2;
+
     if (name.find("Intel(R) Xeon(R)") != std::string::npos)
     {
         auto loc = name.find("Platinum");

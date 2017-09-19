@@ -8,7 +8,7 @@ extern "C"
 
 EXTERN_GEMM_UKR(double, bli_dgemm_opt_12x16_l1);
 EXTERN_GEMM_UKR(double, bli_dgemm_opt_12x16_l2);
-EXTERN_GEMM_UKR(double, bli_sgemm_opt_12x32_l2);
+EXTERN_GEMM_UKR( float, bli_sgemm_opt_12x32_l2);
 EXTERN_GEMM_UKR(double, bli_dgemm_opt_8x24_l1);
 EXTERN_GEMM_UKR(double, bli_dgemm_opt_8x24_l2);
 EXTERN_GEMM_UKR(double, bli_dgemm_opt_6x32_l1);

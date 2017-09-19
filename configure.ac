@@ -173,7 +173,8 @@ AC_ARG_ENABLE([config],
 
                           the following meta-configurations are also available:
  
-                          intel = core2,sandybridge,haswell,skx1,skx2,knl
+                          skx = skx1,skx2
+                          intel = core2,sandybridge,haswell,skx,knl
                           amd = bulldozer,piledriver,excavator,zen
                           x86 = intel,amd],
               [], [enable_config=auto])
@@ -204,9 +205,17 @@ if ( echo $enable_config | grep -qv reference ) && test x$using_default_configs 
 fi
 
 configs=`echo $enable_config | sed 's/x86/intel,amd/' \
-                             | sed 's/intel/core2,sandybridge,haswell,skx1,skx2,knl/' \
+                             | sed 's/intel/core2,sandybridge,haswell,skx,knl/' \
                              | sed 's/amd/bulldozer,piledriver,excavator,zen/' \
+                             | sed 's/skx,/skx1,skx2,/' \
+                             | sed 's/skx$/skx1,skx2/' \
                              | sed 's/,/ /g'`
+
+for config in $configs; do
+    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|bulldozer|piledriver|excavator|zen)$' ); then
+        AC_MSG_ERROR([Unknown configuration $config])
+    fi
+done
 
 AC_MSG_CHECKING([compiler vendor])
 

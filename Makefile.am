@@ -83,6 +83,7 @@ lib_libtblis_la_SOURCES = \
     src/util/basic_types.cxx \
     src/util/configs.cxx \
     src/util/cpuid.cxx \
+	src/util/env.cxx \
     src/util/random.cxx \
     src/util/thread.cxx
     
@@ -278,10 +279,10 @@ noinst_LTLIBRARIES += lib/libknl.la
 lib_libtblis_la_LIBADD += lib/libknl.la
 lib_libknl_la_SOURCES = src/configs/knl/bli_spackm_opt_24x16.c \
 					    src/configs/knl/bli_dpackm_opt_24x8.c \
+						src/configs/knl/bli_dpackm_opt_30x8.c \
 					    src/configs/knl/bli_sgemm_opt_24x16.c \
 					    src/configs/knl/bli_dgemm_opt_24x8.c \
 					    src/configs/knl/config.cxx
-#						src/configs/knl/bli_packm_opt_30x8.c \
 #					    src/configs/knl/bli_dgemm_opt_12x16.c \
 #					    src/configs/knl/bli_dgemm_opt_30x8.c \
 #					    src/configs/knl/bli_dgemm_opt_8x24.c \

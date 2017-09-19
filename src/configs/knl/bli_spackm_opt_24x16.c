@@ -66,27 +66,27 @@
     VUNPCKLPS(YMM(t2), YMM(a2), YMM(a3)) \
     VUNPCKLPS(YMM(t1), YMM(a4), YMM(a5)) \
     VUNPCKLPS(YMM(t3), YMM(a6), YMM(a7)) \
-    VSHUFPS(ZMM(t4), ZMM(t0), ZMM(t2), IMM(0x44)) \
-    VSHUFPS(ZMM(t5), ZMM(t1), ZMM(t3), IMM(0x44)) \
-    VPERM2F128(ZMM(a0), ZMM(t4), ZMM(t5), IMM(0x20)) \
-    VPERM2F128(ZMM(a4), ZMM(t4), ZMM(t5), IMM(0x31)) \
-    VSHUFPS(ZMM(t4), ZMM(t0), ZMM(t2), IMM(0xEE)) \
-    VSHUFPS(ZMM(t5), ZMM(t1), ZMM(t3), IMM(0xEE)) \
-    VPERM2F128(ZMM(a2), ZMM(t4), ZMM(t5), IMM(0x20)) \
-    VPERM2F128(ZMM(a6), ZMM(t4), ZMM(t5), IMM(0x31)) \
+    VSHUFPS(YMM(t4), YMM(t0), YMM(t2), IMM(0x44)) \
+    VSHUFPS(YMM(t5), YMM(t1), YMM(t3), IMM(0x44)) \
+    VPERM2F128(YMM(a0), YMM(t4), YMM(t5), IMM(0x20)) \
+    VPERM2F128(YMM(a4), YMM(t4), YMM(t5), IMM(0x31)) \
+    VSHUFPS(YMM(t4), YMM(t0), YMM(t2), IMM(0xEE)) \
+    VSHUFPS(YMM(t5), YMM(t1), YMM(t3), IMM(0xEE)) \
+    VPERM2F128(YMM(a2), YMM(t4), YMM(t5), IMM(0x20)) \
+    VPERM2F128(YMM(a6), YMM(t4), YMM(t5), IMM(0x31)) \
     \
     VUNPCKHPS(YMM(t0), YMM(a0), YMM(a1)) \
     VUNPCKHPS(YMM(t2), YMM(a2), YMM(a3)) \
     VUNPCKHPS(YMM(t1), YMM(a4), YMM(a5)) \
     VUNPCKHPS(YMM(t3), YMM(a6), YMM(a7)) \
-    VSHUFPS(ZMM(t4), ZMM(t0), ZMM(t2), IMM(0x44)) \
-    VSHUFPS(ZMM(t5), ZMM(t1), ZMM(t3), IMM(0x44)) \
-    VPERM2F128(ZMM(a1), ZMM(t4), ZMM(t5), IMM(0x20)) \
-    VPERM2F128(ZMM(a5), ZMM(t4), ZMM(t5), IMM(0x31)) \
-    VSHUFPS(ZMM(t4), ZMM(t0), ZMM(t2), IMM(0xEE)) \
-    VSHUFPS(ZMM(t5), ZMM(t1), ZMM(t3), IMM(0xEE)) \
-    VPERM2F128(ZMM(a3), ZMM(t4), ZMM(t5), IMM(0x20)) \
-    VPERM2F128(ZMM(a7), ZMM(t4), ZMM(t5), IMM(0x31))
+    VSHUFPS(YMM(t4), YMM(t0), YMM(t2), IMM(0x44)) \
+    VSHUFPS(YMM(t5), YMM(t1), YMM(t3), IMM(0x44)) \
+    VPERM2F128(YMM(a1), YMM(t4), YMM(t5), IMM(0x20)) \
+    VPERM2F128(YMM(a5), YMM(t4), YMM(t5), IMM(0x31)) \
+    VSHUFPS(YMM(t4), YMM(t0), YMM(t2), IMM(0xEE)) \
+    VSHUFPS(YMM(t5), YMM(t1), YMM(t3), IMM(0xEE)) \
+    VPERM2F128(YMM(a3), YMM(t4), YMM(t5), IMM(0x20)) \
+    VPERM2F128(YMM(a7), YMM(t4), YMM(t5), IMM(0x31))
 
 //This is an array used for the scatter/gather instructions.
 static int32_t offsets[32] __attribute__((aligned(64))) =
@@ -302,7 +302,7 @@ void bli_spackm_16xk_opt
     );
 }
 
-void bli_dpackm_24xk_opt
+void bli_spackm_24xk_opt
      (
        conj_t         conja,
        dim_t          n_,

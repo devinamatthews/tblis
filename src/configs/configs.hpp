@@ -4,6 +4,7 @@
 #include "util/basic_types.h"
 #include "util/thread.h"
 #include "util/macros.h"
+#include "util/env.hpp"
 
 #include "kernels/1v/add.hpp"
 #include "kernels/1v/copy.hpp"

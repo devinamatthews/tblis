@@ -9,11 +9,30 @@ int haswell_check()
     int family, model, features;
     int vendor = get_cpu_type(family, model, features);
 
-    if (vendor != VENDOR_INTEL ||
-        !check_features(features, FEATURE_AVX|
-                                  FEATURE_AVX2|
-                                  FEATURE_FMA3)) return -1;
+    if (vendor != VENDOR_INTEL)
+    {   
+        if (get_verbose() >= 1) printf("tblis: haswell: Wrong vendor.\n");
+        return -1;
+    }
 
+    if (!check_features(features, FEATURE_AVX))
+    {   
+        if (get_verbose() >= 1) printf("tblis: haswell: Doesn't support AVX.\n");
+        return -1;
+    }
+
+    if (!check_features(features, FEATURE_FMA3))
+    {   
+        if (get_verbose() >= 1) printf("tblis: haswell: Doesn't support FMA3.\n");
+        return -1;
+    }
+
+    if (!check_features(features, FEATURE_AVX2))
+    {
+        if (get_verbose() >= 1) printf("tblis: haswell: Doesn't support AVX2.\n");
+        return -1;
+    }
+    
     return 3;
 }
 

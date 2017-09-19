@@ -37,11 +37,22 @@ struct default_config
                 priority = cur_prio;
                 value = configs[cfg];
             }
+
+            if (get_verbose() >= 1)
+            {
+                printf("tblis: Configuration %s assigned priority %d.\n",
+                       configs[cfg]->name, cur_prio);
+            }
         }
 
         if (!value)
             tblis_abort_with_message(nullptr,
                 "tblis: No usable configuration enabled, aborting!");
+
+        if (get_verbose() >= 1)
+        {
+            printf("tblis: Using configuration %s.\n", value->name);
+        }
     }
 };
 

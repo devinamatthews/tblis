@@ -77,10 +77,10 @@ const config* configs[] =
     //&skx_6x32_l1_config::instance(),
     //&skx_6x32_l2_config::instance(),
     //&skx_knl_config::instance(),
-    &skx_8x8_l1_config::instance(),
-    &skx_8x8_l2_config::instance(),
-    &skx_8x8_l1_flip_config::instance(),
-    &skx_8x8_l2_flip_config::instance(),
+    //&skx_8x8_l1_config::instance(),
+    //&skx_8x8_l2_config::instance(),
+    //&skx_8x8_l1_flip_config::instance(),
+    //&skx_8x8_l2_flip_config::instance(),
 };
 constexpr auto num_configs = sizeof(configs)/sizeof(configs[0]);
 
@@ -267,7 +267,7 @@ struct gemm_experiment
 
         tblis_matrix At(A.view());
         tblis_matrix Bt(B.view());
-        tblis_matrix Ct(C.view());
+        tblis_matrix Ct(0.0, C.view());
 
         double gflops = 2*m*n*k*1e-9;
 
@@ -288,7 +288,7 @@ struct gemm_experiment
         [&]
         {
             gemm<T>('N', 'N', m, n, k,
-                    1.0, A.data(), m, B.data(), k, 1.0, C.data(), m);
+                    1.0, A.data(), m, B.data(), k, 0.0, C.data(), m);
         });
 
         printf("%e ", perf);

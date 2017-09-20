@@ -14,6 +14,10 @@ EXTERN_GEMM_UKR(double, bli_dgemm_opt_8x24_l2);
 EXTERN_GEMM_UKR(double, bli_dgemm_opt_6x32_l1);
 EXTERN_GEMM_UKR(double, bli_dgemm_opt_6x32_l2);
 EXTERN_GEMM_UKR(double, bli_dgemm_opt_24x8_knl);
+EXTERN_GEMM_UKR(double, bli_dgemm_opt_8x8_l1);
+EXTERN_GEMM_UKR(double, bli_dgemm_opt_8x8_l2);
+EXTERN_GEMM_UKR(double, bli_dgemm_opt_8x8_l1_flip);
+EXTERN_GEMM_UKR(double, bli_dgemm_opt_8x8_l2_flip);
 
 }
 
@@ -24,7 +28,7 @@ extern int skx2_check();
 
 #define L2_BLOCK_SIZES \
     TBLIS_CONFIG_GEMM_MC( 480,   240, _, _) \
-    TBLIS_CONFIG_GEMM_NC(5760,  5760, _, _) \
+    TBLIS_CONFIG_GEMM_NC(3072,  3072, _, _) \
     TBLIS_CONFIG_GEMM_KC_MAX(384, 384, _, _, \
                              480, 480, _, _) \
     TBLIS_CONFIG_M_THREAD_RATIO(_,3,_,_) \

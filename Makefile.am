@@ -83,7 +83,7 @@ lib_libtblis_la_SOURCES = \
     src/util/basic_types.cxx \
     src/util/configs.cxx \
     src/util/cpuid.cxx \
-	src/util/env.cxx \
+    src/util/env.cxx \
     src/util/random.cxx \
     src/util/thread.cxx
     
@@ -341,11 +341,11 @@ noinst_LTLIBRARIES += lib/libskx2.la
 lib_libtblis_la_LIBADD += lib/libskx2.la
 lib_libskx2_la_SOURCES = src/configs/skx2/bli_sgemm_opt_12x32_l2.c \
 					     src/configs/skx2/bli_dgemm_opt_12x16_l2.c \
-					     src/configs/skx2/bli_dgemm_opt_8x8_l1.c \
-					     src/configs/skx2/bli_dgemm_opt_8x8_l2.c \
 					     src/configs/skx2/vpu_count.cxx \
 					     src/configs/skx2/config.cxx
 #                        src/configs/skx2/bli_dgemm_opt_12x16_l1.c \
+#					     src/configs/skx2/bli_dgemm_opt_8x8_l1.c \
+#					     src/configs/skx2/bli_dgemm_opt_8x8_l2.c \
 #					     src/configs/skx2/bli_dgemm_opt_8x24_l1.c \
 #					     src/configs/skx2/bli_dgemm_opt_8x24_l2.c \
 #					     src/configs/skx2/bli_dgemm_opt_6x32_l1.c \

@@ -2,11 +2,22 @@
 A Python interface to mimic numpy.einsum
 '''
 
+import sys
 import re
 import ctypes
 import numpy
 
-libtblis = ctypes.CDLL('libtblis_itrf.so')
+if (sys.platform.startswith('linux') or
+    sys.platform.startswith('gnukfreebsd')):
+    so_ext = '.so'
+elif sys.platform.startswith('darwin'):
+    so_ext = '.dylib'
+elif sys.platform.startswith('win'):
+    so_ext = '.dll'
+else:
+    raise ImportError('Unsupported platform')
+
+libtblis = ctypes.CDLL('libtblis'+so_ext)
 
 libtblis.as_einsum.restype = None
 libtblis.as_einsum.argtypes = (

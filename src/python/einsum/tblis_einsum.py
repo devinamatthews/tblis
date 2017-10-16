@@ -1,3 +1,7 @@
+'''
+A Python interface to mimic numpy.einsum
+'''
+
 import re
 import ctypes
 import numpy
@@ -26,13 +30,13 @@ tblis_dtype = {
 }
 
 def _contract(subscripts, *tensors, **kwargs):
-    subscripts = subscripts.replace(' ','')
     sub_idx = re.split(',|->', subscripts)
     indices  = ''.join(sub_idx)
-    c_dtype = numpy.result_type(*tensors)
+    c_dtype = getattr(kwargs, 'dtype', numpy.result_type(*tensors))
     if (not (',' in subscripts and '->' in subscripts) or
         any(indices.count(x)>2 for x in set(indices)) or
-        numpy.issubdtype(c_dtype, numpy.integer)):
+        not (numpy.issubdtype(c_dtype, numpy.float) or
+             numpy.issubdtype(c_dtype, numpy.complex))):
         return numpy.einsum(subscripts, *tensors)
 
     a = numpy.asarray(tensors[0], dtype=c_dtype)
@@ -77,14 +81,17 @@ def _contract(subscripts, *tensors, **kwargs):
     return c
 
 def einsum(subscripts, *tensors, **kwargs):
+    subscripts = subscripts.replace(' ','')
+    order = getattr(kwargs, 'order', None)
     if len(tensors) <= 2:
-        return _contract(subscripts, *tensors, **kwargs)
+        out = _contract(subscripts, *tensors, **kwargs)
+        out = numpy.asarray(out, order=order)
     else:
-        sub_idx = subscripts.split(',')
+        sub_idx = subscripts.split(',', 2)
         res_idx = ''.join(set(sub_idx[0]).symmetric_difference(sub_idx[1]))
-        script1 = '->'.join((','.join(sub_idx[:2]), res_idx))
-        t0 = _contract(script1, *tensors[:2])
-        subscripts = ','.join([res_idx] + sub_idx[2:])
-        tensors = [t0] + list(tensors[2:])
-        return einsum(subscripts, *tensors, **kwargs)
+        script0 = sub_idx[0] + ',' + sub_idx[1] + '->' + res_idx
+        subscripts = res_idx + ',' + sub_idx[2]
+        tensors = [_contract(script0, *tensors[:2])] + list(tensors[2:])
+        out = einsum(subscripts, *tensors, **kwargs)
+    return out
 

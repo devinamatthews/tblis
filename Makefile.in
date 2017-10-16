@@ -115,6 +115,7 @@ host_triplet = @host@
 @ENABLE_KNL_TRUE@am__append_16 = lib/libknl.la
 noinst_PROGRAMS = bin/test$(EXEEXT) $(am__EXEEXT_1)
 @ENABLE_BLAS_TRUE@am__append_17 = bin/bench bin/batched_bench
+@ENABLE_PYTHON_TRUE@am__append_18 = src/python/as_einsum.cxx
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_blas.m4 \
@@ -305,6 +306,7 @@ lib_libtblis_la_DEPENDENCIES = src/external/tci/lib/libtci.la \
 	$(am__append_2) $(am__append_4) $(am__append_6) \
 	$(am__append_8) $(am__append_10) $(am__append_12) \
 	$(am__append_14) $(am__append_16)
+@ENABLE_PYTHON_TRUE@am__objects_1 = src/python/as_einsum.lo
 am_lib_libtblis_la_OBJECTS = src/iface/1v/add.lo src/iface/1v/dot.lo \
 	src/iface/1v/reduce.lo src/iface/1v/scale.lo \
 	src/iface/1v/set.lo src/iface/1m/add.lo src/iface/1m/dot.lo \
@@ -322,7 +324,7 @@ am_lib_libtblis_la_OBJECTS = src/iface/1v/add.lo src/iface/1v/dot.lo \
 	src/internal/1t/set.lo src/internal/3m/mult.lo \
 	src/internal/3t/mult.lo src/configs/configs.lo \
 	src/util/basic_types.lo src/util/cpuid.lo src/util/random.lo \
-	src/util/thread.lo
+	src/util/thread.lo $(am__objects_1)
 lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
 @ENABLE_BLAS_TRUE@am__EXEEXT_1 = bin/bench$(EXEEXT) \
 @ENABLE_BLAS_TRUE@	bin/batched_bench$(EXEEXT)
@@ -404,8 +406,9 @@ DIST_SOURCES = $(am__lib_libbulldozer_la_SOURCES_DIST) \
 	$(am__lib_libpiledriver_la_SOURCES_DIST) \
 	$(am__lib_libreference_la_SOURCES_DIST) \
 	$(am__lib_libsandybridge_la_SOURCES_DIST) \
-	$(lib_libtblis_la_SOURCES) $(bin_batched_bench_SOURCES) \
-	$(bin_bench_SOURCES) $(bin_test_SOURCES)
+	$(am__lib_libtblis_la_SOURCES_DIST) \
+	$(bin_batched_bench_SOURCES) $(bin_bench_SOURCES) \
+	$(bin_test_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -682,7 +685,8 @@ lib_libtblis_la_SOURCES = \
     src/util/basic_types.cxx \
     src/util/cpuid.cxx \
     src/util/random.cxx \
-    src/util/thread.cxx
+    src/util/thread.cxx \
+	$(am__append_18)
 
 pkginclude_HEADERS = src/tblis.h src/tblis_config.h
 utilincludedir = $(pkgincludedir)/util
@@ -1245,6 +1249,14 @@ src/util/random.lo: src/util/$(am__dirstamp) \
 	src/util/$(DEPDIR)/$(am__dirstamp)
 src/util/thread.lo: src/util/$(am__dirstamp) \
 	src/util/$(DEPDIR)/$(am__dirstamp)
+src/python/$(am__dirstamp):
+	@$(MKDIR_P) src/python
+	@: > src/python/$(am__dirstamp)
+src/python/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/python/$(DEPDIR)
+	@: > src/python/$(DEPDIR)/$(am__dirstamp)
+src/python/as_einsum.lo: src/python/$(am__dirstamp) \
+	src/python/$(DEPDIR)/$(am__dirstamp)
 
 lib/libtblis.la: $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_DEPENDENCIES) $(EXTRA_lib_libtblis_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CXXLD)$(CXXLINK) -rpath $(libdir) $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_LIBADD) $(LIBS)
@@ -1325,6 +1337,8 @@ mostlyclean-compile:
 	-rm -f src/internal/3m/*.lo
 	-rm -f src/internal/3t/*.$(OBJEXT)
 	-rm -f src/internal/3t/*.lo
+	-rm -f src/python/*.$(OBJEXT)
+	-rm -f src/python/*.lo
 	-rm -f src/util/*.$(OBJEXT)
 	-rm -f src/util/*.lo
 	-rm -f test/*.$(OBJEXT)
@@ -1392,6 +1406,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1v/$(DEPDIR)/set.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/3m/$(DEPDIR)/mult.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/3t/$(DEPDIR)/mult.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/python/$(DEPDIR)/as_einsum.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/basic_types.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/cpuid.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/random.Plo@am__quote@
@@ -1649,6 +1664,7 @@ clean-libtool:
 	-rm -rf src/internal/1v/.libs src/internal/1v/_libs
 	-rm -rf src/internal/3m/.libs src/internal/3m/_libs
 	-rm -rf src/internal/3t/.libs src/internal/3t/_libs
+	-rm -rf src/python/.libs src/python/_libs
 	-rm -rf src/util/.libs src/util/_libs
 
 distclean-libtool:
@@ -2232,6 +2248,8 @@ distclean-generic:
 	-rm -f src/internal/3m/$(am__dirstamp)
 	-rm -f src/internal/3t/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/internal/3t/$(am__dirstamp)
+	-rm -f src/python/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/python/$(am__dirstamp)
 	-rm -f src/util/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/util/$(am__dirstamp)
 	-rm -f test/$(DEPDIR)/$(am__dirstamp)
@@ -2247,7 +2265,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/iface/1m/$(DEPDIR) src/iface/1t/$(DEPDIR) src/iface/1v/$(DEPDIR) src/iface/3m/$(DEPDIR) src/iface/3t/$(DEPDIR) src/internal/1m/$(DEPDIR) src/internal/1t/$(DEPDIR) src/internal/1v/$(DEPDIR) src/internal/3m/$(DEPDIR) src/internal/3t/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
+	-rm -rf src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/iface/1m/$(DEPDIR) src/iface/1t/$(DEPDIR) src/iface/1v/$(DEPDIR) src/iface/3m/$(DEPDIR) src/iface/3t/$(DEPDIR) src/internal/1m/$(DEPDIR) src/internal/1t/$(DEPDIR) src/internal/1v/$(DEPDIR) src/internal/3m/$(DEPDIR) src/internal/3t/$(DEPDIR) src/python/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -2300,7 +2318,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/iface/1m/$(DEPDIR) src/iface/1t/$(DEPDIR) src/iface/1v/$(DEPDIR) src/iface/3m/$(DEPDIR) src/iface/3t/$(DEPDIR) src/internal/1m/$(DEPDIR) src/internal/1t/$(DEPDIR) src/internal/1v/$(DEPDIR) src/internal/3m/$(DEPDIR) src/internal/3t/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
+	-rm -rf src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/iface/1m/$(DEPDIR) src/iface/1t/$(DEPDIR) src/iface/1v/$(DEPDIR) src/iface/3m/$(DEPDIR) src/iface/3t/$(DEPDIR) src/internal/1m/$(DEPDIR) src/internal/1t/$(DEPDIR) src/internal/1v/$(DEPDIR) src/internal/3m/$(DEPDIR) src/internal/3t/$(DEPDIR) src/python/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

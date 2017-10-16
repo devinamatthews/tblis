@@ -695,6 +695,8 @@ IS_OSX_FALSE
 IS_OSX_TRUE
 ENABLE_INTEL_COMPILER_FALSE
 ENABLE_INTEL_COMPILER_TRUE
+ENABLE_PYTHON_FALSE
+ENABLE_PYTHON_TRUE
 LSCPU
 CXXCPP
 ENABLE_BLAS_FALSE
@@ -819,6 +821,7 @@ enable_threading
 with_length_type
 with_stride_type
 with_label_type
+enable_einsum
 enable_config
 enable_shared
 enable_static
@@ -1475,6 +1478,7 @@ Optional Features:
                           enable threading with the specified model, one of
                           none, auto, openmp, pthreads, tbb [default=auto]
 
+  --enable-einsum         include Python einsum interface (default is no)
   --enable-config=...    a comma-separated list of configurations
                           [default=auto]
 
@@ -6219,6 +6223,26 @@ $as_echo "$label_type" >&6; }
 cat >>confdefs.h <<_ACEOF
 #define LABEL_TYPE $label_type
 _ACEOF
+
+
+#
+# Whether to build Python einsum interface
+#
+
+# Check whether --enable-einsum was given.
+if test "${enable_einsum+set}" = set; then :
+  enableval=$enable_einsum;
+else
+  enable_einsum=no
+fi
+
+ if test x$enable_einsum != xno; then
+  ENABLE_PYTHON_TRUE=
+  ENABLE_PYTHON_FALSE='#'
+else
+  ENABLE_PYTHON_TRUE='#'
+  ENABLE_PYTHON_FALSE=
+fi
 
 
 #
@@ -18296,6 +18320,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_BLAS_TRUE}" && test -z "${ENABLE_BLAS_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_BLAS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_PYTHON_TRUE}" && test -z "${ENABLE_PYTHON_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_PYTHON\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_INTEL_COMPILER_TRUE}" && test -z "${ENABLE_INTEL_COMPILER_FALSE}"; then

@@ -77,13 +77,13 @@ def _contract(subscripts, *tensors, **kwargs):
         c[:] = 0
 
     a_shape = (ctypes.c_size_t*a.ndim)(*a_shape)
-    b_shape = (ctypes.c_size_t*a.ndim)(*b_shape)
-    c_shape = (ctypes.c_size_t*a.ndim)(*c_shape)
+    b_shape = (ctypes.c_size_t*b.ndim)(*b_shape)
+    c_shape = (ctypes.c_size_t*c.ndim)(*c_shape)
 
     nbytes = c_dtype.itemsize
     a_strides = (ctypes.c_size_t*a.ndim)(*[x//nbytes for x in a.strides])
-    b_strides = (ctypes.c_size_t*a.ndim)(*[x//nbytes for x in b.strides])
-    c_strides = (ctypes.c_size_t*a.ndim)(*[x//nbytes for x in c.strides])
+    b_strides = (ctypes.c_size_t*b.ndim)(*[x//nbytes for x in b.strides])
+    c_strides = (ctypes.c_size_t*c.ndim)(*[x//nbytes for x in c.strides])
 
     libtblis.as_einsum(a, a.ndim, a_shape, a_strides, a_descr,
                        b, b.ndim, b_shape, b_strides, b_descr,

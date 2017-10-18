@@ -15,7 +15,6 @@ env:
   - RUN_TEST=1 THREADING="none" BUILD_CONFIG="reference"
   - RUN_TEST=0 THREADING="openmp" BUILD_CONFIG="auto"
   - RUN_TEST=0 THREADING="pthreads" BUILD_CONFIG="auto"
-  - RUN_TEST=0 THREADING="tbb" BUILD_CONFIG="auto"
 
 matrix:
   exclude:
@@ -40,6 +39,7 @@ addons:
     - clang-3.9
     - libiomp-dev
     - binutils
+    - tbb
     
 install:
   - if [ "$CC" = "gcc" ] ; then export CC="gcc-6" CXX="g++-6"; fi

@@ -73,35 +73,19 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
             reset(other, layout);
         }
 
-        explicit marray(std::initializer_list<len_type> len, const Type& val=Type(), layout layout = DEFAULT)
+        explicit marray(const detail::array_1d<len_type>& len,
+                        const Type& val=Type(), layout layout = DEFAULT)
         {
             reset(len, val, layout);
         }
 
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        explicit marray(const U& len, const Type& val=Type(), layout layout = DEFAULT)
-        {
-            reset(len, val, layout);
-        }
-
-        marray(std::initializer_list<len_type> len, layout layout)
+        marray(const detail::array_1d<len_type>& len, layout layout)
         {
             reset(len, Type(), layout);
         }
 
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        marray(const U& len, layout layout)
-        {
-            reset(len, Type(), layout);
-        }
-
-        marray(std::initializer_list<len_type> len, uninitialized_t, layout layout = DEFAULT)
-        {
-            reset(len, uninitialized, layout);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        marray(const U& len, uninitialized_t, layout layout = DEFAULT)
+        marray(const detail::array_1d<len_type>& len, uninitialized_t,
+               layout layout = DEFAULT)
         {
             reset(len, uninitialized, layout);
         }
@@ -129,6 +113,14 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
         using base::operator/=;
         using base::cview;
         using base::view;
+        using base::cbegin;
+        using base::begin;
+        using base::cend;
+        using base::end;
+        using base::crbegin;
+        using base::rbegin;
+        using base::crend;
+        using base::rend;
         using base::shifted;
         using base::shifted_up;
         using base::shifted_down;
@@ -208,36 +200,20 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
             reset(other.view(), layout);
         }
 
-        void reset(std::initializer_list<len_type> len, const Type& val=Type(), layout layout = DEFAULT)
-        {
-            reset<std::initializer_list<len_type>>(len, val, layout);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        void reset(const U& len, const Type& val=Type(), layout layout = DEFAULT)
+        void reset(const detail::array_1d<len_type>& len,
+                   const Type& val=Type(), layout layout = DEFAULT)
         {
             reset(len, uninitialized, layout);
             std::uninitialized_fill_n(data_, storage_.size, val);
         }
 
-        void reset(std::initializer_list<len_type> len, layout layout)
+        void reset(const detail::array_1d<len_type>& len, layout layout)
         {
             reset(len, Type(), layout);
         }
 
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        void reset(const U& len, layout layout)
-        {
-            reset(len, Type(), layout);
-        }
-
-        void reset(std::initializer_list<len_type> len, uninitialized_t, layout layout = DEFAULT)
-        {
-            reset<std::initializer_list<len_type>>(len, uninitialized, layout);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        void reset(const U& len, uninitialized_t, layout layout = DEFAULT)
+        void reset(const detail::array_1d<len_type>& len, uninitialized_t,
+                   layout layout = DEFAULT)
         {
             reset();
 
@@ -265,13 +241,8 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
          *
          **********************************************************************/
 
-        void resize(std::initializer_list<len_type> len, const Type& val=Type())
-        {
-            resize<std::initializer_list<len_type>>(len, val);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        void resize(const U& len, const Type& val=Type())
+        void resize(const detail::array_1d<len_type>& len,
+                    const Type& val=Type())
         {
             marray a(std::move(*this));
             reset(len, val, layout_);
@@ -378,15 +349,6 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
             a.swap(b);
         }
 };
-
-/*
- * Convenient names for 1- and 2-dimensional array types.
- */
-template <typename Type> using row_view = marray_view<Type, 1>;
-template <typename Type, typename Allocator=std::allocator<Type>> using row = marray<Type, 1, Allocator>;
-
-template <typename Type> using matrix_view = marray_view<Type, 2>;
-template <typename Type, typename Allocator=std::allocator<Type>> using matrix = marray<Type, 2, Allocator>;
 
 }
 

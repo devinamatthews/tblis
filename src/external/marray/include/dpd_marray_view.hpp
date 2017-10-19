@@ -12,16 +12,15 @@ class dpd_marray_view : public dpd_marray_base<Type, NDim, dpd_marray_view<Type,
     protected:
         typedef dpd_marray_base<Type, NDim, dpd_marray_view, false> base;
 
-        using base::len_;
         using base::size_;
+        using base::leaf_;
+        using base::parent_;
         using base::perm_;
+        using base::depth_;
         using base::data_;
         using base::irrep_;
         using base::nirrep_;
         using base::layout_;
-
-        template <typename U> using initializer_matrix =
-            std::initializer_list<std::initializer_list<U>>;
 
     public:
         using typename base::value_type;
@@ -68,28 +67,17 @@ class dpd_marray_view : public dpd_marray_base<Type, NDim, dpd_marray_view<Type,
         }
 
         dpd_marray_view(unsigned irrep, unsigned nirrep,
-                        initializer_matrix<len_type> len, pointer ptr,
+                        const detail::array_2d<len_type>& len, pointer ptr,
                         dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, ptr, layout);
         }
 
-        template <typename U, typename=
-            detail::enable_if_container_of_t<U,len_type>>
         dpd_marray_view(unsigned irrep, unsigned nirrep,
-                        std::initializer_list<U> len, pointer ptr,
-                        dpd_layout layout = DEFAULT)
+                        const detail::array_2d<len_type>& len, pointer ptr,
+                        const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
         {
-            reset(irrep, nirrep, len, ptr, layout);
-        }
-
-        template <typename U, typename=
-            detail::enable_if_t<detail::is_container_of_containers_of<U,len_type>::value ||
-                                detail::is_matrix_of<U,len_type>::value>>
-        dpd_marray_view(unsigned irrep, unsigned nirrep, const U& len, pointer ptr,
-                        dpd_layout layout = DEFAULT)
-        {
-            reset(irrep, nirrep, len, ptr, layout);
+            reset(irrep, nirrep, len, ptr, depth, layout);
         }
 
         /***********************************************************************
@@ -127,24 +115,16 @@ class dpd_marray_view : public dpd_marray_base<Type, NDim, dpd_marray_view<Type,
          *
          **********************************************************************/
 
-        void permute(std::initializer_list<unsigned> perm)
+        void permute(const detail::array_1d<unsigned>& perm_)
         {
-            permute<std::initializer_list<unsigned>>(perm);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,unsigned>>
-        void permute(const U& perm)
-        {
+            std::array<unsigned, NDim> perm;
             std::array<unsigned, NDim> new_perm;
+            perm_.slurp(perm);
 
-            auto it = perm.begin();
             for (unsigned i = 0;i < NDim;i++)
-            {
-                new_perm[i] = perm_[*it];
-                ++it;
-            }
+                new_perm[i] = this->perm_[perm[i]];
 
-            perm_ = new_perm;
+            this->perm_ = new_perm;
         }
 
         template <unsigned N=NDim, typename=detail::enable_if_t<N==2>>

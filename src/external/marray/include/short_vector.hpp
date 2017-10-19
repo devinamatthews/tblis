@@ -1,7 +1,17 @@
 #ifndef _MARRAY_SHORT_VECTOR_HPP_
 #define _MARRAY_SHORT_VECTOR_HPP_
 
-#include "utility.hpp"
+#include <array>
+#include <cstdlib>
+#include <memory>
+
+#ifndef MARRAY_ASSERT
+#ifdef MARRAY_ENABLE_ASSERTS
+#define MARRAY_ASSERT(e) assert(e)
+#else
+#define MARRAY_ASSERT(e)
+#endif
+#endif
 
 namespace MArray
 {

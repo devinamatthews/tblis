@@ -68,6 +68,10 @@ class marray_slice
         typedef typename marray_view<Type, NDim>::pointer pointer;
         typedef typename marray_view<Type, NDim>::const_reference const_reference;
         typedef typename marray_view<Type, NDim>::reference reference;
+        typedef detail::marray_iterator<marray_slice> iterator;
+        typedef detail::marray_iterator<const marray_slice> const_iterator;
+        typedef std::reverse_iterator<iterator> reverse_iterator;
+        typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
     protected:
         const std::array<len_type, NDim>& len_;
@@ -291,6 +295,66 @@ class marray_slice
         friend marray_view<Type, NewNDim> view(const marray_slice& x)
         {
             return x.view();
+        }
+
+        const_iterator cbegin() const
+        {
+            return const_iterator{*this, 0};
+        }
+
+        const_iterator begin() const
+        {
+            return const_iterator{*this, 0};
+        }
+
+        iterator begin()
+        {
+            return iterator{*this, 0};
+        }
+
+        const_iterator cend() const
+        {
+            return const_iterator{*this, len_[NextDim]};
+        }
+
+        const_iterator end() const
+        {
+            return const_iterator{*this, len_[NextDim]};
+        }
+
+        iterator end()
+        {
+            return iterator{*this, len_[NextDim]};
+        }
+
+        const_reverse_iterator crbegin() const
+        {
+            return const_reverse_iterator{end()};
+        }
+
+        const_reverse_iterator rbegin() const
+        {
+            return const_reverse_iterator{end()};
+        }
+
+        reverse_iterator rbegin()
+        {
+            return reverse_iterator{end()};
+        }
+
+        const_reverse_iterator crend() const
+        {
+            return const_reverse_iterator{begin()};
+        }
+
+        const_reverse_iterator rend() const
+        {
+            return const_reverse_iterator{begin()};
+        }
+
+        reverse_iterator rend()
+        {
+            return reverse_iterator{begin()};
         }
 };
 

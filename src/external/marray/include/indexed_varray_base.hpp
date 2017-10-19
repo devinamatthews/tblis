@@ -16,44 +16,6 @@ class indexed_varray_view;
 template <typename Type, typename Allocator=std::allocator<Type>>
 class indexed_varray;
 
-namespace detail
-{
-
-template <typename U, typename V>
-enable_if_container_of_containers_of_t<U,len_type>
-set_idx(const U& idx_in, V& idx)
-{
-    unsigned ndim = idx_in.size();
-    unsigned nidx = idx_in.begin()->size();
-
-    if (nidx == 0) return;
-
-    auto it = idx_in.begin();
-
-    for (unsigned i = 0;i < ndim;i++)
-    {
-        std::copy_n(it->begin(), nidx, &idx[i][0]);
-        ++it;
-    }
-}
-
-template <typename U, typename V>
-enable_if_matrix_of_t<U,len_type>
-set_idx(const U& idx_in, V& idx)
-{
-    unsigned ndim = idx_in.length(0);
-    unsigned nidx = idx_in.length(1);
-
-    if (nidx == 0) return;
-
-    for (unsigned i = 0;i < ndim;i++)
-    {
-        std::copy_n(&idx_in[i][0], nidx, &idx[i][0]);
-    }
-}
-
-}
-
 template <typename Type, typename Derived, bool Owner>
 class indexed_varray_base
 {
@@ -71,12 +33,10 @@ class indexed_varray_base
         typedef typename std::conditional<Owner,const Type,Type>::type ctype;
         typedef ctype& cref;
         typedef ctype* cptr;
-        template <typename U> using initializer_matrix =
-            std::initializer_list<std::initializer_list<U>>;
 
     protected:
-        row_view<const pointer> data_;
-        matrix_view<const len_type> idx_;
+        std::vector<pointer> data_;
+        matrix<len_type> idx_;
         len_vector dense_len_;
         len_vector idx_len_;
         stride_vector dense_stride_;
@@ -90,7 +50,7 @@ class indexed_varray_base
 
         void reset()
         {
-            data_.reset();
+            data_.clear();
             idx_.reset();
             dense_len_.clear();
             idx_len_.clear();
@@ -111,7 +71,7 @@ class indexed_varray_base
                 typename indexed_varray_base<U, D, O>::pointer,pointer>>
         void reset(indexed_varray_base<U, D, O>& other)
         {
-            data_.reset(other.data_);
+            data_.assign(other.data_.begin(), other.data_.end());
             idx_.reset(other.idx_);
             dense_len_ = other.dense_len_;
             idx_len_ = other.idx_len_;
@@ -119,50 +79,52 @@ class indexed_varray_base
             factor_ = other.factor_;
         }
 
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        void reset(const U& len, row_view<const pointer> ptr,
-                   matrix_view<const len_type> idx, layout layout = DEFAULT)
+        void reset(const detail::array_1d<len_type>& len,
+                   const detail::array_1d<pointer>& ptr,
+                   const detail::array_2d<len_type>& idx,
+                   layout layout = DEFAULT)
         {
-            unsigned num_idx = ptr.length();
-            MARRAY_ASSERT(num_idx > 0);
-            MARRAY_ASSERT(idx.length(0) == num_idx);
-
             unsigned total_dim = len.size();
             unsigned idx_dim = idx.length(1);
             unsigned dense_dim = total_dim - idx_dim;
             MARRAY_ASSERT(total_dim > idx_dim);
-            MARRAY_ASSERT(idx_dim > 0 || num_idx == 1);
 
-            data_.reset(ptr);
-            idx_.reset(idx);
-            dense_len_.assign(len.begin(), std::next(len.begin(),dense_dim));
-            idx_len_.assign(std::next(len.begin(),dense_dim), len.end());
+            unsigned num_idx = ptr.size();
+            MARRAY_ASSERT(num_idx > 0);
+            MARRAY_ASSERT(idx_dim > 0 || num_idx == 1);
+            MARRAY_ASSERT(idx.length(0) == num_idx || idx_dim == 0);
+
+            ptr.slurp(data_);
+            idx.slurp(idx_, ROW_MAJOR);
+            len.slurp(dense_len_);
+            idx_len_.assign(dense_len_.begin()+dense_dim, dense_len_.end());
+            dense_len_.resize(dense_dim);
             dense_stride_ = varray_view<Type>::strides(dense_len_, layout);
             factor_.assign(num_idx, Type(1));
         }
 
-        template <typename U, typename V,
-            typename=detail::enable_if_t<
-                detail::is_container_of<U,len_type>::value &&
-                detail::is_container_of<V,stride_type>::value>>
-        void reset(const U& len, row_view<const pointer> ptr,
-                   matrix_view<const len_type> idx, const V& stride)
+        void reset(const detail::array_1d<len_type>& len,
+                   const detail::array_1d<pointer>& ptr,
+                   const detail::array_2d<len_type>& idx,
+                   const detail::array_1d<stride_type>& stride)
         {
-            unsigned num_idx = ptr.length();
-            MARRAY_ASSERT(num_idx > 0);
-            MARRAY_ASSERT(idx.length(0) == num_idx);
-
             unsigned total_dim = len.size();
             unsigned idx_dim = idx.length(1);
             unsigned dense_dim = total_dim - idx_dim;
             MARRAY_ASSERT(total_dim > idx_dim);
-            MARRAY_ASSERT(idx_dim > 0 || num_idx == 1);
+            MARRAY_ASSERT(stride.size() == dense_dim);
 
-            data_.reset(ptr);
-            idx_.reset(idx);
-            dense_len_.assign(len.begin(), std::next(len.begin(),dense_dim));
-            idx_len_.assign(std::next(len.begin(),dense_dim), len.end());
-            dense_stride_.assign(stride.begin(), stride.end());
+            unsigned num_idx = ptr.size();
+            MARRAY_ASSERT(num_idx > 0);
+            MARRAY_ASSERT(idx_dim > 0 || num_idx == 1);
+            MARRAY_ASSERT(idx.length(0) == num_idx || idx_dim == 0);
+
+            ptr.slurp(data_);
+            idx.slurp(idx_, ROW_MAJOR);
+            len.slurp(dense_len_);
+            idx_len_.assign(dense_len_.begin()+dense_dim, dense_len_.end());
+            dense_len_.resize(dense_dim);
+            stride.slurp(dense_stride_);
             factor_.assign(num_idx, Type(1));
         }
 
@@ -503,17 +465,17 @@ class indexed_varray_base
          *
          **********************************************************************/
 
-        const row_view<const const_pointer>& cdata() const
+        const std::vector<const_pointer>& cdata() const
         {
-            return reinterpret_cast<const row_view<const const_pointer>&>(data_);
+            return data();
         }
 
-        const row_view<const cptr>& data() const
+        const std::vector<const_pointer>& data() const
         {
-            return reinterpret_cast<const row_view<const cptr>&>(data_);
+            return reinterpret_cast<const std::vector<const_pointer>&>(data_);
         }
 
-        const row_view<const pointer>& data()
+        const std::vector<pointer>& data()
         {
             return data_;
         }
@@ -545,7 +507,7 @@ class indexed_varray_base
             return factor_[idx];
         }
 
-        const matrix_view<const len_type>& indices() const
+        matrix_view<const len_type> indices() const
         {
             return idx_;
         }

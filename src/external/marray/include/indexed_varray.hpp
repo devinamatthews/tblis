@@ -31,13 +31,8 @@ class indexed_varray : public indexed_varray_base<Type, indexed_varray<Type, All
         using base::idx_len_;
         using base::dense_stride_;
         using base::factor_;
-        row<pointer> real_data_;
-        matrix<len_type> real_idx_;
         layout layout_ = DEFAULT;
         struct : Allocator { stride_type size = 0; } storage_;
-
-        template <typename U> using initializer_matrix =
-            std::initializer_list<std::initializer_list<U>>;
 
     public:
 
@@ -76,81 +71,21 @@ class indexed_varray : public indexed_varray_base<Type, indexed_varray<Type, All
             reset(other, layout);
         }
 
-        indexed_varray(std::initializer_list<len_type> len,
-                       initializer_matrix<len_type> idx,
+        indexed_varray(const detail::array_1d<len_type>& len,
+                       const detail::array_2d<len_type>& idx,
                        const Type& value = Type(), layout layout = DEFAULT)
         {
             reset(len, idx, value, layout);
         }
 
-        template <typename U,
-            typename=detail::enable_if_container_of_t<U,len_type>>
-        indexed_varray(std::initializer_list<len_type> len,
-                       std::initializer_list<U> idx,
-                       const Type& value = Type(), layout layout = DEFAULT)
-        {
-            reset(len, idx, value, layout);
-        }
-
-        template <typename U, typename V,
-            typename=detail::enable_if_t<
-                detail::is_container_of<U,len_type>::value &&
-                (detail::is_container_of_containers_of<V,len_type>::value ||
-                 detail::is_matrix_of<V,len_type>::value)>>
-        indexed_varray(const U& len, const V& idx,
-                       const Type& value = Type(), layout layout = DEFAULT)
-        {
-            reset(len, idx, value, layout);
-        }
-
-        indexed_varray(std::initializer_list<len_type> len,
-                       initializer_matrix<len_type> idx,
-                       layout layout)
+        indexed_varray(const detail::array_1d<len_type>& len,
+                       const detail::array_2d<len_type>& idx, layout layout)
         {
             reset(len, idx, Type(), layout);
         }
 
-        template <typename U,
-            typename=detail::enable_if_container_of_t<U,len_type>>
-        indexed_varray(std::initializer_list<len_type> len,
-                       std::initializer_list<U> idx,
-                       layout layout)
-        {
-            reset(len, idx, Type(), layout);
-        }
-
-        template <typename U, typename V,
-            typename=detail::enable_if_t<
-                detail::is_container_of<U,len_type>::value &&
-                (detail::is_container_of_containers_of<V,len_type>::value ||
-                 detail::is_matrix_of<V,len_type>::value)>>
-        indexed_varray(const U& len, const V& idx, layout layout)
-        {
-            reset(len, idx, Type(), layout);
-        }
-
-        indexed_varray(std::initializer_list<len_type> len,
-                       initializer_matrix<len_type> idx,
-                       uninitialized_t, layout layout = DEFAULT)
-        {
-            reset(len, idx, uninitialized, layout);
-        }
-
-        template <typename U,
-            typename=detail::enable_if_container_of_t<U,len_type>>
-        indexed_varray(std::initializer_list<len_type> len,
-                       std::initializer_list<U> idx,
-                       uninitialized_t, layout layout = DEFAULT)
-        {
-            reset(len, idx, uninitialized, layout);
-        }
-
-        template <typename U, typename V,
-            typename=detail::enable_if_t<
-                detail::is_container_of<U,len_type>::value &&
-                (detail::is_container_of_containers_of<V,len_type>::value ||
-                 detail::is_matrix_of<V,len_type>::value)>>
-        indexed_varray(const U& len, const V& idx,
+        indexed_varray(const detail::array_1d<len_type>& len,
+                       const detail::array_2d<len_type>& idx,
                        uninitialized_t, layout layout = DEFAULT)
         {
             reset(len, idx, uninitialized, layout);
@@ -200,17 +135,14 @@ class indexed_varray : public indexed_varray_base<Type, indexed_varray<Type, All
         {
             if (storage_.size > 0)
             {
-                pointer data_ = real_data_[0];
                 for (stride_type i = storage_.size;i --> 0;)
                 {
-                    alloc_traits::destroy(storage_, data_+i);
+                    alloc_traits::destroy(storage_, data_[i]);
                 }
-                alloc_traits::deallocate(storage_, data_, storage_.size);
+                alloc_traits::deallocate(storage_, data_[0], storage_.size);
                 storage_.size = 0;
             }
 
-            real_data_.reset();
-            real_idx_.reset();
             layout_ = DEFAULT;
             base::reset();
         }
@@ -243,110 +175,49 @@ class indexed_varray : public indexed_varray_base<Type, indexed_varray<Type, All
             base::template operator=<>(other);
         }
 
-        void reset(std::initializer_list<len_type> len,
-                   initializer_matrix<len_type> idx,
+        void reset(const detail::array_1d<len_type>& len,
+                   const detail::array_2d<len_type>& idx,
                    const Type& value = Type(), layout layout = DEFAULT)
         {
             reset(len, idx, uninitialized, layout);
             if (storage_.size > 0)
-                std::uninitialized_fill_n(real_data_[0], storage_.size, value);
+                std::uninitialized_fill_n(data_[0], storage_.size, value);
         }
 
-        template <typename U,
-            typename=detail::enable_if_container_of_t<U,len_type>>
-        void reset(std::initializer_list<len_type> len,
-                   std::initializer_list<U> idx,
-                   const Type& value = Type(), layout layout = DEFAULT)
-        {
-            reset(len, idx, uninitialized, layout);
-            if (storage_.size > 0)
-                std::uninitialized_fill_n(real_data_[0], storage_.size, value);
-        }
-
-        template <typename U, typename V,
-            typename=detail::enable_if_t<
-                detail::is_container_of<U,len_type>::value &&
-                (detail::is_container_of_containers_of<V,len_type>::value ||
-                 detail::is_matrix_of<V,len_type>::value)>>
-        void reset(const U& len, const V& idx,
-                   const Type& value = Type(), layout layout = DEFAULT)
-        {
-            reset(len, idx, uninitialized, layout);
-            if (storage_.size > 0)
-                std::uninitialized_fill_n(real_data_[0], storage_.size, value);
-        }
-
-        void reset(std::initializer_list<len_type> len,
-                   initializer_matrix<len_type> idx,
-                   layout layout)
+        void reset(const detail::array_1d<len_type>& len,
+                   const detail::array_2d<len_type>& idx, layout layout)
         {
             reset(len, idx, Type(), layout);
         }
 
-        template <typename U,
-            typename=detail::enable_if_container_of_t<U,len_type>>
-        void reset(std::initializer_list<len_type> len,
-                   std::initializer_list<U> idx,
-                   layout layout)
-        {
-            reset(len, idx, Type(), layout);
-        }
-
-        template <typename U, typename V,
-            typename=detail::enable_if_t<
-                detail::is_container_of<U,len_type>::value &&
-                (detail::is_container_of_containers_of<V,len_type>::value ||
-                 detail::is_matrix_of<V,len_type>::value)>>
-        void reset(const U& len, const V& idx, layout layout)
-        {
-            reset(len, idx, Type(), layout);
-        }
-
-        void reset(std::initializer_list<len_type> len,
-                   initializer_matrix<len_type> idx,
+        void reset(const detail::array_1d<len_type>& len,
+                   const detail::array_2d<len_type>& idx,
                    uninitialized_t, layout layout = DEFAULT)
         {
-            reset<std::initializer_list<len_type>,
-                  initializer_matrix<len_type>,void>(len, idx, uninitialized, layout);
-        }
+            unsigned total_dim = len.size();
+            unsigned idx_dim = idx.length(1);
+            unsigned dense_dim = total_dim - idx_dim;
+            MARRAY_ASSERT(total_dim > idx_dim);
 
-        template <typename U,
-            typename=detail::enable_if_container_of_t<U,len_type>>
-        void reset(std::initializer_list<len_type> len,
-                   std::initializer_list<U> idx,
-                   uninitialized_t, layout layout = DEFAULT)
-        {
-            reset<std::initializer_list<len_type>,
-                  std::initializer_list<U>,void>(len, idx, uninitialized, layout);
-        }
+            unsigned num_idx = idx_dim == 0 ? 1 : idx.length(0);
+            MARRAY_ASSERT(num_idx > 0);
 
-        template <typename U, typename V,
-            typename=detail::enable_if_t<
-                detail::is_container_of<U,len_type>::value &&
-                (detail::is_container_of_containers_of<V,len_type>::value ||
-                 detail::is_matrix_of<V,len_type>::value)>>
-        void reset(const U& len, const V& idx,
-                   uninitialized_t, layout layout = DEFAULT)
-        {
-            len_type idx_ndim = detail::length(idx, 0);
-            len_type nidx = detail::length(idx, 1);
-            MARRAY_ASSERT(idx_ndim > 0 || nidx == 1);
+            idx.slurp(idx_, ROW_MAJOR);
+            len.slurp(dense_len_);
+            idx_len_.assign(dense_len_.begin()+dense_dim, dense_len_.end());
+            dense_len_.resize(dense_dim);
+            dense_stride_ = varray_view<Type>::strides(dense_len_, layout);
+            factor_.assign(num_idx, Type(1));
 
-            real_data_.reset({idx_ndim});
-            real_idx_.reset({idx_ndim, nidx}, ROW_MAJOR);
             layout_ = layout;
-
-            detail::set_idx(idx, real_idx_);
-
-            base::reset(len, real_data_.cview(), real_idx_.cview(), layout);
-
+            data_.resize(num_idx);
             stride_type size = varray_view<Type>::size(dense_len_);
-            storage_.size = size*idx_ndim;
+            storage_.size = size*num_idx;
             if (storage_.size > 0)
             {
-                real_data_[0] = alloc_traits::allocate(storage_, storage_.size);
-                for (len_type i = 1;i < idx_ndim;i++)
-                    real_data_[i] = real_data_[i-1] + size;
+                data_[0] = alloc_traits::allocate(storage_, storage_.size);
+                for (len_type i = 1;i < num_idx;i++)
+                    data_[i] = data_[i-1] + size;
             }
         }
 
@@ -359,10 +230,8 @@ class indexed_varray : public indexed_varray_base<Type, indexed_varray<Type, All
         void swap(indexed_varray& other)
         {
             using std::swap;
-            swap(real_data_, other.real_data_);
-            swap(real_idx_,  other.real_idx_);
-            swap(storage_,   other.storage_);
-            swap(layout_,    other.layout_);
+            swap(storage_, other.storage_);
+            swap(layout_, other.layout_);
             base::swap(other);
         }
 

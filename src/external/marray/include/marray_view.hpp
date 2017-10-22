@@ -67,27 +67,14 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
             reset(other);
         }
 
-        marray_view(std::initializer_list<len_type> len, pointer ptr, layout layout = DEFAULT)
+        marray_view(const detail::array_1d<len_type>& len, pointer ptr,
+                    layout layout = DEFAULT)
         {
             reset(len, ptr, layout);
         }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        marray_view(const U& len, pointer ptr, layout layout = DEFAULT)
-        {
-            reset(len, ptr, layout);
-        }
-
-        marray_view(std::initializer_list<len_type> len, pointer ptr,
-                    std::initializer_list<stride_type> stride)
-        {
-            reset(len, ptr, stride);
-        }
-
-        template <typename U, typename V, typename=
-                  detail::enable_if_t<detail::is_container_of<U,len_type>::value &&
-                                      detail::is_container_of<V,stride_type>::value>>
-        marray_view(const U& len, pointer ptr, const V& stride)
+    
+        marray_view(const detail::array_1d<len_type>& len, pointer ptr,
+                    const detail::array_1d<stride_type>& stride)
         {
             reset(len, ptr, stride);
         }
@@ -111,6 +98,14 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
         using base::reset;
         using base::cview;
         using base::view;
+        using base::cbegin;
+        using base::begin;
+        using base::cend;
+        using base::end;
+        using base::crbegin;
+        using base::rbegin;
+        using base::crend;
+        using base::rend;
         using base::shifted;
         using base::shifted_up;
         using base::shifted_down;
@@ -140,21 +135,15 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
 
          **********************************************************************/
 
-        void shift(std::initializer_list<len_type> n)
+        void shift(const detail::array_1d<len_type>& n_)
         {
-            shift<std::initializer_list<len_type>>(n);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        void shift(const U& n)
-        {
-            MARRAY_ASSERT(n.size() == NDim);
-            auto it = n.begin();
+            MARRAY_ASSERT(n_.size() == NDim);
+            
+            std::array<len_type, NDim> n;
+            n_.slurp(n);
+            
             for (unsigned dim = 0;dim < NDim;dim++)
-            {
-                shift(dim, *it);
-                ++it;
-            }
+                shift(dim, n[dim]);
         }
 
         template <typename=void, unsigned N=NDim, typename=detail::enable_if_t<N==1>>
@@ -216,27 +205,24 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
          *
          **********************************************************************/
 
-        void permute(const std::array<unsigned, NDim>& perm)
+        void permute(const detail::array_1d<unsigned>& perm_)
         {
-            permute<>(perm);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,unsigned>>
-        void permute(const U& perm)
-        {
+            MARRAY_ASSERT(perm_.size() == NDim);
+            
             std::array<len_type, NDim> len = len_;
             std::array<stride_type, NDim> stride = stride_;
+            std::array<unsigned, NDim> perm;
+            perm_.slurp(perm);
 
             auto it = perm.begin();
             for (unsigned i = 0;i < NDim;i++)
             {
-                MARRAY_ASSERT((unsigned)*it < NDim);
-                for (auto it2 = perm.begin();it2 != it;++it2)
-                    MARRAY_ASSERT(*it != *it2);
+                MARRAY_ASSERT(perm[i] < NDim);
+                for (unsigned j = i+1;j < NDim;j++)
+                    MARRAY_ASSERT(perm[i] != perm[j]);
 
-                len_[i] = len[*it];
-                stride_[i] = stride[*it];
-                ++it;
+                len_[i] = len[perm[i]];
+                stride_[i] = stride[perm[i]];
             }
         }
 
@@ -258,12 +244,12 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
         }
 
         template <unsigned Dim>
-        void reversed()
+        void reverse()
         {
             reverse(Dim);
         }
 
-        void reversed(unsigned dim)
+        void reverse(unsigned dim)
         {
             MARRAY_ASSERT(dim < NDim);
             data_ += (len_[dim]-1)*stride_[dim];

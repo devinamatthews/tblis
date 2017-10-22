@@ -84,8 +84,10 @@ TBLIS_BEGIN_CONFIG(knl_d24x8)
 
     TBLIS_CONFIG_GEMM_UKR(bli_sgemm_opt_24x16, bli_dgemm_opt_24x8 , _, _)
 
-    TBLIS_CONFIG_PACK_NN_MR_UKR(knl_spackm_24xk, knl_dpackm_24xk, _, _)
-    TBLIS_CONFIG_PACK_NN_NR_UKR(knl_spackm_16xk, knl_dpackm_8xk , _, _)
+    //TBLIS_CONFIG_PACK_NN_MR_UKR(knl_spackm_24xk, knl_dpackm_24xk, _, _)
+    //TBLIS_CONFIG_PACK_NN_NR_UKR(knl_spackm_16xk, knl_dpackm_8xk , _, _)
+    TBLIS_CONFIG_PACK_NN_MR_UKR(_, knl_dpackm_24xk, _, _)
+    TBLIS_CONFIG_PACK_NN_NR_UKR(_, knl_dpackm_8xk , _, _)
 
     TBLIS_CONFIG_GEMM_ROW_MAJOR(true, true, _, _)
 

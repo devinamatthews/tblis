@@ -113,8 +113,8 @@ am_bin_test_OBJECTS = test/dpd_marray_view.$(OBJEXT) \
 	test/indexed_varray.$(OBJEXT) test/marray_view.$(OBJEXT) \
 	test/marray.$(OBJEXT) test/miterator.$(OBJEXT) \
 	test/range.$(OBJEXT) test/short_vector.$(OBJEXT) \
-	test/utility.$(OBJEXT) test/varray_view.$(OBJEXT) \
-	test/varray.$(OBJEXT) third_party/gtest/gtest_main.$(OBJEXT) \
+	test/varray_view.$(OBJEXT) test/varray.$(OBJEXT) \
+	third_party/gtest/gtest_main.$(OBJEXT) \
 	third_party/gtest/gtest-all.$(OBJEXT)
 bin_test_OBJECTS = $(am_bin_test_OBJECTS)
 bin_test_LDADD = $(LDADD)
@@ -543,7 +543,6 @@ bin_test_SOURCES = test/dpd_marray_view.cxx \
                    test/miterator.cxx \
                    test/range.cxx \
                    test/short_vector.cxx \
-                   test/utility.cxx \
                    test/varray_view.cxx \
                    test/varray.cxx \
                    third_party/gtest/gtest_main.cc \
@@ -625,8 +624,6 @@ test/range.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 test/short_vector.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
-test/utility.$(OBJEXT): test/$(am__dirstamp) \
-	test/$(DEPDIR)/$(am__dirstamp)
 test/varray_view.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 test/varray.$(OBJEXT): test/$(am__dirstamp) \
@@ -671,7 +668,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/miterator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/range.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/short_vector.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/utility.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/varray.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/varray_view.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@third_party/gtest/$(DEPDIR)/gtest-all.Po@am__quote@

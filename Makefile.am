@@ -94,12 +94,15 @@ utilinclude_HEADERS = \
 	\
 	src/util/basic_types.h \
 	src/util/configs.h \
+	src/util/macros.h \
 	src/util/thread.h
 
 memoryincludedir = $(pkgincludedir)/memory
 memoryinclude_HEADERS = \
 	\
 	src/memory/aligned_allocator.hpp \
+	src/memory/alignment.hpp \
+	src/memory/memory_pool.hpp \
 	src/memory/stack_allocator.hpp
 
 iface1vincludedir = $(pkgincludedir)/iface/1v
@@ -109,7 +112,8 @@ iface1vinclude_HEADERS = \
 	src/iface/1v/dot.h \
 	src/iface/1v/reduce.h \
 	src/iface/1v/scale.h \
-	src/iface/1v/set.h
+	src/iface/1v/set.h \
+	src/iface/1v/shift.h
 
 iface1mincludedir = $(pkgincludedir)/iface/1m
 iface1minclude_HEADERS = \
@@ -118,7 +122,8 @@ iface1minclude_HEADERS = \
 	src/iface/1m/dot.h \
 	src/iface/1m/reduce.h \
 	src/iface/1m/scale.h \
-	src/iface/1m/set.h
+	src/iface/1m/set.h \
+	src/iface/1m/shift.h
 
 iface1tincludedir = $(pkgincludedir)/iface/1t
 iface1tinclude_HEADERS = \
@@ -127,7 +132,8 @@ iface1tinclude_HEADERS = \
 	src/iface/1t/dot.h \
 	src/iface/1t/reduce.h \
 	src/iface/1t/scale.h \
-	src/iface/1t/set.h
+	src/iface/1t/set.h \
+	src/iface/1t/shift.h
 
 iface3mincludedir = $(pkgincludedir)/iface/3m
 iface3minclude_HEADERS = \
@@ -142,11 +148,36 @@ iface3tinclude_HEADERS = \
 marrayincludedir = $(pkgincludedir)/external/marray/include
 marrayinclude_HEADERS = \
 	\
+	src/external/marray/include/dpd_marray_base.hpp \
+	src/external/marray/include/dpd_marray_view.hpp \
+	src/external/marray/include/dpd_marray.hpp \
+	src/external/marray/include/dpd_varray_base.hpp \
+	src/external/marray/include/dpd_varray_view.hpp \
+	src/external/marray/include/dpd_varray.hpp \
+	src/external/marray/include/expression.hpp \
+	src/external/marray/include/indexed_dpd_varray_base.hpp \
+	src/external/marray/include/indexed_dpd_varray_view.hpp \
+	src/external/marray/include/indexed_dpd_varray.hpp \
+	src/external/marray/include/indexed_varray_base.hpp \
+	src/external/marray/include/indexed_varray_view.hpp \
+	src/external/marray/include/indexed_varray.hpp \
+	src/external/marray/include/marray_base.hpp \
+	src/external/marray/include/marray_slice.hpp \
+	src/external/marray/include/marray_view.hpp \
 	src/external/marray/include/marray.hpp \
 	src/external/marray/include/miterator.hpp \
+	src/external/marray/include/range.hpp \
+	src/external/marray/include/rotate.hpp \
+	src/external/marray/include/short_vector.hpp \
+	src/external/marray/include/utility.hpp \
+	src/external/marray/include/varray_base.hpp \
+	src/external/marray/include/varray_view.hpp \
 	src/external/marray/include/varray.hpp \
-	src/external/marray/include/viterator.hpp \
-	src/external/marray/include/utility.hpp
+	src/external/marray/include/vector_avx.hpp \
+	src/external/marray/include/vector_avx512.hpp \
+	src/external/marray/include/vector_sse41.hpp \
+	src/external/marray/include/vector.hpp \
+	src/external/marray/include/viterator.hpp
 	
 stl_extincludedir = $(pkgincludedir)/external/stl_ext/include
 stl_extinclude_HEADERS = \

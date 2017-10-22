@@ -31,14 +31,14 @@ class varray;
 template <typename Expr>
 struct is_expression_arg_or_scalar;
 
-}
+/*
+ * Convenient names for 1- and 2-dimensional array types.
+ */
+template <typename Type> using row_view = marray_view<Type, 1>;
+template <typename Type, typename Allocator=std::allocator<Type>> using row = marray<Type, 1, Allocator>;
 
-#include "expression.hpp"
-#include "marray_slice.hpp"
-#include "miterator.hpp"
-
-namespace MArray
-{
+template <typename Type> using matrix_view = marray_view<Type, 2>;
+template <typename Type, typename Allocator=std::allocator<Type>> using matrix = marray<Type, 2, Allocator>;
 
 namespace detail
 {
@@ -47,32 +47,465 @@ template <typename Type, unsigned NDim>
 struct initializer_type;
 
 template <typename Type>
-struct initializer_type<Type, 1u>
+struct initializer_type<Type, 0u>
 {
-    typedef std::initializer_list<Type> type;
+    typedef Type type;
 };
 
 template <typename Type, unsigned NDim>
 struct initializer_type
 {
-    typedef std::initializer_list<typename initializer_type<Type, NDim-1>::type> type;
+    typedef std::initializer_list<
+        typename initializer_type<Type, NDim-1>::type> type;
 };
 
 template <typename Func, typename Arg, typename... Args>
-detail::enable_if_t<sizeof...(Args) && std::is_same<decltype(std::declval<Func&&>()(std::declval<Arg&&>(), std::declval<Args&&>()...)),void>::value>
+detail::enable_if_t<sizeof...(Args) &&
+                    std::is_same<decltype(std::declval<Func&&>()(
+                        std::declval<Arg&&>(),
+                        std::declval<Args&&>()...)),void>::value>
 call(Func&& f, Arg&& arg, Args&&... args)
 {
     f(std::forward<Arg>(arg), std::forward<Args>(args)...);
 }
 
 template <typename Func, typename Arg, typename... Args>
-detail::enable_if_t<std::is_same<decltype(std::declval<Func&&>()(std::declval<Arg&&>())),void>::value>
+detail::enable_if_t<std::is_same<decltype(std::declval<Func&&>()(
+                        std::declval<Arg&&>())),void>::value>
 call(Func&& f, Arg&& arg, Args&&... args)
 {
     f(std::forward<Arg>(arg));
 }
 
+template <typename Array>
+class marray_iterator
+{
+    protected:
+        Array* array_ = nullptr;
+        len_type i_ = 0;
+
+    public:
+        typedef std::random_access_iterator_tag iterator_category;
+        typedef decltype((*array_)[0]) value_type;
+        typedef len_type difference_type;
+        typedef typename std::remove_reference<value_type>::type* pointer;
+        typedef value_type& reference;
+
+        marray_iterator(Array& array, len_type i)
+        : array_(&array), i_(i) {}
+
+        bool operator==(const marray_iterator& other) const
+        {
+            return i_ == other.i_;
+        }
+
+        bool operator!=(const marray_iterator& other) const
+        {
+            return !(*this == other);
+        }
+
+        value_type operator*() const
+        {
+            return (*array_)[i_];
+        }
+
+        marray_iterator& operator++()
+        {
+            i_++;
+            return *this;
+        }
+
+        marray_iterator operator++(int)
+        {
+            marray_iterator old(*this);
+            i_++;
+            return old;
+        }
+
+        marray_iterator& operator--()
+        {
+            i_--;
+            return *this;
+        }
+
+        marray_iterator operator--(int)
+        {
+            marray_iterator old(*this);
+            i_--;
+            return old;
+        }
+
+        marray_iterator& operator+=(difference_type n)
+        {
+            i_ += n;
+            return *this;
+        }
+
+        marray_iterator operator+(difference_type n) const
+        {
+            return marray_iterator(*array_, i_+n);
+        }
+
+        friend marray_iterator operator+(difference_type n, const marray_iterator& i)
+        {
+            return marray_iterator(*i.array_, i.i_+n);
+        }
+
+        marray_iterator& operator-=(difference_type n)
+        {
+            i_ -= n;
+            return *this;
+        }
+
+        marray_iterator operator-(difference_type n) const
+        {
+            return iterator(*array_, i_-n);
+        }
+
+        difference_type operator-(const marray_iterator& other) const
+        {
+            return i_ - other.i_;
+        }
+
+        bool operator<(const marray_iterator& other) const
+        {
+            return i_ < other.i_;
+        }
+
+        bool operator<=(const marray_iterator& other) const
+        {
+            return !(other < *this);
+        }
+
+        bool operator>(const marray_iterator& other) const
+        {
+            return other < *this;
+        }
+
+        bool operator>=(const marray_iterator& other) const
+        {
+            return !(*this < other);
+        }
+
+        value_type operator[](difference_type n) const
+        {
+            return (*array_)[i_+n];
+        }
+
+        friend void swap(marray_iterator& a, marray_iterator& b)
+        {
+            using std::swap;
+            swap(a.array_, b.array_);
+            swap(a.i_, b.i_);
+        }
+};
+
+template <typename T>
+struct is_row : std::false_type {};
+
+template <typename T, typename D, bool O>
+struct is_row<marray_base<T, 1, D, O>> : std::true_type {};
+
+template <typename T>
+struct is_row<marray_view<T, 1>> : std::true_type {};
+
+template <typename T, typename A>
+struct is_row<marray<T, 1, A>> : std::true_type {};
+
+template <typename T, typename U, typename=void>
+struct is_row_of : std::false_type {};
+
+template <typename T, typename U>
+struct is_row_of<T, U, enable_if_t<is_row<T>::value &&
+    std::is_assignable<U&,typename T::value_type>::value>> : std::true_type {};
+
+template <typename T>
+struct is_matrix : std::false_type {};
+
+template <typename T, typename D, bool O>
+struct is_matrix<marray_base<T, 2, D, O>> : std::true_type {};
+
+template <typename T>
+struct is_matrix<marray_view<T, 2>> : std::true_type {};
+
+template <typename T, typename A>
+struct is_matrix<marray<T, 2, A>> : std::true_type {};
+
+template <typename T, typename U, typename=void>
+struct is_matrix_of : std::false_type {};
+
+template <typename T, typename U>
+struct is_matrix_of<T, U, enable_if_t<is_matrix<T>::value &&
+    std::is_assignable<U&,typename T::value_type>::value>> : std::true_type {};
+
+template <typename T, typename U, typename V=void>
+using enable_if_matrix_of_t = enable_if_t<is_matrix_of<T,U>::value, V>;
+
+template <typename T, typename U>
+struct is_1d_container_of :
+    std::integral_constant<bool, is_row_of<T,U>::value ||
+                                 is_container_of<T,U>::value> {};
+
+template <typename T, typename U, typename V=void>
+using enable_if_1d_container_of_t = enable_if_t<is_1d_container_of<T,U>::value, V>;
+
+template <typename T, typename U>
+struct is_2d_container_of :
+    std::integral_constant<bool, is_matrix_of<T,U>::value ||
+                                 is_container_of_containers_of<T,U>::value> {};
+
+template <typename T, typename U, typename V=void>
+using enable_if_2d_container_of_t = enable_if_t<is_2d_container_of<T,U>::value, V>;
+
+template <typename T>
+enable_if_t<is_container<T>::value,len_type>
+length(const T& len)
+{
+    return len.size();
 }
+
+template <typename T>
+enable_if_t<is_row<T>::value,len_type>
+length(const T& len)
+{
+    return len.length(0);
+}
+
+template <typename T>
+enable_if_t<is_container_of_containers<T>::value,len_type>
+length(const T& len, unsigned dim)
+{
+    if (dim == 0) return len.size();
+    else
+    {
+        MARRAY_ASSERT(dim == 1);
+        auto it = len.begin();
+        if (it == len.end()) return 0;
+        len_type l = it->size();
+        while (++it != len.end()) MARRAY_ASSERT((len_type)it->size() == l);
+        return l;
+    }
+}
+
+template <typename T>
+enable_if_t<is_matrix<T>::value,len_type>
+length(const T& len, unsigned dim)
+{
+    return len.length(dim);
+}
+
+template <typename T>
+class array_1d
+{
+    protected:
+        struct adaptor_base
+        {
+            len_type len;
+
+            adaptor_base(len_type len) : len(len) {}
+
+            virtual ~adaptor_base() {}
+
+            virtual void slurp(T*) const = 0;
+        };
+
+        template <typename U>
+        struct adaptor : adaptor_base
+        {
+            U data;
+
+            adaptor(U data)
+            : data(data), adaptor_base(detail::length(data)) {}
+
+            virtual void slurp(T* x) const override
+            {
+                std::copy_n(data.begin(), this->len, x);
+            }
+        };
+
+        std::unique_ptr<adaptor_base> adaptor_;
+
+    public:
+        array_1d()
+        : adaptor_(new adaptor<std::initializer_list<T>>({})) {}
+
+        template <typename U, typename=detail::enable_if_assignable_t<T&,U>>
+        array_1d(std::initializer_list<U> data)
+        : adaptor_(new adaptor<std::initializer_list<U>>(data)) {}
+
+        template <typename U, typename=detail::enable_if_1d_container_of_t<U,T>>
+        array_1d(const U& data)
+        : adaptor_(new adaptor<const U&>(data)) {}
+
+        template <size_t N>
+        void slurp(std::array<T, N>& x) const
+        {
+            MARRAY_ASSERT(N >= size());
+            adaptor_->slurp(x.data());
+        }
+
+        void slurp(std::vector<T>& x) const
+        {
+            x.resize(size());
+            adaptor_->slurp(x.data());
+        }
+
+        template <size_t N>
+        void slurp(short_vector<T, N>& x) const
+        {
+            x.resize(size());
+            adaptor_->slurp(x.data());
+        }
+
+        void slurp(row<T>& x) const
+        {
+            x.reset({size()});
+            adaptor_->slurp(x.data());
+        }
+
+        len_type size() const { return adaptor_->len; }
+};
+
+template <typename T>
+class array_2d
+{
+    protected:
+        struct adaptor_base
+        {
+            std::array<len_type,2> len;
+
+            adaptor_base(len_type len0, len_type len1) : len{len0, len1} {}
+
+            virtual ~adaptor_base() {}
+
+            virtual void slurp(T* x, len_type rs, len_type cs) const = 0;
+
+            virtual void slurp(std::vector<std::vector<T>>&) const = 0;
+        };
+
+        template <typename U, typename=void> struct adaptor;
+
+        std::unique_ptr<adaptor_base> adaptor_;
+
+    public:
+        array_2d()
+        : adaptor_(new adaptor<std::initializer_list<std::initializer_list<T>>>({{}})) {}
+
+        template <typename U, typename=detail::enable_if_assignable_t<T&,U>>
+        array_2d(std::initializer_list<std::initializer_list<U>> data)
+        : adaptor_(new adaptor<std::initializer_list<std::initializer_list<U>>>(data)) {}
+
+        template <typename U, typename=detail::enable_if_1d_container_of_t<U,T>>
+        array_2d(std::initializer_list<U> data)
+        : adaptor_(new adaptor<std::initializer_list<U>>(data)) {}
+
+        template <typename U, typename=detail::enable_if_2d_container_of_t<U,T>>
+        array_2d(const U& data)
+        : adaptor_(new adaptor<const U&>(data)) {}
+
+        void slurp(std::vector<std::vector<T>>& x) const { adaptor_->slurp(x); }
+
+        template <size_t M, size_t N>
+        void slurp(std::array<std::array<T, N>, M>& x) const
+        {
+            MARRAY_ASSERT(M >= length(0));
+            MARRAY_ASSERT(N >= length(1));
+            adaptor_->slurp(&x[0][0], N, 1);
+        }
+
+        void slurp(matrix<T>& x, layout layout = DEFAULT) const
+        {
+            x.reset({length(0), length(1)}, layout);
+            adaptor_->slurp(x.data(), x.stride(0), x.stride(1));
+        }
+
+        len_type length(unsigned dim) const
+        {
+            MARRAY_ASSERT(dim < 2);
+            return adaptor_->len[dim];
+        }
+};
+
+template <typename T>
+template <typename U>
+struct array_2d<T>::adaptor<U, enable_if_t<!is_matrix<typename std::decay<U>::type>::value>> : array_2d<T>::adaptor_base
+{
+    U data;
+
+    adaptor(U data)
+    : data(data), array_2d<T>::adaptor_base(detail::length(data, 0),
+                                            detail::length(data, 1)) {}
+
+    virtual void slurp(T* x, len_type rs, len_type cs) const override
+    {
+        int i = 0;
+        for (auto it = data.begin(), end = data.end();it != end;++it)
+        {
+            int j = 0;
+            for (auto it2 = it->begin(), end2 = it->end();it2 != end2;++it2)
+            {
+                x[i*rs + j*cs] = *it2;
+                j++;
+            }
+            i++;
+        }
+    }
+
+    virtual void slurp(std::vector<std::vector<T>>& x) const override
+    {
+        x.clear();
+        for (auto it = data.begin(), end = data.end();it != end;++it)
+        {
+            x.emplace_back(it->begin(), it->end());
+        }
+    }
+};
+
+template <typename T>
+template <typename U>
+struct array_2d<T>::adaptor<U, enable_if_t<is_matrix<typename std::decay<U>::type>::value>> : array_2d<T>::adaptor_base
+{
+    U data;
+    using array_2d<T>::adaptor_base::len;
+
+    adaptor(U data)
+    : data(data), array_2d<T>::adaptor_base(detail::length(data, 0),
+                                            detail::length(data, 1)) {}
+
+    virtual void slurp(T* x, len_type rs, len_type cs) const override
+    {
+        for (len_type i = 0;i < len[0];i++)
+        {
+            for (len_type j = 0;j < len[1];j++)
+            {
+                x[i*rs + j*cs] = data[i][j];
+            }
+        }
+    }
+
+    virtual void slurp(std::vector<std::vector<T>>& x) const override
+    {
+        x.resize(len[0]);
+        for (len_type i = 0;i < len[0];i++)
+        {
+            x[i].resize(len[1]);
+            for (len_type j = 0;j < len[1];j++)
+            {
+                x[i][j] = data[i][j];
+            }
+        }
+    }
+};
+
+}
+}
+
+#include "expression.hpp"
+#include "marray_slice.hpp"
+#include "miterator.hpp"
+
+namespace MArray
+{
 
 template <typename Type, unsigned NDim, typename Derived, bool Owner>
 class marray_base
@@ -94,6 +527,10 @@ class marray_base
         typedef const Type& const_reference;
         typedef typename detail::initializer_type<Type, NDim>::type
             initializer_type;
+        typedef detail::marray_iterator<marray_base> iterator;
+        typedef detail::marray_iterator<const marray_base> const_iterator;
+        typedef std::reverse_iterator<iterator> reverse_iterator;
+        typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
         typedef typename std::conditional<Owner,const Type,Type>::type ctype;
         typedef ctype& cref;
@@ -113,8 +550,8 @@ class marray_base
         void reset()
         {
             data_ = nullptr;
-            len_.fill(0);
-            stride_.fill(0);
+            len_ = {};
+            stride_ = {};
         }
 
         template <typename U, bool O, typename D,
@@ -135,39 +572,25 @@ class marray_base
             stride_ = other.stride_;
         }
 
-        template <typename U, unsigned OldNDim, unsigned NIndexed, typename... Dims,
-            typename=detail::enable_if_convertible_t<U*,pointer>>
+        template <typename U, unsigned OldNDim, unsigned NIndexed,
+            typename... Dims, typename=detail::enable_if_convertible_t<U*,pointer>>
         void reset(const marray_slice<U, OldNDim, NIndexed, Dims...>& other)
         {
             reset(other.view());
         }
 
-        void reset(std::initializer_list<len_type> len, pointer ptr, layout layout = DEFAULT)
-        {
-            reset<std::initializer_list<len_type>>(len, ptr, layout);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        void reset(const U& len, pointer ptr, layout layout = DEFAULT)
+        void reset(const detail::array_1d<len_type>& len, pointer ptr,
+                   layout layout = DEFAULT)
         {
             reset(len, ptr, strides(len, layout));
         }
 
-        void reset(std::initializer_list<len_type> len, pointer ptr,
-                   std::initializer_list<stride_type> stride)
-        {
-            reset<std::initializer_list<len_type>,
-                  std::initializer_list<stride_type>>(len, ptr, stride);
-        }
-
-        template <typename U, typename V, typename=detail::enable_if_t<
-            detail::is_container_of<U,len_type>::value &&
-            detail::is_container_of<V,stride_type>::value>>
-        void reset(const U& len, pointer ptr, const V& stride)
+        void reset(const detail::array_1d<len_type>& len, pointer ptr,
+                   const detail::array_1d<stride_type>& stride)
         {
             data_ = ptr;
-            std::copy_n(len.begin(), NDim, len_.begin());
-            std::copy_n(stride.begin(), NDim, stride_.begin());
+            len.slurp(len_);
+            stride.slurp(stride_);
         }
 
         void reset(initializer_type data, layout layout = DEFAULT)
@@ -184,20 +607,24 @@ class marray_base
          **********************************************************************/
 
         template <typename Ptr, typename Func, unsigned... I>
-        void for_each_element(Func&& f, detail::integer_sequence<unsigned, I...>) const
+        void for_each_element(Func&& f,
+                              detail::integer_sequence<unsigned, I...>) const
         {
             miterator<NDim, 1> it(len_, stride_);
             Ptr ptr = const_cast<Ptr>(data_);
-            while (it.next(ptr)) detail::call(std::forward<Func>(f), *ptr, it.position()[I]...);
+            while (it.next(ptr))
+                detail::call(std::forward<Func>(f), *ptr, it.position()[I]...);
         }
 
-        void set_lengths(unsigned i, std::array<len_type, NDim>& len, std::initializer_list<Type> data)
+        void set_lengths(unsigned i, std::array<len_type, NDim>& len,
+                         std::initializer_list<Type> data)
         {
             len[i] = data.size();
         }
 
         template <typename U>
-        void set_lengths(unsigned i, std::array<len_type, NDim>& len, std::initializer_list<U> data)
+        void set_lengths(unsigned i, std::array<len_type, NDim>& len,
+                         std::initializer_list<U> data)
         {
             len[i] = data.size();
             set_lengths(i+1, len, *data.begin());
@@ -240,57 +667,40 @@ class marray_base
          *
          **********************************************************************/
 
-        static std::array<stride_type, NDim>
-        strides(std::initializer_list<len_type> len, layout layout = DEFAULT)
-        {
-            return strides<std::initializer_list<len_type>>(len, layout);
-        }
 
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
         static std::array<stride_type, NDim>
-        strides(const U& len, layout layout = DEFAULT)
+        strides(const detail::array_1d<len_type>& len_, layout layout = DEFAULT)
         {
             //TODO: add alignment option
+            
+            MARRAY_ASSERT(len_.size() == NDim);
 
+            std::array<len_type, NDim> len;
+            len_.slurp(len);
             std::array<stride_type, NDim> stride;
 
             if (layout == ROW_MAJOR)
             {
-                /*
-                 * Some monkeying around has to be done to support len as a
-                 * std::initializer_list (or other forward iterator range)
-                 */
-                auto it = len.begin(); ++it;
-                std::copy_n(it, NDim-1, stride.begin());
                 stride[NDim-1] = 1;
-                for (unsigned i = NDim;i --> 1;)
-                {
-                    stride[i-1] *= stride[i];
-                }
+                for (unsigned i = NDim-1;i --> 0;)
+                    stride[i] = stride[i+1]*len[i+1];
             }
             else
             {
                 stride[0] = 1;
-                auto it = len.begin();
                 for (unsigned i = 1;i < NDim;i++)
-                {
-                    stride[i] = stride[i-1]*(*it);
-                    ++it;
-                }
+                    stride[i] = stride[i-1]*len[i-1];
             }
 
             return stride;
         }
 
-        static stride_type size(std::initializer_list<len_type> len)
-        {
-            return size<std::initializer_list<len_type>>(len);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        static stride_type size(const U& len)
+        static stride_type size(const detail::array_1d<len_type>& len_)
         {
             //TODO: add alignment option
+            
+            len_vector len;
+            len_.slurp(len);
 
             stride_type s = 1;
             for (auto& l : len) s *= l;
@@ -466,28 +876,82 @@ class marray_base
 
         /***********************************************************************
          *
+         * Iterators
+         *
+         **********************************************************************/
+
+        const_iterator cbegin() const
+        {
+            return const_iterator{*this, 0};
+        }
+
+        const_iterator begin() const
+        {
+            return const_iterator{*this, 0};
+        }
+
+        iterator begin()
+        {
+            return iterator{*this, 0};
+        }
+
+        const_iterator cend() const
+        {
+            return const_iterator{*this, len_[0]};
+        }
+
+        const_iterator end() const
+        {
+            return const_iterator{*this, len_[0]};
+        }
+
+        iterator end()
+        {
+            return iterator{*this, len_[0]};
+        }
+
+        const_reverse_iterator crbegin() const
+        {
+            return const_reverse_iterator{end()};
+        }
+
+        const_reverse_iterator rbegin() const
+        {
+            return const_reverse_iterator{end()};
+        }
+
+        reverse_iterator rbegin()
+        {
+            return reverse_iterator{end()};
+        }
+
+        const_reverse_iterator crend() const
+        {
+            return const_reverse_iterator{begin()};
+        }
+
+        const_reverse_iterator rend() const
+        {
+            return const_reverse_iterator{begin()};
+        }
+
+        reverse_iterator rend()
+        {
+            return reverse_iterator{begin()};
+        }
+
+        /***********************************************************************
+         *
          * Shifting
          *
          **********************************************************************/
 
-        marray_view<ctype, NDim> shifted(std::initializer_list<len_type> n) const
+        marray_view<ctype, NDim> shifted(const detail::array_1d<len_type>& n) const
         {
             return const_cast<marray_base&>(*this).shifted(n);
         }
 
-        marray_view<Type, NDim> shifted(std::initializer_list<len_type> n)
-        {
-            return shifted<std::initializer_list<len_type>>(n);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        marray_view<ctype, NDim> shifted(const U& n) const
-        {
-            return const_cast<marray_base&>(*this).shifted(n);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        marray_view<Type, NDim> shifted(const U& n)
+        marray_view<Type, NDim> shifted(const detail::array_1d<len_type>& n)
         {
             marray_view<Type,NDim> r(*this);
             r.shift(n);
@@ -604,24 +1068,12 @@ class marray_base
          *
          **********************************************************************/
 
-        marray_view<ctype,NDim> permuted(std::initializer_list<unsigned> perm) const
+        marray_view<ctype,NDim> permuted(const detail::array_1d<unsigned>& perm) const
         {
             return const_cast<marray_base&>(*this).permuted(perm);
         }
 
-        marray_view<Type,NDim> permuted(std::initializer_list<unsigned> perm)
-        {
-            return permuted<std::initializer_list<unsigned>>(perm);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,unsigned>>
-        marray_view<ctype,NDim> permuted(const U& perm) const
-        {
-            return const_cast<marray_base&>(*this).permuted<U>(perm);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,unsigned>>
-        marray_view<Type,NDim> permuted(const U& perm)
+        marray_view<Type,NDim> permuted(const detail::array_1d<unsigned>& perm)
         {
             marray_view<Type,NDim> r(*this);
             r.permute(perm);
@@ -659,25 +1111,13 @@ class marray_base
          **********************************************************************/
 
         template <unsigned NewNDim>
-        marray_view<ctype, NewNDim> lowered(std::initializer_list<unsigned> split) const
+        marray_view<ctype, NewNDim> lowered(const detail::array_1d<unsigned>& split) const
         {
             return const_cast<marray_base&>(*this).lowered<NewNDim>(split);
         }
 
         template <unsigned NewNDim>
-        marray_view<Type, NewNDim> lowered(std::initializer_list<unsigned> split)
-        {
-            return lowered<NewNDim,std::initializer_list<unsigned>>(split);
-        }
-
-        template <unsigned NewNDim, typename U, typename=detail::enable_if_container_of_t<U,unsigned>>
-        marray_view<ctype, NewNDim> lowered(const U& split) const
-        {
-            return const_cast<marray_base&>(*this).lowered<NewNDim,U>(split);
-        }
-
-        template <unsigned NewNDim, typename U, typename=detail::enable_if_container_of_t<U,unsigned>>
-        marray_view<Type, NewNDim> lowered(const U& split_)
+        marray_view<Type, NewNDim> lowered(const detail::array_1d<unsigned>& split_)
         {
             static_assert(NewNDim > 0 && NewNDim <= NDim,
                           "Cannot split into this number of dimensions");
@@ -686,7 +1126,7 @@ class marray_base
             MARRAY_ASSERT(split_.size() == NSplit);
 
             std::array<unsigned, NSplit> split;
-            std::copy_n(split_.begin(), NSplit, split.begin());
+            split_.slurp(split);
 
             for (unsigned i = 0;i < NSplit;i++)
             {
@@ -1096,13 +1536,15 @@ class marray_base
         template <typename Func>
         void for_each_element(Func&& f) const
         {
-            for_each_element<cptr>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
+            for_each_element<cptr>(std::forward<Func>(f),
+                                   detail::static_range<unsigned, NDim>{});
         }
 
         template <typename Func>
         void for_each_element(Func&& f)
         {
-            for_each_element<pointer>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
+            for_each_element<pointer>(std::forward<Func>(f),
+                                      detail::static_range<unsigned, NDim>{});
         }
 
         /***********************************************************************

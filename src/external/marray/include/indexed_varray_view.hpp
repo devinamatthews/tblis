@@ -23,9 +23,6 @@ class indexed_varray_view : public indexed_varray_base<Type, indexed_varray_view
         using base::dense_stride_;
         using base::factor_;
 
-        template <typename U> using initializer_matrix =
-            std::initializer_list<std::initializer_list<U>>;
-
     public:
         using typename base::value_type;
         using typename base::pointer;
@@ -78,19 +75,18 @@ class indexed_varray_view : public indexed_varray_base<Type, indexed_varray_view
             reset(other);
         }
 
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        indexed_varray_view(const U& len, row_view<pointer> ptr,
-                            matrix_view<len_type> idx, layout layout = DEFAULT)
+        indexed_varray_view(const detail::array_1d<len_type>& len,
+                            const detail::array_1d<pointer>& ptr,
+                            const detail::array_2d<len_type>& idx,
+                            layout layout = DEFAULT)
         {
             reset(len, ptr, idx, layout);
         }
 
-        template <typename U, typename V,
-            typename=detail::enable_if_t<
-                detail::is_container_of<U,len_type>::value &&
-                detail::is_container_of<V,stride_type>::value>>
-        indexed_varray_view(const U& len, row_view<pointer> ptr,
-                            matrix_view<len_type> idx, const V& stride)
+        indexed_varray_view(const detail::array_1d<len_type>& len,
+                            const detail::array_1d<pointer>& ptr,
+                            const detail::array_2d<len_type>& idx,
+                            const detail::array_1d<stride_type>& stride)
         {
             reset(len, ptr, idx, stride);
         }

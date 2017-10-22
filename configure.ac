@@ -45,7 +45,7 @@ fi
 # Check for hwloc
 #
 
-AC_ARG_WITH([memloc], AS_HELP_STRING([--without-hwloc],
+AC_ARG_WITH([hwloc], AS_HELP_STRING([--without-hwloc],
     [do not attempt to link with the hwloc library]))
     
 if test "x$with_hwloc" != "xno"; then

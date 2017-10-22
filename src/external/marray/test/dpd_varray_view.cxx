@@ -4,15 +4,15 @@
 using namespace std;
 using namespace MArray;
 
-static array<dpd_layout,6> layouts =
-{{
+static dpd_layout layouts[6] =
+{
     PREFIX_ROW_MAJOR,
     PREFIX_COLUMN_MAJOR,
     BLOCKED_ROW_MAJOR,
     BLOCKED_COLUMN_MAJOR,
     BALANCED_ROW_MAJOR,
     BALANCED_COLUMN_MAJOR,
-}};
+};
 
 /*
    3   2   1   3
@@ -31,43 +31,43 @@ static array<dpd_layout,6> layouts =
         168                80                88
 */
 
-static arrays<dim_vector,6> perms =
-    {{{3,2,1,0}, {0,1,2,3}, {3,2,1,0}, {0,1,2,3}, {3,2,1,0}, {0,1,2,3}}};
+static dim_vector perms[6] =
+    {{3,2,1,0}, {0,1,2,3}, {3,2,1,0}, {0,1,2,3}, {3,2,1,0}, {0,1,2,3}};
 
-static array<irrep_vector,8> irreps =
-    {{{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {1,1,1,0},
-      {0,0,0,1}, {1,1,0,1}, {1,0,1,1}, {0,1,1,1}}};
-static array<len_vector,8> lengths =
-    {{{1,2,1,3}, {3,2,1,3}, {3,2,2,3}, {1,2,2,3},
-      {3,2,1,4}, {1,2,1,4}, {1,2,2,4}, {3,2,2,4}}};
+static irrep_vector irreps[8] =
+    {{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {1,1,1,0},
+     {0,0,0,1}, {1,1,0,1}, {1,0,1,1}, {0,1,1,1}};
+static len_vector lengths[8] =
+    {{1,2,1,3}, {3,2,1,3}, {3,2,2,3}, {1,2,2,3},
+     {3,2,1,4}, {1,2,1,4}, {1,2,2,4}, {3,2,2,4}};
 
-static arrays<stride_type,6,8,4> strides =
-{{
-    {{{42,11, 3, 1}, {42,11, 3, 1}, {42,10, 3, 1}, {42,10, 3, 1},
-      {42,10, 4, 1}, {42,10, 4, 1}, {42,11, 4, 1}, {42,11, 4, 1}}},
-    {{{ 1, 1, 8,24}, { 1, 3, 8,24}, { 1, 3, 8,24}, { 1, 1, 8,24},
-      { 1, 3, 8,24}, { 1, 1, 8,24}, { 1, 1, 8,24}, { 1, 3, 8,24}}},
-    {{{ 6, 3, 3, 1}, { 6, 3, 3, 1}, {12, 6, 3, 1}, {12, 6, 3, 1},
-      { 8, 4, 4, 1}, { 8, 4, 4, 1}, {16, 8, 4, 1}, {16, 8, 4, 1}}},
-    {{{ 1, 1, 2, 2}, { 1, 3, 6, 6}, { 1, 3, 6,12}, { 1, 1, 2, 4},
-      { 1, 3, 6, 6}, { 1, 1, 2, 2}, { 1, 1, 2, 4}, { 1, 3, 6,12}}},
-    {{{22,11, 3, 1}, {22,11, 3, 1}, {20,10, 3, 1}, {20,10, 3, 1},
-      {20,10, 4, 1}, {20,10, 4, 1}, {22,11, 4, 1}, {22,11, 4, 1}}},
-    {{{ 1, 1, 8, 8}, { 1, 3, 8, 8}, { 1, 3, 8,16}, { 1, 1, 8,16},
-      { 1, 3, 8, 8}, { 1, 1, 8, 8}, { 1, 1, 8,16}, { 1, 3, 8,16}}}
-}};
+static stride_vector strides[6][8] =
+{
+    {{42,11, 3, 1}, {42,11, 3, 1}, {42,10, 3, 1}, {42,10, 3, 1},
+     {42,10, 4, 1}, {42,10, 4, 1}, {42,11, 4, 1}, {42,11, 4, 1}},
+    {{ 1, 1, 8,24}, { 1, 3, 8,24}, { 1, 3, 8,24}, { 1, 1, 8,24},
+     { 1, 3, 8,24}, { 1, 1, 8,24}, { 1, 1, 8,24}, { 1, 3, 8,24}},
+    {{ 6, 3, 3, 1}, { 6, 3, 3, 1}, {12, 6, 3, 1}, {12, 6, 3, 1},
+     { 8, 4, 4, 1}, { 8, 4, 4, 1}, {16, 8, 4, 1}, {16, 8, 4, 1}},
+    {{ 1, 1, 2, 2}, { 1, 3, 6, 6}, { 1, 3, 6,12}, { 1, 1, 2, 4},
+     { 1, 3, 6, 6}, { 1, 1, 2, 2}, { 1, 1, 2, 4}, { 1, 3, 6,12}},
+    {{22,11, 3, 1}, {22,11, 3, 1}, {20,10, 3, 1}, {20,10, 3, 1},
+     {20,10, 4, 1}, {20,10, 4, 1}, {22,11, 4, 1}, {22,11, 4, 1}},
+    {{ 1, 1, 8, 8}, { 1, 3, 8, 8}, { 1, 3, 8,16}, { 1, 1, 8,16},
+     { 1, 3, 8, 8}, { 1, 1, 8, 8}, { 1, 1, 8,16}, { 1, 3, 8,16}}
+};
 
-static arrays<stride_type,6,8> offsets =
-{{
+static stride_type offsets[6][8] =
+{
      {126, 20,  4,152,  0,148,129, 23},
      {  0,  2,  8, 14, 72, 78, 80, 82},
-     {126, 60, 24,156,  0,148,132, 78},
-     {  0,  6, 24, 60, 72, 96,104,120},
+     {162,144, 96,132,  0, 24, 80, 32},
+     {  0, 42,108, 22,144, 34,  6, 60},
      { 80+66, 80   ,     0+4,  0+60+4,
         0   ,  0+60, 80+66+3, 80   +3},
      {  0   ,  0   +2, 88   , 88   +6,
        88+48, 88+48+6,  0+24,  0+24+2}
-}};
+};
 
 #define CHECK_DPD_MARRAY_VIEW_RESET(v) \
     EXPECT_EQ(nullptr, v.data()); \
@@ -120,16 +120,16 @@ TEST(dpd_varray_view, constructor)
     dpd_varray_view<double> v1;
     CHECK_DPD_MARRAY_VIEW_RESET(v1)
 
-    for (unsigned j = 0;j < 6;j++)
+    dpd_varray_view<double> v2(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, data, layouts[0]);
+    CHECK_DPD_MARRAY_VIEW(v2, data, 0)
+
+    for (unsigned j = 1;j < 6;j++)
     {
-        dpd_varray_view<double> v2(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, data, layouts[j]);
-        CHECK_DPD_MARRAY_VIEW(v2, data, j)
+        dpd_varray_view<double> v3(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, data, layouts[j]);
+        CHECK_DPD_MARRAY_VIEW(v3, data, j)
     }
 
-    dpd_varray_view<double> v3(1, 2, arrays<char,4,2>{{{3, 1}, {2, 2}, {1, 2}, {3, 4}}}, data, layouts[0]);
-    CHECK_DPD_MARRAY_VIEW(v3, data, 0)
-
-    dpd_varray_view<double> v5(v3);
+    dpd_varray_view<double> v5(v2);
     CHECK_DPD_MARRAY_VIEW(v5, data, 0)
 
     dpd_varray_view<double> v51(v0);
@@ -141,22 +141,22 @@ TEST(dpd_varray_view, constructor)
     dpd_varray_view<const double> v9;
     CHECK_DPD_MARRAY_VIEW_RESET(v9)
 
+    dpd_varray_view<const double> v10(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, data, layouts[0]);
+    CHECK_DPD_MARRAY_VIEW(v10, data, 0)
+
     for (unsigned j = 0;j < 6;j++)
     {
-        dpd_varray_view<const double> v10(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, data, layouts[j]);
-        CHECK_DPD_MARRAY_VIEW(v10, data, j)
+        dpd_varray_view<const double> v11(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, data, layouts[j]);
+        CHECK_DPD_MARRAY_VIEW(v11, data, j)
     }
 
-    dpd_varray_view<const double> v11(1, 2, arrays<char,4,2>{{{3, 1}, {2, 2}, {1, 2}, {3, 4}}}, data, layouts[0]);
-    CHECK_DPD_MARRAY_VIEW(v11, data, 0)
-
-    dpd_varray_view<const double> v13(v3);
+    dpd_varray_view<const double> v13(v2);
     CHECK_DPD_MARRAY_VIEW(v13, data, 0)
 
     dpd_varray_view<const double> v131(v0);
     CHECK_DPD_MARRAY_VIEW(v131, v0.data(), 0)
 
-    dpd_varray_view<const double> v14(v11);
+    dpd_varray_view<const double> v14(v10);
     CHECK_DPD_MARRAY_VIEW(v14, data, 0)
 
     dpd_varray_view<const double> v15(dpd_varray_view<double>(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, data, layouts[0]));
@@ -185,9 +185,6 @@ TEST(dpd_varray_view, reset)
         CHECK_DPD_MARRAY_VIEW(v1, data, j)
     }
 
-    v1.reset(1, 2, arrays<char,4,2>{{{3, 1}, {2, 2}, {1, 2}, {3, 4}}}, data, layouts[0]);
-    CHECK_DPD_MARRAY_VIEW(v1, data, 0)
-
     v1.reset(v3);
     CHECK_DPD_MARRAY_VIEW(v1, data, 0)
 
@@ -207,9 +204,6 @@ TEST(dpd_varray_view, reset)
         v2.reset(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, data, layouts[j]);
         CHECK_DPD_MARRAY_VIEW(v2, data, j)
     }
-
-    v2.reset(1, 2, arrays<char,4,2>{{{3, 1}, {2, 2}, {1, 2}, {3, 4}}}, data, layouts[0]);
-    CHECK_DPD_MARRAY_VIEW(v2, data, 0)
 
     v2.reset(v3);
     CHECK_DPD_MARRAY_VIEW(v2, data, 0)
@@ -238,11 +232,11 @@ TEST(dpd_varray_view, permute)
     unsigned perm_irreps[8] = {1, 0, 2, 3, 4, 5, 7, 6};
     unsigned perm_irreps2[8] = {4, 1, 0, 5, 2, 7, 6, 3};
 
-    arrays<unsigned,6,4> perms2 =
-        {{{2,3,1,0}, {1,0,2,3}, {2,3,1,0}, {1,0,2,3}, {2,3,1,0}, {1,0,2,3}}};
+    dim_vector perms2[6] =
+        {{2,3,1,0}, {1,0,2,3}, {2,3,1,0}, {1,0,2,3}, {2,3,1,0}, {1,0,2,3}};
 
-    arrays<unsigned,6,4> perms3 =
-        {{{1,2,0,3}, {2,1,3,0}, {1,2,0,3}, {2,1,3,0}, {1,2,0,3}, {2,1,3,0}}};
+    dim_vector perms3[6] =
+        {{1,2,0,3}, {2,1,3,0}, {1,2,0,3}, {2,1,3,0}, {1,2,0,3}, {2,1,3,0}};
 
     for (unsigned j = 0;j < 6;j++)
     {
@@ -273,29 +267,6 @@ TEST(dpd_varray_view, permute)
             EXPECT_EQ(stride, vs.strides());
         }
 
-        auto v3 = v1.permuted(std::vector<char>{1, 0, 2, 3});
-        EXPECT_EQ(data, v3.data());
-        EXPECT_EQ(1u, v3.irrep());
-        EXPECT_EQ(2u, v3.num_irreps());
-        EXPECT_EQ(perms2[j], v3.permutation());
-        EXPECT_EQ((matrix<len_type>{{2, 2}, {3, 1}, {1, 2}, {3, 4}}), v3.lengths());
-
-        for (unsigned i = 0;i < 8;i++)
-        {
-            SCOPED_TRACE(i);
-            len_vector len(4);
-            stride_vector stride(4);
-            for (unsigned k = 0;k < 4;k++)
-            {
-                len[k] = lengths[i][perms2[1][k]];
-                stride[k] = strides[j][i][perms2[1][k]];
-            }
-            auto vs = v3(irreps[perm_irreps[i]]);
-            EXPECT_EQ(data + offsets[j][i], vs.data());
-            EXPECT_EQ(len, vs.lengths());
-            EXPECT_EQ(stride, vs.strides());
-        }
-
         v1.permute({1, 0, 2, 3});
         EXPECT_EQ(data, v1.data());
         EXPECT_EQ(1u, v1.irrep());
@@ -319,7 +290,7 @@ TEST(dpd_varray_view, permute)
             EXPECT_EQ(stride, vs.strides());
         }
 
-        v1.permute(std::vector<char>{2, 0, 3, 1});
+        v1.permute({2, 0, 3, 1});
         EXPECT_EQ(data, v1.data());
         EXPECT_EQ(1u, v1.irrep());
         EXPECT_EQ(2u, v1.num_irreps());
@@ -464,7 +435,7 @@ TEST(dpd_varray_view, element_iteration)
     array<int,31> visited;
     double tmp;
     double* data = &tmp;
-    arrays<len_type,3,2> len = {{{2, 3}, {1, 2}, {3, 1}}};
+    array<len_vector,3> len = {{{2, 3}, {1, 2}, {3, 1}}};
 
     for (int l = 0;l < 6;l++)
     {

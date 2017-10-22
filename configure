@@ -821,7 +821,7 @@ enable_maintainer_mode
 enable_dependency_tracking
 with_blas
 with_memkind
-with_memloc
+with_hwloc
 enable_thread_model
 enable_threading
 with_length_type
@@ -5744,9 +5744,9 @@ fi
 #
 
 
-# Check whether --with-memloc was given.
-if test "${with_memloc+set}" = set; then :
-  withval=$with_memloc;
+# Check whether --with-hwloc was given.
+if test "${with_hwloc+set}" = set; then :
+  withval=$with_hwloc;
 fi
 
 

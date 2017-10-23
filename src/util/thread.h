@@ -35,9 +35,17 @@ void tblis_set_num_threads(unsigned num_threads);
 
 #include <vector>
 #include <utility>
+#include <atomic>
 
 namespace tblis
 {
+
+template <typename T>
+void atomic_accumulate(std::atomic<T>& x, T y)
+{
+    T old = x.load();
+    while (!x.compare_exchange_weak(old, old+y)) continue;
+}
 
 using namespace tci;
 
@@ -103,7 +111,7 @@ class dynamic_task_set
         ~dynamic_task_set()
         {
             comm_.barrier();
-            if (slots_) delete[] slots_;
+            if (comm_.master()) delete[] slots_;
         }
 
         template <typename Func>

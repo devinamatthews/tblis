@@ -56,12 +56,9 @@ void mult_full(const communicator& comm, const config& cfg,
     comm.broadcast(
     [&](varray<T>& A2, varray<T>& B2, varray<T>& C2)
     {
-        if (comm.master())
-        {
-            block_to_full(A, A2);
-            block_to_full(B, B2);
-            block_to_full(C, C2);
-        }
+        block_to_full(comm, cfg, A, A2);
+        block_to_full(comm, cfg, B, B2);
+        block_to_full(comm, cfg, C, C2);
 
         auto len_AB = stl_ext::select_from(A2.lengths(), idx_A_AB);
         auto len_AC = stl_ext::select_from(C2.lengths(), idx_C_AC);
@@ -82,10 +79,7 @@ void mult_full(const communicator& comm, const config& cfg,
                     false, B2.data(), stride_B_AB, stride_B_BC, stride_B_ABC,
               beta, false, C2.data(), stride_C_AC, stride_C_BC, stride_C_ABC);
 
-        if (comm.master())
-        {
-            full_to_block(C2, C);
-        }
+        full_to_block(comm, cfg, C2, C);
     },
     A2, B2, C2);
 }
@@ -267,12 +261,12 @@ void contract_block(const communicator& comm, const config& cfg,
 
                     if (beta == T(0))
                     {
-                        set(comm, cfg, local_C.lengths(),
+                        set(subcomm, cfg, local_C.lengths(),
                             beta, local_C.data(), local_C.strides());
                     }
                     else if (beta != T(1))
                     {
-                        scale(comm, cfg, local_C.lengths(),
+                        scale(subcomm, cfg, local_C.lengths(),
                               beta, false, local_C.data(), local_C.strides());
                     }
                 });

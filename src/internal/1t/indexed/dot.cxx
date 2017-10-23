@@ -50,50 +50,45 @@ void dot_block(const communicator& comm, const config& cfg,
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
 
+    T local_result = T();
+
+    dynamic_task_set tasks(comm, std::min(nidx_A, nidx_B),
+                           stl_ext::prod(group_AB.dense_len));
+
+    stride_type idx = 0;
     stride_type idx_A = 0;
     stride_type idx_B = 0;
 
-    T local_result = T();
-
-    while (idx_A < nidx_A && idx_B < nidx_B)
+    for_each_match<false, false>(idx_A, nidx_A, indices_A, 0,
+                                idx_B, nidx_B, indices_B, 0,
+    [&]
     {
-        if (indices_A[idx_A].key[0] < indices_B[idx_B].key[0])
-        {
-            idx_A++;
-            continue;
-        }
-        else if (indices_A[idx_A].key[0] > indices_B[idx_B].key[0])
-        {
-            idx_B++;
-            continue;
-        }
-
         auto factor = indices_A[idx_A].factor*indices_B[idx_B].factor;
-        if (factor == T(0))
+        if (factor == T(0)) return;
+
+        tasks.visit(idx++,
+        [&,idx_A,idx_B,factor](const communicator& subcomm)
         {
-            idx_A++;
-            idx_B++;
-            continue;
-        }
+            stride_type off_A_AB, off_B_AB;
+            get_local_offset(indices_A[idx_A].idx[0], group_AB,
+                             off_A_AB, 0, off_B_AB, 1);
 
-        stride_type off_A_AB, off_B_AB;
-        get_local_offset(indices_A[idx_A].idx[0], group_AB,
-                         off_A_AB, 0, off_B_AB, 1);
+            auto data_A = A.data(0) + indices_A[idx_A].offset + off_A_AB;
+            auto data_B = B.data(0) + indices_B[idx_B].offset + off_B_AB;
 
-        auto data_A = A.data(0) + indices_A[idx_A].offset + off_A_AB;
-        auto data_B = B.data(0) + indices_B[idx_B].offset + off_B_AB;
+            T block_result;
+            dot(subcomm, cfg, group_AB.dense_len,
+                conj_A, data_A, group_AB.dense_stride[0],
+                conj_B, data_B, group_AB.dense_stride[1],
+                block_result);
 
-        T block_result;
-        dot(comm, cfg, group_AB.dense_len,
-            conj_A, data_A, group_AB.dense_stride[0],
-            conj_B, data_B, group_AB.dense_stride[1],
-            block_result);
+            if (subcomm.master())
+                local_result += factor*block_result;
+        });
+    });
 
-        local_result += factor*block_result;
-
-        idx_A++;
-        idx_B++;
-    }
+    len_type fake_idx;
+    reduce(comm, REDUCE_SUM, local_result, fake_idx);
 
     if (comm.master()) result = local_result;
 }

@@ -329,6 +329,9 @@ class array_1d
         array_1d()
         : adaptor_(new adaptor<std::initializer_list<T>>({})) {}
 
+        array_1d(std::initializer_list<T> data)
+        : adaptor_(new adaptor<std::initializer_list<T>>(data)) {}
+
         template <typename U, typename=detail::enable_if_assignable_t<T&,U>>
         array_1d(std::initializer_list<U> data)
         : adaptor_(new adaptor<std::initializer_list<U>>(data)) {}
@@ -390,6 +393,9 @@ class array_2d
     public:
         array_2d()
         : adaptor_(new adaptor<std::initializer_list<std::initializer_list<T>>>({{}})) {}
+
+        array_2d(std::initializer_list<std::initializer_list<T>> data)
+        : adaptor_(new adaptor<std::initializer_list<std::initializer_list<T>>>(data)) {}
 
         template <typename U, typename=detail::enable_if_assignable_t<T&,U>>
         array_2d(std::initializer_list<std::initializer_list<U>> data)

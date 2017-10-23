@@ -3,6 +3,7 @@
 
 #include "util/basic_types.h"
 #include "util/tensor.hpp"
+#include "internal/1t/dense/add.hpp"
 #include "internal/3t/dpd/mult.hpp"
 
 namespace tblis
@@ -11,7 +12,8 @@ namespace internal
 {
 
 template <typename T, typename U>
-void block_to_full(const dpd_varray_view<T>& A, varray<U>& A2)
+void block_to_full(const communicator& comm, const config& cfg,
+                   const dpd_varray_view<T>& A, varray<U>& A2)
 {
     unsigned nirrep = A.num_irreps();
     unsigned ndim_A = A.dimension();
@@ -26,54 +28,51 @@ void block_to_full(const dpd_varray_view<T>& A, varray<U>& A2)
             len_A[i] += A.length(i, irrep);
         }
     }
-    A2.reset(len_A);
+
+    if (comm.master()) A2.reset(len_A);
+    comm.barrier();
 
     A.for_each_block(
     [&](const varray_view<T>& local_A, const irrep_vector& irreps_A)
     {
-        varray_view<U> local_A2 = A2;
-
-        auto old = local_A2.data();
-
+        auto data_A2 = A2.data();
         for (unsigned i = 0;i < ndim_A;i++)
-        {
-            local_A2.length(i, local_A.length(i));
-            local_A2.shift(i, off_A[i][irreps_A[i]]);
-        }
+            data_A2 += off_A[i][irreps_A[i]]*A2.stride(i);
 
-        local_A2 = local_A;
+        add<U>(comm, cfg, {}, {}, local_A.lengths(),
+               1, false, local_A.data(), {}, local_A.strides(),
+               0, false,        data_A2, {},      A2.strides());
     });
 }
 
 template <typename T, typename U>
-void full_to_block(const varray<U>& A2, const dpd_varray_view<T>& A)
+void full_to_block(const communicator& comm, const config& cfg,
+                   const varray<U>& A2, const dpd_varray_view<T>& A)
 {
     unsigned nirrep = A.num_irreps();
     unsigned ndim_A = A.dimension();
 
-    len_vector len_A(ndim_A);
     matrix<len_type> off_A({ndim_A, nirrep});
     for (unsigned i = 0;i < ndim_A;i++)
     {
+        len_type off = 0;
         for (unsigned irrep = 0;irrep < nirrep;irrep++)
         {
-            off_A[i][irrep] = len_A[i];
-            len_A[i] += A.length(i, irrep);
+            off_A[i][irrep] = off;
+            off += A.length(i, irrep);
         }
     }
 
     A.for_each_block(
     [&](const varray_view<T>& local_A, const irrep_vector& irreps_A)
     {
-        varray_view<const U> local_A2 = A2;
-
+        auto data_A2 = A2.data();
         for (unsigned i = 0;i < ndim_A;i++)
-        {
-            local_A2.length(i, local_A.length(i));
-            local_A2.shift(i, off_A[i][irreps_A[i]]);
-        }
+            data_A2 += off_A[i][irreps_A[i]]*A2.stride(i);
 
-        local_A = local_A2;
+        add<U>(comm, cfg, {}, {}, local_A.lengths(),
+               1, false,        data_A2, {},      A2.strides(),
+               0, false, local_A.data(), {}, local_A.strides());
     });
 }
 

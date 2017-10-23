@@ -23,11 +23,8 @@ void add_full(const communicator& comm, const config& cfg,
     comm.broadcast(
     [&](varray<T>& A2, varray<T>& B2)
     {
-        if (comm.master())
-        {
-            block_to_full(A, A2);
-            block_to_full(B, B2);
-        }
+        block_to_full(comm, cfg, A, A2);
+        block_to_full(comm, cfg, B, B2);
 
         auto len_A = stl_ext::select_from(A2.lengths(), idx_A_A);
         auto len_B = stl_ext::select_from(B2.lengths(), idx_B_B);
@@ -41,10 +38,7 @@ void add_full(const communicator& comm, const config& cfg,
             alpha, conj_A, A2.data(), stride_A_A, stride_A_AB,
              beta, conj_B, B2.data(), stride_B_B, stride_B_AB);
 
-        if (comm.master())
-        {
-            full_to_block(B2, B);
-        }
+        full_to_block(comm, cfg, B2, B);
     },
     A2, B2);
 }

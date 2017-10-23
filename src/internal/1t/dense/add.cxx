@@ -98,12 +98,11 @@ void add(const communicator& comm, const config& cfg,
             while (iter_A.next(A)) sum_A += *A;
             sum_A = alpha*(conj_A ? conj(sum_A) : sum_A);
 
-            TBLIS_SPECIAL_CASE(conj_B,
             TBLIS_SPECIAL_CASE(beta == T(0),
             {
                 *B = sum_A + beta*(conj_B ? conj(*B) : *B);
             }
-            ))
+            )
         }
     }
     else if (!len_B.empty())

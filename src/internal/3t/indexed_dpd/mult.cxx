@@ -25,6 +25,17 @@ namespace tblis
 namespace internal
 {
 
+
+template <typename T, unsigned N>
+std::ostream& operator<<(std::ostream& os, const index_set<T, N>& v)
+{
+    os << "\n{\n";
+    os << "\toffset, factor: " << v.offset << " " << v.factor << '\n';
+    for (unsigned i = 0;i < N;i++)
+        os << "\tkey, idx: " << v.key[i] << " " << v.idx[i] << '\n';
+    return os << '}';
+}
+
 template <typename T>
 void mult_full(const communicator& comm, const config& cfg,
                T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A,
@@ -87,13 +98,9 @@ void contract_block(const communicator& comm, const config& cfg,
 {
     unsigned nirrep = A.num_irreps();
 
-    unsigned ndim_A = A.dimension();
-    unsigned ndim_B = B.dimension();
-    unsigned ndim_C = C.dimension();
-
-    unsigned ndim_AC = (ndim_A+ndim_C-ndim_B)/2;
-    unsigned ndim_BC = (ndim_B+ndim_C-ndim_A)/2;
-    unsigned ndim_AB = (ndim_A+ndim_B-ndim_C)/2;
+    unsigned ndim_AC = idx_C_AC.size();
+    unsigned ndim_BC = idx_C_BC.size();
+    unsigned ndim_AB = idx_A_AB.size();
 
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
     dpd_index_group<2> group_AC(A, idx_A_AC, C, idx_C_AC);
@@ -124,58 +131,23 @@ void contract_block(const communicator& comm, const config& cfg,
     stride_type idx_A = 0;
     stride_type idx_C = 0;
 
-    while (idx_A < nidx_A && idx_C < nidx_C)
+    for_each_match<true, true>(idx_A, nidx_A, indices_A, 0,
+                               idx_C, nidx_C, indices_C, 0,
+    [&](stride_type next_A, stride_type next_C)
     {
-        if (indices_A[idx_A].key[0] < indices_C[idx_C].key[0])
-        {
-            idx_A++;
-            continue;
-        }
-        else if (indices_A[idx_A].key[0] > indices_C[idx_C].key[0])
-        {
-            idx_C++;
-            continue;
-        }
-
-        auto next_A = idx_A;
-
-        do { next_A++; }
-        while (next_A < nidx_A &&
-               indices_A[idx_A].key[0] == indices_C[idx_C].key[0]);
-
         stride_type idx_B = 0;
 
-        while (idx_B < nidx_B && idx_C < nidx_C &&
-               indices_A[idx_A].key[0] == indices_C[idx_C].key[0])
+        for_each_match<true, false>(idx_B, nidx_B, indices_B, 0,
+                                    idx_C, next_C, indices_C, 1,
+        [&](stride_type next_B)
         {
-            if (indices_B[idx_B].key[0] < indices_C[idx_C].key[1])
-            {
-                idx_B++;
-                continue;
-            }
-            else if (indices_B[idx_B].key[0] > indices_C[idx_C].key[1])
-            {
-                idx_C++;
-                continue;
-            }
+            if (indices_C[idx_C].factor == T(0)) return;
 
-            auto next_B = idx_B;
-
-            do { next_B++; }
-            while (next_B < nidx_B &&
-                   indices_B[idx_B].key[0] == indices_C[idx_C].key[1]);
-
-            if (indices_C[idx_C].factor == T(0))
+            for (unsigned irrep_AB0 = 0;irrep_AB0 < nirrep;irrep_AB0++)
             {
-                idx_B = next_B;
-                idx_C++;
-                continue;
-            }
-
-            for (unsigned irrep_AB = 0;irrep_AB < nirrep;irrep_AB++)
-            {
-                unsigned irrep_AC = A.irrep()^irrep_AB;
-                unsigned irrep_BC = B.irrep()^irrep_AB;
+                unsigned irrep_AB = irrep_AB0;
+                unsigned irrep_AC = A.irrep()^irrep_AB0;
+                unsigned irrep_BC = B.irrep()^irrep_AB0;
 
                 for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
                 for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
@@ -215,7 +187,7 @@ void contract_block(const communicator& comm, const config& cfg,
                                           local_irreps_A, group_AB.dense_idx[0],
                                           local_irreps_B, group_AB.dense_idx[1]);
 
-                            if (is_block_empty(dpd_A, local_irreps_A)) return;
+                            if (is_block_empty(dpd_A, local_irreps_A)) continue;
 
                             auto local_idx_A = idx_A;
                             auto local_idx_B = idx_B;
@@ -236,30 +208,17 @@ void contract_block(const communicator& comm, const config& cfg,
                                                local_B, off_B_BC, stride_B_BC, 0,
                                                local_C, off_C_BC, stride_C_BC, 1);
 
-                            auto data_C = local_C.data() + indices_C[idx_C].offset + off_C_AC + off_C_BC;
+                            auto data_C = local_C.data() + indices_C[idx_C].offset +
+                                          off_C_AC + off_C_BC;
 
-                            while (local_idx_A < next_A && local_idx_B < next_B)
+                            for_each_match<false, false>(local_idx_A, next_A, indices_A, 1,
+                                                        local_idx_B, next_B, indices_B, 1,
+                            [&]
                             {
-                                if (indices_A[local_idx_A].key[1] < indices_B[local_idx_B].key[1])
-                                {
-                                    local_idx_A++;
-                                    continue;
-                                }
-                                else if (indices_A[local_idx_A].key[1] > indices_B[local_idx_B].key[1])
-                                {
-                                    local_idx_B++;
-                                    continue;
-                                }
-
                                 auto factor = alpha*indices_A[local_idx_A].factor*
                                                     indices_B[local_idx_B].factor*
                                                     indices_C[idx_C].factor;
-                                if (factor == T(0))
-                                {
-                                    local_idx_A++;
-                                    local_idx_B++;
-                                    continue;
-                                }
+                                if (factor == T(0)) return;
 
                                 len_vector len_AB;
                                 stride_vector stride_A_AB, stride_B_AB;
@@ -268,30 +227,23 @@ void contract_block(const communicator& comm, const config& cfg,
                                                    local_A, off_A_AB, stride_A_AB, 0,
                                                    local_B, off_B_AB, stride_B_AB, 1);
 
-                                auto data_A = local_A.data() + indices_A[local_idx_A].offset + off_A_AB + off_A_AC;
-                                auto data_B = local_B.data() + indices_B[local_idx_B].offset + off_B_AB + off_B_BC;
+                                auto data_A = local_A.data() + indices_A[local_idx_A].offset +
+                                              off_A_AB + off_A_AC;
+                                auto data_B = local_B.data() + indices_B[local_idx_B].offset +
+                                              off_B_AB + off_B_BC;
 
                                 mult(subcomm, cfg,
                                      len_AB, len_AC, len_BC, {},
                                      factor, conj_A, data_A, stride_A_AB, stride_A_AC, {},
                                              conj_B, data_B, stride_B_AB, stride_B_BC, {},
                                        T(1),  false, data_C, stride_C_AC, stride_C_BC, {});
-
-                                local_idx_A++;
-                                local_idx_B++;
-                            }
+                            });
                         }
                     });
                 }
             }
-
-            idx_B = next_B;
-            idx_C++;
-        }
-
-        idx_A = next_A;
-        idx_C++;
-    }
+        });
+    });
 }
 
 template <typename T>
@@ -353,112 +305,28 @@ void mult_block(const communicator& comm, const config& cfg,
 
     if (group_ABC.dense_ndim == 0 && irrep_ABC != 0) return;
 
-    while (idx_A < nidx_A && idx_B0 < nidx_B && idx_C < nidx_C)
+    for_each_match<true, true, true>(idx_A,  nidx_A, indices_A, 0,
+                                    idx_B0, nidx_B, indices_B, 0,
+                                    idx_C,  nidx_C, indices_C, 0,
+    [&](stride_type next_A_ABC, stride_type next_B_ABC, stride_type next_C_ABC)
     {
-        if (indices_A[idx_A].key[0] < indices_B[idx_B0].key[0])
+        for_each_match<true, true>(idx_A, next_A_ABC, indices_A, 1,
+                                  idx_C, next_C_ABC, indices_C, 1,
+        [&](stride_type next_A_AB, stride_type next_C_AC)
         {
-            if (indices_A[idx_A].key[0] < indices_C[idx_C].key[0])
-            {
-                idx_A++;
-            }
-            else
-            {
-                idx_C++;
-            }
-            continue;
-        }
-        else if (indices_A[idx_A].key[0] > indices_B[idx_B0].key[0])
-        {
-            if (indices_B[idx_B0].key[0] < indices_C[idx_C].key[0])
-            {
-                idx_B0++;
-            }
-            else
-            {
-                idx_C++;
-            }
-            continue;
-        }
-        else if (indices_A[idx_A].key[0] < indices_C[idx_C].key[0])
-        {
-            idx_A++;
-            idx_B0++;
-            continue;
-        }
-        else if (indices_A[idx_A].key[0] > indices_C[idx_C].key[0])
-        {
-            idx_C++;
-            continue;
-        }
-
-        auto next_A_ABC = idx_A;
-        auto next_B_ABC = idx_B0;
-        auto next_C_ABC = idx_C;
-
-        do { next_A_ABC++; }
-        while (next_A_ABC < nidx_A &&
-               indices_A[next_A_ABC].key[0] == indices_A[idx_A].key[0]);
-
-        do { next_B_ABC++; }
-        while (next_B_ABC < nidx_B &&
-               indices_B[next_B_ABC].key[0] == indices_B[idx_B0].key[0]);
-
-        do { next_C_ABC++; }
-        while (next_C_ABC < nidx_C &&
-               indices_C[next_C_ABC].key[0] == indices_C[idx_C].key[0]);
-
-        while (idx_A < next_A_ABC && idx_C < next_C_ABC)
-        {
-            if (indices_A[idx_A].key[1] < indices_C[idx_C].key[1])
-            {
-                idx_A++;
-                continue;
-            }
-            else if (indices_A[idx_A].key[1] > indices_C[idx_C].key[1])
-            {
-                idx_C++;
-                continue;
-            }
-
-            auto next_A_AB = idx_A;
-
-            do { next_A_AB++; }
-            while (next_A_AB < next_A_ABC &&
-                   indices_A[next_A_AB].key[1] == indices_A[idx_A].key[1]);
-
             stride_type idx_B = idx_B0;
 
-            while (idx_B < next_B_ABC && idx_C < next_C_ABC &&
-                   indices_A[idx_A].key[1] == indices_C[idx_C].key[1])
+            for_each_match<true, false>(idx_B, next_B_ABC, indices_B, 1,
+                                       idx_C,  next_C_AC, indices_C, 2,
+            [&](stride_type next_B_AB)
             {
-                if (indices_B[idx_B].key[1] < indices_C[idx_C].key[2])
-                {
-                    idx_B++;
-                    continue;
-                }
-                else if (indices_B[idx_B].key[1] > indices_C[idx_C].key[2])
-                {
-                    idx_C++;
-                    continue;
-                }
+                if (indices_C[idx_C].factor == T(0)) return;
 
-                auto next_B_AB = idx_B;
-
-                do { next_B_AB++; }
-                while (next_B_AB < next_B_ABC &&
-                       indices_B[next_B_AB].key[1] == indices_B[idx_B].key[1]);
-
-                if (indices_C[idx_C].factor == T(0))
+                for (unsigned irrep_AB0 = 0;irrep_AB0 < nirrep;irrep_AB0++)
                 {
-                    idx_B = next_B_AB;
-                    idx_C++;
-                    continue;
-                }
-
-                for (unsigned irrep_AB = 0;irrep_AB < nirrep;irrep_AB++)
-                {
-                    unsigned irrep_AC = B.irrep()^C.irrep()^irrep_AB;
-                    unsigned irrep_BC = A.irrep()^C.irrep()^irrep_AB;
+                    unsigned irrep_AB = irrep_AB0;
+                    unsigned irrep_AC = B.irrep()^C.irrep()^irrep_AB0;
+                    unsigned irrep_BC = A.irrep()^C.irrep()^irrep_AB0;
 
                     for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
                     for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
@@ -536,28 +404,14 @@ void mult_block(const communicator& comm, const config& cfg,
                                 auto data_C = local_C.data() + indices_C[idx_C].offset +
                                               off_C_AC + off_C_BC + off_C_ABC;
 
-                                while (local_idx_A < next_A_AB && local_idx_B < next_B_AB)
+                                for_each_match<false, false>(local_idx_A, next_A_AB, indices_A, 2,
+                                                            local_idx_B, next_B_AB, indices_B, 2,
+                                [&]
                                 {
-                                    if (indices_A[local_idx_A].key[2] < indices_B[local_idx_B].key[2])
-                                    {
-                                        local_idx_A++;
-                                        continue;
-                                    }
-                                    else if (indices_A[local_idx_A].key[2] > indices_B[local_idx_B].key[2])
-                                    {
-                                        local_idx_B++;
-                                        continue;
-                                    }
-
                                     auto factor = alpha*indices_A[local_idx_A].factor*
                                                         indices_B[local_idx_B].factor*
                                                         indices_C[idx_C].factor;
-                                    if (factor == T(0))
-                                    {
-                                        local_idx_A++;
-                                        local_idx_B++;
-                                        continue;
-                                    }
+                                    if (factor == T(0)) return;
 
                                     len_vector len_AB;
                                     stride_vector stride_A_AB, stride_B_AB;
@@ -576,27 +430,14 @@ void mult_block(const communicator& comm, const config& cfg,
                                          factor, conj_A, data_A, stride_A_AB, stride_A_AC, stride_A_ABC,
                                                  conj_B, data_B, stride_B_AB, stride_B_BC, stride_B_ABC,
                                            T(1),  false, data_C, stride_C_AC, stride_C_BC, stride_C_ABC);
-
-                                    local_idx_A++;
-                                    local_idx_B++;
-                                }
+                                });
                             }
                         });
                     }
                 }
-
-                idx_B = next_B_AB;
-                idx_C++;
-            }
-
-            idx_A = next_A_AB;
-            idx_C++;
-        }
-
-        idx_A = next_A_ABC;
-        idx_B0 = next_B_ABC;
-        idx_C = next_C_ABC;
-    }
+            });
+        });
+    });
 }
 
 template <typename T>

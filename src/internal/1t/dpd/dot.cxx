@@ -20,11 +20,8 @@ void dot_full(const communicator& comm, const config& cfg,
     comm.broadcast(
     [&](varray<T>& A2, varray<T>& B2)
     {
-        if (comm.master())
-        {
-            block_to_full(A, A2);
-            block_to_full(B, B2);
-        }
+        block_to_full(comm, cfg, A, A2);
+        block_to_full(comm, cfg, B, B2);
 
         auto len_AB = stl_ext::select_from(A2.lengths(), idx_A_AB);
         auto stride_A_AB = stl_ext::select_from(A2.strides(), idx_A_AB);

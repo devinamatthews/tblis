@@ -60,7 +60,7 @@ INFO_OR_PRINT("idx_" #t "         = " << idx_##t);
 #define PRINT_TENSOR(t) \
 cout << "\n" #t ":\n"; \
 t.for_each_element( \
-[](auto& e, auto& pos) \
+[](const typename decltype(t)::value_type & e, const index_vector& pos) \
 { \
     cout << pos << " " << e << endl; \
 });
@@ -68,7 +68,7 @@ t.for_each_element( \
 #define PRINT_DPD_TENSOR(t) \
 cout << "\n" #t ":\n"; \
 t.for_each_element( \
-[](auto& e, auto& irreps, auto& pos) \
+[](const typename decltype(t)::value_type & e, const irrep_vector& irreps, const index_vector& pos) \
 { \
     cout << irreps << " " << pos << " " << e << endl; \
 });
@@ -187,7 +187,7 @@ template <typename T>
 len_vector group_size(const matrix<len_type>& len, const T& idx, const T& choose)
 {
     unsigned nirrep = len.length(1);
-    matrix<len_type> sublen({(len_type)choose.size(), nirrep});
+    matrix<len_type> sublen({(unsigned)choose.size(), nirrep});
 
     for (unsigned i = 0;i < choose.size();i++)
     {
@@ -1896,14 +1896,42 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_trace, R, T, all_types)
     auto neps = prod(A.lengths());
 
     T scale(10.0*random_unit<T>());
+    scale = 1.0;
 
     dpd_impl = dpd_impl_t::FULL;
     C.reset(B);
-    add<T>(scale, A, idx_A.data(), scale, C, idx_B.data());
+    add<T>(scale, A, idx_A.data(), scale*0, C, idx_B.data());
 
     dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(B);
-    add<T>(scale, A, idx_A.data(), scale, D, idx_B.data());
+    add<T>(scale, A, idx_A.data(), scale*0, D, idx_B.data());
+
+    /*
+    len_type i = 0;
+    cout << "A:\n";
+    A.for_each_element(
+    [&](T& e, const index_vector& idx)
+    {
+        cout << idx << " " << e << " " << A.factor(std::min(A.num_indices()-1, i++)) << '\n';
+    });
+    cout << '\n';
+
+    cout << "C:\n";
+    C.for_each_element(
+    [](T& e, const index_vector& idx)
+    {
+        cout << idx << " " << e << '\n';
+    });
+    cout << '\n';
+
+    cout << "D:\n";
+    D.for_each_element(
+    [](T& e, const index_vector& idx)
+    {
+        cout << idx << " " << e << '\n';
+    });
+    cout << '\n';
+    */
 
     add<T>(T(-1), C, idx_B.data(), T(1), D, idx_B.data());
     T error = reduce<T>(REDUCE_NORM_2, D, idx_B.data()).first;
@@ -2494,19 +2522,18 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_mult, R, T, all_types)
                 size_BC[irrep_BC];
     }
 
-    impl = BLAS_BASED;
-    impl = BLIS_BASED;
+    dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
-    impl = REFERENCE;
+    dpd_impl = dpd_impl_t::FULL;
     E.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
     add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
-    check("BLAS", error, scale*neps);
+    check("BLOCKED", error, scale*neps);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_mult, R, T, all_types)
@@ -2515,8 +2542,11 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_mult, R, T, all_types)
     label_vector idx_A, idx_B, idx_C;
 
     T scale(10.0*random_unit<T>());
+    scale = 1;
 
     random_mult(N, A, idx_A, B, idx_B, C, idx_C);
+
+    C = 0;
 
     INDEXED_TENSOR_INFO(A);
     INDEXED_TENSOR_INFO(B);
@@ -2525,18 +2555,18 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_mult, R, T, all_types)
     auto idx_AB = exclusion(intersection(idx_A, idx_B), idx_C);
     auto neps = prod(select_from(A.lengths(), idx_A, idx_AB))*prod(C.lengths());
 
-    impl = BLAS_BASED;
+    dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
-    impl = REFERENCE;
+    dpd_impl = dpd_impl_t::FULL;
     E.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
     add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
-    check("BLAS", error, scale*neps);
+    check("BLOCKED", error, scale*neps);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_mult, R, T, all_types)
@@ -2545,8 +2575,10 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_mult, R, T, all_types)
     label_vector idx_A, idx_B, idx_C;
 
     T scale(10.0*random_unit<T>());
+    scale = 1;
 
     random_mult(N, A, idx_A, B, idx_B, C, idx_C);
+    C = 0;
 
     INDEXED_DPD_TENSOR_INFO(A);
     INDEXED_DPD_TENSOR_INFO(B);
@@ -2576,18 +2608,18 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_mult, R, T, all_types)
                 size_BC[irrep_BC];
     }
 
-    impl = BLAS_BASED;
+    dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
-    impl = REFERENCE;
+    dpd_impl = dpd_impl_t::FULL;
     E.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
     add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
-    check("BLAS", error, scale*neps);
+    check("BLOCKED", error, scale*neps);
 }
 
 /*
@@ -2642,11 +2674,11 @@ REPLICATED_TEMPLATED_TEST_CASE(contract, R, T, all_types)
     auto idx_AB = intersection(idx_A, idx_B);
     auto neps = prod(select_from(A.lengths(), idx_A, idx_AB))*prod(C.lengths());
 
-    impl = REFERENCE;
+    impl = BLAS_BASED;
     D.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
-    impl = BLAS_BASED;
+    impl = REFERENCE;
     E.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
@@ -2698,18 +2730,18 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_contract, R, T, all_types)
                 size_BC[irrep_BC];
     }
 
-    impl = BLAS_BASED;
+    dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
-    impl = REFERENCE;
+    dpd_impl = dpd_impl_t::FULL;
     E.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
     add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
-    check("BLAS", error, scale*neps);
+    check("BLOCKED", error, scale*neps);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_contract, R, T, all_types)
@@ -2728,18 +2760,18 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_contract, R, T, all_types)
     auto idx_AB = intersection(idx_A, idx_B);
     auto neps = prod(select_from(A.lengths(), idx_A, idx_AB))*prod(C.lengths());
 
-    impl = BLAS_BASED;
+    dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
-    impl = REFERENCE;
+    dpd_impl = dpd_impl_t::FULL;
     E.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
     add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
-    check("BLAS", error, scale*neps);
+    check("BLOCKED", error, scale*neps);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_contract, R, T, all_types)
@@ -2775,18 +2807,18 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_contract, R, T, all_types)
                 size_BC[irrep_BC];
     }
 
-    impl = BLAS_BASED;
+    dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
-    impl = REFERENCE;
+    dpd_impl = dpd_impl_t::FULL;
     E.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
     add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
-    check("BLAS", error, scale*neps);
+    check("BLOCKED", error, scale*neps);
 }
 
 /*
@@ -2869,18 +2901,18 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_weight, R, T, all_types)
 
     auto neps = dpd_varray<T>::size(C.irrep(), C.lengths());
 
-    impl = BLAS_BASED;
+    dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
-    impl = REFERENCE;
+    dpd_impl = dpd_impl_t::FULL;
     E.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
     add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
-    check("BLAS", error, scale*neps);
+    check("BLOCKED", error, scale*neps);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_weight, R, T, all_types)
@@ -2898,18 +2930,18 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_weight, R, T, all_types)
 
     auto neps = prod(C.lengths());
 
-    impl = BLAS_BASED;
+    dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
-    impl = REFERENCE;
+    dpd_impl = dpd_impl_t::FULL;
     E.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
     add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
-    check("BLAS", error, scale*neps);
+    check("BLOCKED", error, scale*neps);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_weight, R, T, all_types)
@@ -2927,18 +2959,18 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_weight, R, T, all_types)
 
     auto neps = dpd_varray<T>::size(C.irrep(), C.lengths());
 
-    impl = BLAS_BASED;
+    dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
-    impl = REFERENCE;
+    dpd_impl = dpd_impl_t::FULL;
     E.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
     add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
-    check("BLAS", error, scale*neps);
+    check("BLOCKED", error, scale*neps);
 }
 
 /*
@@ -3014,18 +3046,18 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_outer_prod, R, T, all_types)
 
     auto neps = dpd_varray<T>::size(C.irrep(), C.lengths());
 
-    impl = BLAS_BASED;
+    dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
-    impl = REFERENCE;
+    dpd_impl = dpd_impl_t::FULL;
     E.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
     add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
-    check("BLAS", error, scale*neps);
+    check("BLOCKED", error, scale*neps);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_outer_prod, R, T, all_types)
@@ -3043,18 +3075,18 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_outer_prod, R, T, all_types)
 
     auto neps = prod(C.lengths());
 
-    impl = BLAS_BASED;
+    dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
-    impl = REFERENCE;
+    dpd_impl = dpd_impl_t::FULL;
     E.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
     add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
-    check("BLAS", error, scale*neps);
+    check("BLOCKED", error, scale*neps);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_outer_prod, R, T, all_types)
@@ -3072,18 +3104,18 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_outer_prod, R, T, all_types)
 
     auto neps = dpd_varray<T>::size(C.irrep(), C.lengths());
 
-    impl = BLAS_BASED;
+    dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
-    impl = REFERENCE;
+    dpd_impl = dpd_impl_t::FULL;
     E.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
     add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
-    check("BLAS", error, scale*neps);
+    check("BLOCKED", error, scale*neps);
 }
 
 int main(int argc, char **argv)

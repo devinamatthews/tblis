@@ -7,19 +7,6 @@
 #include "util/gemm_thread.hpp"
 #include "util/tensor.hpp"
 
-#include "external/stl_ext/include/iostream.hpp"
-
-namespace MArray
-{
-
-template <typename T, size_t N, typename Allocator>
-std::ostream& operator<<(std::ostream& os, const short_vector<T, N, Allocator>& v)
-{
-    return os << std::vector<T>(v.begin(), v.end());
-}
-
-}
-
 namespace tblis
 {
 namespace internal
@@ -104,53 +91,17 @@ void contract_block(const communicator& comm, const config& cfg,
     stride_type idx_A = 0;
     stride_type idx_C = 0;
 
-    while (idx_A < nidx_A && idx_C < nidx_C)
+    for_each_match<true, true>(idx_A, nidx_A, indices_A, 0,
+                              idx_C, nidx_C, indices_C, 0,
+    [&](stride_type next_A, stride_type next_C)
     {
-        if (indices_A[idx_A].key[0] < indices_C[idx_C].key[0])
-        {
-            idx_A++;
-            continue;
-        }
-        else if (indices_A[idx_A].key[0] > indices_C[idx_C].key[0])
-        {
-            idx_C++;
-            continue;
-        }
-
-        auto next_A = idx_A;
-
-        do { next_A++; }
-        while (next_A < nidx_A &&
-               indices_A[idx_A].key[0] == indices_C[idx_C].key[0]);
-
         stride_type idx_B = 0;
 
-        while (idx_B < nidx_B && idx_C < nidx_C &&
-               indices_A[idx_A].key[0] == indices_C[idx_C].key[0])
+        for_each_match<true, false>(idx_B, nidx_B, indices_B, 0,
+                                   idx_C, next_C, indices_C, 1,
+        [&](stride_type next_B)
         {
-            if (indices_B[idx_B].key[0] < indices_C[idx_C].key[1])
-            {
-                idx_B++;
-                continue;
-            }
-            else if (indices_B[idx_B].key[0] > indices_C[idx_C].key[1])
-            {
-                idx_C++;
-                continue;
-            }
-
-            auto next_B = idx_B;
-
-            do { next_B++; }
-            while (next_B < nidx_B &&
-                   indices_B[idx_B].key[0] == indices_C[idx_C].key[1]);
-
-            if (indices_C[idx_C].factor == T(0))
-            {
-                idx_B = next_B;
-                idx_C++;
-                continue;
-            }
+            if (indices_C[idx_C].factor == T(0)) return;
 
             tasks.visit(idx++,
             [&,idx_A,idx_B,idx_C,next_A,next_B]
@@ -169,28 +120,14 @@ void contract_block(const communicator& comm, const config& cfg,
 
                 auto data_C = C.data(0) + indices_C[idx_C].offset + off_C_AC + off_C_BC;
 
-                while (local_idx_A < next_A && local_idx_B < next_B)
+                for_each_match<false, false>(local_idx_A, next_A, indices_A, 1,
+                                            local_idx_B, next_B, indices_B, 1,
+                [&]
                 {
-                    if (indices_A[local_idx_A].key[1] < indices_B[local_idx_B].key[1])
-                    {
-                        local_idx_A++;
-                        continue;
-                    }
-                    else if (indices_A[local_idx_A].key[1] > indices_B[local_idx_B].key[1])
-                    {
-                        local_idx_B++;
-                        continue;
-                    }
-
                     auto factor = alpha*indices_A[local_idx_A].factor*
                                         indices_B[local_idx_B].factor*
                                         indices_C[idx_C].factor;
-                    if (factor == T(0))
-                    {
-                        local_idx_A++;
-                        local_idx_B++;
-                        continue;
-                    }
+                    if (factor == T(0)) return;
 
                     stride_type off_A_AB, off_B_AB;
                     get_local_offset(indices_A[local_idx_A].idx[1], group_AB,
@@ -209,19 +146,10 @@ void contract_block(const communicator& comm, const config& cfg,
                                                  group_BC.dense_stride[0], {},
                            T(1),  false, data_C, group_AC.dense_stride[1],
                                                  group_BC.dense_stride[1], {});
-
-                    local_idx_A++;
-                    local_idx_B++;
-                }
+                });
             });
-
-            idx_B = next_B;
-            idx_C++;
-        }
-
-        idx_A = next_A;
-        idx_C++;
-    }
+        });
+    });
 }
 
 template <typename T>
@@ -261,107 +189,22 @@ void mult_block(const communicator& comm, const config& cfg,
     stride_type idx_B0 = 0;
     stride_type idx_C = 0;
 
-    while (idx_A < nidx_A && idx_B0 < nidx_B && idx_C < nidx_C)
+    for_each_match<true, true, true>(idx_A,  nidx_A, indices_A, 0,
+                                    idx_B0, nidx_B, indices_B, 0,
+                                    idx_C,  nidx_C, indices_C, 0,
+    [&](stride_type next_A_ABC, stride_type next_B_ABC, stride_type next_C_ABC)
     {
-        if (indices_A[idx_A].key[0] < indices_B[idx_B0].key[0])
+        for_each_match<true, true>(idx_A, next_A_ABC, indices_A, 1,
+                                  idx_C, next_C_ABC, indices_C, 1,
+        [&](stride_type next_A_AB, stride_type next_C_AC)
         {
-            if (indices_A[idx_A].key[0] < indices_C[idx_C].key[0])
-            {
-                idx_A++;
-            }
-            else
-            {
-                idx_C++;
-            }
-            continue;
-        }
-        else if (indices_A[idx_A].key[0] > indices_B[idx_B0].key[0])
-        {
-            if (indices_B[idx_B0].key[0] < indices_C[idx_C].key[0])
-            {
-                idx_B0++;
-            }
-            else
-            {
-                idx_C++;
-            }
-            continue;
-        }
-        else if (indices_A[idx_A].key[0] < indices_C[idx_C].key[0])
-        {
-            idx_A++;
-            idx_B0++;
-            continue;
-        }
-        else if (indices_A[idx_A].key[0] > indices_C[idx_C].key[0])
-        {
-            idx_C++;
-            continue;
-        }
-
-        auto next_A_ABC = idx_A;
-        auto next_B_ABC = idx_B0;
-        auto next_C_ABC = idx_C;
-
-        do { next_A_ABC++; }
-        while (next_A_ABC < nidx_A &&
-               indices_A[next_A_ABC].key[0] == indices_A[idx_A].key[0]);
-
-        do { next_B_ABC++; }
-        while (next_B_ABC < nidx_B &&
-               indices_B[next_B_ABC].key[0] == indices_B[idx_B0].key[0]);
-
-        do { next_C_ABC++; }
-        while (next_C_ABC < nidx_C &&
-               indices_C[next_C_ABC].key[0] == indices_C[idx_C].key[0]);
-
-        while (idx_A < next_A_ABC && idx_C < next_C_ABC)
-        {
-            if (indices_A[idx_A].key[1] < indices_C[idx_C].key[1])
-            {
-                idx_A++;
-                continue;
-            }
-            else if (indices_A[idx_A].key[1] > indices_C[idx_C].key[1])
-            {
-                idx_C++;
-                continue;
-            }
-
-            auto next_A_AB = idx_A;
-
-            do { next_A_AB++; }
-            while (next_A_AB < next_A_ABC &&
-                   indices_A[next_A_AB].key[1] == indices_A[idx_A].key[1]);
-
             stride_type idx_B = idx_B0;
 
-            while (idx_B < next_B_ABC && idx_C < next_C_ABC &&
-                   indices_A[idx_A].key[1] == indices_C[idx_C].key[1])
+            for_each_match<true, false>(idx_B, next_B_ABC, indices_B, 1,
+                                       idx_C,  next_C_AC, indices_C, 2,
+            [&](stride_type next_B_AB)
             {
-                if (indices_B[idx_B].key[1] < indices_C[idx_C].key[2])
-                {
-                    idx_B++;
-                    continue;
-                }
-                else if (indices_B[idx_B].key[1] > indices_C[idx_C].key[2])
-                {
-                    idx_C++;
-                    continue;
-                }
-
-                auto next_B_AB = idx_B;
-
-                do { next_B_AB++; }
-                while (next_B_AB < next_B_ABC &&
-                       indices_B[next_B_AB].key[1] == indices_B[idx_B].key[1]);
-
-                if (indices_C[idx_C].factor == T(0))
-                {
-                    idx_B = next_B_AB;
-                    idx_C++;
-                    continue;
-                }
+                if (indices_C[idx_C].factor == T(0)) return;
 
                 tasks.visit(idx++,
                 [&,idx_A,idx_B,idx_C,next_A_AB,next_B_AB]
@@ -384,28 +227,14 @@ void mult_block(const communicator& comm, const config& cfg,
 
                     auto data_C = C.data(0) + indices_C[idx_C].offset + off_C_AC + off_C_BC + off_C_ABC;
 
-                    while (local_idx_A < next_A_AB && local_idx_B < next_B_AB)
+                    for_each_match<false, false>(local_idx_A, next_A_AB, indices_A, 2,
+                                                local_idx_B, next_B_AB, indices_B, 2,
+                    [&]
                     {
-                        if (indices_A[local_idx_A].key[2] < indices_B[local_idx_B].key[2])
-                        {
-                            local_idx_A++;
-                            continue;
-                        }
-                        else if (indices_A[local_idx_A].key[2] > indices_B[local_idx_B].key[2])
-                        {
-                            local_idx_B++;
-                            continue;
-                        }
-
                         auto factor = alpha*indices_A[local_idx_A].factor*
                                             indices_B[local_idx_B].factor*
                                             indices_C[idx_C].factor;
-                        if (factor == T(0))
-                        {
-                            local_idx_A++;
-                            local_idx_B++;
-                            continue;
-                        }
+                        if (factor == T(0)) return;
 
                         stride_type off_A_AB, off_B_AB;
                         get_local_offset(indices_A[local_idx_A].idx[2], group_AB,
@@ -428,24 +257,11 @@ void mult_block(const communicator& comm, const config& cfg,
                                T(1),  false, data_C, group_AC.dense_stride[1],
                                                      group_BC.dense_stride[1],
                                                      group_ABC.dense_stride[2]);
-
-                        local_idx_A++;
-                        local_idx_B++;
-                    }
+                    });
                 });
-
-                idx_B = next_B_AB;
-                idx_C++;
-            }
-
-            idx_A = next_A_AB;
-            idx_C++;
-        }
-
-        idx_A = next_A_ABC;
-        idx_B0 = next_B_ABC;
-        idx_C = next_C_ABC;
-    }
+            });
+        });
+    });
 }
 
 template <typename T>

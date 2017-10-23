@@ -86,7 +86,7 @@ class indexed_dpd_varray_view : public indexed_dpd_varray_base<Type, indexed_dpd
         template <typename U, bool O, typename D,
             typename=detail::enable_if_convertible_t<
             typename dpd_varray_base<U, D, O>::cptr,pointer>>
-        indexed_dpd_varray_view(const dpd_varray_base<U, D, O>& other)
+        explicit indexed_dpd_varray_view(const dpd_varray_base<U, D, O>& other)
         {
             reset(other);
         }
@@ -94,7 +94,7 @@ class indexed_dpd_varray_view : public indexed_dpd_varray_base<Type, indexed_dpd
         template <typename U, bool O, typename D,
             typename=detail::enable_if_convertible_t<
             typename dpd_varray_base<U, D, O>::pointer,pointer>>
-        indexed_dpd_varray_view(dpd_varray_base<U, D, O>&& other)
+        explicit indexed_dpd_varray_view(dpd_varray_base<U, D, O>&& other)
         {
             reset(other);
         }
@@ -102,7 +102,7 @@ class indexed_dpd_varray_view : public indexed_dpd_varray_base<Type, indexed_dpd
         template <typename U, bool O, typename D,
             typename=detail::enable_if_convertible_t<
             typename dpd_varray_base<U, D, O>::pointer,pointer>>
-        indexed_dpd_varray_view(dpd_varray_base<U, D, O>& other)
+        explicit indexed_dpd_varray_view(dpd_varray_base<U, D, O>& other)
         {
             reset(other);
         }

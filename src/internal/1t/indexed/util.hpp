@@ -379,6 +379,200 @@ void get_local_offset(const len_vector& idx, const index_group<N>& group,
     get_local_offset_helper<0>(idx, group, std::forward<Args>(args)...);
 }
 
+template <bool AIsRange, bool BIsRange, bool CIsRange> struct call_match_body;
+
+template <> struct call_match_body<false, false, false>
+{
+    template <typename Body>
+    call_match_body(Body&& body, stride_type next_A, stride_type next_B, stride_type next_C)
+    { body(); }
+};
+
+template <> struct call_match_body<true, false, false>
+{
+    template <typename Body>
+    call_match_body(Body&& body, stride_type next_A, stride_type next_B, stride_type next_C)
+    { body(next_A); }
+};
+
+template <> struct call_match_body<false, true, false>
+{
+    template <typename Body>
+    call_match_body(Body&& body, stride_type next_A, stride_type next_B, stride_type next_C)
+    { body(next_B); }
+};
+
+template <> struct call_match_body<true, true, false>
+{
+    template <typename Body>
+    call_match_body(Body&& body, stride_type next_A, stride_type next_B, stride_type next_C)
+    { body(next_A, next_B); }
+};
+
+template <> struct call_match_body<false, false, true>
+{
+    template <typename Body>
+    call_match_body(Body&& body, stride_type next_A, stride_type next_B, stride_type next_C)
+    { body(next_C); }
+};
+
+template <> struct call_match_body<true, false, true>
+{
+    template <typename Body>
+    call_match_body(Body&& body, stride_type next_A, stride_type next_B, stride_type next_C)
+    { body(next_A, next_C); }
+};
+
+template <> struct call_match_body<false, true, true>
+{
+    template <typename Body>
+    call_match_body(Body&& body, stride_type next_A, stride_type next_B, stride_type next_C)
+    { body(next_B, next_C); }
+};
+
+template <> struct call_match_body<true, true, true>
+{
+    template <typename Body>
+    call_match_body(Body&& body, stride_type next_A, stride_type next_B, stride_type next_C)
+    { body(next_A, next_B, next_C); }
+};
+
+template <bool AIsRange, bool BIsRange, typename T, unsigned NA, unsigned NB,
+          typename Body>
+void for_each_match(stride_type& idx_A, stride_type nidx_A,
+                   const group_indices<T,NA>& indices_A, unsigned iA,
+                   stride_type& idx_B, stride_type nidx_B,
+                   const group_indices<T,NB>& indices_B, unsigned iB,
+                   Body&& body)
+{
+    while (idx_A < nidx_A && idx_B < nidx_B)
+    {
+        if (indices_A[idx_A].key[iA] < indices_B[idx_B].key[iB])
+        {
+            idx_A++;
+            continue;
+        }
+        else if (indices_A[idx_A].key[iA] > indices_B[idx_B].key[iB])
+        {
+            idx_B++;
+            continue;
+        }
+
+        auto next_A = idx_A+1;
+        auto next_B = idx_B+1;
+
+        if (AIsRange)
+        {
+            while (next_A < nidx_A &&
+                   indices_A[next_A].key[iA] == indices_B[idx_B].key[iB])
+                next_A++;
+        }
+
+        if (BIsRange)
+        {
+            while (next_B < nidx_B &&
+                   indices_A[idx_A].key[iA] == indices_B[next_B].key[iB])
+                next_B++;
+        }
+
+        call_match_body<AIsRange, BIsRange, false>{body, next_A, next_B, 0};
+
+        idx_A = next_A;
+        idx_B = next_B;
+    }
+}
+
+template <bool AIsRange, bool BIsRange, bool CIsRange, typename T,
+          unsigned NA, unsigned NB, unsigned NC, typename Body>
+void for_each_match(stride_type& idx_A, stride_type nidx_A,
+                   const group_indices<T,NA>& indices_A, unsigned iA,
+                   stride_type& idx_B, stride_type nidx_B,
+                   const group_indices<T,NB>& indices_B, unsigned iB,
+                   stride_type& idx_C, stride_type nidx_C,
+                   const group_indices<T,NC>& indices_C, unsigned iC,
+                   Body&& body)
+{
+    while (idx_A < nidx_A && idx_B < nidx_B && idx_C < nidx_C)
+    {
+        if (indices_A[idx_A].key[iA] < indices_B[idx_B].key[iB])
+        {
+            if (indices_A[idx_A].key[iA] < indices_C[idx_C].key[iC])
+            {
+                idx_A++;
+            }
+            else if (indices_A[idx_A].key[iA] > indices_C[idx_C].key[iC])
+            {
+                idx_C++;
+            }
+            else
+            {
+                idx_A++;
+                idx_C++;
+            }
+            continue;
+        }
+        else if (indices_A[idx_A].key[iA] > indices_B[idx_B].key[iB])
+        {
+            if (indices_B[idx_B].key[iB] < indices_C[idx_C].key[iC])
+            {
+                idx_B++;
+            }
+            else if (indices_B[idx_B].key[iB] > indices_C[idx_C].key[iC])
+            {
+                idx_C++;
+            }
+            else
+            {
+                idx_B++;
+                idx_C++;
+            }
+            continue;
+        }
+        else if (indices_A[idx_A].key[iA] < indices_C[idx_C].key[iC])
+        {
+            idx_A++;
+            idx_B++;
+            continue;
+        }
+        else if (indices_A[idx_A].key[iA] > indices_C[idx_C].key[iC])
+        {
+            idx_C++;
+            continue;
+        }
+
+        auto next_A = idx_A+1;
+        auto next_B = idx_B+1;
+        auto next_C = idx_C+1;
+
+        if (AIsRange)
+        {
+            while (next_A < nidx_A &&
+                   indices_A[next_A].key[iA] == indices_B[idx_B].key[iB])
+                next_A++;
+        }
+
+        if (BIsRange)
+        {
+            while (next_B < nidx_B &&
+                   indices_A[idx_A].key[iA] == indices_B[next_B].key[iB])
+                next_B++;
+        }
+
+        if (CIsRange)
+        {
+            while (next_C < nidx_C &&
+                   indices_A[idx_A].key[iA] == indices_C[next_C].key[iC])
+                next_C++;
+        }
+
+        call_match_body<AIsRange, BIsRange, CIsRange>{body, next_A, next_B, next_C};
+
+        idx_A = next_A;
+        idx_B = next_B;
+        idx_C = next_C;
+    }
+}
+
 }
 }
 

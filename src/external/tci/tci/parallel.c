@@ -10,10 +10,7 @@ int tci_parallelize(tci_thread_func func, void* payload,
 {
     if (nthread <= 1)
     {
-        tci_comm comm;
-        tci_comm_init_single(&comm);
-        func(&comm, payload);
-        tci_comm_destroy(&comm);
+        func(tci_single, payload);
         return 0;
     }
 
@@ -34,6 +31,20 @@ int tci_parallelize(tci_thread_func func, void* payload,
     return 0;
 }
 
+#elif TCI_USE_OMPTASK_THREADS
+
+int tci_parallelize(tci_thread_func func, void* payload,
+                    unsigned nthread, unsigned arity)
+{
+    #pragma omp parallel num_threads(nthread)
+    {
+        #pragma omp single
+        func(tci_single, payload);
+    }
+
+    return 0;
+}
+
 #elif TCI_USE_PTHREADS_THREADS
 
 typedef struct
@@ -42,11 +53,11 @@ typedef struct
     void* payload;
     tci_context* context;
     unsigned nthread, tid;
-} tci_thread_data_t;
+} tci_thread_data;
 
 void* tci_run_thread(void* raw_data)
 {
-    tci_thread_data_t* data = (tci_thread_data_t*)raw_data;
+    tci_thread_data* data = (tci_thread_data*)raw_data;
     tci_comm comm;
     tci_comm_init(&comm, data->context, data->nthread, data->tid, 1, 0);
     data->func(&comm, data->payload);
@@ -59,10 +70,7 @@ int tci_parallelize(tci_thread_func func, void* payload,
 {
     if (nthread <= 1)
     {
-        tci_comm comm;
-        tci_comm_init_single(&comm);
-        func(&comm, payload);
-        tci_comm_destroy(&comm);
+        func(tci_single, payload);
         return 0;
     }
 
@@ -71,7 +79,7 @@ int tci_parallelize(tci_thread_func func, void* payload,
     if (ret != 0) return ret;
 
     pthread_t threads[nthread];
-    tci_thread_data_t data[nthread];
+    tci_thread_data data[nthread];
 
     for (unsigned i = 1;i < nthread;i++)
     {
@@ -85,6 +93,7 @@ int tci_parallelize(tci_thread_func func, void* payload,
         if (ret != 0)
         {
             for (unsigned j = 1;j < i;j++) pthread_join(threads[j], NULL);
+            return ret;
         }
     }
 
@@ -100,15 +109,76 @@ int tci_parallelize(tci_thread_func func, void* payload,
     return tci_comm_destroy(&comm0);
 }
 
-#else
+#elif TCI_USE_WINDOWS_THREADS
+
+//TODO
+
+typedef struct
+{
+    tci_thread_func func;
+    void* payload;
+    tci_context* context;
+    unsigned nthread, tid;
+} tci_thread_data;
+
+DWORD WINAPI tci_run_thread(void* raw_data)
+{
+    tci_thread_data* data = (tci_thread_data*)raw_data;
+    tci_comm comm;
+    tci_comm_init(&comm, data->context, data->nthread, data->tid, 1, 0);
+    data->func(&comm, data->payload);
+    tci_comm_destroy(&comm);
+    return NULL;
+}
 
 int tci_parallelize(tci_thread_func func, void* payload,
                     unsigned nthread, unsigned arity)
 {
-    tci_comm comm;
-    tci_comm_init_single(&comm);
-    func(&comm, payload);
-    tci_comm_destroy(&comm);
+    if (nthread <= 1)
+    {
+        func(tci_single, payload);
+        return 0;
+    }
+
+    tci_context* context;
+    int ret = tci_context_init(&context, nthread, arity);
+    if (ret != 0) return ret;
+
+    HANDLE threads[nthread-1];
+    tci_thread_data data[nthread-1];
+
+    for (unsigned i = 0;i < nthread-1;i++)
+    {
+        data[i].func = func;
+        data[i].payload = payload;
+        data[i].context = context;
+        data[i].nthread = nthread;
+        data[i].tid = i+1;
+
+        threads[i] = CreateThread(NULL, 0, tci_run_thread, &data[i], 0, NULL);
+        if (!threads[i])
+        {
+            WaitForMultipleObjects(i, threads, TRUE, INFINITE);
+            return -1;
+        }
+    }
+
+    tci_comm comm0;
+    tci_comm_init(&comm0, context, nthread, 0, 1, 0);
+    func(&comm0, payload);
+
+    WaitForMultipleObjects(nthread-1, threads, TRUE, INFINITE);
+
+    return tci_comm_destroy(&comm0);
+}
+
+#else // TCI_USE_TBB_THREADS, TCI_USE_DISPATCH_THREADS,
+      // TCI_USE_PPL_THREADS, single threaded
+
+int tci_parallelize(tci_thread_func func, void* payload,
+                    unsigned nthread, unsigned arity)
+{
+    func(tci_single, payload);
     return 0;
 }
 
@@ -210,17 +280,21 @@ void tci_partition_2x2(unsigned nthread,
                        uint64_t work2, unsigned max2,
                        unsigned* nt1, unsigned* nt2)
 {
+    max1 = TCI_MIN(TCI_MAX(max1, 1), nthread);
+    max2 = TCI_MIN(TCI_MAX(max2, 1), nthread);
+    nthread = TCI_MIN(nthread, max1*max2);
+
     if (nthread < 4)
     {
-        if (work1 >= work2 && max1 >= nthread)
+        if (max2 < max1 || (max1 == max2 && work1 >= work2))
         {
-            *nt1 = nthread;
+            *nt1 = max1;
             *nt2 = 1;
         }
         else
         {
             *nt1 = 1;
-            *nt2 = nthread;
+            *nt2 = max2;
         }
         return;
     }
@@ -236,10 +310,30 @@ void tci_partition_2x2(unsigned nthread,
     unsigned f;
     while ((f = tci_next_prime_factor(&factors)) > 1)
     {
-        if ((work1 > work2 && num1*f <= max1) || num2*f > max2)
+        if ((work1 >= work2 || num2*f > max2) && num1*f <= max1)
         {
             work1 /= f;
             num1 *= f;
+        }
+        else if (num2*f > max2) // also implies num1*f > max1
+        {
+            unsigned f1 = max1/num1;
+            unsigned f2 = max2/num2;
+
+            if (f1 == 1 && f2 == 1) break;
+
+            if (f2 < f1 ||
+                (f1 == f2 &&
+                 work1 >= work2))
+            {
+                work1 /= f1;
+                num1 = max1;
+            }
+            else
+            {
+                work2 /= f2;
+                num2 = max2;
+            }
         }
         else
         {
@@ -254,7 +348,7 @@ void tci_partition_2x2(unsigned nthread,
     #else
 
     /*
-     * Eight prime factors handles all numbers up to 223092870
+     * Eight distinct prime factors handles all numbers up to 223092870
      */
     int fact[8];
     int mult[8];

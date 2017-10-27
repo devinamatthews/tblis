@@ -1,12 +1,19 @@
 lib_LTLIBRARIES = lib/libtci.la
 lib_libtci_la_SOURCES = tci/barrier.c \
-						tci/communicator.c \
 						tci/context.c \
 						tci/mutex.c \
 						tci/parallel.c \
 						tci/slot.c \
 						tci/work_item.c
 						
+if CPLUSPLUS
+lib_libtci_la_SOURCES += tci/communicator_cpp.cxx \
+						 tci/task_set_cpp.cxx
+else
+lib_libtci_la_SOURCES += tci/communicator.c \
+						 tci/task_set.c
+endif
+
 nobase_include_HEADERS = tci.h \
 						 tci/tci_config.h \
                          tci/barrier.h \
@@ -17,6 +24,9 @@ nobase_include_HEADERS = tci.h \
                          tci/slot.h \
                          tci/work_item.h \
                          tci/yield.h
+
+%_cpp.cxx: %.c
+	@cp $< $@
 
 VPATH += $(srcdir)
 

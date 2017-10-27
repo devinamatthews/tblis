@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-typedef struct
+typedef struct tci_context
 {
     tci_barrier barrier;
     void* buffer;

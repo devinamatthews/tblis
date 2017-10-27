@@ -38,7 +38,7 @@ int tci_barrier_node_destroy(tci_barrier_node* barrier);
 
 int tci_barrier_node_wait(tci_barrier_node* barrier);
 
-typedef struct
+typedef struct tci_barrier
 {
     union
     {

@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-typedef struct
+typedef struct tci_comm
 {
     tci_context* context;
     unsigned ngang;
@@ -27,7 +27,19 @@ enum
     TCI_NO_CONTEXT     =    0x1
 };
 
-extern const tci_comm* const tci_single;
+typedef struct tci_range
+{
+    uint64_t size;
+    uint64_t chunk;
+    uint64_t grain;
+} tci_range;
+
+typedef void (*tci_range_func)(tci_comm*, uint64_t, uint64_t, void*);
+
+typedef void (*tci_range_2d_func)(tci_comm*, uint64_t, uint64_t,
+                                  uint64_t, uint64_t, void*);
+
+extern tci_comm* const tci_single;
 
 int tci_comm_init_single(tci_comm* comm);
 
@@ -47,35 +59,19 @@ int tci_comm_bcast_nowait(tci_comm* comm, void** object, unsigned root);
 int tci_comm_gang(tci_comm* parent, tci_comm* child,
                   int type, unsigned n, unsigned bs);
 
-void tci_distribute(unsigned n, unsigned idx, uint64_t range,
-                    uint64_t granularity, uint64_t* first, uint64_t* last,
-                    uint64_t* max);
+void tci_comm_distribute_over_gangs(tci_comm* comm, tci_range range,
+                                    tci_range_func func, void* payload);
 
-void tci_distribute_2d(unsigned num, unsigned idx,
-                       uint64_t range_m, uint64_t range_n,
-                       uint64_t granularity_m, uint64_t granularity_n,
-                       uint64_t* first_m, uint64_t* last_m, uint64_t* max_m,
-                       uint64_t* first_n, uint64_t* last_n, uint64_t* max_n);
+void tci_comm_distribute_over_threads(tci_comm* comm, tci_range range,
+                                      tci_range_func func, void* payload);
 
-void tci_comm_distribute_over_gangs(tci_comm* comm, uint64_t range,
-                                    uint64_t granularity, uint64_t* first,
-                                    uint64_t* last, uint64_t* max);
+void tci_comm_distribute_over_gangs_2d(tci_comm* comm, tci_range range_m,
+                                       tci_range range_n,
+                                       tci_range_2d_func func, void* payload);
 
-void tci_comm_distribute_over_threads(tci_comm* comm, uint64_t range,
-                                      uint64_t granularity, uint64_t* first,
-                                      uint64_t* last, uint64_t* max);
-
-void tci_comm_distribute_over_gangs_2d(tci_comm* comm,
-    uint64_t range_m, uint64_t range_n,
-    uint64_t granularity_m, uint64_t granularity_n,
-    uint64_t* first_m, uint64_t* last_m, uint64_t* max_m,
-    uint64_t* first_n, uint64_t* last_n, uint64_t* max_n);
-
-void tci_comm_distribute_over_threads_2d(tci_comm* comm,
-    uint64_t range_m, uint64_t range_n,
-    uint64_t granularity_m, uint64_t granularity_n,
-    uint64_t* first_m, uint64_t* last_m, uint64_t* max_m,
-    uint64_t* first_n, uint64_t* last_n, uint64_t* max_n);
+void tci_comm_distribute_over_threads_2d(tci_comm* comm, tci_range range_m,
+                                         tci_range range_n,
+                                         tci_range_2d_func func, void* payload);
 
 #ifdef __cplusplus
 }
@@ -89,11 +85,18 @@ void tci_comm_distribute_over_threads_2d(tci_comm* comm,
 
 namespace tci
 {
+    class communicator;
+}
+
+#include "task_set.h"
+
+namespace tci
+{
 
 namespace detail
 {
 
-#if __cplusplus >= 201402l && 0
+#if __cplusplus >= 201402l
 
 using std::index_sequence;
 using std::index_sequence_for;
@@ -143,6 +146,40 @@ using index_sequence_for = make_index_sequence<sizeof...(T)>;
 
 }
 
+class range
+{
+    public:
+        range(uint64_t size = 0)
+        {
+            range_.size = size;
+            range_.chunk = 1;
+            range_.grain = 1;
+        }
+
+        uint64_t size() const { return range_.size; }
+
+        uint64_t chunk() const { return range_.chunk; }
+
+        uint64_t grain() const { return range_.grain; }
+
+        range& chunk(uint64_t c)
+        {
+            range_.chunk = c;
+            return *this;
+        }
+
+        range& grain(uint64_t g)
+        {
+            range_.grain = g;
+            return *this;
+        }
+
+        operator tci_range() const { return range_; }
+
+    protected:
+        tci_range range_;
+};
+
 class communicator
 {
     protected:
@@ -163,6 +200,46 @@ class communicator
         };
 
     public:
+        class deferred_task_set
+        {
+            friend class communicator;
+
+            public:
+                ~deferred_task_set()
+                {
+                    tci_task_set_destroy(&_tasks);
+                }
+
+                template <typename Func>
+                void visit(unsigned task, Func&& func)
+                {
+                    tci_task_set_visit(&_tasks,
+                    [](tci_comm* comm, unsigned, void* payload)
+                    {
+                        (*(Func*)payload)(*reinterpret_cast<const communicator*>(comm));
+                    }, task, &func);
+                }
+
+            protected:
+                deferred_task_set(const communicator& comm,
+                                  unsigned ntask, int64_t work)
+                {
+                    tci_task_set_init(&_tasks, comm, ntask, work);
+                }
+
+                template <typename Func>
+                void visit_all(Func&& func)
+                {
+                    tci_task_set_visit_all(&_tasks,
+                    [](tci_comm* comm, unsigned task, void* payload)
+                    {
+                        (*(Func*)payload)(*reinterpret_cast<const communicator*>(comm), task);
+                    }, &func);
+                }
+
+                tci_task_set _tasks;
+        };
+
         communicator()
         {
             tci_comm_init_single(*this);
@@ -262,75 +339,74 @@ class communicator
             return child;
         }
 
-        static std::tuple<uint64_t,uint64_t,uint64_t>
-        distribute(unsigned nthread, unsigned tid, uint64_t range,
-                   uint64_t granularity=1)
+        template <typename Func>
+        void distribute_over_gangs(const range& n, Func&& func) const
         {
-            uint64_t first, last, max;
-            tci_distribute(nthread, tid, range, granularity,
-                           &first, &last, &max);
-            return std::make_tuple(first, last, max);
+            tci_comm_distribute_over_gangs(*this, n,
+            [](tci_comm* comm, uint64_t first, uint64_t last, void* payload)
+            {
+                (*(Func*)payload)(first, last);
+            }, &func);
         }
 
-        static std::tuple<uint64_t,uint64_t,uint64_t,uint64_t,uint64_t,uint64_t>
-        distribute_2d(unsigned nthread, unsigned tid,
-                      uint64_t range_m, uint64_t range_n,
-                      uint64_t granularity_m=1,
-                      uint64_t granularity_n=1)
+        template <typename Func>
+        void distribute_over_threads(const range& n, Func&& func) const
         {
-            uint64_t first_m, last_m, max_m, first_n, last_n, max_n;
-            tci_distribute_2d(nthread, tid, range_m, range_n,
-                              granularity_m, granularity_n,
-                              &first_m, &last_m, &max_m,
-                              &first_n, &last_n, &max_n);
-            return std::make_tuple(first_m, last_m, max_m,
-                                   first_n, last_n, max_n);
+            tci_comm_distribute_over_threads(*this, n,
+            [](tci_comm*, uint64_t first, uint64_t last, void* payload)
+            {
+                (*(Func*)payload)(first, last);
+            }, &func);
         }
 
-        std::tuple<uint64_t,uint64_t,uint64_t>
-        distribute_over_gangs(uint64_t range, uint64_t granularity=1) const
+        template <typename Func>
+        void distribute_over_gangs(const range& m, const range& n,
+                                   Func&& func) const
         {
-            uint64_t first, last, max;
-            tci_comm_distribute_over_gangs(*this, range, granularity,
-                                           &first, &last, &max);
-            return std::make_tuple(first, last, max);
+            tci_comm_distribute_over_gangs_2d(*this, m, n,
+            [](tci_comm* comm, uint64_t mfirst, uint64_t mlast,
+               uint64_t nfirst, uint64_t nlast, void* payload)
+            {
+                (*(Func*)payload)(mfirst, mlast, nfirst, nlast);
+            }, &func);
         }
 
-        std::tuple<uint64_t,uint64_t,uint64_t>
-        distribute_over_threads(uint64_t range, uint64_t granularity=1) const
+        template <typename Func>
+        void distribute_over_threads(const range& m, const range& n,
+                                     Func&& func) const
         {
-            uint64_t first, last, max;
-            tci_comm_distribute_over_threads(*this, range, granularity,
-                                             &first, &last, &max);
-            return std::make_tuple(first, last, max);
+            tci_comm_distribute_over_threads_2d(*this, m, n,
+            [](tci_comm*, uint64_t mfirst, uint64_t mlast,
+               uint64_t nfirst, uint64_t nlast, void* payload)
+            {
+                (*(Func*)payload)(mfirst, mlast, nfirst, nlast);
+            }, &func);
         }
 
-        std::tuple<uint64_t,uint64_t,uint64_t,uint64_t,uint64_t,uint64_t>
-        distribute_over_gangs_2d(uint64_t range_m, uint64_t range_n,
-                                 uint64_t granularity_m=1,
-                                 uint64_t granularity_n=1) const
+        template <typename Func>
+        void do_tasks_deferred(unsigned ntask, int64_t work, Func&& func) const
         {
-            uint64_t first_m, last_m, max_m, first_n, last_n, max_n;
-            tci_comm_distribute_over_gangs_2d(*this, range_m, range_n,
-                                              granularity_m, granularity_n,
-                                              &first_m, &last_m, &max_m,
-                                              &first_n, &last_n, &max_n);
-            return std::make_tuple(first_m, last_m, max_m,
-                                   first_n, last_n, max_n);
+            deferred_task_set tasks(*this, ntask, work);
+            func(tasks);
         }
 
-        std::tuple<uint64_t,uint64_t,uint64_t,uint64_t,uint64_t,uint64_t>
-        distribute_over_threads_2d(uint64_t range_m, uint64_t range_n,
-                                   uint64_t granularity_m=1,
-                                   uint64_t granularity_n=1) const
+        template <typename Func>
+        void do_tasks_deferred(unsigned ntask, Func&& func) const
         {
-            uint64_t first_m, last_m, max_m, first_n, last_n, max_n;
-            tci_comm_distribute_over_threads_2d(*this, range_m, range_n,
-                                                granularity_m, granularity_n,
-                                                &first_m, &last_m, &max_m,
-                                                &first_n, &last_n, &max_n);
-            return std::make_tuple(first_m, last_m, max_m,
-                                   first_n, last_n, max_n);
+            do_tasks_deferred(ntask, -1, func);
+        }
+
+        template <typename Func>
+        void do_tasks(unsigned ntask, int64_t work, Func&& func) const
+        {
+            deferred_task_set tasks(*this, ntask, work);
+            tasks.visit_all(func);
+        }
+
+        template <typename Func>
+        void do_tasks(unsigned ntask, Func&& func) const
+        {
+            do_tasks(ntask, -1, func);
         }
 
         operator tci_comm*() const { return const_cast<tci_comm*>(&_comm); }

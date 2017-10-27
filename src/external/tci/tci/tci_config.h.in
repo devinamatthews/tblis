@@ -4,6 +4,11 @@
 #define TCI_USE_ATOMIC_SPINLOCK  @USE_ATOMIC_SPINLOCK@
 #define TCI_USE_OMP_LOCK         @USE_OMP_LOCK@
 #define TCI_USE_OPENMP_THREADS   @USE_OPENMP_THREADS@
+#define TCI_USE_WINDOWS_THREADS  @USE_WINDOWS_THREADS@
+#define TCI_USE_TBB_THREADS      @USE_TBB_THREADS@
+#define TCI_USE_PPL_THREADS      @USE_PPL_THREADS@
+#define TCI_USE_OMPTASK_THREADS  @USE_OMPTASK_THREADS@
+#define TCI_USE_DISPATCH_THREADS @USE_DISPATCH_THREADS@
 #define TCI_USE_OSX_SPINLOCK     @USE_OSX_SPINLOCK@
 #define TCI_USE_PTHREADS_THREADS @USE_PTHREADS_THREADS@
 #define TCI_USE_PTHREAD_BARRIER  @USE_PTHREAD_BARRIER@
@@ -71,6 +76,23 @@
 
 #if TCI_USE_OMP_LOCK || TCI_USE_OPENMP_THREADS
 #include <omp.h>
+#endif
+
+#if TCI_USE_TBB_THREADS && defined(__cplusplus)
+#include <tbb/tbb.h>
+#endif
+
+#if TCI_USE_DISPATCH_THREADS
+#include <dispatch/dispatch.h>
+#endif
+
+#if TCI_USE_PPL_THREADS && defined(__cplusplus)
+#include <ppl.h>
+#endif
+
+#if TCI_USE_WINDOWS_THREADS
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #endif
 
 #endif

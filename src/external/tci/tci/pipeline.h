@@ -17,7 +17,7 @@ enum
     TCI_FILLED
 };
 
-typedef struct
+typedef struct tci_pipeline
 {
     void* buffer;
     size_t size;

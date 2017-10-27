@@ -14,7 +14,7 @@ typedef void (*tci_thread_func)(tci_comm*, void*);
 int tci_parallelize(tci_thread_func func, void* payload,
                     unsigned nthread, unsigned arity);
 
-typedef struct
+typedef struct tci_prime_factors
 {
     unsigned n;
     unsigned sqrt_n;
@@ -50,7 +50,7 @@ void parallelize(Body&& body, unsigned nthread, unsigned arity=0)
         [](tci_comm* comm, void* data)
         {
             Body body = *static_cast<Body*>(data);
-            body(*reinterpret_cast<communicator*>(comm));
+            body(*reinterpret_cast<const communicator*>(comm));
         },
         static_cast<void*>(&body), nthread, arity);
 }

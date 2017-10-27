@@ -83,69 +83,71 @@ void contract_block(const communicator& comm, const config& cfg,
     auto nidx_B = indices_B.size();
     auto nidx_C = indices_C.size();
 
-    dynamic_task_set tasks(comm, nidx_C, stl_ext::prod(group_AB.dense_len)*
-                                         stl_ext::prod(group_AC.dense_len)*
-                                         stl_ext::prod(group_BC.dense_len));
-
     stride_type idx = 0;
     stride_type idx_A = 0;
     stride_type idx_C = 0;
 
-    for_each_match<true, true>(idx_A, nidx_A, indices_A, 0,
-                              idx_C, nidx_C, indices_C, 0,
-    [&](stride_type next_A, stride_type next_C)
+    comm.do_tasks_deferred(nidx_C, stl_ext::prod(group_AB.dense_len)*
+                                   stl_ext::prod(group_AC.dense_len)*
+                                   stl_ext::prod(group_BC.dense_len)*inout_ratio,
+    [&](communicator::deferred_task_set& tasks)
     {
-        stride_type idx_B = 0;
-
-        for_each_match<true, false>(idx_B, nidx_B, indices_B, 0,
-                                   idx_C, next_C, indices_C, 1,
-        [&](stride_type next_B)
+        for_each_match<true, true>(idx_A, nidx_A, indices_A, 0,
+                                  idx_C, nidx_C, indices_C, 0,
+        [&](stride_type next_A, stride_type next_C)
         {
-            if (indices_C[idx_C].factor == T(0)) return;
+            stride_type idx_B = 0;
 
-            tasks.visit(idx++,
-            [&,idx_A,idx_B,idx_C,next_A,next_B]
-            (const communicator& subcomm)
+            for_each_match<true, false>(idx_B, nidx_B, indices_B, 0,
+                                       idx_C, next_C, indices_C, 1,
+            [&](stride_type next_B)
             {
-                auto local_idx_A = idx_A;
-                auto local_idx_B = idx_B;
+                if (indices_C[idx_C].factor == T(0)) return;
 
-                stride_type off_A_AC, off_C_AC;
-                get_local_offset(indices_A[local_idx_A].idx[0], group_AC,
-                                 off_A_AC, 0, off_C_AC, 1);
-
-                stride_type off_B_BC, off_C_BC;
-                get_local_offset(indices_B[local_idx_B].idx[0], group_BC,
-                                 off_B_BC, 0, off_C_BC, 1);
-
-                auto data_C = C.data(0) + indices_C[idx_C].offset + off_C_AC + off_C_BC;
-
-                for_each_match<false, false>(local_idx_A, next_A, indices_A, 1,
-                                            local_idx_B, next_B, indices_B, 1,
-                [&]
+                tasks.visit(idx++,
+                [&,idx_A,idx_B,idx_C,next_A,next_B]
+                (const communicator& subcomm)
                 {
-                    auto factor = alpha*indices_A[local_idx_A].factor*
-                                        indices_B[local_idx_B].factor*
-                                        indices_C[idx_C].factor;
-                    if (factor == T(0)) return;
+                    auto local_idx_A = idx_A;
+                    auto local_idx_B = idx_B;
 
-                    stride_type off_A_AB, off_B_AB;
-                    get_local_offset(indices_A[local_idx_A].idx[1], group_AB,
-                                     off_A_AB, 0, off_B_AB, 1);
+                    stride_type off_A_AC, off_C_AC;
+                    get_local_offset(indices_A[local_idx_A].idx[0], group_AC,
+                                     off_A_AC, 0, off_C_AC, 1);
 
-                    auto data_A = A.data(0) + indices_A[local_idx_A].offset + off_A_AB + off_A_AC;
-                    auto data_B = B.data(0) + indices_B[local_idx_B].offset + off_B_AB + off_B_BC;
+                    stride_type off_B_BC, off_C_BC;
+                    get_local_offset(indices_B[local_idx_B].idx[0], group_BC,
+                                     off_B_BC, 0, off_C_BC, 1);
 
-                    mult(subcomm, cfg,
-                         group_AB.dense_len,
-                         group_AC.dense_len,
-                         group_BC.dense_len, {},
-                         factor, conj_A, data_A, group_AB.dense_stride[0],
-                                                 group_AC.dense_stride[0], {},
-                                 conj_B, data_B, group_AB.dense_stride[1],
-                                                 group_BC.dense_stride[0], {},
-                           T(1),  false, data_C, group_AC.dense_stride[1],
-                                                 group_BC.dense_stride[1], {});
+                    auto data_C = C.data(0) + indices_C[idx_C].offset + off_C_AC + off_C_BC;
+
+                    for_each_match<false, false>(local_idx_A, next_A, indices_A, 1,
+                                                local_idx_B, next_B, indices_B, 1,
+                    [&]
+                    {
+                        auto factor = alpha*indices_A[local_idx_A].factor*
+                                            indices_B[local_idx_B].factor*
+                                            indices_C[idx_C].factor;
+                        if (factor == T(0)) return;
+
+                        stride_type off_A_AB, off_B_AB;
+                        get_local_offset(indices_A[local_idx_A].idx[1], group_AB,
+                                         off_A_AB, 0, off_B_AB, 1);
+
+                        auto data_A = A.data(0) + indices_A[local_idx_A].offset + off_A_AB + off_A_AC;
+                        auto data_B = B.data(0) + indices_B[local_idx_B].offset + off_B_AB + off_B_BC;
+
+                        mult(subcomm, cfg,
+                             group_AB.dense_len,
+                             group_AC.dense_len,
+                             group_BC.dense_len, {},
+                             factor, conj_A, data_A, group_AB.dense_stride[0],
+                                                     group_AC.dense_stride[0], {},
+                                     conj_B, data_B, group_AB.dense_stride[1],
+                                                     group_BC.dense_stride[0], {},
+                               T(1),  false, data_C, group_AC.dense_stride[1],
+                                                     group_BC.dense_stride[1], {});
+                    });
                 });
             });
         });
@@ -179,84 +181,86 @@ void mult_block(const communicator& comm, const config& cfg,
     auto nidx_B = indices_B.size();
     auto nidx_C = indices_C.size();
 
-    dynamic_task_set tasks(comm, nidx_C, stl_ext::prod(group_AB.dense_len)*
-                                         stl_ext::prod(group_AC.dense_len)*
-                                         stl_ext::prod(group_BC.dense_len)*
-                                         stl_ext::prod(group_ABC.dense_len));
-
     stride_type idx = 0;
     stride_type idx_A = 0;
     stride_type idx_B0 = 0;
     stride_type idx_C = 0;
 
-    for_each_match<true, true, true>(idx_A,  nidx_A, indices_A, 0,
-                                    idx_B0, nidx_B, indices_B, 0,
-                                    idx_C,  nidx_C, indices_C, 0,
-    [&](stride_type next_A_ABC, stride_type next_B_ABC, stride_type next_C_ABC)
+    comm.do_tasks_deferred(nidx_C, stl_ext::prod(group_AB.dense_len)*
+                                   stl_ext::prod(group_AC.dense_len)*
+                                   stl_ext::prod(group_BC.dense_len)*
+                                   stl_ext::prod(group_ABC.dense_len)*inout_ratio,
+    [&](communicator::deferred_task_set& tasks)
     {
-        for_each_match<true, true>(idx_A, next_A_ABC, indices_A, 1,
-                                  idx_C, next_C_ABC, indices_C, 1,
-        [&](stride_type next_A_AB, stride_type next_C_AC)
+        for_each_match<true, true, true>(idx_A,  nidx_A, indices_A, 0,
+                                        idx_B0, nidx_B, indices_B, 0,
+                                        idx_C,  nidx_C, indices_C, 0,
+        [&](stride_type next_A_ABC, stride_type next_B_ABC, stride_type next_C_ABC)
         {
-            stride_type idx_B = idx_B0;
-
-            for_each_match<true, false>(idx_B, next_B_ABC, indices_B, 1,
-                                       idx_C,  next_C_AC, indices_C, 2,
-            [&](stride_type next_B_AB)
+            for_each_match<true, true>(idx_A, next_A_ABC, indices_A, 1,
+                                      idx_C, next_C_ABC, indices_C, 1,
+            [&](stride_type next_A_AB, stride_type next_C_AC)
             {
-                if (indices_C[idx_C].factor == T(0)) return;
+                stride_type idx_B = idx_B0;
 
-                tasks.visit(idx++,
-                [&,idx_A,idx_B,idx_C,next_A_AB,next_B_AB]
-                (const communicator& subcomm)
+                for_each_match<true, false>(idx_B, next_B_ABC, indices_B, 1,
+                                           idx_C,  next_C_AC, indices_C, 2,
+                [&](stride_type next_B_AB)
                 {
-                    auto local_idx_A = idx_A;
-                    auto local_idx_B = idx_B;
+                    if (indices_C[idx_C].factor == T(0)) return;
 
-                    stride_type off_A_ABC, off_B_ABC, off_C_ABC;
-                    get_local_offset(indices_A[local_idx_A].idx[0], group_ABC,
-                                     off_A_ABC, 0, off_B_ABC, 1, off_C_ABC, 2);
-
-                    stride_type off_A_AC, off_C_AC;
-                    get_local_offset(indices_A[local_idx_A].idx[1], group_AC,
-                                     off_A_AC, 0, off_C_AC, 1);
-
-                    stride_type off_B_BC, off_C_BC;
-                    get_local_offset(indices_B[local_idx_B].idx[1], group_BC,
-                                     off_B_BC, 0, off_C_BC, 1);
-
-                    auto data_C = C.data(0) + indices_C[idx_C].offset + off_C_AC + off_C_BC + off_C_ABC;
-
-                    for_each_match<false, false>(local_idx_A, next_A_AB, indices_A, 2,
-                                                local_idx_B, next_B_AB, indices_B, 2,
-                    [&]
+                    tasks.visit(idx++,
+                    [&,idx_A,idx_B,idx_C,next_A_AB,next_B_AB]
+                    (const communicator& subcomm)
                     {
-                        auto factor = alpha*indices_A[local_idx_A].factor*
-                                            indices_B[local_idx_B].factor*
-                                            indices_C[idx_C].factor;
-                        if (factor == T(0)) return;
+                        auto local_idx_A = idx_A;
+                        auto local_idx_B = idx_B;
 
-                        stride_type off_A_AB, off_B_AB;
-                        get_local_offset(indices_A[local_idx_A].idx[2], group_AB,
-                                         off_A_AB, 0, off_B_AB, 1);
+                        stride_type off_A_ABC, off_B_ABC, off_C_ABC;
+                        get_local_offset(indices_A[local_idx_A].idx[0], group_ABC,
+                                         off_A_ABC, 0, off_B_ABC, 1, off_C_ABC, 2);
 
-                        auto data_A = A.data(0) + indices_A[local_idx_A].offset + off_A_AB + off_A_AC + off_A_ABC;
-                        auto data_B = B.data(0) + indices_B[local_idx_B].offset + off_B_AB + off_B_BC + off_B_ABC;
+                        stride_type off_A_AC, off_C_AC;
+                        get_local_offset(indices_A[local_idx_A].idx[1], group_AC,
+                                         off_A_AC, 0, off_C_AC, 1);
 
-                        mult(subcomm, cfg,
-                             group_AB.dense_len,
-                             group_AC.dense_len,
-                             group_BC.dense_len,
-                             group_ABC.dense_len,
-                             factor, conj_A, data_A, group_AB.dense_stride[0],
-                                                     group_AC.dense_stride[0],
-                                                     group_ABC.dense_stride[0],
-                                     conj_B, data_B, group_AB.dense_stride[1],
-                                                     group_BC.dense_stride[0],
-                                                     group_ABC.dense_stride[1],
-                               T(1),  false, data_C, group_AC.dense_stride[1],
-                                                     group_BC.dense_stride[1],
-                                                     group_ABC.dense_stride[2]);
+                        stride_type off_B_BC, off_C_BC;
+                        get_local_offset(indices_B[local_idx_B].idx[1], group_BC,
+                                         off_B_BC, 0, off_C_BC, 1);
+
+                        auto data_C = C.data(0) + indices_C[idx_C].offset + off_C_AC + off_C_BC + off_C_ABC;
+
+                        for_each_match<false, false>(local_idx_A, next_A_AB, indices_A, 2,
+                                                    local_idx_B, next_B_AB, indices_B, 2,
+                        [&]
+                        {
+                            auto factor = alpha*indices_A[local_idx_A].factor*
+                                                indices_B[local_idx_B].factor*
+                                                indices_C[idx_C].factor;
+                            if (factor == T(0)) return;
+
+                            stride_type off_A_AB, off_B_AB;
+                            get_local_offset(indices_A[local_idx_A].idx[2], group_AB,
+                                             off_A_AB, 0, off_B_AB, 1);
+
+                            auto data_A = A.data(0) + indices_A[local_idx_A].offset + off_A_AB + off_A_AC + off_A_ABC;
+                            auto data_B = B.data(0) + indices_B[local_idx_B].offset + off_B_AB + off_B_BC + off_B_ABC;
+
+                            mult(subcomm, cfg,
+                                 group_AB.dense_len,
+                                 group_AC.dense_len,
+                                 group_BC.dense_len,
+                                 group_ABC.dense_len,
+                                 factor, conj_A, data_A, group_AB.dense_stride[0],
+                                                         group_AC.dense_stride[0],
+                                                         group_ABC.dense_stride[0],
+                                         conj_B, data_B, group_AB.dense_stride[1],
+                                                         group_BC.dense_stride[0],
+                                                         group_ABC.dense_stride[1],
+                                   T(1),  false, data_C, group_AC.dense_stride[1],
+                                                         group_BC.dense_stride[1],
+                                                         group_ABC.dense_stride[2]);
+                        });
                     });
                 });
             });

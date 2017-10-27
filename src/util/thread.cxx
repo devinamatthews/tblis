@@ -97,7 +97,8 @@ namespace tblis
 
 tci::communicator single;
 
-len_type dynamic_task_set::inout_ratio = 200000;
+std::atomic<long> flops{0};
+len_type inout_ratio = 200000;
 
 }
 

@@ -33,8 +33,6 @@ void gemm_ukr_def(stride_type k,
     constexpr len_type MR = Config::template gemm_mr<T>::def;
     constexpr len_type NR = Config::template gemm_nr<T>::def;
 
-    TBLIS_ASSERT(strcmp(Config::name, "reference") == 0);
-
     T p_ab[MR*NR] __attribute__((aligned(64))) = {};
 
     while (k --> 0)

@@ -174,105 +174,108 @@ void contract_block(const communicator& comm, const config& cfg,
     if (nblock_BC > 1) nblock_BC /= nirrep;
     if (nblock_AB > 1) nblock_AB /= nirrep;
 
-    dynamic_task_set tasks(comm, nblock_par, dense_AC*dense_BC);
-
     stride_type block_idx = 0;
-    for (unsigned irrep_AB = 0;irrep_AB < nirrep;irrep_AB++)
+
+    comm.do_tasks_deferred(nblock_par, dense_AB*dense_AC*dense_BC*inout_ratio,
+    [&](communicator::deferred_task_set& tasks)
     {
-        unsigned irrep_AC = A.irrep()^irrep_AB;
-        unsigned irrep_BC = B.irrep()^irrep_AB;
-
-        if (ndim_AC == 0 && irrep_AC != 0) continue;
-        if (ndim_BC == 0 && irrep_BC != 0) continue;
-
-        for (stride_type block_AC = 0;block_AC < nblock_AC;block_AC++)
+        for (unsigned irrep_AB = 0;irrep_AB < nirrep;irrep_AB++)
         {
-            for (stride_type block_BC = 0;block_BC < nblock_BC;block_BC++)
+            unsigned irrep_AC = A.irrep()^irrep_AB;
+            unsigned irrep_BC = B.irrep()^irrep_AB;
+
+            if (ndim_AC == 0 && irrep_AC != 0) continue;
+            if (ndim_BC == 0 && irrep_BC != 0) continue;
+
+            for (stride_type block_AC = 0;block_AC < nblock_AC;block_AC++)
             {
-                tasks.visit(block_idx++,
-                [&,irrep_AB,irrep_AC,irrep_BC,block_AC,block_BC]
-                (const communicator& subcomm)
+                for (stride_type block_BC = 0;block_BC < nblock_BC;block_BC++)
                 {
-                    irrep_vector irreps_A(ndim_A);
-                    irrep_vector irreps_B(ndim_B);
-                    irrep_vector irreps_C(ndim_C);
-
-                    assign_irreps(ndim_AC, irrep_AC, nirrep, block_AC,
-                                  irreps_A, idx_A_AC, irreps_C, idx_C_AC);
-
-                    assign_irreps(ndim_BC, irrep_BC, nirrep, block_BC,
-                                  irreps_B, idx_B_BC, irreps_C, idx_C_BC);
-
-                    if (is_block_empty(C, irreps_C)) return;
-
-                    auto local_C = C(irreps_C);
-                    T beta = beta_;
-
-                    auto len_AC = stl_ext::select_from(local_C.lengths(), idx_C_AC);
-                    auto len_BC = stl_ext::select_from(local_C.lengths(), idx_C_BC);
-                    auto stride_C_AC = stl_ext::select_from(local_C.strides(), idx_C_AC);
-                    auto stride_C_BC = stl_ext::select_from(local_C.strides(), idx_C_BC);
-
-                    tensor_matrix<T> ct(len_AC, len_BC, local_C.data(),
-                                        stride_C_AC, stride_C_BC);
-
-                    if (ndim_AB != 0 || irrep_AB == 0)
+                    tasks.visit(block_idx++,
+                    [&,irrep_AB,irrep_AC,irrep_BC,block_AC,block_BC]
+                    (const communicator& subcomm)
                     {
-                        auto tc = make_gemm_thread_config<T>(
-                            cfg, subcomm.num_threads(), ct.length(0), ct.length(1), 0);
+                        irrep_vector irreps_A(ndim_A);
+                        irrep_vector irreps_B(ndim_B);
+                        irrep_vector irreps_C(ndim_C);
 
-                        for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
+                        assign_irreps(ndim_AC, irrep_AC, nirrep, block_AC,
+                                      irreps_A, idx_A_AC, irreps_C, idx_C_AC);
+
+                        assign_irreps(ndim_BC, irrep_BC, nirrep, block_BC,
+                                      irreps_B, idx_B_BC, irreps_C, idx_C_BC);
+
+                        if (is_block_empty(C, irreps_C)) return;
+
+                        auto local_C = C(irreps_C);
+                        T beta = beta_;
+
+                        auto len_AC = stl_ext::select_from(local_C.lengths(), idx_C_AC);
+                        auto len_BC = stl_ext::select_from(local_C.lengths(), idx_C_BC);
+                        auto stride_C_AC = stl_ext::select_from(local_C.strides(), idx_C_AC);
+                        auto stride_C_BC = stl_ext::select_from(local_C.strides(), idx_C_BC);
+
+                        tensor_matrix<T> ct(len_AC, len_BC, local_C.data(),
+                                            stride_C_AC, stride_C_BC);
+
+                        if (ndim_AB != 0 || irrep_AB == 0)
                         {
-                            assign_irreps(ndim_AB, irrep_AB, nirrep, block_AB,
-                                          irreps_A, idx_A_AB, irreps_B, idx_B_AB);
+                            auto tc = make_gemm_thread_config<T>(
+                                cfg, subcomm.num_threads(), ct.length(0), ct.length(1), 0);
 
-                            if (is_block_empty(A, irreps_A)) continue;
+                            for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
+                            {
+                                assign_irreps(ndim_AB, irrep_AB, nirrep, block_AB,
+                                              irreps_A, idx_A_AB, irreps_B, idx_B_AB);
 
-                            auto local_A = A(irreps_A);
-                            auto local_B = B(irreps_B);
+                                if (is_block_empty(A, irreps_A)) continue;
 
-                            auto len_AB = stl_ext::select_from(local_A.lengths(), idx_A_AB);
-                            auto stride_A_AB = stl_ext::select_from(local_A.strides(), idx_A_AB);
-                            auto stride_A_AC = stl_ext::select_from(local_A.strides(), idx_A_AC);
-                            auto stride_B_AB = stl_ext::select_from(local_B.strides(), idx_B_AB);
-                            auto stride_B_BC = stl_ext::select_from(local_B.strides(), idx_B_BC);
+                                auto local_A = A(irreps_A);
+                                auto local_B = B(irreps_B);
 
-                            tensor_matrix<T> at(len_AC, len_AB, const_cast<T*>(local_A.data()),
-                                                stride_A_AC, stride_A_AB);
+                                auto len_AB = stl_ext::select_from(local_A.lengths(), idx_A_AB);
+                                auto stride_A_AB = stl_ext::select_from(local_A.strides(), idx_A_AB);
+                                auto stride_A_AC = stl_ext::select_from(local_A.strides(), idx_A_AC);
+                                auto stride_B_AB = stl_ext::select_from(local_B.strides(), idx_B_AB);
+                                auto stride_B_BC = stl_ext::select_from(local_B.strides(), idx_B_BC);
 
-                            tensor_matrix<T> bt(len_AB, len_BC, const_cast<T*>(local_B.data()),
-                                                stride_B_AB, stride_B_BC);
+                                tensor_matrix<T> at(len_AC, len_AB, const_cast<T*>(local_A.data()),
+                                                    stride_A_AC, stride_A_AB);
 
-                            if (subcomm.master())
-                                flops += 2*ct.length(0)*ct.length(1)*at.length(1);
+                                tensor_matrix<T> bt(len_AB, len_BC, const_cast<T*>(local_B.data()),
+                                                    stride_B_AB, stride_B_BC);
 
-                            TensorGEMM gemm;
+                                if (subcomm.master())
+                                    flops += 2*ct.length(0)*ct.length(1)*at.length(1);
 
-                            step<0>(gemm).distribute = tc.jc_nt;
-                            step<4>(gemm).distribute = tc.ic_nt;
-                            step<8>(gemm).distribute = tc.jr_nt;
-                            step<9>(gemm).distribute = tc.ir_nt;
+                                TensorGEMM gemm;
 
-                            gemm(subcomm, cfg, alpha, at, bt, beta, ct);
+                                step<0>(gemm).distribute = tc.jc_nt;
+                                step<4>(gemm).distribute = tc.ic_nt;
+                                step<8>(gemm).distribute = tc.jr_nt;
+                                step<9>(gemm).distribute = tc.ir_nt;
 
-                            beta = T(1);
+                                gemm(subcomm, cfg, alpha, at, bt, beta, ct);
+
+                                beta = T(1);
+                            }
                         }
-                    }
 
-                    if (beta == T(0))
-                    {
-                        set(subcomm, cfg, local_C.lengths(),
-                            beta, local_C.data(), local_C.strides());
-                    }
-                    else if (beta != T(1))
-                    {
-                        scale(subcomm, cfg, local_C.lengths(),
-                              beta, false, local_C.data(), local_C.strides());
-                    }
-                });
+                        if (beta == T(0))
+                        {
+                            set(subcomm, cfg, local_C.lengths(),
+                                beta, local_C.data(), local_C.strides());
+                        }
+                        else if (beta != T(1))
+                        {
+                            scale(subcomm, cfg, local_C.lengths(),
+                                  beta, false, local_C.data(), local_C.strides());
+                        }
+                    });
+                }
             }
         }
-    }
+    });
 }
 
 template <typename T>
@@ -374,7 +377,6 @@ void mult_block(const communicator& comm, const config& cfg,
 
             if (ndim_AC == 0 && irrep_AC != 0) continue;
             if (ndim_BC == 0 && irrep_BC != 0) continue;
-            if (ndim_ABC == 0 && irrep_ABC != 0) continue;
 
             for (stride_type block_ABC = 0;block_ABC < nblock_ABC;block_ABC++)
             {

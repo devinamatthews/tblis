@@ -16,29 +16,35 @@ void dot(const communicator& comm, const config& cfg,
 {
     (void)cfg;
 
-    viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
-
     len_type n = stl_ext::prod(len_AB);
 
-    len_type n_min, n_max;
-    std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(n);
-
-    T local_result = T();
+    std::atomic<T> local_result{T()};
 
     if (conj_A) conj_B = !conj_B;
 
-    iter_AB.position(n_min, A, B);
-
-    for (len_type i = n_min;i < n_max;i++)
+    comm.distribute_over_threads(tci::range(n).chunk(1000),
+    [&](len_type n_min, len_type n_max)
     {
-        iter_AB.next(A, B);
-        local_result += (*A)*(conj_B ? conj(*B) : *B);
-    }
+        auto A1 = A;
+        auto B1 = B;
 
-    len_type dummy = 0;
-    reduce(comm, REDUCE_SUM, local_result, dummy);
+        viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
+        iter_AB.position(n_min, A1, B1);
+
+        T micro_result = T();
+
+        for (len_type i = n_min;i < n_max;i++)
+        {
+            iter_AB.next(A1, B1);
+            micro_result += (*A1)*(conj_B ? conj(*B1) : *B1);
+        }
+
+        atomic_accumulate(local_result, micro_result);
+    });
+
+    reduce(comm, local_result);
     if (comm.master())
-        result = (conj_A ? conj(local_result) : local_result);
+        result = (conj_A ? conj(local_result.load()) : local_result.load());
 
     comm.barrier();
 }

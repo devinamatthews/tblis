@@ -10,11 +10,6 @@
 #include "tci.h"
 #include "basic_types.h"
 
-#if defined(__cplusplus) && TBLIS_ENABLE_TBB
-#define TBLIS_SIMPLE_TBB 1
-#include <tbb/tbb.h>
-#endif
-
 typedef tci_comm tblis_comm;
 extern const tblis_comm* const tblis_single;
 
@@ -36,9 +31,20 @@ void tblis_set_num_threads(unsigned num_threads);
 #include <vector>
 #include <utility>
 #include <atomic>
+#include <iostream>
 
 namespace tblis
 {
+
+using tci::communicator;
+using tci::parallelize;
+using tci::partition_2x2;
+
+extern communicator single;
+
+extern std::atomic<long> flops;
+extern len_type inout_ratio;
+extern int outer_threading;
 
 template <typename T>
 void atomic_accumulate(std::atomic<T>& x, T y)
@@ -47,89 +53,60 @@ void atomic_accumulate(std::atomic<T>& x, T y)
     while (!x.compare_exchange_weak(old, old+y)) continue;
 }
 
-using namespace tci;
-
-extern tci::communicator single;
-
-inline int max_num_threads(const communicator& comm)
+template <typename T>
+struct atomic_reducer_helper
 {
-    (void)comm;
-    #if TBLIS_ENABLE_TBB
-    #if TBB_INTERFACE_VERSION >= 9100
-        return tbb::this_task_arena::max_concurrency();
-    #else //TBB_INTERFACE_VERSION >= 9100
-        return tblis_get_num_threads();
-    #endif //TBB_INTERFACE_VERSION >= 9100
-    #else //TBLIS_ENABLE_TBB
-        return comm.num_threads();
-    #endif //TBLIS_ENABLE_TBB
+    T first;
+    len_type second;
+
+    constexpr atomic_reducer_helper(T first = T(), len_type second = 0) noexcept
+    : first(first), second(second) {}
+};
+
+template <typename T>
+using atomic_reducer = std::atomic<atomic_reducer_helper<T>>;
+
+template <typename T>
+void atomic_reduce(reduce_t op, atomic_reducer<T>& x, T y_val, len_type y_idx)
+{
+    auto old = x.load();
+    auto update = old;
+
+    do
+    {
+        update = old;
+
+        switch (op)
+        {
+            case REDUCE_SUM:
+                update.first = old.first + y_val;
+                break;
+            case REDUCE_SUM_ABS:
+                update.first = old.first + std::abs(y_val);
+                break;
+            case REDUCE_MAX:
+                if (y_val > old.first)
+                    update = {y_val, y_idx};
+                break;
+            case REDUCE_MAX_ABS:
+                if (std::abs(y_val) > old.first)
+                    update = {std::abs(y_val), y_idx};
+                break;
+            case REDUCE_MIN:
+                if (y_val < old.first)
+                    update = {y_val, y_idx};
+                break;
+            case REDUCE_MIN_ABS:
+                if (std::abs(y_val) < old.first)
+                    update = {std::abs(y_val), y_idx};
+                break;
+            case REDUCE_NORM_2:
+                update.first = old.first + y_val;
+                break;
+        }
+    }
+    while (!x.compare_exchange_weak(old, update));
 }
-
-#if TBLIS_ENABLE_TBB
-
-class dynamic_task_set
-{
-    public:
-        dynamic_task_set(const communicator&, int, len_type) {}
-
-        ~dynamic_task_set()
-        {
-            group_.wait();
-        }
-
-        template <typename Func>
-        void visit(int task, Func&& f)
-        {
-            group_.run([=] { const_cast<Func&>(f)(single); });
-        }
-
-    protected:
-        tbb::task_group group_;
-        static len_type inout_ratio;
-};
-
-#else //TBLIS_ENABLE_TBB
-
-class dynamic_task_set
-{
-    public:
-        dynamic_task_set(const communicator& comm, int ntask, len_type nwork)
-        : comm_(comm), ntask_(ntask)
-        {
-            if (comm_.master()) slots_ = new slot<>[ntask];
-            comm_.broadcast_value(slots_);
-
-            int nt = max_num_threads(comm_);
-            int nt_outer, nt_inner;
-            std::tie(nt_outer, nt_inner) =
-                partition_2x2(nt, inout_ratio*nwork, ntask,
-                              nwork, nt);
-
-            subcomm_ = comm_.gang(TCI_EVENLY, nt_outer);
-        }
-
-        ~dynamic_task_set()
-        {
-            comm_.barrier();
-            if (comm_.master()) delete[] slots_;
-        }
-
-        template <typename Func>
-        void visit(int task, Func&& f)
-        {
-            TBLIS_ASSERT(task >= 0 && task < ntask_);
-            if (slots_[task].try_fill(subcomm_.gang_num())) f(subcomm_);
-        }
-
-    protected:
-        const communicator& comm_;
-        communicator subcomm_;
-        slot<>* slots_ = nullptr;
-        int ntask_;
-        static len_type inout_ratio;
-};
-
-#endif //TBLIS_ENABLE_TBB
 
 template <typename T>
 void reduce_init(reduce_t op, T& value, len_type& idx)
@@ -157,6 +134,15 @@ void reduce_init(reduce_t op, T& value, len_type& idx)
 }
 
 template <typename T>
+void reduce_init(reduce_t op, atomic_reducer<T>& pair)
+{
+    T tmp1;
+    len_type tmp2;
+    reduce_init(op, tmp1, tmp2);
+    pair = {tmp1, tmp2};
+}
+
+template <typename T>
 void reduce(const communicator& comm, reduce_t op, T& value, len_type& idx)
 {
     if (comm.num_threads() == 1)
@@ -177,58 +163,54 @@ void reduce(const communicator& comm, reduce_t op, T& value, len_type& idx)
 
     if (comm.master())
     {
-        if (op == REDUCE_SUM)
+        switch (op)
         {
-            for (unsigned i = 1;i < comm.num_threads();i++)
-            {
-                vals[0].first += vals[i].first;
-            }
-        }
-        else if (op == REDUCE_SUM_ABS)
-        {
-            vals[0].first = std::abs(vals[0].first);
-            for (unsigned i = 1;i < comm.num_threads();i++)
-            {
-                vals[0].first += std::abs(vals[i].first);
-            }
-        }
-        else if (op == REDUCE_MAX)
-        {
-            for (unsigned i = 1;i < comm.num_threads();i++)
-            {
-                if (vals[i].first > vals[0].first) vals[0] = vals[i];
-            }
-        }
-        else if (op == REDUCE_MAX_ABS)
-        {
-            for (unsigned i = 1;i < comm.num_threads();i++)
-            {
-                if (std::abs(vals[i].first) >
-                    std::abs(vals[0].first)) vals[0] = vals[i];
-            }
-        }
-        else if (op == REDUCE_MIN)
-        {
-            for (unsigned i = 1;i < comm.num_threads();i++)
-            {
-                if (vals[i].first < vals[0].first) vals[0] = vals[i];
-            }
-        }
-        else if (op == REDUCE_MIN_ABS)
-        {
-            for (unsigned i = 1;i < comm.num_threads();i++)
-            {
-                if (std::abs(vals[i].first) <
-                    std::abs(vals[0].first)) vals[0] = vals[i];
-            }
-        }
-        else if (op == REDUCE_NORM_2)
-        {
-            for (unsigned i = 1;i < comm.num_threads();i++)
-            {
-                vals[0].first += vals[i].first;
-            }
-            vals[0].first = std::sqrt(vals[0].first);
+            case REDUCE_SUM:
+                for (unsigned i = 1;i < comm.num_threads();i++)
+                {
+                    vals[0].first += vals[i].first;
+                }
+                break;
+            case REDUCE_SUM_ABS:
+                vals[0].first = std::abs(vals[0].first);
+                for (unsigned i = 1;i < comm.num_threads();i++)
+                {
+                    vals[0].first += std::abs(vals[i].first);
+                }
+                break;
+            case REDUCE_MAX:
+                for (unsigned i = 1;i < comm.num_threads();i++)
+                {
+                    if (vals[i].first > vals[0].first) vals[0] = vals[i];
+                }
+                break;
+            case REDUCE_MAX_ABS:
+                for (unsigned i = 1;i < comm.num_threads();i++)
+                {
+                    if (std::abs(vals[i].first) >
+                        std::abs(vals[0].first)) vals[0] = vals[i];
+                }
+                break;
+            case REDUCE_MIN:
+                for (unsigned i = 1;i < comm.num_threads();i++)
+                {
+                    if (vals[i].first < vals[0].first) vals[0] = vals[i];
+                }
+                break;
+            case REDUCE_MIN_ABS:
+                for (unsigned i = 1;i < comm.num_threads();i++)
+                {
+                    if (std::abs(vals[i].first) <
+                        std::abs(vals[0].first)) vals[0] = vals[i];
+                }
+                break;
+            case REDUCE_NORM_2:
+                for (unsigned i = 1;i < comm.num_threads();i++)
+                {
+                    vals[0].first += vals[i].first;
+                }
+                vals[0].first = std::sqrt(vals[0].first);
+                break;
         }
 
         value = vals[0].first;
@@ -236,6 +218,53 @@ void reduce(const communicator& comm, reduce_t op, T& value, len_type& idx)
     }
 
     comm.barrier();
+}
+
+template <typename T>
+void reduce(const communicator& comm, T& value)
+{
+    if (comm.num_threads() == 1) return;
+
+    std::vector<T> vals;
+    if (comm.master()) vals.resize(comm.num_threads());
+
+    comm.broadcast(
+    [&](std::vector<T>& vals)
+    {
+        vals[comm.thread_num()] = value;
+    },
+    vals);
+
+    if (comm.master())
+    {
+        for (unsigned i = 1;i < comm.num_threads();i++)
+        {
+            vals[0] += vals[i];
+        }
+
+        value = vals[0];
+    }
+
+    comm.barrier();
+}
+
+template <typename T>
+void reduce(const communicator& comm, reduce_t op, atomic_reducer<T>& pair)
+{
+    T tmp1;
+    len_type tmp2;
+    tmp1 = pair.load().first;
+    tmp2 = pair.load().second;
+    reduce(comm, op, tmp1, tmp2);
+    pair = {tmp1,tmp2};
+}
+
+template <typename T>
+void reduce(const communicator& comm, std::atomic<T>& value)
+{
+    T tmp = value.load();
+    reduce(comm, tmp);
+    value = tmp;
 }
 
 template <typename Func, typename... Args>

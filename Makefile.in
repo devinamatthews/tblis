@@ -125,19 +125,6 @@ noinst_PROGRAMS = bin/test$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
 @ENABLE_BLAS_TRUE@@ENABLE_SKX1_TRUE@am__append_24 = bin/skx_bench
 @ENABLE_BLAS_TRUE@@ENABLE_SKX1_FALSE@@ENABLE_SKX2_TRUE@am__append_25 = bin/skx_bench
 subdir = .
-DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	$(top_srcdir)/configure $(am__configure_deps) \
-	$(srcdir)/config.h.in \
-	$(top_srcdir)/src/configs/foreach_type.h.in \
-	$(top_srcdir)/src/configs/foreach_config.h.in \
-	$(top_srcdir)/src/configs/foreach_config_and_type.h.in \
-	$(top_srcdir)/src/configs/include_configs.hpp.in depcomp \
-	$(iface1minclude_HEADERS) $(iface1tinclude_HEADERS) \
-	$(iface1vinclude_HEADERS) $(iface3minclude_HEADERS) \
-	$(iface3tinclude_HEADERS) $(marrayinclude_HEADERS) \
-	$(memoryinclude_HEADERS) $(pkginclude_HEADERS) \
-	$(stl_extinclude_HEADERS) $(utilinclude_HEADERS) ar-lib \
-	compile config.guess config.sub install-sh missing ltmain.sh
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_blas.m4 \
 	$(top_srcdir)/m4/ax_check_define.m4 \
@@ -151,6 +138,13 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_blas.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
+DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
+	$(am__configure_deps) $(iface1minclude_HEADERS) \
+	$(iface1tinclude_HEADERS) $(iface1vinclude_HEADERS) \
+	$(iface3minclude_HEADERS) $(iface3tinclude_HEADERS) \
+	$(marrayinclude_HEADERS) $(memoryinclude_HEADERS) \
+	$(pkginclude_HEADERS) $(stl_extinclude_HEADERS) \
+	$(utilinclude_HEADERS) $(am__DIST_COMMON)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
@@ -529,6 +523,13 @@ ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
 DIST_SUBDIRS = $(SUBDIRS)
+am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
+	$(top_srcdir)/src/configs/foreach_config.h.in \
+	$(top_srcdir)/src/configs/foreach_config_and_type.h.in \
+	$(top_srcdir)/src/configs/foreach_type.h.in \
+	$(top_srcdir)/src/configs/include_configs.hpp.in ar-lib \
+	compile config.guess config.sub depcomp install-sh ltmain.sh \
+	missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -1043,7 +1044,6 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign Makefile'; \
 	$(am__cd) $(top_srcdir) && \
 	  $(AUTOMAKE) --foreign Makefile
-.PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -2462,15 +2462,15 @@ dist-xz: distdir
 	$(am__post_remove_distdir)
 
 dist-tarZ: distdir
-	@echo WARNING: "Support for shar distribution archives is" \
-	               "deprecated." >&2
+	@echo WARNING: "Support for distribution archives compressed with" \
+		       "legacy program 'compress' is deprecated." >&2
 	@echo WARNING: "It will be removed altogether in Automake 2.0" >&2
 	tardir=$(distdir) && $(am__tar) | compress -c >$(distdir).tar.Z
 	$(am__post_remove_distdir)
 
 dist-shar: distdir
-	@echo WARNING: "Support for distribution archives compressed with" \
-		       "legacy program 'compress' is deprecated." >&2
+	@echo WARNING: "Support for shar distribution archives is" \
+	               "deprecated." >&2
 	@echo WARNING: "It will be removed altogether in Automake 2.0" >&2
 	shar $(distdir) | eval GZIP= gzip $(GZIP_ENV) -c >$(distdir).shar.gz
 	$(am__post_remove_distdir)
@@ -2506,16 +2506,17 @@ distcheck: dist
 	esac
 	chmod -R a-w $(distdir)
 	chmod u+w $(distdir)
-	mkdir $(distdir)/_build $(distdir)/_inst
+	mkdir $(distdir)/_build $(distdir)/_build/sub $(distdir)/_inst
 	chmod a-w $(distdir)
 	test -d $(distdir)/_build || exit 0; \
 	dc_install_base=`$(am__cd) $(distdir)/_inst && pwd | sed -e 's,^[^:\\/]:[\\/],/,'` \
 	  && dc_destdir="$${TMPDIR-/tmp}/am-dc-$$$$/" \
 	  && am__cwd=`pwd` \
-	  && $(am__cd) $(distdir)/_build \
-	  && ../configure --srcdir=.. --prefix="$$dc_install_base" \
+	  && $(am__cd) $(distdir)/_build/sub \
+	  && ../../configure \
 	    $(AM_DISTCHECK_CONFIGURE_FLAGS) \
 	    $(DISTCHECK_CONFIGURE_FLAGS) \
+	    --srcdir=../.. --prefix="$$dc_install_base" \
 	  && $(MAKE) $(AM_MAKEFLAGS) \
 	  && $(MAKE) $(AM_MAKEFLAGS) dvi \
 	  && $(MAKE) $(AM_MAKEFLAGS) check \
@@ -2788,6 +2789,8 @@ uninstall-am: uninstall-iface1mincludeHEADERS \
 	uninstall-marrayincludeHEADERS uninstall-memoryincludeHEADERS \
 	uninstall-pkgincludeHEADERS uninstall-stl_extincludeHEADERS \
 	uninstall-utilincludeHEADERS
+
+.PRECIOUS: Makefile
 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

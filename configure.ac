@@ -81,37 +81,6 @@ AX_CHECK_DEFINE([unistd.h], [_SC_NPROCESSORS_ONLN],
                            [sysconf(_SC_NPROCESSORS_ONLN) is valid.])])
 
 #
-# Determine if TBB should be used (may override TCI threading)
-#
-
-AC_ARG_ENABLE([thread-model], AS_HELP_STRING([--enable-thread-model@<:@=model@:>@],
-    [enable threading with the specified model, one of none, auto, \
-    openmp, pthreads, tbb @<:@default=auto@:>@]),
-    [thread_model=$enable_thread_model], [thread_model=auto])
-
-AC_ARG_ENABLE([threading], [], [thread_model=$enable_threading], [])
-
-enable_tbb=0
-if test x"$thread_model" = xtbb; then
-    #
-    # Check for TBB
-    #
-    
-    AC_CHECK_HEADERS([tbb/tbb.h])
-    AC_SEARCH_LIBS([TBB_runtime_interface_version], [tbb])
-    
-    if test x"$ac_cv_header_tbb_tbb_h" = xyes && \
-       test x"$ac_cv_search_TBB_runtime_interface_version" != xno; then
-        AC_MSG_NOTICE([using tbb for threading])
-        enable_tbb=1
-    else
-        AC_MSG_ERROR([tbb requested but not available])
-    fi
-fi
-
-AC_DEFINE_UNQUOTED([ENABLE_TBB], [$enable_tbb], [enable_tbb])
-
-#
 # Determine basic types
 #
 
@@ -499,8 +468,4 @@ AC_CONFIG_FILES([Makefile
 AX_PREFIX_CONFIG_H([src/tblis_config.h], [TBLIS])
 AC_OUTPUT
 
-if test "x$enable_tbb" = "x1"; then
-    TBLIS_CONFIG_SUBDIR([src/external/tci], [--enable-threading=no --enable-thread-model=no])
-else
-    TBLIS_CONFIG_SUBDIR([src/external/tci])
-fi
+TBLIS_CONFIG_SUBDIR([src/external/tci])

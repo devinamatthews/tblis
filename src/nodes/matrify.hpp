@@ -26,22 +26,25 @@ void block_scatter(const communicator& comm, MatrixA& A,
     len_type m = A.length(0);
     len_type n = A.length(1);
 
-    len_type first, last;
-    std::tie(first, last, std::ignore) = comm.distribute_over_threads(m, MB);
+    comm.distribute_over_threads(tci::range(m).chunk(1000).grain(MB),
+    [&](len_type first, len_type last)
+    {
+        A.length(0, last-first);
+        A.shift(0, first);
+        A.fill_block_scatter(0, rscat+first, MB, rbs+first/MB);
+        A.shift(0, -first);
+        A.length(0, m);
+    });
 
-    A.length(0, last-first);
-    A.shift(0, first);
-    A.fill_block_scatter(0, rscat+first, MB, rbs+first/MB);
-    A.shift(0, -first);
-    A.length(0, m);
-
-    std::tie(first, last, std::ignore) = comm.distribute_over_threads(n, NB);
-
-    A.length(1, last-first);
-    A.shift(1, first);
-    A.fill_block_scatter(1, cscat+first, NB, cbs+first/NB);
-    A.shift(1, -first);
-    A.length(1, n);
+    comm.distribute_over_threads(tci::range(n).chunk(1000).grain(NB),
+    [&](len_type first, len_type last)
+    {
+        A.length(1, last-first);
+        A.shift(1, first);
+        A.fill_block_scatter(1, cscat+first, NB, cbs+first/NB);
+        A.shift(1, -first);
+        A.length(1, n);
+    });
 
     comm.barrier();
 }

@@ -16,6 +16,7 @@ struct partition
     communicator subcomm;
     bool ganged = false;
     int distribute = 1;
+    len_type chunk = 1;
 
     partition() {}
 
@@ -43,26 +44,37 @@ struct partition
                               Dim == DIM_N ? C.length(1) : B.length(0));
         const len_type m = std::min(m_u, m_v);
 
-        auto body = [&,M_def](int tid, Child& child, MatrixA& A, MatrixB& B, MatrixC& C)
+        if (!ganged)
         {
-            len_type m_first, m_last;
-            std::tie(m_first, m_last, std::ignore) =
-                communicator::distribute(distribute, tid, m, M_iota);
+            subcomm = comm.gang(TCI_EVENLY, distribute);
+            ganged = true;
+        }
+
+        subcomm.distribute_over_gangs(tci::range(m).chunk(chunk).grain(M_iota),
+        [&](len_type m_first, len_type m_last)
+        {
+            auto local_A = A;
+            auto local_B = B;
+            auto local_C = C;
 
             auto length = [&](len_type m_u, len_type m_v)
             {
-                (Dim == DIM_M ? A.length(0, m_u) :
-                 Dim == DIM_N ? B.length(1, m_u) : A.length(1, m_u));
-                (Dim == DIM_M ? C.length(0, m_v) :
-                 Dim == DIM_N ? C.length(1, m_v) : B.length(0, m_v));
+                (Dim == DIM_M ? local_A.length(0, m_u) :
+                 Dim == DIM_N ? local_B.length(1, m_u) :
+                      /*DIM_K*/ local_A.length(1, m_u));
+                (Dim == DIM_M ? local_C.length(0, m_v) :
+                 Dim == DIM_N ? local_C.length(1, m_v) :
+                      /*DIM_K*/ local_B.length(0, m_v));
             };
 
             auto shift = [&](len_type m_u, len_type m_v)
             {
-                (Dim == DIM_M ? A.shift(0, m_u) :
-                 Dim == DIM_N ? B.shift(1, m_u) : A.shift(1, m_u));
-                (Dim == DIM_M ? C.shift(0, m_v) :
-                 Dim == DIM_N ? C.shift(1, m_v) : B.shift(0, m_v));
+                (Dim == DIM_M ? local_A.shift(0, m_u) :
+                 Dim == DIM_N ? local_B.shift(1, m_u) :
+                      /*DIM_K*/ local_A.shift(1, m_u));
+                (Dim == DIM_M ? local_C.shift(0, m_v) :
+                 Dim == DIM_N ? local_C.shift(1, m_v) :
+                      /*DIM_K*/ local_B.shift(0, m_v));
             };
 
             len_type m_off = m_first;
@@ -77,7 +89,7 @@ struct partition
                 len_type m_loc = std::min(m_last-m_off, M_cur);
                 length(m_loc, m_loc);
 
-                child(subcomm, cfg, alpha, A, B, beta, C);
+                child(subcomm, cfg, alpha, local_A, local_B, beta, local_C);
                 if (Dim == DIM_K) beta = 1.0;
 
                 shift(M_cur, M_cur);
@@ -87,44 +99,7 @@ struct partition
 
             shift(-m_off, -m_off);
             length(m_u, m_v);
-        };
-
-#if TBLIS_ENABLE_TBB
-
-        if (distribute > 1)
-        {
-            tbb::task_group tg;
-
-            for (int tid = 0;tid < distribute;tid++)
-            {
-                tg.run([&,tid]
-                {
-                    auto child = this->child;
-                    auto A_ = A;
-                    auto B_ = B;
-                    auto C_ = C;
-                    body(tid, child, A_, B_, C_);
-                });
-            }
-
-            tg.wait();
-        }
-        else
-        {
-            body(0, child, A, B, C);
-        }
-
-#else //TBLIS_ENABLE_TBB
-
-        if (!ganged)
-        {
-            subcomm = comm.gang(TCI_EVENLY, distribute);
-            ganged = true;
-        }
-
-        body(subcomm.gang_num(), child, A, B, C);
-
-#endif //TBLIS_ENABLE_TBB
+        });
     }
 };
 

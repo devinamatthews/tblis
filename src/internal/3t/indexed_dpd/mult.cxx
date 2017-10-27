@@ -124,124 +124,126 @@ void contract_block(const communicator& comm, const config& cfg,
     auto dpd_B = B[0];
     auto dpd_C = C[0];
 
-    dynamic_task_set tasks(comm, nirrep*nidx_C*group_AC.dense_nblock*group_BC.dense_nblock,
-                           group_AB.dense_size*group_AC.dense_size*group_BC.dense_size);
-
     stride_type idx = 0;
     stride_type idx_A = 0;
     stride_type idx_C = 0;
 
-    for_each_match<true, true>(idx_A, nidx_A, indices_A, 0,
-                               idx_C, nidx_C, indices_C, 0,
-    [&](stride_type next_A, stride_type next_C)
+    comm.do_tasks_deferred(nirrep*nidx_C*group_AC.dense_nblock*group_BC.dense_nblock,
+                           group_AB.dense_size*group_AC.dense_size*group_BC.dense_size*inout_ratio,
+    [&](communicator::deferred_task_set& tasks)
     {
-        stride_type idx_B = 0;
-
-        for_each_match<true, false>(idx_B, nidx_B, indices_B, 0,
-                                    idx_C, next_C, indices_C, 1,
-        [&](stride_type next_B)
+        for_each_match<true, true>(idx_A, nidx_A, indices_A, 0,
+                                   idx_C, nidx_C, indices_C, 0,
+        [&](stride_type next_A, stride_type next_C)
         {
-            if (indices_C[idx_C].factor == T(0)) return;
+            stride_type idx_B = 0;
 
-            for (unsigned irrep_AB0 = 0;irrep_AB0 < nirrep;irrep_AB0++)
+            for_each_match<true, false>(idx_B, nidx_B, indices_B, 0,
+                                        idx_C, next_C, indices_C, 1,
+            [&](stride_type next_B)
             {
-                unsigned irrep_AB = irrep_AB0;
-                unsigned irrep_AC = A.irrep()^irrep_AB0;
-                unsigned irrep_BC = B.irrep()^irrep_AB0;
+                if (indices_C[idx_C].factor == T(0)) return;
 
-                for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
-                for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
-                for (auto irrep : group_BC.batch_irrep) irrep_BC ^= irrep;
-
-                if (group_AB.dense_ndim == 0 && irrep_AB != 0) continue;
-                if (group_AC.dense_ndim == 0 && irrep_AC != 0) continue;
-                if (group_BC.dense_ndim == 0 && irrep_BC != 0) continue;
-
-                for (stride_type block_AC = 0;block_AC < group_AC.dense_nblock;block_AC++)
-                for (stride_type block_BC = 0;block_BC < group_BC.dense_nblock;block_BC++)
+                for (unsigned irrep_AB0 = 0;irrep_AB0 < nirrep;irrep_AB0++)
                 {
-                    tasks.visit(idx++,
-                    [&,idx_A,idx_B,idx_C,next_A,next_B,
-                     irrep_AB,irrep_AC,irrep_BC,block_AC,block_BC]
-                    (const communicator& subcomm)
+                    unsigned irrep_AB = irrep_AB0;
+                    unsigned irrep_AC = A.irrep()^irrep_AB0;
+                    unsigned irrep_BC = B.irrep()^irrep_AB0;
+
+                    for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
+                    for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
+                    for (auto irrep : group_BC.batch_irrep) irrep_BC ^= irrep;
+
+                    if (group_AB.dense_ndim == 0 && irrep_AB != 0) continue;
+                    if (group_AC.dense_ndim == 0 && irrep_AC != 0) continue;
+                    if (group_BC.dense_ndim == 0 && irrep_BC != 0) continue;
+
+                    for (stride_type block_AC = 0;block_AC < group_AC.dense_nblock;block_AC++)
+                    for (stride_type block_BC = 0;block_BC < group_BC.dense_nblock;block_BC++)
                     {
-                        auto local_irreps_A = irreps_A;
-                        auto local_irreps_B = irreps_B;
-                        auto local_irreps_C = irreps_C;
-
-                        assign_irreps(group_AC.dense_ndim, irrep_AC, nirrep, block_AC,
-                                      local_irreps_A, group_AC.dense_idx[0],
-                                      local_irreps_C, group_AC.dense_idx[1]);
-
-                        assign_irreps(group_BC.dense_ndim, irrep_BC, nirrep, block_BC,
-                                      local_irreps_B, group_BC.dense_idx[0],
-                                      local_irreps_C, group_BC.dense_idx[1]);
-
-                        if (is_block_empty(dpd_C, local_irreps_C)) return;
-
-                        auto local_C = dpd_C(local_irreps_C);
-
-                        for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
+                        tasks.visit(idx++,
+                        [&,idx_A,idx_B,idx_C,next_A,next_B,
+                         irrep_AB,irrep_AC,irrep_BC,block_AC,block_BC]
+                        (const communicator& subcomm)
                         {
-                            assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
-                                          local_irreps_A, group_AB.dense_idx[0],
-                                          local_irreps_B, group_AB.dense_idx[1]);
+                            auto local_irreps_A = irreps_A;
+                            auto local_irreps_B = irreps_B;
+                            auto local_irreps_C = irreps_C;
 
-                            if (is_block_empty(dpd_A, local_irreps_A)) continue;
+                            assign_irreps(group_AC.dense_ndim, irrep_AC, nirrep, block_AC,
+                                          local_irreps_A, group_AC.dense_idx[0],
+                                          local_irreps_C, group_AC.dense_idx[1]);
 
-                            auto local_idx_A = idx_A;
-                            auto local_idx_B = idx_B;
-                            auto local_A = dpd_A(local_irreps_A);
-                            auto local_B = dpd_B(local_irreps_B);
+                            assign_irreps(group_BC.dense_ndim, irrep_BC, nirrep, block_BC,
+                                          local_irreps_B, group_BC.dense_idx[0],
+                                          local_irreps_C, group_BC.dense_idx[1]);
 
-                            len_vector len_AC;
-                            stride_vector stride_A_AC, stride_C_AC;
-                            stride_type off_A_AC, off_C_AC;
-                            get_local_geometry(indices_A[local_idx_A].idx[0], group_AC, len_AC,
-                                               local_A, off_A_AC, stride_A_AC, 0,
-                                               local_C, off_C_AC, stride_C_AC, 1);
+                            if (is_block_empty(dpd_C, local_irreps_C)) return;
 
-                            len_vector len_BC;
-                            stride_vector stride_B_BC, stride_C_BC;
-                            stride_type off_B_BC, off_C_BC;
-                            get_local_geometry(indices_B[local_idx_B].idx[0], group_BC, len_BC,
-                                               local_B, off_B_BC, stride_B_BC, 0,
-                                               local_C, off_C_BC, stride_C_BC, 1);
+                            auto local_C = dpd_C(local_irreps_C);
 
-                            auto data_C = local_C.data() + indices_C[idx_C].offset +
-                                          off_C_AC + off_C_BC;
-
-                            for_each_match<false, false>(local_idx_A, next_A, indices_A, 1,
-                                                        local_idx_B, next_B, indices_B, 1,
-                            [&]
+                            for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
                             {
-                                auto factor = alpha*indices_A[local_idx_A].factor*
-                                                    indices_B[local_idx_B].factor*
-                                                    indices_C[idx_C].factor;
-                                if (factor == T(0)) return;
+                                assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
+                                              local_irreps_A, group_AB.dense_idx[0],
+                                              local_irreps_B, group_AB.dense_idx[1]);
 
-                                len_vector len_AB;
-                                stride_vector stride_A_AB, stride_B_AB;
-                                stride_type off_A_AB, off_B_AB;
-                                get_local_geometry(indices_A[local_idx_A].idx[1], group_AB, len_AB,
-                                                   local_A, off_A_AB, stride_A_AB, 0,
-                                                   local_B, off_B_AB, stride_B_AB, 1);
+                                if (is_block_empty(dpd_A, local_irreps_A)) continue;
 
-                                auto data_A = local_A.data() + indices_A[local_idx_A].offset +
-                                              off_A_AB + off_A_AC;
-                                auto data_B = local_B.data() + indices_B[local_idx_B].offset +
-                                              off_B_AB + off_B_BC;
+                                auto local_idx_A = idx_A;
+                                auto local_idx_B = idx_B;
+                                auto local_A = dpd_A(local_irreps_A);
+                                auto local_B = dpd_B(local_irreps_B);
 
-                                mult(subcomm, cfg,
-                                     len_AB, len_AC, len_BC, {},
-                                     factor, conj_A, data_A, stride_A_AB, stride_A_AC, {},
-                                             conj_B, data_B, stride_B_AB, stride_B_BC, {},
-                                       T(1),  false, data_C, stride_C_AC, stride_C_BC, {});
-                            });
-                        }
-                    });
+                                len_vector len_AC;
+                                stride_vector stride_A_AC, stride_C_AC;
+                                stride_type off_A_AC, off_C_AC;
+                                get_local_geometry(indices_A[local_idx_A].idx[0], group_AC, len_AC,
+                                                   local_A, off_A_AC, stride_A_AC, 0,
+                                                   local_C, off_C_AC, stride_C_AC, 1);
+
+                                len_vector len_BC;
+                                stride_vector stride_B_BC, stride_C_BC;
+                                stride_type off_B_BC, off_C_BC;
+                                get_local_geometry(indices_B[local_idx_B].idx[0], group_BC, len_BC,
+                                                   local_B, off_B_BC, stride_B_BC, 0,
+                                                   local_C, off_C_BC, stride_C_BC, 1);
+
+                                auto data_C = local_C.data() + indices_C[idx_C].offset +
+                                              off_C_AC + off_C_BC;
+
+                                for_each_match<false, false>(local_idx_A, next_A, indices_A, 1,
+                                                            local_idx_B, next_B, indices_B, 1,
+                                [&]
+                                {
+                                    auto factor = alpha*indices_A[local_idx_A].factor*
+                                                        indices_B[local_idx_B].factor*
+                                                        indices_C[idx_C].factor;
+                                    if (factor == T(0)) return;
+
+                                    len_vector len_AB;
+                                    stride_vector stride_A_AB, stride_B_AB;
+                                    stride_type off_A_AB, off_B_AB;
+                                    get_local_geometry(indices_A[local_idx_A].idx[1], group_AB, len_AB,
+                                                       local_A, off_A_AB, stride_A_AB, 0,
+                                                       local_B, off_B_AB, stride_B_AB, 1);
+
+                                    auto data_A = local_A.data() + indices_A[local_idx_A].offset +
+                                                  off_A_AB + off_A_AC;
+                                    auto data_B = local_B.data() + indices_B[local_idx_B].offset +
+                                                  off_B_AB + off_B_BC;
+
+                                    mult(subcomm, cfg,
+                                         len_AB, len_AC, len_BC, {},
+                                         factor, conj_A, data_A, stride_A_AB, stride_A_AC, {},
+                                                 conj_B, data_B, stride_B_AB, stride_B_BC, {},
+                                           T(1),  false, data_C, stride_C_AC, stride_C_BC, {});
+                                });
+                            }
+                        });
+                    }
                 }
-            }
+            });
         });
     });
 }
@@ -292,9 +294,6 @@ void mult_block(const communicator& comm, const config& cfg,
     auto dpd_B = B[0];
     auto dpd_C = C[0];
 
-    dynamic_task_set tasks(comm, nirrep*nidx_C*group_AC.dense_nblock*group_BC.dense_nblock*group_ABC.dense_nblock,
-                           group_AB.dense_size*group_AC.dense_size*group_BC.dense_size*group_ABC.dense_size);
-
     stride_type idx = 0;
     stride_type idx_A = 0;
     stride_type idx_B0 = 0;
@@ -305,136 +304,141 @@ void mult_block(const communicator& comm, const config& cfg,
 
     if (group_ABC.dense_ndim == 0 && irrep_ABC != 0) return;
 
-    for_each_match<true, true, true>(idx_A,  nidx_A, indices_A, 0,
-                                    idx_B0, nidx_B, indices_B, 0,
-                                    idx_C,  nidx_C, indices_C, 0,
-    [&](stride_type next_A_ABC, stride_type next_B_ABC, stride_type next_C_ABC)
+    comm.do_tasks_deferred(nirrep*nidx_C*group_AC.dense_nblock*group_BC.dense_nblock*group_ABC.dense_nblock,
+                           group_AB.dense_size*group_AC.dense_size*group_BC.dense_size*group_ABC.dense_size*inout_ratio,
+    [&](communicator::deferred_task_set& tasks)
     {
-        for_each_match<true, true>(idx_A, next_A_ABC, indices_A, 1,
-                                  idx_C, next_C_ABC, indices_C, 1,
-        [&](stride_type next_A_AB, stride_type next_C_AC)
+        for_each_match<true, true, true>(idx_A,  nidx_A, indices_A, 0,
+                                        idx_B0, nidx_B, indices_B, 0,
+                                        idx_C,  nidx_C, indices_C, 0,
+        [&](stride_type next_A_ABC, stride_type next_B_ABC, stride_type next_C_ABC)
         {
-            stride_type idx_B = idx_B0;
-
-            for_each_match<true, false>(idx_B, next_B_ABC, indices_B, 1,
-                                       idx_C,  next_C_AC, indices_C, 2,
-            [&](stride_type next_B_AB)
+            for_each_match<true, true>(idx_A, next_A_ABC, indices_A, 1,
+                                      idx_C, next_C_ABC, indices_C, 1,
+            [&](stride_type next_A_AB, stride_type next_C_AC)
             {
-                if (indices_C[idx_C].factor == T(0)) return;
+                stride_type idx_B = idx_B0;
 
-                for (unsigned irrep_AB0 = 0;irrep_AB0 < nirrep;irrep_AB0++)
+                for_each_match<true, false>(idx_B, next_B_ABC, indices_B, 1,
+                                           idx_C,  next_C_AC, indices_C, 2,
+                [&](stride_type next_B_AB)
                 {
-                    unsigned irrep_AB = irrep_AB0;
-                    unsigned irrep_AC = B.irrep()^C.irrep()^irrep_AB0;
-                    unsigned irrep_BC = A.irrep()^C.irrep()^irrep_AB0;
+                    if (indices_C[idx_C].factor == T(0)) return;
 
-                    for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
-                    for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
-                    for (auto irrep : group_BC.batch_irrep) irrep_BC ^= irrep;
-
-                    if (group_AB.dense_ndim == 0 && irrep_AB != 0) continue;
-                    if (group_AC.dense_ndim == 0 && irrep_AC != 0) continue;
-                    if (group_BC.dense_ndim == 0 && irrep_BC != 0) continue;
-
-                    for (stride_type block_ABC = 0;block_ABC < group_ABC.dense_nblock;block_ABC++)
-                    for (stride_type block_AC = 0;block_AC < group_AC.dense_nblock;block_AC++)
-                    for (stride_type block_BC = 0;block_BC < group_BC.dense_nblock;block_BC++)
+                    for (unsigned irrep_AB0 = 0;irrep_AB0 < nirrep;irrep_AB0++)
                     {
-                        tasks.visit(idx++,
-                        [&,idx_A,idx_B,idx_C,next_A_AB,next_B_AB,
-                         irrep_AB,irrep_AC,irrep_BC,block_AC,block_BC,block_ABC]
-                        (const communicator& subcomm)
+                        unsigned irrep_AB = irrep_AB0;
+                        unsigned irrep_AC = B.irrep()^C.irrep()^irrep_AB0;
+                        unsigned irrep_BC = A.irrep()^C.irrep()^irrep_AB0;
+
+                        for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
+                        for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
+                        for (auto irrep : group_BC.batch_irrep) irrep_BC ^= irrep;
+
+                        if (group_AB.dense_ndim == 0 && irrep_AB != 0) continue;
+                        if (group_AC.dense_ndim == 0 && irrep_AC != 0) continue;
+                        if (group_BC.dense_ndim == 0 && irrep_BC != 0) continue;
+
+                        for (stride_type block_ABC = 0;block_ABC < group_ABC.dense_nblock;block_ABC++)
+                        for (stride_type block_AC = 0;block_AC < group_AC.dense_nblock;block_AC++)
+                        for (stride_type block_BC = 0;block_BC < group_BC.dense_nblock;block_BC++)
                         {
-                            auto local_irreps_A = irreps_A;
-                            auto local_irreps_B = irreps_B;
-                            auto local_irreps_C = irreps_C;
-
-                            assign_irreps(group_ABC.dense_ndim, irrep_ABC, nirrep, block_ABC,
-                                          local_irreps_A, group_ABC.dense_idx[0],
-                                          local_irreps_B, group_ABC.dense_idx[1],
-                                          local_irreps_C, group_ABC.dense_idx[2]);
-
-                            assign_irreps(group_AC.dense_ndim, irrep_AC, nirrep, block_AC,
-                                          local_irreps_A, group_AC.dense_idx[0],
-                                          local_irreps_C, group_AC.dense_idx[1]);
-
-                            assign_irreps(group_BC.dense_ndim, irrep_BC, nirrep, block_BC,
-                                          local_irreps_B, group_BC.dense_idx[0],
-                                          local_irreps_C, group_BC.dense_idx[1]);
-
-                            if (is_block_empty(dpd_C, local_irreps_C)) return;
-
-                            auto local_C = dpd_C(local_irreps_C);
-
-                            for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
+                            tasks.visit(idx++,
+                            [&,idx_A,idx_B,idx_C,next_A_AB,next_B_AB,
+                             irrep_AB,irrep_AC,irrep_BC,block_AC,block_BC,block_ABC]
+                            (const communicator& subcomm)
                             {
-                                assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
-                                              local_irreps_A, group_AB.dense_idx[0],
-                                              local_irreps_B, group_AB.dense_idx[1]);
+                                auto local_irreps_A = irreps_A;
+                                auto local_irreps_B = irreps_B;
+                                auto local_irreps_C = irreps_C;
 
-                                if (is_block_empty(dpd_A, local_irreps_A)) continue;
+                                assign_irreps(group_ABC.dense_ndim, irrep_ABC, nirrep, block_ABC,
+                                              local_irreps_A, group_ABC.dense_idx[0],
+                                              local_irreps_B, group_ABC.dense_idx[1],
+                                              local_irreps_C, group_ABC.dense_idx[2]);
 
-                                auto local_idx_A = idx_A;
-                                auto local_idx_B = idx_B;
-                                auto local_A = dpd_A(local_irreps_A);
-                                auto local_B = dpd_B(local_irreps_B);
+                                assign_irreps(group_AC.dense_ndim, irrep_AC, nirrep, block_AC,
+                                              local_irreps_A, group_AC.dense_idx[0],
+                                              local_irreps_C, group_AC.dense_idx[1]);
 
-                                len_vector len_ABC;
-                                stride_vector stride_A_ABC, stride_B_ABC, stride_C_ABC;
-                                stride_type off_A_ABC, off_B_ABC, off_C_ABC;
-                                get_local_geometry(indices_A[local_idx_A].idx[0], group_ABC, len_ABC,
-                                                   local_A, off_A_ABC, stride_A_ABC, 0,
-                                                   local_B, off_B_ABC, stride_B_ABC, 1,
-                                                   local_C, off_C_ABC, stride_C_ABC, 2);
+                                assign_irreps(group_BC.dense_ndim, irrep_BC, nirrep, block_BC,
+                                              local_irreps_B, group_BC.dense_idx[0],
+                                              local_irreps_C, group_BC.dense_idx[1]);
 
-                                len_vector len_AC;
-                                stride_vector stride_A_AC, stride_C_AC;
-                                stride_type off_A_AC, off_C_AC;
-                                get_local_geometry(indices_A[local_idx_A].idx[1], group_AC, len_AC,
-                                                   local_A, off_A_AC, stride_A_AC, 0,
-                                                   local_C, off_C_AC, stride_C_AC, 1);
+                                if (is_block_empty(dpd_C, local_irreps_C)) return;
 
-                                len_vector len_BC;
-                                stride_vector stride_B_BC, stride_C_BC;
-                                stride_type off_B_BC, off_C_BC;
-                                get_local_geometry(indices_B[local_idx_B].idx[1], group_BC, len_BC,
-                                                   local_B, off_B_BC, stride_B_BC, 0,
-                                                   local_C, off_C_BC, stride_C_BC, 1);
+                                auto local_C = dpd_C(local_irreps_C);
 
-                                auto data_C = local_C.data() + indices_C[idx_C].offset +
-                                              off_C_AC + off_C_BC + off_C_ABC;
-
-                                for_each_match<false, false>(local_idx_A, next_A_AB, indices_A, 2,
-                                                            local_idx_B, next_B_AB, indices_B, 2,
-                                [&]
+                                for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
                                 {
-                                    auto factor = alpha*indices_A[local_idx_A].factor*
-                                                        indices_B[local_idx_B].factor*
-                                                        indices_C[idx_C].factor;
-                                    if (factor == T(0)) return;
+                                    assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
+                                                  local_irreps_A, group_AB.dense_idx[0],
+                                                  local_irreps_B, group_AB.dense_idx[1]);
 
-                                    len_vector len_AB;
-                                    stride_vector stride_A_AB, stride_B_AB;
-                                    stride_type off_A_AB, off_B_AB;
-                                    get_local_geometry(indices_A[local_idx_A].idx[2], group_AB, len_AB,
-                                                       local_A, off_A_AB, stride_A_AB, 0,
-                                                       local_B, off_B_AB, stride_B_AB, 1);
+                                    if (is_block_empty(dpd_A, local_irreps_A)) continue;
 
-                                    auto data_A = local_A.data() + indices_A[local_idx_A].offset +
-                                                  off_A_AB + off_A_AC + off_A_ABC;
-                                    auto data_B = local_B.data() + indices_B[local_idx_B].offset +
-                                                  off_B_AB + off_B_BC + off_B_ABC;
+                                    auto local_idx_A = idx_A;
+                                    auto local_idx_B = idx_B;
+                                    auto local_A = dpd_A(local_irreps_A);
+                                    auto local_B = dpd_B(local_irreps_B);
 
-                                    mult(subcomm, cfg,
-                                         len_AB, len_AC, len_BC, len_ABC,
-                                         factor, conj_A, data_A, stride_A_AB, stride_A_AC, stride_A_ABC,
-                                                 conj_B, data_B, stride_B_AB, stride_B_BC, stride_B_ABC,
-                                           T(1),  false, data_C, stride_C_AC, stride_C_BC, stride_C_ABC);
-                                });
-                            }
-                        });
+                                    len_vector len_ABC;
+                                    stride_vector stride_A_ABC, stride_B_ABC, stride_C_ABC;
+                                    stride_type off_A_ABC, off_B_ABC, off_C_ABC;
+                                    get_local_geometry(indices_A[local_idx_A].idx[0], group_ABC, len_ABC,
+                                                       local_A, off_A_ABC, stride_A_ABC, 0,
+                                                       local_B, off_B_ABC, stride_B_ABC, 1,
+                                                       local_C, off_C_ABC, stride_C_ABC, 2);
+
+                                    len_vector len_AC;
+                                    stride_vector stride_A_AC, stride_C_AC;
+                                    stride_type off_A_AC, off_C_AC;
+                                    get_local_geometry(indices_A[local_idx_A].idx[1], group_AC, len_AC,
+                                                       local_A, off_A_AC, stride_A_AC, 0,
+                                                       local_C, off_C_AC, stride_C_AC, 1);
+
+                                    len_vector len_BC;
+                                    stride_vector stride_B_BC, stride_C_BC;
+                                    stride_type off_B_BC, off_C_BC;
+                                    get_local_geometry(indices_B[local_idx_B].idx[1], group_BC, len_BC,
+                                                       local_B, off_B_BC, stride_B_BC, 0,
+                                                       local_C, off_C_BC, stride_C_BC, 1);
+
+                                    auto data_C = local_C.data() + indices_C[idx_C].offset +
+                                                  off_C_AC + off_C_BC + off_C_ABC;
+
+                                    for_each_match<false, false>(local_idx_A, next_A_AB, indices_A, 2,
+                                                                local_idx_B, next_B_AB, indices_B, 2,
+                                    [&]
+                                    {
+                                        auto factor = alpha*indices_A[local_idx_A].factor*
+                                                            indices_B[local_idx_B].factor*
+                                                            indices_C[idx_C].factor;
+                                        if (factor == T(0)) return;
+
+                                        len_vector len_AB;
+                                        stride_vector stride_A_AB, stride_B_AB;
+                                        stride_type off_A_AB, off_B_AB;
+                                        get_local_geometry(indices_A[local_idx_A].idx[2], group_AB, len_AB,
+                                                           local_A, off_A_AB, stride_A_AB, 0,
+                                                           local_B, off_B_AB, stride_B_AB, 1);
+
+                                        auto data_A = local_A.data() + indices_A[local_idx_A].offset +
+                                                      off_A_AB + off_A_AC + off_A_ABC;
+                                        auto data_B = local_B.data() + indices_B[local_idx_B].offset +
+                                                      off_B_AB + off_B_BC + off_B_ABC;
+
+                                        mult(subcomm, cfg,
+                                             len_AB, len_AC, len_BC, len_ABC,
+                                             factor, conj_A, data_A, stride_A_AB, stride_A_AC, stride_A_ABC,
+                                                     conj_B, data_B, stride_B_AB, stride_B_BC, stride_B_ABC,
+                                               T(1),  false, data_C, stride_C_AC, stride_C_BC, stride_C_ABC);
+                                    });
+                                }
+                            });
+                        }
                     }
-                }
+                });
             });
         });
     });

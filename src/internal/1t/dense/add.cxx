@@ -1,5 +1,6 @@
 #include "add.hpp"
 #include "reduce.hpp"
+#include "scale.hpp"
 #include "shift.hpp"
 
 #include "util/tensor.hpp"
@@ -34,33 +35,48 @@ void add(const communicator& comm, const config& cfg,
     auto stride_A_AB = stl_ext::permuted(stride_A_AB_, perm_AB);
     auto stride_B_AB = stl_ext::permuted(stride_B_AB_, perm_AB);
 
+    len_type n_AB = stl_ext::prod(len_AB);
+    len_type n_A = stl_ext::prod(len_A);
+    len_type n_B = stl_ext::prod(len_B);
+
+    if (n_AB == 0 || n_B == 0) return;
+
+    if (n_A == 0)
+    {
+        scale(comm, cfg, len_B, beta, conj_B, B, stride_B);
+        return;
+    }
+
     //
     // Scalar intermediate
     //
-    if (len_AB.empty())
+    if (n_AB == 1)
     {
-        if (!len_A.empty())
+        if (n_A > 1)
         {
             T sum;
             len_type idx;
             reduce(comm, cfg, REDUCE_SUM, len_A, A, stride_A, sum, idx);
 
-            if (beta == T(0))
+            if (comm.master())
             {
-                *B = alpha*(conj_A ? conj(sum) : sum);
-            }
-            else
-            {
-                *B = alpha*(conj_A ? conj(sum) : sum) +
-                      beta*(conj_B ? conj( *B) :  *B);
+                if (beta == T(0))
+                {
+                    *B = alpha*(conj_A ? conj(sum) : sum);
+                }
+                else
+                {
+                    *B = alpha*(conj_A ? conj(sum) : sum) +
+                          beta*(conj_B ? conj( *B) :  *B);
+                }
             }
         }
-        else if (!len_B.empty())
+        else if (n_B > 1)
         {
             shift(comm, cfg, len_B, alpha*(conj_A ? conj(*A) : *A),
                   beta, conj_B, B, stride_B);
         }
-        else
+        else if (comm.master())
         {
             if (beta == T(0))
             {
@@ -73,116 +89,121 @@ void add(const communicator& comm, const config& cfg,
             }
         }
 
+        comm.barrier();
         return;
     }
 
-    if (!len_A.empty())
+    if (n_A > 1)
     {
         //TODO sum (reduce?) ukr
         //TODO fused ukr
 
-        viterator<1> iter_A(len_A, stride_A);
-        viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
-        len_type n = stl_ext::prod(len_AB);
-
-        len_type n_min, n_max;
-        std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(n);
-
-        iter_AB.position(n_min, A, B);
-
-        for (len_type i = n_min;i < n_max;i++)
+        comm.distribute_over_threads(tci::range(n_AB).chunk(1000/n_A),
+        [&](len_type n_min, len_type n_max)
         {
-            iter_AB.next(A, B);
+            auto A1 = A;
+            auto B1 = B;
 
-            T sum_A = T();
-            while (iter_A.next(A)) sum_A += *A;
-            sum_A = alpha*(conj_A ? conj(sum_A) : sum_A);
+            viterator<1> iter_A(len_A, stride_A);
+            viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
+            iter_AB.position(n_min, A1, B1);
 
-            TBLIS_SPECIAL_CASE(beta == T(0),
+            for (len_type i = n_min;i < n_max;i++)
             {
-                *B = sum_A + beta*(conj_B ? conj(*B) : *B);
+                iter_AB.next(A1, B1);
+
+                T sum_A = T();
+                while (iter_A.next(A1)) sum_A += *A1;
+                sum_A = alpha*(conj_A ? conj(sum_A) : sum_A);
+
+                if (beta == T(0)) *B1 = sum_A;
+                else              *B1 = sum_A + beta*(conj_B ? conj(*B1) : *B1);
             }
-            )
-        }
+        });
     }
-    else if (!len_B.empty())
+    else if (n_B > 1)
     {
         //TODO replicate ukr
         //TODO fused ukr
 
-        viterator<1> iter_B(len_B, stride_B);
-        viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
-        len_type n = stl_ext::prod(len_AB);
-
-        len_type n_min, n_max;
-        std::tie(n_min, n_max, std::ignore) = comm.distribute_over_threads(n);
-
-        iter_AB.position(n_min, A, B);
-
-        for (len_type i = n_min;i < n_max;i++)
+        comm.distribute_over_threads(tci::range(n_AB).chunk(1000/n_B),
+        [&](len_type n_min, len_type n_max)
         {
-            iter_AB.next(A, B);
+            auto A1 = A;
+            auto B1 = B;
 
-            T tmp_A = alpha*(conj_A ? conj(*A) : *A);
+            viterator<1> iter_B(len_B, stride_B);
+            viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
+            iter_AB.position(n_min, A1, B1);
 
-            TBLIS_SPECIAL_CASE(conj_B,
-            TBLIS_SPECIAL_CASE(beta == T(0),
+            for (len_type i = n_min;i < n_max;i++)
             {
-                while (iter_B.next(B))
+                iter_AB.next(A1, B1);
+
+                T tmp_A = alpha*(conj_A ? conj(*A1) : *A1);
+
+                if (beta == T(0))
                 {
-                    *B = tmp_A + beta*(conj_B ? conj(*B) : *B);
+                    while (iter_B.next(B1)) *B1 = tmp_A;
+                }
+                else
+                {
+                    TBLIS_SPECIAL_CASE(conj_B,
+                    while (iter_B.next(B1))
+                        *B1 = tmp_A + beta*(conj_B ? conj(*B1) : *B1);
+                    )
                 }
             }
-            ))
-        }
+        });
     }
     else
     {
         //TODO transpose ukr
 
-        len_type len0 = len_AB[0];
+        len_type n0 = len_AB[0];
         len_vector len1(len_AB.begin()+1, len_AB.end());
+        len_type n1 = stl_ext::prod(len1);
 
         stride_type stride_A0 = stride_A_AB[0];
-        stride_vector stride_A1(stride_A_AB.begin()+1,
-                                           stride_A_AB.end());
+        stride_vector stride_A1(stride_A_AB.begin()+1, stride_A_AB.end());
 
         stride_type stride_B0 = stride_B_AB[0];
-        stride_vector stride_B1(stride_B_AB.begin()+1,
-                                           stride_B_AB.end());
+        stride_vector stride_B1(stride_B_AB.begin()+1, stride_B_AB.end());
 
-        viterator<2> iter_AB(len1, stride_A1, stride_B1);
-        len_type n = stl_ext::prod(len1);
-
-        len_type m_min, m_max, n_min, n_max;
-        std::tie(m_min, m_max, std::ignore,
-                 n_min, n_max, std::ignore) =
-            comm.distribute_over_threads_2d(len0, n);
-
-        iter_AB.position(n_min, A, B);
-        A += m_min*stride_A0;
-        B += m_min*stride_B0;
-
-        if (beta == T(0))
+        comm.distribute_over_threads(tci::range(n0).chunk(1000),
+                                     tci::range(n1).chunk(1000/n0),
+        [&](len_type n0_min, len_type n0_max, len_type n1_min, len_type n1_max)
         {
-            for (len_type i = n_min;i < n_max;i++)
+            auto A1 = A;
+            auto B1 = B;
+
+            viterator<2> iter_AB(len1, stride_A1, stride_B1);
+            iter_AB.position(n1_min, A1, B1);
+
+            A1 += n0_min*stride_A0;
+            B1 += n0_min*stride_B0;
+
+            if (beta == T(0))
             {
-                iter_AB.next(A, B);
-                cfg.copy_ukr.call<T>(m_max-m_min,
-                                     alpha, conj_A, A, stride_A0,
-                                                    B, stride_B0);
+                for (len_type i = n1_min;i < n1_max;i++)
+                {
+                    iter_AB.next(A1, B1);
+                    cfg.copy_ukr.call<T>(n0_max-n0_min,
+                                         alpha, conj_A, A1, stride_A0,
+                                                        B1, stride_B0);
+                }
             }
-        }
-        else
-        {
-            for (len_type i = n_min;i < n_max;i++)
+            else
             {
-                iter_AB.next(A, B);
-                cfg.add_ukr.call<T>(m_max-m_min,
-                                    alpha, conj_A, A, stride_A0,
-                                     beta, conj_B, B, stride_B0);
+                for (len_type i = n1_min;i < n1_max;i++)
+                {
+                    iter_AB.next(A1, B1);
+                    cfg.add_ukr.call<T>(n0_max-n0_min,
+                                        alpha, conj_A, A1, stride_A0,
+                                         beta, conj_B, B1, stride_B0);
+                }
             }
-        }
+        });
     }
 
     comm.barrier();

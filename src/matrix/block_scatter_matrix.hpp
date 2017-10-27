@@ -210,107 +210,107 @@ void add(const communicator& comm, T alpha, tensor_matrix<T> A,
     stride_type cs_min = std::min(cs0_A, cs_B);
     stride_type cs_max = std::max(cs0_A, cs_B);
 
-    len_type m_min, m_max, n_min, n_max;
-    std::tie(m_min, m_max, std::ignore,
-             n_min, n_max, std::ignore) =
-        comm.distribute_over_threads_2d(m, n, MB, NB);
-
-    if (rs_min == 1 && (cs_min != 1 || cs_max < rs_max))
+    comm.distribute_over_threads(tci::range(m).chunk(50).grain(MB),
+                                 tci::range(n).chunk(50).grain(NB),
+    [&](len_type m_min, len_type m_max, len_type n_min, len_type n_max)
     {
-        for (len_type j0 = n_min, jb = n_min/NB;j0 < n_max;j0 += NB, jb++)
+        if (rs_min == 1 && (cs_min != 1 || cs_max < rs_max))
         {
-            len_type n_loc = std::min(NB, n_max-j0);
-
-            for (len_type i0 = m_min, ib = m_min/MB;i0 < m_max;i0 += MB, ib++)
-            {
-                len_type m_loc = std::min(MB, m_max-i0);
-
-                stride_type rs_A = rbs_A[ib];
-                const T* p_A = A.data() + (rs_A ? rscat_A[i0] : 0);
-                T* p_B = B.data() + rs_B*i0 + cs_B*j0;
-
-                if (rs_A)
-                {
-                    TBLIS_SPECIAL_CASE(m_loc == MB,
-                    TBLIS_SPECIAL_CASE(n_loc == NB,
-                    TBLIS_SPECIAL_CASE(rs_A == 1,
-                    TBLIS_SPECIAL_CASE(rs_B == 1,
-                    TBLIS_SPECIAL_CASE(alpha == T(1),
-                    TBLIS_SPECIAL_CASE(beta == T(0),
-                    for (len_type j = 0;j < n_loc;j++)
-                    {
-                        for (len_type i = 0;i < m_loc;i++)
-                        {
-                            p_B[i*rs_B + j*cs_B] =
-                                alpha*p_A[i*rs_A + cscat_A[j0+j]] +
-                                beta*p_B[i*rs_B + j*cs_B];
-                        }
-                    }
-                    ))))));
-                }
-                else
-                {
-                    for (len_type j = 0;j < n_loc;j++)
-                    {
-                        for (len_type i = 0;i < m_loc;i++)
-                        {
-                            p_B[i*rs_B + j*cs_B] =
-                                alpha*p_A[rscat_A[i0+i] + cscat_A[j0+j]] +
-                                beta*p_B[i*rs_B + j*cs_B];
-                        }
-                    }
-                }
-            }
-        }
-    }
-    else
-    {
-        for (len_type i0 = m_min, ib = m_min/MB;i0 < m_max;i0 += MB, ib++)
-        {
-            len_type m_loc = std::min(MB, m_max-i0);
-
             for (len_type j0 = n_min, jb = n_min/NB;j0 < n_max;j0 += NB, jb++)
             {
                 len_type n_loc = std::min(NB, n_max-j0);
 
-                stride_type cs_A = cbs_A[jb];
-                const T* p_A = A.data() + (cs_A ? cscat_A[j0] : 0);
-                T* p_B = B.data() + rs_B*i0 + cs_B*j0;
-
-                if (cs_A)
+                for (len_type i0 = m_min, ib = m_min/MB;i0 < m_max;i0 += MB, ib++)
                 {
-                    TBLIS_SPECIAL_CASE(m_loc == MB,
-                    TBLIS_SPECIAL_CASE(n_loc == NB,
-                    TBLIS_SPECIAL_CASE(cs_A == 1,
-                    TBLIS_SPECIAL_CASE(cs_B == 1,
-                    TBLIS_SPECIAL_CASE(alpha == T(1),
-                    TBLIS_SPECIAL_CASE(beta == T(0),
-                    for (len_type i = 0;i < m_loc;i++)
+                    len_type m_loc = std::min(MB, m_max-i0);
+
+                    stride_type rs_A = rbs_A[ib];
+                    const T* p_A = A.data() + (rs_A ? rscat_A[i0] : 0);
+                    T* p_B = B.data() + rs_B*i0 + cs_B*j0;
+
+                    if (rs_A)
+                    {
+                        TBLIS_SPECIAL_CASE(m_loc == MB,
+                        TBLIS_SPECIAL_CASE(n_loc == NB,
+                        TBLIS_SPECIAL_CASE(rs_A == 1,
+                        TBLIS_SPECIAL_CASE(rs_B == 1,
+                        TBLIS_SPECIAL_CASE(alpha == T(1),
+                        TBLIS_SPECIAL_CASE(beta == T(0),
+                        for (len_type j = 0;j < n_loc;j++)
+                        {
+                            for (len_type i = 0;i < m_loc;i++)
+                            {
+                                p_B[i*rs_B + j*cs_B] =
+                                    alpha*p_A[i*rs_A + cscat_A[j0+j]] +
+                                    beta*p_B[i*rs_B + j*cs_B];
+                            }
+                        }
+                        ))))));
+                    }
+                    else
                     {
                         for (len_type j = 0;j < n_loc;j++)
                         {
-                            p_B[i*rs_B + j*cs_B] =
-                                alpha*p_A[rscat_A[i0+i] + j*cs_A] +
-                                beta*p_B[i*rs_B + j*cs_B];
-                        }
-                    }
-                    ))))));
-                }
-                else
-                {
-                    for (len_type j = 0;j < n_loc;j++)
-                    {
-                        for (len_type i = 0;i < m_loc;i++)
-                        {
-                            p_B[i*rs_B + j*cs_B] =
-                                alpha*p_A[rscat_A[i0+i] + cscat_A[j0+j]] +
-                                beta*p_B[i*rs_B + j*cs_B];
+                            for (len_type i = 0;i < m_loc;i++)
+                            {
+                                p_B[i*rs_B + j*cs_B] =
+                                    alpha*p_A[rscat_A[i0+i] + cscat_A[j0+j]] +
+                                    beta*p_B[i*rs_B + j*cs_B];
+                            }
                         }
                     }
                 }
             }
         }
-    }
+        else
+        {
+            for (len_type i0 = m_min, ib = m_min/MB;i0 < m_max;i0 += MB, ib++)
+            {
+                len_type m_loc = std::min(MB, m_max-i0);
+
+                for (len_type j0 = n_min, jb = n_min/NB;j0 < n_max;j0 += NB, jb++)
+                {
+                    len_type n_loc = std::min(NB, n_max-j0);
+
+                    stride_type cs_A = cbs_A[jb];
+                    const T* p_A = A.data() + (cs_A ? cscat_A[j0] : 0);
+                    T* p_B = B.data() + rs_B*i0 + cs_B*j0;
+
+                    if (cs_A)
+                    {
+                        TBLIS_SPECIAL_CASE(m_loc == MB,
+                        TBLIS_SPECIAL_CASE(n_loc == NB,
+                        TBLIS_SPECIAL_CASE(cs_A == 1,
+                        TBLIS_SPECIAL_CASE(cs_B == 1,
+                        TBLIS_SPECIAL_CASE(alpha == T(1),
+                        TBLIS_SPECIAL_CASE(beta == T(0),
+                        for (len_type i = 0;i < m_loc;i++)
+                        {
+                            for (len_type j = 0;j < n_loc;j++)
+                            {
+                                p_B[i*rs_B + j*cs_B] =
+                                    alpha*p_A[rscat_A[i0+i] + j*cs_A] +
+                                    beta*p_B[i*rs_B + j*cs_B];
+                            }
+                        }
+                        ))))));
+                    }
+                    else
+                    {
+                        for (len_type j = 0;j < n_loc;j++)
+                        {
+                            for (len_type i = 0;i < m_loc;i++)
+                            {
+                                p_B[i*rs_B + j*cs_B] =
+                                    alpha*p_A[rscat_A[i0+i] + cscat_A[j0+j]] +
+                                    beta*p_B[i*rs_B + j*cs_B];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 template <typename T>
@@ -354,107 +354,107 @@ void add(const communicator& comm, T alpha, matrix_view<const T> A,
     stride_type cs_min = std::min(cs0_B, cs_A);
     stride_type cs_max = std::max(cs0_B, cs_A);
 
-    len_type m_min, m_max, n_min, n_max;
-    std::tie(m_min, m_max, std::ignore,
-             n_min, n_max, std::ignore) =
-        comm.distribute_over_threads_2d(m, n, MB, NB);
-
-    if (rs_min == 1 && (cs_min != 1 || cs_max < rs_max))
+    comm.distribute_over_threads(tci::range(m).chunk(50).grain(MB),
+                                 tci::range(n).chunk(50).grain(NB),
+    [&](len_type m_min, len_type m_max, len_type n_min, len_type n_max)
     {
-        for (len_type j0 = n_min, jb = n_min/NB;j0 < n_max;j0 += NB, jb++)
+        if (rs_min == 1 && (cs_min != 1 || cs_max < rs_max))
         {
-            len_type n_loc = std::min(NB, n_max-j0);
-
-            for (len_type i0 = m_min, ib = m_min/MB;i0 < m_max;i0 += MB, ib++)
-            {
-                len_type m_loc = std::min(MB, m_max-i0);
-
-                stride_type rs_B = rbs_B[ib];
-                const T* p_B = B.data() + (rs_B ? rscat_B[i0] : 0);
-                T* p_A = B.data() + rs_A*i0 + cs_A*j0;
-
-                if (rs_B)
-                {
-                    TBLIS_SPECIAL_CASE(m_loc == MB,
-                    TBLIS_SPECIAL_CASE(n_loc == NB,
-                    TBLIS_SPECIAL_CASE(rs_A == 1,
-                    TBLIS_SPECIAL_CASE(rs_B == 1,
-                    TBLIS_SPECIAL_CASE(alpha == T(1),
-                    TBLIS_SPECIAL_CASE(beta == T(0),
-                    for (len_type j = 0;j < n_loc;j++)
-                    {
-                        for (len_type i = 0;i < m_loc;i++)
-                        {
-                            p_B[i*rs_B + cscat_B[j0+j]] =
-                                alpha*p_A[i*rs_A + j*cs_A] +
-                                beta*p_B[i*rs_B + cscat_B[j0+j]];
-                        }
-                    }
-                    ))))));
-                }
-                else
-                {
-                    for (len_type j = 0;j < n_loc;j++)
-                    {
-                        for (len_type i = 0;i < m_loc;i++)
-                        {
-                            p_B[rscat_B[i0+i] + cscat_B[j0+j]] =
-                                alpha*p_A[i*rs_A + j*cs_A] +
-                                beta*p_B[rscat_B[i0+i] + cscat_B[j0+j]];
-                        }
-                    }
-                }
-            }
-        }
-    }
-    else
-    {
-        for (len_type i0 = m_min, ib = m_min/MB;i0 < m_max;i0 += MB, ib++)
-        {
-            len_type m_loc = std::min(MB, m_max-i0);
-
             for (len_type j0 = n_min, jb = n_min/NB;j0 < n_max;j0 += NB, jb++)
             {
                 len_type n_loc = std::min(NB, n_max-j0);
 
-                stride_type cs_B = cbs_B[jb];
-                const T* p_B = B.data() + (cs_B ? cscat_B[j0] : 0);
-                T* p_A = B.data() + rs_A*i0 + cs_A*j0;
-
-                if (cs_B)
+                for (len_type i0 = m_min, ib = m_min/MB;i0 < m_max;i0 += MB, ib++)
                 {
-                    TBLIS_SPECIAL_CASE(m_loc == MB,
-                    TBLIS_SPECIAL_CASE(n_loc == NB,
-                    TBLIS_SPECIAL_CASE(cs_A == 1,
-                    TBLIS_SPECIAL_CASE(cs_B == 1,
-                    TBLIS_SPECIAL_CASE(alpha == T(1),
-                    TBLIS_SPECIAL_CASE(beta == T(0),
-                    for (len_type i = 0;i < m_loc;i++)
+                    len_type m_loc = std::min(MB, m_max-i0);
+
+                    stride_type rs_B = rbs_B[ib];
+                    const T* p_B = B.data() + (rs_B ? rscat_B[i0] : 0);
+                    T* p_A = B.data() + rs_A*i0 + cs_A*j0;
+
+                    if (rs_B)
+                    {
+                        TBLIS_SPECIAL_CASE(m_loc == MB,
+                        TBLIS_SPECIAL_CASE(n_loc == NB,
+                        TBLIS_SPECIAL_CASE(rs_A == 1,
+                        TBLIS_SPECIAL_CASE(rs_B == 1,
+                        TBLIS_SPECIAL_CASE(alpha == T(1),
+                        TBLIS_SPECIAL_CASE(beta == T(0),
+                        for (len_type j = 0;j < n_loc;j++)
+                        {
+                            for (len_type i = 0;i < m_loc;i++)
+                            {
+                                p_B[i*rs_B + cscat_B[j0+j]] =
+                                    alpha*p_A[i*rs_A + j*cs_A] +
+                                    beta*p_B[i*rs_B + cscat_B[j0+j]];
+                            }
+                        }
+                        ))))));
+                    }
+                    else
                     {
                         for (len_type j = 0;j < n_loc;j++)
                         {
-                            p_B[rscat_B[i0+i] + j*cs_B] =
-                                alpha*p_A[i*rs_A + j*cs_A] +
-                                beta*p_B[rscat_B[i0+i] + j*cs_B];
-                        }
-                    }
-                    ))))));
-                }
-                else
-                {
-                    for (len_type j = 0;j < n_loc;j++)
-                    {
-                        for (len_type i = 0;i < m_loc;i++)
-                        {
-                            p_B[rscat_B[i0+i] + cscat_B[j0+j]] =
-                                alpha*p_A[i*rs_A + j*cs_A] +
-                                beta*p_B[rscat_B[i0+i] + cscat_B[j0+j]];
+                            for (len_type i = 0;i < m_loc;i++)
+                            {
+                                p_B[rscat_B[i0+i] + cscat_B[j0+j]] =
+                                    alpha*p_A[i*rs_A + j*cs_A] +
+                                    beta*p_B[rscat_B[i0+i] + cscat_B[j0+j]];
+                            }
                         }
                     }
                 }
             }
         }
-    }
+        else
+        {
+            for (len_type i0 = m_min, ib = m_min/MB;i0 < m_max;i0 += MB, ib++)
+            {
+                len_type m_loc = std::min(MB, m_max-i0);
+
+                for (len_type j0 = n_min, jb = n_min/NB;j0 < n_max;j0 += NB, jb++)
+                {
+                    len_type n_loc = std::min(NB, n_max-j0);
+
+                    stride_type cs_B = cbs_B[jb];
+                    const T* p_B = B.data() + (cs_B ? cscat_B[j0] : 0);
+                    T* p_A = B.data() + rs_A*i0 + cs_A*j0;
+
+                    if (cs_B)
+                    {
+                        TBLIS_SPECIAL_CASE(m_loc == MB,
+                        TBLIS_SPECIAL_CASE(n_loc == NB,
+                        TBLIS_SPECIAL_CASE(cs_A == 1,
+                        TBLIS_SPECIAL_CASE(cs_B == 1,
+                        TBLIS_SPECIAL_CASE(alpha == T(1),
+                        TBLIS_SPECIAL_CASE(beta == T(0),
+                        for (len_type i = 0;i < m_loc;i++)
+                        {
+                            for (len_type j = 0;j < n_loc;j++)
+                            {
+                                p_B[rscat_B[i0+i] + j*cs_B] =
+                                    alpha*p_A[i*rs_A + j*cs_A] +
+                                    beta*p_B[rscat_B[i0+i] + j*cs_B];
+                            }
+                        }
+                        ))))));
+                    }
+                    else
+                    {
+                        for (len_type j = 0;j < n_loc;j++)
+                        {
+                            for (len_type i = 0;i < m_loc;i++)
+                            {
+                                p_B[rscat_B[i0+i] + cscat_B[j0+j]] =
+                                    alpha*p_A[i*rs_A + j*cs_A] +
+                                    beta*p_B[rscat_B[i0+i] + cscat_B[j0+j]];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 template <typename T>

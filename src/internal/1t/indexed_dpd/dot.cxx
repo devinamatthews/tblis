@@ -68,65 +68,65 @@ void dot_block(const communicator& comm, const config& cfg,
     auto dpd_A = A[0];
     auto dpd_B = B[0];
 
-    T local_result = T();
-
-    dynamic_task_set tasks(comm, std::min(nidx_A, nidx_B)*group_AB.dense_nblock,
-                           group_AB.dense_size);
+    std::atomic<T> local_result{T()};
 
     stride_type idx = 0;
     stride_type idx_A = 0;
     stride_type idx_B = 0;
 
-    for_each_match<false, false>(idx_A, nidx_A, indices_A, 0,
-                                idx_B, nidx_B, indices_B, 0,
-    [&]
+    comm.do_tasks_deferred(std::min(nidx_A, nidx_B)*group_AB.dense_nblock,
+                           group_AB.dense_size*inout_ratio,
+    [&](communicator::deferred_task_set& tasks)
     {
-        auto factor = indices_A[idx_A].factor*indices_B[idx_B].factor;
-        if (factor == T(0)) return;
-
-        for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
+        for_each_match<false, false>(idx_A, nidx_A, indices_A, 0,
+                                    idx_B, nidx_B, indices_B, 0,
+        [&]
         {
-            tasks.visit(idx++,
-            [&,factor,idx_A,idx_B,block_AB](const communicator& subcomm)
+            auto factor = indices_A[idx_A].factor*indices_B[idx_B].factor;
+            if (factor == T(0)) return;
+
+            for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
             {
-                auto local_irreps_A = irreps_A;
-                auto local_irreps_B = irreps_B;
+                tasks.visit(idx++,
+                [&,factor,idx_A,idx_B,block_AB](const communicator& subcomm)
+                {
+                    auto local_irreps_A = irreps_A;
+                    auto local_irreps_B = irreps_B;
 
-                assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
-                              local_irreps_A, group_AB.dense_idx[0],
-                              local_irreps_B, group_AB.dense_idx[1]);
+                    assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
+                                  local_irreps_A, group_AB.dense_idx[0],
+                                  local_irreps_B, group_AB.dense_idx[1]);
 
-                if (is_block_empty(dpd_A, local_irreps_A)) return;
+                    if (is_block_empty(dpd_A, local_irreps_A)) return;
 
-                auto local_A = dpd_A(local_irreps_A);
-                auto local_B = dpd_B(local_irreps_B);
+                    auto local_A = dpd_A(local_irreps_A);
+                    auto local_B = dpd_B(local_irreps_B);
 
-                len_vector len_AB;
-                stride_vector stride_A_AB, stride_B_AB;
-                stride_type off_A_AB, off_B_AB;
-                get_local_geometry(indices_A[idx_A].idx[0], group_AB, len_AB,
-                                   local_A, off_A_AB, stride_A_AB, 0,
-                                   local_B, off_B_AB, stride_B_AB, 1);
+                    len_vector len_AB;
+                    stride_vector stride_A_AB, stride_B_AB;
+                    stride_type off_A_AB, off_B_AB;
+                    get_local_geometry(indices_A[idx_A].idx[0], group_AB, len_AB,
+                                       local_A, off_A_AB, stride_A_AB, 0,
+                                       local_B, off_B_AB, stride_B_AB, 1);
 
-                auto data_A = local_A.data() + indices_A[idx_A].offset + off_A_AB;
-                auto data_B = local_B.data() + indices_B[idx_B].offset + off_B_AB;
+                    auto data_A = local_A.data() + indices_A[idx_A].offset + off_A_AB;
+                    auto data_B = local_B.data() + indices_B[idx_B].offset + off_B_AB;
 
-                T block_result;
+                    T block_result;
 
-                dot(subcomm, cfg, len_AB,
-                    conj_A, data_A, stride_A_AB,
-                    conj_B, data_B, stride_B_AB,
-                    block_result);
+                    dot(subcomm, cfg, len_AB,
+                        conj_A, data_A, stride_A_AB,
+                        conj_B, data_B, stride_B_AB,
+                        block_result);
 
-                if (subcomm.master())
-                    local_result += factor*block_result;
-            });
-        }
+                    if (subcomm.master())
+                        atomic_accumulate(local_result, factor*block_result);
+                });
+            }
+        });
     });
 
-    len_type fake_idx;
-    reduce(comm, REDUCE_SUM, local_result, fake_idx);
-
+    reduce(comm, local_result);
     if (comm.master()) result = local_result;
 }
 

@@ -40,7 +40,7 @@ void mult(const communicator& comm, const config& cfg,
     matrix_view<T> Bv({k, n}, const_cast<T*>(B), {rs_B, cs_B});
     matrix_view<T> Cv({m, n},                C , {rs_C, cs_C});
 
-    int nt = max_num_threads(comm);
+    int nt = comm.num_threads();
     gemm_thread_config tc = make_gemm_thread_config<T>(cfg, nt, m, n, k);
 
     GotoGEMM gemm;

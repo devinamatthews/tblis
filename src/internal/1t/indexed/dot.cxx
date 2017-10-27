@@ -50,46 +50,46 @@ void dot_block(const communicator& comm, const config& cfg,
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
 
-    T local_result = T();
-
-    dynamic_task_set tasks(comm, std::min(nidx_A, nidx_B),
-                           stl_ext::prod(group_AB.dense_len));
+    std::atomic<T> local_result{T()};
 
     stride_type idx = 0;
     stride_type idx_A = 0;
     stride_type idx_B = 0;
 
-    for_each_match<false, false>(idx_A, nidx_A, indices_A, 0,
-                                idx_B, nidx_B, indices_B, 0,
-    [&]
+    comm.do_tasks_deferred(std::min(nidx_A, nidx_B),
+                           stl_ext::prod(group_AB.dense_len)*inout_ratio,
+    [&](communicator::deferred_task_set& tasks)
     {
-        auto factor = indices_A[idx_A].factor*indices_B[idx_B].factor;
-        if (factor == T(0)) return;
-
-        tasks.visit(idx++,
-        [&,idx_A,idx_B,factor](const communicator& subcomm)
+        for_each_match<false, false>(idx_A, nidx_A, indices_A, 0,
+                                    idx_B, nidx_B, indices_B, 0,
+        [&]
         {
-            stride_type off_A_AB, off_B_AB;
-            get_local_offset(indices_A[idx_A].idx[0], group_AB,
-                             off_A_AB, 0, off_B_AB, 1);
+            auto factor = indices_A[idx_A].factor*indices_B[idx_B].factor;
+            if (factor == T(0)) return;
 
-            auto data_A = A.data(0) + indices_A[idx_A].offset + off_A_AB;
-            auto data_B = B.data(0) + indices_B[idx_B].offset + off_B_AB;
+            tasks.visit(idx++,
+            [&,idx_A,idx_B,factor](const communicator& subcomm)
+            {
+                stride_type off_A_AB, off_B_AB;
+                get_local_offset(indices_A[idx_A].idx[0], group_AB,
+                                 off_A_AB, 0, off_B_AB, 1);
 
-            T block_result;
-            dot(subcomm, cfg, group_AB.dense_len,
-                conj_A, data_A, group_AB.dense_stride[0],
-                conj_B, data_B, group_AB.dense_stride[1],
-                block_result);
+                auto data_A = A.data(0) + indices_A[idx_A].offset + off_A_AB;
+                auto data_B = B.data(0) + indices_B[idx_B].offset + off_B_AB;
 
-            if (subcomm.master())
-                local_result += factor*block_result;
+                T block_result;
+                dot(subcomm, cfg, group_AB.dense_len,
+                    conj_A, data_A, group_AB.dense_stride[0],
+                    conj_B, data_B, group_AB.dense_stride[1],
+                    block_result);
+
+                if (subcomm.master())
+                    atomic_accumulate(local_result, factor*block_result);
+            });
         });
     });
 
-    len_type fake_idx;
-    reduce(comm, REDUCE_SUM, local_result, fake_idx);
-
+    reduce(comm, local_result);
     if (comm.master()) result = local_result;
 }
 

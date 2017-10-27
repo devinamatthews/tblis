@@ -7,6 +7,7 @@
 #include <map>
 #include <typeinfo>
 #include <cxxabi.h>
+#include <chrono>
 
 #include "tblis.h"
 
@@ -62,7 +63,7 @@ cout << "\n" #t ":\n"; \
 t.for_each_element( \
 [](const typename decltype(t)::value_type & e, const index_vector& pos) \
 { \
-    cout << pos << " " << e << endl; \
+    if (std::abs(e) > 1e-13) cout << pos << " " << e << endl; \
 });
 
 #define PRINT_DPD_TENSOR(t) \
@@ -70,7 +71,7 @@ cout << "\n" #t ":\n"; \
 t.for_each_element( \
 [](const typename decltype(t)::value_type & e, const irrep_vector& irreps, const index_vector& pos) \
 { \
-    cout << irreps << " " << pos << " " << e << endl; \
+    if (std::abs(e) > 1e-13) cout << irreps << " " << pos << " " << e << endl; \
 });
 
 template <typename T> const string& type_name();
@@ -1906,33 +1907,6 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_trace, R, T, all_types)
     D.reset(B);
     add<T>(scale, A, idx_A.data(), scale*0, D, idx_B.data());
 
-    /*
-    len_type i = 0;
-    cout << "A:\n";
-    A.for_each_element(
-    [&](T& e, const index_vector& idx)
-    {
-        cout << idx << " " << e << " " << A.factor(std::min(A.num_indices()-1, i++)) << '\n';
-    });
-    cout << '\n';
-
-    cout << "C:\n";
-    C.for_each_element(
-    [](T& e, const index_vector& idx)
-    {
-        cout << idx << " " << e << '\n';
-    });
-    cout << '\n';
-
-    cout << "D:\n";
-    D.for_each_element(
-    [](T& e, const index_vector& idx)
-    {
-        cout << idx << " " << e << '\n';
-    });
-    cout << '\n';
-    */
-
     add<T>(T(-1), C, idx_B.data(), T(1), D, idx_B.data());
     T error = reduce<T>(REDUCE_NORM_2, D, idx_B.data()).first;
 
@@ -3120,7 +3094,8 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_outer_prod, R, T, all_types)
 
 int main(int argc, char **argv)
 {
-    time_t seed = time(NULL);
+    time_t seed = chrono::duration_cast<chrono::nanoseconds>(
+        chrono::high_resolution_clock::now().time_since_epoch()).count();
 
     struct option opts[] = {{"size", required_argument, NULL, 'n'},
                             {"rep",  required_argument, NULL, 'r'},

@@ -128,6 +128,33 @@ class KnownValues(unittest.TestCase):
         b = numpy.random.random((2,4,5,7))
         self.assertRaises(ValueError, einsum, 'abcd,fdea->cebf', a, b)
 
+    def test_contraction1(self):
+        a = numpy.random.random((5,2,3,2))
+        c0 = numpy.einsum('ijkj->k', a)
+        c1 = einsum('ijkj->k', a)
+        self.assertTrue(abs(c0-c1).max() < 1e-13)
+
+    def test_contraction2(self):
+        a = numpy.random.random((5,2,3,2))
+        b = numpy.random.random((2,4,7))+1j
+        c0 = numpy.einsum('ijkj,jlp->pk', a, b)
+        c1 = einsum('ijkj,jlp->pk', a, b)
+        self.assertTrue(abs(c0-c1).max() < 1e-13)
+
+    def test_contraction3(self):
+        a = numpy.random.random((5,2,3,2))
+        b = numpy.random.random((2,4,7))+1j
+        c0 = numpy.einsum('ijkj,jlp->jpk', a, b)
+        c1 = einsum('ijkj,jlp->jpk', a, b)
+        self.assertTrue(abs(c0-c1).max() < 1e-13)
+
+    def test_contraction4(self):
+        a = numpy.random.random((5,2,3,2))
+        b = numpy.random.random((2,4,7))
+        c0 = numpy.einsum('...jkj,jlp->...jp', a, b)
+        c1 = einsum('...jkj,jlp->...jp', a, b)
+        self.assertTrue(abs(c0-c1).max() < 1e-13)
+
 
 if __name__ == '__main__':
     unittest.main()

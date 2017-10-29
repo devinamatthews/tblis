@@ -40,15 +40,23 @@ tblis_dtype = {
     numpy.dtype(numpy.complex128) : 3,
 }
 
+numpy_einsum = numpy.einsum
+
 def _contract(subscripts, *tensors, **kwargs):
     sub_idx = re.split(',|->', subscripts)
     indices  = ''.join(sub_idx)
     c_dtype = getattr(kwargs, 'dtype', numpy.result_type(*tensors))
-    if (not (',' in subscripts and '->' in subscripts) or
-        any(indices.count(x)>2 for x in set(indices)) or
+    if ('...' in subscripts or
         not (numpy.issubdtype(c_dtype, numpy.float) or
              numpy.issubdtype(c_dtype, numpy.complex))):
-        return numpy.einsum(subscripts, *tensors)
+        return numpy_einsum(subscripts, *tensors)
+
+    if '->' not in subscripts:
+        # Find chararacters which appear only once in the subscripts for c_descr
+        for x in set(indices):
+            if indices.count(x) > 1:
+                indices = indices.replace(x, '')
+        sub_idx += [indices]
 
     a = numpy.asarray(tensors[0], dtype=c_dtype)
     b = numpy.asarray(tensors[1], dtype=c_dtype)
@@ -94,7 +102,9 @@ def _contract(subscripts, *tensors, **kwargs):
 def einsum(subscripts, *tensors, **kwargs):
     subscripts = subscripts.replace(' ','')
     order = getattr(kwargs, 'order', None)
-    if len(tensors) <= 2:
+    if len(tensors) <= 1:
+        out = numpy_einsum(subscripts, *tensors, **kwargs)
+    elif len(tensors) <= 2:
         out = _contract(subscripts, *tensors, **kwargs)
         out = numpy.asarray(out, order=order)
     else:

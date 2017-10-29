@@ -76,17 +76,17 @@
     VMOVUPS(MEM(RCX,RAX,1,1*64), ZMM(R4)) \
     LEA(RCX, MEM(RCX,RAX,2))
 
-#define UPDATE_C_BZ_RS_ONE(R) \
+#define UPDATE_C_BZ_RS_ONE(R,C) \
 \
     KXNORW(K(1), K(0), K(0)) \
     KXNORW(K(2), K(0), K(0)) \
     VMULPS(ZMM(R), ZMM(R), ZMM(0)) \
     VMOVAPS(ZMM(4), ZMM(R)) \
     VEXTRACTF64X4(YMM(5), ZMM(R), IMM(1)) \
-    VSCATTERQPS(MEM(RCX,ZMM(2),4) MASK_K(1), YMM(4)) \
-    VSCATTERQPS(MEM(RCX,ZMM(3),4) MASK_K(2), YMM(5))
+    VSCATTERQPS(MEM(C,ZMM(2),4) MASK_K(1), YMM(4)) \
+    VSCATTERQPS(MEM(C,ZMM(3),4) MASK_K(2), YMM(5))
 
-#define UPDATE_C_RS_ONE(R) \
+#define UPDATE_C_RS_ONE(R,C) \
 \
     KXNORW(K(1), K(0), K(0)) \
     KXNORW(K(2), K(0), K(0)) \
@@ -95,37 +95,37 @@
     VMULPS(ZMM(R), ZMM(R), ZMM(0)) \
     VMOVAPS(ZMM(4), ZMM(R)) \
     VEXTRACTF64X4(YMM(5), ZMM(R), IMM(1)) \
-    VGATHERQPS(YMM(6) MASK_K(1), MEM(RCX,ZMM(2),8)) \
-    VGATHERQPS(YMM(7) MASK_K(2), MEM(RCX,ZMM(3),8)) \
+    VGATHERQPS(YMM(6) MASK_K(1), MEM(C,ZMM(2),4)) \
+    VGATHERQPS(YMM(7) MASK_K(2), MEM(C,ZMM(3),4)) \
     VFMADD231PS(YMM(4), YMM(6), YMM(1)) \
     VFMADD231PS(YMM(5), YMM(7), YMM(1)) \
-    VSCATTERQPS(MEM(RCX,ZMM(2),4) MASK_K(3), YMM(4)) \
-    VSCATTERQPS(MEM(RCX,ZMM(3),4) MASK_K(4), YMM(5))
+    VSCATTERQPS(MEM(C,ZMM(2),4) MASK_K(3), YMM(4)) \
+    VSCATTERQPS(MEM(C,ZMM(3),4) MASK_K(4), YMM(5))
 
 #define UPDATE_C_ROW_SCATTERED(R1,R2,R3,R4) \
 \
-    UPDATE_C_RS_ONE(R1) \
-    UPDATE_C_RS_ONE(R2) \
+    UPDATE_C_RS_ONE(R1,RCX) \
+    UPDATE_C_RS_ONE(R2,RDX) \
 \
     LEA(RCX, MEM(RCX,RAX,1)) \
     LEA(RDX, MEM(RDX,RAX,1)) \
 \
-    UPDATE_C_RS_ONE(R3) \
-    UPDATE_C_RS_ONE(R4) \
+    UPDATE_C_RS_ONE(R3,RCX) \
+    UPDATE_C_RS_ONE(R4,RDX) \
 \
     LEA(RCX, MEM(RCX,RAX,1)) \
     LEA(RDX, MEM(RDX,RAX,1))
 
 #define UPDATE_C_BZ_ROW_SCATTERED(R1,R2,R3,R4) \
 \
-    UPDATE_C_BZ_RS_ONE(R1) \
-    UPDATE_C_BZ_RS_ONE(R2) \
+    UPDATE_C_BZ_RS_ONE(R1,RCX) \
+    UPDATE_C_BZ_RS_ONE(R2,RDX) \
 \
     LEA(RCX, MEM(RCX,RAX,1)) \
     LEA(RDX, MEM(RDX,RAX,1)) \
 \
-    UPDATE_C_BZ_RS_ONE(R3) \
-    UPDATE_C_BZ_RS_ONE(R4) \
+    UPDATE_C_BZ_RS_ONE(R3,RCX) \
+    UPDATE_C_BZ_RS_ONE(R4,RDX) \
 \
     LEA(RCX, MEM(RCX,RAX,1)) \
     LEA(RDX, MEM(RDX,RAX,1))
@@ -215,22 +215,22 @@
 \
     PREFETCH_B_L1(n, 0) \
     \
-    VBROADCASTSS(ZMM(3), MEM(RAX,(12*n+ 0)*8)) \
-    VBROADCASTSS(ZMM(4), MEM(RAX,(12*n+ 1)*8)) \
+    VBROADCASTSS(ZMM(3), MEM(RAX,(12*n+ 0)*4)) \
+    VBROADCASTSS(ZMM(4), MEM(RAX,(12*n+ 1)*4)) \
     VFMADD231PS(ZMM( 8), ZMM(0), ZMM(3)) \
     VFMADD231PS(ZMM( 9), ZMM(1), ZMM(3)) \
     VFMADD231PS(ZMM(10), ZMM(0), ZMM(4)) \
     VFMADD231PS(ZMM(11), ZMM(1), ZMM(4)) \
     \
-    VBROADCASTSS(ZMM(3), MEM(RAX,(12*n+ 2)*8)) \
-    VBROADCASTSS(ZMM(4), MEM(RAX,(12*n+ 3)*8)) \
+    VBROADCASTSS(ZMM(3), MEM(RAX,(12*n+ 2)*4)) \
+    VBROADCASTSS(ZMM(4), MEM(RAX,(12*n+ 3)*4)) \
     VFMADD231PS(ZMM(12), ZMM(0), ZMM(3)) \
     VFMADD231PS(ZMM(13), ZMM(1), ZMM(3)) \
     VFMADD231PS(ZMM(14), ZMM(0), ZMM(4)) \
     VFMADD231PS(ZMM(15), ZMM(1), ZMM(4)) \
     \
-    VBROADCASTSS(ZMM(3), MEM(RAX,(12*n+ 4)*8)) \
-    VBROADCASTSS(ZMM(4), MEM(RAX,(12*n+ 5)*8)) \
+    VBROADCASTSS(ZMM(3), MEM(RAX,(12*n+ 4)*4)) \
+    VBROADCASTSS(ZMM(4), MEM(RAX,(12*n+ 5)*4)) \
     VFMADD231PS(ZMM(16), ZMM(0), ZMM(3)) \
     VFMADD231PS(ZMM(17), ZMM(1), ZMM(3)) \
     VFMADD231PS(ZMM(18), ZMM(0), ZMM(4)) \
@@ -238,29 +238,29 @@
     \
     PREFETCH_B_L1(n, 1) \
     \
-    VBROADCASTSS(ZMM(3), MEM(RAX,(12*n+ 6)*8)) \
-    VBROADCASTSS(ZMM(4), MEM(RAX,(12*n+ 7)*8)) \
+    VBROADCASTSS(ZMM(3), MEM(RAX,(12*n+ 6)*4)) \
+    VBROADCASTSS(ZMM(4), MEM(RAX,(12*n+ 7)*4)) \
     VFMADD231PS(ZMM(20), ZMM(0), ZMM(3)) \
     VFMADD231PS(ZMM(21), ZMM(1), ZMM(3)) \
     VFMADD231PS(ZMM(22), ZMM(0), ZMM(4)) \
     VFMADD231PS(ZMM(23), ZMM(1), ZMM(4)) \
     \
-    VBROADCASTSS(ZMM(3), MEM(RAX,(12*n+ 8)*8)) \
-    VBROADCASTSS(ZMM(4), MEM(RAX,(12*n+ 9)*8)) \
+    VBROADCASTSS(ZMM(3), MEM(RAX,(12*n+ 8)*4)) \
+    VBROADCASTSS(ZMM(4), MEM(RAX,(12*n+ 9)*4)) \
     VFMADD231PS(ZMM(24), ZMM(0), ZMM(3)) \
     VFMADD231PS(ZMM(25), ZMM(1), ZMM(3)) \
     VFMADD231PS(ZMM(26), ZMM(0), ZMM(4)) \
     VFMADD231PS(ZMM(27), ZMM(1), ZMM(4)) \
     \
-    VBROADCASTSS(ZMM(3), MEM(RAX,(12*n+10)*8)) \
-    VBROADCASTSS(ZMM(4), MEM(RAX,(12*n+11)*8)) \
+    VBROADCASTSS(ZMM(3), MEM(RAX,(12*n+10)*4)) \
+    VBROADCASTSS(ZMM(4), MEM(RAX,(12*n+11)*4)) \
     VFMADD231PS(ZMM(28), ZMM(0), ZMM(3)) \
     VFMADD231PS(ZMM(29), ZMM(1), ZMM(3)) \
     VFMADD231PS(ZMM(30), ZMM(0), ZMM(4)) \
     VFMADD231PS(ZMM(31), ZMM(1), ZMM(4)) \
     \
-    VMOVAPD(ZMM(0), MEM(RBX,(16*n+0)*8)) \
-    VMOVAPD(ZMM(1), MEM(RBX,(16*n+8)*8))
+    VMOVAPS(ZMM(0), MEM(RBX,(32*n+ 0)*4)) \
+    VMOVAPS(ZMM(1), MEM(RBX,(32*n+16)*4))
 
 //This is an array used for the scatter/gather instructions.
 static int64_t offsets[16] __attribute__((aligned(64))) =
@@ -296,8 +296,8 @@ void bli_sgemm_opt_12x32_l2(
     VMOVAPD(YMM(12), YMM(8))   MOV(RBX, VAR(b)) //load address of b
     VMOVAPD(YMM(13), YMM(8))   MOV(RCX, VAR(c)) //load address of c
     VMOVAPD(YMM(14), YMM(8))
-    VMOVAPD(YMM(15), YMM(8))   VMOVAPD(ZMM(0), MEM(RBX,  0*4)) //pre-load b
-    VMOVAPD(YMM(16), YMM(8))   VMOVAPD(ZMM(1), MEM(RBX, 16*4)) //pre-load b
+    VMOVAPD(YMM(15), YMM(8))   VMOVAPS(ZMM(0), MEM(RBX,  0*4)) //pre-load b
+    VMOVAPD(YMM(16), YMM(8))   VMOVAPS(ZMM(1), MEM(RBX, 16*4)) //pre-load b
     VMOVAPD(YMM(17), YMM(8))
     VMOVAPD(YMM(18), YMM(8))
     VMOVAPD(YMM(19), YMM(8))   MOV(R12, VAR(rs_c))      //rs_c
@@ -429,14 +429,14 @@ void bli_sgemm_opt_12x32_l2(
     VBROADCASTSS(ZMM(1), MEM(RBX))
 
     MOV(RAX, VAR(rs_c))
-    LEA(RAX, MEM(,RAX,8))
+    LEA(RAX, MEM(,RAX,4))
     MOV(RBX, VAR(cs_c))
 
     // Check if C is row stride. If not, jump to the slow scattered update
     CMP(RBX, IMM(1))
     JNE(SCATTEREDUPDATE)
 
-        VCOMISD(XMM(1), XMM(7))
+        VCOMISS(XMM(1), XMM(7))
         JE(COLSTORBZ)
 
             UPDATE_C( 8, 9,10,11)
@@ -459,8 +459,8 @@ void bli_sgemm_opt_12x32_l2(
     JMP(END)
     LABEL(SCATTEREDUPDATE)
 
-        LEA(RDX, MEM(RCX,RBX,8))
-        LEA(RDX, MEM(RDX,RBX,8))
+        LEA(RDX, MEM(RCX,RAX,8))
+        LEA(RDX, MEM(RDX,RAX,8))
 
         MOV(RDI, VAR(offsetPtr))
         VMOVDQA64(ZMM(2), MEM(RDI,0*64))
@@ -469,7 +469,7 @@ void bli_sgemm_opt_12x32_l2(
         VPMULLQ(ZMM(2), ZMM(6), ZMM(2))
         VPMULLQ(ZMM(3), ZMM(6), ZMM(3))
 
-        VCOMISD(XMM(1), XMM(7))
+        VCOMISS(XMM(1), XMM(7))
         JE(SCATTERBZ)
 
             UPDATE_C_ROW_SCATTERED( 8, 9,10,11)

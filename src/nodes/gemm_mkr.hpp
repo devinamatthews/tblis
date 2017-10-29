@@ -30,8 +30,8 @@ struct gemm_macro_kernel
         const len_type NE = cfg.gemm_nr.extent<T>();
         const bool row_major = cfg.gemm_row_major.value<T>();
         const bool flip_ukr = cfg.gemm_flip_ukr.value<T>();
-        const len_type rs_ab = (row_major^flip_ukr ? NR : 1);
-        const len_type cs_ab = (row_major^flip_ukr ? 1 : MR);
+        const len_type rs_ab = (row_major ? NR : 1);
+        const len_type cs_ab = (row_major ? 1 : MR);
 
         len_type m = C.length(0);
         len_type n = C.length(1);

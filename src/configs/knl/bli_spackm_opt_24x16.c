@@ -35,6 +35,8 @@
 #include "bli_avx512_macros.h"
 #include "blis.h"
 
+#include <stdio.h>
+
 #define LOADMUL8x8(a,o,s1,s3,s5,s7, \
                    z0,z1,z2,z3,z4,z5,z6,z7) \
     \
@@ -59,34 +61,47 @@
     VMOVUPS(MEM(a,(o)+6*(s)), YMM(z6)) \
     VMOVUPS(MEM(a,(o)+7*(s)), YMM(z7))
 
-#define TRANSPOSE8x8(a0,a1,a2,a3,a4,a5,a6,a7, \
-                     t0,t1,t2,t3,t4,t5) \
+#define STORETRANS8x8(a,o,s, \
+                      a0,a1,a2,a3,a4,a5,a6,a7, \
+                      t0,t1,t2,t3,t4,t5) \
     \
     VUNPCKLPS(YMM(t0), YMM(a0), YMM(a1)) \
     VUNPCKLPS(YMM(t2), YMM(a2), YMM(a3)) \
     VUNPCKLPS(YMM(t1), YMM(a4), YMM(a5)) \
     VUNPCKLPS(YMM(t3), YMM(a6), YMM(a7)) \
+    \
     VSHUFPS(YMM(t4), YMM(t0), YMM(t2), IMM(0x44)) \
     VSHUFPS(YMM(t5), YMM(t1), YMM(t3), IMM(0x44)) \
-    VPERM2F128(YMM(a0), YMM(t4), YMM(t5), IMM(0x20)) \
-    VPERM2F128(YMM(a4), YMM(t4), YMM(t5), IMM(0x31)) \
+    VMOVUPS(MEM(a,(o   )+0*(s)), XMM(t4)) \
+    VMOVUPS(MEM(a,(o+16)+0*(s)), XMM(t5)) \
+    VEXTRACTF128(MEM(a,(o   )+4*(s)), YMM(t4), IMM(1)) \
+    VEXTRACTF128(MEM(a,(o+16)+4*(s)), YMM(t5), IMM(1)) \
+    \
     VSHUFPS(YMM(t4), YMM(t0), YMM(t2), IMM(0xEE)) \
     VSHUFPS(YMM(t5), YMM(t1), YMM(t3), IMM(0xEE)) \
-    VPERM2F128(YMM(a2), YMM(t4), YMM(t5), IMM(0x20)) \
-    VPERM2F128(YMM(a6), YMM(t4), YMM(t5), IMM(0x31)) \
+    VMOVUPS(MEM(a,(o   )+1*(s)), XMM(t4)) \
+    VMOVUPS(MEM(a,(o+16)+1*(s)), XMM(t5)) \
+    VEXTRACTF128(MEM(a,(o   )+5*(s)), YMM(t4), IMM(1)) \
+    VEXTRACTF128(MEM(a,(o+16)+5*(s)), YMM(t5), IMM(1)) \
     \
     VUNPCKHPS(YMM(t0), YMM(a0), YMM(a1)) \
     VUNPCKHPS(YMM(t2), YMM(a2), YMM(a3)) \
     VUNPCKHPS(YMM(t1), YMM(a4), YMM(a5)) \
     VUNPCKHPS(YMM(t3), YMM(a6), YMM(a7)) \
+    \
     VSHUFPS(YMM(t4), YMM(t0), YMM(t2), IMM(0x44)) \
     VSHUFPS(YMM(t5), YMM(t1), YMM(t3), IMM(0x44)) \
-    VPERM2F128(YMM(a1), YMM(t4), YMM(t5), IMM(0x20)) \
-    VPERM2F128(YMM(a5), YMM(t4), YMM(t5), IMM(0x31)) \
+    VMOVUPS(MEM(a,(o   )+2*(s)), XMM(t4)) \
+    VMOVUPS(MEM(a,(o+16)+2*(s)), XMM(t5)) \
+    VEXTRACTF128(MEM(a,(o   )+6*(s)), YMM(t4), IMM(1)) \
+    VEXTRACTF128(MEM(a,(o+16)+6*(s)), YMM(t5), IMM(1)) \
+    \
     VSHUFPS(YMM(t4), YMM(t0), YMM(t2), IMM(0xEE)) \
     VSHUFPS(YMM(t5), YMM(t1), YMM(t3), IMM(0xEE)) \
-    VPERM2F128(YMM(a3), YMM(t4), YMM(t5), IMM(0x20)) \
-    VPERM2F128(YMM(a7), YMM(t4), YMM(t5), IMM(0x31))
+    VMOVUPS(MEM(a,(o   )+3*(s)), XMM(t4)) \
+    VMOVUPS(MEM(a,(o+16)+3*(s)), XMM(t5)) \
+    VEXTRACTF128(MEM(a,(o   )+7*(s)), YMM(t4), IMM(1)) \
+    VEXTRACTF128(MEM(a,(o+16)+7*(s)), YMM(t5), IMM(1))
 
 //This is an array used for the scatter/gather instructions.
 static int32_t offsets[32] __attribute__((aligned(64))) =
@@ -120,16 +135,14 @@ void bli_spackm_16xk_opt
         MOV(RBX, VAR(inca))
         MOV(RCX, VAR(lda))
         MOV(R14, VAR(p))
-        MOV(RDI, VAR(ldp))
 
         TEST(RSI, RSI)
         JZ(PACK16_DONE)
 
         LEA(RBX, MEM(,RBX,4))    //inca in bytes
         LEA(RCX, MEM(,RCX,4))    //lda in bytes
-        LEA(RDI, MEM(,RDI,4))    //ldp in bytes
 
-        VBROADCASTSS(ZMM(15), VAR(kappa))
+        VBROADCASTSS(YMM(15), VAR(kappa))
 
         CMP(RBX, IMM(4))
         JNE(PACK16_T)
@@ -154,7 +167,7 @@ void bli_spackm_16xk_opt
                 STORE8x8(R14,32,16*4,0,1,2,3,4,5,6,7)
 
                 LEA(RAX, MEM(RAX,RCX,8))
-                LEA(R14, MEM(R14,RDI,8))
+                LEA(R14, MEM(R14,16*8*4))
 
                 SUB(RSI, IMM(1))
 
@@ -165,11 +178,13 @@ void bli_spackm_16xk_opt
 
             LABEL(PACK16_N_TAIL)
 
-                VMULPS(ZMM(0), ZMM(15), MEM(RAX))
-                VMOVUPS(MEM(R14), ZMM(0))
+                VMULPS(YMM(0), YMM(15), MEM(RAX   ))
+                VMULPS(YMM(1), YMM(15), MEM(RAX,32))
+                VMOVUPS(MEM(R14   ), YMM(0))
+                VMOVUPS(MEM(R14,32), YMM(1))
 
                 LEA(RAX, MEM(RAX,RCX,1))
-                LEA(R14, MEM(R14,RDI,1))
+                LEA(R14, MEM(R14, 16*4))
 
                 SUB(RDX, IMM(1))
 
@@ -195,16 +210,14 @@ void bli_spackm_16xk_opt
             LABEL(PACK16_T_LOOP)
 
                 LOADMUL8x8(RAX,0,RBX,R8,R9,R10,0,1,2,3,4,5,6,7)
-                TRANSPOSE8x8(0,1,2,3,4,5,6,7,8,9,10,11,12,13)
-                STORE8x8(R14,0,16*4,0,1,2,3,4,5,6,7)
+                STORETRANS8x8(R14,0,16*4,0,1,2,3,4,5,6,7,8,9,10,11,12,13)
 
                 LOADMUL8x8(R11,0,RBX,R8,R9,R10,0,1,2,3,4,5,6,7)
-                TRANSPOSE8x8(0,1,2,3,4,5,6,7,8,9,10,11,12,13)
-                STORE8x8(R14,32,16*4,0,1,2,3,4,5,6,7)
+                STORETRANS8x8(R14,32,16*4,0,1,2,3,4,5,6,7,8,9,10,11,12,13)
 
-                LEA(RAX, MEM(RAX,RCX,8))
-                LEA(R11, MEM(R11,RCX,8))
-                LEA(R14, MEM(R14,RDI,8))
+                LEA(RAX, MEM(RAX,   8*4))
+                LEA(R11, MEM(R11,   8*4))
+                LEA(R14, MEM(R14,16*8*4))
 
                 SUB(RSI, IMM(1))
 
@@ -215,13 +228,13 @@ void bli_spackm_16xk_opt
 
             LABEL(PACK16_T_TAIL)
 
-                VMULSS(XMM(0), XMM(15), MEM(RAX))
+                VMULSS(XMM(0), XMM(15), MEM(RAX      ))
                 VMULSS(XMM(1), XMM(15), MEM(RAX,RBX,1))
                 VMULSS(XMM(2), XMM(15), MEM(RAX,RBX,2))
-                VMULSS(XMM(3), XMM(15), MEM(RAX,R8,1))
+                VMULSS(XMM(3), XMM(15), MEM(RAX,R8 ,1))
                 VMULSS(XMM(4), XMM(15), MEM(RAX,RBX,4))
-                VMULSS(XMM(5), XMM(15), MEM(RAX,R9,1))
-                VMULSS(XMM(6), XMM(15), MEM(RAX,R8,2))
+                VMULSS(XMM(5), XMM(15), MEM(RAX,R9 ,1))
+                VMULSS(XMM(6), XMM(15), MEM(RAX,R8 ,2))
                 VMULSS(XMM(7), XMM(15), MEM(RAX,R10,1))
                 VMOVSS(MEM(R14,0*4), XMM(0))
                 VMOVSS(MEM(R14,1*4), XMM(1))
@@ -232,13 +245,13 @@ void bli_spackm_16xk_opt
                 VMOVSS(MEM(R14,6*4), XMM(6))
                 VMOVSS(MEM(R14,7*4), XMM(7))
 
-                VMULSS(XMM(0), XMM(15), MEM(R11))
+                VMULSS(XMM(0), XMM(15), MEM(R11      ))
                 VMULSS(XMM(1), XMM(15), MEM(R11,RBX,1))
                 VMULSS(XMM(2), XMM(15), MEM(R11,RBX,2))
-                VMULSS(XMM(3), XMM(15), MEM(R11,R8,1))
+                VMULSS(XMM(3), XMM(15), MEM(R11,R8 ,1))
                 VMULSS(XMM(4), XMM(15), MEM(R11,RBX,4))
-                VMULSS(XMM(5), XMM(15), MEM(R11,R9,1))
-                VMULSS(XMM(6), XMM(15), MEM(R11,R8,2))
+                VMULSS(XMM(5), XMM(15), MEM(R11,R9 ,1))
+                VMULSS(XMM(6), XMM(15), MEM(R11,R8 ,2))
                 VMULSS(XMM(7), XMM(15), MEM(R11,R10,1))
                 VMOVSS(MEM(R14, 8*4), XMM(0))
                 VMOVSS(MEM(R14, 9*4), XMM(1))
@@ -249,8 +262,9 @@ void bli_spackm_16xk_opt
                 VMOVSS(MEM(R14,14*4), XMM(6))
                 VMOVSS(MEM(R14,15*4), XMM(7))
 
-                LEA(RAX, MEM(RAX,RCX,1))
-                LEA(R14, MEM(R14,RDI,1))
+                LEA(RAX, MEM(RAX,   4))
+                LEA(R11, MEM(R11,   4))
+                LEA(R14, MEM(R14,16*4))
 
                 SUB(RDX, IMM(1))
 
@@ -272,7 +286,7 @@ void bli_spackm_16xk_opt
                 VMOVUPS(MEM(R14), ZMM(3))
 
                 LEA(RAX, MEM(RAX,RCX,1))
-                LEA(R14, MEM(R14,RDI,1))
+                LEA(R14, MEM(R14, 16*4))
 
                 SUB(RSI, IMM(1))
 
@@ -411,16 +425,13 @@ void bli_spackm_24xk_opt
             LABEL(PACK24_T_LOOP)
 
                 LOADMUL8x8(RAX,0,RBX,R8,R9,R10,0,1,2,3,4,5,6,7)
-                TRANSPOSE8x8(0,1,2,3,4,5,6,7,8,9,10,11,12,13)
-                STORE8x8(R14,0,24*4,0,1,2,3,4,5,6,7)
+                STORETRANS8x8(R14,0,24*4,0,1,2,3,4,5,6,7,8,9,10,11,12,13)
 
                 LOADMUL8x8(R11,0,RBX,R8,R9,R10,0,1,2,3,4,5,6,7)
-                TRANSPOSE8x8(0,1,2,3,4,5,6,7,8,9,10,11,12,13)
-                STORE8x8(R14,32,24*4,0,1,2,3,4,5,6,7)
+                STORETRANS8x8(R14,32,24*4,0,1,2,3,4,5,6,7,8,9,10,11,12,13)
 
                 LOADMUL8x8(R12,0,RBX,R8,R9,R10,0,1,2,3,4,5,6,7)
-                TRANSPOSE8x8(0,1,2,3,4,5,6,7,8,9,10,11,12,13)
-                STORE8x8(R14,64,24*4,0,1,2,3,4,5,6,7)
+                STORETRANS8x8(R14,64,24*4,0,1,2,3,4,5,6,7,8,9,10,11,12,13)
 
                 LEA(RAX, MEM(RAX,RCX,8))
                 LEA(R11, MEM(R11,RCX,8))
@@ -488,6 +499,8 @@ void bli_spackm_24xk_opt
                 VMOVSS(MEM(R14,23*4), XMM(7))
 
                 LEA(RAX, MEM(RAX,RCX,1))
+                LEA(R11, MEM(R11,RCX,1))
+                LEA(R12, MEM(R12,RCX,1))
                 LEA(R14, MEM(R14,RDI,1))
 
                 SUB(RDX, IMM(1))

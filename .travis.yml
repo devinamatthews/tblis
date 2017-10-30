@@ -40,12 +40,11 @@ addons:
     - clang-3.9
     - libiomp-dev
     - libtbb-dev
-    - binutils
+    - binutils-2.26
     
 install:
   - 'if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-        sudo rm -f /usr/bin/as;
-        sudo ln -s /usr/bin/as-* /usr/bin/as;
+        export PATH=/usr/lib/binutils-2.26/bin:${PATH};
     fi'
   - if [ "$CC" = "gcc" ] ; then export CC="gcc-6" CXX="g++-6"; fi
   - 'if [ "$CC" = "clang" ] ; then

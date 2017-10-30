@@ -244,7 +244,8 @@ if test x"$cc_vendor" = xicc; then
     fi
     if test $cc_major -eq 15; then
         if test $cc_revision -lt 1; then
-            configs=`echo $configs | sed 's/ *skx[12] */ /'`
+            configs=`echo $configs | sed 's/ *skx1 */ /' \
+                                   | sed 's/ *skx2 */ /'`
         fi
     fi
 elif test x"$cc_vendor" = xgcc; then
@@ -261,7 +262,8 @@ elif test x"$cc_vendor" = xgcc; then
         configs=`echo $configs | sed 's/ *knl */ /'`
     fi
     if test $cc_major -lt 6; then
-        configs=`echo $configs | sed 's/ *skx[12] */ /' \
+        configs=`echo $configs | sed 's/ *skx1 */ /' \
+                               | sed 's/ *skx2 */ /' \
                                | sed 's/ *zen */ /'`
     fi
 elif test x"$cc_vendor" = xclang; then
@@ -277,7 +279,8 @@ elif test x"$cc_vendor" = xclang; then
                                    | sed 's/ *excavator */ /'`
         fi
         if test $cc_minor -lt 9; then
-            configs=`echo $configs | sed 's/ *skx[12] */ /'`
+            configs=`echo $configs | sed 's/ *skx1 */ /' \
+                                   | sed 's/ *skx2 */ /'`
         fi
     fi
     if test $cc_major -lt 4; then
@@ -319,7 +322,8 @@ if ( echo $configs | $EGREP -q 'haswell|piledriver|excavator|skx' ); then
         configs=`echo $configs | sed 's/ *haswell */ /' \
                                | sed 's/ *piledriver */ /' \
                                | sed 's/ *excavator */ /' \
-                               | sed 's/ *skx[12] */ /' \
+                               | sed 's/ *skx1 */ /' \
+                               | sed 's/ *skx2 */ /' \
                                | sed 's/ *zen */ /'`
     fi
 fi
@@ -360,7 +364,8 @@ if ( echo $configs | $EGREP -q 'knl|skx' ); then
     if test "x$enable_avx512f" = xno; then
         AC_MSG_WARN([AVX-512F cannot be compiled; disabling knl and skx configurations])
         configs=`echo $configs | sed 's/ *knl */ /' \
-                               | sed 's/ *skx[12] */ /'`
+                               | sed 's/ *skx1 */ /' \
+                               | sed 's/ *skx2 */ /'`
     fi
     CPPFLAGS="$CPPFLAGS_save"
 fi
@@ -381,7 +386,8 @@ if ( echo $configs | $EGREP -q 'skx' ); then
     AC_MSG_RESULT([$enable_avx512dq])
     if test "x$enable_avx512dq" = xno; then
         AC_MSG_WARN([AVX-512DQ cannot be compiled; disabling skx configuration])
-        configs=`echo $configs | sed 's/ *skx[12] */ /'`
+        configs=`echo $configs | sed 's/ *skx1 */ /' \
+                               | sed 's/ *skx2 */ /'`
     fi
     CPPFLAGS="$CPPFLAGS_save"
 fi

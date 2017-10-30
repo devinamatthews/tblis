@@ -25,7 +25,7 @@ matrix:
   
 before_install:
   - 'if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-        brew update && brew install gcc@6 llvm@3.9 tbb;
+        brew update && brew install gcc@6 tbb && brew install --with-toolchain llvm@3.9;
         brew link --force llvm@3.9;
     fi'
 
@@ -43,6 +43,10 @@ addons:
     - binutils
     
 install:
+  - 'if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+        sudo rm -f /usr/bin/as;
+        sudo ln -s /usr/bin/as-* /usr/bin/as;
+    fi'
   - if [ "$CC" = "gcc" ] ; then export CC="gcc-6" CXX="g++-6"; fi
   - 'if [ "$CC" = "clang" ] ; then
         if [ "$TRAVIS_OS_NAME" = "linux" ]; then
@@ -55,6 +59,8 @@ install:
 script:
   - $CC --version
   - $CXX --version
-  - ./configure CC="$CC" CXX="$CXX" --enable-threading="$THREADING" --enable-config="$BUILD_CONFIG" || cat config.log src/external/tci/config.log
+  - as --version
+  - ./configure CC="$CC" CXX="$CXX" --enable-threading="$THREADING" --enable-config="$BUILD_CONFIG"
+  - cat config.log src/external/tci/config.log
   - make -j 2
   - if [ $RUN_TEST -eq 1 ]; then travis_wait 30 bin/test; fi

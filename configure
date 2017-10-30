@@ -6329,7 +6329,8 @@ if test x"$cc_vendor" = xicc; then
     fi
     if test $cc_major -eq 15; then
         if test $cc_revision -lt 1; then
-            configs=`echo $configs | sed 's/ *skx12 */ /'`
+            configs=`echo $configs | sed 's/ *skx1 */ /' \
+                                   | sed 's/ *skx2 */ /'`
         fi
     fi
 elif test x"$cc_vendor" = xgcc; then
@@ -6346,7 +6347,8 @@ elif test x"$cc_vendor" = xgcc; then
         configs=`echo $configs | sed 's/ *knl */ /'`
     fi
     if test $cc_major -lt 6; then
-        configs=`echo $configs | sed 's/ *skx12 */ /' \
+        configs=`echo $configs | sed 's/ *skx1 */ /' \
+                               | sed 's/ *skx2 */ /' \
                                | sed 's/ *zen */ /'`
     fi
 elif test x"$cc_vendor" = xclang; then
@@ -6362,7 +6364,8 @@ elif test x"$cc_vendor" = xclang; then
                                    | sed 's/ *excavator */ /'`
         fi
         if test $cc_minor -lt 9; then
-            configs=`echo $configs | sed 's/ *skx12 */ /'`
+            configs=`echo $configs | sed 's/ *skx1 */ /' \
+                                   | sed 's/ *skx2 */ /'`
         fi
     fi
     if test $cc_major -lt 4; then
@@ -6440,7 +6443,8 @@ $as_echo "$as_me: WARNING: FMA3 cannot be compiled; disabling haswell, piledrive
         configs=`echo $configs | sed 's/ *haswell */ /' \
                                | sed 's/ *piledriver */ /' \
                                | sed 's/ *excavator */ /' \
-                               | sed 's/ *skx12 */ /' \
+                               | sed 's/ *skx1 */ /' \
+                               | sed 's/ *skx2 */ /' \
                                | sed 's/ *zen */ /'`
     fi
 fi
@@ -6517,7 +6521,8 @@ $as_echo "$enable_avx512f" >&6; }
         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: AVX-512F cannot be compiled; disabling knl and skx configurations" >&5
 $as_echo "$as_me: WARNING: AVX-512F cannot be compiled; disabling knl and skx configurations" >&2;}
         configs=`echo $configs | sed 's/ *knl */ /' \
-                               | sed 's/ *skx12 */ /'`
+                               | sed 's/ *skx1 */ /' \
+                               | sed 's/ *skx2 */ /'`
     fi
     CPPFLAGS="$CPPFLAGS_save"
 fi
@@ -6556,7 +6561,8 @@ $as_echo "$enable_avx512dq" >&6; }
     if test "x$enable_avx512dq" = xno; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: AVX-512DQ cannot be compiled; disabling skx configuration" >&5
 $as_echo "$as_me: WARNING: AVX-512DQ cannot be compiled; disabling skx configuration" >&2;}
-        configs=`echo $configs | sed 's/ *skx12 */ /'`
+        configs=`echo $configs | sed 's/ *skx1 */ /' \
+                               | sed 's/ *skx2 */ /'`
     fi
     CPPFLAGS="$CPPFLAGS_save"
 fi

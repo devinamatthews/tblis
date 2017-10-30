@@ -50,7 +50,7 @@ void dot_block(const communicator& comm, const config& cfg,
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
 
-    std::atomic<T> local_result{T()};
+    atomic_accumulator<T> local_result;
 
     stride_type idx = 0;
     stride_type idx_A = 0;
@@ -83,8 +83,7 @@ void dot_block(const communicator& comm, const config& cfg,
                     conj_B, data_B, group_AB.dense_stride[1],
                     block_result);
 
-                if (subcomm.master())
-                    atomic_accumulate(local_result, factor*block_result);
+                if (subcomm.master()) local_result += factor*block_result;
             });
         });
     });

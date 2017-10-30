@@ -21,8 +21,8 @@ void tci_task_set_init(tci_task_set* set, tci_comm* comm, unsigned ntask,
     }
     tci_comm_bcast(comm, (void**)&set->slots, 0);
 
-    int nt = comm->nthread;
-    int nt_outer, nt_inner;
+    unsigned nt = comm->nthread;
+    unsigned nt_outer, nt_inner;
     tci_partition_2x2(nt, work, (work == 0 ? 1 : nt),
                       ntask, ntask, &nt_inner, &nt_outer);
     tci_comm_gang(comm, &set->subcomm, TCI_EVENLY, nt_outer, 0);
@@ -53,7 +53,7 @@ int tci_task_set_visit_all(tci_task_set* set, tci_task_func func,
 {
     for (;;)
     {
-        int task = __atomic_fetch_add((volatile unsigned*)set->slots, 1, __ATOMIC_ACQUIRE);
+        unsigned task = __atomic_fetch_add((volatile unsigned*)set->slots, 1, __ATOMIC_ACQUIRE);
         if (task >= set->ntask) break;
         func(&set->subcomm, task, payload);
     }

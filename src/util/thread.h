@@ -46,12 +46,60 @@ extern std::atomic<long> flops;
 extern len_type inout_ratio;
 extern int outer_threading;
 
-template <typename T>
-void atomic_accumulate(std::atomic<T>& x, T y)
+template <typename T, typename=void>
+struct atomic_accumulator
 {
-    T old = x.load();
-    while (!x.compare_exchange_weak(old, old+y)) continue;
-}
+    std::atomic<T> value;
+
+    constexpr atomic_accumulator(T value = T()) noexcept
+    : value(value) {}
+
+    atomic_accumulator& operator=(const atomic_accumulator&) = delete;
+
+    atomic_accumulator& operator=(T val)
+    {
+        value = val;
+        return *this;
+    }
+
+    atomic_accumulator& operator+=(T val)
+    {
+        T old = value.load();
+        while (!value.compare_exchange_weak(old, old+val)) continue;
+        return *this;
+    }
+
+    operator T() const { return value.load(); }
+};
+
+template <typename T>
+struct atomic_accumulator<T, typename std::enable_if<is_complex<T>::value>::type>
+{
+        std::atomic<real_type_t<T>> real, imag;
+
+        constexpr atomic_accumulator(T value = T()) noexcept
+        : real(value.real()), imag(value.imag()) {}
+
+        atomic_accumulator& operator=(const atomic_accumulator&) = delete;
+
+        atomic_accumulator& operator=(T val)
+        {
+            real = val.real();
+            imag = val.imag();
+            return *this;
+        }
+
+        atomic_accumulator& operator+=(T val)
+        {
+            auto old = real.load();
+            while (!real.compare_exchange_weak(old, old+val.real())) continue;
+            old = imag.load();
+            while (!imag.compare_exchange_weak(old, old+val.imag())) continue;
+            return *this;
+        }
+
+        operator T() const { return {real.load(), imag.load()}; }
+};
 
 template <typename T>
 struct atomic_reducer_helper
@@ -260,9 +308,9 @@ void reduce(const communicator& comm, reduce_t op, atomic_reducer<T>& pair)
 }
 
 template <typename T>
-void reduce(const communicator& comm, std::atomic<T>& value)
+void reduce(const communicator& comm, atomic_accumulator<T>& value)
 {
-    T tmp = value.load();
+    T tmp = value;
     reduce(comm, tmp);
     value = tmp;
 }

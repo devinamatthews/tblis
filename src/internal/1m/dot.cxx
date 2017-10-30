@@ -17,7 +17,7 @@ void dot(const communicator& comm, const config& cfg, len_type m, len_type n,
         std::swap(rs_B, cs_B);
     }
 
-    std::atomic<T> local_result{T()};
+    atomic_accumulator<T> local_result;
 
     comm.distribute_over_threads(tci::range(m).chunk(1000),
                                  tci::range(n).chunk(1000/m),
@@ -32,7 +32,7 @@ void dot(const communicator& comm, const config& cfg, len_type m, len_type n,
                                 conj_B, B + m_min*rs_B + j*cs_B, rs_B, micro_result);
         }
 
-        atomic_accumulate(local_result, micro_result);
+        local_result += micro_result;
     });
 
     reduce(comm, local_result);

@@ -18,7 +18,7 @@ void dot(const communicator& comm, const config& cfg,
 
     len_type n = stl_ext::prod(len_AB);
 
-    std::atomic<T> local_result{T()};
+    atomic_accumulator<T> local_result;
 
     if (conj_A) conj_B = !conj_B;
 
@@ -39,12 +39,12 @@ void dot(const communicator& comm, const config& cfg,
             micro_result += (*A1)*(conj_B ? conj(*B1) : *B1);
         }
 
-        atomic_accumulate(local_result, micro_result);
+        local_result += micro_result;
     });
 
     reduce(comm, local_result);
     if (comm.master())
-        result = (conj_A ? conj(local_result.load()) : local_result.load());
+        result = (conj_A ? conj((T)local_result) : (T)local_result);
 
     comm.barrier();
 }

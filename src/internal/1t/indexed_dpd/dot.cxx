@@ -68,7 +68,7 @@ void dot_block(const communicator& comm, const config& cfg,
     auto dpd_A = A[0];
     auto dpd_B = B[0];
 
-    std::atomic<T> local_result{T()};
+    atomic_accumulator<T> local_result;
 
     stride_type idx = 0;
     stride_type idx_A = 0;
@@ -119,8 +119,7 @@ void dot_block(const communicator& comm, const config& cfg,
                         conj_B, data_B, stride_B_AB,
                         block_result);
 
-                    if (subcomm.master())
-                        atomic_accumulate(local_result, factor*block_result);
+                    if (subcomm.master()) local_result += factor*block_result;
                 });
             }
         });

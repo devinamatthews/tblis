@@ -400,7 +400,13 @@ bin_bench_DEPENDENCIES = lib/libtblis.la $(am__DEPENDENCIES_1)
 am_bin_skx_bench_OBJECTS = test/skx_bench.$(OBJEXT)
 bin_skx_bench_OBJECTS = $(am_bin_skx_bench_OBJECTS)
 bin_skx_bench_DEPENDENCIES = lib/libtblis.la $(am__DEPENDENCIES_1)
-am_bin_test_OBJECTS = test/test.$(OBJEXT)
+am_bin_test_OBJECTS = test/test.$(OBJEXT) test/1t/dot.$(OBJEXT) \
+	test/1t/reduce.$(OBJEXT) test/1t/scale.$(OBJEXT) \
+	test/1t/replicate.$(OBJEXT) test/1t/trace.$(OBJEXT) \
+	test/1t/transpose.$(OBJEXT) test/3m/gemm.$(OBJEXT) \
+	test/3m/gemv.$(OBJEXT) test/3m/ger.$(OBJEXT) \
+	test/3t/contract.$(OBJEXT) test/3t/mult.$(OBJEXT) \
+	test/3t/outer_prod.$(OBJEXT) test/3t/weight.$(OBJEXT)
 bin_test_OBJECTS = $(am_bin_test_OBJECTS)
 bin_test_DEPENDENCIES = lib/libtblis.la
 AM_V_P = $(am__v_P_@AM_V@)
@@ -701,7 +707,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = lib/libtblis.la
 lib_libtblis_la_SOURCES = \
-	\
+    \
     src/iface/1v/add.cxx \
     src/iface/1v/dot.cxx \
     src/iface/1v/reduce.cxx \
@@ -715,7 +721,7 @@ lib_libtblis_la_SOURCES = \
     src/iface/1m/scale.cxx \
     src/iface/1m/set.cxx \
     src/iface/1m/shift.cxx \
-	\
+    \
     src/iface/1t/add.cxx \
     src/iface/1t/dot.cxx \
     src/iface/1t/reduce.cxx \
@@ -726,7 +732,7 @@ lib_libtblis_la_SOURCES = \
     src/iface/3m/mult.cxx \
     \
     src/iface/3t/mult.cxx \
-	\
+    \
     src/internal/1v/add.cxx \
     src/internal/1v/dot.cxx \
     src/internal/1v/reduce.cxx \
@@ -740,7 +746,7 @@ lib_libtblis_la_SOURCES = \
     src/internal/1m/scale.cxx \
     src/internal/1m/set.cxx \
     src/internal/1m/shift.cxx \
-	\
+    \
     src/internal/1t/dense/add.cxx \
     src/internal/1t/dense/dot.cxx \
     src/internal/1t/dense/reduce.cxx \
@@ -791,111 +797,111 @@ lib_libtblis_la_SOURCES = \
 pkginclude_HEADERS = src/tblis.h src/tblis_config.h
 utilincludedir = $(pkgincludedir)/util
 utilinclude_HEADERS = \
-	\
-	src/util/basic_types.h \
-	src/util/configs.h \
-	src/util/macros.h \
-	src/util/thread.h
+    \
+    src/util/basic_types.h \
+    src/util/configs.h \
+    src/util/macros.h \
+    src/util/thread.h
 
 memoryincludedir = $(pkgincludedir)/memory
 memoryinclude_HEADERS = \
-	\
-	src/memory/aligned_allocator.hpp \
-	src/memory/alignment.hpp \
-	src/memory/memory_pool.hpp \
-	src/memory/stack_allocator.hpp
+    \
+    src/memory/aligned_allocator.hpp \
+    src/memory/alignment.hpp \
+    src/memory/memory_pool.hpp \
+    src/memory/stack_allocator.hpp
 
 iface1vincludedir = $(pkgincludedir)/iface/1v
 iface1vinclude_HEADERS = \
-	\
-	src/iface/1v/add.h \
-	src/iface/1v/dot.h \
-	src/iface/1v/reduce.h \
-	src/iface/1v/scale.h \
-	src/iface/1v/set.h \
-	src/iface/1v/shift.h
+    \
+    src/iface/1v/add.h \
+    src/iface/1v/dot.h \
+    src/iface/1v/reduce.h \
+    src/iface/1v/scale.h \
+    src/iface/1v/set.h \
+    src/iface/1v/shift.h
 
 iface1mincludedir = $(pkgincludedir)/iface/1m
 iface1minclude_HEADERS = \
-	\
-	src/iface/1m/add.h \
-	src/iface/1m/dot.h \
-	src/iface/1m/reduce.h \
-	src/iface/1m/scale.h \
-	src/iface/1m/set.h \
-	src/iface/1m/shift.h
+    \
+    src/iface/1m/add.h \
+    src/iface/1m/dot.h \
+    src/iface/1m/reduce.h \
+    src/iface/1m/scale.h \
+    src/iface/1m/set.h \
+    src/iface/1m/shift.h
 
 iface1tincludedir = $(pkgincludedir)/iface/1t
 iface1tinclude_HEADERS = \
-	\
-	src/iface/1t/add.h \
-	src/iface/1t/dot.h \
-	src/iface/1t/reduce.h \
-	src/iface/1t/scale.h \
-	src/iface/1t/set.h \
-	src/iface/1t/shift.h
+    \
+    src/iface/1t/add.h \
+    src/iface/1t/dot.h \
+    src/iface/1t/reduce.h \
+    src/iface/1t/scale.h \
+    src/iface/1t/set.h \
+    src/iface/1t/shift.h
 
 iface3mincludedir = $(pkgincludedir)/iface/3m
 iface3minclude_HEADERS = \
-	\
-	src/iface/3m/mult.h
+    \
+    src/iface/3m/mult.h
 
 iface3tincludedir = $(pkgincludedir)/iface/3t
 iface3tinclude_HEADERS = \
-	\
-	src/iface/3t/mult.h
+    \
+    src/iface/3t/mult.h
 
 marrayincludedir = $(pkgincludedir)/external/marray/include
 marrayinclude_HEADERS = \
-	\
-	src/external/marray/include/dpd_marray_base.hpp \
-	src/external/marray/include/dpd_marray_view.hpp \
-	src/external/marray/include/dpd_marray.hpp \
-	src/external/marray/include/dpd_varray_base.hpp \
-	src/external/marray/include/dpd_varray_view.hpp \
-	src/external/marray/include/dpd_varray.hpp \
-	src/external/marray/include/expression.hpp \
-	src/external/marray/include/indexed_dpd_varray_base.hpp \
-	src/external/marray/include/indexed_dpd_varray_view.hpp \
-	src/external/marray/include/indexed_dpd_varray.hpp \
-	src/external/marray/include/indexed_varray_base.hpp \
-	src/external/marray/include/indexed_varray_view.hpp \
-	src/external/marray/include/indexed_varray.hpp \
-	src/external/marray/include/marray_base.hpp \
-	src/external/marray/include/marray_slice.hpp \
-	src/external/marray/include/marray_view.hpp \
-	src/external/marray/include/marray.hpp \
-	src/external/marray/include/miterator.hpp \
-	src/external/marray/include/range.hpp \
-	src/external/marray/include/rotate.hpp \
-	src/external/marray/include/short_vector.hpp \
-	src/external/marray/include/utility.hpp \
-	src/external/marray/include/varray_base.hpp \
-	src/external/marray/include/varray_view.hpp \
-	src/external/marray/include/varray.hpp \
-	src/external/marray/include/vector_avx.hpp \
-	src/external/marray/include/vector_avx512.hpp \
-	src/external/marray/include/vector_sse41.hpp \
-	src/external/marray/include/vector.hpp \
-	src/external/marray/include/viterator.hpp
+    \
+    src/external/marray/include/dpd_marray_base.hpp \
+    src/external/marray/include/dpd_marray_view.hpp \
+    src/external/marray/include/dpd_marray.hpp \
+    src/external/marray/include/dpd_varray_base.hpp \
+    src/external/marray/include/dpd_varray_view.hpp \
+    src/external/marray/include/dpd_varray.hpp \
+    src/external/marray/include/expression.hpp \
+    src/external/marray/include/indexed_dpd_varray_base.hpp \
+    src/external/marray/include/indexed_dpd_varray_view.hpp \
+    src/external/marray/include/indexed_dpd_varray.hpp \
+    src/external/marray/include/indexed_varray_base.hpp \
+    src/external/marray/include/indexed_varray_view.hpp \
+    src/external/marray/include/indexed_varray.hpp \
+    src/external/marray/include/marray_base.hpp \
+    src/external/marray/include/marray_slice.hpp \
+    src/external/marray/include/marray_view.hpp \
+    src/external/marray/include/marray.hpp \
+    src/external/marray/include/miterator.hpp \
+    src/external/marray/include/range.hpp \
+    src/external/marray/include/rotate.hpp \
+    src/external/marray/include/short_vector.hpp \
+    src/external/marray/include/utility.hpp \
+    src/external/marray/include/varray_base.hpp \
+    src/external/marray/include/varray_view.hpp \
+    src/external/marray/include/varray.hpp \
+    src/external/marray/include/vector_avx.hpp \
+    src/external/marray/include/vector_avx512.hpp \
+    src/external/marray/include/vector_sse41.hpp \
+    src/external/marray/include/vector.hpp \
+    src/external/marray/include/viterator.hpp
 
 stl_extincludedir = $(pkgincludedir)/external/stl_ext/include
 stl_extinclude_HEADERS = \
-	\
-	src/external/stl_ext/include/algorithm.hpp \
-	src/external/stl_ext/include/any.hpp \
-	src/external/stl_ext/include/bounded_vector.hpp \
-	src/external/stl_ext/include/complex.hpp \
-	src/external/stl_ext/include/cosort.hpp \
-	src/external/stl_ext/include/fill_iterator.hpp \
-	src/external/stl_ext/include/global_ptr.hpp \
-	src/external/stl_ext/include/iostream.hpp \
-	src/external/stl_ext/include/ptr_list.hpp \
-	src/external/stl_ext/include/ptr_vector.hpp \
-	src/external/stl_ext/include/string.hpp \
-	src/external/stl_ext/include/type_traits.hpp \
-	src/external/stl_ext/include/vector.hpp \
-	src/external/stl_ext/include/zip.hpp
+    \
+    src/external/stl_ext/include/algorithm.hpp \
+    src/external/stl_ext/include/any.hpp \
+    src/external/stl_ext/include/bounded_vector.hpp \
+    src/external/stl_ext/include/complex.hpp \
+    src/external/stl_ext/include/cosort.hpp \
+    src/external/stl_ext/include/fill_iterator.hpp \
+    src/external/stl_ext/include/global_ptr.hpp \
+    src/external/stl_ext/include/iostream.hpp \
+    src/external/stl_ext/include/ptr_list.hpp \
+    src/external/stl_ext/include/ptr_vector.hpp \
+    src/external/stl_ext/include/string.hpp \
+    src/external/stl_ext/include/type_traits.hpp \
+    src/external/stl_ext/include/vector.hpp \
+    src/external/stl_ext/include/zip.hpp
 
 noinst_LTLIBRARIES = $(am__append_1) $(am__append_3) $(am__append_5) \
 	$(am__append_7) $(am__append_9) $(am__append_11) \
@@ -910,78 +916,78 @@ lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la \
 @ENABLE_REFERENCE_TRUE@lib_libreference_la_CFLAGS = -O3
 @ENABLE_REFERENCE_TRUE@lib_libreference_la_CXXFLAGS = -O3
 @ENABLE_BULLDOZER_TRUE@lib_libbulldozer_la_SOURCES = src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c \
-@ENABLE_BULLDOZER_TRUE@					         src/configs/bulldozer/config.cxx
+@ENABLE_BULLDOZER_TRUE@                             src/configs/bulldozer/config.cxx
 
 @ENABLE_BULLDOZER_TRUE@lib_libbulldozer_la_CFLAGS = -O3 -mavx -mfma4 -march=bdver1 -mfpmath=sse
 @ENABLE_BULLDOZER_TRUE@lib_libbulldozer_la_CXXFLAGS = -O3 -mavx -mfma4 -march=bdver1 -mfpmath=sse
 @ENABLE_PILEDRIVER_TRUE@lib_libpiledriver_la_SOURCES = src/configs/piledriver/bli_gemm_asm_d8x3.c \
-@ENABLE_PILEDRIVER_TRUE@					           src/configs/piledriver/config.cxx
+@ENABLE_PILEDRIVER_TRUE@                               src/configs/piledriver/config.cxx
 
 @ENABLE_PILEDRIVER_TRUE@lib_libpiledriver_la_CFLAGS = -O3 -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse
 @ENABLE_PILEDRIVER_TRUE@lib_libpiledriver_la_CXXFLAGS = -O3 -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse
 @ENABLE_EXCAVATOR_TRUE@@ENABLE_PILEDRIVER_FALSE@lib_libexcavator_la_SOURCES = src/configs/excavator/bli_gemm_asm_d8x3.c \
-@ENABLE_EXCAVATOR_TRUE@@ENABLE_PILEDRIVER_FALSE@					          src/configs/excavator/config.cxx
+@ENABLE_EXCAVATOR_TRUE@@ENABLE_PILEDRIVER_FALSE@                              src/configs/excavator/config.cxx
 
 @ENABLE_EXCAVATOR_TRUE@@ENABLE_PILEDRIVER_TRUE@lib_libexcavator_la_SOURCES = src/configs/excavator/config.cxx
 @ENABLE_EXCAVATOR_TRUE@lib_libexcavator_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
 @ENABLE_EXCAVATOR_TRUE@lib_libexcavator_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
 @ENABLE_HASWELL_FALSE@@ENABLE_ZEN_TRUE@lib_libzen_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
-@ENABLE_HASWELL_FALSE@@ENABLE_ZEN_TRUE@					    src/configs/zen/config.cxx
+@ENABLE_HASWELL_FALSE@@ENABLE_ZEN_TRUE@                        src/configs/zen/config.cxx
 
 @ENABLE_HASWELL_TRUE@@ENABLE_ZEN_TRUE@lib_libzen_la_SOURCES = src/configs/zen/config.cxx
 @ENABLE_ZEN_TRUE@lib_libzen_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=znver1 -mfpmath=sse
 @ENABLE_ZEN_TRUE@lib_libzen_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=znver1 -mfpmath=sse
 @ENABLE_CORE2_TRUE@lib_libcore2_la_SOURCES = src/configs/core2/bli_gemm_asm_d4x4.c \
-@ENABLE_CORE2_TRUE@					      src/configs/core2/config.cxx
+@ENABLE_CORE2_TRUE@                          src/configs/core2/config.cxx
 
 @ENABLE_CORE2_TRUE@@ENABLE_INTEL_COMPILER_FALSE@lib_libcore2_la_CFLAGS = -O3 -msse3 -mssse3 -march=core2 -mfpmath=sse
 @ENABLE_CORE2_TRUE@@ENABLE_INTEL_COMPILER_TRUE@lib_libcore2_la_CFLAGS = -O3 -xSSSE3
 @ENABLE_CORE2_TRUE@@ENABLE_INTEL_COMPILER_FALSE@lib_libcore2_la_CXXFLAGS = -O3 -msse3 -mssse3 -march=core2 -mfpmath=sse
 @ENABLE_CORE2_TRUE@@ENABLE_INTEL_COMPILER_TRUE@lib_libcore2_la_CXXFLAGS = -O3 -xSSSE3
 @ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_SOURCES = src/configs/sandybridge/bli_gemm_asm_d8x4.c \
-@ENABLE_SANDYBRIDGE_TRUE@					            src/configs/sandybridge/config.cxx
+@ENABLE_SANDYBRIDGE_TRUE@                                src/configs/sandybridge/config.cxx
 
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_CFLAGS = -O3 -mavx -march=corei7-avx -mfpmath=sse
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_CFLAGS = -O3 -xAVX
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_CXXFLAGS = -O3 -mavx -march=corei7-avx -mfpmath=sse
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_CXXFLAGS = -O3 -xAVX
 @ENABLE_HASWELL_TRUE@lib_libhaswell_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
-@ENABLE_HASWELL_TRUE@					        src/configs/haswell/config.cxx
+@ENABLE_HASWELL_TRUE@                            src/configs/haswell/config.cxx
 
 @ENABLE_HASWELL_TRUE@@ENABLE_INTEL_COMPILER_FALSE@lib_libhaswell_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=core-avx2 -mfpmath=sse
-#							src/configs/haswell/bli_gemm_asm_d12x4.c \
-#						    src/configs/haswell/bli_gemm_asm_d8x6.c \
-#						    src/configs/haswell/bli_gemm_asm_d4x12.c
+#                            src/configs/haswell/bli_gemm_asm_d12x4.c \
+#                            src/configs/haswell/bli_gemm_asm_d8x6.c \
+#                            src/configs/haswell/bli_gemm_asm_d4x12.c
 @ENABLE_HASWELL_TRUE@@ENABLE_INTEL_COMPILER_TRUE@lib_libhaswell_la_CFLAGS = -O3 -xCORE-AVX2
 @ENABLE_HASWELL_TRUE@@ENABLE_INTEL_COMPILER_FALSE@lib_libhaswell_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=core-avx2 -mfpmath=sse
 @ENABLE_HASWELL_TRUE@@ENABLE_INTEL_COMPILER_TRUE@lib_libhaswell_la_CXXFLAGS = -O3 -xCORE-AVX2
 @ENABLE_KNL_TRUE@lib_libknl_la_SOURCES = src/configs/knl/bli_spackm_opt_24x16.c \
-@ENABLE_KNL_TRUE@					    src/configs/knl/bli_dpackm_opt_24x8.c \
-@ENABLE_KNL_TRUE@						src/configs/knl/bli_dpackm_opt_30x8.c \
-@ENABLE_KNL_TRUE@					    src/configs/knl/bli_sgemm_opt_24x16.c \
-@ENABLE_KNL_TRUE@					    src/configs/knl/bli_dgemm_opt_24x8.c \
-@ENABLE_KNL_TRUE@					    src/configs/knl/config.cxx
+@ENABLE_KNL_TRUE@                        src/configs/knl/bli_dpackm_opt_24x8.c \
+@ENABLE_KNL_TRUE@                        src/configs/knl/bli_dpackm_opt_30x8.c \
+@ENABLE_KNL_TRUE@                        src/configs/knl/bli_sgemm_opt_24x16.c \
+@ENABLE_KNL_TRUE@                        src/configs/knl/bli_dgemm_opt_24x8.c \
+@ENABLE_KNL_TRUE@                        src/configs/knl/config.cxx
 
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_FALSE@lib_libknl_la_CFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_TRUE@lib_libknl_la_CFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse -Wa,-march=knl
-#					    src/configs/knl/bli_dgemm_opt_12x16.c \
-#					    src/configs/knl/bli_dgemm_opt_30x8.c \
-#					    src/configs/knl/bli_dgemm_opt_8x24.c \
-#					    src/configs/knl/bli_sgemm_opt_30x16_knc.c \
-#					    src/configs/knl/bli_dgemm_opt_30x8_knc.c
+#                        src/configs/knl/bli_dgemm_opt_12x16.c \
+#                        src/configs/knl/bli_dgemm_opt_30x8.c \
+#                        src/configs/knl/bli_dgemm_opt_8x24.c \
+#                        src/configs/knl/bli_sgemm_opt_30x16_knc.c \
+#                        src/configs/knl/bli_dgemm_opt_30x8_knc.c
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_KNL_TRUE@lib_libknl_la_CFLAGS = -O3 -xMIC-AVX512
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_FALSE@lib_libknl_la_CXXFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_TRUE@lib_libknl_la_CXXFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse -Wa,-march=knl
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_KNL_TRUE@lib_libknl_la_CXXFLAGS = -O3 -xMIC-AVX512
 @ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@lib_libskx1_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
-@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@					     src/configs/skx2/vpu_count.cxx \
-@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@					     src/configs/skx1/config.cxx
+@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@                         src/configs/skx2/vpu_count.cxx \
+@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@                         src/configs/skx1/config.cxx
 
 @ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_TRUE@lib_libskx1_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
-@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_TRUE@					     src/configs/skx1/config.cxx
+@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_TRUE@                         src/configs/skx1/config.cxx
 
 @ENABLE_HASWELL_TRUE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@lib_libskx1_la_SOURCES = src/configs/skx2/vpu_count.cxx \
-@ENABLE_HASWELL_TRUE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@					     src/configs/skx1/config.cxx
+@ENABLE_HASWELL_TRUE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@                         src/configs/skx1/config.cxx
 
 @ENABLE_HASWELL_TRUE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_TRUE@lib_libskx1_la_SOURCES = src/configs/skx1/config.cxx
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SKX1_TRUE@@IS_OSX_FALSE@lib_libskx1_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
@@ -991,25 +997,42 @@ lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la \
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SKX1_TRUE@@IS_OSX_TRUE@lib_libskx1_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SKX1_TRUE@lib_libskx1_la_CXXFLAGS = -O3 -xCORE-AVX512
 @ENABLE_SKX2_TRUE@lib_libskx2_la_SOURCES = src/configs/skx2/bli_sgemm_opt_12x32_l2.c \
-@ENABLE_SKX2_TRUE@					     src/configs/skx2/bli_dgemm_opt_12x16_l2.c \
-@ENABLE_SKX2_TRUE@					     src/configs/skx2/vpu_count.cxx \
-@ENABLE_SKX2_TRUE@					     src/configs/skx2/config.cxx
+@ENABLE_SKX2_TRUE@                         src/configs/skx2/bli_dgemm_opt_12x16_l2.c \
+@ENABLE_SKX2_TRUE@                         src/configs/skx2/vpu_count.cxx \
+@ENABLE_SKX2_TRUE@                         src/configs/skx2/config.cxx
 
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SKX2_TRUE@@IS_OSX_FALSE@lib_libskx2_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SKX2_TRUE@@IS_OSX_TRUE@lib_libskx2_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
 #                        src/configs/skx2/bli_dgemm_opt_12x16_l1.c \
-#					     src/configs/skx2/bli_dgemm_opt_8x8_l1.c \
-#					     src/configs/skx2/bli_dgemm_opt_8x8_l2.c \
-#					     src/configs/skx2/bli_dgemm_opt_8x24_l1.c \
-#					     src/configs/skx2/bli_dgemm_opt_8x24_l2.c \
-#					     src/configs/skx2/bli_dgemm_opt_6x32_l1.c \
-#					     src/configs/skx2/bli_dgemm_opt_6x32_l2.c \
-#					     src/configs/skx2/bli_dgemm_opt_24x8_knl.c
+#                         src/configs/skx2/bli_dgemm_opt_8x8_l1.c \
+#                         src/configs/skx2/bli_dgemm_opt_8x8_l2.c \
+#                         src/configs/skx2/bli_dgemm_opt_8x24_l1.c \
+#                         src/configs/skx2/bli_dgemm_opt_8x24_l2.c \
+#                         src/configs/skx2/bli_dgemm_opt_6x32_l1.c \
+#                         src/configs/skx2/bli_dgemm_opt_6x32_l2.c \
+#                         src/configs/skx2/bli_dgemm_opt_24x8_knl.c
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SKX2_TRUE@lib_libskx2_la_CFLAGS = -O3 -xCORE-AVX512
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SKX2_TRUE@@IS_OSX_FALSE@lib_libskx2_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SKX2_TRUE@@IS_OSX_TRUE@lib_libskx2_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SKX2_TRUE@lib_libskx2_la_CXXFLAGS = -O3 -xCORE-AVX512
-bin_test_SOURCES = test/test.cxx
+bin_test_SOURCES = test/test.cxx \
+                   \
+                   test/1t/dot.cxx \
+                   test/1t/reduce.cxx \
+                   test/1t/scale.cxx \
+                   test/1t/replicate.cxx \
+                   test/1t/trace.cxx \
+                   test/1t/transpose.cxx \
+                   \
+                   test/3m/gemm.cxx \
+                   test/3m/gemv.cxx \
+                   test/3m/ger.cxx \
+                   \
+                   test/3t/contract.cxx \
+                   test/3t/mult.cxx \
+                   test/3t/outer_prod.cxx \
+                   test/3t/weight.cxx
+
 bin_skx_bench_SOURCES = test/skx_bench.cxx
 bin_bench_SOURCES = test/bench.cxx
 bin_batched_bench_SOURCES = test/batched_bench.cxx
@@ -1611,6 +1634,50 @@ bin/skx_bench$(EXEEXT): $(bin_skx_bench_OBJECTS) $(bin_skx_bench_DEPENDENCIES) $
 	$(AM_V_CXXLD)$(CXXLINK) $(bin_skx_bench_OBJECTS) $(bin_skx_bench_LDADD) $(LIBS)
 test/test.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
+test/1t/$(am__dirstamp):
+	@$(MKDIR_P) test/1t
+	@: > test/1t/$(am__dirstamp)
+test/1t/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) test/1t/$(DEPDIR)
+	@: > test/1t/$(DEPDIR)/$(am__dirstamp)
+test/1t/dot.$(OBJEXT): test/1t/$(am__dirstamp) \
+	test/1t/$(DEPDIR)/$(am__dirstamp)
+test/1t/reduce.$(OBJEXT): test/1t/$(am__dirstamp) \
+	test/1t/$(DEPDIR)/$(am__dirstamp)
+test/1t/scale.$(OBJEXT): test/1t/$(am__dirstamp) \
+	test/1t/$(DEPDIR)/$(am__dirstamp)
+test/1t/replicate.$(OBJEXT): test/1t/$(am__dirstamp) \
+	test/1t/$(DEPDIR)/$(am__dirstamp)
+test/1t/trace.$(OBJEXT): test/1t/$(am__dirstamp) \
+	test/1t/$(DEPDIR)/$(am__dirstamp)
+test/1t/transpose.$(OBJEXT): test/1t/$(am__dirstamp) \
+	test/1t/$(DEPDIR)/$(am__dirstamp)
+test/3m/$(am__dirstamp):
+	@$(MKDIR_P) test/3m
+	@: > test/3m/$(am__dirstamp)
+test/3m/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) test/3m/$(DEPDIR)
+	@: > test/3m/$(DEPDIR)/$(am__dirstamp)
+test/3m/gemm.$(OBJEXT): test/3m/$(am__dirstamp) \
+	test/3m/$(DEPDIR)/$(am__dirstamp)
+test/3m/gemv.$(OBJEXT): test/3m/$(am__dirstamp) \
+	test/3m/$(DEPDIR)/$(am__dirstamp)
+test/3m/ger.$(OBJEXT): test/3m/$(am__dirstamp) \
+	test/3m/$(DEPDIR)/$(am__dirstamp)
+test/3t/$(am__dirstamp):
+	@$(MKDIR_P) test/3t
+	@: > test/3t/$(am__dirstamp)
+test/3t/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) test/3t/$(DEPDIR)
+	@: > test/3t/$(DEPDIR)/$(am__dirstamp)
+test/3t/contract.$(OBJEXT): test/3t/$(am__dirstamp) \
+	test/3t/$(DEPDIR)/$(am__dirstamp)
+test/3t/mult.$(OBJEXT): test/3t/$(am__dirstamp) \
+	test/3t/$(DEPDIR)/$(am__dirstamp)
+test/3t/outer_prod.$(OBJEXT): test/3t/$(am__dirstamp) \
+	test/3t/$(DEPDIR)/$(am__dirstamp)
+test/3t/weight.$(OBJEXT): test/3t/$(am__dirstamp) \
+	test/3t/$(DEPDIR)/$(am__dirstamp)
 
 bin/test$(EXEEXT): $(bin_test_OBJECTS) $(bin_test_DEPENDENCIES) $(EXTRA_bin_test_DEPENDENCIES) bin/$(am__dirstamp)
 	@rm -f bin/test$(EXEEXT)
@@ -1677,6 +1744,9 @@ mostlyclean-compile:
 	-rm -f src/util/*.$(OBJEXT)
 	-rm -f src/util/*.lo
 	-rm -f test/*.$(OBJEXT)
+	-rm -f test/1t/*.$(OBJEXT)
+	-rm -f test/3m/*.$(OBJEXT)
+	-rm -f test/3t/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -1780,6 +1850,19 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/bench.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/skx_bench.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/1t/$(DEPDIR)/dot.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/1t/$(DEPDIR)/reduce.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/1t/$(DEPDIR)/replicate.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/1t/$(DEPDIR)/scale.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/1t/$(DEPDIR)/trace.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/1t/$(DEPDIR)/transpose.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/3m/$(DEPDIR)/gemm.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/3m/$(DEPDIR)/gemv.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/3m/$(DEPDIR)/ger.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/3t/$(DEPDIR)/contract.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/3t/$(DEPDIR)/mult.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/3t/$(DEPDIR)/outer_prod.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/3t/$(DEPDIR)/weight.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -2665,6 +2748,12 @@ distclean-generic:
 	-rm -f src/util/$(am__dirstamp)
 	-rm -f test/$(DEPDIR)/$(am__dirstamp)
 	-rm -f test/$(am__dirstamp)
+	-rm -f test/1t/$(DEPDIR)/$(am__dirstamp)
+	-rm -f test/1t/$(am__dirstamp)
+	-rm -f test/3m/$(DEPDIR)/$(am__dirstamp)
+	-rm -f test/3m/$(am__dirstamp)
+	-rm -f test/3t/$(DEPDIR)/$(am__dirstamp)
+	-rm -f test/3t/$(am__dirstamp)
 	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
@@ -2677,7 +2766,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/configs/skx1/$(DEPDIR) src/configs/skx2/$(DEPDIR) src/configs/zen/$(DEPDIR) src/iface/1m/$(DEPDIR) src/iface/1t/$(DEPDIR) src/iface/1v/$(DEPDIR) src/iface/3m/$(DEPDIR) src/iface/3t/$(DEPDIR) src/internal/1m/$(DEPDIR) src/internal/1t/dense/$(DEPDIR) src/internal/1t/dpd/$(DEPDIR) src/internal/1t/indexed/$(DEPDIR) src/internal/1t/indexed_dpd/$(DEPDIR) src/internal/1v/$(DEPDIR) src/internal/3m/$(DEPDIR) src/internal/3t/dense/$(DEPDIR) src/internal/3t/dpd/$(DEPDIR) src/internal/3t/indexed/$(DEPDIR) src/internal/3t/indexed_dpd/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
+	-rm -rf src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/configs/skx1/$(DEPDIR) src/configs/skx2/$(DEPDIR) src/configs/zen/$(DEPDIR) src/iface/1m/$(DEPDIR) src/iface/1t/$(DEPDIR) src/iface/1v/$(DEPDIR) src/iface/3m/$(DEPDIR) src/iface/3t/$(DEPDIR) src/internal/1m/$(DEPDIR) src/internal/1t/dense/$(DEPDIR) src/internal/1t/dpd/$(DEPDIR) src/internal/1t/indexed/$(DEPDIR) src/internal/1t/indexed_dpd/$(DEPDIR) src/internal/1v/$(DEPDIR) src/internal/3m/$(DEPDIR) src/internal/3t/dense/$(DEPDIR) src/internal/3t/dpd/$(DEPDIR) src/internal/3t/indexed/$(DEPDIR) src/internal/3t/indexed_dpd/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR) test/1t/$(DEPDIR) test/3m/$(DEPDIR) test/3t/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -2730,7 +2819,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/configs/skx1/$(DEPDIR) src/configs/skx2/$(DEPDIR) src/configs/zen/$(DEPDIR) src/iface/1m/$(DEPDIR) src/iface/1t/$(DEPDIR) src/iface/1v/$(DEPDIR) src/iface/3m/$(DEPDIR) src/iface/3t/$(DEPDIR) src/internal/1m/$(DEPDIR) src/internal/1t/dense/$(DEPDIR) src/internal/1t/dpd/$(DEPDIR) src/internal/1t/indexed/$(DEPDIR) src/internal/1t/indexed_dpd/$(DEPDIR) src/internal/1v/$(DEPDIR) src/internal/3m/$(DEPDIR) src/internal/3t/dense/$(DEPDIR) src/internal/3t/dpd/$(DEPDIR) src/internal/3t/indexed/$(DEPDIR) src/internal/3t/indexed_dpd/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR)
+	-rm -rf src/configs/$(DEPDIR) src/configs/bulldozer/$(DEPDIR) src/configs/core2/$(DEPDIR) src/configs/excavator/$(DEPDIR) src/configs/haswell/$(DEPDIR) src/configs/knl/$(DEPDIR) src/configs/piledriver/$(DEPDIR) src/configs/reference/$(DEPDIR) src/configs/sandybridge/$(DEPDIR) src/configs/skx1/$(DEPDIR) src/configs/skx2/$(DEPDIR) src/configs/zen/$(DEPDIR) src/iface/1m/$(DEPDIR) src/iface/1t/$(DEPDIR) src/iface/1v/$(DEPDIR) src/iface/3m/$(DEPDIR) src/iface/3t/$(DEPDIR) src/internal/1m/$(DEPDIR) src/internal/1t/dense/$(DEPDIR) src/internal/1t/dpd/$(DEPDIR) src/internal/1t/indexed/$(DEPDIR) src/internal/1t/indexed_dpd/$(DEPDIR) src/internal/1v/$(DEPDIR) src/internal/3m/$(DEPDIR) src/internal/3t/dense/$(DEPDIR) src/internal/3t/dpd/$(DEPDIR) src/internal/3t/indexed/$(DEPDIR) src/internal/3t/indexed_dpd/$(DEPDIR) src/util/$(DEPDIR) test/$(DEPDIR) test/1t/$(DEPDIR) test/3m/$(DEPDIR) test/3t/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

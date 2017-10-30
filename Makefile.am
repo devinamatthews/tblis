@@ -1,6 +1,6 @@
 lib_LTLIBRARIES = lib/libtblis.la
 lib_libtblis_la_SOURCES = \
-	\
+    \
     src/iface/1v/add.cxx \
     src/iface/1v/dot.cxx \
     src/iface/1v/reduce.cxx \
@@ -14,7 +14,7 @@ lib_libtblis_la_SOURCES = \
     src/iface/1m/scale.cxx \
     src/iface/1m/set.cxx \
     src/iface/1m/shift.cxx \
-	\
+    \
     src/iface/1t/add.cxx \
     src/iface/1t/dot.cxx \
     src/iface/1t/reduce.cxx \
@@ -25,7 +25,7 @@ lib_libtblis_la_SOURCES = \
     src/iface/3m/mult.cxx \
     \
     src/iface/3t/mult.cxx \
-	\
+    \
     src/internal/1v/add.cxx \
     src/internal/1v/dot.cxx \
     src/internal/1v/reduce.cxx \
@@ -39,7 +39,7 @@ lib_libtblis_la_SOURCES = \
     src/internal/1m/scale.cxx \
     src/internal/1m/set.cxx \
     src/internal/1m/shift.cxx \
-	\
+    \
     src/internal/1t/dense/add.cxx \
     src/internal/1t/dense/dot.cxx \
     src/internal/1t/dense/reduce.cxx \
@@ -91,112 +91,112 @@ pkginclude_HEADERS = src/tblis.h src/tblis_config.h
 
 utilincludedir = $(pkgincludedir)/util
 utilinclude_HEADERS = \
-	\
-	src/util/basic_types.h \
-	src/util/configs.h \
-	src/util/macros.h \
-	src/util/thread.h
+    \
+    src/util/basic_types.h \
+    src/util/configs.h \
+    src/util/macros.h \
+    src/util/thread.h
 
 memoryincludedir = $(pkgincludedir)/memory
 memoryinclude_HEADERS = \
-	\
-	src/memory/aligned_allocator.hpp \
-	src/memory/alignment.hpp \
-	src/memory/memory_pool.hpp \
-	src/memory/stack_allocator.hpp
+    \
+    src/memory/aligned_allocator.hpp \
+    src/memory/alignment.hpp \
+    src/memory/memory_pool.hpp \
+    src/memory/stack_allocator.hpp
 
 iface1vincludedir = $(pkgincludedir)/iface/1v
 iface1vinclude_HEADERS = \
-	\
-	src/iface/1v/add.h \
-	src/iface/1v/dot.h \
-	src/iface/1v/reduce.h \
-	src/iface/1v/scale.h \
-	src/iface/1v/set.h \
-	src/iface/1v/shift.h
+    \
+    src/iface/1v/add.h \
+    src/iface/1v/dot.h \
+    src/iface/1v/reduce.h \
+    src/iface/1v/scale.h \
+    src/iface/1v/set.h \
+    src/iface/1v/shift.h
 
 iface1mincludedir = $(pkgincludedir)/iface/1m
 iface1minclude_HEADERS = \
-	\
-	src/iface/1m/add.h \
-	src/iface/1m/dot.h \
-	src/iface/1m/reduce.h \
-	src/iface/1m/scale.h \
-	src/iface/1m/set.h \
-	src/iface/1m/shift.h
+    \
+    src/iface/1m/add.h \
+    src/iface/1m/dot.h \
+    src/iface/1m/reduce.h \
+    src/iface/1m/scale.h \
+    src/iface/1m/set.h \
+    src/iface/1m/shift.h
 
 iface1tincludedir = $(pkgincludedir)/iface/1t
 iface1tinclude_HEADERS = \
-	\
-	src/iface/1t/add.h \
-	src/iface/1t/dot.h \
-	src/iface/1t/reduce.h \
-	src/iface/1t/scale.h \
-	src/iface/1t/set.h \
-	src/iface/1t/shift.h
+    \
+    src/iface/1t/add.h \
+    src/iface/1t/dot.h \
+    src/iface/1t/reduce.h \
+    src/iface/1t/scale.h \
+    src/iface/1t/set.h \
+    src/iface/1t/shift.h
 
 iface3mincludedir = $(pkgincludedir)/iface/3m
 iface3minclude_HEADERS = \
-	\
-	src/iface/3m/mult.h
+    \
+    src/iface/3m/mult.h
 
 iface3tincludedir = $(pkgincludedir)/iface/3t
 iface3tinclude_HEADERS = \
-	\
-	src/iface/3t/mult.h
-	
+    \
+    src/iface/3t/mult.h
+    
 marrayincludedir = $(pkgincludedir)/external/marray/include
 marrayinclude_HEADERS = \
-	\
-	src/external/marray/include/dpd_marray_base.hpp \
-	src/external/marray/include/dpd_marray_view.hpp \
-	src/external/marray/include/dpd_marray.hpp \
-	src/external/marray/include/dpd_varray_base.hpp \
-	src/external/marray/include/dpd_varray_view.hpp \
-	src/external/marray/include/dpd_varray.hpp \
-	src/external/marray/include/expression.hpp \
-	src/external/marray/include/indexed_dpd_varray_base.hpp \
-	src/external/marray/include/indexed_dpd_varray_view.hpp \
-	src/external/marray/include/indexed_dpd_varray.hpp \
-	src/external/marray/include/indexed_varray_base.hpp \
-	src/external/marray/include/indexed_varray_view.hpp \
-	src/external/marray/include/indexed_varray.hpp \
-	src/external/marray/include/marray_base.hpp \
-	src/external/marray/include/marray_slice.hpp \
-	src/external/marray/include/marray_view.hpp \
-	src/external/marray/include/marray.hpp \
-	src/external/marray/include/miterator.hpp \
-	src/external/marray/include/range.hpp \
-	src/external/marray/include/rotate.hpp \
-	src/external/marray/include/short_vector.hpp \
-	src/external/marray/include/utility.hpp \
-	src/external/marray/include/varray_base.hpp \
-	src/external/marray/include/varray_view.hpp \
-	src/external/marray/include/varray.hpp \
-	src/external/marray/include/vector_avx.hpp \
-	src/external/marray/include/vector_avx512.hpp \
-	src/external/marray/include/vector_sse41.hpp \
-	src/external/marray/include/vector.hpp \
-	src/external/marray/include/viterator.hpp
-	
+    \
+    src/external/marray/include/dpd_marray_base.hpp \
+    src/external/marray/include/dpd_marray_view.hpp \
+    src/external/marray/include/dpd_marray.hpp \
+    src/external/marray/include/dpd_varray_base.hpp \
+    src/external/marray/include/dpd_varray_view.hpp \
+    src/external/marray/include/dpd_varray.hpp \
+    src/external/marray/include/expression.hpp \
+    src/external/marray/include/indexed_dpd_varray_base.hpp \
+    src/external/marray/include/indexed_dpd_varray_view.hpp \
+    src/external/marray/include/indexed_dpd_varray.hpp \
+    src/external/marray/include/indexed_varray_base.hpp \
+    src/external/marray/include/indexed_varray_view.hpp \
+    src/external/marray/include/indexed_varray.hpp \
+    src/external/marray/include/marray_base.hpp \
+    src/external/marray/include/marray_slice.hpp \
+    src/external/marray/include/marray_view.hpp \
+    src/external/marray/include/marray.hpp \
+    src/external/marray/include/miterator.hpp \
+    src/external/marray/include/range.hpp \
+    src/external/marray/include/rotate.hpp \
+    src/external/marray/include/short_vector.hpp \
+    src/external/marray/include/utility.hpp \
+    src/external/marray/include/varray_base.hpp \
+    src/external/marray/include/varray_view.hpp \
+    src/external/marray/include/varray.hpp \
+    src/external/marray/include/vector_avx.hpp \
+    src/external/marray/include/vector_avx512.hpp \
+    src/external/marray/include/vector_sse41.hpp \
+    src/external/marray/include/vector.hpp \
+    src/external/marray/include/viterator.hpp
+    
 stl_extincludedir = $(pkgincludedir)/external/stl_ext/include
 stl_extinclude_HEADERS = \
-	\
-	src/external/stl_ext/include/algorithm.hpp \
-	src/external/stl_ext/include/any.hpp \
-	src/external/stl_ext/include/bounded_vector.hpp \
-	src/external/stl_ext/include/complex.hpp \
-	src/external/stl_ext/include/cosort.hpp \
-	src/external/stl_ext/include/fill_iterator.hpp \
-	src/external/stl_ext/include/global_ptr.hpp \
-	src/external/stl_ext/include/iostream.hpp \
-	src/external/stl_ext/include/ptr_list.hpp \
-	src/external/stl_ext/include/ptr_vector.hpp \
-	src/external/stl_ext/include/string.hpp \
-	src/external/stl_ext/include/type_traits.hpp \
-	src/external/stl_ext/include/vector.hpp \
-	src/external/stl_ext/include/zip.hpp
-	
+    \
+    src/external/stl_ext/include/algorithm.hpp \
+    src/external/stl_ext/include/any.hpp \
+    src/external/stl_ext/include/bounded_vector.hpp \
+    src/external/stl_ext/include/complex.hpp \
+    src/external/stl_ext/include/cosort.hpp \
+    src/external/stl_ext/include/fill_iterator.hpp \
+    src/external/stl_ext/include/global_ptr.hpp \
+    src/external/stl_ext/include/iostream.hpp \
+    src/external/stl_ext/include/ptr_list.hpp \
+    src/external/stl_ext/include/ptr_vector.hpp \
+    src/external/stl_ext/include/string.hpp \
+    src/external/stl_ext/include/type_traits.hpp \
+    src/external/stl_ext/include/vector.hpp \
+    src/external/stl_ext/include/zip.hpp
+    
 noinst_LTLIBRARIES =
 lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la
 
@@ -216,7 +216,7 @@ if ENABLE_BULLDOZER
 noinst_LTLIBRARIES += lib/libbulldozer.la
 lib_libtblis_la_LIBADD += lib/libbulldozer.la
 lib_libbulldozer_la_SOURCES = src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c \
-					         src/configs/bulldozer/config.cxx
+                             src/configs/bulldozer/config.cxx
 lib_libbulldozer_la_CFLAGS = -O3 -mavx -mfma4 -march=bdver1 -mfpmath=sse
 lib_libbulldozer_la_CXXFLAGS = -O3 -mavx -mfma4 -march=bdver1 -mfpmath=sse
 endif
@@ -225,7 +225,7 @@ if ENABLE_PILEDRIVER
 noinst_LTLIBRARIES += lib/libpiledriver.la
 lib_libtblis_la_LIBADD += lib/libpiledriver.la
 lib_libpiledriver_la_SOURCES = src/configs/piledriver/bli_gemm_asm_d8x3.c \
-					           src/configs/piledriver/config.cxx
+                               src/configs/piledriver/config.cxx
 lib_libpiledriver_la_CFLAGS = -O3 -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse
 lib_libpiledriver_la_CXXFLAGS = -O3 -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse
 endif
@@ -235,7 +235,7 @@ noinst_LTLIBRARIES += lib/libexcavator.la
 lib_libtblis_la_LIBADD += lib/libexcavator.la
 if !ENABLE_PILEDRIVER
 lib_libexcavator_la_SOURCES = src/configs/excavator/bli_gemm_asm_d8x3.c \
-					          src/configs/excavator/config.cxx
+                              src/configs/excavator/config.cxx
 else
 lib_libexcavator_la_SOURCES = src/configs/excavator/config.cxx
 endif
@@ -248,7 +248,7 @@ noinst_LTLIBRARIES += lib/libzen.la
 lib_libtblis_la_LIBADD += lib/libzen.la
 if !ENABLE_HASWELL
 lib_libzen_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
-					    src/configs/zen/config.cxx
+                        src/configs/zen/config.cxx
 else
 lib_libzen_la_SOURCES = src/configs/zen/config.cxx
 endif
@@ -264,7 +264,7 @@ if ENABLE_CORE2
 noinst_LTLIBRARIES += lib/libcore2.la
 lib_libtblis_la_LIBADD += lib/libcore2.la
 lib_libcore2_la_SOURCES = src/configs/core2/bli_gemm_asm_d4x4.c \
-					      src/configs/core2/config.cxx
+                          src/configs/core2/config.cxx
 if ENABLE_INTEL_COMPILER
 lib_libcore2_la_CFLAGS = -O3 -xSSSE3
 lib_libcore2_la_CXXFLAGS = -O3 -xSSSE3
@@ -278,7 +278,7 @@ if ENABLE_SANDYBRIDGE
 noinst_LTLIBRARIES += lib/libsandybridge.la
 lib_libtblis_la_LIBADD += lib/libsandybridge.la
 lib_libsandybridge_la_SOURCES = src/configs/sandybridge/bli_gemm_asm_d8x4.c \
-					            src/configs/sandybridge/config.cxx
+                                src/configs/sandybridge/config.cxx
 if ENABLE_INTEL_COMPILER
 lib_libsandybridge_la_CFLAGS = -O3 -xAVX
 lib_libsandybridge_la_CXXFLAGS = -O3 -xAVX
@@ -292,10 +292,10 @@ if ENABLE_HASWELL
 noinst_LTLIBRARIES += lib/libhaswell.la
 lib_libtblis_la_LIBADD += lib/libhaswell.la
 lib_libhaswell_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
-					        src/configs/haswell/config.cxx
-#							src/configs/haswell/bli_gemm_asm_d12x4.c \
-#						    src/configs/haswell/bli_gemm_asm_d8x6.c \
-#						    src/configs/haswell/bli_gemm_asm_d4x12.c
+                            src/configs/haswell/config.cxx
+#                            src/configs/haswell/bli_gemm_asm_d12x4.c \
+#                            src/configs/haswell/bli_gemm_asm_d8x6.c \
+#                            src/configs/haswell/bli_gemm_asm_d4x12.c
 if ENABLE_INTEL_COMPILER
 lib_libhaswell_la_CFLAGS = -O3 -xCORE-AVX2
 lib_libhaswell_la_CXXFLAGS = -O3 -xCORE-AVX2
@@ -309,16 +309,16 @@ if ENABLE_KNL
 noinst_LTLIBRARIES += lib/libknl.la
 lib_libtblis_la_LIBADD += lib/libknl.la
 lib_libknl_la_SOURCES = src/configs/knl/bli_spackm_opt_24x16.c \
-					    src/configs/knl/bli_dpackm_opt_24x8.c \
-						src/configs/knl/bli_dpackm_opt_30x8.c \
-					    src/configs/knl/bli_sgemm_opt_24x16.c \
-					    src/configs/knl/bli_dgemm_opt_24x8.c \
-					    src/configs/knl/config.cxx
-#					    src/configs/knl/bli_dgemm_opt_12x16.c \
-#					    src/configs/knl/bli_dgemm_opt_30x8.c \
-#					    src/configs/knl/bli_dgemm_opt_8x24.c \
-#					    src/configs/knl/bli_sgemm_opt_30x16_knc.c \
-#					    src/configs/knl/bli_dgemm_opt_30x8_knc.c
+                        src/configs/knl/bli_dpackm_opt_24x8.c \
+                        src/configs/knl/bli_dpackm_opt_30x8.c \
+                        src/configs/knl/bli_sgemm_opt_24x16.c \
+                        src/configs/knl/bli_dgemm_opt_24x8.c \
+                        src/configs/knl/config.cxx
+#                        src/configs/knl/bli_dgemm_opt_12x16.c \
+#                        src/configs/knl/bli_dgemm_opt_30x8.c \
+#                        src/configs/knl/bli_dgemm_opt_8x24.c \
+#                        src/configs/knl/bli_sgemm_opt_30x16_knc.c \
+#                        src/configs/knl/bli_dgemm_opt_30x8_knc.c
 if ENABLE_INTEL_COMPILER
 lib_libknl_la_CFLAGS = -O3 -xMIC-AVX512
 lib_libknl_la_CXXFLAGS = -O3 -xMIC-AVX512
@@ -339,16 +339,16 @@ lib_libtblis_la_LIBADD += lib/libskx1.la
 if !ENABLE_SKX2
 if !ENABLE_HASWELL
 lib_libskx1_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
-					     src/configs/skx2/vpu_count.cxx \
-					     src/configs/skx1/config.cxx
+                         src/configs/skx2/vpu_count.cxx \
+                         src/configs/skx1/config.cxx
 else
 lib_libskx1_la_SOURCES = src/configs/skx2/vpu_count.cxx \
-					     src/configs/skx1/config.cxx
+                         src/configs/skx1/config.cxx
 endif
 else
 if !ENABLE_HASWELL
 lib_libskx1_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
-					     src/configs/skx1/config.cxx
+                         src/configs/skx1/config.cxx
 else
 lib_libskx1_la_SOURCES = src/configs/skx1/config.cxx
 endif
@@ -371,17 +371,17 @@ if ENABLE_SKX2
 noinst_LTLIBRARIES += lib/libskx2.la
 lib_libtblis_la_LIBADD += lib/libskx2.la
 lib_libskx2_la_SOURCES = src/configs/skx2/bli_sgemm_opt_12x32_l2.c \
-					     src/configs/skx2/bli_dgemm_opt_12x16_l2.c \
-					     src/configs/skx2/vpu_count.cxx \
-					     src/configs/skx2/config.cxx
+                         src/configs/skx2/bli_dgemm_opt_12x16_l2.c \
+                         src/configs/skx2/vpu_count.cxx \
+                         src/configs/skx2/config.cxx
 #                        src/configs/skx2/bli_dgemm_opt_12x16_l1.c \
-#					     src/configs/skx2/bli_dgemm_opt_8x8_l1.c \
-#					     src/configs/skx2/bli_dgemm_opt_8x8_l2.c \
-#					     src/configs/skx2/bli_dgemm_opt_8x24_l1.c \
-#					     src/configs/skx2/bli_dgemm_opt_8x24_l2.c \
-#					     src/configs/skx2/bli_dgemm_opt_6x32_l1.c \
-#					     src/configs/skx2/bli_dgemm_opt_6x32_l2.c \
-#					     src/configs/skx2/bli_dgemm_opt_24x8_knl.c
+#                         src/configs/skx2/bli_dgemm_opt_8x8_l1.c \
+#                         src/configs/skx2/bli_dgemm_opt_8x8_l2.c \
+#                         src/configs/skx2/bli_dgemm_opt_8x24_l1.c \
+#                         src/configs/skx2/bli_dgemm_opt_8x24_l2.c \
+#                         src/configs/skx2/bli_dgemm_opt_6x32_l1.c \
+#                         src/configs/skx2/bli_dgemm_opt_6x32_l2.c \
+#                         src/configs/skx2/bli_dgemm_opt_24x8_knl.c
 if ENABLE_INTEL_COMPILER
 lib_libskx2_la_CFLAGS = -O3 -xCORE-AVX512
 lib_libskx2_la_CXXFLAGS = -O3 -xCORE-AVX512
@@ -400,14 +400,14 @@ endif
 #noinst_LTLIBRARIES += lib/libmic.la
 #lib_libtblis_la_LIBADD += lib/libmic.la
 #lib_libmic_la_SOURCES = src/external/blis/config/mic/kernels/3/bli_dgemm_opt_30x8.c \
-#					     src/external/blis/config/mic/kernels/3/bli_sgemm_opt_30x16.c
+#                         src/external/blis/config/mic/kernels/3/bli_sgemm_opt_30x16.c
 #lib_libmic_la_CFLAGS = -Isrc/external/blis/config/mic -fasm-blocks
 #endif
 
 #
 # ARM architectures
 # 
-	
+    
 #if ENABLE_ARMV7A
 #noinst_LTLIBRARIES += lib/libarmv7a.la
 #lib_libtblis_la_LIBADD += lib/libarmv7a.la
@@ -481,7 +481,24 @@ noinst_PROGRAMS += bin/skx_bench
 endif
 endif
 endif
-bin_test_SOURCES = test/test.cxx
+
+bin_test_SOURCES = test/test.cxx \
+                   \
+                   test/1t/dot.cxx \
+                   test/1t/reduce.cxx \
+                   test/1t/scale.cxx \
+                   test/1t/replicate.cxx \
+                   test/1t/trace.cxx \
+                   test/1t/transpose.cxx \
+                   \
+                   test/3m/gemm.cxx \
+                   test/3m/gemv.cxx \
+                   test/3m/ger.cxx \
+                   \
+                   test/3t/contract.cxx \
+                   test/3t/mult.cxx \
+                   test/3t/outer_prod.cxx \
+                   test/3t/weight.cxx
 bin_skx_bench_SOURCES = test/skx_bench.cxx
 bin_bench_SOURCES = test/bench.cxx
 bin_batched_bench_SOURCES = test/batched_bench.cxx

@@ -25,7 +25,7 @@ matrix:
   
 before_install:
   - 'if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-        brew update && brew install gcc@6 tbb && brew install --with-toolchain llvm@3.9;
+        brew update && brew install gcc@6 tbb llvm@3.9;
         brew link --force llvm@3.9;
     fi'
 

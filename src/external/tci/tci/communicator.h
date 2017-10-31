@@ -5,10 +5,6 @@
 
 #include "context.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct tci_comm
 {
     tci_context* context;
@@ -30,14 +26,27 @@ enum
 typedef struct tci_range
 {
     uint64_t size;
-    uint64_t chunk;
     uint64_t grain;
+
+#ifdef __cplusplus
+    tci_range() : size(0), grain(1) {}
+
+    template <typename T>
+    tci_range(const T& size) : size(size), grain(1) {}
+
+    template <typename T, typename U>
+    tci_range(const T& size, const U& grain) : size(size), grain(grain) {}
+#endif
 } tci_range;
 
 typedef void (*tci_range_func)(tci_comm*, uint64_t, uint64_t, void*);
 
 typedef void (*tci_range_2d_func)(tci_comm*, uint64_t, uint64_t,
                                   uint64_t, uint64_t, void*);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern tci_comm* const tci_single;
 
@@ -146,40 +155,6 @@ using index_sequence_for = make_index_sequence<sizeof...(T)>;
 
 }
 
-class range
-{
-    public:
-        range(uint64_t size = 0)
-        {
-            range_.size = size;
-            range_.chunk = 1;
-            range_.grain = 1;
-        }
-
-        uint64_t size() const { return range_.size; }
-
-        uint64_t chunk() const { return range_.chunk; }
-
-        uint64_t grain() const { return range_.grain; }
-
-        range& chunk(uint64_t c)
-        {
-            range_.chunk = c;
-            return *this;
-        }
-
-        range& grain(uint64_t g)
-        {
-            range_.grain = g;
-            return *this;
-        }
-
-        operator tci_range() const { return range_; }
-
-    protected:
-        tci_range range_;
-};
-
 class communicator
 {
     protected:
@@ -213,11 +188,15 @@ class communicator
                 template <typename Func>
                 void visit(unsigned task, Func&& func)
                 {
+                    typedef typename std::decay<Func>::type RealFunc;
+                    RealFunc* payload = new RealFunc(std::forward<Func>(func));
                     tci_task_set_visit(&_tasks,
-                    [](tci_comm* comm, unsigned, void* payload)
+                    [](tci_comm* comm, unsigned, void* payload_)
                     {
-                        (*(Func*)payload)(*reinterpret_cast<const communicator*>(comm));
-                    }, task, &func);
+                        RealFunc* payload = (RealFunc*)payload_;
+                        (*payload)(*reinterpret_cast<const communicator*>(comm));
+                        delete payload;
+                    }, task, payload);
                 }
 
             protected:
@@ -233,7 +212,8 @@ class communicator
                     tci_task_set_visit_all(&_tasks,
                     [](tci_comm* comm, unsigned task, void* payload)
                     {
-                        (*(Func*)payload)(*reinterpret_cast<const communicator*>(comm), task);
+                        (*(typename std::decay<Func>::type*)payload)
+                            (*reinterpret_cast<const communicator*>(comm), task);
                     }, &func);
                 }
 
@@ -340,46 +320,48 @@ class communicator
         }
 
         template <typename Func>
-        void distribute_over_gangs(const range& n, Func&& func) const
+        void distribute_over_gangs(const tci_range& n, Func&& func) const
         {
             tci_comm_distribute_over_gangs(*this, n,
             [](tci_comm* comm, uint64_t first, uint64_t last, void* payload)
             {
-                (*(Func*)payload)(first, last);
+                (*(typename std::decay<Func>::type*)payload)(first, last);
             }, &func);
         }
 
         template <typename Func>
-        void distribute_over_threads(const range& n, Func&& func) const
+        void distribute_over_threads(const tci_range& n, Func&& func) const
         {
             tci_comm_distribute_over_threads(*this, n,
             [](tci_comm*, uint64_t first, uint64_t last, void* payload)
             {
-                (*(Func*)payload)(first, last);
+                (*(typename std::decay<Func>::type*)payload)(first, last);
             }, &func);
         }
 
         template <typename Func>
-        void distribute_over_gangs(const range& m, const range& n,
+        void distribute_over_gangs(const tci_range& m, const tci_range& n,
                                    Func&& func) const
         {
             tci_comm_distribute_over_gangs_2d(*this, m, n,
             [](tci_comm* comm, uint64_t mfirst, uint64_t mlast,
                uint64_t nfirst, uint64_t nlast, void* payload)
             {
-                (*(Func*)payload)(mfirst, mlast, nfirst, nlast);
+                (*(typename std::decay<Func>::type*)payload)
+                    (mfirst, mlast, nfirst, nlast);
             }, &func);
         }
 
         template <typename Func>
-        void distribute_over_threads(const range& m, const range& n,
+        void distribute_over_threads(const tci_range& m, const tci_range& n,
                                      Func&& func) const
         {
             tci_comm_distribute_over_threads_2d(*this, m, n,
             [](tci_comm*, uint64_t mfirst, uint64_t mlast,
                uint64_t nfirst, uint64_t nlast, void* payload)
             {
-                (*(Func*)payload)(mfirst, mlast, nfirst, nlast);
+                (*(typename std::decay<Func>::type*)payload)
+                    (mfirst, mlast, nfirst, nlast);
             }, &func);
         }
 

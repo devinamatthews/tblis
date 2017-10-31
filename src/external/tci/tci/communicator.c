@@ -138,7 +138,6 @@ int tci_comm_gang(tci_comm* parent, tci_comm* child,
 
     if (!parent->context || (type & TCI_NO_CONTEXT))
     {
-        abort();
         tci_comm_init(child, NULL, new_nthread, new_tid, n, block);
     }
     else
@@ -215,6 +214,333 @@ static void tci_distribute_2d(unsigned num, unsigned idx, tci_comm* comm,
                nfirst*range_n.grain, TCI_MIN(nlast*range_n.grain, range_n.size), payload);
 }
 
+#elif TCI_USE_TBB_THREADS
+
+static void tci_distribute(unsigned n, unsigned idx, tci_comm* comm,
+                           tci_range range, tci_range_func func, void* payload)
+{
+    if (n == 1)
+    {
+        func(comm, 0, range.size, payload);
+        return;
+    }
+
+    range.grain = TCI_MAX(range.grain, 1);
+    uint64_t ngrain = (range.size+range.grain-1)/range.grain;
+
+    tbb::task_group tg;
+
+    for (unsigned idx = 0;idx < n;idx++)
+    {
+        tg.run(
+        [&,idx]
+        {
+            uint64_t first = (idx*ngrain)/n;
+            uint64_t last = ((idx+1)*ngrain)/n;
+
+            func(comm, first*range.grain, TCI_MIN(last*range.grain, range.size), payload);
+        });
+    }
+
+    tg.wait();
+}
+
+static void tci_distribute_2d(unsigned num, unsigned idx, tci_comm* comm,
+                              tci_range range_m, tci_range range_n,
+                              tci_range_2d_func func, void* payload)
+{
+    if (num == 1)
+    {
+        func(comm, 0, range_m.size, 0, range_n.size, payload);
+        return;
+    }
+
+    unsigned m, n;
+    tci_partition_2x2(num, range_m.size, num, range_n.size, num, &m, &n);
+
+    range_m.grain = TCI_MAX(range_m.grain, 1);
+    range_n.grain = TCI_MAX(range_n.grain, 1);
+    uint64_t mgrain = (range_m.size+range_m.grain-1)/range_m.grain;
+    uint64_t ngrain = (range_n.size+range_n.grain-1)/range_n.grain;
+
+    tbb::task_group tg;
+
+    for (unsigned idx_m = 0;idx_m < m;idx_m++)
+    {
+        for (unsigned idx_n = 0;idx_n < n;idx_n++)
+        {
+            tg.run(
+            [&,idx_m,idx_n]
+            {
+                uint64_t mfirst = (idx_m*mgrain)/m;
+                uint64_t nfirst = (idx_n*ngrain)/n;
+                uint64_t mlast = ((idx_m+1)*mgrain)/m;
+                uint64_t nlast = ((idx_n+1)*ngrain)/n;
+
+                func(comm, mfirst*range_m.grain, TCI_MIN(mlast*range_m.grain, range_m.size),
+                           nfirst*range_n.grain, TCI_MIN(nlast*range_n.grain, range_n.size), payload);
+            });
+        }
+    }
+
+    tg.wait();
+}
+
+#elif TCI_USE_OMPTASK_THREADS
+
+static void tci_distribute(unsigned n, unsigned idx, tci_comm* comm,
+                           tci_range range, tci_range_func func, void* payload)
+{
+    (void)idx;
+
+    if (n == 1)
+    {
+        func(comm, 0, range.size, payload);
+        return;
+    }
+
+    range.grain = TCI_MAX(range.grain, 1);
+    uint64_t ngrain = (range.size+range.grain-1)/range.grain;
+
+    #pragma omp taskgroup
+    {
+        for (uint64_t idx = 0;idx < n;idx++)
+        {
+            #pragma omp task
+            {
+                uint64_t first = (idx*ngrain)/n;
+                uint64_t last = ((idx+1)*ngrain)/n;
+
+                func(comm, first*range.grain, TCI_MIN(last*range.grain, range.size), payload);
+            }
+        }
+    }
+}
+
+static void tci_distribute_2d(unsigned num, unsigned idx, tci_comm* comm,
+                              tci_range range_m, tci_range range_n,
+                              tci_range_2d_func func, void* payload)
+{
+    (void)idx;
+
+    if (num == 1)
+    {
+        func(comm, 0, range_m.size, 0, range_n.size, payload);
+        return;
+    }
+
+    unsigned m, n;
+    tci_partition_2x2(num, range_m.size, num, range_n.size, num, &m, &n);
+
+    range_m.grain = TCI_MAX(range_m.grain, 1);
+    range_n.grain = TCI_MAX(range_n.grain, 1);
+    uint64_t mgrain = (range_m.size+range_m.grain-1)/range_m.grain;
+    uint64_t ngrain = (range_n.size+range_n.grain-1)/range_n.grain;
+
+    #pragma omp taskgroup
+    {
+        for (uint64_t idx_m = 0;idx_m < m;idx_m++)
+        {
+            for (uint64_t idx_n = 0;idx_n < n;idx_n++)
+            {
+                #pragma omp task
+                {
+                    uint64_t mfirst = (idx_m*mgrain)/m;
+                    uint64_t nfirst = (idx_n*ngrain)/n;
+                    uint64_t mlast = ((idx_m+1)*mgrain)/m;
+                    uint64_t nlast = ((idx_n+1)*ngrain)/n;
+
+                    func(comm, mfirst*range_m.grain, TCI_MIN(mlast*range_m.grain, range_m.size),
+                               nfirst*range_n.grain, TCI_MIN(nlast*range_n.grain, range_n.size), payload);
+                }
+            }
+        }
+    }
+}
+
+#elif TCI_USE_DISPATCH_THREADS
+
+typedef struct tci_distribute_func_data
+{
+    tci_comm* comm;
+    tci_range_func func;
+    uint64_t n;
+    tci_range* range;
+    void* payload;
+} tci_distribute_func_data;
+
+static void tci_distribute_func(void* data_, size_t idx)
+{
+    tci_distribute_func_data* data = (tci_distribute_func_data*)data_;
+
+    uint64_t ngrain = (data->range->size+data->range->grain-1)/data->range->grain;
+    uint64_t first = (idx*ngrain)/data->n;
+    uint64_t last = ((idx+1)*ngrain)/data->n;
+
+    data->func(data->comm, first*data->range->grain,
+               TCI_MIN(last*data->range->grain, data->range->size), data->payload);
+}
+
+typedef struct tci_distribute_2d_func_data
+{
+    tci_comm* comm;
+    tci_range_2d_func func;
+    uint64_t m, n;
+    tci_range *range_m, *range_n;
+    void* payload;
+} tci_distribute_2d_func_data;
+
+static void tci_distribute_2d_func(void* data_, size_t idx)
+{
+    tci_distribute_2d_func_data* data = (tci_distribute_2d_func_data*)data_;
+
+    unsigned idx_m = idx % data->m;
+    unsigned idx_n = idx / data->m;
+
+    uint64_t mgrain = (data->range_m->size+data->range_m->grain-1)/data->range_m->grain;
+    uint64_t ngrain = (data->range_n->size+data->range_n->grain-1)/data->range_n->grain;
+    uint64_t mfirst = (idx_m*mgrain)/data->m;
+    uint64_t nfirst = (idx_n*ngrain)/data->n;
+    uint64_t mlast = ((idx_m+1)*mgrain)/data->m;
+    uint64_t nlast = ((idx_n+1)*ngrain)/data->n;
+
+    data->func(data->comm, mfirst*data->range_m->grain,
+               TCI_MIN(mlast*data->range_m->grain, data->range_m->size),
+               nfirst*data->range_n->grain,
+               TCI_MIN(nlast*data->range_n->grain, data->range_n->size), data->payload);
+}
+
+static void tci_distribute(unsigned n, unsigned idx, tci_comm* comm,
+                           tci_range range, tci_range_func func, void* payload)
+{
+    (void)idx;
+
+    if (n == 1)
+    {
+        func(comm, 0, range.size, payload);
+        return;
+    }
+
+    range.grain = TCI_MAX(range.grain, 1);
+
+    tci_distribute_func_data data = {comm, func, n, &range, payload};
+    dispatch_queue_t queue =
+        dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+
+    dispatch_apply_f(n, queue, &data, tci_distribute_func);
+}
+
+static void tci_distribute_2d(unsigned num, unsigned idx, tci_comm* comm,
+                              tci_range range_m, tci_range range_n,
+                              tci_range_2d_func func, void* payload)
+{
+    (void)idx;
+
+    if (num == 1)
+    {
+        func(comm, 0, range_m.size, 0, range_n.size, payload);
+        return;
+    }
+
+    unsigned m, n;
+    tci_partition_2x2(num, range_m.size, num, range_n.size, num, &m, &n);
+
+    range_m.grain = TCI_MAX(range_m.grain, 1);
+    range_n.grain = TCI_MAX(range_n.grain, 1);
+
+    tci_distribute_2d_func_data data = {comm, func, m, n, &range_m, &range_n, payload};
+    dispatch_queue_t queue =
+        dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+
+    dispatch_apply_f(m*n, queue, &data, tci_distribute_2d_func);
+}
+
+#elif TCI_USE_PPL_THREADS
+
+static void tci_distribute(unsigned n, unsigned idx, tci_comm* comm,
+                           tci_range range, tci_range_func func, void* payload)
+{
+    (void)idx;
+
+    if (n == 1)
+    {
+        func(comm, 0, range.size, payload);
+        return;
+    }
+
+    range.grain = TCI_MAX(range.grain, 1);
+    uint64_t ngrain = (range.size+range.grain-1)/range.grain;
+
+    concurrency::parallel_for(uint64_t(), n,
+    [&](uint64_t idx)
+    {
+        uint64_t first = (idx*ngrain)/n;
+        uint64_t last = ((idx+1)*ngrain)/n;
+
+        func(comm, first*range.grain,
+             TCI_MIN(last*range.grain, range.size), payload);
+    });
+}
+
+static void tci_distribute_2d(unsigned num, unsigned idx, tci_comm* comm,
+                              tci_range range_m, tci_range range_n,
+                              tci_range_2d_func func, void* payload)
+{
+    (void)idx;
+
+    if (num == 1)
+    {
+        func(comm, 0, range_m.size, 0, range_n.size, payload);
+        return;
+    }
+
+    unsigned m, n;
+    tci_partition_2x2(num, range_m.size, num, range_n.size, num, &m, &n);
+
+    range_m.grain = TCI_MAX(range_m.grain, 1);
+    range_n.grain = TCI_MAX(range_n.grain, 1);
+    uint64_t mgrain = (range_m.size+range_m.grain-1)/range_m.grain;
+    uint64_t ngrain = (range_n.size+range_n.grain-1)/range_n.grain;
+
+    concurrency::parallel_for(uint64_t(), m*n,
+    [&](uint64_t idx)
+    {
+        unsigned idx_m = idx % m;
+        unsigned idx_n = idx / m;
+
+        uint64_t mfirst = (idx_m*mgrain)/m;
+        uint64_t nfirst = (idx_n*ngrain)/n;
+        uint64_t mlast = ((idx_m+1)*mgrain)/m;
+        uint64_t nlast = ((idx_n+1)*ngrain)/n;
+
+        func(comm, mfirst*range_m.grain,
+                   TCI_MIN(mlast*range_m.grain, range_m.size),
+                   nfirst*range_n.grain,
+                   TCI_MIN(nlast*range_n.grain, range_n.size), payload);
+    });
+}
+
+#else // single threaded
+
+static void tci_distribute(unsigned n, unsigned idx, tci_comm* comm,
+                           tci_range range, tci_range_func func, void* payload)
+{
+    (void)n;
+    (void)idx;
+    func(comm, 0, range.size, payload);
+}
+
+static void tci_distribute_2d(unsigned n, unsigned idx, tci_comm* comm,
+                              tci_range range_m, tci_range range_n,
+                              tci_range_2d_func func, void* payload)
+{
+    (void)n;
+    (void)idx;
+    func(comm, 0, range_m.size, 0, range_n.size, payload);
+}
+
+#endif
+
 void tci_comm_distribute_over_gangs(tci_comm* comm, tci_range range,
                                     tci_range_func func, void* payload)
 {
@@ -242,324 +568,3 @@ void tci_comm_distribute_over_threads_2d(tci_comm* comm, tci_range range_m,
     tci_distribute_2d(comm->nthread, comm->tid, tci_single, range_m, range_n,
                       func, payload);
 }
-
-#elif TCI_USE_TBB_THREADS
-
-void tci_comm_distribute_over_gangs(tci_comm* comm, tci_range range,
-                                    tci_range_func func, void* payload)
-{
-    range.grain = TCI_MAX(range.grain, 1);
-    range.chunk = TCI_MAX(range.chunk, range.grain);
-
-    tbb::parallel_for(tbb::blocked_range<uint64_t>(0,
-        (range.size+range.grain-1)/range.grain, range.chunk/range.grain),
-    [&](const tbb::blocked_range<uint64_t>& br)
-    {
-        func(tci_single, br.begin()*range.grain,
-             TCI_MIN(br.end()*range.grain, range.size), payload);
-    });
-}
-
-void tci_comm_distribute_over_threads(tci_comm* comm, tci_range range,
-                                      tci_range_func func, void* payload)
-{
-    tci_comm_distribute_over_gangs(comm, range, func, payload);
-}
-
-void tci_comm_distribute_over_gangs_2d(tci_comm* comm, tci_range range_m,
-                                       tci_range range_n,
-                                       tci_range_2d_func func, void* payload)
-{
-    range_m.grain = TCI_MAX(range_m.grain, 1);
-    range_n.grain = TCI_MAX(range_n.grain, 1);
-    range_m.chunk = TCI_MAX(range_m.chunk, range_m.grain);
-    range_n.chunk = TCI_MAX(range_n.chunk, range_n.grain);
-
-    tbb::parallel_for(tbb::blocked_range2d<uint64_t>(0,
-        (range_m.size+range_m.grain-1)/range_m.grain, range_m.chunk/range_m.grain,
-        (range_n.size+range_n.grain-1)/range_n.grain, range_n.chunk/range_n.grain)),
-    [&](const tbb::blocked_range2d<uint64_t>& br)
-    {
-        func(tci_single, br.rows().begin()*range_m.grain,
-             TCI_MIN(br.rows().end()*range_m.grain, range_m.size),
-             br.cols().begin()*range_n.grain,
-             TCI_MIN(br.cols().end()*range_n.grain, range_n.size), payload);
-    });
-}
-
-void tci_comm_distribute_over_threads_2d(tci_comm* comm, tci_range range_m,
-                                         tci_range range_n,
-                                         tci_range_2d_func func, void* payload)
-{
-    tci_comm_distribute_over_gangs_2d(comm, range_m, range_n, func, payload);
-}
-
-#elif TCI_USE_OMPTASK_THREADS
-
-void tci_comm_distribute_over_gangs(tci_comm* comm, tci_range range,
-                                    tci_range_func func, void* payload)
-{
-    range.grain = TCI_MAX(range.grain, 1);
-    range.chunk = TCI_MAX(range.chunk, range.grain);
-
-    uint64_t n = (range.size+range.chunk-1)/range.chunk;
-    uint64_t ngrain = (range.size+range.grain-1)/range.grain;
-
-    #pragma omp taskgroup
-    {
-        uint64_t first = 0;
-        for (uint64_t idx = 0;idx < n;idx++)
-        {
-            uint64_t last = TCI_MIN((((idx+1)*ngrain)/n)*range.grain, range.size);
-
-            #pragma omp task
-            func(tci_single, first, last, payload);
-
-            first = last;
-        }
-    }
-}
-
-void tci_comm_distribute_over_threads(tci_comm* comm, tci_range range,
-                                      tci_range_func func, void* payload)
-{
-    tci_comm_distribute_over_gangs(comm, range, func, payload);
-}
-
-void tci_comm_distribute_over_gangs_2d(tci_comm* comm, tci_range range_m,
-                                       tci_range range_n,
-                                       tci_range_2d_func func, void* payload)
-{
-    range_m.grain = TCI_MAX(range_m.grain, 1);
-    range_n.grain = TCI_MAX(range_n.grain, 1);
-    range_m.chunk = TCI_MAX(range_m.chunk, range_m.grain);
-    range_n.chunk = TCI_MAX(range_n.chunk, range_n.grain);
-
-    uint64_t m = (range_m.size+range_m.chunk-1)/range_m.chunk;
-    uint64_t n = (range_n.size+range_n.chunk-1)/range_n.chunk;
-    uint64_t mgrain = (range_m.size+range_m.grain-1)/range_m.grain;
-    uint64_t ngrain = (range_n.size+range_n.grain-1)/range_n.grain;
-
-    #pragma omp taskgroup
-    {
-        uint64_t mfirst = 0;
-        for (uint64_t idx_m = 0;idx_m < m;idx_m++)
-        {
-            uint64_t mlast = TCI_MIN((((idx_m+1)*mgrain)/m)*range_m.grain, range_m.size);
-
-            uint64_t nfirst = 0;
-            for (uint64_t idx_n = 0;idx_n < n;idx_n++)
-            {
-                uint64_t nlast = TCI_MIN((((idx_n+1)*ngrain)/n)*range_n.grain, range_n.size);
-
-                #pragma omp task
-                func(tci_single, mfirst, mlast, nfirst, nlast, payload);
-
-                nfirst = nlast;
-            }
-
-            mfirst = mlast;
-        }
-    }
-}
-
-void tci_comm_distribute_over_threads_2d(tci_comm* comm, tci_range range_m,
-                                         tci_range range_n,
-                                         tci_range_2d_func func, void* payload)
-{
-    tci_comm_distribute_over_gangs_2d(comm, range_m, range_n, func, payload);
-}
-
-#elif TCI_USE_DISPATCH_THREADS
-
-typedef struct tci_distribute_func_data
-{
-    tci_range_func func;
-    uint64_t n;
-    tci_range* range;
-    void* payload;
-} tci_distribute_func_data;
-
-static void tci_distribute_func(void* data_, size_t idx)
-{
-    tci_distribute_func_data* data = (tci_distribute_func_data*)data_;
-
-    uint64_t ngrain = (data->range->size+data->range->grain-1)/data->range->grain;
-    uint64_t first = (idx*ngrain)/data->n;
-    uint64_t last = ((idx+1)*ngrain)/data->n;
-
-    data->func(tci_single, first*data->range->grain,
-               TCI_MIN(last*data->range->grain, data->range->size), data->payload);
-}
-
-typedef struct tci_distribute_2d_func_data
-{
-    tci_range_2d_func func;
-    uint64_t m, n;
-    tci_range *range_m, *range_n;
-    void* payload;
-} tci_distribute_2d_func_data;
-
-static void tci_distribute_2d_func(void* data_, size_t idx)
-{
-    tci_distribute_2d_func_data* data = (tci_distribute_2d_func_data*)data_;
-
-    unsigned idx_m = idx % data->m;
-    unsigned idx_n = idx / data->m;
-
-    uint64_t mgrain = (data->range_m->size+data->range_m->grain-1)/data->range_m->grain;
-    uint64_t ngrain = (data->range_n->size+data->range_n->grain-1)/data->range_n->grain;
-    uint64_t mfirst = (idx_m*mgrain)/data->m;
-    uint64_t nfirst = (idx_n*ngrain)/data->n;
-    uint64_t mlast = ((idx_m+1)*mgrain)/data->m;
-    uint64_t nlast = ((idx_n+1)*ngrain)/data->n;
-
-    data->func(tci_single, mfirst*data->range_m->grain,
-               TCI_MIN(mlast*data->range_m->grain, data->range_m->size),
-               nfirst*data->range_n->grain,
-               TCI_MIN(nlast*data->range_n->grain, data->range_n->size), data->payload);
-}
-
-void tci_comm_distribute_over_gangs(tci_comm* comm, tci_range range,
-                                    tci_range_func func, void* payload)
-{
-    range.grain = TCI_MAX(range.grain, 1);
-    range.chunk = TCI_MAX(range.chunk, range.grain);
-
-    uint64_t n = (range.size+range.chunk-1)/range.chunk;
-
-    tci_distribute_func_data data = {func, n, &range, payload};
-    dispatch_queue_t queue =
-        dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-
-    dispatch_apply_f(n, queue, &data, tci_distribute_func);
-}
-
-void tci_comm_distribute_over_threads(tci_comm* comm, tci_range range,
-                                      tci_range_func func, void* payload)
-{
-    tci_comm_distribute_over_gangs(comm, range, func, payload);
-}
-
-void tci_comm_distribute_over_gangs_2d(tci_comm* comm, tci_range range_m,
-                                       tci_range range_n,
-                                       tci_range_2d_func func, void* payload)
-{
-    range_m.grain = TCI_MAX(range_m.grain, 1);
-    range_n.grain = TCI_MAX(range_n.grain, 1);
-    range_m.chunk = TCI_MAX(range_m.chunk, range_m.grain);
-    range_n.chunk = TCI_MAX(range_n.chunk, range_n.grain);
-
-    uint64_t m = (range_m.size+range_m.chunk-1)/range_m.chunk;
-    uint64_t n = (range_n.size+range_n.chunk-1)/range_n.chunk;
-
-    tci_distribute_2d_func_data data = {func, m, n, &range_m, &range_n, payload};
-    dispatch_queue_t queue =
-        dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-
-    dispatch_apply_f(m*n, queue, &data, tci_distribute_2d_func);
-}
-
-void tci_comm_distribute_over_threads_2d(tci_comm* comm, tci_range range_m,
-                                         tci_range range_n,
-                                         tci_range_2d_func func, void* payload)
-{
-    tci_comm_distribute_over_gangs_2d(comm, range_m, range_n, func, payload);
-}
-
-#elif TCI_USE_PPL_THREADS
-
-void tci_comm_distribute_over_gangs(tci_comm* comm, tci_range range,
-                                    tci_range_func func, void* payload)
-{
-    range.grain = TCI_MAX(range.grain, 1);
-    range.chunk = TCI_MAX(range.chunk, range.grain);
-
-    uint64_t n = (range.size+range.chunk-1)/range.chunk;
-
-    concurrency::parallel_for(uint64_t(), n,
-    [&](uint64_t idx)
-    {
-        uint64_t ngrain = (range.size+range.grain-1)/range.grain;
-        uint64_t first = (idx*ngrain)/n;
-        uint64_t last = ((idx+1)*ngrain)/n;
-
-        func(tci_single, first*range.grain,
-             TCI_MIN(last*range.grain, range.size), payload);
-    });
-}
-
-void tci_comm_distribute_over_threads(tci_comm* comm, tci_range range,
-                                      tci_range_func func, void* payload)
-{
-    tci_comm_distribute_over_gangs(comm, range, func, payload);
-}
-
-void tci_comm_distribute_over_gangs_2d(tci_comm* comm, tci_range range_m,
-                                       tci_range range_n,
-                                       tci_range_2d_func func, void* payload)
-{
-    range_m.grain = TCI_MAX(range_m.grain, 1);
-    range_n.grain = TCI_MAX(range_n.grain, 1);
-    range_m.chunk = TCI_MAX(range_m.chunk, range_m.grain);
-    range_n.chunk = TCI_MAX(range_n.chunk, range_n.grain);
-
-    uint64_t m = (range_m.size+range_m.chunk-1)/range_m.chunk;
-    uint64_t n = (range_n.size+range_n.chunk-1)/range_n.chunk;
-
-    concurrency::parallel_for(uint64_t(), m*n,
-    [&](uint64_t idx)
-    {
-        unsigned idx_m = idx % m;
-        unsigned idx_n = idx / m;
-
-        uint64_t mgrain = (range_m.size+range_m.grain-1)/range_m.grain;
-        uint64_t ngrain = (range_n.size+range_n.grain-1)/range_n.grain;
-        uint64_t mfirst = (idx_m*mgrain)/m;
-        uint64_t nfirst = (idx_n*ngrain)/n;
-        uint64_t mlast = ((idx_m+1)*mgrain)/m;
-        uint64_t nlast = ((idx_n+1)*ngrain)/n;
-
-        func(tci_single, mfirst*range_m.grain,
-                   TCI_MIN(mlast*range_m.grain, range_m.size),
-                   nfirst*range_n.grain,
-                   TCI_MIN(nlast*range_n.grain, range_n.size), payload);
-    });
-}
-
-void tci_comm_distribute_over_threads_2d(tci_comm* comm, tci_range range_m,
-                                         tci_range range_n,
-                                         tci_range_2d_func func, void* payload)
-{
-    tci_comm_distribute_over_gangs_2d(comm, range_m, range_n, func, payload);
-}
-
-#else // single threaded
-
-void tci_comm_distribute_over_gangs(tci_comm* comm, tci_range range,
-                                    tci_range_func func, void* payload)
-{
-    func(comm, 0, range.size, payload);
-}
-
-void tci_comm_distribute_over_threads(tci_comm* comm, tci_range range,
-                                      tci_range_func func, void* payload)
-{
-    func(comm, 0, range.size, payload);
-}
-
-void tci_comm_distribute_over_gangs_2d(tci_comm* comm, tci_range range_m,
-                                       tci_range range_n,
-                                       tci_range_2d_func func, void* payload)
-{
-    func(comm, 0, range_m.size, 0, range_n.size, payload);
-}
-
-void tci_comm_distribute_over_threads_2d(tci_comm* comm, tci_range range_m,
-                                         tci_range range_n,
-                                         tci_range_2d_func func, void* payload)
-{
-    func(comm, 0, range_m.size, 0, range_n.size, payload);
-}
-
-#endif

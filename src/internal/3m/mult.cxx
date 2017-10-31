@@ -44,10 +44,10 @@ void mult(const communicator& comm, const config& cfg,
     gemm_thread_config tc = make_gemm_thread_config<T>(cfg, nt, m, n, k);
 
     GotoGEMM gemm;
-    step<0>(gemm).distribute = tc.jc_nt;
-    step<3>(gemm).distribute = tc.ic_nt;
-    step<5>(gemm).distribute = tc.jr_nt;
-    step<6>(gemm).distribute = tc.ir_nt;
+    step<0>(gemm).subcomm =                  comm.gang(TCI_EVENLY, tc.jc_nt);
+    step<3>(gemm).subcomm = step<0>(gemm).subcomm.gang(TCI_EVENLY, tc.ic_nt);
+    step<5>(gemm).subcomm = step<3>(gemm).subcomm.gang(TCI_EVENLY, tc.jr_nt);
+    step<6>(gemm).subcomm = step<5>(gemm).subcomm.gang(TCI_EVENLY, tc.ir_nt);
 
     gemm(comm, cfg, alpha, Av, Bv, beta, Cv);
 

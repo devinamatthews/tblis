@@ -15,8 +15,7 @@ void shift(const communicator& comm, const config& cfg, len_type m, len_type n,
         std::swap(rs_A, cs_A);
     }
 
-    comm.distribute_over_threads(tci::range(m).chunk(1000),
-                                 tci::range(n).chunk(1000/m),
+    comm.distribute_over_threads(m, n,
     [&](len_type m_min, len_type m_max, len_type n_min, len_type n_max)
     {
         for (len_type j = n_min;j < n_max;j++)

@@ -193,10 +193,15 @@ void reduce_init(reduce_t op, atomic_reducer<T>& pair)
 template <typename T>
 void reduce(const communicator& comm, reduce_t op, T& value, len_type& idx)
 {
+#if TCI_USE_OPENMP_THREADS || TCI_USE_PTHREADS_THREADS || TCI_USE_WINDOWS_THREADS
     if (comm.num_threads() == 1)
     {
+#endif
+
         if (op == REDUCE_NORM_2) value = sqrt(value);
         return;
+
+#if TCI_USE_OPENMP_THREADS || TCI_USE_PTHREADS_THREADS || TCI_USE_WINDOWS_THREADS
     }
 
     std::vector<std::pair<T,len_type>> vals;
@@ -266,12 +271,21 @@ void reduce(const communicator& comm, reduce_t op, T& value, len_type& idx)
     }
 
     comm.barrier();
+#endif
 }
 
 template <typename T>
 void reduce(const communicator& comm, T& value)
 {
-    if (comm.num_threads() == 1) return;
+#if TCI_USE_OPENMP_THREADS || TCI_USE_PTHREADS_THREADS || TCI_USE_WINDOWS_THREADS
+    if (comm.num_threads() == 1)
+    {
+#endif
+
+        return;
+
+#if TCI_USE_OPENMP_THREADS || TCI_USE_PTHREADS_THREADS || TCI_USE_WINDOWS_THREADS
+    }
 
     std::vector<T> vals;
     if (comm.master()) vals.resize(comm.num_threads());
@@ -294,6 +308,7 @@ void reduce(const communicator& comm, T& value)
     }
 
     comm.barrier();
+#endif
 }
 
 template <typename T>

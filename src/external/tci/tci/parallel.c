@@ -178,7 +178,8 @@ int tci_parallelize(tci_thread_func func, void* payload,
 int tci_parallelize(tci_thread_func func, void* payload,
                     unsigned nthread, unsigned arity)
 {
-    func(tci_single, payload);
+    tci_comm comm = {NULL, 1, 0, nthread, 0};
+    func(&comm, payload);
     return 0;
 }
 

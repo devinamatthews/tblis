@@ -21,8 +21,7 @@ void set(const communicator& comm, const config& cfg,
     stride_type stride0 = (empty ? 1 : stride_A[0]);
     len_vector stride1(stride_A.begin() + !empty, stride_A.end());
 
-    comm.distribute_over_threads(tci::range(n0).chunk(1000),
-                                 tci::range(n1).chunk(1000/n0),
+    comm.distribute_over_threads(n0, n1,
     [&](len_type n0_min, len_type n0_max, len_type n1_min, len_type n1_max)
     {
         auto A1 = A;

@@ -19,8 +19,7 @@ void reduce(const communicator& comm, const config& cfg, reduce_t op,
     atomic_reducer<T> local_result;
     reduce_init(op, local_result);
 
-    comm.distribute_over_threads(tci::range(m).chunk(1000),
-                                 tci::range(n).chunk(1000/m),
+    comm.distribute_over_threads(m, n,
     [&](len_type m_min, len_type m_max, len_type n_min, len_type n_max)
     {
         T micro_result;

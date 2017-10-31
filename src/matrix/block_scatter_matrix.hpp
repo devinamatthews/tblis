@@ -210,8 +210,7 @@ void add(const communicator& comm, T alpha, tensor_matrix<T> A,
     stride_type cs_min = std::min(cs0_A, cs_B);
     stride_type cs_max = std::max(cs0_A, cs_B);
 
-    comm.distribute_over_threads(tci::range(m).chunk(50).grain(MB),
-                                 tci::range(n).chunk(50).grain(NB),
+    comm.distribute_over_threads({m, MB}, {n, NB},
     [&](len_type m_min, len_type m_max, len_type n_min, len_type n_max)
     {
         if (rs_min == 1 && (cs_min != 1 || cs_max < rs_max))
@@ -354,8 +353,7 @@ void add(const communicator& comm, T alpha, matrix_view<const T> A,
     stride_type cs_min = std::min(cs0_B, cs_A);
     stride_type cs_max = std::max(cs0_B, cs_A);
 
-    comm.distribute_over_threads(tci::range(m).chunk(50).grain(MB),
-                                 tci::range(n).chunk(50).grain(NB),
+    comm.distribute_over_threads({m, MB}, {n, NB},
     [&](len_type m_min, len_type m_max, len_type n_min, len_type n_max)
     {
         if (rs_min == 1 && (cs_min != 1 || cs_max < rs_max))

@@ -39,8 +39,7 @@ struct gemm_macro_kernel
         stride_type rs_c = C.stride(0);
         stride_type cs_c = C.stride(1);
 
-        comm.distribute_over_threads(tci::range((m+MR-1)/MR).chunk(chunk_m/MR),
-                                     tci::range((n+NR-1)/NR).chunk(chunk_n/NR),
+        comm.distribute_over_threads({(m+MR-1)/MR}, {(n+NR-1)/NR},
         [&](len_type m_first, len_type m_last, len_type n_first, len_type n_last)
         {
             T p_ab[512] __attribute__((aligned(64)));

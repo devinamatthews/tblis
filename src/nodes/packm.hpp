@@ -38,8 +38,7 @@ struct pack_row_panel
         const stride_type rs_a = A.stride( Trans);
         const stride_type cs_a = A.stride(!Trans);
 
-        comm.distribute_over_threads(tci::range(m_a).chunk(50).grain(MR),
-                                     tci::range(k_a).chunk(50).grain(KR),
+        comm.distribute_over_threads({m_a, MR}, {k_a, KR},
         [&](len_type m_first, len_type m_last, len_type k_first, len_type k_last)
         {
             const T*  p_a =  A.data() +  m_first       *rs_a + k_first*cs_a;
@@ -75,8 +74,7 @@ struct pack_row_panel
         const stride_type rs_a = A.stride( Trans);
         const stride_type cs_a = A.stride(!Trans);
 
-        comm.distribute_over_threads(tci::range(m_a).chunk(50).grain(MR),
-                                     tci::range(k_a).chunk(50).grain(KR),
+        comm.distribute_over_threads({m_a, MR}, {k_a, KR},
         [&](len_type m_first, len_type m_last, len_type k_first, len_type k_last)
         {
             const stride_type* rscat_a = A.scatter( Trans) + m_first;
@@ -146,8 +144,7 @@ struct pack_row_panel
         const len_type m_a = A.length( Trans);
         const len_type k_a = A.length(!Trans);
 
-        comm.distribute_over_threads(tci::range(m_a).chunk(50).grain(MR),
-                                     tci::range(k_a).chunk(50).grain(KR),
+        comm.distribute_over_threads({m_a, MR}, {k_a, KR},
         [&](len_type m_first, len_type m_last, len_type k_first, len_type k_last)
         {
             const T* p_a = A.raw_data();

@@ -27,8 +27,7 @@ void add(const communicator& comm, const config& cfg, len_type m, len_type n,
             std::swap(rs_B, cs_B);
         }
 
-        comm.distribute_over_threads(tci::range(m).chunk(50).grain(MR),
-                                     tci::range(n).chunk(50).grain(NR),
+        comm.distribute_over_threads({m, MR}, {n, NR},
         [&](len_type m_min, len_type m_max, len_type n_min, len_type n_max)
         {
             if (beta == T(0))
@@ -73,8 +72,7 @@ void add(const communicator& comm, const config& cfg, len_type m, len_type n,
             std::swap(rs_B, cs_B);
         }
 
-        comm.distribute_over_threads(tci::range(m).chunk(1000),
-                                     tci::range(n).chunk(1000/m),
+        comm.distribute_over_threads(m, n,
         [&](len_type m_min, len_type m_max, len_type n_min, len_type n_max)
         {
             if (beta == T(0))

@@ -1,3 +1,4 @@
+#include "communicator.h"
 #include "task_set.h"
 
 #ifdef __cplusplus

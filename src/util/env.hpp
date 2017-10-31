@@ -2,6 +2,7 @@
 #define _TBLIS_ENV_HPP_
 
 #include <string>
+#include <cstdlib>
 
 namespace tblis
 {

@@ -250,10 +250,10 @@ void contract_block(const communicator& comm, const config& cfg,
 
                                 TensorGEMM gemm;
 
-                                step<0>(gemm).distribute = tc.jc_nt;
-                                step<4>(gemm).distribute = tc.ic_nt;
-                                step<8>(gemm).distribute = tc.jr_nt;
-                                step<9>(gemm).distribute = tc.ir_nt;
+                                step<0>(gemm).subcomm =                  comm.gang(TCI_EVENLY, tc.jc_nt);
+                                step<4>(gemm).subcomm = step<0>(gemm).subcomm.gang(TCI_EVENLY, tc.ic_nt);
+                                step<8>(gemm).subcomm = step<4>(gemm).subcomm.gang(TCI_EVENLY, tc.jr_nt);
+                                step<9>(gemm).subcomm = step<8>(gemm).subcomm.gang(TCI_EVENLY, tc.ir_nt);
 
                                 gemm(subcomm, cfg, alpha, at, bt, beta, ct);
 

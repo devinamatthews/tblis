@@ -98,7 +98,7 @@ void add(const communicator& comm, const config& cfg,
         //TODO sum (reduce?) ukr
         //TODO fused ukr
 
-        comm.distribute_over_threads(tci::range(n_AB).chunk(1000/n_A),
+        comm.distribute_over_threads(n_AB,
         [&](len_type n_min, len_type n_max)
         {
             auto A1 = A;
@@ -126,7 +126,7 @@ void add(const communicator& comm, const config& cfg,
         //TODO replicate ukr
         //TODO fused ukr
 
-        comm.distribute_over_threads(tci::range(n_AB).chunk(1000/n_B),
+        comm.distribute_over_threads(n_AB,
         [&](len_type n_min, len_type n_max)
         {
             auto A1 = A;
@@ -170,8 +170,7 @@ void add(const communicator& comm, const config& cfg,
         stride_type stride_B0 = stride_B_AB[0];
         stride_vector stride_B1(stride_B_AB.begin()+1, stride_B_AB.end());
 
-        comm.distribute_over_threads(tci::range(n0).chunk(1000),
-                                     tci::range(n1).chunk(1000/n0),
+        comm.distribute_over_threads(n0, n1,
         [&](len_type n0_min, len_type n0_max, len_type n1_min, len_type n1_max)
         {
             auto A1 = A;

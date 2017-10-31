@@ -133,10 +133,10 @@ void contract_blis(const communicator& comm, const config& cfg,
 
     int nt = comm.num_threads();
     auto tc = make_gemm_thread_config<T>(cfg, nt, m, n, k);
-    step<0>(gemm).distribute = tc.jc_nt;
-    step<4>(gemm).distribute = tc.ic_nt;
-    step<8>(gemm).distribute = tc.jr_nt;
-    step<9>(gemm).distribute = tc.ir_nt;
+    step<0>(gemm).subcomm =                  comm.gang(TCI_EVENLY, tc.jc_nt);
+    step<4>(gemm).subcomm = step<0>(gemm).subcomm.gang(TCI_EVENLY, tc.ic_nt);
+    step<8>(gemm).subcomm = step<4>(gemm).subcomm.gang(TCI_EVENLY, tc.jr_nt);
+    step<9>(gemm).subcomm = step<8>(gemm).subcomm.gang(TCI_EVENLY, tc.ir_nt);
 
     gemm(comm, cfg, alpha, at, bt, beta, ct);
 }
@@ -306,7 +306,7 @@ void mult_vec(const communicator& comm, const config& cfg,
 
     len_type n = stl_ext::prod(len_ABC);
 
-    comm.distribute_over_threads(tci::range(n).chunk(1000),
+    comm.distribute_over_threads(n,
     [&](len_type n_min, len_type n_max)
     {
         auto A1 = A;

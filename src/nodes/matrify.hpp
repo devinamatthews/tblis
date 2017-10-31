@@ -26,7 +26,7 @@ void block_scatter(const communicator& comm, MatrixA& A,
     len_type m = A.length(0);
     len_type n = A.length(1);
 
-    comm.distribute_over_threads(tci::range(m).chunk(1000).grain(MB),
+    comm.distribute_over_threads({m, MB},
     [&](len_type first, len_type last)
     {
         A.length(0, last-first);
@@ -36,7 +36,7 @@ void block_scatter(const communicator& comm, MatrixA& A,
         A.length(0, m);
     });
 
-    comm.distribute_over_threads(tci::range(n).chunk(1000).grain(NB),
+    comm.distribute_over_threads({n, NB},
     [&](len_type first, len_type last)
     {
         A.length(1, last-first);

@@ -14,14 +14,10 @@ struct partition
 {
     Child child;
     communicator subcomm;
-    bool ganged = false;
-    int distribute = 1;
-    len_type chunk = 1;
 
     partition() {}
 
-    partition(const partition& other)
-    : child(other.child), distribute(other.distribute) {}
+    partition(const partition& other) : child(other.child) {}
 
     template <typename T, typename MatrixA, typename MatrixB, typename MatrixC>
     void operator()(const communicator& comm, const config& cfg,
@@ -39,23 +35,20 @@ struct partition
         TBLIS_ASSERT(M_ext == M_def);
 
         const len_type m_u = (Dim == DIM_M ? A.length(0) :
-                              Dim == DIM_N ? B.length(1) : A.length(1));
+                              Dim == DIM_N ? B.length(1) :
+                                   /*DIM_K*/ A.length(1));
         const len_type m_v = (Dim == DIM_M ? C.length(0) :
-                              Dim == DIM_N ? C.length(1) : B.length(0));
-        const len_type m = std::min(m_u, m_v);
+                              Dim == DIM_N ? C.length(1) :
+                                   /*DIM_K*/ B.length(0));
 
-        if (!ganged)
+        subcomm.distribute_over_gangs({std::min(m_u, m_v), M_iota},
+        [&,A,B,C,beta](len_type m_first, len_type m_last)
         {
-            subcomm = comm.gang(TCI_EVENLY, distribute);
-            ganged = true;
-        }
-
-        subcomm.distribute_over_gangs(tci::range(m).chunk(chunk).grain(M_iota),
-        [&](len_type m_first, len_type m_last)
-        {
-            auto local_A = A;
-            auto local_B = B;
-            auto local_C = C;
+            auto child = this->child;
+            auto local_A = const_cast<MatrixA&>(A);
+            auto local_B = const_cast<MatrixB&>(B);
+            auto local_C = const_cast<MatrixC&>(C);
+            auto local_beta = const_cast<T&>(beta);
 
             auto length = [&](len_type m_u, len_type m_v)
             {
@@ -89,16 +82,13 @@ struct partition
                 len_type m_loc = std::min(m_last-m_off, M_cur);
                 length(m_loc, m_loc);
 
-                child(subcomm, cfg, alpha, local_A, local_B, beta, local_C);
-                if (Dim == DIM_K) beta = 1.0;
+                child(subcomm, cfg, alpha, local_A, local_B, local_beta, local_C);
+                if (Dim == DIM_K) local_beta = 1.0;
 
                 shift(M_cur, M_cur);
                 m_off += M_cur;
                 M_cur = M_def;
             }
-
-            shift(-m_off, -m_off);
-            length(m_u, m_v);
         });
     }
 };

@@ -5,6 +5,8 @@
 #include "util/macros.h"
 #include "util/thread.h"
 
+#include "memory/alignment.hpp"
+
 #include "tensor_matrix.hpp"
 
 namespace tblis

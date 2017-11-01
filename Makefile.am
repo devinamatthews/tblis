@@ -491,6 +491,7 @@ bin_test_SOURCES = test/test.cxx \
                    test/1t/trace.cxx \
                    test/1t/transpose.cxx \
                    \
+                   test/3m/gemm_ukr.cxx \
                    test/3m/gemm.cxx \
                    test/3m/gemv.cxx \
                    test/3m/ger.cxx \

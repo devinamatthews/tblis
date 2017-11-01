@@ -83,8 +83,8 @@
     VMULPS(ZMM(R), ZMM(R), ZMM(0)) \
     VMOVAPS(ZMM(4), ZMM(R)) \
     VEXTRACTF64X4(YMM(5), ZMM(R), IMM(1)) \
-    VSCATTERQPS(MEM(C,ZMM(2),4) MASK_K(1), YMM(4)) \
-    VSCATTERQPS(MEM(C,ZMM(3),4) MASK_K(2), YMM(5))
+    VSCATTERQPS(MEM(C,ZMM(2),1) MASK_K(1), YMM(4)) \
+    VSCATTERQPS(MEM(C,ZMM(3),1) MASK_K(2), YMM(5))
 
 #define UPDATE_C_RS_ONE(R,C) \
 \
@@ -95,12 +95,12 @@
     VMULPS(ZMM(R), ZMM(R), ZMM(0)) \
     VMOVAPS(ZMM(4), ZMM(R)) \
     VEXTRACTF64X4(YMM(5), ZMM(R), IMM(1)) \
-    VGATHERQPS(YMM(6) MASK_K(1), MEM(C,ZMM(2),4)) \
-    VGATHERQPS(YMM(7) MASK_K(2), MEM(C,ZMM(3),4)) \
+    VGATHERQPS(YMM(6) MASK_K(1), MEM(C,ZMM(2),1)) \
+    VGATHERQPS(YMM(7) MASK_K(2), MEM(C,ZMM(3),1)) \
     VFMADD231PS(YMM(4), YMM(6), YMM(1)) \
     VFMADD231PS(YMM(5), YMM(7), YMM(1)) \
-    VSCATTERQPS(MEM(C,ZMM(2),4) MASK_K(3), YMM(4)) \
-    VSCATTERQPS(MEM(C,ZMM(3),4) MASK_K(4), YMM(5))
+    VSCATTERQPS(MEM(C,ZMM(2),1) MASK_K(3), YMM(4)) \
+    VSCATTERQPS(MEM(C,ZMM(3),1) MASK_K(4), YMM(5))
 
 #define UPDATE_C_ROW_SCATTERED(R1,R2,R3,R4) \
 \
@@ -431,9 +431,10 @@ void bli_sgemm_opt_12x32_l2(
     MOV(RAX, VAR(rs_c))
     LEA(RAX, MEM(,RAX,4))
     MOV(RBX, VAR(cs_c))
+    LEA(RBX, MEM(,RBX,4))
 
     // Check if C is row stride. If not, jump to the slow scattered update
-    CMP(RBX, IMM(1))
+    CMP(RBX, IMM(4))
     JNE(SCATTEREDUPDATE)
 
         VCOMISS(XMM(1), XMM(7))
@@ -459,8 +460,8 @@ void bli_sgemm_opt_12x32_l2(
     JMP(END)
     LABEL(SCATTEREDUPDATE)
 
-        LEA(RDX, MEM(RCX,RAX,8))
-        LEA(RDX, MEM(RDX,RAX,8))
+        LEA(RDX, MEM(RCX,RBX,8))
+        LEA(RDX, MEM(RDX,RBX,8))
 
         MOV(RDI, VAR(offsetPtr))
         VMOVDQA64(ZMM(2), MEM(RDI,0*64))

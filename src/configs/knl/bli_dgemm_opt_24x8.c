@@ -531,6 +531,7 @@ void bli_dgemm_opt_24x8(
 
     MOV(RDX, RCX)
     ADD(RSI, IMM(32))
+    JZ(POSTACCUM)
 
     LABEL(TAIL_LOOP)
 

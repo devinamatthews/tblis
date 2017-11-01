@@ -82,17 +82,17 @@
 \
     KXNORW(K(1), K(0), K(0)) \
     KXNORW(K(2), K(0), K(0)) \
-    VMULPD(ZMM(NUM), ZMM(NUM), ZMM(0)) \
-    VGATHERDPS(ZMM(3) MASK_K(1), MEM(RCX,ZMM(2),8)) \
+    VMULPS(ZMM(NUM), ZMM(NUM), ZMM(0)) \
+    VGATHERDPS(ZMM(3) MASK_K(1), MEM(RCX,ZMM(2),4)) \
     VFMADD231PS(ZMM(NUM), ZMM(3), ZMM(1)) \
-    VSCATTERDPS(MEM(RCX,ZMM(2),8) MASK_K(2), ZMM(NUM)) \
+    VSCATTERDPS(MEM(RCX,ZMM(2),4) MASK_K(2), ZMM(NUM)) \
     ADD(RCX, RAX)
 
 #define UPDATE_C_BZ_ROW_SCATTERED(NUM) \
 \
     KXNORW(K(1), K(0), K(0)) \
     VMULPS(ZMM(NUM), ZMM(NUM), ZMM(0)) \
-    VSCATTERDPS(MEM(RCX,ZMM(2),8) MASK_K(1), ZMM(NUM)) \
+    VSCATTERDPS(MEM(RCX,ZMM(2),4) MASK_K(1), ZMM(NUM)) \
     ADD(RCX, RAX)
 
 #define PREFETCH_A_L1_1(n) PREFETCH(0, MEM(RAX,(A_L1_PREFETCH_DIST+n)*24*4))
@@ -242,7 +242,7 @@ void bli_sgemm_opt_24x16(
     VMOVAPS(ZMM(22), ZMM(8))
     VMOVAPS(ZMM(23), ZMM(8))
 #endif
-    VMOVAPS(ZMM(24), ZMM(8))   VPSLLD(ZMM(4), ZMM(4), IMM(3))
+    VMOVAPS(ZMM(24), ZMM(8))   VPSLLD(ZMM(4), ZMM(4), IMM(2))
     VMOVAPS(ZMM(25), ZMM(8))   MOV(R8, IMM(4*24*4))     //offset for 4 iterations
     VMOVAPS(ZMM(26), ZMM(8))   LEA(R9, MEM(R8,R8,2))    //*3
     VMOVAPS(ZMM(27), ZMM(8))   LEA(R10, MEM(R8,R8,4))   //*5
@@ -528,6 +528,7 @@ void bli_sgemm_opt_24x16(
 
     MOV(RDX, RCX)
     ADD(RSI, IMM(32))
+    JZ(POSTACCUM)
 
     LABEL(TAIL_LOOP)
 

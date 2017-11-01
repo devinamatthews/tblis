@@ -403,10 +403,11 @@ bin_skx_bench_DEPENDENCIES = lib/libtblis.la $(am__DEPENDENCIES_1)
 am_bin_test_OBJECTS = test/test.$(OBJEXT) test/1t/dot.$(OBJEXT) \
 	test/1t/reduce.$(OBJEXT) test/1t/scale.$(OBJEXT) \
 	test/1t/replicate.$(OBJEXT) test/1t/trace.$(OBJEXT) \
-	test/1t/transpose.$(OBJEXT) test/3m/gemm.$(OBJEXT) \
-	test/3m/gemv.$(OBJEXT) test/3m/ger.$(OBJEXT) \
-	test/3t/contract.$(OBJEXT) test/3t/mult.$(OBJEXT) \
-	test/3t/outer_prod.$(OBJEXT) test/3t/weight.$(OBJEXT)
+	test/1t/transpose.$(OBJEXT) test/3m/gemm_ukr.$(OBJEXT) \
+	test/3m/gemm.$(OBJEXT) test/3m/gemv.$(OBJEXT) \
+	test/3m/ger.$(OBJEXT) test/3t/contract.$(OBJEXT) \
+	test/3t/mult.$(OBJEXT) test/3t/outer_prod.$(OBJEXT) \
+	test/3t/weight.$(OBJEXT)
 bin_test_OBJECTS = $(am_bin_test_OBJECTS)
 bin_test_DEPENDENCIES = lib/libtblis.la
 AM_V_P = $(am__v_P_@AM_V@)
@@ -1024,6 +1025,7 @@ bin_test_SOURCES = test/test.cxx \
                    test/1t/trace.cxx \
                    test/1t/transpose.cxx \
                    \
+                   test/3m/gemm_ukr.cxx \
                    test/3m/gemm.cxx \
                    test/3m/gemv.cxx \
                    test/3m/ger.cxx \
@@ -1658,6 +1660,8 @@ test/3m/$(am__dirstamp):
 test/3m/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) test/3m/$(DEPDIR)
 	@: > test/3m/$(DEPDIR)/$(am__dirstamp)
+test/3m/gemm_ukr.$(OBJEXT): test/3m/$(am__dirstamp) \
+	test/3m/$(DEPDIR)/$(am__dirstamp)
 test/3m/gemm.$(OBJEXT): test/3m/$(am__dirstamp) \
 	test/3m/$(DEPDIR)/$(am__dirstamp)
 test/3m/gemv.$(OBJEXT): test/3m/$(am__dirstamp) \
@@ -1857,6 +1861,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@test/1t/$(DEPDIR)/trace.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/1t/$(DEPDIR)/transpose.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/3m/$(DEPDIR)/gemm.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/3m/$(DEPDIR)/gemm_ukr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/3m/$(DEPDIR)/gemv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/3m/$(DEPDIR)/ger.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/3t/$(DEPDIR)/contract.Po@am__quote@

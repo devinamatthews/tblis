@@ -4,6 +4,9 @@
 #include "util/basic_types.h"
 #include "util/thread.h"
 
+#include "matrix/scatter_matrix.hpp"
+#include "matrix/block_scatter_matrix.hpp"
+
 #include "configs/configs.hpp"
 
 namespace tblis

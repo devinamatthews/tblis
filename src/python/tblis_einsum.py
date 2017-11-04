@@ -77,7 +77,8 @@ def _contract(subscripts, *tensors, **kwargs):
 
     out = getattr(kwargs, 'out', None)
     if out is None:
-        c = numpy.zeros(c_shape, dtype=c_dtype)
+        order = getattr(kwargs, 'order', 'C')
+        c = numpy.zeros(c_shape, dtype=c_dtype, order=order)
     else:
         assert(out.dtype == c_dtype)
         assert(out.shape == c_shape)
@@ -93,20 +94,18 @@ def _contract(subscripts, *tensors, **kwargs):
     b_strides = (ctypes.c_size_t*b.ndim)(*[x//nbytes for x in b.strides])
     c_strides = (ctypes.c_size_t*c.ndim)(*[x//nbytes for x in c.strides])
 
-    libtblis.as_einsum(a, a.ndim, a_shape, a_strides, a_descr,
-                       b, b.ndim, b_shape, b_strides, b_descr,
-                       c, c.ndim, c_shape, c_strides, c_descr,
+    libtblis.as_einsum(a, a.ndim, a_shape, a_strides, a_descr.encode('ascii'),
+                       b, b.ndim, b_shape, b_strides, b_descr.encode('ascii'),
+                       c, c.ndim, c_shape, c_strides, c_descr.encode('ascii'),
                        tblis_dtype[c_dtype])
     return c
 
 def einsum(subscripts, *tensors, **kwargs):
     subscripts = subscripts.replace(' ','')
-    order = getattr(kwargs, 'order', None)
     if len(tensors) <= 1:
         out = numpy_einsum(subscripts, *tensors, **kwargs)
     elif len(tensors) <= 2:
         out = _contract(subscripts, *tensors, **kwargs)
-        out = numpy.asarray(out, order=order)
     else:
         sub_idx = subscripts.split(',', 2)
         res_idx = ''.join(set(sub_idx[0]).symmetric_difference(sub_idx[1]))

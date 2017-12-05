@@ -140,6 +140,15 @@ AC_MSG_RESULT([$label_type])
 AC_DEFINE_UNQUOTED([LABEL_TYPE], [$label_type], [label_type])
 
 #
+# Whether to build Python einsum interface
+#
+
+AC_ARG_ENABLE([einsum], AS_HELP_STRING([--enable-einsum],
+              [include Python einsum interface (default is no)]),
+              [], [enable_einsum=no])
+AM_CONDITIONAL(ENABLE_PYTHON, [test x$enable_einsum != xno])
+
+#
 # Determine configurations to build
 #
 

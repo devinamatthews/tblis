@@ -343,3 +343,8 @@ AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la
 bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 bin_batched_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
+
+if ENABLE_PYTHON
+lib_libtblis_la_SOURCES += src/python/as_einsum.cxx
+endif
+#gcc -fPIC -g -shared -o libtblis_itrf.so as_einsum.c -I/home/qssun/workspace/program/tblis/opt/include -L/home/qssun/workspace/program/tblis/opt/lib -ltblis

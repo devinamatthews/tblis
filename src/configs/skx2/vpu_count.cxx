@@ -35,7 +35,6 @@ static std::string get_cpu_name()
     uint32_t eax, ebx, ecx, edx;
 
     __cpuid(0x80000002u, eax, ebx, ecx, edx);
-    //printf("%x %x %x %x\n", eax, ebx, ecx, edx);
 
     *(uint32_t *)&cpu_name[0]  = eax;
     *(uint32_t *)&cpu_name[4]  = ebx;
@@ -43,7 +42,6 @@ static std::string get_cpu_name()
     *(uint32_t *)&cpu_name[12] = edx;
 
     __cpuid(0x80000003u, eax, ebx, ecx, edx);
-    //printf("%x %x %x %x\n", eax, ebx, ecx, edx);
 
     *(uint32_t *)&cpu_name[16+0]  = eax;
     *(uint32_t *)&cpu_name[16+4]  = ebx;
@@ -51,7 +49,6 @@ static std::string get_cpu_name()
     *(uint32_t *)&cpu_name[16+12] = edx;
 
     __cpuid(0x80000004u, eax, ebx, ecx, edx);
-    //printf("%x %x %x %x\n", eax, ebx, ecx, edx);
 
     *(uint32_t *)&cpu_name[32+0]  = eax;
     *(uint32_t *)&cpu_name[32+4]  = ebx;
@@ -65,8 +62,6 @@ int vpu_count()
 {
     std::string name = get_cpu_name();
 
-    return 2;
-
     if (name.find("Intel(R) Xeon(R)") != std::string::npos)
     {
         auto loc = name.find("Platinum");
@@ -75,8 +70,9 @@ int vpu_count()
         if (loc == std::string::npos) loc = name.find("Bronze");
         if (loc == std::string::npos) loc = name.find("W");
         if (loc == std::string::npos) return -1;
+        loc = name.find_first_of("- ", loc+1)+1;
 
-        auto sku = atoi(name.substr(loc+1, 4).c_str());
+        auto sku = atoi(name.substr(loc, 4).c_str());
         if      (8199 >= sku && sku >= 8100) return 2;
         else if (6199 >= sku && sku >= 6100) return 2;
         else if (sku == 5122)                return 2;
@@ -89,12 +85,12 @@ int vpu_count()
     }
     else if (name.find("Intel(R) Core(TM) i9") != std::string::npos)
     {
-        return 1;
+        return 2;
     }
     else if (name.find("Intel(R) Core(TM) i7") != std::string::npos)
     {
         if (name.find("7800X") != std::string::npos ||
-            name.find("7820X") != std::string::npos) return 1;
+            name.find("7820X") != std::string::npos) return 2;
         else return -1;
     }
     else

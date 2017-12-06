@@ -7,6 +7,7 @@
 #include "memory/alignment.hpp"
 #include "memory/memory_pool.hpp"
 
+#include "matrix/diag_scaled_matrix.hpp"
 #include "matrix/scatter_matrix.hpp"
 #include "matrix/block_scatter_matrix.hpp"
 
@@ -53,6 +54,44 @@ struct pack_row_panel
                     cfg.pack_nn_mr_ukr.call<T>(m, k, p_a, rs_a, cs_a, p_ap);
                 else
                     cfg.pack_nn_nr_ukr.call<T>(m, k, p_a, rs_a, cs_a, p_ap);
+
+                p_a += m*rs_a;
+                p_ap += ME*k_a;
+            }
+        });
+    }
+
+    void operator()(const communicator& comm, const config& cfg,
+                    diag_scaled_matrix_view<T, !Trans>& A, matrix_view<T>& Ap) const
+    {
+        const len_type MR = (!Trans ? cfg.gemm_mr.def<T>()
+                                    : cfg.gemm_nr.def<T>());
+        const len_type ME = (!Trans ? cfg.gemm_mr.extent<T>()
+                                    : cfg.gemm_nr.extent<T>());
+        const len_type KR = cfg.gemm_kr.def<T>();
+
+        const len_type m_a = A.length( Trans);
+        const len_type k_a = A.length(!Trans);
+        const stride_type rs_a = A.stride( Trans);
+        const stride_type cs_a = A.stride(!Trans);
+        const stride_type inc_d = A.diag_stride();
+
+        comm.distribute_over_threads({m_a, MR}, {k_a, KR},
+        [&](len_type m_first, len_type m_last, len_type k_first, len_type k_last)
+        {
+            const T*  p_a =  A.data() +  m_first       *rs_a + k_first* cs_a;
+            const T*  p_d =  A.diag() +                        k_first*inc_d;
+                  T* p_ap = Ap.data() + (m_first/MR)*ME* k_a + k_first*   ME;
+
+            for (len_type off_m = m_first;off_m < m_last;off_m += MR)
+            {
+                len_type m = std::min(MR, m_last-off_m);
+                len_type k = k_last-k_first;
+
+                if (!Trans)
+                    cfg.pack_nnd_mr_ukr.call<T>(m, k, p_a, rs_a, cs_a, p_d, inc_d, p_ap);
+                else
+                    cfg.pack_nnd_nr_ukr.call<T>(m, k, p_a, rs_a, cs_a, p_d, inc_d, p_ap);
 
                 p_a += m*rs_a;
                 p_ap += ME*k_a;

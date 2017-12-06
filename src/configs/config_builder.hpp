@@ -161,6 +161,10 @@ config cfg##_config_instance = config(cfg##_config());
     TBLIS_CONFIG_UKR3(this_config, matrix_constants::MAT_A, pack_nn_mr_ukr, pack_nn_ukr_t, S,D,C,Z, pack_nn_ukr_def)
 #define TBLIS_CONFIG_PACK_NN_NR_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR3(this_config, matrix_constants::MAT_B, pack_nn_nr_ukr, pack_nn_ukr_t, S,D,C,Z, pack_nn_ukr_def)
+#define TBLIS_CONFIG_PACK_NND_MR_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR3(this_config, matrix_constants::MAT_A, pack_nnd_mr_ukr, pack_nnd_ukr_t, S,D,C,Z, pack_nnd_ukr_def)
+#define TBLIS_CONFIG_PACK_NND_NR_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR3(this_config, matrix_constants::MAT_B, pack_nnd_nr_ukr, pack_nnd_ukr_t, S,D,C,Z, pack_nnd_ukr_def)
 #define TBLIS_CONFIG_PACK_SN_MR_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR3(this_config, matrix_constants::MAT_A, pack_sn_mr_ukr, pack_sn_ukr_t, S,D,C,Z, pack_sn_ukr_def)
 #define TBLIS_CONFIG_PACK_SN_NR_UKR(S,D,C,Z) \
@@ -302,6 +306,8 @@ struct config_template
 
     TBLIS_CONFIG_PACK_NN_MR_UKR(_,_,_,_)
     TBLIS_CONFIG_PACK_NN_NR_UKR(_,_,_,_)
+    TBLIS_CONFIG_PACK_NND_MR_UKR(_,_,_,_)
+    TBLIS_CONFIG_PACK_NND_NR_UKR(_,_,_,_)
     TBLIS_CONFIG_PACK_SN_MR_UKR(_,_,_,_)
     TBLIS_CONFIG_PACK_SN_NR_UKR(_,_,_,_)
     TBLIS_CONFIG_PACK_NS_MR_UKR(_,_,_,_)

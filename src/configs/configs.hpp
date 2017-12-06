@@ -133,6 +133,8 @@ struct config
 
     microkernel<pack_nn_ukr_t> pack_nn_mr_ukr;
     microkernel<pack_nn_ukr_t> pack_nn_nr_ukr;
+    microkernel<pack_nnd_ukr_t> pack_nnd_mr_ukr;
+    microkernel<pack_nnd_ukr_t> pack_nnd_nr_ukr;
     microkernel<pack_sn_ukr_t> pack_sn_mr_ukr;
     microkernel<pack_sn_ukr_t> pack_sn_nr_ukr;
     microkernel<pack_ns_ukr_t> pack_ns_mr_ukr;
@@ -183,6 +185,8 @@ struct config
 
       pack_nn_mr_ukr(typename Traits::template pack_nn_mr_ukr<float>()),
       pack_nn_nr_ukr(typename Traits::template pack_nn_nr_ukr<float>()),
+      pack_nnd_mr_ukr(typename Traits::template pack_nnd_mr_ukr<float>()),
+      pack_nnd_nr_ukr(typename Traits::template pack_nnd_nr_ukr<float>()),
       pack_sn_mr_ukr(typename Traits::template pack_sn_mr_ukr<float>()),
       pack_sn_nr_ukr(typename Traits::template pack_sn_nr_ukr<float>()),
       pack_ns_mr_ukr(typename Traits::template pack_ns_mr_ukr<float>()),

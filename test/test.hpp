@@ -240,6 +240,12 @@ void gemm_ref(T alpha, matrix_view<const T> A,
                        matrix_view<const T> B,
               T  beta,       matrix_view<T> C);
 
+template <typename T>
+void gemm_ref(T alpha, matrix_view<const T> A,
+                          row_view<const T> D,
+                       matrix_view<const T> B,
+              T  beta,       matrix_view<T> C);
+
 /*
  * Creates a matrix whose total storage size is between N/4
  * and N entries, and with edge lengths of at least those given. The number

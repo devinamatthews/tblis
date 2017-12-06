@@ -13,11 +13,7 @@ template <int Dim, blocksize config::*BS, typename Child>
 struct partition
 {
     Child child;
-    communicator subcomm;
-
-    partition() {}
-
-    partition(const partition& other) : child(other.child) {}
+    communicator* subcomm = nullptr;
 
     template <typename T, typename MatrixA, typename MatrixB, typename MatrixC>
     void operator()(const communicator& comm, const config& cfg,
@@ -41,14 +37,14 @@ struct partition
                               Dim == DIM_N ? C.length(1) :
                                    /*DIM_K*/ B.length(0));
 
-        subcomm.distribute_over_gangs({std::min(m_u, m_v), M_iota},
+        subcomm->distribute_over_gangs({std::min(m_u, m_v), M_iota},
         [&,A,B,C,beta](len_type m_first, len_type m_last)
         {
             auto child = this->child;
-            auto local_A = const_cast<MatrixA&>(A);
-            auto local_B = const_cast<MatrixB&>(B);
-            auto local_C = const_cast<MatrixC&>(C);
-            auto local_beta = const_cast<T&>(beta);
+            auto local_A = A;
+            auto local_B = B;
+            auto local_C = C;
+            auto local_beta = beta;
 
             auto length = [&](len_type m_u, len_type m_v)
             {
@@ -82,7 +78,7 @@ struct partition
                 len_type m_loc = std::min(m_last-m_off, M_cur);
                 length(m_loc, m_loc);
 
-                child(subcomm, cfg, alpha, local_A, local_B, local_beta, local_C);
+                child(*subcomm, cfg, alpha, local_A, local_B, local_beta, local_C);
                 if (Dim == DIM_K) local_beta = 1.0;
 
                 shift(M_cur, M_cur);

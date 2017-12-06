@@ -223,6 +223,19 @@ void contract_block(const communicator& comm, const config& cfg,
                             auto tc = make_gemm_thread_config<T>(
                                 cfg, subcomm.num_threads(), ct.length(0), ct.length(1), 0);
 
+                            communicator comm_nc = subcomm.gang(TCI_EVENLY, tc.jc_nt);
+                            communicator comm_kc = comm_nc.gang(TCI_EVENLY,        1);
+                            communicator comm_mc = comm_kc.gang(TCI_EVENLY, tc.ic_nt);
+                            communicator comm_nr = comm_mc.gang(TCI_EVENLY, tc.jr_nt);
+                            communicator comm_mr = comm_nr.gang(TCI_EVENLY, tc.ir_nt);
+
+                            TensorGEMM gemm;
+                            step<0>(gemm).subcomm = &comm_nc;
+                            step<1>(gemm).subcomm = &comm_kc;
+                            step<4>(gemm).subcomm = &comm_mc;
+                            step<8>(gemm).subcomm = &comm_nr;
+                            step<9>(gemm).subcomm = &comm_mr;
+
                             for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
                             {
                                 assign_irreps(ndim_AB, irrep_AB, nirrep, block_AB,
@@ -247,13 +260,6 @@ void contract_block(const communicator& comm, const config& cfg,
 
                                 if (subcomm.master())
                                     flops += 2*ct.length(0)*ct.length(1)*at.length(1);
-
-                                TensorGEMM gemm;
-
-                                step<0>(gemm).subcomm =                  comm.gang(TCI_EVENLY, tc.jc_nt);
-                                step<4>(gemm).subcomm = step<0>(gemm).subcomm.gang(TCI_EVENLY, tc.ic_nt);
-                                step<8>(gemm).subcomm = step<4>(gemm).subcomm.gang(TCI_EVENLY, tc.jr_nt);
-                                step<9>(gemm).subcomm = step<8>(gemm).subcomm.gang(TCI_EVENLY, tc.ir_nt);
 
                                 gemm(subcomm, cfg, alpha, at, bt, beta, ct);
 

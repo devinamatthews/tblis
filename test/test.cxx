@@ -92,6 +92,76 @@ void gemm_ref(T alpha, matrix_view<const T> A, \
               T  beta,       matrix_view<T> C);
 #include "configs/foreach_type.h"
 
+template <typename T>
+void gemm_ref(T alpha, matrix_view<const T> A,
+                          row_view<const T> D,
+                       matrix_view<const T> B,
+              T  beta,       matrix_view<T> C)
+{
+    const T* ptr_A = A.data();
+    const T* ptr_D = D.data();
+    const T* ptr_B = B.data();
+          T* ptr_C = C.data();
+
+    len_type m_A = A.length(0);
+    len_type m_C = C.length(0);
+    len_type n_B = B.length(1);
+    len_type n_C = C.length(1);
+    len_type k_A = A.length(1);
+    len_type k_B = B.length(0);
+    len_type k_D = D.length();
+
+    stride_type rs_A = A.stride(0);
+    stride_type cs_A = A.stride(1);
+    stride_type rs_B = B.stride(0);
+    stride_type cs_B = B.stride(1);
+    stride_type rs_C = C.stride(0);
+    stride_type cs_C = C.stride(1);
+    stride_type inc_D = D.stride();
+
+    TBLIS_ASSERT(m_A == m_C);
+    TBLIS_ASSERT(n_B == n_C);
+    TBLIS_ASSERT(k_A == k_B);
+    TBLIS_ASSERT(k_A == k_D);
+
+    len_type m = m_A;
+    len_type n = n_B;
+    len_type k = k_A;
+
+    for (len_type i = 0;i < m;i++)
+    {
+        for (len_type j = 0;j < n;j++)
+        {
+            T tmp = T();
+
+            if (alpha != T(0))
+            {
+                for (len_type ik = 0;ik < k;ik++)
+                {
+                    tmp += ptr_A[i*rs_A + ik*cs_A]*ptr_B[ik*rs_B + j*cs_B]*ptr_D[ik*inc_D];
+                }
+            }
+
+            if (beta == T(0))
+            {
+                ptr_C[i*rs_C + j*cs_C] = alpha*tmp;
+            }
+            else
+            {
+                ptr_C[i*rs_C + j*cs_C] = alpha*tmp + beta*ptr_C[i*rs_C + j*cs_C];
+            }
+        }
+    }
+}
+
+#define FOREACH_TYPE(T) \
+template \
+void gemm_ref(T alpha, matrix_view<const T> A, \
+                          row_view<const T> D, \
+                       matrix_view<const T> B, \
+              T  beta,       matrix_view<T> C);
+#include "configs/foreach_type.h"
+
 /*
  * Creates a matrix whose total storage size is between N/4
  * and N entries, and with edge lengths of at least those given. The number

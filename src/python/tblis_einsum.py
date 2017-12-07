@@ -30,7 +30,8 @@ libtblis.as_einsum.argtypes = (
     numpy.ctypeslib.ndpointer(), ctypes.c_int,
     ctypes.POINTER(ctypes.c_size_t), ctypes.POINTER(ctypes.c_size_t),
     ctypes.POINTER(ctypes.c_char),
-    ctypes.c_int
+    ctypes.c_int,
+    numpy.ctypeslib.ndpointer(), numpy.ctypeslib.ndpointer()
 )
 
 tblis_dtype = {
@@ -43,9 +44,22 @@ tblis_dtype = {
 numpy_einsum = numpy.einsum
 
 def _contract(subscripts, *tensors, **kwargs):
+    '''
+    c = alpha * contract(a, b) + beta * c
+
+    Args:
+        tensors (list of ndarray) : Tensors for the operation.
+
+    Kwargs:
+        out (ndarray) : If provided, the calculation is done into this array.
+        dtype (ndarray) : If provided, forces the calculation to use the data
+            type specified.
+        alpha (number) : Default is 1
+        beta (number) :  Default is 0
+    '''
     sub_idx = re.split(',|->', subscripts)
     indices  = ''.join(sub_idx)
-    c_dtype = getattr(kwargs, 'dtype', numpy.result_type(*tensors))
+    c_dtype = kwargs.get('dtype', numpy.result_type(*tensors))
     if ('...' in subscripts or
         not (numpy.issubdtype(c_dtype, numpy.float) or
              numpy.issubdtype(c_dtype, numpy.complex))):
@@ -58,6 +72,11 @@ def _contract(subscripts, *tensors, **kwargs):
                 indices = indices.replace(x, '')
         sub_idx += [indices]
 
+    alpha = kwargs.get('alpha', 1)
+    beta  = kwargs.get('beta', 0)
+    c_dtype = numpy.result_type(c_dtype, alpha, beta)
+    alpha = numpy.asarray(alpha, dtype=c_dtype)
+    beta  = numpy.asarray(beta , dtype=c_dtype)
     a = numpy.asarray(tensors[0], dtype=c_dtype)
     b = numpy.asarray(tensors[1], dtype=c_dtype)
 
@@ -75,15 +94,14 @@ def _contract(subscripts, *tensors, **kwargs):
     ab_shape_dic.update(b_shape_dic)
     c_shape = tuple([ab_shape_dic[x] for x in c_descr])
 
-    out = getattr(kwargs, 'out', None)
+    out = kwargs.get('out', None)
     if out is None:
-        order = getattr(kwargs, 'order', 'C')
-        c = numpy.zeros(c_shape, dtype=c_dtype, order=order)
+        order = kwargs.get('order', 'C')
+        c = numpy.empty(c_shape, dtype=c_dtype, order=order)
     else:
         assert(out.dtype == c_dtype)
         assert(out.shape == c_shape)
         c = out
-        c[:] = 0
 
     a_shape = (ctypes.c_size_t*a.ndim)(*a_shape)
     b_shape = (ctypes.c_size_t*b.ndim)(*b_shape)
@@ -97,7 +115,7 @@ def _contract(subscripts, *tensors, **kwargs):
     libtblis.as_einsum(a, a.ndim, a_shape, a_strides, a_descr.encode('ascii'),
                        b, b.ndim, b_shape, b_strides, b_descr.encode('ascii'),
                        c, c.ndim, c_shape, c_strides, c_descr.encode('ascii'),
-                       tblis_dtype[c_dtype])
+                       tblis_dtype[c_dtype], alpha, beta)
     return c
 
 def einsum(subscripts, *tensors, **kwargs):

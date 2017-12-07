@@ -1,5 +1,6 @@
 import unittest
 import numpy
+import tblis_einsum
 from tblis_einsum import einsum
 
 class KnownValues(unittest.TestCase):
@@ -153,6 +154,16 @@ class KnownValues(unittest.TestCase):
         b = numpy.random.random((2,4,7))
         c0 = numpy.einsum('...jkj,jlp->...jp', a, b)
         c1 = einsum('...jkj,jlp->...jp', a, b)
+        self.assertTrue(abs(c0-c1).max() < 1e-13)
+
+    def test_contract(self):
+        a = numpy.random.random((5,4,6))
+        b = numpy.random.random((4,9,6))
+
+        c1 = numpy.ones((9,5), dtype=numpy.complex128)
+        c0 = tblis_einsum._contract('ijk,jlk->li', a, b, out=c1, alpha=.5j, beta=.2)
+        c1 = numpy.ones((9,5), dtype=numpy.complex128)
+        c1 = c1*.2 + numpy.einsum('ijk,jlk->li', a, b)*.5j
         self.assertTrue(abs(c0-c1).max() < 1e-13)
 
 

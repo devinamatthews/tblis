@@ -1,7 +1,7 @@
 import unittest
 import numpy
 import tblis_einsum
-from tblis_einsum import einsum
+einsum = tblis_einsum.einsum
 
 class KnownValues(unittest.TestCase):
     def test_d_d(self):
@@ -114,6 +114,15 @@ class KnownValues(unittest.TestCase):
         c = numpy.random.random((2,8,3,6))
         c0 = numpy.einsum('abcd,fdea,ficj->iebj', a, b, c)
         c1 = einsum('abcd,fdea,ficj->iebj', a, b, c)
+        self.assertTrue(c0.dtype == c1.dtype)
+        self.assertTrue(abs(c0-c1).max() < 1e-13)
+
+    def test_3operands1(self):
+        a = numpy.random.random((2,2,2,2)) + 1j
+        b = numpy.random.random((2,2,2,2))
+        c = numpy.random.random((2,2,2,2))
+        c0 = numpy.einsum('abcd,acde,adef->ebf', a, b, c)
+        c1 = einsum('abcd,acde,adef->ebf', a, b, c)
         self.assertTrue(c0.dtype == c1.dtype)
         self.assertTrue(abs(c0-c1).max() < 1e-13)
 

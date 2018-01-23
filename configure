@@ -6376,30 +6376,32 @@ fi
 if ( echo $configs | grep -q sandybridge ); then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether inline AVX can be compiled" >&5
 $as_echo_n "checking whether inline AVX can be compiled... " >&6; }
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
+    ac_c_ext=$ac_ext
+ ac_ext=${ac_s_ext-s}
+ cat > conftest.$ac_ext <<EOF
+ .file "configure"
 
-int
-main ()
-{
+        vzeroall
+        vmovapd %ymm0, %ymm1
+        vmulpd %ymm0, %ymm0, %ymm1
 
-        __asm__ __volatile__
-        (
-            "vzeroall \n\t"
-            "vmovapd %%ymm0, %%ymm1 \n\t"
-            "vmulpd %%ymm0, %%ymm0, %%ymm1 \n\t"
-            :::
-        );
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  enable_avx=yes
+EOF
+if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  ac_ext=$ac_c_ext
+    enable_avx=yes
+  rm -rf conftest*
 else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  ac_ext=$ac_c_ext
+  rm -rf conftest*
   enable_avx=no
 fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+rm -rf conftest*
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_avx" >&5
 $as_echo "$enable_avx" >&6; }
     if test "x$enable_avx" = xno; then
@@ -6412,29 +6414,31 @@ fi
 if ( echo $configs | $EGREP -q 'haswell|piledriver|excavator|skx' ); then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether inline FMA3 can be compiled" >&5
 $as_echo_n "checking whether inline FMA3 can be compiled... " >&6; }
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
+    ac_c_ext=$ac_ext
+ ac_ext=${ac_s_ext-s}
+ cat > conftest.$ac_ext <<EOF
+ .file "configure"
 
-int
-main ()
-{
+        vzeroall
+        vfmadd213pd %ymm0, %ymm1, %ymm2
 
-        __asm__ __volatile__
-        (
-            "vzeroall \n\t"
-            "vfmadd213pd %%ymm0, %%ymm1, %%ymm2 \n\t"
-            :::
-        );
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  enable_fma3=yes
+EOF
+if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  ac_ext=$ac_c_ext
+    enable_fma3=yes
+  rm -rf conftest*
 else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  ac_ext=$ac_c_ext
+  rm -rf conftest*
   enable_fma3=no
 fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+rm -rf conftest*
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_fma3" >&5
 $as_echo "$enable_fma3" >&6; }
     if test "x$enable_fma3" = xno; then
@@ -6452,29 +6456,31 @@ fi
 if ( echo $configs | grep -q bulldozer ); then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether inline FMA4 can be compiled" >&5
 $as_echo_n "checking whether inline FMA4 can be compiled... " >&6; }
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
+    ac_c_ext=$ac_ext
+ ac_ext=${ac_s_ext-s}
+ cat > conftest.$ac_ext <<EOF
+ .file "configure"
 
-int
-main ()
-{
+        vzeroall
+        vfmaddpd %ymm0, %ymm1, %ymm2, %ymm3
 
-        __asm__ __volatile__
-        (
-            "vzeroall \n\t"
-            "vfmaddpd %%ymm0, %%ymm1, %%ymm2, %%ymm3 \n\t"
-            :::
-        );
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  enable_fma4=yes
+EOF
+if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  ac_ext=$ac_c_ext
+    enable_fma4=yes
+  rm -rf conftest*
 else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  ac_ext=$ac_c_ext
+  rm -rf conftest*
   enable_fma4=no
 fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+rm -rf conftest*
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_fma4" >&5
 $as_echo "$enable_fma4" >&6; }
     if test "x$enable_fma4" = xno; then
@@ -6491,30 +6497,32 @@ if ( echo $configs | $EGREP -q 'knl|skx' ); then
     fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether inline AVX-512F can be compiled" >&5
 $as_echo_n "checking whether inline AVX-512F can be compiled... " >&6; }
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
+    ac_c_ext=$ac_ext
+ ac_ext=${ac_s_ext-s}
+ cat > conftest.$ac_ext <<EOF
+ .file "configure"
 
-int
-main ()
-{
+        vmovapd %zmm0, %zmm1
+        vmulpd %zmm0, %zmm0, %zmm1
+        vfmadd213pd 0x400(%rax,%rsi,8) {1to8}, %zmm1, %zmm2
 
-        __asm__ __volatile__
-        (
-            "vmovapd %%zmm0, %%zmm1 \n\t"
-            "vmulpd %%zmm0, %%zmm0, %%zmm1 \n\t"
-            "vfmadd213pd 0x400(%%rax,%%rsi,8) %{1to8%}, %%zmm1, %%zmm2 \n\t"
-            :::
-        );
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  enable_avx512f=yes
+EOF
+if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  ac_ext=$ac_c_ext
+    enable_avx512f=yes
+  rm -rf conftest*
 else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  ac_ext=$ac_c_ext
+  rm -rf conftest*
   enable_avx512f=no
 fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+rm -rf conftest*
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_avx512f" >&5
 $as_echo "$enable_avx512f" >&6; }
     if test "x$enable_avx512f" = xno; then
@@ -6534,28 +6542,30 @@ if ( echo $configs | $EGREP -q 'skx' ); then
     fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether inline AVX-512DQ can be compiled" >&5
 $as_echo_n "checking whether inline AVX-512DQ can be compiled... " >&6; }
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
+    ac_c_ext=$ac_ext
+ ac_ext=${ac_s_ext-s}
+ cat > conftest.$ac_ext <<EOF
+ .file "configure"
 
-int
-main ()
-{
+        vpmullq %zmm0, %zmm0, %zmm1
 
-        __asm__ __volatile__
-        (
-            "vpmullq %%zmm0, %%zmm0, %%zmm1 \n\t"
-            :::
-        );
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  enable_avx512dq=yes
+EOF
+if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  ac_ext=$ac_c_ext
+    enable_avx512dq=yes
+  rm -rf conftest*
 else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  ac_ext=$ac_c_ext
+  rm -rf conftest*
   enable_avx512dq=no
 fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+rm -rf conftest*
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_avx512dq" >&5
 $as_echo "$enable_avx512dq" >&6; }
     if test "x$enable_avx512dq" = xno; then

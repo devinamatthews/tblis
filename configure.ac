@@ -290,15 +290,11 @@ fi
 
 if ( echo $configs | grep -q sandybridge ); then
     AC_MSG_CHECKING([whether inline AVX can be compiled])
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
-        __asm__ __volatile__
-        (
-            "vzeroall \n\t"
-            "vmovapd %%ymm0, %%ymm1 \n\t"
-            "vmulpd %%ymm0, %%ymm0, %%ymm1 \n\t"
-            :::
-        );])],
-        [enable_avx=yes], [enable_avx=no])
+    AC_TRY_ASSEMBLE([
+        vzeroall
+        vmovapd %ymm0, %ymm1
+        vmulpd %ymm0, %ymm0, %ymm1
+        ], [enable_avx=yes], [enable_avx=no])
     AC_MSG_RESULT([$enable_avx])
     if test "x$enable_avx" = xno; then
         AC_MSG_WARN([AVX cannot be compiled; disabling sandybridge configuration])
@@ -308,14 +304,10 @@ fi
 
 if ( echo $configs | $EGREP -q 'haswell|piledriver|excavator|skx' ); then
     AC_MSG_CHECKING([whether inline FMA3 can be compiled])
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
-        __asm__ __volatile__
-        (
-            "vzeroall \n\t"
-            "vfmadd213pd %%ymm0, %%ymm1, %%ymm2 \n\t"
-            :::
-        );])],
-        [enable_fma3=yes], [enable_fma3=no])
+    AC_TRY_ASSEMBLE([
+        vzeroall
+        vfmadd213pd %ymm0, %ymm1, %ymm2
+        ], [enable_fma3=yes], [enable_fma3=no])
     AC_MSG_RESULT([$enable_fma3])
     if test "x$enable_fma3" = xno; then
         AC_MSG_WARN([FMA3 cannot be compiled; disabling haswell, piledriver, excavator, skx, and zen configurations])
@@ -330,14 +322,10 @@ fi
 
 if ( echo $configs | grep -q bulldozer ); then
     AC_MSG_CHECKING([whether inline FMA4 can be compiled])
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
-        __asm__ __volatile__
-        (
-            "vzeroall \n\t"
-            "vfmaddpd %%ymm0, %%ymm1, %%ymm2, %%ymm3 \n\t"
-            :::
-        );])],
-        [enable_fma4=yes], [enable_fma4=no])
+    AC_TRY_ASSEMBLE([
+        vzeroall
+        vfmaddpd %ymm0, %ymm1, %ymm2, %ymm3
+        ], [enable_fma4=yes], [enable_fma4=no])
     AC_MSG_RESULT([$enable_fma4])
     if test "x$enable_fma4" = xno; then
         AC_MSG_WARN([FMA4 cannot be compiled; disabling bulldozer configuration])
@@ -351,15 +339,11 @@ if ( echo $configs | $EGREP -q 'knl|skx' ); then
         CPPFLAGS="$CPPFLAGS -Wa,-march=knl"
     fi
     AC_MSG_CHECKING([whether inline AVX-512F can be compiled])
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
-        __asm__ __volatile__
-        (
-            "vmovapd %%zmm0, %%zmm1 \n\t"
-            "vmulpd %%zmm0, %%zmm0, %%zmm1 \n\t"
-            "vfmadd213pd 0x400(%%rax,%%rsi,8) %{1to8%}, %%zmm1, %%zmm2 \n\t"
-            :::
-        );])],
-        [enable_avx512f=yes], [enable_avx512f=no])
+    AC_TRY_ASSEMBLE([
+        vmovapd %zmm0, %zmm1
+        vmulpd %zmm0, %zmm0, %zmm1
+        vfmadd213pd 0x400(%rax,%rsi,8) {1to8}, %zmm1, %zmm2
+        ], [enable_avx512f=yes], [enable_avx512f=no])
     AC_MSG_RESULT([$enable_avx512f])
     if test "x$enable_avx512f" = xno; then
         AC_MSG_WARN([AVX-512F cannot be compiled; disabling knl and skx configurations])
@@ -376,13 +360,9 @@ if ( echo $configs | $EGREP -q 'skx' ); then
         CPPFLAGS="$CPPFLAGS -Wa,-march=skylake-avx512"
     fi
     AC_MSG_CHECKING([whether inline AVX-512DQ can be compiled])
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
-        __asm__ __volatile__
-        (
-            "vpmullq %%zmm0, %%zmm0, %%zmm1 \n\t"
-            :::
-        );])],
-        [enable_avx512dq=yes], [enable_avx512dq=no])
+    AC_TRY_ASSEMBLE([
+        vpmullq %zmm0, %zmm0, %zmm1
+        ], [enable_avx512dq=yes], [enable_avx512dq=no])
     AC_MSG_RESULT([$enable_avx512dq])
     if test "x$enable_avx512dq" = xno; then
         AC_MSG_WARN([AVX-512DQ cannot be compiled; disabling skx configuration])

@@ -8,6 +8,7 @@
 #include "internal/1t/dense/add.hpp"
 #include "internal/1t/dense/dot.hpp"
 #include "internal/1t/dense/scale.hpp"
+#include "internal/1t/dense/set.hpp"
 #include "internal/3m/mult.hpp"
 
 namespace tblis
@@ -491,8 +492,16 @@ void mult(const communicator& comm, const config& cfg,
 
     if (n_AB == 0)
     {
-        scale(comm, cfg, len_AC+len_BC+len_ABC, beta, conj_C, C,
-              stride_C_AC+stride_C_BC+stride_C_ABC);
+        if (beta == T(0))
+        {
+            set(comm, cfg, len_AC+len_BC+len_ABC, beta, C,
+                stride_C_AC+stride_C_BC+stride_C_ABC);
+        }
+        else
+        {
+            scale(comm, cfg, len_AC+len_BC+len_ABC, beta, conj_C, C,
+                  stride_C_AC+stride_C_BC+stride_C_ABC);
+        }
     }
 
     if (impl == REFERENCE)

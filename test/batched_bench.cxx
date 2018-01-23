@@ -196,82 +196,19 @@ void bench(int R,
                     indexed_varray_view<const T> B, const std::string& typeb,
            T  beta, indexed_varray_view<      T> C, const std::string& typec)
 {
-    indexed_varray<T> tmp0_, tmp1_, tmp2_, tmp3_;
-    indexed_varray_view<T> tmp0, tmp1, tmp2, tmp3;
-
-    if (check)
-    {
-        tmp0_.reset(C);
-        tmp1_.reset(C);
-        tmp2_.reset(C);
-        tmp3_.reset(C);
-        tmp0.reset(tmp0_);
-        tmp1.reset(tmp1_);
-        tmp2.reset(tmp2_);
-        tmp3.reset(tmp3_);
-    }
-    else
-    {
-        tmp0.reset(C);
-        tmp1.reset(C);
-        tmp2.reset(C);
-        tmp3.reset(C);
-    }
-
-    if (dumb)
-    {
-        contract_batch_dumb<double>(alpha,    A, typea.data(),
-                                              B, typeb.data(),
-                                     beta, tmp0, typec.data());
-    }
-
     flops = 0;
 
     double t1 = run_kernel(R,
     [&]
     {
-        contract_batch_ref<double>(alpha,    A, typea.data(),
-                                             B, typeb.data(),
-                                    beta, tmp1, typec.data());
+        mult<double>(alpha, A, typea.data(),
+                            B, typeb.data(),
+                      beta, C, typec.data());
     });
 
-    auto flops1 = flops.load();
-    printf("%ld\n", flops1);
-    flops = 0;
+    long flops1 = flops.load()/R;
 
-    double t2 = run_kernel(R,
-    [&]
-    {
-        contract_batch<double>(alpha,    A, typea.data(),
-                                         B, typeb.data(),
-                                beta, tmp2, typec.data());
-    });
-
-    auto flops2 = flops.load();
-    printf("%ld\n", flops2);
-    flops = 0;
-
-    double t3 = run_kernel(R,
-    [&]
-    {
-        contract_batch2<double>(alpha,    A, typea.data(),
-                                          B, typeb.data(),
-                                 beta, tmp3, typec.data());
-    });
-
-    auto flops3 = flops.load();
-    printf("%ld\n", flops3);
-
-    if (check)
-    {
-        double d1 = diff(dumb ? tmp0 : tmp1, tmp1);
-        double d2 = diff(dumb ? tmp0 : tmp1, tmp2);
-        double d3 = diff(dumb ? tmp0 : tmp1, tmp3);
-        printf("%g %g %g\n", d1, d2, d3);
-    }
-
-    printf("%g %g %g\n", t1, t2, t3);
-    printf("%g %g %g\n", flops1/t1/1e9/R, flops2/t2/1e9/R, flops3/t3/1e9/R);
+    printf("%ld %g %g\n", flops1, t1, flops1/t1/1e9);
 }
 
 int main(int argc, char** argv)
@@ -285,10 +222,6 @@ int main(int argc, char** argv)
                             {"no-check", no_argument, &check, 0},
                             {"dumb", no_argument, &dumb, 1},
                             {"no-dumb", no_argument, &dumb, 0},
-                            {"outer-threading", no_argument, &outer_threading, 1},
-                            {"no-outer-threading", no_argument, &outer_threading, 0},
-                            {"inner-threading", no_argument, &outer_threading, 0},
-                            {"no-inner-threading", no_argument, &outer_threading, 1},
                             {"inout-ratio", required_argument, NULL, 'i'},
                             {"occ", required_argument, NULL, 'o'},
                             {"vrt", required_argument, NULL, 'v'},
@@ -332,12 +265,12 @@ int main(int argc, char** argv)
     cout << "Using mt19937 with seed " << seed << endl;
     rand_engine.seed(seed);
 
-    constexpr bool test0 = false;
+    constexpr bool test0 = true;
     constexpr bool test1 = false;
     constexpr bool test2 = false;
-    constexpr bool test3 = false;
+    constexpr bool test3 = true;
     constexpr bool test4 = true;
-    constexpr bool test5 = false;
+    constexpr bool test5 = true;
 
     if (test0)
     {
@@ -384,7 +317,7 @@ int main(int argc, char** argv)
                          1.0, T3, "ABCIJK");
     }
 
-    if (test3)
+    if (test4)
     {
         indexed_varray<double> T4;
         indexed_varray<double> T3;
@@ -399,7 +332,7 @@ int main(int argc, char** argv)
                          1.0, T4, "ABCDIJKL");
     }
 
-    if (test4)
+    if (test3)
     {
         indexed_varray<double> T4;
         indexed_varray<double> Z4;

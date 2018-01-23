@@ -130,6 +130,11 @@ void contract_blis(const communicator& comm, const config& cfg,
     len_type n = ct.length(1);
     len_type k = at.length(1);
 
+    if (comm.master())
+    {
+	flops += 2*m*n*k;
+    }
+
     int nt = comm.num_threads();
     auto tc = make_gemm_thread_config<T>(cfg, nt, m, n, k);
 

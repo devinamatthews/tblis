@@ -130,10 +130,7 @@ void contract_blis(const communicator& comm, const config& cfg,
     len_type n = ct.length(1);
     len_type k = at.length(1);
 
-    if (comm.master())
-    {
-	flops += 2*m*n*k;
-    }
+    if (comm.master()) flops += 2*m*n*k;
 
     int nt = comm.num_threads();
     auto tc = make_gemm_thread_config<T>(cfg, nt, m, n, k);
@@ -574,11 +571,11 @@ void mult(const communicator& comm, const config& cfg,
                       beta, conj_C, C, stride_C_ABC);
             break;
         case HAS_AC+HAS_BC:
-            outer_prod_blas(comm, cfg, len_AC, len_BC,
-                            alpha, conj_A, A, stride_A_AC,
-                                   conj_B, B, stride_B_BC,
-                             beta, conj_C, C, stride_C_AC, stride_C_BC);
-            break;
+        //    outer_prod_blas(comm, cfg, len_AC, len_BC,
+        //                    alpha, conj_A, A, stride_A_AC,
+        //                           conj_B, B, stride_B_BC,
+        //                     beta, conj_C, C, stride_C_AC, stride_C_BC);
+        //    break;
         //TODO: gemv
         case HAS_AB+HAS_AC:
         case HAS_AB+HAS_BC:

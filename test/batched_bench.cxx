@@ -317,21 +317,6 @@ int main(int argc, char** argv)
                          1.0, T3, "ABCIJK");
     }
 
-    if (test4)
-    {
-        indexed_varray<double> T4;
-        indexed_varray<double> T3;
-        indexed_varray<double> W;
-
-        init(T4, "ABCD", "I===");
-        init(T3,  "ABC",  "I==");
-        init(W,  "IJKA",  "");
-
-        bench<double>(R, 1.0, T3,   "ABCIJM",
-                               W,     "KLMD",
-                         1.0, T4, "ABCDIJKL");
-    }
-
     if (test3)
     {
         indexed_varray<double> T4;
@@ -345,6 +330,21 @@ int main(int argc, char** argv)
         bench<double>(R, 1.0, T4, "ABCEIJKM",
                               Wa,     "DMEL",
                          1.0, Z4, "ABCDIJKL");
+    }
+
+    if (test4)
+    {
+        indexed_varray<double> T4;
+        indexed_varray<double> T3;
+        indexed_varray<double> W;
+
+        init(T4, "ABCD", "I===");
+        init(T3,  "ABC",  "I==");
+        init(W,  "IJKA",  "");
+
+        bench<double>(R, 1.0, T3,   "ABCIJM",
+                               W,     "KLMD",
+                         1.0, T4, "ABCDIJKL");
     }
 
     if (test5)

@@ -121,7 +121,7 @@ host_triplet = @host@
 @ENABLE_SKX2_TRUE@am__append_22 = lib/libskx2.la
 noinst_PROGRAMS = bin/test$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
 	$(am__EXEEXT_3)
-@ENABLE_BLAS_TRUE@am__append_23 = bin/bench #bin/batched_bench bin/dpd_bench
+@ENABLE_BLAS_TRUE@am__append_23 = bin/bench bin/batched_bench #bin/dpd_bench
 @ENABLE_BLAS_TRUE@@ENABLE_SKX1_TRUE@am__append_24 = bin/skx_bench
 @ENABLE_BLAS_TRUE@@ENABLE_SKX1_FALSE@@ENABLE_SKX2_TRUE@am__append_25 = bin/skx_bench
 subdir = .
@@ -388,14 +388,18 @@ lib_libzen_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(lib_libzen_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
 @ENABLE_ZEN_TRUE@am_lib_libzen_la_rpath =
-@ENABLE_BLAS_TRUE@am__EXEEXT_1 = bin/bench$(EXEEXT)
+@ENABLE_BLAS_TRUE@am__EXEEXT_1 = bin/bench$(EXEEXT) \
+@ENABLE_BLAS_TRUE@	bin/batched_bench$(EXEEXT)
 @ENABLE_BLAS_TRUE@@ENABLE_SKX1_TRUE@am__EXEEXT_2 =  \
 @ENABLE_BLAS_TRUE@@ENABLE_SKX1_TRUE@	bin/skx_bench$(EXEEXT)
 @ENABLE_BLAS_TRUE@@ENABLE_SKX1_FALSE@@ENABLE_SKX2_TRUE@am__EXEEXT_3 = bin/skx_bench$(EXEEXT)
 PROGRAMS = $(noinst_PROGRAMS)
+am_bin_batched_bench_OBJECTS = test/batched_bench.$(OBJEXT)
+bin_batched_bench_OBJECTS = $(am_bin_batched_bench_OBJECTS)
+am__DEPENDENCIES_1 =
+bin_batched_bench_DEPENDENCIES = lib/libtblis.la $(am__DEPENDENCIES_1)
 am_bin_bench_OBJECTS = test/bench.$(OBJEXT)
 bin_bench_OBJECTS = $(am_bin_bench_OBJECTS)
-am__DEPENDENCIES_1 =
 bin_bench_DEPENDENCIES = lib/libtblis.la $(am__DEPENDENCIES_1)
 am_bin_skx_bench_OBJECTS = test/skx_bench.$(OBJEXT)
 bin_skx_bench_OBJECTS = $(am_bin_skx_bench_OBJECTS)
@@ -468,8 +472,9 @@ SOURCES = $(lib_libbulldozer_la_SOURCES) $(lib_libcore2_la_SOURCES) \
 	$(lib_libreference_la_SOURCES) \
 	$(lib_libsandybridge_la_SOURCES) $(lib_libskx1_la_SOURCES) \
 	$(lib_libskx2_la_SOURCES) $(lib_libtblis_la_SOURCES) \
-	$(lib_libzen_la_SOURCES) $(bin_bench_SOURCES) \
-	$(bin_skx_bench_SOURCES) $(bin_test_SOURCES)
+	$(lib_libzen_la_SOURCES) $(bin_batched_bench_SOURCES) \
+	$(bin_bench_SOURCES) $(bin_skx_bench_SOURCES) \
+	$(bin_test_SOURCES)
 DIST_SOURCES = $(am__lib_libbulldozer_la_SOURCES_DIST) \
 	$(am__lib_libcore2_la_SOURCES_DIST) \
 	$(am__lib_libexcavator_la_SOURCES_DIST) \
@@ -480,8 +485,9 @@ DIST_SOURCES = $(am__lib_libbulldozer_la_SOURCES_DIST) \
 	$(am__lib_libsandybridge_la_SOURCES_DIST) \
 	$(am__lib_libskx1_la_SOURCES_DIST) \
 	$(am__lib_libskx2_la_SOURCES_DIST) $(lib_libtblis_la_SOURCES) \
-	$(am__lib_libzen_la_SOURCES_DIST) $(bin_bench_SOURCES) \
-	$(bin_skx_bench_SOURCES) $(bin_test_SOURCES)
+	$(am__lib_libzen_la_SOURCES_DIST) $(bin_batched_bench_SOURCES) \
+	$(bin_bench_SOURCES) $(bin_skx_bench_SOURCES) \
+	$(bin_test_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -1619,11 +1625,17 @@ test/$(am__dirstamp):
 test/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) test/$(DEPDIR)
 	@: > test/$(DEPDIR)/$(am__dirstamp)
-test/bench.$(OBJEXT): test/$(am__dirstamp) \
+test/batched_bench.$(OBJEXT): test/$(am__dirstamp) \
 	test/$(DEPDIR)/$(am__dirstamp)
 bin/$(am__dirstamp):
 	@$(MKDIR_P) bin
 	@: > bin/$(am__dirstamp)
+
+bin/batched_bench$(EXEEXT): $(bin_batched_bench_OBJECTS) $(bin_batched_bench_DEPENDENCIES) $(EXTRA_bin_batched_bench_DEPENDENCIES) bin/$(am__dirstamp)
+	@rm -f bin/batched_bench$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(bin_batched_bench_OBJECTS) $(bin_batched_bench_LDADD) $(LIBS)
+test/bench.$(OBJEXT): test/$(am__dirstamp) \
+	test/$(DEPDIR)/$(am__dirstamp)
 
 bin/bench$(EXEEXT): $(bin_bench_OBJECTS) $(bin_bench_DEPENDENCIES) $(EXTRA_bin_bench_DEPENDENCIES) bin/$(am__dirstamp)
 	@rm -f bin/bench$(EXEEXT)
@@ -1851,6 +1863,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/env.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/random.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/thread.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/batched_bench.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/bench.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/skx_bench.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/test.Po@am__quote@

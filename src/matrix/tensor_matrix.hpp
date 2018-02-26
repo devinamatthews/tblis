@@ -9,6 +9,8 @@ namespace tblis
 template <typename T>
 class tensor_matrix
 {
+    template <typename> friend class block_scatter_matrix;
+
     public:
         typedef size_t size_type;
         typedef const stride_type* scatter_type;
@@ -20,34 +22,36 @@ class tensor_matrix
 
     protected:
         pointer data_ = nullptr;
-        std::array<len_type, 2> len_;
-        std::array<len_type, 2> offset_;
-        std::array<len_type, 2> leading_len_;
-        std::array<stride_type, 2> leading_stride_;
-        std::array<viterator<>, 2> iterator_;
+        std::array<len_type, 2> tot_len_ = {};
+        std::array<len_type, 2> offset_ = {};
+        std::array<len_vector, 2> len_ = {};
+        std::array<stride_vector, 2> stride_ = {};
 
     public:
-        tensor_matrix()
-        {
-            reset();
-        }
-
-        tensor_matrix(const tensor_matrix& other)
-        {
-            reset(other);
-        }
-
-        tensor_matrix(tensor_matrix&& other)
-        {
-            reset(std::move(other));
-        }
+        tensor_matrix();
 
         template <typename U, typename V>
         tensor_matrix(varray_view<const T> other,
                       const U& row_inds,
                       const V& col_inds)
         {
-            reset(std::move(other), row_inds, col_inds);
+            TBLIS_ASSERT(row_inds.size()+col_inds.size() == other.dimension());
+
+            data_ = const_cast<T*>(other.data());
+
+            for (unsigned i = 0;i < row_inds.size();i++)
+            {
+                len_[0].push_back(other.length(row_inds[i]));
+                stride_[0].push_back(other.stride(row_inds[i]));
+                tot_len_[0] *= other.length(row_inds[i]);
+            }
+
+            for (unsigned i = 0;i < col_inds.size();i++)
+            {
+                len_[1].push_back(other.length(col_inds[i]));
+                stride_[1].push_back(other.stride(col_inds[i]));
+                tot_len_[1] *= other.length(col_inds[i]);
+            }
         }
 
         template <typename U, typename V, typename W, typename X>
@@ -57,146 +61,37 @@ class tensor_matrix
                       const W& stride_m,
                       const X& stride_n)
         {
-            reset(len_m, len_n, ptr, stride_m, stride_n);
-        }
-
-        tensor_matrix& operator=(const tensor_matrix& other) = delete;
-
-        void reset()
-        {
-            data_ = nullptr;
-            len_[0] = 0;
-            len_[1] = 0;
-            offset_[0] = 0;
-            offset_[1] = 0;
-            leading_len_[0] = 0;
-            leading_len_[1] = 0;
-            leading_stride_[0] = 0;
-            leading_stride_[1] = 0;
-            iterator_[0] = viterator<>();
-            iterator_[1] = viterator<>();
-        }
-
-        void reset(const tensor_matrix& other)
-        {
-            data_ = other.data_;
-            len_[0] = other.len_[0];
-            len_[1] = other.len_[1];
-            offset_[0] = other.offset_[0];
-            offset_[1] = other.offset_[1];
-            leading_len_[0] = other.leading_len_[0];
-            leading_len_[1] = other.leading_len_[1];
-            leading_stride_[0] = other.leading_stride_[0];
-            leading_stride_[1] = other.leading_stride_[1];
-            iterator_[0] = other.iterator_[0];
-            iterator_[1] = other.iterator_[1];
-        }
-
-        void reset(tensor_matrix&& other)
-        {
-            data_ = other.data_;
-            len_[0] = other.len_[0];
-            len_[1] = other.len_[1];
-            offset_[0] = other.offset_[0];
-            offset_[1] = other.offset_[1];
-            leading_len_[0] = other.leading_len_[0];
-            leading_len_[1] = other.leading_len_[1];
-            leading_stride_[0] = other.leading_stride_[0];
-            leading_stride_[1] = other.leading_stride_[1];
-            iterator_[0] = std::move(other.iterator_[0]);
-            iterator_[1] = std::move(other.iterator_[1]);
-        }
-
-        template <typename U, typename V>
-        void reset(varray_view<const T> other,
-                   const U& row_inds,
-                   const V& col_inds)
-        {
-            TBLIS_ASSERT(row_inds.size()+col_inds.size() == other.dimension());
-
-            data_ = const_cast<T*>(other.data());
-            len_[0] = leading_len_[0] = (row_inds.empty() ? 1 : other.length(row_inds[0]));
-            len_[1] = leading_len_[1] = (col_inds.empty() ? 1 : other.length(col_inds[0]));
-            leading_stride_[0] = (row_inds.empty() ? 1 : other.stride(row_inds[0]));
-            leading_stride_[1] = (col_inds.empty() ? 1 : other.stride(col_inds[0]));
-            offset_[0] = 0;
-            offset_[1] = 0;
-
-            len_vector len_m_; len_m_.reserve(row_inds.size());
-            len_vector len_n_; len_n_.reserve(col_inds.size());
-            stride_vector stride_m_; stride_m_.reserve(row_inds.size());
-            stride_vector stride_n_; stride_n_.reserve(col_inds.size());
-
-            for (unsigned i = 1;i < row_inds.size();i++)
-            {
-                len_m_.push_back(other.length(row_inds[i]));
-                stride_m_.push_back(other.stride(row_inds[i]));
-            }
-
-            for (unsigned i = 1;i < col_inds.size();i++)
-            {
-                len_n_.push_back(other.length(col_inds[i]));
-                stride_n_.push_back(other.stride(col_inds[i]));
-            }
-
-            for (len_type len : len_m_) len_[0] *= len;
-            for (len_type len : len_n_) len_[1] *= len;
-
-            iterator_[0] = viterator<>(len_m_, stride_m_);
-            iterator_[1] = viterator<>(len_n_, stride_n_);
-        }
-
-        template <typename U, typename V, typename W, typename X>
-        void reset(const U& len_m,
-                   const V& len_n,
-                   pointer ptr,
-                   const W& stride_m,
-                   const X& stride_n)
-        {
             TBLIS_ASSERT(len_m.size() == stride_m.size());
             TBLIS_ASSERT(len_n.size() == stride_n.size());
 
             data_ = ptr;
-            len_[0] = leading_len_[0] = (len_m.empty() ? 1 : len_m[0]);
-            len_[1] = leading_len_[1] = (len_n.empty() ? 1 : len_n[0]);
-            leading_stride_[0] = (stride_m.empty() ? 1 : stride_m[0]);
-            leading_stride_[1] = (stride_n.empty() ? 1 : stride_n[0]);
-            offset_[0] = 0;
-            offset_[1] = 0;
 
-            len_vector len_m_, len_n_;
-            stride_vector stride_m_, stride_n_;
-            if (!len_m.empty()) len_m_.assign(len_m.begin()+1, len_m.end());
-            if (!len_n.empty()) len_n_.assign(len_n.begin()+1, len_n.end());
-            if (!stride_m.empty()) stride_m_.assign(stride_m.begin()+1, stride_m.end());
-            if (!stride_n.empty()) stride_n_.assign(stride_n.begin()+1, stride_n.end());
+            len_[0].assign(len_m.begin(), len_m.end());
+            len_[1].assign(len_n.begin(), len_n.end());
+            stride_[0].assign(stride_m.begin(), stride_m.end());
+            stride_[1].assign(stride_n.begin(), stride_n.end());
 
-            for (len_type len : len_m_) len_[0] *= len;
-            for (len_type len : len_n_) len_[1] *= len;
-
-            iterator_[0] = viterator<>(len_m_, stride_m_);
-            iterator_[1] = viterator<>(len_n_, stride_n_);
+            for (len_type len : len_[0]) tot_len_[0] *= len;
+            for (len_type len : len_[1]) tot_len_[1] *= len;
         }
 
         void transpose()
         {
             using std::swap;
-            swap(len_[0], len_[1]);
+            swap(tot_len_[0], tot_len_[1]);
             swap(offset_[0], offset_[1]);
-            swap(leading_len_[0], leading_len_[1]);
-            swap(leading_stride_[0], leading_stride_[1]);
-            swap(iterator_[0], iterator_[1]);
+            swap(len_[0], len_[1]);
+            swap(stride_[0], stride_[1]);
         }
 
         void swap(tensor_matrix& other)
         {
             using std::swap;
             swap(data_, other.data_);
-            swap(len_, other.len_);
+            swap(tot_len_, other.tot_len_);
             swap(offset_, other.offset_);
-            swap(leading_len_, other.leading_len_);
-            swap(leading_stride_, other.leading_stride_);
-            swap(iterator_, other.iterator_);
+            swap(len_, other.len_);
+            swap(stride_, other.stride_);
         }
 
         friend void swap(tensor_matrix& a, tensor_matrix& b)
@@ -207,20 +102,20 @@ class tensor_matrix
         len_type length(unsigned dim) const
         {
             TBLIS_ASSERT(dim < 2);
-            return len_[dim];
+            return tot_len_[dim];
         }
 
         len_type length(unsigned dim, len_type m)
         {
             TBLIS_ASSERT(dim < 2);
-            std::swap(m, len_[dim]);
+            std::swap(m, tot_len_[dim]);
             return m;
         }
 
         stride_type stride(unsigned dim) const
         {
             TBLIS_ASSERT(dim < 2);
-            return leading_stride_[dim];
+            return (stride_[dim].empty() ? 1 : stride_[dim][0]);
         }
 
         void shift(unsigned dim, len_type n)
@@ -231,12 +126,12 @@ class tensor_matrix
 
         void shift_down(unsigned dim)
         {
-            shift(dim, len_[dim]);
+            shift(dim, tot_len_[dim]);
         }
 
         void shift_up(unsigned dim)
         {
-            shift(dim, -len_[dim]);
+            shift(dim, -tot_len_[dim]);
         }
 
         pointer data()
@@ -256,80 +151,9 @@ class tensor_matrix
             return ptr;
         }
 
-        void fill_scatter(unsigned dim, stride_type* scatter)
+        constexpr unsigned num_patches(unsigned dim) const
         {
-            TBLIS_ASSERT(dim < 2);
-
-            len_type m = len_[dim];
-            len_type off_m = offset_[dim];
-            len_type m0 = leading_len_[dim];
-            stride_type s0 = leading_stride_[dim];
-            auto& it = iterator_[dim];
-
-            len_type p0 = off_m%m0;
-            stride_type off = 0;
-            it.position(off_m/m0, off);
-
-            for (len_type idx = 0;it.next(off);)
-            {
-                for (len_type i0 = p0;i0 < m0;i0++)
-                {
-                    if (idx == m) return;
-                    scatter[idx++] = off + i0*s0;
-                }
-                p0 = 0;
-            }
-        }
-
-        void fill_block_scatter(unsigned dim, stride_type* scatter, len_type MB, stride_type* block_scatter)
-        {
-            /*
-            TBLIS_ASSERT(dim < 2);
-
-            const auto& m = len_[dim];
-            const auto& off_m = offset_[dim];
-            const auto& m0 = leading_len_[dim];
-            const auto& s0 = leading_stride_[dim];
-            auto& it = iterator_[dim];
-
-            len_type p0 = off_m%m0;
-            stride_type off = 0;
-            it.position(off_m/m0, off);
-
-            len_type nleft = 0;
-            for (len_type idx = 0, bidx = 0;it.next(off);)
-            {
-                for (len_type i0 = p0;i0 < m0;i0++)
-                {
-                    if (idx == m) return;
-
-                    if (nleft == 0)
-                    {
-                        block_scatter[bidx++] = (m0-i0 >= MR || m0-i0+idx >= m ? s0 : 0);
-                        //block_scatter[bidx++] = 0;
-                        nleft = MR;
-                    }
-
-                    scatter[idx++] = off + i0*s0;
-                    nleft--;
-                }
-                p0 = 0;
-            }
-            */
-
-            fill_scatter(dim, scatter);
-
-            len_type m = len_[dim];
-
-            for (len_type i = 0, b = 0;i < m;i += MB, b++)
-            {
-                stride_type s = (m-i) > 1 ? scatter[i+1]-scatter[i] : 1;
-                for (len_type j = i+1;j+1 < std::min(i+MB,m);j++)
-                {
-                    if (scatter[j+1]-scatter[j] != s) s = 0;
-                }
-                block_scatter[b] = s;
-            }
+            return 1;
         }
 };
 

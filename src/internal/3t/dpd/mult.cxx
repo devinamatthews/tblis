@@ -125,22 +125,6 @@ void contract_block(const communicator& comm, const config& cfg,
     stl_ext::permute(idx_C_AC, perm_AC);
     stl_ext::permute(idx_C_BC, perm_BC);
 
-    const bool row_major = cfg.gemm_row_major.value<T>();
-    const bool transpose = row_major ? (ndim_AC > 0 ? stride[2][idx_C_AC[0]] : 0) == 1
-                                     : (ndim_BC > 0 ? stride[2][idx_C_BC[0]] : 0) == 1;
-
-    if (transpose)
-    {
-        using std::swap;
-        swap(ndim_AC, ndim_BC);
-        swap(ndim_A, ndim_B);
-        swap(len[0], len[1]);
-        swap(idx_A_AC, idx_B_BC);
-        swap(idx_A_AB, idx_B_AB);
-        swap(idx_C_AC, idx_C_BC);
-        swap(A, B);
-    }
-
     stride_type dense_AC = 1;
     stride_type nblock_AC = 1;
     for (unsigned i : idx_C_AC)
@@ -215,26 +199,9 @@ void contract_block(const communicator& comm, const config& cfg,
                         auto stride_C_AC = stl_ext::select_from(local_C.strides(), idx_C_AC);
                         auto stride_C_BC = stl_ext::select_from(local_C.strides(), idx_C_BC);
 
-                        tensor_matrix<T> ct(len_AC, len_BC, local_C.data(),
-                                            stride_C_AC, stride_C_BC);
-
                         if (ndim_AB != 0 || irrep_AB == 0)
                         {
-                            auto tc = make_gemm_thread_config<T>(
-                                cfg, subcomm.num_threads(), ct.length(0), ct.length(1), 0);
-
-                            communicator comm_nc = subcomm.gang(TCI_EVENLY, tc.jc_nt);
-                            communicator comm_kc = comm_nc.gang(TCI_EVENLY,        1);
-                            communicator comm_mc = comm_kc.gang(TCI_EVENLY, tc.ic_nt);
-                            communicator comm_nr = comm_mc.gang(TCI_EVENLY, tc.jr_nt);
-                            communicator comm_mr = comm_nr.gang(TCI_EVENLY, tc.ir_nt);
-
                             TensorGEMM gemm;
-                            step<0>(gemm).subcomm = &comm_nc;
-                            step<1>(gemm).subcomm = &comm_kc;
-                            step<4>(gemm).subcomm = &comm_mc;
-                            step<8>(gemm).subcomm = &comm_nr;
-                            step<9>(gemm).subcomm = &comm_mr;
 
                             for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
                             {
@@ -257,6 +224,9 @@ void contract_block(const communicator& comm, const config& cfg,
 
                                 tensor_matrix<T> bt(len_AB, len_BC, const_cast<T*>(local_B.data()),
                                                     stride_B_AB, stride_B_BC);
+
+                                tensor_matrix<T> ct(len_AC, len_BC, local_C.data(),
+                                                    stride_C_AC, stride_C_BC);
 
                                 if (subcomm.master())
                                     flops += 2*ct.length(0)*ct.length(1)*at.length(1);

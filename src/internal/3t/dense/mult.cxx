@@ -113,43 +113,7 @@ void contract_blis(const communicator& comm, const config& cfg,
                         stl_ext::permuted(stride_C_AC, reorder_AC),
                         stl_ext::permuted(stride_C_BC, reorder_BC));
 
-    const bool row_major = cfg.gemm_row_major.value<T>();
-
-    if (ct.stride(!row_major) == 1)
-    {
-        /*
-         * Compute C^T = B^T * A^T instead
-         */
-        at.swap(bt);
-        at.transpose();
-        bt.transpose();
-        ct.transpose();
-    }
-
-
-    len_type m = ct.length(0);
-    len_type n = ct.length(1);
-    len_type k = at.length(1);
-
-    if (comm.master()) flops += 2*m*n*k;
-
-    int nt = comm.num_threads();
-    auto tc = make_gemm_thread_config<T>(cfg, nt, m, n, k);
-
-    communicator comm_nc =    comm.gang(TCI_EVENLY, tc.jc_nt);
-    communicator comm_kc = comm_nc.gang(TCI_EVENLY,        1);
-    communicator comm_mc = comm_kc.gang(TCI_EVENLY, tc.ic_nt);
-    communicator comm_nr = comm_mc.gang(TCI_EVENLY, tc.jr_nt);
-    communicator comm_mr = comm_nr.gang(TCI_EVENLY, tc.ir_nt);
-
-    TensorGEMM gemm;
-    step<0>(gemm).subcomm = &comm_nc;
-    step<1>(gemm).subcomm = &comm_kc;
-    step<4>(gemm).subcomm = &comm_mc;
-    step<8>(gemm).subcomm = &comm_nr;
-    step<9>(gemm).subcomm = &comm_mr;
-
-    gemm(comm, cfg, alpha, at, bt, beta, ct);
+    TensorGEMM{}(comm, cfg, alpha, at, bt, beta, ct);
 }
 
 #define FOREACH_TYPE(T) \

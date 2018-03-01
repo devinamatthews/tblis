@@ -2,7 +2,46 @@
 
 #include <string.h>
 
-#if TCI_USE_OSX_SPINLOCK
+#if TCI_USE_OS_UNFAIR_LOCK
+
+int tci_mutex_init(tci_mutex* mutex)
+{
+    static os_unfair_lock init = OS_UNFAIR_LOCK_INIT;
+    memcpy(mutex, &init, sizeof(os_unfair_lock));
+    return 0;
+}
+
+int tci_mutex_destroy(tci_mutex* mutex)
+{
+    (void)mutex;
+    return 0;
+}
+
+int tci_mutex_lock(tci_mutex* mutex)
+{
+    os_unfair_lock_lock(mutex);
+    return 0;
+}
+
+int tci_mutex_trylock(tci_mutex* mutex)
+{
+    if (os_unfair_lock_trylock(mutex))
+    {
+        return 0;
+    }
+    else
+    {
+        return EBUSY;
+    }
+}
+
+int tci_mutex_unlock(tci_mutex* mutex)
+{
+    os_unfair_lock_unlock(mutex);
+    return 0;
+}
+
+#elif TCI_USE_OSX_SPINLOCK
 
 int tci_mutex_init(tci_mutex* mutex)
 {

@@ -16,7 +16,7 @@ LT_INIT
 
 AC_ARG_ENABLE([mutex], AS_HELP_STRING([--enable-mutex=type],
     [use a mutex of the specified type, one of auto, pthread_mutex, \
-    pthread_spinlock, osx_spinlock, omp_lock, atomic_spinlock @<:@default=auto@:>@]),
+    pthread_spinlock, osx_spinlock, os_unfair_lock, omp_lock, atomic_spinlock @<:@default=auto@:>@]),
     [mutex_type=$enable_mutex], [mutex_type=auto])
 
 AC_ARG_ENABLE([barrier], AS_HELP_STRING([--enable-barrier=type],
@@ -159,6 +159,20 @@ else
 fi
 
 #
+# Check for os_unfair_lock
+#
+
+AC_CHECK_HEADER([os/lock.h])
+AC_CHECK_FUNCS([os_unfair_lock_lock])
+
+if test x"$ac_cv_header_os_lock_h" = xyes -a \
+        x"$ac_cv_func_os_unfair_lock_lock" = xyes; then
+    have_os_unfair_lock=yes
+else
+    have_os_unfair_lock=no
+fi
+
+#
 # Check for OSSpinLock
 #
 
@@ -242,7 +256,9 @@ AC_SEARCH_LIBS([__atomic_compare_exchange_16], [atomic])
 #
 
 if test x"$mutex_type" = xauto; then
-    if test x"$have_osx_spinlock" = xyes; then
+    if test x"$have_os_unfair_lock" = xyes; then
+        mutex_type=os_unfair_lock
+    elif test x"$have_osx_spinlock" = xyes; then
         mutex_type=osx_spinlock
     elif test x"$have_pthread_spinlock" = xyes; then
         mutex_type=pthread_spinlock
@@ -253,6 +269,7 @@ fi
 
 USE_PTHREAD_MUTEX=0
 USE_PTHREAD_SPINLOCK=0
+USE_OS_UNFAIR_LOCK=0
 USE_OSX_SPINLOCK=0
 USE_OMP_LOCK=0
 USE_ATOMIC_SPINLOCK=0
@@ -268,6 +285,11 @@ elif test x"$mutex_type" = xpthread_spinlock; then
         AC_MSG_ERROR([pthread spinlock requested but not available])
     fi
     USE_PTHREAD_SPINLOCK=1
+elif test x"$mutex_type" = xos_unfair_lock; then
+    if test x"$have_os_unfair_lock" = xno; then
+        AC_MSG_ERROR([macOS os_unfair_lock requested but not available])
+    fi
+    USE_OS_UNFAIR_LOCK=1
 elif test x"$mutex_type" = xosx_spinlock; then
     if test x"$have_osx_spinlock" = xno; then
         AC_MSG_ERROR([OSX OSSpinLock requested but not available])
@@ -287,6 +309,7 @@ AC_MSG_RESULT([$mutex_type])
 
 AC_SUBST([USE_PTHREAD_MUTEX])
 AC_SUBST([USE_PTHREAD_SPINLOCK])
+AC_SUBST([USE_OS_UNFAIR_LOCK])
 AC_SUBST([USE_OSX_SPINLOCK])
 AC_SUBST([USE_OMP_LOCK])
 AC_SUBST([USE_ATOMIC_SPINLOCK])

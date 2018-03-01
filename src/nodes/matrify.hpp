@@ -5,6 +5,7 @@
 #include "util/thread.h"
 
 #include "matrix/block_scatter_matrix.hpp"
+#include "matrix/patch_block_scatter_matrix.hpp"
 
 #include "nodes/packm.hpp"
 
@@ -45,15 +46,15 @@ allocate_buffers(len_type MB, len_type NB, matrify<Mat, MBS, NBS, Pool, Child>& 
 
         if (comm.master())
         {
-            parent.scat_buffer = Pool.allocate<stride_type>(2*m*mp*np + 2*n*mp*np);
+            parent.scat_buffer = Pool.allocate<stride_type>(2*m*np + 2*n*mp);
             parent.rscat = parent.scat_buffer.template get<stride_type>();
         }
 
         comm.broadcast_value(parent.rscat);
 
-        parent.cscat = parent.rscat+m*mp*np;
-        parent.rbs = parent.cscat+n*mp*np;
-        parent.cbs = parent.rbs+m*mp*np;
+        parent.cscat = parent.rscat+m*np;
+        parent.rbs = parent.cscat+n*mp;
+        parent.cbs = parent.rbs+m*np;
     }
 }
 
@@ -73,7 +74,7 @@ allocate_buffers(len_type MB, len_type NB, matrify<Mat, MBS, NBS, Pool, Child>& 
 
         if (comm.master())
         {
-            len_type scatter_size = size_as_type<stride_type,T>(2*m*mp*np + 2*n*mp*np);
+            len_type scatter_size = size_as_type<stride_type,T>(2*m*np + 2*n*mp);
             child.pack_buffer = Pool.allocate<T>(m*n + std::max(m,n)*TBLIS_MAX_UNROLL + scatter_size);
             child.pack_ptr = child.pack_buffer.get();
         }
@@ -81,9 +82,9 @@ allocate_buffers(len_type MB, len_type NB, matrify<Mat, MBS, NBS, Pool, Child>& 
         comm.broadcast_value(child.pack_ptr);
 
         parent.rscat = convert_and_align<T,stride_type>(static_cast<T*>(child.pack_ptr) + m*n);
-        parent.cscat = parent.rscat+m*mp*np;
-        parent.rbs = parent.cscat+n*mp*np;
-        parent.cbs = parent.rbs+m*mp*np;
+        parent.cscat = parent.rscat+m*np;
+        parent.rbs = parent.cscat+n*mp;
+        parent.cbs = parent.rbs+m*np;
     }
 }
 
@@ -94,9 +95,9 @@ template <> struct matrify_and_run<matrix_constants::MAT_A>
                     T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         allocate_buffers(MB, NB, parent, parent.child, comm, A);
-        block_scatter_matrix<T> M(comm, A,
-                                  MB, parent.rscat, parent.rbs,
-                                  NB, parent.cscat, parent.cbs);
+        patch_block_scatter_matrix<T> M(comm, A,
+                                        MB, parent.rscat, parent.rbs,
+                                        NB, parent.cscat, parent.cbs);
         parent.child(comm, cfg, alpha, M, B, beta, C);
     }
 };
@@ -108,9 +109,9 @@ template <> struct matrify_and_run<matrix_constants::MAT_B>
                     T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         allocate_buffers(MB, NB, parent, parent.child, comm, B);
-        block_scatter_matrix<T> M(comm, B,
-                                  MB, parent.rscat, parent.rbs,
-                                  NB, parent.cscat, parent.cbs);
+        patch_block_scatter_matrix<T> M(comm, B,
+                                        MB, parent.rscat, parent.rbs,
+                                        NB, parent.cscat, parent.cbs);
         parent.child(comm, cfg, alpha, A, M, beta, C);
     }
 };
@@ -122,9 +123,9 @@ template <> struct matrify_and_run<matrix_constants::MAT_C>
                     T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
     {
         allocate_buffers(MB, NB, parent, parent.child, comm, C);
-        block_scatter_matrix<T> M(comm, C,
-                                  MB, parent.rscat, parent.rbs,
-                                  NB, parent.cscat, parent.cbs);
+        patch_block_scatter_matrix<T> M(comm, C,
+                                        MB, parent.rscat, parent.rbs,
+                                        NB, parent.cscat, parent.cbs);
         parent.child(comm, cfg, alpha, A, B, beta, M);
     }
 };
@@ -153,8 +154,7 @@ struct matrify
 
         if (Mat == matrix_constants::MAT_B) std::swap(MB, NB);
 
-        matrify_and_run<Mat>((cfg.*MBS).def<T>(), (cfg.*NBS).def<T>(),
-                             *this, comm, cfg, alpha, A, B, beta, C);
+        matrify_and_run<Mat>(MB, NB, *this, comm, cfg, alpha, A, B, beta, C);
     }
 };
 

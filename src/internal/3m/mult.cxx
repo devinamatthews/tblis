@@ -52,10 +52,10 @@ void mult(const communicator& comm, const config& cfg,
 {
     TBLIS_ASSERT(!conj_A && !conj_B && !conj_C && !conj_D);
 
-         normal_matrix<T  > Av(m, k, const_cast<T*>(A), rs_A, cs_A);
-    diag_scaled_matrix<T,0> Bv(k, n, const_cast<T*>(B), rs_B, cs_B,
-                                     const_cast<T*>(D), inc_D);
-         normal_matrix<T  > Cv(m, n,                C , rs_C, cs_C);
+         normal_matrix<T> Av(m, k, const_cast<T*>(A), rs_A, cs_A);
+    diag_scaled_matrix<T> Bv(k, n, const_cast<T*>(B), rs_B, cs_B,
+                                0, const_cast<T*>(D), inc_D);
+         normal_matrix<T> Cv(m, n,                C , rs_C, cs_C);
 
     GotoGEMM{}(comm, cfg, alpha, Av, Bv, beta, Cv);
 

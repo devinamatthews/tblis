@@ -80,9 +80,21 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_contract, R, T, all_types)
     dpd_varray<T> A, B, C, D, E;
     label_vector idx_A, idx_B, idx_C;
 
+    if (std::is_same<T,float>::value) return;
+
     T scale(10.0*random_unit<T>());
 
-    random_contract(N, A, idx_A, B, idx_B, C, idx_C);
+    random_contract(N*10, A, idx_A, B, idx_B, C, idx_C);
+
+    idx_A = "cba";
+    idx_B = "ca";
+    idx_C = "b";
+    A.reset(0, 2, {{16, 66}, {73, 159}, {9, 31}});
+    B.reset(0, 2, {{16, 66}, {9, 31}});
+    C.reset(0, 2, {{73, 159}});
+    randomize_tensor(A);
+    randomize_tensor(B);
+    scale = 1;
 
     DPD_TENSOR_INFO(A);
     DPD_TENSOR_INFO(B);
@@ -108,11 +120,11 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_contract, R, T, all_types)
                 size_BC[irrep_BC];
     }
 
-    dpd_impl = dpd_impl_t::BLOCKED;
+    dpd_impl = dpd_impl_t::FULL;
     D.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
-    dpd_impl = dpd_impl_t::FULL;
+    dpd_impl = dpd_impl_t::BLOCKED;
     E.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
@@ -120,6 +132,15 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_contract, R, T, all_types)
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
     check("BLOCKED", error, scale*neps);
+
+    dpd_impl = dpd_impl_t::BLIS;
+    E.reset(C);
+    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
+
+    add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
+    error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
+
+    check("BLIS", error, scale*neps);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_contract, R, T, all_types)

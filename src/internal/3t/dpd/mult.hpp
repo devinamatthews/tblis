@@ -10,7 +10,7 @@ namespace tblis
 namespace internal
 {
 
-enum dpd_impl_t {BLOCKED, FULL};
+enum dpd_impl_t {BLIS, BLOCKED, FULL};
 extern dpd_impl_t dpd_impl;
 
 template <typename T>

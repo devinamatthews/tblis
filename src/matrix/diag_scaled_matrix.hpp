@@ -3,80 +3,35 @@
 
 #include "util/basic_types.h"
 
+#include "normal_matrix.hpp"
+
 namespace tblis
 {
 
-template <typename T, int RowCol>
-class diag_scaled_matrix
+template <typename T>
+class diag_scaled_matrix : public normal_matrix<T>
 {
-    public:
-        enum { COL_SCALED, ROW_SCALED };
-
     protected:
-        T* data_ = nullptr;
-        std::array<len_type,2> len_ = {};
-        std::array<stride_type,2> stride_ = {};
+        using normal_matrix<T>::data_;
+        using normal_matrix<T>::tot_len_;
+        using normal_matrix<T>::cur_len_;
+        using normal_matrix<T>::off_;
+        using normal_matrix<T>::stride_;
+        unsigned diag_dim_ = 0;
         T* diag_ = nullptr;
         stride_type diag_stride_ = 0;
 
     public:
         diag_scaled_matrix() {}
 
-        diag_scaled_matrix(len_type m, len_type n, T* ptr, stride_type rs, stride_type cs, T* diag, stride_type inc)
-        : data_(ptr), len_{m, n}, stride_{rs, cs}, diag_(diag), diag_stride_(inc) {}
-
-        void shift(unsigned dim, len_type n)
-        {
-            TBLIS_ASSERT(dim < 2);
-
-            data_ += n*stride_[dim];
-            if (dim == RowCol) diag_ += n*diag_stride_;
-        }
-
-        T* data() const
-        {
-            return data_;
-        }
+        diag_scaled_matrix(len_type m, len_type n, T* ptr, stride_type rs, stride_type cs,
+                           unsigned diag_dim, T* diag, stride_type inc)
+        : normal_matrix<T>(m, n, ptr, rs, cs),
+          diag_dim_(diag_dim), diag_(diag), diag_stride_(inc) {}
 
         T* diag() const
         {
-            return diag_;
-        }
-
-        len_type length(unsigned dim) const
-        {
-            TBLIS_ASSERT(dim < 2);
-            return len_[dim];
-        }
-
-        len_type length(unsigned dim, len_type len)
-        {
-            TBLIS_ASSERT(dim < 2);
-            std::swap(len, len_[dim]);
-            return len;
-        }
-
-        const std::array<len_type, 2>& lengths() const
-        {
-            return len_;
-        }
-
-        stride_type stride(unsigned dim) const
-        {
-            TBLIS_ASSERT(dim < 2);
-            return stride_[dim];
-        }
-
-        stride_type stride(unsigned dim, stride_type stride)
-        {
-            TBLIS_ASSERT(dim < 2);
-            std::swap(stride, stride_[dim]);
-            return stride;
-        }
-
-        const std::array<stride_type, 2>& strides() const
-        {
-            return stride_;
+            return diag_ + off_[diag_dim_]*stride_[diag_dim_];
         }
 
         stride_type diag_stride() const
@@ -84,22 +39,10 @@ class diag_scaled_matrix
             return diag_stride_;
         }
 
-        stride_type diag_stride(stride_type stride)
-        {
-            std::swap(stride, diag_stride_);
-            return stride;
-        }
-
-        unsigned dimension() const
-        {
-            return 2;
-        }
-
         void transpose()
         {
-            using std::swap;
-            swap(len_[0], len_[1]);
-            swap(stride_[0], len_[1]);
+            normal_matrix<T>::transpose();
+            diag_dim_ = 1-diag_dim_;
         }
 
         void pack(const communicator& comm, const config& cfg, bool trans, normal_matrix<T>& Ap) const
@@ -110,23 +53,30 @@ class diag_scaled_matrix
                                         : cfg.gemm_nr.extent<T>());
             const len_type KR = cfg.gemm_kr.def<T>();
 
-            const len_type m_a = length( trans);
-            const len_type k_a = length(!trans);
-            const stride_type rs_a = stride( trans);
-            const stride_type cs_a = stride(!trans);
-            const stride_type inc_d = diag_stride();
+            const len_type m_a = cur_len_[ trans];
+            const len_type k_a = cur_len_[!trans];
+            const stride_type rs_a = stride_[ trans];
+            const stride_type cs_a = stride_[!trans];
+            const stride_type inc_d = diag_stride_;
+
+            TBLIS_ASSERT(diag_dim_ == !trans);
 
             comm.distribute_over_threads({m_a, MR}, {k_a, KR},
             [&](len_type m_first, len_type m_last, len_type k_first, len_type k_last)
             {
-                const T*  p_a =    data() +  m_first       *rs_a + k_first* cs_a;
-                const T*  p_d =    diag() +                        k_first*inc_d;
-                      T* p_ap = Ap.data() + (m_first/MR)*ME* k_a + k_first*   ME;
+                const T*  p_a = this->data() +  m_first       *rs_a + k_first* cs_a;
+                const T*  p_d = this->diag() +                        k_first*inc_d;
+                      T* p_ap =    Ap.data() + (m_first/MR)*ME* k_a + k_first*   ME;
 
                 for (len_type off_m = m_first;off_m < m_last;off_m += MR)
                 {
                     len_type m = std::min(MR, m_last-off_m);
                     len_type k = k_last-k_first;
+
+                    TBLIS_ASSERT(p_a + (m-1)*rs_a + (k-1)*cs_a <=
+                                 data_ + (tot_len_[0]-1)*stride_[0] + (tot_len_[1]-1)*stride_[1]);
+                    TBLIS_ASSERT(p_d + (k-1)*inc_d <= diag_ + (tot_len_[diag_dim_]-1)*stride_[diag_dim_]);
+                    TBLIS_ASSERT(p_ap + k*ME <= Ap.data() + Ap.length(0)*Ap.length(1));
 
                     if (!trans)
                         cfg.pack_nnd_mr_ukr.call<T>(m, k, p_a, rs_a, cs_a, p_d, inc_d, p_ap);

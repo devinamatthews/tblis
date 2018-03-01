@@ -19,7 +19,7 @@ namespace internal
 {
 
 std::atomic<long> flops;
-dpd_impl_t dpd_impl = BLOCKED;
+dpd_impl_t dpd_impl = BLIS;
 
 template <typename T>
 void contract_blis(const communicator& comm, const config& cfg,
@@ -255,6 +255,89 @@ void contract_block(const communicator& comm, const config& cfg,
 }
 
 template <typename T>
+void contract_blis(const communicator& comm, const config& cfg,
+                   T alpha, dpd_varray_view<const T> A,
+                   dim_vector idx_A_AB,
+                   dim_vector idx_A_AC,
+                            dpd_varray_view<const T> B,
+                   dim_vector idx_B_AB,
+                   dim_vector idx_B_BC,
+                   T beta,  dpd_varray_view<      T> C,
+                   dim_vector idx_C_AC,
+                   dim_vector idx_C_BC)
+{
+    unsigned nirrep = A.num_irreps();
+
+    std::array<len_vector,3> len;
+    std::array<stride_vector,3> stride;
+    dense_total_lengths_and_strides(len, stride, A, idx_A_AB, B, idx_B_AB,
+                                    C, idx_C_AC);
+
+    auto perm_AC = detail::sort_by_stride(stl_ext::select_from(stride[2], idx_C_AC),
+                                          stl_ext::select_from(stride[0], idx_A_AC));
+    auto perm_BC = detail::sort_by_stride(stl_ext::select_from(stride[2], idx_C_BC),
+                                          stl_ext::select_from(stride[1], idx_B_BC));
+    auto perm_AB = detail::sort_by_stride(stl_ext::select_from(stride[0], idx_A_AB),
+                                          stl_ext::select_from(stride[1], idx_B_AB));
+
+    stl_ext::permute(idx_A_AC, perm_AC);
+    stl_ext::permute(idx_A_AB, perm_AB);
+    stl_ext::permute(idx_B_AB, perm_AB);
+    stl_ext::permute(idx_B_BC, perm_BC);
+    stl_ext::permute(idx_C_AC, perm_AC);
+    stl_ext::permute(idx_C_BC, perm_BC);
+
+    for (unsigned irrep_AB = 0;irrep_AB < nirrep;irrep_AB++)
+    {
+        unsigned irrep_AC = A.irrep()^irrep_AB;
+        unsigned irrep_BC = B.irrep()^irrep_AB;
+
+        dpd_tensor_matrix<T> at(A, idx_A_AC, idx_A_AB, irrep_AB);
+        dpd_tensor_matrix<T> bt(B, idx_B_AB, idx_B_BC, irrep_BC);
+        dpd_tensor_matrix<T> ct(C, idx_C_AC, idx_C_BC, irrep_BC);
+
+        if (ct.length(0) == 0 || ct.length(1) == 0) continue;
+
+        if (at.length(1) != 0)
+        {
+            TensorGEMM{}(comm, cfg, alpha, at, bt, beta, ct);
+        }
+        else if (beta != T(1))
+        {
+            irrep_iterator row_it(irrep_AC, nirrep, idx_C_AC.size());
+            irrep_iterator col_it(irrep_BC, nirrep, idx_C_BC.size());
+
+            irrep_vector irreps(C.dimension());
+
+            while (row_it.next())
+            {
+                for (unsigned i = 0;i < idx_C_AC.size();i++)
+                    irreps[idx_C_AC[i]] = row_it.irrep(i);
+
+                while (col_it.next())
+                {
+                    for (unsigned i = 0;i < idx_C_BC.size();i++)
+                        irreps[idx_C_BC[i]] = col_it.irrep(i);
+
+                    auto local_C = C(irreps);
+
+                    if (beta == T(0))
+                    {
+                        set(comm, cfg, local_C.lengths(),
+                            beta, local_C.data(), local_C.strides());
+                    }
+                    else
+                    {
+                        scale(comm, cfg, local_C.lengths(),
+                              beta, false, local_C.data(), local_C.strides());
+                    }
+                }
+            }
+        }
+    }
+}
+
+template <typename T>
 void mult_block(const communicator& comm, const config& cfg,
                 T alpha, dpd_varray_view<const T> A,
                 dim_vector idx_A_AB,
@@ -455,10 +538,20 @@ void mult(const communicator& comm, const config& cfg,
     }
     else if (idx_C_ABC.empty())
     {
-        contract_block(comm, cfg,
-                       alpha, A, idx_A_AB, idx_A_AC,
-                              B, idx_B_AB, idx_B_BC,
-                        beta, C, idx_C_AC, idx_C_BC);
+        if (dpd_impl == BLIS)
+        {
+            contract_blis(comm, cfg,
+                          alpha, A, idx_A_AB, idx_A_AC,
+                                 B, idx_B_AB, idx_B_BC,
+                           beta, C, idx_C_AC, idx_C_BC);
+        }
+        else
+        {
+            contract_block(comm, cfg,
+                           alpha, A, idx_A_AB, idx_A_AC,
+                                  B, idx_B_AB, idx_B_BC,
+                            beta, C, idx_C_AC, idx_C_BC);
+        }
     }
     else
     {

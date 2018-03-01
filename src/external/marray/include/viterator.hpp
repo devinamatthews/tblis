@@ -141,11 +141,6 @@ class viterator
             return ndim_;
         }
 
-        len_type position(unsigned dim) const
-        {
-            return pos_[dim];
-        }
-
         const len_vector& position() const
         {
             return pos_;

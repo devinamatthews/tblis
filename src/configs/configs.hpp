@@ -18,6 +18,7 @@
 #include "kernels/1m/trans_copy.hpp"
 
 #include "kernels/3m/gemm.hpp"
+#include "kernels/3m/packm.hpp"
 
 namespace tblis
 {

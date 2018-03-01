@@ -6,6 +6,7 @@
 
 #include "matrix/normal_matrix.hpp"
 #include "matrix/block_scatter_matrix.hpp"
+#include "matrix/patch_block_scatter_matrix.hpp"
 
 #include "configs/configs.hpp"
 
@@ -204,8 +205,89 @@ struct gemm_micro_kernel
         const T* p_b = B.data();
               T* p_c;
 
-        TBLIS_ASSERT((C.block_size(0) == MR || C.block_size(0) == 0) &&
-                     (C.block_size(1) == NR || C.block_size(1) == 0));
+        TBLIS_ASSERT(C.block_size(0) == MR);
+        TBLIS_ASSERT(C.block_size(1) == NR);
+
+        len_type m, n;
+        len_type k = A.length(1);
+        stride_type rs_c, cs_c;
+        const stride_type *rscat_c, *cscat_c;
+
+        C.block(p_c, rscat_c, rs_c, m, cscat_c, cs_c, n);
+
+        if (m == MR && n == NR && rs_c && cs_c)
+        {
+            if (flip_ukr)
+            {
+                cfg.gemm_ukr.call<T>(k, &alpha, p_b, p_a,
+                                     &beta, p_c, cs_c, rs_c);
+            }
+            else
+            {
+                cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
+                                     &beta, p_c, rs_c, cs_c);
+            }
+        }
+        else
+        {
+            T p_ab[512] __attribute__((aligned(64)));
+            static const T zero = T(0);
+
+            if (flip_ukr)
+            {
+                cfg.gemm_ukr.call<T>(k, &alpha, p_b, p_a,
+                                     &zero, &p_ab[0], cs_ab, rs_ab);
+            }
+            else
+            {
+                cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
+                                     &zero, &p_ab[0], rs_ab, cs_ab);
+            }
+
+            if (rs_c && cs_c)
+            {
+                accum_utile(m, n, p_ab, rs_ab, cs_ab,
+                            beta, p_c, rs_c, cs_c);
+            }
+            else if (rs_c)
+            {
+                accum_utile(m, n, p_ab, rs_ab, cs_ab,
+                            beta, p_c, rs_c, cscat_c);
+            }
+            else if (cs_c)
+            {
+                accum_utile(m, n, p_ab, rs_ab, cs_ab,
+                            beta, p_c, rscat_c, cs_c);
+            }
+            else
+            {
+                accum_utile(m, n, p_ab, rs_ab, cs_ab,
+                            beta, p_c, rscat_c, cscat_c);
+            }
+        }
+    }
+
+    template <typename T>
+    void operator()(const communicator& comm, const config& cfg,
+                    T alpha,              normal_matrix<T>& A,
+                                          normal_matrix<T>& B,
+                    T  beta, patch_block_scatter_matrix<T>& C) const
+    {
+        (void)comm;
+
+        const len_type MR = cfg.gemm_mr.def<T>();
+        const len_type NR = cfg.gemm_nr.def<T>();
+        const bool row_major = cfg.gemm_row_major.value<T>();
+        const bool flip_ukr = cfg.gemm_flip_ukr.value<T>();
+        const len_type rs_ab = (row_major ? NR : 1);
+        const len_type cs_ab = (row_major ? 1 : MR);
+
+        const T* p_a = A.data();
+        const T* p_b = B.data();
+              T* p_c;
+
+        TBLIS_ASSERT(C.block_size(0) == MR);
+        TBLIS_ASSERT(C.block_size(1) == NR);
 
         len_type m, n;
         len_type k = A.length(1);

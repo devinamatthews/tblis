@@ -12,26 +12,31 @@ namespace tblis
 
 extern MemoryPool BuffersForA, BuffersForB, BuffersForScatter;
 
-template <template <typename> class NodeType>
-struct node_helper
+template <typename T>
+struct has_child
 {
-    template <typename T>
-    auto operator()(T& tree, ...) const -> decltype(node_helper<NodeType>()(tree.child))
-    {
-        return node_helper<NodeType>()(tree.child);
-    }
+    template <typename U>
+    static std::false_type check(...);
 
-    template <typename T>
-    NodeType<T>& operator()(NodeType<T>& tree) const
-    {
-        return tree;
-    }
+    template <typename U>
+    static std::true_type check(decltype(std::declval<U>().child)*);
+
+    static constexpr bool value = decltype(check<T>(0))::value;
 };
 
 template <template <typename> class NodeType, typename T>
-auto node(T& tree) -> decltype(node_helper<NodeType>()(tree))
+NodeType<T>& node(NodeType<T>& tree)
 {
-    return node_helper<NodeType>()(tree);
+    return tree;
+}
+
+template <template <typename> class NodeType>
+void node(int);
+
+template <template <typename> class NodeType, typename T>
+auto node(T& tree) -> decltype(node<NodeType>(std::declval<detail::conditional_t<has_child<T>::value,decltype(std::declval<T>().child)&,const int&>>()))
+{
+    return node<NodeType>(tree.child);
 }
 
 template <typename Child>
@@ -46,12 +51,13 @@ struct gemm
         using namespace matrix_constants;
 
         const bool row_major = cfg.gemm_row_major.value<T>();
+        const bool trans = C.stride(!row_major) == 1;
 
         len_type m = C.length(0);
         len_type n = C.length(1);
         len_type k = A.length(1);
 
-        if (C.stride(!row_major) == 1)
+        if (trans)
         {
             /*
              * Compute C^T = B^T * A^T instead
@@ -79,7 +85,7 @@ struct gemm
         node<partition_gemm_nr>(child).subcomm = &comm_nr;
         node<partition_gemm_mr>(child).subcomm = &comm_mr;
 
-        if (C.stride(!row_major) == 1)
+        if (trans)
         {
             /*
              * Compute C^T = B^T * A^T instead

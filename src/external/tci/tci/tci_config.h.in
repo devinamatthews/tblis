@@ -63,6 +63,10 @@
 #include <xmmintrin.h>
 #endif
 
+#if TCI_USE_OS_UNFAIR_LOCK
+#include <os/lock.h>
+#endif
+
 #if TCI_USE_OSX_SPINLOCK
 #include <libkern/OSAtomic.h>
 #endif

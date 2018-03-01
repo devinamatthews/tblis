@@ -9,7 +9,11 @@
 extern "C" {
 #endif
 
-#if TCI_USE_OSX_SPINLOCK
+#if TCI_USE_OS_UNFAIR_LOICK
+
+typedef os_unfair_lock tci_mutex;
+
+#elif TCI_USE_OSX_SPINLOCK
 
 typedef OSSpinLock tci_mutex;
 

@@ -650,6 +650,7 @@ USE_PTHREAD_BARRIER
 USE_ATOMIC_SPINLOCK
 USE_OMP_LOCK
 USE_OSX_SPINLOCK
+USE_OS_UNFAIR_LOCK
 USE_PTHREAD_SPINLOCK
 USE_PTHREAD_MUTEX
 OPENMP_CFLAGS
@@ -1448,7 +1449,8 @@ Optional Features:
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-mutex=type     use a mutex of the specified type, one of auto,
                           pthread_mutex, pthread_spinlock, osx_spinlock,
-                          omp_lock, atomic_spinlock [default=auto]
+                          os_unfair_lock, omp_lock, atomic_spinlock
+                          [default=auto]
   --enable-barrier=type   use a barrier of the specified type, one of auto,
                           pthread_barrier, spin_barrier [default=auto]
   --enable-thread-model[=model]
@@ -16998,6 +17000,35 @@ else
 fi
 
 #
+# Check for os_unfair_lock
+#
+
+ac_fn_c_check_header_mongrel "$LINENO" "os/lock.h" "ac_cv_header_os_lock_h" "$ac_includes_default"
+if test "x$ac_cv_header_os_lock_h" = xyes; then :
+
+fi
+
+
+for ac_func in os_unfair_lock_lock
+do :
+  ac_fn_c_check_func "$LINENO" "os_unfair_lock_lock" "ac_cv_func_os_unfair_lock_lock"
+if test "x$ac_cv_func_os_unfair_lock_lock" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_OS_UNFAIR_LOCK_LOCK 1
+_ACEOF
+
+fi
+done
+
+
+if test x"$ac_cv_header_os_lock_h" = xyes -a \
+        x"$ac_cv_func_os_unfair_lock_lock" = xyes; then
+    have_os_unfair_lock=yes
+else
+    have_os_unfair_lock=no
+fi
+
+#
 # Check for OSSpinLock
 #
 
@@ -18269,7 +18300,9 @@ fi
 #
 
 if test x"$mutex_type" = xauto; then
-    if test x"$have_osx_spinlock" = xyes; then
+    if test x"$have_os_unfair_lock" = xyes; then
+        mutex_type=os_unfair_lock
+    elif test x"$have_osx_spinlock" = xyes; then
         mutex_type=osx_spinlock
     elif test x"$have_pthread_spinlock" = xyes; then
         mutex_type=pthread_spinlock
@@ -18280,6 +18313,7 @@ fi
 
 USE_PTHREAD_MUTEX=0
 USE_PTHREAD_SPINLOCK=0
+USE_OS_UNFAIR_LOCK=0
 USE_OSX_SPINLOCK=0
 USE_OMP_LOCK=0
 USE_ATOMIC_SPINLOCK=0
@@ -18296,6 +18330,11 @@ elif test x"$mutex_type" = xpthread_spinlock; then
         as_fn_error $? "pthread spinlock requested but not available" "$LINENO" 5
     fi
     USE_PTHREAD_SPINLOCK=1
+elif test x"$mutex_type" = xos_unfair_lock; then
+    if test x"$have_os_unfair_lock" = xno; then
+        as_fn_error $? "macOS os_unfair_lock requested but not available" "$LINENO" 5
+    fi
+    USE_OS_UNFAIR_LOCK=1
 elif test x"$mutex_type" = xosx_spinlock; then
     if test x"$have_osx_spinlock" = xno; then
         as_fn_error $? "OSX OSSpinLock requested but not available" "$LINENO" 5
@@ -18313,6 +18352,7 @@ else
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $mutex_type" >&5
 $as_echo "$mutex_type" >&6; }
+
 
 
 

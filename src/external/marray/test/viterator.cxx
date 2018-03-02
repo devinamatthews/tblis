@@ -144,8 +144,6 @@ TEST(viterator, position)
     EXPECT_TRUE(m1.next(off1));
     EXPECT_EQ(5, off1);
 
-    EXPECT_EQ(1, m1.position(0));
-    EXPECT_EQ(2, m1.position(1));
     EXPECT_EQ((vector<len_type>{1,2}), m1.position());
 }
 

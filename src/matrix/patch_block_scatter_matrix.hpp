@@ -66,6 +66,7 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
         {
             block_size_ = {MB, NB};
 
+            data_ = A.tensor_.data();
             const unsigned nirrep = A.tensor_.num_irreps();
             const auto rscat_max = cscat;
             const auto cscat_max = rbs;

@@ -36,7 +36,7 @@ class block_scatter_matrix : public abstract_matrix<T>
         {
             if (size == 0) return;
 
-            if (size == 1)
+            if (len.empty())
             {
                 *scat = 0;
                 *bs = 1;

@@ -31,7 +31,7 @@ class diag_scaled_matrix : public normal_matrix<T>
 
         T* diag() const
         {
-            return diag_ + off_[diag_dim_]*stride_[diag_dim_];
+            return diag_ + off_[diag_dim_]*diag_stride_;
         }
 
         stride_type diag_stride() const

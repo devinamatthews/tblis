@@ -80,21 +80,9 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_contract, R, T, all_types)
     dpd_varray<T> A, B, C, D, E;
     label_vector idx_A, idx_B, idx_C;
 
-    if (std::is_same<T,float>::value) return;
-
     T scale(10.0*random_unit<T>());
 
-    random_contract(N*10, A, idx_A, B, idx_B, C, idx_C);
-
-    idx_A = "cba";
-    idx_B = "ca";
-    idx_C = "b";
-    A.reset(0, 2, {{16, 66}, {73, 159}, {9, 31}});
-    B.reset(0, 2, {{16, 66}, {9, 31}});
-    C.reset(0, 2, {{73, 159}});
-    randomize_tensor(A);
-    randomize_tensor(B);
-    scale = 1;
+    random_contract(N, A, idx_A, B, idx_B, C, idx_C);
 
     DPD_TENSOR_INFO(A);
     DPD_TENSOR_INFO(B);

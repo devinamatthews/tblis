@@ -12,31 +12,84 @@ namespace tblis
 
 extern MemoryPool BuffersForA, BuffersForB, BuffersForScatter;
 
-template <typename T>
-struct has_child
+template <template <typename> class NodeType, typename T>
+struct node_depth
 {
-    template <typename U>
-    static std::false_type check(...);
+    static constexpr unsigned value = node_depth<NodeType,decltype(std::declval<T>().child)>::value+1;
+};
 
-    template <typename U>
-    static std::true_type check(decltype(std::declval<U>().child)*);
+template <typename T>
+struct node_depth<partition_gemm_mc, partition_gemm_mc<T>>
+{
+    static constexpr unsigned value = 0;
+};
 
-    static constexpr bool value = decltype(check<T>(0))::value;
+template <typename T>
+struct node_depth<partition_gemm_nc, partition_gemm_nc<T>>
+{
+    static constexpr unsigned value = 0;
+};
+
+template <typename T>
+struct node_depth<partition_gemm_kc, partition_gemm_kc<T>>
+{
+    static constexpr unsigned value = 0;
+};
+
+template <typename T>
+struct node_depth<partition_gemm_mr, partition_gemm_mr<T>>
+{
+    static constexpr unsigned value = 0;
+};
+
+template <typename T>
+struct node_depth<partition_gemm_nr, partition_gemm_nr<T>>
+{
+    static constexpr unsigned value = 0;
+};
+
+template <template <typename> class NodeType>
+struct node_depth<NodeType, gemm_micro_kernel>
+{
+    static constexpr unsigned value = 0;
+};
+
+template <unsigned Depth, typename T>
+struct node_type
+{
+    typedef typename node_type<Depth-1, decltype(std::declval<T>().child)>::type type;
+};
+
+template <typename T>
+struct node_type<0, T>
+{
+    typedef T type;
+};
+
+template <unsigned Depth>
+struct node_at_depth
+{
+    template <typename T>
+    typename node_type<Depth,T>::type operator()(T& tree) const
+    {
+        return node_at_depth<Depth-1>{}(tree.child);
+    }
+};
+
+template <>
+struct node_at_depth<0>
+{
+    template <typename T>
+    T& operator()(T& tree) const
+    {
+        return tree;
+    }
 };
 
 template <template <typename> class NodeType, typename T>
-NodeType<T>& node(NodeType<T>& tree)
+typename node_type<node_depth<NodeType,T>::value,T>::type node(T& tree)
 {
-    return tree;
-}
-
-template <template <typename> class NodeType>
-void node(int);
-
-template <template <typename> class NodeType, typename T>
-auto node(T& tree) -> decltype(node<NodeType>(std::declval<detail::conditional_t<has_child<T>::value,decltype(std::declval<T>().child)&,const int&>>()))
-{
-    return node<NodeType>(tree.child);
+    return node_at_depth<node_depth<NodeType,T>::value>{}(tree);
 }
 
 template <typename Child>

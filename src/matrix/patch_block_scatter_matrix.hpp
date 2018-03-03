@@ -39,8 +39,9 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
                                    len_type NB, stride_type* cscat, stride_type* cbs)
         {
             data_ = A.data_;
-            tot_len_ = cur_len_ = A.cur_len_;
-            len_patch_ = {{{tot_len_[0]}, {tot_len_[1]}}};
+            tot_len_ = cur_len_ = {round_up(A.cur_len_[0], MB),
+                                   round_up(A.cur_len_[1], NB)};
+            len_patch_ = {{{A.cur_len_[0]}, {A.cur_len_[1]}}};
             block_size_ = {MB, NB};
             scatter_[0].reset({1, 1}, rscat);
             scatter_[1].reset({1, 1}, cscat);

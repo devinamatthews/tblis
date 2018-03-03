@@ -70,7 +70,7 @@ template <unsigned Depth>
 struct node_at_depth
 {
     template <typename T>
-    typename node_type<Depth,T>::type operator()(T& tree) const
+    typename node_type<Depth,T>::type& operator()(T& tree) const
     {
         return node_at_depth<Depth-1>{}(tree.child);
     }
@@ -87,7 +87,7 @@ struct node_at_depth<0>
 };
 
 template <template <typename> class NodeType, typename T>
-typename node_type<node_depth<NodeType,T>::value,T>::type node(T& tree)
+typename node_type<node_depth<NodeType,T>::value,T>::type& node(T& tree)
 {
     return node_at_depth<node_depth<NodeType,T>::value>{}(tree);
 }

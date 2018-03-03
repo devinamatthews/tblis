@@ -96,8 +96,8 @@ template <> struct matrify_and_run<matrix_constants::MAT_A>
     {
         allocate_buffers(MB, NB, parent, parent.child, comm, A);
         patch_block_scatter_matrix<T> M(comm, A,
-                                        MB, parent.rscat, parent.rbs,
-                                        NB, parent.cscat, parent.cbs);
+                                        MB, MB, parent.rscat, parent.rbs,
+                                        NB,  1, parent.cscat, parent.cbs);
         parent.child(comm, cfg, alpha, M, B, beta, C);
     }
 };
@@ -110,8 +110,8 @@ template <> struct matrify_and_run<matrix_constants::MAT_B>
     {
         allocate_buffers(MB, NB, parent, parent.child, comm, B);
         patch_block_scatter_matrix<T> M(comm, B,
-                                        MB, parent.rscat, parent.rbs,
-                                        NB, parent.cscat, parent.cbs);
+                                        MB,  1, parent.rscat, parent.rbs,
+                                        NB, NB, parent.cscat, parent.cbs);
         parent.child(comm, cfg, alpha, A, M, beta, C);
     }
 };
@@ -124,8 +124,8 @@ template <> struct matrify_and_run<matrix_constants::MAT_C>
     {
         allocate_buffers(MB, NB, parent, parent.child, comm, C);
         patch_block_scatter_matrix<T> M(comm, C,
-                                        MB, parent.rscat, parent.rbs,
-                                        NB, parent.cscat, parent.cbs);
+                                        MB, MB, parent.rscat, parent.rbs,
+                                        NB, NB, parent.cscat, parent.cbs);
         parent.child(comm, cfg, alpha, A, B, beta, M);
     }
 };

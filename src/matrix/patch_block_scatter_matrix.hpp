@@ -30,19 +30,21 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
         std::array<matrix<stride_type*>, 2> scatter_ = {};
         std::array<matrix<stride_type*>, 2> block_stride_ = {};
         std::array<len_type, 2> block_size_ = {};
+        std::array<len_type, 2> block_round_ = {};
 
     public:
         patch_block_scatter_matrix();
 
         patch_block_scatter_matrix(const communicator& comm, const tensor_matrix<T>& A,
-                                   len_type MB, stride_type* rscat, stride_type* rbs,
-                                   len_type NB, stride_type* cscat, stride_type* cbs)
+                                   len_type MB, len_type ME, stride_type* rscat, stride_type* rbs,
+                                   len_type NB, len_type NE, stride_type* cscat, stride_type* cbs)
         {
             data_ = A.data_;
-            tot_len_ = cur_len_ = {round_up(A.cur_len_[0], MB),
-                                   round_up(A.cur_len_[1], NB)};
+            tot_len_ = cur_len_ = {round_up(A.cur_len_[0], ME),
+                                   round_up(A.cur_len_[1], NE)};
             len_patch_ = {{{A.cur_len_[0]}, {A.cur_len_[1]}}};
             block_size_ = {MB, NB};
+            block_round_ = {ME, NE};
             scatter_[0].reset({1, 1}, rscat);
             scatter_[1].reset({1, 1}, cscat);
             block_stride_[0].reset({1, 1}, rbs);
@@ -62,10 +64,11 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
         }
 
         patch_block_scatter_matrix(const communicator& comm, const dpd_tensor_matrix<T>& A,
-                                   len_type MB, stride_type* rscat, stride_type* rbs,
-                                   len_type NB, stride_type* cscat, stride_type* cbs)
+                                   len_type MB, len_type ME, stride_type* rscat, stride_type* rbs,
+                                   len_type NB, len_type NE, stride_type* cscat, stride_type* cbs)
         {
             block_size_ = {MB, NB};
+            block_round_ = {ME, NE};
 
             data_ = A.tensor_.data();
             const unsigned nirrep = A.tensor_.num_irreps();
@@ -85,7 +88,7 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
                     len_type loc = std::min(A.cur_len_[dim]-off,
                         A.block_size_[dim][block]-block_off);
                     len_patch_[dim].push_back(loc);
-                    tot_len_[dim] += round_up(loc, block_size_[dim]);
+                    tot_len_[dim] += round_up(loc, block_round_[dim]);
                     off += loc;
                     block_off = 0;
                     block++;
@@ -211,12 +214,12 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
                     cscat += col_block_size;
                     cbs += ceil_div(col_block_size, block_size_[1]);
 
-                    col_offset += round_up(col_block_size, NB);
+                    col_offset += round_up(col_block_size, NE);
                     col_block_off = 0;
                     col_patch++;
                 }
 
-                row_offset += round_up(row_block_size, MB);
+                row_offset += round_up(row_block_size, ME);
                 row_block_off = 0;
                 row_patch++;
             }
@@ -276,10 +279,10 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
             while (n < 0)
             {
                 patch_[dim]--;
-                n += ceil_div(len_patch_[dim][patch_[dim]], block_size_[dim]);
+                n += round_up(len_patch_[dim][patch_[dim]], block_round_[dim]);
             }
 
-            while (n > 0 && n >= (size = round_up(len_patch_[dim][patch_[dim]], block_size_[dim])))
+            while (n > 0 && n >= (size = round_up(len_patch_[dim][patch_[dim]], block_round_[dim])))
             {
                 n -= size;
                 patch_[dim]++;
@@ -303,11 +306,9 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
             const len_type m_a = cur_len_[ trans];
             const len_type k_a = cur_len_[!trans];
 
-            comm.distribute_over_threads({m_a, MR}, {k_a, KR},
+            comm.distribute_over_threads({m_a, MR}, k_a,
             [&](len_type m_first, len_type m_last, len_type k_first, len_type k_last)
             {
-                T* p_ap = Ap.data() + (m_first/MR)*ME*k_a + k_first*ME;
-
                 len_type m_off_patch = m_first + off_patch_[ trans];
                 len_type k_off_patch = k_first + off_patch_[!trans];
                 unsigned m_patch = patch_[ trans];
@@ -317,17 +318,39 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
 
                 len_type size;
 
-                while (m_off_patch >= (size = round_up(len_patch_[trans][m_patch], block_size_[trans])))
+                while (m_off_patch >= (size = round_up(len_patch_[trans][m_patch], block_round_[trans])))
                 {
                     m_off_patch -= size;
                     m_patch++;
                 }
 
-                while (k_off_patch >= (size = round_up(len_patch_[!trans][k_patch], block_size_[!trans])))
+                while (k_off_patch >= (size = round_up(len_patch_[!trans][k_patch], block_round_[!trans])))
                 {
                     k_off_patch -= size;
                     k_patch++;
                 }
+
+                if (k_first > 0)
+                {
+                    k_first -= k_off_patch % KR;
+                    k_off_patch -= k_off_patch % KR;
+                }
+
+                if (k_last < k_a)
+                {
+                    unsigned k_last_patch = k_patch;
+                    unsigned k_last_off = k_last - k_first + k_off_patch;
+
+                    while (k_last_off >= (size = round_up(len_patch_[!trans][k_last_patch], block_round_[!trans])))
+                    {
+                        k_last_off -= size;
+                        k_last_patch++;
+                    }
+
+                    k_last -= k_last_off % KR;
+                }
+
+                T* p_ap = Ap.data() + (m_first/MR)*ME*k_a + ME*k_first;
 
                 len_type m_block = 0;
                 len_type m_off = m_first;
@@ -349,21 +372,18 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
                         while (k_off < k_last)
                         {
                             len_type k_len_patch = len_patch_[!trans][k_patch];
-                            len_type k = std::min(k_last-k_off,
-                                k_len_patch-k_off_patch);
-                            len_type kp = round_up(k, KR);
-
-                            if (k_len_patch == 0)
-                            {
-                                k_patch++;
-                                continue;
-                            }
+                            len_type k = std::min(k_len_patch - k_off_patch,
+                                                  k_last - k_off);
+                            len_type kp = round_up(k, block_round_[!trans]);
 
                             scatter_type rscat_a = scatter_[trans][patch0][patch1] + m_off_patch;
                             scatter_type rbs_a = block_stride_[trans][patch0][patch1] + m_off_patch/MR;
                             scatter_type cscat_a = scatter_[!trans][patch0][patch1] + k_off_patch;
                             scatter_type cbs_a = block_stride_[!trans][patch0][patch1] + k_off_patch/KR;
 
+                            TBLIS_ASSERT(m_off_patch % MR == 0);
+                            TBLIS_ASSERT(k_off_patch % KR == 0);
+                            TBLIS_ASSERT(p_ap + ME*k <= Ap.data() + Ap.length(0)*Ap.length(1));
                             TBLIS_ASSERT(rscat_a - scatter_[trans][patch0][patch1] < m_len_patch);
                             TBLIS_ASSERT(cscat_a - scatter_[!trans][patch0][patch1] < k_len_patch);
                             TBLIS_ASSERT(rbs_a - block_stride_[trans][patch0][patch1] < ceil_div(m_len_patch, block_size_[trans]));

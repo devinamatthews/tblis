@@ -57,11 +57,11 @@ REPLICATED_TEMPLATED_TEST_CASE(mult, R, T, all_types)
     auto idx_AB = exclusion(intersection(idx_A, idx_B), idx_C);
     auto neps = prod(select_from(A.lengths(), idx_A, idx_AB))*prod(C.lengths());
 
-    impl = BLAS_BASED;
+    impl = REFERENCE;
     D.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
-    impl = REFERENCE;
+    impl = BLAS_BASED;
     E.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
@@ -69,6 +69,15 @@ REPLICATED_TEMPLATED_TEST_CASE(mult, R, T, all_types)
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
     check("BLAS", error, scale*neps);
+
+    impl = BLIS_BASED;
+    E.reset(C);
+    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
+
+    add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
+    error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
+
+    check("BLIS", error, scale*neps);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(dpd_mult, R, T, all_types)

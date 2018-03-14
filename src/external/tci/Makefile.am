@@ -22,6 +22,7 @@ nobase_include_HEADERS = tci.h \
                          tci/mutex.h \
                          tci/parallel.h \
                          tci/slot.h \
+                         tci/task_set.h \
                          tci/work_item.h \
                          tci/yield.h
 

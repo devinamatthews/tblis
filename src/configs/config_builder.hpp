@@ -145,6 +145,8 @@ config cfg##_config_instance = config(cfg##_config());
     TBLIS_CONFIG_UKR2(this_config, copy_ukr, copy_ukr_t, S,D,C,Z, copy_ukr_def)
 #define TBLIS_CONFIG_DOT_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, dot_ukr, dot_ukr_t, S,D,C,Z, dot_ukr_def)
+#define TBLIS_CONFIG_MULT_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR2(this_config, mult_ukr, mult_ukr_t, S,D,C,Z, mult_ukr_def)
 #define TBLIS_CONFIG_REDUCE_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, reduce_ukr, reduce_ukr_t, S,D,C,Z, reduce_ukr_def)
 #define TBLIS_CONFIG_SCALE_UKR(S,D,C,Z) \
@@ -165,6 +167,10 @@ config cfg##_config_instance = config(cfg##_config());
     TBLIS_CONFIG_UKR3(this_config, matrix_constants::MAT_A, pack_nnd_mr_ukr, pack_nnd_ukr_t, S,D,C,Z, pack_nnd_ukr_def)
 #define TBLIS_CONFIG_PACK_NND_NR_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR3(this_config, matrix_constants::MAT_B, pack_nnd_nr_ukr, pack_nnd_ukr_t, S,D,C,Z, pack_nnd_ukr_def)
+#define TBLIS_CONFIG_PACK_NNE_MR_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR3(this_config, matrix_constants::MAT_A, pack_nne_mr_ukr, pack_nne_ukr_t, S,D,C,Z, pack_nne_ukr_def)
+#define TBLIS_CONFIG_PACK_NNE_NR_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR3(this_config, matrix_constants::MAT_B, pack_nne_nr_ukr, pack_nne_ukr_t, S,D,C,Z, pack_nne_ukr_def)
 #define TBLIS_CONFIG_PACK_SN_MR_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR3(this_config, matrix_constants::MAT_A, pack_sn_mr_ukr, pack_sn_ukr_t, S,D,C,Z, pack_sn_ukr_def)
 #define TBLIS_CONFIG_PACK_SN_NR_UKR(S,D,C,Z) \
@@ -283,6 +289,7 @@ struct config_template
     TBLIS_CONFIG_ADD_UKR(_,_,_,_)
     TBLIS_CONFIG_COPY_UKR(_,_,_,_)
     TBLIS_CONFIG_DOT_UKR(_,_,_,_)
+    TBLIS_CONFIG_MULT_UKR(_,_,_,_)
     TBLIS_CONFIG_REDUCE_UKR(_,_,_,_)
     TBLIS_CONFIG_SCALE_UKR(_,_,_,_)
     TBLIS_CONFIG_SET_UKR(_,_,_,_)
@@ -308,6 +315,8 @@ struct config_template
     TBLIS_CONFIG_PACK_NN_NR_UKR(_,_,_,_)
     TBLIS_CONFIG_PACK_NND_MR_UKR(_,_,_,_)
     TBLIS_CONFIG_PACK_NND_NR_UKR(_,_,_,_)
+    TBLIS_CONFIG_PACK_NNE_MR_UKR(_,_,_,_)
+    TBLIS_CONFIG_PACK_NNE_NR_UKR(_,_,_,_)
     TBLIS_CONFIG_PACK_SN_MR_UKR(_,_,_,_)
     TBLIS_CONFIG_PACK_SN_NR_UKR(_,_,_,_)
     TBLIS_CONFIG_PACK_NS_MR_UKR(_,_,_,_)

@@ -19,6 +19,7 @@
 #include "util/macros.h"
 #include "external/stl_ext/include/algorithm.hpp"
 #include "external/stl_ext/include/iostream.hpp"
+#include "internal/3t/dense/cp_gradient.hpp"
 #include "internal/3t/dense/mult.hpp"
 #include "internal/3t/dpd/mult.hpp"
 
@@ -61,10 +62,18 @@ INFO_OR_PRINT("data_" #t "        = \n" << t.data()); \
 INFO_OR_PRINT("indices_" #t "     = \n" << t.indices()); \
 INFO_OR_PRINT("idx_" #t "         = " << idx_##t);
 
+#define PRINT_MATRIX(t) \
+cout << "\n" #t ":\n"; \
+t.for_each_element( \
+[](const T& e, len_type i, len_type j) \
+{ \
+    if (std::abs(e) > 1e-13) cout << "[" << i << ", " << j << "] " << e << endl; \
+});
+
 #define PRINT_TENSOR(t) \
 cout << "\n" #t ":\n"; \
 t.for_each_element( \
-[](const typename decltype(t)::value_type & e, const index_vector& pos) \
+[](const T& e, const index_vector& pos) \
 { \
     if (std::abs(e) > 1e-13) cout << pos << " " << e << endl; \
 });
@@ -72,7 +81,7 @@ t.for_each_element( \
 #define PRINT_DPD_TENSOR(t) \
 cout << "\n" #t ":\n"; \
 t.for_each_element( \
-[](const typename decltype(t)::value_type & e, const irrep_vector& irreps, const index_vector& pos) \
+[](const T& e, const irrep_vector& irreps, const index_vector& pos) \
 { \
     if (std::abs(e) > 1e-13) cout << irreps << " " << pos << " " << e << endl; \
 });
@@ -273,27 +282,27 @@ void random_matrix(stride_type N, matrix<T>& t);
  * are initialized to zero, while referencable elements are randomly
  * initialized from the interior of the unit circle.
  */
-void random_lengths(stride_type N, unsigned d, const vector<len_type>& len_min, len_vector& len);
+void random_lengths(stride_type N, unsigned d, const len_vector& len_min, len_vector& len);
 
 matrix<len_type> random_indices(const len_vector& len, double sparsity);
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, varray<T>& A);
+void random_tensor(stride_type N, unsigned d, const len_vector& len_min, varray<T>& A);
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, unsigned nirrep, const vector<len_type>& len_min, dpd_varray<T>& A);
+void random_tensor(stride_type N, unsigned d, unsigned nirrep, const len_vector& len_min, dpd_varray<T>& A);
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, indexed_varray<T>& A);
+void random_tensor(stride_type N, unsigned d, const len_vector& len_min, indexed_varray<T>& A);
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, unsigned nirrep, const vector<len_type>& len_min, indexed_dpd_varray<T>& A);
+void random_tensor(stride_type N, unsigned d, unsigned nirrep, const len_vector& len_min, indexed_dpd_varray<T>& A);
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, dpd_varray<T>& A);
+void random_tensor(stride_type N, unsigned d, const len_vector& len_min, dpd_varray<T>& A);
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, indexed_dpd_varray<T>& A);
+void random_tensor(stride_type N, unsigned d, const len_vector& len_min, indexed_dpd_varray<T>& A);
 
 /*
  * Creates a tensor of d dimensions, whose total storage size is between N/2
@@ -307,7 +316,7 @@ void random_lengths(stride_type N, unsigned d, len_vector& len);
 template <typename T>
 void random_tensor(stride_type N, unsigned d, T& A)
 {
-    random_tensor(N, d, vector<len_type>(d), A);
+    random_tensor(N, d, len_vector(d), A);
 }
 
 /*

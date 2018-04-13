@@ -9,6 +9,7 @@
 #include "kernels/1v/add.hpp"
 #include "kernels/1v/copy.hpp"
 #include "kernels/1v/dot.hpp"
+#include "kernels/1v/mult.hpp"
 #include "kernels/1v/reduce.hpp"
 #include "kernels/1v/scale.hpp"
 #include "kernels/1v/set.hpp"
@@ -98,6 +99,7 @@ struct config
     microkernel<add_ukr_t> add_ukr;
     microkernel<copy_ukr_t> copy_ukr;
     microkernel<dot_ukr_t> dot_ukr;
+    microkernel<mult_ukr_t> mult_ukr;
     microkernel<reduce_ukr_t> reduce_ukr;
     microkernel<scale_ukr_t> scale_ukr;
     microkernel<set_ukr_t> set_ukr;
@@ -135,6 +137,8 @@ struct config
     microkernel<pack_nn_ukr_t> pack_nn_nr_ukr;
     microkernel<pack_nnd_ukr_t> pack_nnd_mr_ukr;
     microkernel<pack_nnd_ukr_t> pack_nnd_nr_ukr;
+    microkernel<pack_nne_ukr_t> pack_nne_mr_ukr;
+    microkernel<pack_nne_ukr_t> pack_nne_nr_ukr;
     microkernel<pack_sn_ukr_t> pack_sn_mr_ukr;
     microkernel<pack_sn_ukr_t> pack_sn_nr_ukr;
     microkernel<pack_ns_ukr_t> pack_ns_mr_ukr;
@@ -158,6 +162,7 @@ struct config
     : add_ukr(typename Traits::template add_ukr<float>()),
       copy_ukr(typename Traits::template copy_ukr<float>()),
       dot_ukr(typename Traits::template dot_ukr<float>()),
+      mult_ukr(typename Traits::template mult_ukr<float>()),
       reduce_ukr(typename Traits::template reduce_ukr<float>()),
       scale_ukr(typename Traits::template scale_ukr<float>()),
       set_ukr(typename Traits::template set_ukr<float>()),
@@ -187,6 +192,8 @@ struct config
       pack_nn_nr_ukr(typename Traits::template pack_nn_nr_ukr<float>()),
       pack_nnd_mr_ukr(typename Traits::template pack_nnd_mr_ukr<float>()),
       pack_nnd_nr_ukr(typename Traits::template pack_nnd_nr_ukr<float>()),
+      pack_nne_mr_ukr(typename Traits::template pack_nne_mr_ukr<float>()),
+      pack_nne_nr_ukr(typename Traits::template pack_nne_nr_ukr<float>()),
       pack_sn_mr_ukr(typename Traits::template pack_sn_mr_ukr<float>()),
       pack_sn_nr_ukr(typename Traits::template pack_sn_nr_ukr<float>()),
       pack_ns_mr_ukr(typename Traits::template pack_ns_mr_ukr<float>()),

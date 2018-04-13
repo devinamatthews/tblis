@@ -136,8 +136,8 @@ int random_weighted_choice(const Weights& w)
  * Returns a sequence of n non-negative numbers such that sum_i n_i = s and
  * and n_i >= mn_i, with uniform distribution.
  */
-template <typename T>
-std::vector<T> random_sum_constrained_sequence(unsigned n, T s, const std::vector<T>& mn)
+template <typename T, typename C>
+C random_sum_constrained_sequence(unsigned n, T s, const C& mn)
 {
     TBLIS_ASSERT(n > 0);
     TBLIS_ASSERT(s >= 0);
@@ -150,7 +150,7 @@ std::vector<T> random_sum_constrained_sequence(unsigned n, T s, const std::vecto
         TBLIS_ASSERT(s >= 0);
     }
 
-    std::vector<T> p(n+1);
+    C p(n+1);
 
     p[0] = 0;
     p[n] = s;
@@ -185,21 +185,21 @@ std::vector<T> random_sum_constrained_sequence(unsigned n, T s)
  * Returns a sequence of n numbers such than prod_i n_i = p and n_i >= mn_i,
  * where n_i and p are >= 1 and with uniform distribution.
  */
-template <typename T>
-enable_if_floating_point_t<T,std::vector<T>>
-random_product_constrained_sequence(unsigned n, T p, const std::vector<T>& mn)
+template <typename T, typename C>
+enable_if_floating_point_t<T,C>
+random_product_constrained_sequence(unsigned n, T p, const C& mn)
 {
     TBLIS_ASSERT(n >  0);
     TBLIS_ASSERT(p >= 1);
     TBLIS_ASSERT(mn.size() == n);
 
-    std::vector<T> log_mn(n);
+    C log_mn(n);
     for (unsigned i = 0;i < n;i++)
     {
         log_mn[i] = (mn[i] <= 0.0 ? 1.0 : std::log(mn[i]));
     }
 
-    std::vector<T> s = random_sum_constrained_sequence<T>(n, std::log(p), log_mn);
+    C s = random_sum_constrained_sequence<T>(n, std::log(p), log_mn);
     for (unsigned i = 0;i < n;i++) s[i] = std::exp(s[i]);
     //cout << p << s << accumulate(s.begin(), s.end(), 1.0, multiplies<double>()) << endl;
     return s;
@@ -223,9 +223,9 @@ enum rounding_mode {ROUND_UP, ROUND_DOWN, ROUND_NEAREST};
  * Returns a sequence of n numbers such that p/2^d <= prod_i n_i <= p and
  * n_i >= mn_i, where n_i and p are >= 1 and with uniform distribution.
  */
-template <typename T, rounding_mode Mode=ROUND_DOWN>
-enable_if_integral_t<T,std::vector<T>>
-random_product_constrained_sequence(unsigned n, T p, const std::vector<T>& mn)
+template <typename T, typename C, rounding_mode Mode=ROUND_DOWN>
+enable_if_integral_t<T,C>
+random_product_constrained_sequence(unsigned n, T p, const C& mn)
 {
     TBLIS_ASSERT(n >  0);
     TBLIS_ASSERT(p >= 1);
@@ -238,7 +238,7 @@ random_product_constrained_sequence(unsigned n, T p, const std::vector<T>& mn)
     }
 
     std::vector<double> sd = random_product_constrained_sequence<double>(n, p, mnd);
-    std::vector<T> si(n);
+    C si(n);
     for (unsigned i = 0;i < n;i++)
     {
         switch (Mode)

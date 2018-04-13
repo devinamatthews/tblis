@@ -3,6 +3,7 @@ lib_libtblis_la_SOURCES = \
     \
     src/iface/1v/add.cxx \
     src/iface/1v/dot.cxx \
+    src/iface/1v/mult.cxx \
     src/iface/1v/reduce.cxx \
     src/iface/1v/scale.cxx \
     src/iface/1v/set.cxx \
@@ -24,10 +25,14 @@ lib_libtblis_la_SOURCES = \
     \
     src/iface/3m/mult.cxx \
     \
+    src/iface/3t/cp_gradient.cxx \
+    src/iface/3t/cp_reform.cxx \
+    src/iface/3t/khatri_rao.cxx \
     src/iface/3t/mult.cxx \
     \
     src/internal/1v/add.cxx \
     src/internal/1v/dot.cxx \
+    src/internal/1v/mult.cxx \
     src/internal/1v/reduce.cxx \
     src/internal/1v/scale.cxx \
     src/internal/1v/set.cxx \
@@ -70,6 +75,9 @@ lib_libtblis_la_SOURCES = \
     \
     src/internal/3m/mult.cxx \
     \
+    src/internal/3t/dense/cp_gradient.cxx \
+    src/internal/3t/dense/cp_reform.cxx \
+    src/internal/3t/dense/khatri_rao.cxx \
     src/internal/3t/dense/mult.cxx \
     \
     src/internal/3t/dpd/mult.cxx \
@@ -110,6 +118,7 @@ iface1vinclude_HEADERS = \
     \
     src/iface/1v/add.h \
     src/iface/1v/dot.h \
+    src/iface/1v/mult.h \
     src/iface/1v/reduce.h \
     src/iface/1v/scale.h \
     src/iface/1v/set.h \
@@ -143,6 +152,9 @@ iface3minclude_HEADERS = \
 iface3tincludedir = $(pkgincludedir)/iface/3t
 iface3tinclude_HEADERS = \
     \
+    src/iface/3t/cp_gradient.h \
+    src/iface/3t/cp_reform.h \
+    src/iface/3t/khatri_rao.h \
     src/iface/3t/mult.h
     
 marrayincludedir = $(pkgincludedir)/external/marray/include
@@ -497,6 +509,9 @@ bin_test_SOURCES = test/test.cxx \
                    test/3m/ger.cxx \
                    \
                    test/3t/contract.cxx \
+                   test/3t/cp_gradient.cxx \
+                   test/3t/cp_reform.cxx \
+                   test/3t/khatri_rao.cxx \
                    test/3t/mult.cxx \
                    test/3t/outer_prod.cxx \
                    test/3t/weight.cxx

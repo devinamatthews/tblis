@@ -5,6 +5,7 @@
 
 #include "iface/1v/add.h"
 #include "iface/1v/dot.h"
+#include "iface/1v/mult.h"
 #include "iface/1v/reduce.h"
 #include "iface/1v/scale.h"
 #include "iface/1v/set.h"
@@ -23,6 +24,9 @@
 
 #include "iface/3m/mult.h"
 
+#include "iface/3t/cp_gradient.h"
+#include "iface/3t/cp_reform.h"
+#include "iface/3t/khatri_rao.h"
 #include "iface/3t/mult.h"
 
 #endif

@@ -172,7 +172,7 @@ void gemm_ref(T alpha, matrix_view<const T> A, \
 template <typename T>
 void random_matrix(stride_type N, len_type m_min, len_type n_min, matrix<T>& t)
 {
-    vector<len_type> len = random_product_constrained_sequence<len_type>(2, N/sizeof(T), {m_min, n_min});
+    auto len = random_product_constrained_sequence<len_type>(2, N/sizeof(T), len_vector{m_min, n_min});
 
     len_type m = (m_min > 0 ? m_min : random_number<len_type>(1, len[0]));
     len_type n = (n_min > 0 ? n_min : random_number<len_type>(1, len[1]));
@@ -219,9 +219,9 @@ template void random_matrix(stride_type N, matrix<T>& t);
  * are initialized to zero, while referencable elements are randomly
  * initialized from the interior of the unit circle.
  */
-void random_lengths(stride_type N, unsigned d, const vector<len_type>& len_min, len_vector& len)
+void random_lengths(stride_type N, unsigned d, const len_vector& len_min, len_vector& len)
 {
-    vector<len_type> len_max = random_product_constrained_sequence<len_type>(d, N, len_min);
+    auto len_max = random_product_constrained_sequence<len_type>(d, N, len_min);
 
     len.resize(d);
     for (unsigned i = 0;i < d;i++)
@@ -252,7 +252,7 @@ matrix<len_type> random_indices(const len_vector& len, double sparsity)
 }
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, varray<T>& A)
+void random_tensor(stride_type N, unsigned d, const len_vector& len_min, varray<T>& A)
 {
     len_vector len_A;
     random_lengths(N/sizeof(T), d, len_min, len_A);
@@ -261,11 +261,11 @@ void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, v
 }
 
 #define FOREACH_TYPE(T) \
-template void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, varray<T>& A);
+template void random_tensor(stride_type N, unsigned d, const len_vector& len_min, varray<T>& A);
 #include "configs/foreach_type.h"
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, unsigned nirrep, const vector<len_type>& len_min, dpd_varray<T>& A)
+void random_tensor(stride_type N, unsigned d, unsigned nirrep, const len_vector& len_min, dpd_varray<T>& A)
 {
     unsigned irrep_A;
     vector<vector<len_type>> len_A(d);
@@ -287,11 +287,11 @@ void random_tensor(stride_type N, unsigned d, unsigned nirrep, const vector<len_
 }
 
 #define FOREACH_TYPE(T) \
-template void random_tensor(stride_type N, unsigned d, unsigned nirrep, const vector<len_type>& len_min, dpd_varray<T>& A);
+template void random_tensor(stride_type N, unsigned d, unsigned nirrep, const len_vector& len_min, dpd_varray<T>& A);
 #include "configs/foreach_type.h"
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, indexed_varray<T>& A)
+void random_tensor(stride_type N, unsigned d, const len_vector& len_min, indexed_varray<T>& A)
 {
     len_vector len_A;
     random_lengths(N/sizeof(T), d, len_min, len_A);
@@ -306,11 +306,11 @@ void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, i
 }
 
 #define FOREACH_TYPE(T) \
-template void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, indexed_varray<T>& A);
+template void random_tensor(stride_type N, unsigned d, const len_vector& len_min, indexed_varray<T>& A);
 #include "configs/foreach_type.h"
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, unsigned nirrep, const vector<len_type>& len_min, indexed_dpd_varray<T>& A)
+void random_tensor(stride_type N, unsigned d, unsigned nirrep, const len_vector& len_min, indexed_dpd_varray<T>& A)
 {
     unsigned irrep_A;
     vector<vector<len_type>> len_A(d);
@@ -351,27 +351,27 @@ void random_tensor(stride_type N, unsigned d, unsigned nirrep, const vector<len_
 }
 
 #define FOREACH_TYPE(T) \
-template void random_tensor(stride_type N, unsigned d, unsigned nirrep, const vector<len_type>& len_min, indexed_dpd_varray<T>& A);
+template void random_tensor(stride_type N, unsigned d, unsigned nirrep, const len_vector& len_min, indexed_dpd_varray<T>& A);
 #include "configs/foreach_type.h"
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, dpd_varray<T>& A)
+void random_tensor(stride_type N, unsigned d, const len_vector& len_min, dpd_varray<T>& A)
 {
     random_tensor(N, d, 1 << random_number(2), len_min, A);
 }
 
 #define FOREACH_TYPE(T) \
-template void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, dpd_varray<T>& A);
+template void random_tensor(stride_type N, unsigned d, const len_vector& len_min, dpd_varray<T>& A);
 #include "configs/foreach_type.h"
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, indexed_dpd_varray<T>& A)
+void random_tensor(stride_type N, unsigned d, const len_vector& len_min, indexed_dpd_varray<T>& A)
 {
     random_tensor(N, d, 1 << random_number(2), len_min, A);
 }
 
 #define FOREACH_TYPE(T) \
-template void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, indexed_dpd_varray<T>& A);
+template void random_tensor(stride_type N, unsigned d, const len_vector& len_min, indexed_dpd_varray<T>& A);
 #include "configs/foreach_type.h"
 
 /*
@@ -383,7 +383,7 @@ template void random_tensor(stride_type N, unsigned d, const vector<len_type>& l
  */
 void random_lengths(stride_type N, unsigned d, len_vector& len)
 {
-    random_lengths(N, d, vector<len_type>(d), len);
+    random_lengths(N, d, len_vector(d), len);
 }
 
 /*
@@ -464,7 +464,7 @@ void random_lengths(stride_type N,
 
     random_lengths(N, ndim_A, len_A);
 
-    vector<len_type> min_B(ndim_B);
+    len_vector min_B(ndim_B);
     for (unsigned i = 0;i < ndim_B;i++)
     {
         for (unsigned j = 0;j < ndim_A;j++)
@@ -888,7 +888,7 @@ void random_lengths(stride_type N,
     {
         random_lengths(N, ndim_A, len_A);
 
-        vector<len_type> min_B(ndim_B);
+        len_vector min_B(ndim_B);
         for (unsigned i = 0;i < ndim_B;i++)
         {
             for (unsigned j = 0;j < ndim_A;j++)
@@ -904,7 +904,7 @@ void random_lengths(stride_type N,
         random_lengths(N, ndim_B, min_B, len_B);
 
         stride_type siz = 1;
-        vector<len_type> min_C(ndim_C);
+        len_vector min_C(ndim_C);
         for (unsigned i = 0;i < ndim_C;i++)
         {
             bool found = false;

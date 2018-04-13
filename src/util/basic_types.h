@@ -23,6 +23,7 @@
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 #include <string>
+#include <array>
 
 #include "../memory/aligned_allocator.hpp"
 

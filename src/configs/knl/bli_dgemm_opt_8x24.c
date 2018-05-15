@@ -35,7 +35,7 @@
 #include "blis.h"
 #include <assert.h>
 
-#include "bli_avx512_macros.h"
+#include "../../util/asm_x86.h"
 
 #define UNROLL_K 32
 

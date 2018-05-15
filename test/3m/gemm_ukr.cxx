@@ -79,13 +79,6 @@ TEMPLATED_TEST_CASE(gemm_ukr, T, all_types)
                         matrix_view<T> C({m, n}, reinterpret_cast<T*>(C_buf), {rs_c, cs_c});
                         matrix_view<T> D({m, n}, reinterpret_cast<T*>(D_buf), {rs_c, cs_c});
 
-                        for (len_type j = 0;j < ME*k;j++)
-                            A.data()[j] = random_unit<T>();
-                        for (len_type j = 0;j < NE*k;j++)
-                            B.data()[j] = random_unit<T>();
-                        for (len_type j = 0;j < MR*NR*2;j++)
-                            C.data()[j] = D.data()[j] = random_unit<T>();
-
                         INFO("C before:\n" << C);
 
                         gemm_micro_kernel{}(single, cfg, alpha, A, B, beta, C);

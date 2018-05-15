@@ -35,7 +35,7 @@
 #include "blis.h"
 #include <assert.h>
 
-#include "bli_avx512_macros.h"
+#include "../../util/asm_x86.h"
 
 #define UNROLL_K 32
 
@@ -83,17 +83,190 @@
     KXNORW(K(1), K(0), K(0)) \
     KXNORW(K(2), K(0), K(0)) \
     VMULPD(ZMM(NUM), ZMM(NUM), ZMM(0)) \
-    VGATHERDPD(ZMM(3) MASK_K(1), MEM(RCX,YMM(2),8)) \
+    VGATHERDPD(ZMM(3) MASK_K(1), MEM(RCX,YMM(2),1)) \
     VFMADD231PD(ZMM(NUM), ZMM(3), ZMM(1)) \
-    VSCATTERDPD(MEM(RCX,YMM(2),8) MASK_K(2), ZMM(NUM)) \
+    VSCATTERDPD(MEM(RCX,YMM(2),1) MASK_K(2), ZMM(NUM)) \
     ADD(RCX, RAX)
 
 #define UPDATE_C_BZ_ROW_SCATTERED(NUM) \
 \
     KXNORW(K(1), K(0), K(0)) \
     VMULPD(ZMM(NUM), ZMM(NUM), ZMM(0)) \
-    VSCATTERDPD(MEM(RCX,YMM(2),8) MASK_K(1), ZMM(NUM)) \
+    VSCATTERDPD(MEM(RCX,YMM(2),1) MASK_K(1), ZMM(NUM)) \
     ADD(RCX, RAX)
+
+//
+// zmm{r1-r8}: eight rows of AB
+// zmm0:       alpha
+// zmm1:       beta
+// zmm2-7:     temporaries, will be overwritten
+// k1:         0x33
+// rcx:        C
+// rbx:        rs_c
+// r13:        rs_c*3
+// r15:        rs_c*5
+// r10:        rs_c*7
+#define UPDATE_C_TRANS8X8(R1,R2,R3,R4,R5,R6,R7,R8) \
+\
+    VMULPD(ZMM(R1), ZMM(R1), ZMM(0)) \
+    VMULPD(ZMM(R2), ZMM(R2), ZMM(0)) \
+    VMULPD(ZMM(R3), ZMM(R3), ZMM(0)) \
+    VMULPD(ZMM(R4), ZMM(R4), ZMM(0)) \
+    VMULPD(ZMM(R5), ZMM(R5), ZMM(0)) \
+    VMULPD(ZMM(R6), ZMM(R6), ZMM(0)) \
+    VMULPD(ZMM(R7), ZMM(R7), ZMM(0)) \
+    VMULPD(ZMM(R8), ZMM(R8), ZMM(0)) \
+    /* 00 01 02 03 04 05 06 07 - R1 */ \
+    /* 10 11 12 13 14 15 16 17 - R2 */ \
+    /* 20 21 22 23 24 25 26 27 - R3 */ \
+    /* 30 31 32 33 34 35 36 37 - R4 */ \
+    /* 40 41 42 43 44 45 46 47 - R5 */ \
+    /* 50 51 52 53 54 55 56 57 - R6 */ \
+    /* 60 61 62 63 64 65 66 67 - R7 */ \
+    /* 70 71 72 73 74 75 76 77 - R8 */ \
+    VUNPCKLPD(ZMM( 2), ZMM(R1), ZMM(R2)) \
+    VUNPCKHPD(ZMM( 3), ZMM(R3), ZMM(R4)) \
+    VUNPCKLPD(ZMM( 4), ZMM(R5), ZMM(R6)) \
+    VUNPCKHPD(ZMM( 5), ZMM(R7), ZMM(R8)) \
+    VUNPCKHPD(ZMM(R2), ZMM(R1), ZMM(R2)) \
+    VUNPCKLPD(ZMM(R3), ZMM(R3), ZMM(R4)) \
+    VUNPCKHPD(ZMM(R6), ZMM(R5), ZMM(R6)) \
+    VUNPCKLPD(ZMM(R7), ZMM(R7), ZMM(R8)) \
+    /* 00 10 02 12 04 14 06 16 -  2 */ \
+    /* 01 11 03 13 05 15 07 17 - R2 */ \
+    /* 20 30 22 32 24 34 26 36 - R3 */ \
+    /* 21 31 23 33 25 35 27 37 -  3 */ \
+    /* 40 50 42 52 44 54 46 56 -  4 */ \
+    /* 41 51 43 53 45 55 47 57 - R6 */ \
+    /* 60 70 62 72 64 74 66 76 - R7 */ \
+    /* 61 71 63 73 65 75 67 77 -  5 */ \
+    VSHUFF64X2(ZMM( 6), ZMM( 2), ZMM(R3), IMM(0x71)) \
+    VBLENDMPD(ZMM(R1) MASK_K(1), ZMM( 6), ZMM(R1)) \
+    VBLENDMPD(ZMM(R3) MASK_K(1), ZMM(R3), ZMM( 6)) \
+    VSHUFF64X2(ZMM( 7), ZMM(R2), ZMM( 3), IMM(0x71)) \
+    VBLENDMPD(ZMM(R2) MASK_K(1), ZMM( 7), ZMM(R2)) \
+    VBLENDMPD(ZMM(R4) MASK_K(1), ZMM(R4), ZMM( 7)) \
+    VSHUFF64X2(ZMM( 2), ZMM( 4), ZMM(R7), IMM(0x71)) \
+    VBLENDMPD(ZMM(R3) MASK_K(1), ZMM( 2), ZMM(R3)) \
+    VBLENDMPD(ZMM(R5) MASK_K(1), ZMM(R7), ZMM( 2)) \
+    VSHUFF64X2(ZMM( 3), ZMM(R6), ZMM( 5), IMM(0x71)) \
+    VBLENDMPD(ZMM(R4) MASK_K(1), ZMM( 3), ZMM(R4)) \
+    VBLENDMPD(ZMM(R8) MASK_K(1), ZMM(R8), ZMM( 3)) \
+    /* 00 10 20 30 02 12 22 32 - R1 */ \
+    /* 01 11 21 31 03 13 23 33 - R2 */ \
+    /* 04 14 24 34 06 16 26 36 - R3 */ \
+    /* 05 15 25 35 07 17 27 37 - R4 */ \
+    /* 40 50 60 70 42 52 62 72 - R5 */ \
+    /* 41 51 61 71 43 53 63 73 - R6 */ \
+    /* 44 54 64 74 46 56 66 76 - R7 */ \
+    /* 45 55 65 75 47 57 67 77 - R8 */ \
+    VSHUFF64X2(ZMM(R3), ZMM(R1), ZMM( 4), IMM(0xdd)) \
+    VSHUFF64X2(ZMM(R1), ZMM(R1), ZMM( 4), IMM(0x88)) \
+    VSHUFF64X2(ZMM(R2), ZMM( 2), ZMM(R4), IMM(0x88)) \
+    VSHUFF64X2(ZMM(R4), ZMM( 2), ZMM(R4), IMM(0xdd)) \
+    VSHUFF64X2(ZMM(R5), ZMM( 3), ZMM(R7), IMM(0x88)) \
+    VSHUFF64X2(ZMM(R7), ZMM( 3), ZMM(R7), IMM(0xdd)) \
+    VSHUFF64X2(ZMM(R8), ZMM(R6), ZMM( 5), IMM(0xdd)) \
+    VSHUFF64X2(ZMM(R6), ZMM(R6), ZMM( 5), IMM(0x88)) \
+    /* 00 10 20 30 40 50 60 70 - R1 */ \
+    /* 01 11 21 31 41 51 61 71 - R2 */ \
+    /* 04 14 24 34 44 54 64 74 - R5 */ \
+    /* 05 15 25 35 45 55 65 75 - R6 */ \
+    /* 02 12 22 32 42 52 62 72 - R3 */ \
+    /* 03 13 23 33 43 53 63 73 - R4 */ \
+    /* 06 16 26 36 46 56 66 76 - R7 */ \
+    /* 07 17 27 37 47 57 67 77 - R8 */ \
+    VFMADD231PD(ZMM(R1), ZMM(1), MEM(RCX      )) \
+    VFMADD231PD(ZMM(R2), ZMM(1), MEM(RCX,RBX,1)) \
+    VFMADD231PD(ZMM(R3), ZMM(1), MEM(RCX,RBX,2)) \
+    VFMADD231PD(ZMM(R4), ZMM(1), MEM(RCX,R13,1)) \
+    VFMADD231PD(ZMM(R5), ZMM(1), MEM(RCX,RBX,4)) \
+    VFMADD231PD(ZMM(R6), ZMM(1), MEM(RCX,R15,1)) \
+    VFMADD231PD(ZMM(R7), ZMM(1), MEM(RCX,R13,2)) \
+    VFMADD231PD(ZMM(R8), ZMM(1), MEM(RCX,R10,1)) \
+    VMOVUPD(MEM(RCX      ), ZMM(R1)) \
+    VMOVUPD(MEM(RCX,RBX,1), ZMM(R2)) \
+    VMOVUPD(MEM(RCX,RBX,2), ZMM(R3)) \
+    VMOVUPD(MEM(RCX,R13,1), ZMM(R4)) \
+    VMOVUPD(MEM(RCX,RBX,4), ZMM(R5)) \
+    VMOVUPD(MEM(RCX,R15,1), ZMM(R6)) \
+    VMOVUPD(MEM(RCX,R13,2), ZMM(R7)) \
+    VMOVUPD(MEM(RCX,R10,1), ZMM(R8))
+
+#define UPDATE_C_TRANS8X8_BZ(R1,R2,R3,R4,R5,R6,R7,R8) \
+\
+    VMULPD(ZMM(R1), ZMM(R1), ZMM(0)) \
+    VMULPD(ZMM(R2), ZMM(R2), ZMM(0)) \
+    VMULPD(ZMM(R3), ZMM(R3), ZMM(0)) \
+    VMULPD(ZMM(R4), ZMM(R4), ZMM(0)) \
+    VMULPD(ZMM(R5), ZMM(R5), ZMM(0)) \
+    VMULPD(ZMM(R6), ZMM(R6), ZMM(0)) \
+    VMULPD(ZMM(R7), ZMM(R7), ZMM(0)) \
+    VMULPD(ZMM(R8), ZMM(R8), ZMM(0)) \
+    /* 00 01 02 03 04 05 06 07 - R1 */ \
+    /* 10 11 12 13 14 15 16 17 - R2 */ \
+    /* 20 21 22 23 24 25 26 27 - R3 */ \
+    /* 30 31 32 33 34 35 36 37 - R4 */ \
+    /* 40 41 42 43 44 45 46 47 - R5 */ \
+    /* 50 51 52 53 54 55 56 57 - R6 */ \
+    /* 60 61 62 63 64 65 66 67 - R7 */ \
+    /* 70 71 72 73 74 75 76 77 - R8 */ \
+    VUNPCKLPD(ZMM( 2), ZMM(R1), ZMM(R2)) \
+    VUNPCKHPD(ZMM(R2), ZMM(R1), ZMM(R2)) \
+    VUNPCKLPD(ZMM( 3), ZMM(R3), ZMM(R4)) \
+    VUNPCKHPD(ZMM(R4), ZMM(R3), ZMM(R4)) \
+    VUNPCKLPD(ZMM( 4), ZMM(R5), ZMM(R6)) \
+    VUNPCKHPD(ZMM(R6), ZMM(R5), ZMM(R6)) \
+    VUNPCKLPD(ZMM( 5), ZMM(R7), ZMM(R8)) \
+    VUNPCKHPD(ZMM(R8), ZMM(R7), ZMM(R8)) \
+    /* 00 10 02 12 04 14 06 16 -  2 */ \
+    /* 01 11 03 13 05 15 07 17 - R2 */ \
+    /* 20 30 22 32 24 34 26 36 -  3 */ \
+    /* 21 31 23 33 25 35 27 37 - R4 */ \
+    /* 40 50 42 52 44 54 46 56 -  4 */ \
+    /* 41 51 43 53 45 55 47 57 - R6 */ \
+    /* 60 70 62 72 64 74 66 76 -  5 */ \
+    /* 61 71 63 73 65 75 67 77 - R8 */ \
+    VSHUFF64X2(ZMM(R1), ZMM( 2), ZMM( 3), IMM(0x44)) \
+    VSHUFF64X2(ZMM( 3), ZMM( 2), ZMM( 3), IMM(0xee)) \
+    VSHUFF64X2(ZMM(R7), ZMM( 4), ZMM( 5), IMM(0xee)) \
+    VSHUFF64X2(ZMM( 4), ZMM( 4), ZMM( 5), IMM(0x44)) \
+    VSHUFF64X2(ZMM( 5), ZMM(R6), ZMM(R8), IMM(0xee)) \
+    VSHUFF64X2(ZMM(R4), ZMM(R6), ZMM(R8), IMM(0x44)) \
+    VSHUFF64X2(ZMM( 2), ZMM(R2), ZMM(R4), IMM(0x44)) \
+    VSHUFF64X2(ZMM(R6), ZMM(R2), ZMM(R4), IMM(0xee)) \
+    /* 00 10 02 12 20 30 22 32 - R1 */ \
+    /* 01 11 03 13 21 31 23 33 -  2 */ \
+    /* 04 14 06 16 24 34 26 36 -  3 */ \
+    /* 05 15 07 17 25 35 27 37 - R6 */ \
+    /* 40 50 42 52 60 70 62 72 -  4 */ \
+    /* 41 51 43 53 61 71 63 73 - R4 */ \
+    /* 44 54 46 56 64 74 66 76 - R7 */ \
+    /* 45 55 47 57 65 75 67 77 -  5 */ \
+    VSHUFF64X2(ZMM(R3), ZMM(R1), ZMM( 4), IMM(0xdd)) \
+    VSHUFF64X2(ZMM(R1), ZMM(R1), ZMM( 4), IMM(0x88)) \
+    VSHUFF64X2(ZMM(R2), ZMM( 2), ZMM(R4), IMM(0x88)) \
+    VSHUFF64X2(ZMM(R4), ZMM( 2), ZMM(R4), IMM(0xdd)) \
+    VSHUFF64X2(ZMM(R5), ZMM( 3), ZMM(R7), IMM(0x88)) \
+    VSHUFF64X2(ZMM(R7), ZMM( 3), ZMM(R7), IMM(0xdd)) \
+    VSHUFF64X2(ZMM(R8), ZMM(R6), ZMM( 5), IMM(0xdd)) \
+    VSHUFF64X2(ZMM(R6), ZMM(R6), ZMM( 5), IMM(0x88)) \
+    /* 00 10 20 30 40 50 60 70 - R1 */ \
+    /* 01 11 21 31 41 51 61 71 - R2 */ \
+    /* 04 14 24 34 44 54 64 74 - R5 */ \
+    /* 05 15 25 35 45 55 65 75 - R6 */ \
+    /* 02 12 22 32 42 52 62 72 - R3 */ \
+    /* 03 13 23 33 43 53 63 73 - R4 */ \
+    /* 06 16 26 36 46 56 66 76 - R7 */ \
+    /* 07 17 27 37 47 57 67 77 - R8 */ \
+    VMOVUPD(MEM(RCX      ), ZMM(R1)) \
+    VMOVUPD(MEM(RCX,RBX,1), ZMM(R2)) \
+    VMOVUPD(MEM(RCX,RBX,2), ZMM(R3)) \
+    VMOVUPD(MEM(RCX,R13,1), ZMM(R4)) \
+    VMOVUPD(MEM(RCX,RBX,4), ZMM(R5)) \
+    VMOVUPD(MEM(RCX,R15,1), ZMM(R6)) \
+    VMOVUPD(MEM(RCX,R13,2), ZMM(R7)) \
+    VMOVUPD(MEM(RCX,R10,1), ZMM(R8))
 
 #define PREFETCH_A_L1_1(n) PREFETCH(0, MEM(RAX,(A_L1_PREFETCH_DIST+n)*24*8))
 #define PREFETCH_A_L1_2(n) PREFETCH(0, MEM(RAX,(A_L1_PREFETCH_DIST+n)*24*8+64))
@@ -379,7 +552,7 @@ void bli_dgemm_opt_24x8(
     JNZ(MAIN_LOOP)
 
     LABEL(REM_1)
-    SAR1(RDI)
+    SAR(RDI)
     JNC(REM_2)
 
     SUBITER(0,1,0,RAX)
@@ -388,7 +561,7 @@ void bli_dgemm_opt_24x8(
     ADD(RBX, IMM( 8*8))
 
     LABEL(REM_2)
-    SAR1(RDI)
+    SAR(RDI)
     JNC(REM_4)
 
     SUBITER(0,1,0,RAX)
@@ -397,7 +570,7 @@ void bli_dgemm_opt_24x8(
     ADD(RBX, IMM(2* 8*8))
 
     LABEL(REM_4)
-    SAR1(RDI)
+    SAR(RDI)
     JNC(REM_8)
 
     SUBITER(0,1,0,RAX)
@@ -408,7 +581,7 @@ void bli_dgemm_opt_24x8(
     ADD(RBX, IMM(4* 8*8))
 
     LABEL(REM_8)
-    SAR1(RDI)
+    SAR(RDI)
     JNC(REM_16)
 
     SUBITER(0,1,0,RAX     )
@@ -423,7 +596,7 @@ void bli_dgemm_opt_24x8(
     ADD(RBX, IMM(8* 8*8))
 
     LABEL(REM_16)
-    SAR1(RDI)
+    SAR(RDI)
     JNC(AFTER_LOOP)
 
     SUBITER( 0,1,0,RAX      )
@@ -560,103 +733,135 @@ void bli_dgemm_opt_24x8(
     VBROADCASTSD(ZMM(0), MEM(RAX))
     VBROADCASTSD(ZMM(1), MEM(RBX))
 
-    // Check if C is row stride. If not, jump to the slow scattered update
     MOV(RAX, VAR(rs_c))
     LEA(RAX, MEM(,RAX,8))
     MOV(RBX, VAR(cs_c))
+    LEA(RBX, MEM(,RBX,8))
     LEA(RDI, MEM(RAX,RAX,2))
-    CMP(RBX, IMM(1))
+
+    // Check if C is row stride.
+    CMP(RBX, IMM(8))
+    JNE(COLSTORED)
+
+        VMOVQ(RDX, XMM(1))
+        SAL(RDX) //shift out sign bit
+        JZ(ROWSTORBZ)
+
+            UPDATE_C_FOUR_ROWS( 8, 9,10,11)
+            UPDATE_C_FOUR_ROWS(12,13,14,15)
+            UPDATE_C_FOUR_ROWS(16,17,18,19)
+            UPDATE_C_FOUR_ROWS(20,21,22,23)
+            UPDATE_C_FOUR_ROWS(24,25,26,27)
+            UPDATE_C_FOUR_ROWS(28,29,30,31)
+
+        JMP(END)
+        LABEL(ROWSTORBZ)
+
+            UPDATE_C_BZ_FOUR_ROWS( 8, 9,10,11)
+            UPDATE_C_BZ_FOUR_ROWS(12,13,14,15)
+            UPDATE_C_BZ_FOUR_ROWS(16,17,18,19)
+            UPDATE_C_BZ_FOUR_ROWS(20,21,22,23)
+            UPDATE_C_BZ_FOUR_ROWS(24,25,26,27)
+            UPDATE_C_BZ_FOUR_ROWS(28,29,30,31)
+
+    JMP(END)
+    LABEL(COLSTORED)
+
+    // Check if C is column stride. If not, jump to the slow scattered update
+    CMP(RAX, IMM(8))
     JNE(SCATTEREDUPDATE)
 
-    VMOVQ(RDX, XMM(1))
-    SAL1(RDX) //shift out sign bit
-    JZ(COLSTORBZ)
+        LEA(R13, MEM(RBX,RBX,2))
+        LEA(R15, MEM(RBX,RBX,4))
+        LEA(R10, MEM(R15,RBX,2))
 
-    UPDATE_C_FOUR_ROWS( 8, 9,10,11)
-    UPDATE_C_FOUR_ROWS(12,13,14,15)
-    UPDATE_C_FOUR_ROWS(16,17,18,19)
-    UPDATE_C_FOUR_ROWS(20,21,22,23)
-    UPDATE_C_FOUR_ROWS(24,25,26,27)
-    UPDATE_C_FOUR_ROWS(28,29,30,31)
+        MOV(ESI, IMM(0x33))
+        KMOV(K(1), ESI)
+
+        VMOVQ(RDX, XMM(1))
+        SAL(RDX) //shift out sign bit
+        JZ(COLSTORBZ)
+
+            UPDATE_C_TRANS8X8( 8, 9,10,11,12,13,14,15)
+            ADD(RCX, IMM(64))
+            UPDATE_C_TRANS8X8(16,17,18,19,20,21,22,23)
+            ADD(RCX, IMM(64))
+            UPDATE_C_TRANS8X8(24,25,26,27,28,29,30,31)
+
+        JMP(END)
+        LABEL(COLSTORBZ)
+
+            UPDATE_C_TRANS8X8_BZ( 8, 9,10,11,12,13,14,15)
+            ADD(RCX, IMM(64))
+            UPDATE_C_TRANS8X8_BZ(16,17,18,19,20,21,22,23)
+            ADD(RCX, IMM(64))
+            UPDATE_C_TRANS8X8_BZ(24,25,26,27,28,29,30,31)
 
     JMP(END)
-
-    LABEL(COLSTORBZ)
-
-    UPDATE_C_BZ_FOUR_ROWS( 8, 9,10,11)
-    UPDATE_C_BZ_FOUR_ROWS(12,13,14,15)
-    UPDATE_C_BZ_FOUR_ROWS(16,17,18,19)
-    UPDATE_C_BZ_FOUR_ROWS(20,21,22,23)
-    UPDATE_C_BZ_FOUR_ROWS(24,25,26,27)
-    UPDATE_C_BZ_FOUR_ROWS(28,29,30,31)
-
-    JMP(END)
-
     LABEL(SCATTEREDUPDATE)
 
-    MOV(RDI, VAR(offsetPtr))
-    VMOVAPS(ZMM(2), MEM(RDI))
-    /* Note that this ignores the upper 32 bits in cs_c */
-    VPBROADCASTD(ZMM(3), EBX)
-    VPMULLD(ZMM(2), ZMM(3), ZMM(2))
+        MOV(RDI, VAR(offsetPtr))
+        VMOVAPS(ZMM(2), MEM(RDI))
+        /* Note that this ignores the upper 32 bits in cs_c */
+        VPBROADCASTD(ZMM(3), EBX)
+        VPMULLD(ZMM(2), ZMM(3), ZMM(2))
 
-    VMOVQ(RDX, XMM(1))
-    SAL1(RDX) //shift out sign bit
-    JZ(SCATTERBZ)
+        VMOVQ(RDX, XMM(1))
+        SAL(RDX) //shift out sign bit
+        JZ(SCATTERBZ)
 
-    UPDATE_C_ROW_SCATTERED( 8)
-    UPDATE_C_ROW_SCATTERED( 9)
-    UPDATE_C_ROW_SCATTERED(10)
-    UPDATE_C_ROW_SCATTERED(11)
-    UPDATE_C_ROW_SCATTERED(12)
-    UPDATE_C_ROW_SCATTERED(13)
-    UPDATE_C_ROW_SCATTERED(14)
-    UPDATE_C_ROW_SCATTERED(15)
-    UPDATE_C_ROW_SCATTERED(16)
-    UPDATE_C_ROW_SCATTERED(17)
-    UPDATE_C_ROW_SCATTERED(18)
-    UPDATE_C_ROW_SCATTERED(19)
-    UPDATE_C_ROW_SCATTERED(20)
-    UPDATE_C_ROW_SCATTERED(21)
-    UPDATE_C_ROW_SCATTERED(22)
-    UPDATE_C_ROW_SCATTERED(23)
-    UPDATE_C_ROW_SCATTERED(24)
-    UPDATE_C_ROW_SCATTERED(25)
-    UPDATE_C_ROW_SCATTERED(26)
-    UPDATE_C_ROW_SCATTERED(27)
-    UPDATE_C_ROW_SCATTERED(28)
-    UPDATE_C_ROW_SCATTERED(29)
-    UPDATE_C_ROW_SCATTERED(30)
-    UPDATE_C_ROW_SCATTERED(31)
+            UPDATE_C_ROW_SCATTERED( 8)
+            UPDATE_C_ROW_SCATTERED( 9)
+            UPDATE_C_ROW_SCATTERED(10)
+            UPDATE_C_ROW_SCATTERED(11)
+            UPDATE_C_ROW_SCATTERED(12)
+            UPDATE_C_ROW_SCATTERED(13)
+            UPDATE_C_ROW_SCATTERED(14)
+            UPDATE_C_ROW_SCATTERED(15)
+            UPDATE_C_ROW_SCATTERED(16)
+            UPDATE_C_ROW_SCATTERED(17)
+            UPDATE_C_ROW_SCATTERED(18)
+            UPDATE_C_ROW_SCATTERED(19)
+            UPDATE_C_ROW_SCATTERED(20)
+            UPDATE_C_ROW_SCATTERED(21)
+            UPDATE_C_ROW_SCATTERED(22)
+            UPDATE_C_ROW_SCATTERED(23)
+            UPDATE_C_ROW_SCATTERED(24)
+            UPDATE_C_ROW_SCATTERED(25)
+            UPDATE_C_ROW_SCATTERED(26)
+            UPDATE_C_ROW_SCATTERED(27)
+            UPDATE_C_ROW_SCATTERED(28)
+            UPDATE_C_ROW_SCATTERED(29)
+            UPDATE_C_ROW_SCATTERED(30)
+            UPDATE_C_ROW_SCATTERED(31)
 
-    JMP(END)
+        JMP(END)
+        LABEL(SCATTERBZ)
 
-    LABEL(SCATTERBZ)
-
-    UPDATE_C_BZ_ROW_SCATTERED( 8)
-    UPDATE_C_BZ_ROW_SCATTERED( 9)
-    UPDATE_C_BZ_ROW_SCATTERED(10)
-    UPDATE_C_BZ_ROW_SCATTERED(11)
-    UPDATE_C_BZ_ROW_SCATTERED(12)
-    UPDATE_C_BZ_ROW_SCATTERED(13)
-    UPDATE_C_BZ_ROW_SCATTERED(14)
-    UPDATE_C_BZ_ROW_SCATTERED(15)
-    UPDATE_C_BZ_ROW_SCATTERED(16)
-    UPDATE_C_BZ_ROW_SCATTERED(17)
-    UPDATE_C_BZ_ROW_SCATTERED(18)
-    UPDATE_C_BZ_ROW_SCATTERED(19)
-    UPDATE_C_BZ_ROW_SCATTERED(20)
-    UPDATE_C_BZ_ROW_SCATTERED(21)
-    UPDATE_C_BZ_ROW_SCATTERED(22)
-    UPDATE_C_BZ_ROW_SCATTERED(23)
-    UPDATE_C_BZ_ROW_SCATTERED(24)
-    UPDATE_C_BZ_ROW_SCATTERED(25)
-    UPDATE_C_BZ_ROW_SCATTERED(26)
-    UPDATE_C_BZ_ROW_SCATTERED(27)
-    UPDATE_C_BZ_ROW_SCATTERED(28)
-    UPDATE_C_BZ_ROW_SCATTERED(29)
-    UPDATE_C_BZ_ROW_SCATTERED(30)
-    UPDATE_C_BZ_ROW_SCATTERED(31)
+            UPDATE_C_BZ_ROW_SCATTERED( 8)
+            UPDATE_C_BZ_ROW_SCATTERED( 9)
+            UPDATE_C_BZ_ROW_SCATTERED(10)
+            UPDATE_C_BZ_ROW_SCATTERED(11)
+            UPDATE_C_BZ_ROW_SCATTERED(12)
+            UPDATE_C_BZ_ROW_SCATTERED(13)
+            UPDATE_C_BZ_ROW_SCATTERED(14)
+            UPDATE_C_BZ_ROW_SCATTERED(15)
+            UPDATE_C_BZ_ROW_SCATTERED(16)
+            UPDATE_C_BZ_ROW_SCATTERED(17)
+            UPDATE_C_BZ_ROW_SCATTERED(18)
+            UPDATE_C_BZ_ROW_SCATTERED(19)
+            UPDATE_C_BZ_ROW_SCATTERED(20)
+            UPDATE_C_BZ_ROW_SCATTERED(21)
+            UPDATE_C_BZ_ROW_SCATTERED(22)
+            UPDATE_C_BZ_ROW_SCATTERED(23)
+            UPDATE_C_BZ_ROW_SCATTERED(24)
+            UPDATE_C_BZ_ROW_SCATTERED(25)
+            UPDATE_C_BZ_ROW_SCATTERED(26)
+            UPDATE_C_BZ_ROW_SCATTERED(27)
+            UPDATE_C_BZ_ROW_SCATTERED(28)
+            UPDATE_C_BZ_ROW_SCATTERED(29)
+            UPDATE_C_BZ_ROW_SCATTERED(30)
+            UPDATE_C_BZ_ROW_SCATTERED(31)
 
     LABEL(END)
 

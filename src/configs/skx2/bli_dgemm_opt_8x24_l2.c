@@ -35,7 +35,7 @@
 #include "blis.h"
 #include <assert.h>
 
-#include "../knl/bli_avx512_macros.h"
+#include "../../util/asm_x86.h"
 #include "common.h"
 
 #define CACHELINE_SIZE 64 //size of cache line in bytes

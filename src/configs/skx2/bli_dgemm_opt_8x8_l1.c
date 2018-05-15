@@ -35,7 +35,7 @@
 #include "blis.h"
 #include <assert.h>
 
-#include "../knl/bli_avx512_macros.h"
+#include "../../util/asm_x86.h"
 
 #define A_L1_PREFETCH_DIST 12
 

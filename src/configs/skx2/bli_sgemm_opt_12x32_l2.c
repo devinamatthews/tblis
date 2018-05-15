@@ -35,7 +35,7 @@
 #include "blis.h"
 #include <assert.h>
 
-#include "../knl/bli_avx512_macros.h"
+#include "../../util/asm_x86.h"
 #include "common.h"
 
 #define CACHELINE_SIZE 64 //size of cache line in bytes
@@ -129,6 +129,308 @@
 \
     LEA(RCX, MEM(RCX,RAX,1)) \
     LEA(RDX, MEM(RDX,RAX,1))
+
+#define UPDATE_C_TRANS16X12(Z1,Z2,Z3,Z4,Z5,Z6,Z7,Z8,Z9,Z10,Z11,Z12) \
+\
+    VMULPD(ZMM( Z1), ZMM( Z1), ZMM(0))                          \
+    VMULPD(ZMM( Z2), ZMM( Z2), ZMM(0))                          \
+    VMULPD(ZMM( Z3), ZMM( Z3), ZMM(0))                          \
+    VMULPD(ZMM( Z4), ZMM( Z4), ZMM(0))                          \
+    VMULPD(ZMM( Z5), ZMM( Z5), ZMM(0))                          \
+    VMULPD(ZMM( Z6), ZMM( Z6), ZMM(0))                          \
+    VMULPD(ZMM( Z7), ZMM( Z7), ZMM(0))                          \
+    VMULPD(ZMM( Z8), ZMM( Z8), ZMM(0))                          \
+    VMULPD(ZMM( Z9), ZMM( Z9), ZMM(0))                          \
+    VMULPD(ZMM(Z10), ZMM(Z10), ZMM(0))                          \
+    VMULPD(ZMM(Z11), ZMM(Z11), ZMM(0))                          \
+    VMULPD(ZMM(Z12), ZMM(Z12), ZMM(0))                          \
+    /* 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F -  Z1 */ \
+    /* 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F -  Z2 */ \
+    /* 20 21 22 23 24 25 26 27 28 29 2A 2B 2C 2D 2E 2F -  Z3 */ \
+    /* 30 31 32 33 34 35 36 37 38 39 3A 3B 3C 3D 3E 3F -  Z4 */ \
+    /* 40 41 42 43 44 45 46 47 48 49 4A 4B 4C 4D 4E 4F -  Z5 */ \
+    /* 50 51 52 53 54 55 56 57 58 59 5A 5B 5C 5D 5E 5F -  Z6 */ \
+    /* 60 61 62 63 64 65 66 67 68 69 6A 6B 6C 6D 6E 6F -  Z7 */ \
+    /* 70 71 72 73 74 75 76 77 78 79 7A 7B 7C 7D 7E 7F -  Z8 */ \
+    /* 80 81 82 83 84 85 86 87 88 89 8A 8B 8C 8D 8E 8F -  Z9 */ \
+    /* 90 91 92 93 94 95 96 97 98 99 9A 9B 9C 9D 9E 9F - Z10 */ \
+    /* A0 A1 A2 A3 A4 A5 A6 A7 A8 A9 AA AB AC AD AE AF - Z11 */ \
+    /* B0 B1 B2 B3 B4 B5 B6 B7 B8 B9 BA BB BC BD BE BF - Z12 */ \
+    VUNPCKLPS(ZMM(  2), ZMM( Z1), ZMM( Z2))                     \
+    VUNPCKHPS(ZMM( Z2), ZMM( Z1), ZMM( Z2))                     \
+    VUNPCKLPS(ZMM(  3), ZMM( Z3), ZMM( Z4))                     \
+    VUNPCKHPS(ZMM( Z4), ZMM( Z3), ZMM( Z4))                     \
+    VUNPCKLPS(ZMM(  4), ZMM( Z5), ZMM( Z6))                     \
+    VUNPCKHPS(ZMM( Z6), ZMM( Z5), ZMM( Z6))                     \
+    VUNPCKLPS(ZMM(  5), ZMM( Z7), ZMM( Z8))                     \
+    VUNPCKHPS(ZMM( Z8), ZMM( Z7), ZMM( Z8))                     \
+    VUNPCKLPS(ZMM(  6), ZMM( Z9), ZMM(Z10))                     \
+    VUNPCKHPS(ZMM(Z10), ZMM( Z9), ZMM(Z10))                     \
+    VUNPCKHPS(ZMM(  7), ZMM(Z11), ZMM(Z12))                     \
+    VUNPCKLPS(ZMM(Z11), ZMM(Z11), ZMM(Z12))                     \
+    /* 00 10 02 12 04 14 06 16 08 18 0A 1A 0C 1C 0E 1E -   2 */ \
+    /* 01 11 03 13 05 15 07 17 09 19 0B 1B 0D 1D 0F 1F -  Z2 */ \
+    /* 20 30 22 32 24 34 26 36 28 38 2A 3A 2C 3C 2E 3E -   3 */ \
+    /* 21 31 23 33 25 35 27 37 29 39 2B 3B 2D 3D 2F 3F -  Z4 */ \
+    /* 40 50 42 52 44 54 46 56 48 58 4A 5A 4C 5C 4E 5E -   4 */ \
+    /* 41 51 43 53 45 55 47 57 49 59 4B 5B 4D 5D 4F 5F -  Z6 */ \
+    /* 60 70 62 72 64 74 66 76 68 78 6A 7A 6C 7C 6E 7E -   5 */ \
+    /* 61 71 63 73 65 75 67 77 69 79 6B 7B 6D 7D 6F 7F -  Z8 */ \
+    /* 80 90 82 92 84 94 86 96 88 98 8A 8A 8C 9C 8E 9E -   6 */ \
+    /* 81 91 83 93 85 95 87 97 89 99 8B 9B 8D 9D 8F 9F - Z10 */ \
+    /* A0 B0 A2 B2 A4 B4 A6 B6 A8 B8 AA BA AC BC AE BE - Z11 */ \
+    /* A1 B1 A3 B3 A5 B5 A7 B7 A9 B9 AB BB AD BD AF BF -   7 */ \
+    VSHUFPS(ZMM( Z3), ZMM(  2), ZMM(  3), IMM(0xee))            \
+    VSHUFPS(ZMM(  2), ZMM(  2), ZMM(  3), IMM(0x44))            \
+    VSHUFPS(ZMM(  3), ZMM( Z2), ZMM( Z4), IMM(0xee))            \
+    VSHUFPS(ZMM( Z2), ZMM( Z2), ZMM( Z4), IMM(0x44))            \
+    VSHUFPS(ZMM( Z5), ZMM(  4), ZMM(  5), IMM(0x44))            \
+    VSHUFPS(ZMM(  5), ZMM(  4), ZMM(  5), IMM(0xee))            \
+    VSHUFPS(ZMM(  4), ZMM( Z6), ZMM( Z8), IMM(0x44))            \
+    VSHUFPS(ZMM( Z8), ZMM( Z6), ZMM( Z8), IMM(0xee))            \
+    VSHUFPS(ZMM( Z9), ZMM(  6), ZMM(Z11), IMM(0x44))            \
+    VSHUFPS(ZMM(Z11), ZMM(  6), ZMM(Z11), IMM(0xee))            \
+    VSHUFPS(ZMM(Z12), ZMM(Z10), ZMM(  7), IMM(0xee))            \
+    VSHUFPS(ZMM(Z10), ZMM(Z10), ZMM(  7), IMM(0x44))            \
+    /* 00 10 20 30 04 14 24 34 08 18 28 38 0C 1C 2C 3C -   2 */ \
+    /* 01 11 03 31 05 15 25 35 09 19 29 39 0D 1D 2D 3D -  Z2 */ \
+    /* 02 12 22 32 06 16 26 36 0A 1A 2A 3A 0E 1E 2E 3E -  Z3 */ \
+    /* 03 13 23 33 07 17 27 37 0B 1B 2B 3B 0F 1F 2F 3F -   3 */ \
+    /* 40 50 60 70 44 54 64 74 48 58 68 78 4C 5C 6C 7C -  Z5 */ \
+    /* 41 51 61 71 45 55 65 75 49 59 69 79 4D 5D 6D 7D -   4 */ \
+    /* 42 52 62 72 46 56 66 76 4A 5A 6A 7A 4E 5E 6E 7E -   5 */ \
+    /* 43 53 63 73 47 57 67 77 4B 5B 6B 7B 4F 5F 6F 7F -  Z8 */ \
+    /* 80 90 A0 B0 84 94 A4 B4 88 98 A8 B8 8C 9C AC BC -  Z9 */ \
+    /* 81 91 A1 B1 85 95 A5 B5 89 99 A9 B9 8D 9D AD BD - Z10 */ \
+    /* 82 92 A2 B2 86 96 A6 B6 8A 9A AA BA 8E 9E AE BE - Z11 */ \
+    /* 83 93 A3 B3 87 97 A7 B7 8B 9B AB BB 8F 9F AF BF - Z12 */ \
+    VSHUFF32X4(ZMM( Z1), ZMM(  2), ZMM( Z5), IMM(0x44))         \
+    VSHUFF32X4(ZMM( Z5), ZMM(  2), ZMM( Z5), IMM(0xee))         \
+    VSHUFF32X4(ZMM( Z6), ZMM( Z2), ZMM(  4), IMM(0xee))         \
+    VSHUFF32X4(ZMM( Z2), ZMM( Z2), ZMM(  4), IMM(0x44))         \
+    VSHUFF32X4(ZMM( Z7), ZMM( Z3), ZMM(  5), IMM(0xee))         \
+    VSHUFF32X4(ZMM( Z3), ZMM( Z3), ZMM(  5), IMM(0x44))         \
+    VSHUFF32X4(ZMM( Z4), ZMM(  3), ZMM( Z8), IMM(0x44))         \
+    VSHUFF32X4(ZMM( Z8), ZMM(  3), ZMM( Z8), IMM(0xee))         \
+    /* 00 10 20 30 04 14 24 34 40 50 60 70 44 54 64 74 -  Z1 */ \
+    /* 01 11 03 31 05 15 25 35 41 51 61 71 45 55 65 75 -  Z2 */ \
+    /* 02 12 22 32 06 16 26 36 42 52 62 72 46 56 66 76 -  Z3 */ \
+    /* 03 13 23 33 07 17 27 37 43 53 63 73 47 57 67 77 -  Z4 */ \
+    /* 08 18 28 38 0C 1C 2C 3C 48 58 68 78 4C 5C 6C 7C -  Z5 */ \
+    /* 09 19 29 39 0D 1D 2D 3D 49 59 69 79 4D 5D 6D 7D -  Z6 */ \
+    /* 0A 1A 2A 3A 0E 1E 2E 3E 4A 5A 6A 7A 4E 5E 6E 7E -  Z7 */ \
+    /* 0B 1B 2B 3B 0F 1F 2F 3F 4B 5B 6B 7B 4F 5F 6F 7F -  Z8 */ \
+    /* 80 90 A0 B0 84 94 A4 B4 88 98 A8 B8 8C 9C AC BC -  Z9 */ \
+    /* 81 91 A1 B1 85 95 A5 B5 89 99 A9 B9 8D 9D AD BD - Z10 */ \
+    /* 82 92 A2 B2 86 96 A6 B6 8A 9A AA BA 8E 9E AE BE - Z11 */ \
+    /* 83 93 A3 B3 87 97 A7 B7 8B 9B AB BB 8F 9F AF BF - Z12 */ \
+    VSHUFF32X4(ZMM(  2), ZMM(Z1), ZMM( Z9), IMM(0x08))          \
+    VSHUFF32X4(ZMM(  3), ZMM(Z2), ZMM(Z10), IMM(0x08))          \
+    VSHUFF32X4(ZMM(  4), ZMM(Z3), ZMM(Z11), IMM(0x08))          \
+    VSHUFF32X4(ZMM(  5), ZMM(Z4), ZMM(Z12), IMM(0x5d))          \
+    VSHUFF32X4(ZMM(  6), ZMM(Z1), ZMM( Z9), IMM(0x5d))          \
+    VSHUFF32X4(ZMM(  7), ZMM(Z2), ZMM(Z10), IMM(0x5d))          \
+    VSHUFF32X4(ZMM( Z1), ZMM(Z3), ZMM(Z11), IMM(0x5d))          \
+    VSHUFF32X4(ZMM( Z2), ZMM(Z4), ZMM(Z12), IMM(0x5d))          \
+    VSHUFF32X4(ZMM( Z3), ZMM(Z5), ZMM( Z9), IMM(0xa8))          \
+    VSHUFF32X4(ZMM( Z4), ZMM(Z6), ZMM(Z10), IMM(0xa8))          \
+    VSHUFF32X4(ZMM( Z7), ZMM(Z7), ZMM(Z11), IMM(0xa8))          \
+    VSHUFF32X4(ZMM( Z8), ZMM(Z8), ZMM(Z12), IMM(0xa8))          \
+    VSHUFF32X4(ZMM( Z9), ZMM(Z5), ZMM( Z9), IMM(0xfd))          \
+    VSHUFF32X4(ZMM(Z10), ZMM(Z6), ZMM(Z10), IMM(0xfd))          \
+    VSHUFF32X4(ZMM(Z11), ZMM(Z7), ZMM(Z11), IMM(0xfd))          \
+    VSHUFF32X4(ZMM(Z12), ZMM(Z8), ZMM(Z12), IMM(0xfd))          \
+    /* 00 10 20 30 40 50 60 70 80 90 A0 B0 80 90 A0 B0 -   2 */ \
+    /* 01 11 03 31 41 51 61 71 81 91 A1 B1 81 91 A1 B1 -   3 */ \
+    /* 02 12 22 32 42 52 62 72 82 92 A2 B2 82 92 A2 B2 -   4 */ \
+    /* 03 13 23 33 43 53 63 73 83 93 A3 B3 83 93 A3 B3 -   5 */ \
+    /* 04 14 24 34 44 54 64 74 84 94 A4 B4 84 94 A4 B4 -   6 */ \
+    /* 05 15 25 35 45 55 65 75 85 95 A5 B5 85 95 A5 B5 -   7 */ \
+    /* 06 16 26 36 46 56 66 76 86 96 A6 B6 86 96 A6 B6 -  Z1 */ \
+    /* 07 17 27 37 47 57 67 77 87 97 A7 B7 87 97 A7 B7 -  Z2 */ \
+    /* 08 18 28 38 48 58 68 78 88 98 A8 B8 88 98 A8 B8 -  Z3 */ \
+    /* 09 19 09 39 49 59 69 79 89 99 A9 B9 89 99 A9 B9 -  Z4 */ \
+    /* 0A 1A 2A 3A 4A 5A 6A 7A 8A 9A AA BA 8A 9A AA BA -  Z7 */ \
+    /* 0B 1B 2B 3B 4B 5B 6B 7B 8B 9B AB BB 8B 9B AB BB -  Z8 */ \
+    /* 0C 1C 2C 3C 4C 5C 6C 7C 8C 9C AC BC 8C 9C AC BC -  Z9 */ \
+    /* 0D 1D 2D 3D 4D 5D 6D 7D 8D 9D AD BD 8D 9D AD BD - Z10 */ \
+    /* 0E 1E 2E 3E 4E 5E 6E 7E 8E 9E AE BE 8E 9E AE BE - Z11 */ \
+    /* 0F 1F 2F 3F 4F 5F 6F 7F 8F 9F AF BF 8F 9F AF BF - Z12 */ \
+    VFMADD231PS(ZMM(  2) MASK_K(1), ZMM(1), MEM(RCX      ))     \
+    VFMADD231PS(ZMM(  3) MASK_K(1), ZMM(1), MEM(RCX,RBX,1))     \
+    VFMADD231PS(ZMM(  4) MASK_K(1), ZMM(1), MEM(RCX,RBX,2))     \
+    VFMADD231PS(ZMM(  5) MASK_K(1), ZMM(1), MEM(RCX,R13,1))     \
+    VFMADD231PS(ZMM(  6) MASK_K(1), ZMM(1), MEM(RCX,RBX,4))     \
+    VFMADD231PS(ZMM(  7) MASK_K(1), ZMM(1), MEM(RCX,R15,1))     \
+    VFMADD231PS(ZMM( Z1) MASK_K(1), ZMM(1), MEM(RCX,R13,2))     \
+    VFMADD231PS(ZMM( Z2) MASK_K(1), ZMM(1), MEM(RCX,R10,1))     \
+    VFMADD231PS(ZMM( Z3) MASK_K(1), ZMM(1), MEM(RDX      ))     \
+    VFMADD231PS(ZMM( Z4) MASK_K(1), ZMM(1), MEM(RDX,RBX,1))     \
+    VFMADD231PS(ZMM( Z7) MASK_K(1), ZMM(1), MEM(RDX,RBX,2))     \
+    VFMADD231PS(ZMM( Z8) MASK_K(1), ZMM(1), MEM(RDX,R13,1))     \
+    VFMADD231PS(ZMM( Z9) MASK_K(1), ZMM(1), MEM(RDX,RBX,4))     \
+    VFMADD231PS(ZMM(Z10) MASK_K(1), ZMM(1), MEM(RDX,R15,1))     \
+    VFMADD231PS(ZMM(Z11) MASK_K(1), ZMM(1), MEM(RDX,R13,2))     \
+    VFMADD231PS(ZMM(Z12) MASK_K(1), ZMM(1), MEM(RDX,R10,1))     \
+    VMOVUPS(MEM(RCX      ) MASK_K(1), ZMM(  2))                 \
+    VMOVUPS(MEM(RCX,RBX,1) MASK_K(1), ZMM(  3))                 \
+    VMOVUPS(MEM(RCX,RBX,2) MASK_K(1), ZMM(  4))                 \
+    VMOVUPS(MEM(RCX,R13,1) MASK_K(1), ZMM(  5))                 \
+    VMOVUPS(MEM(RCX,RBX,4) MASK_K(1), ZMM(  6))                 \
+    VMOVUPS(MEM(RCX,R15,1) MASK_K(1), ZMM(  7))                 \
+    VMOVUPS(MEM(RCX,R13,2) MASK_K(1), ZMM( Z1))                 \
+    VMOVUPS(MEM(RCX,R10,1) MASK_K(1), ZMM( Z2))                 \
+    VMOVUPS(MEM(RDX      ) MASK_K(1), ZMM( Z3))                 \
+    VMOVUPS(MEM(RDX,RBX,1) MASK_K(1), ZMM( Z4))                 \
+    VMOVUPS(MEM(RDX,RBX,2) MASK_K(1), ZMM( Z7))                 \
+    VMOVUPS(MEM(RDX,R13,1) MASK_K(1), ZMM( Z8))                 \
+    VMOVUPS(MEM(RDX,RBX,4) MASK_K(1), ZMM( Z9))                 \
+    VMOVUPS(MEM(RDX,R15,1) MASK_K(1), ZMM(Z10))                 \
+    VMOVUPS(MEM(RDX,R13,2) MASK_K(1), ZMM(Z11))                 \
+    VMOVUPS(MEM(RDX,R10,1) MASK_K(1), ZMM(Z12))
+
+#define UPDATE_C_TRANS16X12_BZ(Z1,Z2,Z3,Z4,Z5,Z6,Z7,Z8,Z9,Z10,Z11,Z12) \
+\
+    VMULPD(ZMM( Z1), ZMM( Z1), ZMM(0))                          \
+    VMULPD(ZMM( Z2), ZMM( Z2), ZMM(0))                          \
+    VMULPD(ZMM( Z3), ZMM( Z3), ZMM(0))                          \
+    VMULPD(ZMM( Z4), ZMM( Z4), ZMM(0))                          \
+    VMULPD(ZMM( Z5), ZMM( Z5), ZMM(0))                          \
+    VMULPD(ZMM( Z6), ZMM( Z6), ZMM(0))                          \
+    VMULPD(ZMM( Z7), ZMM( Z7), ZMM(0))                          \
+    VMULPD(ZMM( Z8), ZMM( Z8), ZMM(0))                          \
+    VMULPD(ZMM( Z9), ZMM( Z9), ZMM(0))                          \
+    VMULPD(ZMM(Z10), ZMM(Z10), ZMM(0))                          \
+    VMULPD(ZMM(Z11), ZMM(Z11), ZMM(0))                          \
+    VMULPD(ZMM(Z12), ZMM(Z12), ZMM(0))                          \
+    /* 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F -  Z1 */ \
+    /* 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F -  Z2 */ \
+    /* 20 21 22 23 24 25 26 27 28 29 2A 2B 2C 2D 2E 2F -  Z3 */ \
+    /* 30 31 32 33 34 35 36 37 38 39 3A 3B 3C 3D 3E 3F -  Z4 */ \
+    /* 40 41 42 43 44 45 46 47 48 49 4A 4B 4C 4D 4E 4F -  Z5 */ \
+    /* 50 51 52 53 54 55 56 57 58 59 5A 5B 5C 5D 5E 5F -  Z6 */ \
+    /* 60 61 62 63 64 65 66 67 68 69 6A 6B 6C 6D 6E 6F -  Z7 */ \
+    /* 70 71 72 73 74 75 76 77 78 79 7A 7B 7C 7D 7E 7F -  Z8 */ \
+    /* 80 81 82 83 84 85 86 87 88 89 8A 8B 8C 8D 8E 8F -  Z9 */ \
+    /* 90 91 92 93 94 95 96 97 98 99 9A 9B 9C 9D 9E 9F - Z10 */ \
+    /* A0 A1 A2 A3 A4 A5 A6 A7 A8 A9 AA AB AC AD AE AF - Z11 */ \
+    /* B0 B1 B2 B3 B4 B5 B6 B7 B8 B9 BA BB BC BD BE BF - Z12 */ \
+    VUNPCKLPS(ZMM(  2), ZMM( Z1), ZMM( Z2))                     \
+    VUNPCKHPS(ZMM( Z2), ZMM( Z1), ZMM( Z2))                     \
+    VUNPCKLPS(ZMM(  3), ZMM( Z3), ZMM( Z4))                     \
+    VUNPCKHPS(ZMM( Z4), ZMM( Z3), ZMM( Z4))                     \
+    VUNPCKLPS(ZMM(  4), ZMM( Z5), ZMM( Z6))                     \
+    VUNPCKHPS(ZMM( Z6), ZMM( Z5), ZMM( Z6))                     \
+    VUNPCKLPS(ZMM(  5), ZMM( Z7), ZMM( Z8))                     \
+    VUNPCKHPS(ZMM( Z8), ZMM( Z7), ZMM( Z8))                     \
+    VUNPCKLPS(ZMM(  6), ZMM( Z9), ZMM(Z10))                     \
+    VUNPCKHPS(ZMM(Z10), ZMM( Z9), ZMM(Z10))                     \
+    VUNPCKHPS(ZMM(  7), ZMM(Z11), ZMM(Z12))                     \
+    VUNPCKLPS(ZMM(Z11), ZMM(Z11), ZMM(Z12))                     \
+    /* 00 10 02 12 04 14 06 16 08 18 0A 1A 0C 1C 0E 1E -   2 */ \
+    /* 01 11 03 13 05 15 07 17 09 19 0B 1B 0D 1D 0F 1F -  Z2 */ \
+    /* 20 30 22 32 24 34 26 36 28 38 2A 3A 2C 3C 2E 3E -   3 */ \
+    /* 21 31 23 33 25 35 27 37 29 39 2B 3B 2D 3D 2F 3F -  Z4 */ \
+    /* 40 50 42 52 44 54 46 56 48 58 4A 5A 4C 5C 4E 5E -   4 */ \
+    /* 41 51 43 53 45 55 47 57 49 59 4B 5B 4D 5D 4F 5F -  Z6 */ \
+    /* 60 70 62 72 64 74 66 76 68 78 6A 7A 6C 7C 6E 7E -   5 */ \
+    /* 61 71 63 73 65 75 67 77 69 79 6B 7B 6D 7D 6F 7F -  Z8 */ \
+    /* 80 90 82 92 84 94 86 96 88 98 8A 8A 8C 9C 8E 9E -   6 */ \
+    /* 81 91 83 93 85 95 87 97 89 99 8B 9B 8D 9D 8F 9F - Z10 */ \
+    /* A0 B0 A2 B2 A4 B4 A6 B6 A8 B8 AA BA AC BC AE BE - Z11 */ \
+    /* A1 B1 A3 B3 A5 B5 A7 B7 A9 B9 AB BB AD BD AF BF -   7 */ \
+    VSHUFPS(ZMM( Z3), ZMM(  2), ZMM(  3), IMM(0xee))            \
+    VSHUFPS(ZMM(  2), ZMM(  2), ZMM(  3), IMM(0x44))            \
+    VSHUFPS(ZMM(  3), ZMM( Z2), ZMM( Z4), IMM(0xee))            \
+    VSHUFPS(ZMM( Z2), ZMM( Z2), ZMM( Z4), IMM(0x44))            \
+    VSHUFPS(ZMM( Z5), ZMM(  4), ZMM(  5), IMM(0x44))            \
+    VSHUFPS(ZMM(  5), ZMM(  4), ZMM(  5), IMM(0xee))            \
+    VSHUFPS(ZMM(  4), ZMM( Z6), ZMM( Z8), IMM(0x44))            \
+    VSHUFPS(ZMM( Z8), ZMM( Z6), ZMM( Z8), IMM(0xee))            \
+    VSHUFPS(ZMM( Z9), ZMM(  6), ZMM(Z11), IMM(0x44))            \
+    VSHUFPS(ZMM(Z11), ZMM(  6), ZMM(Z11), IMM(0xee))            \
+    VSHUFPS(ZMM(Z12), ZMM(Z10), ZMM(  7), IMM(0xee))            \
+    VSHUFPS(ZMM(Z10), ZMM(Z10), ZMM(  7), IMM(0x44))            \
+    /* 00 10 20 30 04 14 24 34 08 18 28 38 0C 1C 2C 3C -   2 */ \
+    /* 01 11 03 31 05 15 25 35 09 19 29 39 0D 1D 2D 3D -  Z2 */ \
+    /* 02 12 22 32 06 16 26 36 0A 1A 2A 3A 0E 1E 2E 3E -  Z3 */ \
+    /* 03 13 23 33 07 17 27 37 0B 1B 2B 3B 0F 1F 2F 3F -   3 */ \
+    /* 40 50 60 70 44 54 64 74 48 58 68 78 4C 5C 6C 7C -  Z5 */ \
+    /* 41 51 61 71 45 55 65 75 49 59 69 79 4D 5D 6D 7D -   4 */ \
+    /* 42 52 62 72 46 56 66 76 4A 5A 6A 7A 4E 5E 6E 7E -   5 */ \
+    /* 43 53 63 73 47 57 67 77 4B 5B 6B 7B 4F 5F 6F 7F -  Z8 */ \
+    /* 80 90 A0 B0 84 94 A4 B4 88 98 A8 B8 8C 9C AC BC -  Z9 */ \
+    /* 81 91 A1 B1 85 95 A5 B5 89 99 A9 B9 8D 9D AD BD - Z10 */ \
+    /* 82 92 A2 B2 86 96 A6 B6 8A 9A AA BA 8E 9E AE BE - Z11 */ \
+    /* 83 93 A3 B3 87 97 A7 B7 8B 9B AB BB 8F 9F AF BF - Z12 */ \
+    VSHUFF32X4(ZMM( Z1), ZMM(  2), ZMM( Z5), IMM(0x44))         \
+    VSHUFF32X4(ZMM( Z5), ZMM(  2), ZMM( Z5), IMM(0xee))         \
+    VSHUFF32X4(ZMM( Z6), ZMM( Z2), ZMM(  4), IMM(0xee))         \
+    VSHUFF32X4(ZMM( Z2), ZMM( Z2), ZMM(  4), IMM(0x44))         \
+    VSHUFF32X4(ZMM( Z7), ZMM( Z3), ZMM(  5), IMM(0xee))         \
+    VSHUFF32X4(ZMM( Z3), ZMM( Z3), ZMM(  5), IMM(0x44))         \
+    VSHUFF32X4(ZMM( Z4), ZMM(  3), ZMM( Z8), IMM(0x44))         \
+    VSHUFF32X4(ZMM( Z8), ZMM(  3), ZMM( Z8), IMM(0xee))         \
+    /* 00 10 20 30 04 14 24 34 40 50 60 70 44 54 64 74 -  Z1 */ \
+    /* 01 11 03 31 05 15 25 35 41 51 61 71 45 55 65 75 -  Z2 */ \
+    /* 02 12 22 32 06 16 26 36 42 52 62 72 46 56 66 76 -  Z3 */ \
+    /* 03 13 23 33 07 17 27 37 43 53 63 73 47 57 67 77 -  Z4 */ \
+    /* 08 18 28 38 0C 1C 2C 3C 48 58 68 78 4C 5C 6C 7C -  Z5 */ \
+    /* 09 19 29 39 0D 1D 2D 3D 49 59 69 79 4D 5D 6D 7D -  Z6 */ \
+    /* 0A 1A 2A 3A 0E 1E 2E 3E 4A 5A 6A 7A 4E 5E 6E 7E -  Z7 */ \
+    /* 0B 1B 2B 3B 0F 1F 2F 3F 4B 5B 6B 7B 4F 5F 6F 7F -  Z8 */ \
+    /* 80 90 A0 B0 84 94 A4 B4 88 98 A8 B8 8C 9C AC BC -  Z9 */ \
+    /* 81 91 A1 B1 85 95 A5 B5 89 99 A9 B9 8D 9D AD BD - Z10 */ \
+    /* 82 92 A2 B2 86 96 A6 B6 8A 9A AA BA 8E 9E AE BE - Z11 */ \
+    /* 83 93 A3 B3 87 97 A7 B7 8B 9B AB BB 8F 9F AF BF - Z12 */ \
+    VSHUFF32X4(ZMM(  2), ZMM(Z1), ZMM( Z9), IMM(0x08))          \
+    VSHUFF32X4(ZMM(  3), ZMM(Z2), ZMM(Z10), IMM(0x08))          \
+    VSHUFF32X4(ZMM(  4), ZMM(Z3), ZMM(Z11), IMM(0x08))          \
+    VSHUFF32X4(ZMM(  5), ZMM(Z4), ZMM(Z12), IMM(0x5d))          \
+    VSHUFF32X4(ZMM(  6), ZMM(Z1), ZMM( Z9), IMM(0x5d))          \
+    VSHUFF32X4(ZMM(  7), ZMM(Z2), ZMM(Z10), IMM(0x5d))          \
+    VSHUFF32X4(ZMM( Z1), ZMM(Z3), ZMM(Z11), IMM(0x5d))          \
+    VSHUFF32X4(ZMM( Z2), ZMM(Z4), ZMM(Z12), IMM(0x5d))          \
+    VSHUFF32X4(ZMM( Z3), ZMM(Z5), ZMM( Z9), IMM(0xa8))          \
+    VSHUFF32X4(ZMM( Z4), ZMM(Z6), ZMM(Z10), IMM(0xa8))          \
+    VSHUFF32X4(ZMM( Z7), ZMM(Z7), ZMM(Z11), IMM(0xa8))          \
+    VSHUFF32X4(ZMM( Z8), ZMM(Z8), ZMM(Z12), IMM(0xa8))          \
+    VSHUFF32X4(ZMM( Z9), ZMM(Z5), ZMM( Z9), IMM(0xfd))          \
+    VSHUFF32X4(ZMM(Z10), ZMM(Z6), ZMM(Z10), IMM(0xfd))          \
+    VSHUFF32X4(ZMM(Z11), ZMM(Z7), ZMM(Z11), IMM(0xfd))          \
+    VSHUFF32X4(ZMM(Z12), ZMM(Z8), ZMM(Z12), IMM(0xfd))          \
+    /* 00 10 20 30 40 50 60 70 80 90 A0 B0 80 90 A0 B0 -   2 */ \
+    /* 01 11 03 31 41 51 61 71 81 91 A1 B1 81 91 A1 B1 -   3 */ \
+    /* 02 12 22 32 42 52 62 72 82 92 A2 B2 82 92 A2 B2 -   4 */ \
+    /* 03 13 23 33 43 53 63 73 83 93 A3 B3 83 93 A3 B3 -   5 */ \
+    /* 04 14 24 34 44 54 64 74 84 94 A4 B4 84 94 A4 B4 -   6 */ \
+    /* 05 15 25 35 45 55 65 75 85 95 A5 B5 85 95 A5 B5 -   7 */ \
+    /* 06 16 26 36 46 56 66 76 86 96 A6 B6 86 96 A6 B6 -  Z1 */ \
+    /* 07 17 27 37 47 57 67 77 87 97 A7 B7 87 97 A7 B7 -  Z2 */ \
+    /* 08 18 28 38 48 58 68 78 88 98 A8 B8 88 98 A8 B8 -  Z3 */ \
+    /* 09 19 09 39 49 59 69 79 89 99 A9 B9 89 99 A9 B9 -  Z4 */ \
+    /* 0A 1A 2A 3A 4A 5A 6A 7A 8A 9A AA BA 8A 9A AA BA -  Z7 */ \
+    /* 0B 1B 2B 3B 4B 5B 6B 7B 8B 9B AB BB 8B 9B AB BB -  Z8 */ \
+    /* 0C 1C 2C 3C 4C 5C 6C 7C 8C 9C AC BC 8C 9C AC BC -  Z9 */ \
+    /* 0D 1D 2D 3D 4D 5D 6D 7D 8D 9D AD BD 8D 9D AD BD - Z10 */ \
+    /* 0E 1E 2E 3E 4E 5E 6E 7E 8E 9E AE BE 8E 9E AE BE - Z11 */ \
+    /* 0F 1F 2F 3F 4F 5F 6F 7F 8F 9F AF BF 8F 9F AF BF - Z12 */ \
+    VMOVUPS(MEM(RCX      ) MASK_K(1), ZMM(  2))                 \
+    VMOVUPS(MEM(RCX,RBX,1) MASK_K(1), ZMM(  3))                 \
+    VMOVUPS(MEM(RCX,RBX,2) MASK_K(1), ZMM(  4))                 \
+    VMOVUPS(MEM(RCX,R13,1) MASK_K(1), ZMM(  5))                 \
+    VMOVUPS(MEM(RCX,RBX,4) MASK_K(1), ZMM(  6))                 \
+    VMOVUPS(MEM(RCX,R15,1) MASK_K(1), ZMM(  7))                 \
+    VMOVUPS(MEM(RCX,R13,2) MASK_K(1), ZMM( Z1))                 \
+    VMOVUPS(MEM(RCX,R10,1) MASK_K(1), ZMM( Z2))                 \
+    VMOVUPS(MEM(RDX      ) MASK_K(1), ZMM( Z3))                 \
+    VMOVUPS(MEM(RDX,RBX,1) MASK_K(1), ZMM( Z4))                 \
+    VMOVUPS(MEM(RDX,RBX,2) MASK_K(1), ZMM( Z7))                 \
+    VMOVUPS(MEM(RDX,R13,1) MASK_K(1), ZMM( Z8))                 \
+    VMOVUPS(MEM(RDX,RBX,4) MASK_K(1), ZMM( Z9))                 \
+    VMOVUPS(MEM(RDX,R15,1) MASK_K(1), ZMM(Z10))                 \
+    VMOVUPS(MEM(RDX,R13,2) MASK_K(1), ZMM(Z11))                 \
+    VMOVUPS(MEM(RDX,R10,1) MASK_K(1), ZMM(Z12))
 
 #ifdef PREFETCH_C_L2
 #undef PREFETCH_C_L2
@@ -433,12 +735,12 @@ void bli_sgemm_opt_12x32_l2(
     MOV(RBX, VAR(cs_c))
     LEA(RBX, MEM(,RBX,4))
 
-    // Check if C is row stride. If not, jump to the slow scattered update
+    // Check if C is row stride.
     CMP(RBX, IMM(4))
-    JNE(SCATTEREDUPDATE)
+    JNE(COLSTORED)
 
         VCOMISS(XMM(1), XMM(7))
-        JE(COLSTORBZ)
+        JE(ROWSTORBZ)
 
             UPDATE_C( 8, 9,10,11)
             UPDATE_C(12,13,14,15)
@@ -448,7 +750,7 @@ void bli_sgemm_opt_12x32_l2(
             UPDATE_C(28,29,30,31)
 
         JMP(END)
-        LABEL(COLSTORBZ)
+        LABEL(ROWSTORBZ)
 
             UPDATE_C_BZ( 8, 9,10,11)
             UPDATE_C_BZ(12,13,14,15)
@@ -456,6 +758,101 @@ void bli_sgemm_opt_12x32_l2(
             UPDATE_C_BZ(20,21,22,23)
             UPDATE_C_BZ(24,25,26,27)
             UPDATE_C_BZ(28,29,30,31)
+
+    JMP(END)
+    LABEL(COLSTORED)
+
+    // Check if C is column stride. If not, jump to the slow scattered update
+    CMP(RAX, IMM(4))
+    JNE(SCATTEREDUPDATE)
+
+        //
+        // Transpose and write out in two halves, only low half shown:
+        //
+        // +---------------------------------------------------------------+
+        // |c00-c01-c02-c03-c04-c05-c06-c07-c08-c09-c0A-c0B-c0C-c0D-c0E-c0F|
+        // |                                                               |
+        // |c10-c11-c12-c13-c14-c15-c16-c17-c18-c19-c1A-c1B-c1C-c1D-c1E-c1F|
+        // |                                                               |
+        // |c20-c21-c22-c23-c24-c25-c26-c27-c28-c29-c2A-c2B-c2C-c2D-c2E-c2F|
+        // |                                                               |
+        // |c30-c31-c32-c33-c34-c35-c36-c37-c38-c39-c3A-c3B-c3C-c3D-c3E-c3F|
+        // |                                                               |
+        // |c40-c41-c42-c43-c44-c45-c46-c47-c48-c49-c4A-c4B-c4C-c4D-c4E-c4F|
+        // |                                                               |
+        // |c50-c51-c52-c53-c54-c55-c56-c57-c58-c59-c5A-c5B-c5C-c5D-c5E-c5F|
+        // |                                                               |
+        // |c60-c61-c62-c63-c64-c65-c66-c67-c68-c69-c6A-c6B-c6C-c6D-c6E-c6F|
+        // |                                                               |
+        // |c70-c71-c72-c73-c74-c75-c76-c77-c78-c79-c7A-c7B-c7C-c7D-c7E-c7F|
+        // |                                                               |
+        // |c80-c81-c82-c83-c84-c85-c86-c87-c88-c89-c8A-c8B-c8C-c8D-c8E-c8F|
+        // |                                                               |
+        // |c90-c91-c92-c93-c94-c95-c96-c97-c98-c99-c9A-c9B-c9C-c9D-c9E-c9F|
+        // |                                                               |
+        // |cA0-cA1-cA2-cA3-cA4-cA5-cA6-cA7-cA8-cA9-cAA-cAB-cAC-cAD-cAE-cAF|
+        // |                                                               |
+        // |cB0-cB1-cB2-cB3-cB4-cB5-cB6-cB7-cB8-cB9-cBA cBB-cBC-cBD-cBE-cBF|
+        // +---------------------------------------------------------------+
+        //
+        //                                ||
+        //                                \/
+        //
+        // +---------------------------------------------------------------+
+        // |c00 c01 c02 c03 c04 c05 c06 c07 c08 c09 c0A c0B c0C c0D c0E c0F|
+        // | |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | |
+        // |c10 c11 c12 c13 c14 c15 c16 c17 c18 c19 c1A c1B c1C c1D c1E c1F|
+        // | |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | |
+        // |c20 c21 c22 c23 c24 c25 c26 c27 c28 c29 c2A c2B c2C c2D c2E c2F|
+        // | |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | |
+        // |c30 c31 c32 c33 c34 c35 c36 c37 c38 c39 c3A c3B c3C c3D c3E c3F|
+        // | |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | |
+        // |c40 c41 c42 c43 c44 c45 c46 c47 c48 c49 c4A c4B c4C c4D c4E c4F|
+        // | |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | |
+        // |c50 c51 c52 c53 c54 c55 c56 c57 c58 c59 c5A c5B c5C c5D c5E c5F|
+        // | |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | |
+        // |c60 c61 c62 c63 c64 c65 c66 c67 c68 c69 c6A c6B c6C c6D c6E c6F|
+        // | |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | |
+        // |c70 c71 c72 c73 c74 c75 c76 c77 c78 c79 c7A c7B c7C c7D c7E c7F|
+        // | |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | |
+        // |c80 c81 c82 c83 c84 c85 c86 c87 c88 c89 c8A c8B c8C c8D c8E c8F|
+        // | |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | |
+        // |c90 c91 c92 c93 c94 c95 c96 c97 c98 c99 c9A c9B c9C c9D c9E c9F|
+        // | |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | |
+        // |cA0 cA1 cA2 cA3 cA4 cA5 cA6 cA7 cA8 cA9 cAA cAB cAC cAD cAE cAF|
+        // | |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | |
+        // |cB0 cB1 cB2 cB3 cB4 cB5 cB6 cB7 cB8 cB9 cBA cBB cBC cBD cBE cBF|
+        // +---------------------------------------------------------------+
+        //
+
+        MOV(ESI, IMM(0xfff))
+        KMOV(K(1), ESI)
+
+        LEA(R13, MEM(RBX,RBX,2))
+        LEA(R15, MEM(RBX,RBX,4))
+        LEA(R10, MEM(R15,RBX,2))
+        LEA( R8, MEM(   ,RBX,8))
+        LEA(RDX, MEM(RCX,RBX,8))
+
+        VCOMISD(XMM(1), XMM(7))
+        JE(COLSTORBZ)
+
+            UPDATE_C_TRANS16X12(8,10,12,14,16,18,20,22,24,26,28,30)
+
+            LEA(RCX, MEM(RCX,R8,2))
+            LEA(RDX, MEM(RDX,R8,2))
+
+            UPDATE_C_TRANS16X12(8,10,12,14,16,18,20,22,24,26,28,30)
+
+        JMP(END)
+        LABEL(COLSTORBZ)
+
+            UPDATE_C_TRANS16X12_BZ(8,10,12,14,16,18,20,22,24,26,28,30)
+
+            LEA(RCX, MEM(RCX,R8,2))
+            LEA(RDX, MEM(RDX,R8,2))
+
+            UPDATE_C_TRANS16X12_BZ(8,10,12,14,16,18,20,22,24,26,28,30)
 
     JMP(END)
     LABEL(SCATTEREDUPDATE)

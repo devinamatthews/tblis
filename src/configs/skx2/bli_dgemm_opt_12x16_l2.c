@@ -35,7 +35,7 @@
 #include "blis.h"
 #include <assert.h>
 
-#include "../knl/bli_avx512_macros.h"
+#include "../../util/asm_x86.h"
 #include "common.h"
 
 #define CACHELINE_SIZE 64 //size of cache line in bytes
@@ -91,32 +91,32 @@
     KXNORW(K(1), K(0), K(0)) \
     KXNORW(K(2), K(0), K(0)) \
     VMULPD(ZMM(R1), ZMM(R1), ZMM(0)) \
-    VGATHERQPD(ZMM(6) MASK_K(1), MEM(RCX,ZMM(2),8)) \
+    VGATHERQPD(ZMM(6) MASK_K(1), MEM(RCX,ZMM(2),1)) \
     VFMADD231PD(ZMM(R1), ZMM(6), ZMM(1)) \
-    VSCATTERQPD(MEM(RCX,ZMM(2),8) MASK_K(2), ZMM(R1)) \
+    VSCATTERQPD(MEM(RCX,ZMM(2),1) MASK_K(2), ZMM(R1)) \
 \
     KXNORW(K(1), K(0), K(0)) \
     KXNORW(K(2), K(0), K(0)) \
     VMULPD(ZMM(R2), ZMM(R2), ZMM(0)) \
-    VGATHERQPD(ZMM(6) MASK_K(1), MEM(RCX,ZMM(3),8)) \
+    VGATHERQPD(ZMM(6) MASK_K(1), MEM(RCX,ZMM(3),1)) \
     VFMADD231PD(ZMM(R2), ZMM(6), ZMM(1)) \
-    VSCATTERQPD(MEM(RCX,ZMM(3),8) MASK_K(2), ZMM(R2)) \
+    VSCATTERQPD(MEM(RCX,ZMM(3),1) MASK_K(2), ZMM(R2)) \
 \
     LEA(RCX, MEM(RCX,RAX,1)) \
 \
     KXNORW(K(1), K(0), K(0)) \
     KXNORW(K(2), K(0), K(0)) \
     VMULPD(ZMM(R3), ZMM(R3), ZMM(0)) \
-    VGATHERQPD(ZMM(6) MASK_K(1), MEM(RCX,ZMM(2),8)) \
+    VGATHERQPD(ZMM(6) MASK_K(1), MEM(RCX,ZMM(2),1)) \
     VFMADD231PD(ZMM(R3), ZMM(6), ZMM(1)) \
-    VSCATTERQPD(MEM(RCX,ZMM(2),8) MASK_K(2), ZMM(R3)) \
+    VSCATTERQPD(MEM(RCX,ZMM(2),1) MASK_K(2), ZMM(R3)) \
 \
     KXNORW(K(1), K(0), K(0)) \
     KXNORW(K(2), K(0), K(0)) \
     VMULPD(ZMM(R4), ZMM(R4), ZMM(0)) \
-    VGATHERQPD(ZMM(6) MASK_K(1), MEM(RCX,ZMM(3),8)) \
+    VGATHERQPD(ZMM(6) MASK_K(1), MEM(RCX,ZMM(3),1)) \
     VFMADD231PD(ZMM(R4), ZMM(6), ZMM(1)) \
-    VSCATTERQPD(MEM(RCX,ZMM(3),8) MASK_K(2), ZMM(R4)) \
+    VSCATTERQPD(MEM(RCX,ZMM(3),1) MASK_K(2), ZMM(R4)) \
 \
     LEA(RCX, MEM(RCX,RAX,1))
 
@@ -124,23 +124,263 @@
 \
     KXNORW(K(1), K(0), K(0)) \
     VMULPD(ZMM(R1), ZMM(R1), ZMM(0)) \
-    VSCATTERQPD(MEM(RCX,ZMM(2),8) MASK_K(1), ZMM(R1)) \
+    VSCATTERQPD(MEM(RCX,ZMM(2),1) MASK_K(1), ZMM(R1)) \
 \
     KXNORW(K(1), K(0), K(0)) \
     VMULPD(ZMM(R2), ZMM(R2), ZMM(0)) \
-    VSCATTERQPD(MEM(RCX,ZMM(3),8) MASK_K(1), ZMM(R2)) \
+    VSCATTERQPD(MEM(RCX,ZMM(3),1) MASK_K(1), ZMM(R2)) \
 \
     LEA(RCX, MEM(RCX,RAX,1)) \
 \
     KXNORW(K(1), K(0), K(0)) \
     VMULPD(ZMM(R3), ZMM(R3), ZMM(0)) \
-    VSCATTERQPD(MEM(RCX,ZMM(2),8) MASK_K(1), ZMM(R3)) \
+    VSCATTERQPD(MEM(RCX,ZMM(2),1) MASK_K(1), ZMM(R3)) \
 \
     KXNORW(K(1), K(0), K(0)) \
     VMULPD(ZMM(R4), ZMM(R4), ZMM(0)) \
-    VSCATTERQPD(MEM(RCX,ZMM(3),8) MASK_K(1), ZMM(R4)) \
+    VSCATTERQPD(MEM(RCX,ZMM(3),1) MASK_K(1), ZMM(R4)) \
 \
     LEA(RCX, MEM(RCX,RAX,1))
+
+#define UPDATE_C_TRANS8X8(R1,R2,R3,R4,R5,R6,R7,R8) \
+\
+    VMULPD(ZMM(R1), ZMM(R1), ZMM(0)) \
+    VMULPD(ZMM(R2), ZMM(R2), ZMM(0)) \
+    VMULPD(ZMM(R3), ZMM(R3), ZMM(0)) \
+    VMULPD(ZMM(R4), ZMM(R4), ZMM(0)) \
+    VMULPD(ZMM(R5), ZMM(R5), ZMM(0)) \
+    VMULPD(ZMM(R6), ZMM(R6), ZMM(0)) \
+    VMULPD(ZMM(R7), ZMM(R7), ZMM(0)) \
+    VMULPD(ZMM(R8), ZMM(R8), ZMM(0)) \
+    /* 00 01 02 03 04 05 06 07 - R1 */ \
+    /* 10 11 12 13 14 15 16 17 - R2 */ \
+    /* 20 21 22 23 24 25 26 27 - R3 */ \
+    /* 30 31 32 33 34 35 36 37 - R4 */ \
+    /* 40 41 42 43 44 45 46 47 - R5 */ \
+    /* 50 51 52 53 54 55 56 57 - R6 */ \
+    /* 60 61 62 63 64 65 66 67 - R7 */ \
+    /* 70 71 72 73 74 75 76 77 - R8 */ \
+    VUNPCKLPD(ZMM( 2), ZMM(R1), ZMM(R2)) \
+    VUNPCKHPD(ZMM(R2), ZMM(R1), ZMM(R2)) \
+    VUNPCKLPD(ZMM( 3), ZMM(R3), ZMM(R4)) \
+    VUNPCKHPD(ZMM(R4), ZMM(R3), ZMM(R4)) \
+    VUNPCKLPD(ZMM( 4), ZMM(R5), ZMM(R6)) \
+    VUNPCKHPD(ZMM(R6), ZMM(R5), ZMM(R6)) \
+    VUNPCKLPD(ZMM( 5), ZMM(R7), ZMM(R8)) \
+    VUNPCKHPD(ZMM(R8), ZMM(R7), ZMM(R8)) \
+    /* 00 10 02 12 04 14 06 16 -  2 */ \
+    /* 01 11 03 13 05 15 07 17 - R2 */ \
+    /* 20 30 22 32 24 34 26 36 -  3 */ \
+    /* 21 31 23 33 25 35 27 37 - R4 */ \
+    /* 40 50 42 52 44 54 46 56 -  4 */ \
+    /* 41 51 43 53 45 55 47 57 - R6 */ \
+    /* 60 70 62 72 64 74 66 76 -  5 */ \
+    /* 61 71 63 73 65 75 67 77 - R8 */ \
+    VSHUFF64X2(ZMM(R1), ZMM( 2), ZMM( 3), IMM(0x44)) \
+    VSHUFF64X2(ZMM( 3), ZMM( 2), ZMM( 3), IMM(0xee)) \
+    VSHUFF64X2(ZMM(R7), ZMM( 4), ZMM( 5), IMM(0xee)) \
+    VSHUFF64X2(ZMM( 4), ZMM( 4), ZMM( 5), IMM(0x44)) \
+    VSHUFF64X2(ZMM( 5), ZMM(R6), ZMM(R8), IMM(0xee)) \
+    VSHUFF64X2(ZMM(R4), ZMM(R6), ZMM(R8), IMM(0x44)) \
+    VSHUFF64X2(ZMM( 2), ZMM(R2), ZMM(R4), IMM(0x44)) \
+    VSHUFF64X2(ZMM(R6), ZMM(R2), ZMM(R4), IMM(0xee)) \
+    /* 00 10 02 12 20 30 22 32 - R1 */ \
+    /* 01 11 03 13 21 31 23 33 -  2 */ \
+    /* 04 14 06 16 24 34 26 36 -  3 */ \
+    /* 05 15 07 17 25 35 27 37 - R6 */ \
+    /* 40 50 42 52 60 70 62 72 -  4 */ \
+    /* 41 51 43 53 61 71 63 73 - R4 */ \
+    /* 44 54 46 56 64 74 66 76 - R7 */ \
+    /* 45 55 47 57 65 75 67 77 -  5 */ \
+    VSHUFF64X2(ZMM(R3), ZMM(R1), ZMM( 4), IMM(0xdd)) \
+    VSHUFF64X2(ZMM(R1), ZMM(R1), ZMM( 4), IMM(0x88)) \
+    VSHUFF64X2(ZMM(R2), ZMM( 2), ZMM(R4), IMM(0x88)) \
+    VSHUFF64X2(ZMM(R4), ZMM( 2), ZMM(R4), IMM(0xdd)) \
+    VSHUFF64X2(ZMM(R5), ZMM( 3), ZMM(R7), IMM(0x88)) \
+    VSHUFF64X2(ZMM(R7), ZMM( 3), ZMM(R7), IMM(0xdd)) \
+    VSHUFF64X2(ZMM(R8), ZMM(R6), ZMM( 5), IMM(0xdd)) \
+    VSHUFF64X2(ZMM(R6), ZMM(R6), ZMM( 5), IMM(0x88)) \
+    /* 00 10 20 30 40 50 60 70 - R1 */ \
+    /* 01 11 21 31 41 51 61 71 - R2 */ \
+    /* 04 14 24 34 44 54 64 74 - R5 */ \
+    /* 05 15 25 35 45 55 65 75 - R6 */ \
+    /* 02 12 22 32 42 52 62 72 - R3 */ \
+    /* 03 13 23 33 43 53 63 73 - R4 */ \
+    /* 06 16 26 36 46 56 66 76 - R7 */ \
+    /* 07 17 27 37 47 57 67 77 - R8 */ \
+    VFMADD231PD(ZMM(R1), ZMM(1), MEM(RCX      )) \
+    VFMADD231PD(ZMM(R2), ZMM(1), MEM(RCX,RBX,1)) \
+    VFMADD231PD(ZMM(R3), ZMM(1), MEM(RCX,RBX,2)) \
+    VFMADD231PD(ZMM(R4), ZMM(1), MEM(RCX,R13,1)) \
+    VFMADD231PD(ZMM(R5), ZMM(1), MEM(RCX,RBX,4)) \
+    VFMADD231PD(ZMM(R6), ZMM(1), MEM(RCX,R15,1)) \
+    VFMADD231PD(ZMM(R7), ZMM(1), MEM(RCX,R13,2)) \
+    VFMADD231PD(ZMM(R8), ZMM(1), MEM(RCX,R10,1)) \
+    VMOVUPD(MEM(RCX      ), ZMM(R1)) \
+    VMOVUPD(MEM(RCX,RBX,1), ZMM(R2)) \
+    VMOVUPD(MEM(RCX,RBX,2), ZMM(R3)) \
+    VMOVUPD(MEM(RCX,R13,1), ZMM(R4)) \
+    VMOVUPD(MEM(RCX,RBX,4), ZMM(R5)) \
+    VMOVUPD(MEM(RCX,R15,1), ZMM(R6)) \
+    VMOVUPD(MEM(RCX,R13,2), ZMM(R7)) \
+    VMOVUPD(MEM(RCX,R10,1), ZMM(R8))
+
+#define UPDATE_C_TRANS8X8_BZ(R1,R2,R3,R4,R5,R6,R7,R8) \
+\
+    VMULPD(ZMM(R1), ZMM(R1), ZMM(0)) \
+    VMULPD(ZMM(R2), ZMM(R2), ZMM(0)) \
+    VMULPD(ZMM(R3), ZMM(R3), ZMM(0)) \
+    VMULPD(ZMM(R4), ZMM(R4), ZMM(0)) \
+    VMULPD(ZMM(R5), ZMM(R5), ZMM(0)) \
+    VMULPD(ZMM(R6), ZMM(R6), ZMM(0)) \
+    VMULPD(ZMM(R7), ZMM(R7), ZMM(0)) \
+    VMULPD(ZMM(R8), ZMM(R8), ZMM(0)) \
+    /* 00 01 02 03 04 05 06 07 - R1 */ \
+    /* 10 11 12 13 14 15 16 17 - R2 */ \
+    /* 20 21 22 23 24 25 26 27 - R3 */ \
+    /* 30 31 32 33 34 35 36 37 - R4 */ \
+    /* 40 41 42 43 44 45 46 47 - R5 */ \
+    /* 50 51 52 53 54 55 56 57 - R6 */ \
+    /* 60 61 62 63 64 65 66 67 - R7 */ \
+    /* 70 71 72 73 74 75 76 77 - R8 */ \
+    VUNPCKLPD(ZMM( 2), ZMM(R1), ZMM(R2)) \
+    VUNPCKHPD(ZMM(R2), ZMM(R1), ZMM(R2)) \
+    VUNPCKLPD(ZMM( 3), ZMM(R3), ZMM(R4)) \
+    VUNPCKHPD(ZMM(R4), ZMM(R3), ZMM(R4)) \
+    VUNPCKLPD(ZMM( 4), ZMM(R5), ZMM(R6)) \
+    VUNPCKHPD(ZMM(R6), ZMM(R5), ZMM(R6)) \
+    VUNPCKLPD(ZMM( 5), ZMM(R7), ZMM(R8)) \
+    VUNPCKHPD(ZMM(R8), ZMM(R7), ZMM(R8)) \
+    /* 00 10 02 12 04 14 06 16 -  2 */ \
+    /* 01 11 03 13 05 15 07 17 - R2 */ \
+    /* 20 30 22 32 24 34 26 36 -  3 */ \
+    /* 21 31 23 33 25 35 27 37 - R4 */ \
+    /* 40 50 42 52 44 54 46 56 -  4 */ \
+    /* 41 51 43 53 45 55 47 57 - R6 */ \
+    /* 60 70 62 72 64 74 66 76 -  5 */ \
+    /* 61 71 63 73 65 75 67 77 - R8 */ \
+    VSHUFF64X2(ZMM(R1), ZMM( 2), ZMM( 3), IMM(0x44)) \
+    VSHUFF64X2(ZMM( 3), ZMM( 2), ZMM( 3), IMM(0xee)) \
+    VSHUFF64X2(ZMM(R7), ZMM( 4), ZMM( 5), IMM(0xee)) \
+    VSHUFF64X2(ZMM( 4), ZMM( 4), ZMM( 5), IMM(0x44)) \
+    VSHUFF64X2(ZMM( 5), ZMM(R6), ZMM(R8), IMM(0xee)) \
+    VSHUFF64X2(ZMM(R4), ZMM(R6), ZMM(R8), IMM(0x44)) \
+    VSHUFF64X2(ZMM( 2), ZMM(R2), ZMM(R4), IMM(0x44)) \
+    VSHUFF64X2(ZMM(R6), ZMM(R2), ZMM(R4), IMM(0xee)) \
+    /* 00 10 02 12 20 30 22 32 - R1 */ \
+    /* 01 11 03 13 21 31 23 33 -  2 */ \
+    /* 04 14 06 16 24 34 26 36 -  3 */ \
+    /* 05 15 07 17 25 35 27 37 - R6 */ \
+    /* 40 50 42 52 60 70 62 72 -  4 */ \
+    /* 41 51 43 53 61 71 63 73 - R4 */ \
+    /* 44 54 46 56 64 74 66 76 - R7 */ \
+    /* 45 55 47 57 65 75 67 77 -  5 */ \
+    VSHUFF64X2(ZMM(R3), ZMM(R1), ZMM( 4), IMM(0xdd)) \
+    VSHUFF64X2(ZMM(R1), ZMM(R1), ZMM( 4), IMM(0x88)) \
+    VSHUFF64X2(ZMM(R2), ZMM( 2), ZMM(R4), IMM(0x88)) \
+    VSHUFF64X2(ZMM(R4), ZMM( 2), ZMM(R4), IMM(0xdd)) \
+    VSHUFF64X2(ZMM(R5), ZMM( 3), ZMM(R7), IMM(0x88)) \
+    VSHUFF64X2(ZMM(R7), ZMM( 3), ZMM(R7), IMM(0xdd)) \
+    VSHUFF64X2(ZMM(R8), ZMM(R6), ZMM( 5), IMM(0xdd)) \
+    VSHUFF64X2(ZMM(R6), ZMM(R6), ZMM( 5), IMM(0x88)) \
+    /* 00 10 20 30 40 50 60 70 - R1 */ \
+    /* 01 11 21 31 41 51 61 71 - R2 */ \
+    /* 04 14 24 34 44 54 64 74 - R5 */ \
+    /* 05 15 25 35 45 55 65 75 - R6 */ \
+    /* 02 12 22 32 42 52 62 72 - R3 */ \
+    /* 03 13 23 33 43 53 63 73 - R4 */ \
+    /* 06 16 26 36 46 56 66 76 - R7 */ \
+    /* 07 17 27 37 47 57 67 77 - R8 */ \
+    VMOVUPD(MEM(RCX      ), ZMM(R1)) \
+    VMOVUPD(MEM(RCX,RBX,1), ZMM(R2)) \
+    VMOVUPD(MEM(RCX,RBX,2), ZMM(R3)) \
+    VMOVUPD(MEM(RCX,R13,1), ZMM(R4)) \
+    VMOVUPD(MEM(RCX,RBX,4), ZMM(R5)) \
+    VMOVUPD(MEM(RCX,R15,1), ZMM(R6)) \
+    VMOVUPD(MEM(RCX,R13,2), ZMM(R7)) \
+    VMOVUPD(MEM(RCX,R10,1), ZMM(R8))
+
+#define UPDATE_C_TRANS8X4(R1,R2,R3,R4) \
+\
+    VMULPD(ZMM(R1), ZMM(R1), ZMM(0)) \
+    VMULPD(ZMM(R2), ZMM(R2), ZMM(0)) \
+    VMULPD(ZMM(R3), ZMM(R3), ZMM(0)) \
+    VMULPD(ZMM(R4), ZMM(R4), ZMM(0)) \
+    /* 00 01 02 03 04 05 06 07 - R1 */ \
+    /* 10 11 12 13 14 15 16 17 - R2 */ \
+    /* 20 21 22 23 24 25 26 27 - R3 */ \
+    /* 30 31 32 33 34 35 36 37 - R4 */ \
+    VUNPCKLPD(ZMM(2), ZMM(R1), ZMM(R2)) \
+    VUNPCKHPD(ZMM(3), ZMM(R1), ZMM(R2)) \
+    VUNPCKHPD(ZMM(4), ZMM(R3), ZMM(R4)) \
+    VUNPCKLPD(ZMM(5), ZMM(R3), ZMM(R4)) \
+    /* 00 10 02 12 04 14 06 16 -  2 */ \
+    /* 01 11 03 13 05 15 07 17 -  3 */ \
+    /* 20 30 22 32 24 34 26 36 -  4 */ \
+    /* 21 31 23 33 25 35 27 37 -  5 */ \
+    VSHUFF64X2(ZMM(R1), ZMM(2), ZMM(4), IMM(0x88)) \
+    VSHUFF64X2(ZMM(R2), ZMM(3), ZMM(5), IMM(0x88)) \
+    VSHUFF64X2(ZMM(R3), ZMM(2), ZMM(4), IMM(0xdd)) \
+    VSHUFF64X2(ZMM(R4), ZMM(3), ZMM(5), IMM(0xdd)) \
+    /* 00 10 20 30 04 14 24 34 - R1 */ \
+    /* 01 11 21 31 05 15 25 35 - R2 */ \
+    /* 02 12 22 32 06 16 26 36 - R3 */ \
+    /* 03 13 23 33 07 17 27 37 - R4 */ \
+    VMOVUPD(YMM(2), MEM(RCX,      64)) \
+    VMOVUPD(YMM(3), MEM(RCX,RBX,1,64)) \
+    VMOVUPD(YMM(4), MEM(RCX,RBX,2,64)) \
+    VMOVUPD(YMM(5), MEM(RCX,R13,1,64)) \
+    VINSERTF64X4(ZMM(2), ZMM(2), MEM(RCX,RBX,4,64), IMM(1)) \
+    VINSERTF64X4(ZMM(3), ZMM(3), MEM(RCX,R15,1,64), IMM(1)) \
+    VINSERTF64X4(ZMM(4), ZMM(4), MEM(RCX,R13,2,64), IMM(1)) \
+    VINSERTF64X4(ZMM(5), ZMM(5), MEM(RCX,R10,1,64), IMM(1)) \
+    VFMADD231PD(ZMM(R1), ZMM(1), ZMM(2)) \
+    VFMADD231PD(ZMM(R2), ZMM(1), ZMM(3)) \
+    VFMADD231PD(ZMM(R3), ZMM(1), ZMM(4)) \
+    VFMADD231PD(ZMM(R4), ZMM(1), ZMM(5)) \
+    VMOVUPD(MEM(RCX,      64), YMM(R1)) \
+    VMOVUPD(MEM(RCX,RBX,1,64), YMM(R2)) \
+    VMOVUPD(MEM(RCX,RBX,2,64), YMM(R3)) \
+    VMOVUPD(MEM(RCX,R13,1,64), YMM(R4)) \
+    VEXTRACTF64X4(MEM(RCX,RBX,4,64), ZMM(R1), IMM(1)) \
+    VEXTRACTF64X4(MEM(RCX,R15,1,64), ZMM(R2), IMM(1)) \
+    VEXTRACTF64X4(MEM(RCX,R13,2,64), ZMM(R3), IMM(1)) \
+    VEXTRACTF64X4(MEM(RCX,R10,1,64), ZMM(R4), IMM(1))
+
+#define UPDATE_C_TRANS8X4_BZ(R1,R2,R3,R4) \
+\
+    VMULPD(ZMM(R1), ZMM(R1), ZMM(0)) \
+    VMULPD(ZMM(R2), ZMM(R2), ZMM(0)) \
+    VMULPD(ZMM(R3), ZMM(R3), ZMM(0)) \
+    VMULPD(ZMM(R4), ZMM(R4), ZMM(0)) \
+    /* 00 01 02 03 04 05 06 07 - R1 */ \
+    /* 10 11 12 13 14 15 16 17 - R2 */ \
+    /* 20 21 22 23 24 25 26 27 - R3 */ \
+    /* 30 31 32 33 34 35 36 37 - R4 */ \
+    VUNPCKLPD(ZMM(2), ZMM(R1), ZMM(R2)) \
+    VUNPCKHPD(ZMM(3), ZMM(R1), ZMM(R2)) \
+    VUNPCKHPD(ZMM(4), ZMM(R3), ZMM(R4)) \
+    VUNPCKLPD(ZMM(5), ZMM(R3), ZMM(R4)) \
+    /* 00 10 02 12 04 14 06 16 -  2 */ \
+    /* 01 11 03 13 05 15 07 17 -  3 */ \
+    /* 20 30 22 32 24 34 26 36 -  4 */ \
+    /* 21 31 23 33 25 35 27 37 -  5 */ \
+    VSHUFF64X2(ZMM(R1), ZMM(2), ZMM(4), IMM(0x44)) \
+    VSHUFF64X2(ZMM(R3), ZMM(2), ZMM(4), IMM(0xee)) \
+    VSHUFF64X2(ZMM(R4), ZMM(3), ZMM(5), IMM(0xee)) \
+    VSHUFF64X2(ZMM(R2), ZMM(3), ZMM(5), IMM(0x44)) \
+    /* 00 10 20 30 04 14 24 34 - R1 */ \
+    /* 01 11 21 31 05 15 25 35 - R2 */ \
+    /* 02 12 22 32 06 16 26 36 - R3 */ \
+    /* 03 13 23 33 07 17 27 37 - R4 */ \
+    VMOVUPD(MEM(RCX,      64), YMM(R1)) \
+    VMOVUPD(MEM(RCX,RBX,1,64), YMM(R2)) \
+    VMOVUPD(MEM(RCX,RBX,2,64), YMM(R3)) \
+    VMOVUPD(MEM(RCX,R13,1,64), YMM(R4)) \
+    VEXTRACTF64X4(MEM(RCX,RBX,4,64), ZMM(R1), IMM(1)) \
+    VEXTRACTF64X4(MEM(RCX,R15,1,64), ZMM(R2), IMM(1)) \
+    VEXTRACTF64X4(MEM(RCX,R13,2,64), ZMM(R3), IMM(1)) \
+    VEXTRACTF64X4(MEM(RCX,R10,1,64), ZMM(R4), IMM(1))
 
 #ifdef PREFETCH_C_L2
 #undef PREFETCH_C_L2
@@ -456,13 +696,14 @@ void bli_dgemm_opt_12x16_l2(
     MOV(RAX, VAR(rs_c))
     LEA(RAX, MEM(,RAX,8))
     MOV(RBX, VAR(cs_c))
+    LEA(RBX, MEM(,RBX,8))
 
-    // Check if C is row stride. If not, jump to the slow scattered update
-    CMP(RBX, IMM(1))
-    JNE(SCATTEREDUPDATE)
+    // Check if C is row stride.
+    CMP(RBX, IMM(8))
+    JNE(COLSTORED)
 
         VCOMISD(XMM(1), XMM(7))
-        JE(COLSTORBZ)
+        JE(ROWSTORBZ)
 
             UPDATE_C( 8, 9,10,11)
             UPDATE_C(12,13,14,15)
@@ -472,7 +713,7 @@ void bli_dgemm_opt_12x16_l2(
             UPDATE_C(28,29,30,31)
 
         JMP(END)
-        LABEL(COLSTORBZ)
+        LABEL(ROWSTORBZ)
 
             UPDATE_C_BZ( 8, 9,10,11)
             UPDATE_C_BZ(12,13,14,15)
@@ -480,6 +721,98 @@ void bli_dgemm_opt_12x16_l2(
             UPDATE_C_BZ(20,21,22,23)
             UPDATE_C_BZ(24,25,26,27)
             UPDATE_C_BZ(28,29,30,31)
+
+    JMP(END)
+    LABEL(COLSTORED)
+
+    // Check if C is column stride. If not, jump to the slow scattered update
+    CMP(RAX, IMM(8))
+    JNE(SCATTEREDUPDATE)
+
+        //
+        // Transpose and write out in four quadrants:
+        //
+        // +-------------------------------+-------------------------------+
+        // |c00-c01-c02-c03-c04-c05-c06-c07|c08-c09-c0A-c0B-c0C-c0D-c0E-c0F|
+        // |                               |                               |
+        // |c10-c11-c12-c13-c14-c15-c16-c17|c18-c19-c1A-c1B-c1C-c1D-c1E-c1F|
+        // |                               |                               |
+        // |c20-c21-c22-c23-c24-c25-c26-c27|c28-c29-c2A-c2B-c2C-c2D-c2E-c2F|
+        // |                               |                               |
+        // |c30-c31-c32-c33-c34-c35-c36-c37|c38-c39-c3A-c3B-c3C-c3D-c3E-c3F|     +------+------+
+        // |                               |                               |     |      |      |
+        // |c40-c41-c42-c43-c44-c45-c46-c47|c48-c49-c4A-c4B-c4C-c4D-c4E-c4F|     |  Q1  |  Q3  |
+        // |                               |                               |     |      |      |
+        // |c50-c51-c52-c53-c54-c55-c56-c57|c58-c59-c5A-c5B-c5C-c5D-c5E-c5F|  =  +------+------+
+        // |                               |                               |     |      |      |
+        // |c60-c61-c62-c63-c64-c65-c66-c67|c68-c69-c6A-c6B-c6C-c6D-c6E-c6F|     |  Q2  |  Q4  |
+        // |                               |                               |     |      |      |
+        // |c70-c71-c72-c73-c74-c75-c76-c77|c78-c79-c7A-c7B-c7C-c7D-c7E-c7F|     +------+------+
+        // +-------------------------------+-------------------------------+
+        // |c80-c81-c82-c83-c84-c85-c86-c87|c88-c89-c8A-c8B-c8C-c8D-c8E-c8F|
+        // |                               |                               |
+        // |c90-c91-c92-c93-c94-c95-c96-c97|c98-c99-c9A-c9B-c9C-c9D-c9E-c9F|
+        // |                               |                               |
+        // |cA0-cA1-cA2-cA3-cA4-cA5-cA6-cA7|cA8-cA9-cAA-cAB-cAC-cAD-cAE-cAF|
+        // |                               |                               |
+        // |cB0-cB1-cB2-cB3-cB4-cB5-cB6-cB7|cB8-cB9-cBA cBB-cBC-cBD-cBE-cBF|
+        // +-------------------------------+-------------------------------+
+        //
+        //                                ||
+        //                                \/
+        //
+        // +-------------------------------+-------------------------------+
+        // |c00 c01 c02 c03 c04 c05 c06 c07|c08 c09 c0A c0B c0C c0D c0E c0F|
+        // | |   |   |   |   |   |   |   | | |   |   |   |   |   |   |   | |
+        // |c10 c11 c12 c13 c14 c15 c16 c17|c18 c19 c1A c1B c1C c1D c1E c1F|
+        // | |   |   |   |   |   |   |   | | |   |   |   |   |   |   |   | |
+        // |c20 c21 c22 c23 c24 c25 c26 c27|c28 c29 c2A c2B c2C c2D c2E c2F|
+        // | |   |   |   |   |   |   |   | | |   |   |   |   |   |   |   | |
+        // |c30 c31 c32 c33 c34 c35 c36 c37|c38 c39 c3A c3B c3C c3D c3E c3F|
+        // | |   |   |   |   |   |   |   | | |   |   |   |   |   |   |   | |
+        // |c40 c41 c42 c43 c44 c45 c46 c47|c48 c49 c4A c4B c4C c4D c4E c4F|
+        // | |   |   |   |   |   |   |   | | |   |   |   |   |   |   |   | |
+        // |c50 c51 c52 c53 c54 c55 c56 c57|c58 c59 c5A c5B c5C c5D c5E c5F|
+        // | |   |   |   |   |   |   |   | | |   |   |   |   |   |   |   | |
+        // |c60 c61 c62 c63 c64 c65 c66 c67|c68 c69 c6A c6B c6C c6D c6E c6F|
+        // | |   |   |   |   |   |   |   | | |   |   |   |   |   |   |   | |
+        // |c70 c71 c72 c73 c74 c75 c76 c77|c78 c79 c7A c7B c7C c7D c7E c7F|
+        // +-------------------------------+-------------------------------+
+        // |c80 c81 c82 c83 c84 c85 c86 c87|c88 c89 c8A c8B c8C c8D c8E c8F|
+        // | |   |   |   |   |   |   |   | | |   |   |   |   |   |   |   | |
+        // |c90 c91 c92 c93 c94 c95 c96 c97|c98 c99 c9A c9B c9C c9D c9E c9F|
+        // | |   |   |   |   |   |   |   | | |   |   |   |   |   |   |   | |
+        // |cA0 cA1 cA2 cA3 cA4 cA5 cA6 cA7|cA8 cA9 cAA cAB cAC cAD cAE cAF|
+        // | |   |   |   |   |   |   |   | | |   |   |   |   |   |   |   | |
+        // |cB0 cB1 cB2 cB3 cB4 cB5 cB6 cB7|cB8 cB9 cBA cBB cBC cBD cBE cBF|
+        // +-------------------------------+-------------------------------+
+        //
+
+        LEA(R13, MEM(RBX,RBX,2))
+        LEA(R15, MEM(RBX,RBX,4))
+        LEA(R10, MEM(R15,RBX,2))
+
+        VCOMISD(XMM(1), XMM(7))
+        JE(COLSTORBZ)
+
+            UPDATE_C_TRANS8X8( 8,10,12,14,16,18,20,22)
+            UPDATE_C_TRANS8X4(24,26,28,30)
+
+            LEA(RCX, MEM(RCX,RBX,8))
+
+            UPDATE_C_TRANS8X8( 9,11,13,15,17,19,21,23)
+            UPDATE_C_TRANS8X4(25,27,29,31)
+
+        JMP(END)
+        LABEL(COLSTORBZ)
+
+            UPDATE_C_TRANS8X8_BZ( 8,10,12,14,16,18,20,22)
+            UPDATE_C_TRANS8X4_BZ(24,26,28,30)
+
+            LEA(RCX, MEM(RCX,RBX,8))
+
+            UPDATE_C_TRANS8X8_BZ( 9,11,13,15,17,19,21,23)
+            UPDATE_C_TRANS8X4_BZ(25,27,29,31)
 
     JMP(END)
     LABEL(SCATTEREDUPDATE)

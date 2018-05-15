@@ -32,9 +32,9 @@
 
 */
 
+#include "../../util/asm_x86.h"
 #include "blis.h"
 
-#include "bli_avx512_macros.h"
 
 static int32_t offsets[32] __attribute__((aligned(64))) =
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,

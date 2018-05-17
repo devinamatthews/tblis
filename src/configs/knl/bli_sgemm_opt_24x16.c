@@ -605,8 +605,8 @@ void bli_sgemm_opt_24x16(
         KMOV(K(1), ESI)
         KMOV(K(2), EDI)
 
-        VMOVD(EDX, XMM(1))
-        SAL(EDX) //shift out sign bit
+        VMOVD(EDI, XMM(1))
+        SAL(EDI) //shift out sign bit
         JZ(COLSTORBZ)
 
             // Transpose and write out the last 8 rows so we can use them as temporaries

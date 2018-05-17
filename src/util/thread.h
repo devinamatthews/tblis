@@ -102,7 +102,7 @@ struct atomic_accumulator<T, typename std::enable_if<is_complex<T>::value>::type
 };
 
 template <typename T>
-struct atomic_reducer_helper
+struct alignas(16) atomic_reducer_helper
 {
     T first;
     len_type second;

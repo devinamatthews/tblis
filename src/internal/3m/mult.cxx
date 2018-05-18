@@ -14,17 +14,20 @@ namespace internal
 {
 
 template <typename T>
-void mult(const communicator& comm, const config& cfg,
+void mult(const communicator& comm, const config& cfg_,
           len_type m, len_type n, len_type k,
           T alpha, bool conj_A, const T* A, stride_type rs_A, stride_type cs_A,
                    bool conj_B, const T* B, stride_type rs_B, stride_type cs_B,
           T  beta, bool conj_C,       T* C, stride_type rs_C, stride_type cs_C)
 {
     TBLIS_ASSERT(!conj_A && !conj_B && !conj_C);
+    
+    config cfg = cfg_;
 
     const bool row_major = cfg.gemm_row_major.value<T>();
 
-    if ((row_major ? rs_C : cs_C) == 1)
+    //if ((row_major ? rs_C : cs_C) == 1)
+    if (n > m)
     {
         /*
          * Compute C^T = B^T * A^T instead
@@ -34,6 +37,24 @@ void mult(const communicator& comm, const config& cfg,
         std::swap(rs_A, cs_B);
         std::swap(rs_B, cs_A);
         std::swap(rs_C, cs_C);
+    }
+
+    if ((row_major ? rs_C : cs_C) == 1)
+    {
+        cfg.gemm_row_major.value<T>() ^= true;
+        cfg.gemm_flip_ukr.value<T>() ^= true;
+        std::swap(cfg.gemm_mr, cfg.gemm_nr);
+        std::swap(cfg.pack_nn_mr_ukr, cfg.pack_nn_nr_ukr);
+        cfg.gemm_mc.iota<T>() = cfg.gemm_mr.def<T>();
+        cfg.gemm_nc.iota<T>() = cfg.gemm_nr.def<T>();
+        cfg.gemm_mc.def<T>() = round_up(cfg.gemm_mc.def<T>(),
+                                        cfg.gemm_mr.def<T>());
+        cfg.gemm_nc.def<T>() = round_up(cfg.gemm_nc.def<T>(),
+                                        cfg.gemm_nr.def<T>());
+        cfg.gemm_mc.max<T>() = round_up(cfg.gemm_mc.max<T>(),
+                                        cfg.gemm_mr.def<T>());
+        cfg.gemm_nc.max<T>() = round_up(cfg.gemm_nc.max<T>(),
+                                        cfg.gemm_nr.def<T>());
     }
 
     matrix_view<T> Av({m, k}, const_cast<T*>(A), {rs_A, cs_A});

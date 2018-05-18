@@ -49,7 +49,6 @@ struct thread_configuration
             if (depth != HWLOC_TYPE_DEPTH_UNKNOWN)
             {
                 num_threads = hwloc_get_nbobjs_by_depth(topo, depth);
-                printf("nt: %d\n", num_threads);
             }
 
             hwloc_topology_destroy(topo);

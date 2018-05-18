@@ -154,17 +154,55 @@ void bli_sgemm_asm_6x16
 
     MOV(RCX, VAR(c))
     MOV(RDI, VAR(rs_c))
+    MOV(RSI, VAR(cs_c))
     LEA(RDI, MEM(,RDI,4)) // rs_c *= sizeof(float)
+    LEA(RSI, MEM(,RSI,4)) // cs_c *= sizeof(float)
 
-    LEA(R13, MEM(RDI,RDI,2)) // r13 = 3*rs_c
-    LEA(RDX, MEM(RCX,R13,1)) // rdx = c + 3*rs_c;
+    CMP(RSI, IMM(4))
+    JNE(.SROWSTORPF)
 
-    PREFETCH(0, MEM(RCX,      7*8))
-    PREFETCH(0, MEM(RCX,RDI,1,7*8))
-    PREFETCH(0, MEM(RCX,RDI,2,7*8))
-    PREFETCH(0, MEM(RDX,      7*8))
-    PREFETCH(0, MEM(RDX,RDI,1,7*8))
-    PREFETCH(0, MEM(RDX,RDI,2,7*8))
+        LEA(R13, MEM(RDI,RDI,2)) // r13 = 3*rs_c
+        LEA(RDX, MEM(RCX,R13,1)) // rdx = c + 3*rs_c;
+
+        PREFETCH(1, MEM(RCX,      64))
+        PREFETCH(1, MEM(RCX,RDI,1,64))
+        PREFETCH(1, MEM(RCX,RDI,2,64))
+        PREFETCH(1, MEM(RDX,      64))
+        PREFETCH(1, MEM(RDX,RDI,1,64))
+        PREFETCH(1, MEM(RDX,RDI,2,64))
+
+        PREFETCH(0, MEM(RCX,     ))
+        PREFETCH(0, MEM(RCX,RDI,1))
+        PREFETCH(0, MEM(RCX,RDI,2))
+        PREFETCH(0, MEM(RDX,     ))
+        PREFETCH(0, MEM(RDX,RDI,1))
+        PREFETCH(0, MEM(RDX,RDI,2))
+
+    JMP(.SACCUM)
+    LABEL(.SROWSTORPF)
+
+        LEA(R13, MEM(RSI,RSI,2)) // r13 = 3*cs_c
+        LEA(RDX, MEM(RCX,RSI,4)) // rdx = c + 4*cs_c;
+
+        PREFETCH(1, MEM(RCX,      48))
+        PREFETCH(1, MEM(RCX,RSI,1,48))
+        PREFETCH(1, MEM(RCX,RSI,2,48))
+        PREFETCH(1, MEM(RCX,R13,1,48))
+        PREFETCH(1, MEM(RDX,      48))
+        PREFETCH(1, MEM(RDX,RSI,1,48))
+        PREFETCH(1, MEM(RDX,RSI,2,48))
+        PREFETCH(1, MEM(RDX,R13,1,48))
+
+        PREFETCH(0, MEM(RCX,     ))
+        PREFETCH(0, MEM(RCX,RSI,1))
+        PREFETCH(0, MEM(RCX,RSI,2))
+        PREFETCH(0, MEM(RCX,R13,1))
+        PREFETCH(0, MEM(RDX,     ))
+        PREFETCH(0, MEM(RDX,RSI,1))
+        PREFETCH(0, MEM(RDX,RSI,2))
+        PREFETCH(0, MEM(RDX,R13,1))
+
+    LABEL(.SACCUM)
 
     MOV(RSI, VAR(k))
     MOV(R8, RSI)

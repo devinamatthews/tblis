@@ -41,6 +41,11 @@ struct blocksize
     len_type   _iota[4];
     len_type _extent[4];
 
+    template <typename T> len_type&    def() { return    _def[type_idx<T>::value]; }
+    template <typename T> len_type&    max() { return    _max[type_idx<T>::value]; }
+    template <typename T> len_type&   iota() { return   _iota[type_idx<T>::value]; }
+    template <typename T> len_type& extent() { return _extent[type_idx<T>::value]; }
+
     template <typename T> len_type    def() const { return    _def[type_idx<T>::value]; }
     template <typename T> len_type    max() const { return    _max[type_idx<T>::value]; }
     template <typename T> len_type   iota() const { return   _iota[type_idx<T>::value]; }
@@ -82,11 +87,9 @@ struct parameter
            param<scomplex>::value,
            param<dcomplex>::value} {}
 
-    template <typename T>
-    U value() const
-    {
-        return _val[type_idx<T>::value];
-    }
+    template <typename T> U& value() { return _val[type_idx<T>::value]; }
+    
+    template <typename T> U value() const { return _val[type_idx<T>::value]; }
 };
 
 struct config

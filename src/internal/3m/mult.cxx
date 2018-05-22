@@ -39,6 +39,7 @@ void mult(const communicator& comm, const config& cfg_,
         std::swap(rs_C, cs_C);
     }
 
+#if 1
     if ((row_major ? rs_C : cs_C) == 1)
     {
         cfg.gemm_row_major.value<T>() ^= true;
@@ -56,6 +57,7 @@ void mult(const communicator& comm, const config& cfg_,
         cfg.gemm_nc.max<T>() = round_up(cfg.gemm_nc.max<T>(),
                                         cfg.gemm_nr.def<T>());
     }
+#endif
 
     matrix_view<T> Av({m, k}, const_cast<T*>(A), {rs_A, cs_A});
     matrix_view<T> Bv({k, n}, const_cast<T*>(B), {rs_B, cs_B});

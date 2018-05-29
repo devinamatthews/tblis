@@ -147,8 +147,8 @@ C random_sum_constrained_sequence(unsigned n, T s, const C& mn)
     {
         TBLIS_ASSERT(mn[i] >= 0);
         s -= mn[i];
-        TBLIS_ASSERT(s >= 0);
     }
+    if (s < 0) s = 0;
 
     C p(n+1);
 
@@ -223,7 +223,7 @@ enum rounding_mode {ROUND_UP, ROUND_DOWN, ROUND_NEAREST};
  * Returns a sequence of n numbers such that p/2^d <= prod_i n_i <= p and
  * n_i >= mn_i, where n_i and p are >= 1 and with uniform distribution.
  */
-template <typename T, typename C, rounding_mode Mode=ROUND_DOWN>
+template <typename T, rounding_mode Mode=ROUND_DOWN, typename C>
 enable_if_integral_t<T,C>
 random_product_constrained_sequence(unsigned n, T p, const C& mn)
 {

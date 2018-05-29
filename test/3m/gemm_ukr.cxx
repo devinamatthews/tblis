@@ -49,7 +49,6 @@ TEMPLATED_TEST_CASE(gemm_ukr, T, all_types)
         INFO_OR_PRINT("MC, NC, KC = " << MC << ", " << NC << ", " << KC);
         INFO_OR_PRINT("MX, NX, KX = " << MX << ", " << NX << ", " << KX);
         INFO_OR_PRINT("row major? " << (cfg.gemm_row_major.value<T>() ? "yes" : "no"));
-        INFO_OR_PRINT("flipped? " << (cfg.gemm_flip_ukr.value<T>() ? "yes" : "no"));
 
         for (auto mn : (len_type[10][2]){{0, 0}, {1, 1}, {MR, 0}, {0, NR},
                                          {MR, 1}, {1, NR}, {MR, NR-1},

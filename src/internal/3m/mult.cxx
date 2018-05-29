@@ -43,7 +43,7 @@ void mult(const communicator& comm, const config& cfg_,
     if ((row_major ? rs_C : cs_C) == 1)
     {
         cfg.gemm_row_major.value<T>() ^= true;
-        cfg.gemm_flip_ukr.value<T>() ^= true;
+        cfg.gemm_ukr = cfg.gemm_flip_ukr;
         std::swap(cfg.gemm_mr, cfg.gemm_nr);
         std::swap(cfg.pack_nn_mr_ukr, cfg.pack_nn_nr_ukr);
         cfg.gemm_mc.iota<T>() = cfg.gemm_mr.def<T>();

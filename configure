@@ -6493,7 +6493,7 @@ fi
 if ( echo $configs | $EGREP -q 'knl|skx' ); then
     CPPFLAGS_save="$CPPFLAGS"
     if test `uname -s` = Darwin; then
-        CPPFLAGS="$CPPFLAGS -Wa,-march=knl"
+        CPPFLAGS="$CPPFLAGS -march=knl -Wa,-march=knl"
     fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether inline AVX-512F can be compiled" >&5
 $as_echo_n "checking whether inline AVX-512F can be compiled... " >&6; }
@@ -6538,7 +6538,7 @@ fi
 if ( echo $configs | $EGREP -q 'skx' ); then
     CPPFLAGS_save="$CPPFLAGS"
     if test `uname -s` = Darwin; then
-        CPPFLAGS="$CPPFLAGS -Wa,-march=skylake-avx512"
+        CPPFLAGS="$CPPFLAGS -march=skylake-avx512 -Wa,-march=skylake-avx512"
     fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether inline AVX-512DQ can be compiled" >&5
 $as_echo_n "checking whether inline AVX-512DQ can be compiled... " >&6; }

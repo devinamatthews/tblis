@@ -29,7 +29,6 @@ struct gemm_macro_kernel
         const len_type ME = cfg.gemm_mr.extent<T>();
         const len_type NE = cfg.gemm_nr.extent<T>();
         const bool row_major = cfg.gemm_row_major.value<T>();
-        const bool flip_ukr = cfg.gemm_flip_ukr.value<T>();
         const len_type rs_ab = (row_major ? NR : 1);
         const len_type cs_ab = (row_major ? 1 : MR);
 
@@ -59,29 +58,13 @@ struct gemm_macro_kernel
 
                     if (m_loc == MR && n_loc == NR)
                     {
-                        if (flip_ukr)
-                        {
-                            cfg.gemm_ukr.call<T>(k, &alpha, p_b, p_a,
-                                                 &beta, p_c, cs_c, rs_c);
-                        }
-                        else
-                        {
-                            cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
-                                                 &beta, p_c, rs_c, cs_c);
-                        }
+                        cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
+                                             &beta, p_c, rs_c, cs_c);
                     }
                     else
                     {
-                        if (flip_ukr)
-                        {
-                            cfg.gemm_ukr.call<T>(k, &alpha, p_b, p_a,
-                                                 &zero, &p_ab[0], cs_ab, rs_ab);
-                        }
-                        else
-                        {
-                            cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
-                                                 &zero, &p_ab[0], rs_ab, cs_ab);
-                        }
+                        cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
+                                             &zero, &p_ab[0], rs_ab, cs_ab);
 
                         accum_utile(m_loc, n_loc, p_ab, rs_ab, cs_ab,
                                     beta, p_c, rs_c, cs_c);

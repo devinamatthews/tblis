@@ -33,1236 +33,1255 @@
 */
 
 #include "blis.h"
+#include "util/asm_x86.h"
 
+#define SGEMM_GS(n) \
+    VMOVAPS(XMM(0), XMM(n)) \
+    VFMADD231SS(XMM(0), XMM(1), MEM(RCX)) \
+    VMOVSS(MEM(RCX), XMM(0)) \
+    \
+    VUNPCKHPS(XMM(0), XMM(0), XMM(0)) \
+    VFMADD231SS(XMM(0), XMM(1), MEM(RCX,RSI,1)) \
+    VMOVSS(MEM(RCX,RSI,1), XMM(0)) \
+    \
+    VUNPCKHPD(XMM(0), XMM(n), XMM(n)) \
+    VFMADD231SS(XMM(0), XMM(1), MEM(RCX,RSI,2)) \
+    VMOVSS(MEM(RCX,RSI,2), XMM(0)) \
+    \
+    VUNPCKHPS(XMM(0), XMM(0), XMM(0)) \
+    VFMADD231SS(XMM(0), XMM(1), MEM(RCX,R13,1)) \
+    VMOVSS(MEM(RCX,R13,1), XMM(0)) \
+    \
+    VEXTRACTF128(XMM(2), YMM(n), IMM(1)) \
+    VMOVAPS(XMM(2), XMM(0)) \
+    VFMADD231SS(XMM(0), XMM(1), MEM(RCX,RSI,4)) \
+    VMOVSS(MEM(RCX,RSI,4), XMM(0)) \
+    \
+    VUNPCKHPS(XMM(0), XMM(0), XMM(0)) \
+    VFMADD231SS(XMM(0), XMM(1), MEM(RCX,R15,1)) \
+    VMOVSS(MEM(RCX,R15,1), XMM(0)) \
+    \
+    VUNPCKHPD(XMM(0), XMM(2), XMM(2)) \
+    VFMADD231SS(XMM(0), XMM(1), MEM(RCX,R13,2)) \
+    VMOVSS(MEM(RCX,R13,2), XMM(0)) \
+    \
+    VUNPCKHPS(XMM(0), XMM(0), XMM(0)) \
+    VFMADD231SS(XMM(0), XMM(1), MEM(RCX,R10,1)) \
+    VMOVSS(MEM(RCX,R10,1), XMM(0))
 
-#define SGEMM_INPUT_GS_BETA_NZ \
-	"vmovlps    (%%rcx        ),  %%xmm0,  %%xmm0  \n\t" \
-	"vmovhps    (%%rcx,%%rsi,1),  %%xmm0,  %%xmm0  \n\t" \
-	"vmovlps    (%%rcx,%%rsi,2),  %%xmm1,  %%xmm1  \n\t" \
-	"vmovhps    (%%rcx,%%r13  ),  %%xmm1,  %%xmm1  \n\t" \
-	"vshufps    $0x88,   %%xmm1,  %%xmm0,  %%xmm0  \n\t" \
-	"vmovlps    (%%rcx,%%rsi,4),  %%xmm2,  %%xmm2  \n\t" \
-	"vmovhps    (%%rcx,%%r15  ),  %%xmm2,  %%xmm2  \n\t" \
-	"vmovlps    (%%rcx,%%r13,2),  %%xmm1,  %%xmm1  \n\t" \
-	"vmovhps    (%%rcx,%%r10  ),  %%xmm1,  %%xmm1  \n\t" \
-	"vshufps    $0x88,   %%xmm1,  %%xmm2,  %%xmm2  \n\t" \
-	"vperm2f128 $0x20,   %%ymm2,  %%ymm0,  %%ymm0  \n\t"
+#define SGEMM_GS_BZ(n) \
+    VMOVAPS(XMM(0), XMM(n)) \
+    VMOVSS(MEM(RCX), XMM(0)) \
+    \
+    VUNPCKHPS(XMM(0), XMM(0), XMM(0)) \
+    VMOVSS(MEM(RCX,RSI,1), XMM(0)) \
+    \
+    VUNPCKHPD(XMM(0), XMM(n), XMM(n)) \
+    VMOVSS(MEM(RCX,RSI,2), XMM(0)) \
+    \
+    VUNPCKHPS(XMM(0), XMM(0), XMM(0)) \
+    VMOVSS(MEM(RCX,R13,1), XMM(0)) \
+    \
+    VEXTRACTF128(XMM(2), YMM(n), IMM(1)) \
+    VMOVAPS(XMM(2), XMM(0)) \
+    VMOVSS(MEM(RCX,RSI,4), XMM(0)) \
+    \
+    VUNPCKHPS(XMM(0), XMM(0), XMM(0)) \
+    VMOVSS(MEM(RCX,R15,1), XMM(0)) \
+    \
+    VUNPCKHPD(XMM(0), XMM(2), XMM(2)) \
+    VMOVSS(MEM(RCX,R13,2), XMM(0)) \
+    \
+    VUNPCKHPS(XMM(0), XMM(0), XMM(0)) \
+    VMOVSS(MEM(RCX,R10,1), XMM(0))
 
-#define SGEMM_OUTPUT_GS_BETA_NZ \
-	"vextractf128  $1, %%ymm0,  %%xmm2           \n\t" \
-	"vmovss            %%xmm0, (%%rcx        )   \n\t" \
-	"vpermilps  $0x39, %%xmm0,  %%xmm1           \n\t" \
-	"vmovss            %%xmm1, (%%rcx,%%rsi,1)   \n\t" \
-	"vpermilps  $0x39, %%xmm1,  %%xmm0           \n\t" \
-	"vmovss            %%xmm0, (%%rcx,%%rsi,2)   \n\t" \
-	"vpermilps  $0x39, %%xmm0,  %%xmm1           \n\t" \
-	"vmovss            %%xmm1, (%%rcx,%%r13  )   \n\t" \
-	"vmovss            %%xmm2, (%%rcx,%%rsi,4)   \n\t" \
-	"vpermilps  $0x39, %%xmm2,  %%xmm1           \n\t" \
-	"vmovss            %%xmm1, (%%rcx,%%r15  )   \n\t" \
-	"vpermilps  $0x39, %%xmm1,  %%xmm2           \n\t" \
-	"vmovss            %%xmm2, (%%rcx,%%r13,2)   \n\t" \
-	"vpermilps  $0x39, %%xmm2,  %%xmm1           \n\t" \
-	"vmovss            %%xmm1, (%%rcx,%%r10  )   \n\t"
+#define SGEMM_ITERATION(n) \
+    \
+    VBROADCASTSS(YMM(2), MEM(RAX,4*(0+6*n))) \
+    VBROADCASTSS(YMM(3), MEM(RAX,4*(1+6*n))) \
+    VFMADD231PS(YMM(4), YMM(2), YMM(0)) \
+    VFMADD231PS(YMM(5), YMM(2), YMM(1)) \
+    VFMADD231PS(YMM(6), YMM(3), YMM(0)) \
+    VFMADD231PS(YMM(7), YMM(3), YMM(1)) \
+    \
+    VBROADCASTSS(YMM(2), MEM(RAX,4*(2+6*n))) \
+    VBROADCASTSS(YMM(3), MEM(RAX,4*(3+6*n))) \
+    VFMADD231PS(YMM(8), YMM(2), YMM(0)) \
+    VFMADD231PS(YMM(9), YMM(2), YMM(1)) \
+    VFMADD231PS(YMM(10), YMM(3), YMM(0)) \
+    VFMADD231PS(YMM(11), YMM(3), YMM(1)) \
+    \
+    VBROADCASTSS(YMM(2), MEM(RAX,4*(4+6*n))) \
+    VBROADCASTSS(YMM(3), MEM(RAX,4*(5+6*n))) \
+    VFMADD231PS(YMM(12), YMM(2), YMM(0)) \
+    VFMADD231PS(YMM(13), YMM(2), YMM(1)) \
+    VFMADD231PS(YMM(14), YMM(3), YMM(0)) \
+    VFMADD231PS(YMM(15), YMM(3), YMM(1)) \
+    \
+    VMOVAPS(YMM(0), MEM(RBX,32*(-4+2*n))) \
+    VMOVAPS(YMM(1), MEM(RBX,32*(-3+2*n)))
 
-void bli_sgemm_asm_16x6
+void bli_sgemm_asm_6x16
      (
-       dim_t               k,
+       dim_t               k_,
        float*     restrict alpha,
        float*     restrict a,
        float*     restrict b,
        float*     restrict beta,
-       float*     restrict c, inc_t rs_c, inc_t cs_c,
+       float*     restrict c, inc_t rs_c_, inc_t cs_c_,
        auxinfo_t* restrict data,
        cntx_t*    restrict cntx
      )
 {
-	//void*   a_next = bli_auxinfo_next_a( data );
-	//void*   b_next = bli_auxinfo_next_b( data );
+    //void*   a_next = bli_auxinfo_next_a( data );
+    //void*   b_next = bli_auxinfo_next_b( data );
 
-	dim_t   k_iter = k / 4;
-	dim_t   k_left = k % 4;
+    int64_t k = k_;
+    int64_t rs_c = rs_c_;
+    int64_t cs_c = cs_c_;
 
-	__asm__ volatile
-	(
-	"                                            \n\t"
-	"vzeroall                                    \n\t" // zero all xmm/ymm registers.
-	"                                            \n\t"
-	"                                            \n\t"
-	"movq                %2, %%rax               \n\t" // load address of a.
-	"movq                %3, %%rbx               \n\t" // load address of b.
-	//"movq                %9, %%r15               \n\t" // load address of b_next.
-	"                                            \n\t"
-	"addq           $32 * 4, %%rax               \n\t"
-	"                                            \n\t" // initialize loop by pre-loading
-	"vmovaps           -4 * 32(%%rax), %%ymm0    \n\t"
-	"vmovaps           -3 * 32(%%rax), %%ymm1    \n\t"
-	"                                            \n\t"
-	"movq                %6, %%rcx               \n\t" // load address of c
-	"movq                %8, %%rdi               \n\t" // load cs_c
-	"leaq        (,%%rdi,4), %%rdi               \n\t" // cs_c *= sizeof(float)
-	"                                            \n\t"
-	"leaq   (%%rdi,%%rdi,2), %%r13               \n\t" // r13 = 3*cs_c;
-	"leaq   (%%rcx,%%r13,1), %%rdx               \n\t" // rdx = c + 3*cs_c;
-	"prefetcht0   7 * 8(%%rcx)                   \n\t" // prefetch c + 0*cs_c
-	"prefetcht0   7 * 8(%%rcx,%%rdi)             \n\t" // prefetch c + 1*cs_c
-	"prefetcht0   7 * 8(%%rcx,%%rdi,2)           \n\t" // prefetch c + 2*cs_c
-	"prefetcht0   7 * 8(%%rdx)                   \n\t" // prefetch c + 3*cs_c
-	"prefetcht0   7 * 8(%%rdx,%%rdi)             \n\t" // prefetch c + 4*cs_c
-	"prefetcht0   7 * 8(%%rdx,%%rdi,2)           \n\t" // prefetch c + 5*cs_c
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"movq      %0, %%rsi                         \n\t" // i = k_iter;
-	"testq  %%rsi, %%rsi                         \n\t" // check i via logical AND.
-	"je     .SCONSIDKLEFT                        \n\t" // if i == 0, jump to code that
-	"                                            \n\t" // contains the k_left loop.
-	"                                            \n\t"
-	"                                            \n\t"
-	".SLOOPKITER:                                \n\t" // MAIN LOOP
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t" // iteration 0
-	"prefetcht0  128 * 4(%%rax)                  \n\t"
-	"                                            \n\t"
-	"vbroadcastss       0 *  4(%%rbx), %%ymm2    \n\t"
-	"vbroadcastss       1 *  4(%%rbx), %%ymm3    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm2, %%ymm4    \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm2, %%ymm5    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm3, %%ymm6    \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm3, %%ymm7    \n\t"
-	"                                            \n\t"
-	"vbroadcastss       2 *  4(%%rbx), %%ymm2    \n\t"
-	"vbroadcastss       3 *  4(%%rbx), %%ymm3    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm2, %%ymm8    \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm2, %%ymm9    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm3, %%ymm10   \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm3, %%ymm11   \n\t"
-	"                                            \n\t"
-	"vbroadcastss       4 *  4(%%rbx), %%ymm2    \n\t"
-	"vbroadcastss       5 *  4(%%rbx), %%ymm3    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm2, %%ymm12   \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm2, %%ymm13   \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm3, %%ymm14   \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm3, %%ymm15   \n\t"
-	"                                            \n\t"
-	"vmovaps           -2 * 32(%%rax), %%ymm0    \n\t"
-	"vmovaps           -1 * 32(%%rax), %%ymm1    \n\t"
-	"                                            \n\t"
-	"                                            \n\t" // iteration 1
-	"vbroadcastss       6 *  4(%%rbx), %%ymm2    \n\t"
-	"vbroadcastss       7 *  4(%%rbx), %%ymm3    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm2, %%ymm4    \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm2, %%ymm5    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm3, %%ymm6    \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm3, %%ymm7    \n\t"
-	"                                            \n\t"
-	"vbroadcastss       8 *  4(%%rbx), %%ymm2    \n\t"
-	"vbroadcastss       9 *  4(%%rbx), %%ymm3    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm2, %%ymm8    \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm2, %%ymm9    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm3, %%ymm10   \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm3, %%ymm11   \n\t"
-	"                                            \n\t"
-	"vbroadcastss      10 *  4(%%rbx), %%ymm2    \n\t"
-	"vbroadcastss      11 *  4(%%rbx), %%ymm3    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm2, %%ymm12   \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm2, %%ymm13   \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm3, %%ymm14   \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm3, %%ymm15   \n\t"
-	"                                            \n\t"
-	"vmovaps            0 * 32(%%rax), %%ymm0    \n\t"
-	"vmovaps            1 * 32(%%rax), %%ymm1    \n\t"
-	"                                            \n\t"
-	"                                            \n\t" // iteration 2
-	"prefetcht0  160 * 4(%%rax)                  \n\t"
-	"                                            \n\t"
-	"vbroadcastss      12 *  4(%%rbx), %%ymm2    \n\t"
-	"vbroadcastss      13 *  4(%%rbx), %%ymm3    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm2, %%ymm4    \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm2, %%ymm5    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm3, %%ymm6    \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm3, %%ymm7    \n\t"
-	"                                            \n\t"
-	"vbroadcastss      14 *  4(%%rbx), %%ymm2    \n\t"
-	"vbroadcastss      15 *  4(%%rbx), %%ymm3    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm2, %%ymm8    \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm2, %%ymm9    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm3, %%ymm10   \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm3, %%ymm11   \n\t"
-	"                                            \n\t"
-	"vbroadcastss      16 *  4(%%rbx), %%ymm2    \n\t"
-	"vbroadcastss      17 *  4(%%rbx), %%ymm3    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm2, %%ymm12   \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm2, %%ymm13   \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm3, %%ymm14   \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm3, %%ymm15   \n\t"
-	"                                            \n\t"
-	"vmovaps            2 * 32(%%rax), %%ymm0    \n\t"
-	"vmovaps            3 * 32(%%rax), %%ymm1    \n\t"
-	"                                            \n\t"
-	"                                            \n\t" // iteration 3
-	"vbroadcastss      18 *  4(%%rbx), %%ymm2    \n\t"
-	"vbroadcastss      19 *  4(%%rbx), %%ymm3    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm2, %%ymm4    \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm2, %%ymm5    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm3, %%ymm6    \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm3, %%ymm7    \n\t"
-	"                                            \n\t"
-	"vbroadcastss      20 *  4(%%rbx), %%ymm2    \n\t"
-	"vbroadcastss      21 *  4(%%rbx), %%ymm3    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm2, %%ymm8    \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm2, %%ymm9    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm3, %%ymm10   \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm3, %%ymm11   \n\t"
-	"                                            \n\t"
-	"vbroadcastss      22 *  4(%%rbx), %%ymm2    \n\t"
-	"vbroadcastss      23 *  4(%%rbx), %%ymm3    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm2, %%ymm12   \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm2, %%ymm13   \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm3, %%ymm14   \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm3, %%ymm15   \n\t"
-	"                                            \n\t"
-	"addq          $4 * 16 * 4, %%rax            \n\t" // a += 4*16 (unroll x mr)
-	"addq          $4 *  6 * 4, %%rbx            \n\t" // b += 4*6  (unroll x nr)
-	"                                            \n\t"
-	"vmovaps           -4 * 32(%%rax), %%ymm0    \n\t"
-	"vmovaps           -3 * 32(%%rax), %%ymm1    \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"decq   %%rsi                                \n\t" // i -= 1;
-	"jne    .SLOOPKITER                          \n\t" // iterate again if i != 0.
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	".SCONSIDKLEFT:                              \n\t"
-	"                                            \n\t"
-	"movq      %1, %%rsi                         \n\t" // i = k_left;
-	"testq  %%rsi, %%rsi                         \n\t" // check i via logical AND.
-	"je     .SPOSTACCUM                          \n\t" // if i == 0, we're done; jump to end.
-	"                                            \n\t" // else, we prepare to enter k_left loop.
-	"                                            \n\t"
-	"                                            \n\t"
-	".SLOOPKLEFT:                                \n\t" // EDGE LOOP
-	"                                            \n\t"
-	"prefetcht0  128 * 4(%%rax)                  \n\t"
-	"                                            \n\t"
-	"vbroadcastss       0 *  4(%%rbx), %%ymm2    \n\t"
-	"vbroadcastss       1 *  4(%%rbx), %%ymm3    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm2, %%ymm4    \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm2, %%ymm5    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm3, %%ymm6    \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm3, %%ymm7    \n\t"
-	"                                            \n\t"
-	"vbroadcastss       2 *  4(%%rbx), %%ymm2    \n\t"
-	"vbroadcastss       3 *  4(%%rbx), %%ymm3    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm2, %%ymm8    \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm2, %%ymm9    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm3, %%ymm10   \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm3, %%ymm11   \n\t"
-	"                                            \n\t"
-	"vbroadcastss       4 *  4(%%rbx), %%ymm2    \n\t"
-	"vbroadcastss       5 *  4(%%rbx), %%ymm3    \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm2, %%ymm12   \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm2, %%ymm13   \n\t"
-	"vfmadd231ps       %%ymm0, %%ymm3, %%ymm14   \n\t"
-	"vfmadd231ps       %%ymm1, %%ymm3, %%ymm15   \n\t"
-	"                                            \n\t"
-	"addq          $1 * 16 * 4, %%rax            \n\t" // a += 1*16 (unroll x mr)
-	"addq          $1 *  6 * 4, %%rbx            \n\t" // b += 1*6  (unroll x nr)
-	"                                            \n\t"
-	"vmovaps           -4 * 32(%%rax), %%ymm0    \n\t"
-	"vmovaps           -3 * 32(%%rax), %%ymm1    \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"decq   %%rsi                                \n\t" // i -= 1;
-	"jne    .SLOOPKLEFT                          \n\t" // iterate again if i != 0.
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	".SPOSTACCUM:                                \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"movq         %4, %%rax                      \n\t" // load address of alpha
-	"movq         %5, %%rbx                      \n\t" // load address of beta 
-	"vbroadcastss    (%%rax), %%ymm0             \n\t" // load alpha and duplicate
-	"vbroadcastss    (%%rbx), %%ymm3             \n\t" // load beta and duplicate
-	"                                            \n\t"
-	"vmulps           %%ymm0,  %%ymm4,  %%ymm4   \n\t" // scale by alpha
-	"vmulps           %%ymm0,  %%ymm5,  %%ymm5   \n\t"
-	"vmulps           %%ymm0,  %%ymm6,  %%ymm6   \n\t"
-	"vmulps           %%ymm0,  %%ymm7,  %%ymm7   \n\t"
-	"vmulps           %%ymm0,  %%ymm8,  %%ymm8   \n\t"
-	"vmulps           %%ymm0,  %%ymm9,  %%ymm9   \n\t"
-	"vmulps           %%ymm0,  %%ymm10, %%ymm10  \n\t"
-	"vmulps           %%ymm0,  %%ymm11, %%ymm11  \n\t"
-	"vmulps           %%ymm0,  %%ymm12, %%ymm12  \n\t"
-	"vmulps           %%ymm0,  %%ymm13, %%ymm13  \n\t"
-	"vmulps           %%ymm0,  %%ymm14, %%ymm14  \n\t"
-	"vmulps           %%ymm0,  %%ymm15, %%ymm15  \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"movq                %7, %%rsi               \n\t" // load rs_c
-	"leaq        (,%%rsi,4), %%rsi               \n\t" // rsi = rs_c * sizeof(float)
-	"                                            \n\t"
-	"leaq   (%%rcx,%%rsi,8), %%rdx               \n\t" // load address of c +  8*rs_c;
-	"                                            \n\t"
-	"leaq   (%%rsi,%%rsi,2), %%r13               \n\t" // r13 = 3*rs_c;
-	"leaq   (%%rsi,%%rsi,4), %%r15               \n\t" // r15 = 5*rs_c;
-	"leaq   (%%r13,%%rsi,4), %%r10               \n\t" // r10 = 7*rs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t" // determine if
-	"                                            \n\t" //    c    % 32 == 0, AND
-	"                                            \n\t" //  4*cs_c % 32 == 0, AND
-	"                                            \n\t" //    rs_c      == 1
-	"                                            \n\t" // ie: aligned, ldim aligned, and
-	"                                            \n\t" // column-stored
-	"                                            \n\t"
-	"cmpq       $4, %%rsi                        \n\t" // set ZF if (4*rs_c) == 4.
-	"sete           %%bl                         \n\t" // bl = ( ZF == 1 ? 1 : 0 );
-	"testq     $31, %%rcx                        \n\t" // set ZF if c & 32 is zero.
-	"setz           %%bh                         \n\t" // bh = ( ZF == 0 ? 1 : 0 );
-	"testq     $31, %%rdi                        \n\t" // set ZF if (4*cs_c) & 32 is zero.
-	"setz           %%al                         \n\t" // al = ( ZF == 0 ? 1 : 0 );
-	"                                            \n\t" // and(bl,bh) followed by
-	"                                            \n\t" // and(bh,al) will reveal result
-	"                                            \n\t"
-	"                                            \n\t" // now avoid loading C if beta == 0
-	"                                            \n\t"
-	"vxorps    %%ymm0,  %%ymm0,  %%ymm0          \n\t" // set ymm0 to zero.
-	"vucomiss  %%xmm0,  %%xmm3                   \n\t" // set ZF if beta == 0.
-	"je      .SBETAZERO                          \n\t" // if ZF = 1, jump to beta == 0 case
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t" // check if aligned/column-stored
-	"andb     %%bl, %%bh                         \n\t" // set ZF if bl & bh == 1.
-	"andb     %%bh, %%al                         \n\t" // set ZF if bh & al == 1.
-	"jne     .SCOLSTORED                         \n\t" // jump to column storage case
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	".SGENSTORED:                                \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	SGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213ps      %%ymm4,  %%ymm3,  %%ymm0   \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	SGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213ps      %%ymm6,  %%ymm3,  %%ymm0   \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	SGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213ps      %%ymm8,  %%ymm3,  %%ymm0   \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	SGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213ps      %%ymm10, %%ymm3,  %%ymm0   \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	SGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213ps      %%ymm12, %%ymm3,  %%ymm0   \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	SGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213ps      %%ymm14, %%ymm3,  %%ymm0   \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	//"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"movq      %%rdx, %%rcx                      \n\t" // rcx = c + 8*rs_c
-	"                                            \n\t"
-	"                                            \n\t"
-	SGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213ps      %%ymm5,  %%ymm3,  %%ymm0   \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	SGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213ps      %%ymm7,  %%ymm3,  %%ymm0   \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	SGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213ps      %%ymm9,  %%ymm3,  %%ymm0   \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	SGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213ps      %%ymm11, %%ymm3,  %%ymm0   \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	SGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213ps      %%ymm13, %%ymm3,  %%ymm0   \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	SGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213ps      %%ymm15, %%ymm3,  %%ymm0   \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	//"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"jmp    .SDONE                               \n\t" // jump to end.
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	".SCOLSTORED:                                \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps    (%%rcx),       %%ymm0            \n\t"
-	"vfmadd213ps      %%ymm4,  %%ymm3,  %%ymm0   \n\t"
-	"vmovaps          %%ymm0,  (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps    (%%rdx),       %%ymm1            \n\t"
-	"vfmadd213ps      %%ymm5,  %%ymm3,  %%ymm1   \n\t"
-	"vmovaps          %%ymm1,  (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps    (%%rcx),       %%ymm0            \n\t"
-	"vfmadd213ps      %%ymm6,  %%ymm3,  %%ymm0   \n\t"
-	"vmovaps          %%ymm0,  (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps    (%%rdx),       %%ymm1            \n\t"
-	"vfmadd213ps      %%ymm7,  %%ymm3,  %%ymm1   \n\t"
-	"vmovaps          %%ymm1,  (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps    (%%rcx),       %%ymm0            \n\t"
-	"vfmadd213ps      %%ymm8,  %%ymm3,  %%ymm0   \n\t"
-	"vmovaps          %%ymm0,  (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps    (%%rdx),       %%ymm1            \n\t"
-	"vfmadd213ps      %%ymm9,  %%ymm3,  %%ymm1   \n\t"
-	"vmovaps          %%ymm1,  (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps    (%%rcx),       %%ymm0            \n\t"
-	"vfmadd213ps      %%ymm10, %%ymm3,  %%ymm0   \n\t"
-	"vmovaps          %%ymm0,  (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps    (%%rdx),       %%ymm1            \n\t"
-	"vfmadd213ps      %%ymm11, %%ymm3,  %%ymm1   \n\t"
-	"vmovaps          %%ymm1,  (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps    (%%rcx),       %%ymm0            \n\t"
-	"vfmadd213ps      %%ymm12, %%ymm3,  %%ymm0   \n\t"
-	"vmovaps          %%ymm0,  (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps    (%%rdx),       %%ymm1            \n\t"
-	"vfmadd213ps      %%ymm13, %%ymm3,  %%ymm1   \n\t"
-	"vmovaps          %%ymm1,  (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps    (%%rcx),       %%ymm0            \n\t"
-	"vfmadd213ps      %%ymm14, %%ymm3,  %%ymm0   \n\t"
-	"vmovaps          %%ymm0,  (%%rcx)           \n\t"
-	//"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps    (%%rdx),       %%ymm1            \n\t"
-	"vfmadd213ps      %%ymm15, %%ymm3,  %%ymm1   \n\t"
-	"vmovaps          %%ymm1,  (%%rdx)           \n\t"
-	//"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"jmp    .SDONE                               \n\t" // jump to end.
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	".SBETAZERO:                                 \n\t"
-	"                                            \n\t" // check if aligned/column-stored
-	"andb     %%bl, %%bh                         \n\t" // set ZF if bl & bh == 1.
-	"andb     %%bh, %%al                         \n\t" // set ZF if bh & al == 1.
-	"jne     .SCOLSTORBZ                         \n\t" // jump to column storage case
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	".SGENSTORBZ:                                \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm4,  %%ymm0           \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm6,  %%ymm0           \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm8,  %%ymm0           \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm10, %%ymm0           \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm12, %%ymm0           \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm14, %%ymm0           \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	//"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"movq      %%rdx, %%rcx                      \n\t" // rcx = c + 8*rs_c
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm5,  %%ymm0           \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm7,  %%ymm0           \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm9,  %%ymm0           \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm11, %%ymm0           \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm13, %%ymm0           \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm15, %%ymm0           \n\t"
-	SGEMM_OUTPUT_GS_BETA_NZ
-	//"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"jmp    .SDONE                               \n\t" // jump to end.
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	".SCOLSTORBZ:                                \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps          %%ymm4,  (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps          %%ymm5,  (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"vmovaps          %%ymm6,  (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps          %%ymm7,  (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps          %%ymm8,  (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps          %%ymm9,  (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps          %%ymm10, (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps          %%ymm11, (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps          %%ymm12, (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps          %%ymm13, (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps          %%ymm14, (%%rcx)           \n\t"
-	//"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps          %%ymm15, (%%rdx)           \n\t"
-	//"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	".SDONE:                                     \n\t"
-	"                                            \n\t"
+    BEGIN_ASM
 
-	: // output operands (none)
-	: // input operands
-	  "m" (k_iter), // 0
-	  "m" (k_left), // 1
-	  "m" (a),      // 2
-	  "m" (b),      // 3
-	  "m" (alpha),  // 4
-	  "m" (beta),   // 5
-	  "m" (c),      // 6
-	  "m" (rs_c),   // 7
-	  "m" (cs_c)/*,   // 8
-	  "m" (b_next), // 9
-	  "m" (a_next)*/  // 10
-	: // register clobber list
-	  "rax", "rbx", "rcx", "rdx", "rsi", "rdi", 
-	  "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
-	  "xmm0", "xmm1", "xmm2", "xmm3",
-	  "xmm4", "xmm5", "xmm6", "xmm7",
-	  "xmm8", "xmm9", "xmm10", "xmm11",
-	  "xmm12", "xmm13", "xmm14", "xmm15",
-	  "memory"
-	);
+    VZEROALL()
+
+    MOV(RAX, VAR(b))
+    MOV(RBX, VAR(a))
+
+    VMOVAPS(YMM(0), MEM(RBX,0*32)) // initialize loop by pre-loading
+    VMOVAPS(YMM(1), MEM(RBX,1*32))
+
+    ADD(RBX, IMM(32*6))
+
+    MOV(RCX, VAR(c))
+    MOV(RDI, VAR(cs_c))
+    MOV(RSI, VAR(rs_c))
+    LEA(RDI, MEM(,RDI,4)) // cs_c *= sizeof(float)
+    LEA(RSI, MEM(,RSI,4)) // rs_c *= sizeof(float)
+
+    CMP(RSI, IMM(4))
+    JNE(.SROWSTORPF)
+
+        LEA(R13, MEM(RDI,RDI,2)) // r13 = 3*cs_c
+        MOV(RDX, RCX)
+
+        PREFETCH(0, MEM(RDX      ))
+        PREFETCH(0, MEM(RDX,RDI,1))
+        PREFETCH(0, MEM(RDX,RDI,2))
+        LEA(RDX, MEM(RDX,R13,1))
+        PREFETCH(0, MEM(RDX      ))
+        PREFETCH(0, MEM(RDX,RDI,1))
+        PREFETCH(0, MEM(RDX,RDI,2))
+        LEA(RDX, MEM(RDX,R13,1))
+        PREFETCH(1, MEM(RDX      ))
+        PREFETCH(1, MEM(RDX,RDI,1))
+        PREFETCH(1, MEM(RDX,RDI,2))
+        LEA(RDX, MEM(RDX,R13,1))
+        PREFETCH(1, MEM(RDX      ))
+        PREFETCH(1, MEM(RDX,RDI,1))
+        PREFETCH(1, MEM(RDX,RDI,2))
+
+    JMP(.SACCUM)
+    LABEL(.SROWSTORPF)
+
+        LEA(R13, MEM(RSI,RSI,2)) // r13 = 3*rs_c
+        MOV(RDX, RCX)
+
+        PREFETCH(0, MEM(RDX      ))
+        PREFETCH(0, MEM(RDX,RSI,1))
+        PREFETCH(0, MEM(RDX,RSI,2))
+        PREFETCH(0, MEM(RDX,R13,1))
+        LEA(RDX, MEM(RDX,RSI,4))
+        PREFETCH(0, MEM(RDX      ))
+        PREFETCH(0, MEM(RDX,RSI,1))
+        PREFETCH(0, MEM(RDX,RSI,2))
+        PREFETCH(0, MEM(RDX,R13,1))
+        LEA(RDX, MEM(RDX,RSI,4))
+        PREFETCH(0, MEM(RDX      ))
+        PREFETCH(0, MEM(RDX,RSI,1))
+        PREFETCH(0, MEM(RDX,RSI,2))
+        PREFETCH(0, MEM(RDX,R13,1))
+        LEA(RDX, MEM(RDX,RSI,4))
+        PREFETCH(0, MEM(RDX      ))
+        PREFETCH(0, MEM(RDX,RSI,1))
+        PREFETCH(0, MEM(RDX,RSI,2))
+        PREFETCH(0, MEM(RDX,R13,1))
+
+    LABEL(.SACCUM)
+
+    MOV(RSI, VAR(k))
+    MOV(R8, RSI)
+    SAR(RSI, IMM(2))
+    JZ(.SCONSIDKLEFT)
+
+    LABEL(.SLOOPKITER)
+
+        PREFETCH(0, MEM(RBX,64*4))
+
+        SGEMM_ITERATION(0)
+
+        PREFETCH(0, MEM(RBX,80*4))
+
+        SGEMM_ITERATION(1)
+
+        PREFETCH(0, MEM(RBX,96*4))
+
+        SGEMM_ITERATION(2)
+
+        PREFETCH(0, MEM(RBX,112*4))
+
+        SGEMM_ITERATION(3)
+
+        ADD(RAX, IMM(4* 6*4))
+        ADD(RBX, IMM(4*16*4))
+
+        DEC(RSI)
+
+    JNZ(.SLOOPKITER)
+
+    LABEL(.SCONSIDKLEFT)
+
+    MOV(RSI, R8)
+    AND(RSI, IMM(3))
+    JZ(.SPOSTACCUM)
+
+    LABEL(.SLOOPKLEFT)
+
+        PREFETCH(0, MEM(RBX,64*4))
+
+        SGEMM_ITERATION(0)
+
+        ADD(RAX, IMM(1* 6*4))
+        ADD(RBX, IMM(1*16*4))
+
+        DEC(RSI)
+
+    JNZ(.SLOOPKLEFT)
+
+    LABEL(.SPOSTACCUM)
+
+    MOV(RAX, VAR(alpha))
+    MOV(RBX, VAR(beta))
+    VBROADCASTSS(YMM(0), MEM(RAX))
+    VBROADCASTSS(YMM(1), MEM(RBX))
+
+    VMULPS(YMM( 4), YMM( 4), YMM(0))
+    VMULPS(YMM( 5), YMM( 5), YMM(0))
+    VMULPS(YMM( 6), YMM( 6), YMM(0))
+    VMULPS(YMM( 7), YMM( 7), YMM(0))
+    VMULPS(YMM( 8), YMM( 8), YMM(0))
+    VMULPS(YMM( 9), YMM( 9), YMM(0))
+    VMULPS(YMM(10), YMM(10), YMM(0))
+    VMULPS(YMM(11), YMM(11), YMM(0))
+    VMULPS(YMM(12), YMM(12), YMM(0))
+    VMULPS(YMM(13), YMM(13), YMM(0))
+    VMULPS(YMM(14), YMM(14), YMM(0))
+    VMULPS(YMM(15), YMM(15), YMM(0))
+
+    MOV(RSI, VAR(rs_c))
+    LEA(RSI, MEM(,RSI,4))
+
+    LEA(RDX, MEM(RCX,RSI,8))
+
+    LEA(R13, MEM(RSI,RSI,2))
+    LEA(R15, MEM(RSI,RSI,4))
+    LEA(R10, MEM(R13,RSI,4))
+
+    VXORPS(YMM(0), YMM(0), YMM(0))
+    VUCOMISS(XMM(1), XMM(0))
+    JZ(.SBETAZERO)
+
+        CMP(RSI, IMM(4))
+        JE(.SCOLSTORED)
+
+        CMP(RDI, IMM(4))
+        JE(.SROWSTORED)
+
+        LABEL(.SGENSTORED)
+
+            SGEMM_GS(4)
+            ADD(RCX, RDI)
+            SGEMM_GS(6)
+            ADD(RCX, RDI)
+            SGEMM_GS(8)
+            ADD(RCX, RDI)
+            SGEMM_GS(10)
+            ADD(RCX, RDI)
+            SGEMM_GS(12)
+            ADD(RCX, RDI)
+            SGEMM_GS(14)
+            MOV(RCX, RDX)
+            SGEMM_GS(5)
+            ADD(RCX, RDI)
+            SGEMM_GS(7)
+            ADD(RCX, RDI)
+            SGEMM_GS(9)
+            ADD(RCX, RDI)
+            SGEMM_GS(11)
+            ADD(RCX, RDI)
+            SGEMM_GS(13)
+            ADD(RCX, RDI)
+            SGEMM_GS(15)
+
+        JMP(.SDONE)
+        LABEL(.SCOLSTORED)
+
+            VFMADD231PS(YMM(4), YMM(1), MEM(RCX))
+            VFMADD231PS(YMM(5), YMM(1), MEM(RDX))
+            VMOVUPS(MEM(RCX), YMM(4))
+            VMOVUPS(MEM(RDX), YMM(5))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VFMADD231PS(YMM(6), YMM(1), MEM(RCX))
+            VFMADD231PS(YMM(7), YMM(1), MEM(RDX))
+            VMOVUPS(MEM(RCX), YMM(6))
+            VMOVUPS(MEM(RDX), YMM(7))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VFMADD231PS(YMM(8), YMM(1), MEM(RCX))
+            VFMADD231PS(YMM(9), YMM(1), MEM(RDX))
+            VMOVUPS(MEM(RCX), YMM(8))
+            VMOVUPS(MEM(RDX), YMM(9))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VFMADD231PS(YMM(10), YMM(1), MEM(RCX))
+            VFMADD231PS(YMM(11), YMM(1), MEM(RDX))
+            VMOVUPS(MEM(RCX), YMM(10))
+            VMOVUPS(MEM(RDX), YMM(11))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VFMADD231PS(YMM(12), YMM(1), MEM(RCX))
+            VFMADD231PS(YMM(13), YMM(1), MEM(RDX))
+            VMOVUPS(MEM(RCX), YMM(12))
+            VMOVUPS(MEM(RDX), YMM(13))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VFMADD231PS(YMM(14), YMM(1), MEM(RCX))
+            VFMADD231PS(YMM(15), YMM(1), MEM(RDX))
+            VMOVUPS(MEM(RCX), YMM(14))
+            VMOVUPS(MEM(RDX), YMM(15))
+
+        JMP(.SDONE)
+        LABEL(.SROWSTORED)
+
+            //
+            // Transpose and write out in four quadrants:
+            //
+            // +-------------------------------+-------------------------------+
+            // |c00-c01-c02-c03-c04-c05-c06-c07|c08-c09-c0a-c0b-c0c-c0d-c0e-c0f|
+            // |                               |                               |     +------+------+
+            // |c10-c11-c12-c13-c14-c15-c16-c17|c18-c19-c1a-c1b-c1c-c1d-c1e-c1f|     |      |      |
+            // |                               |                               |     |  Q1  |  Q3  |
+            // |c20-c21-c22-c23-c24-c25-c26-c27|c28-c29-c2a-c2b-c2c-c2d-c2e-c2f|     |      |      |
+            // |                               |                               |  =  +------+------+
+            // |c30-c31-c32-c33-c34-c35-c36-c37|c38-c39-c3a-c3b-c3c-c3d-c3e-c3f|     |      |      |
+            // +-------------------------------+-------------------------------+     |  Q2  |  Q4  |
+            // |c40-c41-c42-c43-c44-c45-c46-c47|c48-c49-c4a-c4b-c4c-c4d-c4e-c4f|     |      |      |
+            // |                               |                               |     +------+------+
+            // |c50-c51-c52-c53-c54-c55-c56-c57|c58-c59-c5a-c5b-c5c-c5d-c5e-c5f|
+            // +-------------------------------+-------------------------------+
+            //
+            //                                ||
+            //                                \/
+            //
+            // +-------------------------------+-------------------------------+
+            // |c00 c01 c02 c03 c04 c05 c06 c07|c08 c09 c0a c0b c0c c0d c0e c0f|
+            // | |   |   |   |   |   |   |   | | |   |   |   |   |   |   |   | |
+            // |c10 c11 c12 c13 c14 c15 c16 c17|c18 c19 c1a c1b c1c c1d c1e c1f|
+            // | |   |   |   |   |   |   |   | | |   |   |   |   |   |   |   | |
+            // |c20 c21 c22 c23 c24 c25 c26 c27|c28 c29 c2a c2b c2c c2d c2e c2f|
+            // | |   |   |   |   |   |   |   | | |   |   |   |   |   |   |   | |
+            // |c30 c31 c32 c33 c34 c35 c36 c37|c38 c39 c3a c3b c3c c3d c3e c3f|
+            // +-------------------------------+-------------------------------+
+            // |c40 c41 c42 c43 c44 c45 c46 c47|c48 c49 c4a c4b c4c c4d c4e c4f|
+            // | |   |   |   |   |   |   |   | | |   |   |   |   |   |   |   | |
+            // |c50 c51 c52 c53 c54 c55 c56 c57|c58 c59 c5a c5b c5c c5d c5e c5f|
+            // +-------------------------------+-------------------------------+
+            //
+
+            VUNPCKLPS(YMM( 2), YMM(4), YMM( 6))
+            VUNPCKHPS(YMM( 3), YMM(4), YMM( 6))
+            VUNPCKLPS(YMM( 6), YMM(8), YMM(10))
+            VUNPCKHPS(YMM(10), YMM(8), YMM(10))
+            VSHUFPS (YMM( 0), YMM(2), YMM( 6), IMM(0x4e))
+            VBLENDPS(YMM( 4), YMM(2), YMM( 0), IMM(0xcc))
+            VBLENDPS(YMM( 6), YMM(0), YMM( 6), IMM(0xcc))
+            VSHUFPS (YMM( 0), YMM(3), YMM(10), IMM(0x4e))
+            VBLENDPS(YMM( 8), YMM(3), YMM( 0), IMM(0xcc))
+            VBLENDPS(YMM(10), YMM(0), YMM(10), IMM(0xcc))
+            VMOVUPS(XMM(2), MEM(RCX,     ))
+            VMOVUPS(XMM(3), MEM(RCX,RSI,1))
+            VINSERTF128(YMM(2), YMM(2), MEM(RCX,RSI,4), IMM(1))
+            VINSERTF128(YMM(3), YMM(3), MEM(RCX,R15,1), IMM(1))
+            VFMADD231PS(YMM(4), YMM(1), YMM(2))
+            VFMADD231PS(YMM(6), YMM(1), YMM(3))
+            VMOVUPS(MEM(RCX,     ), XMM(4))
+            VMOVUPS(MEM(RCX,RSI,1), XMM(6))
+            VEXTRACTF128(MEM(RCX,RSI,4), YMM(4), IMM(1))
+            VEXTRACTF128(MEM(RCX,R15,1), YMM(6), IMM(1))
+            VMOVUPS(XMM(2), MEM(RCX,RSI,2))
+            VMOVUPS(XMM(3), MEM(RCX,R13,1))
+            VINSERTF128(YMM(2), YMM(2), MEM(RCX,R13,2), IMM(1))
+            VINSERTF128(YMM(3), YMM(3), MEM(RCX,R10,1), IMM(1))
+            VFMADD231PS(YMM( 8), YMM(1), YMM(2))
+            VFMADD231PS(YMM(10), YMM(1), YMM(3))
+            VMOVUPS(MEM(RCX,RSI,2), XMM( 8))
+            VMOVUPS(MEM(RCX,R13,1), XMM(10))
+            VEXTRACTF128(MEM(RCX,R13,2), YMM( 8), IMM(1))
+            VEXTRACTF128(MEM(RCX,R10,1), YMM(10), IMM(1))
+
+            VUNPCKLPS(YMM(2), YMM(12), YMM(14))
+            VUNPCKHPS(YMM(3), YMM(12), YMM(14))
+            VMOVLPS(XMM(12), XMM(12), MEM(RCX,      16))
+            VMOVHPS(XMM(12), XMM(12), MEM(RCX,RSI,1,16))
+            VMOVLPS(XMM(0), XMM(0), MEM(RCX,RSI,4,16))
+            VMOVHPS(XMM(0), XMM(0), MEM(RCX,R15,1,16))
+            VINSERTF128(YMM(12), YMM(12), XMM(0), IMM(1))
+            VMOVLPS(XMM(14), XMM(14), MEM(RCX,RSI,2,16))
+            VMOVHPS(XMM(14), XMM(14), MEM(RCX,R13,1,16))
+            VMOVLPS(XMM(0), XMM(0), MEM(RCX,R13,2,16))
+            VMOVHPS(XMM(0), XMM(0), MEM(RCX,R10,1,16))
+            VINSERTF128(YMM(14), YMM(14), XMM(0), IMM(1))
+            VFMADD231PS(YMM(2), YMM(1), YMM(12))
+            VFMADD231PS(YMM(3), YMM(1), YMM(14))
+            VMOVLPS(MEM(RCX,      16), XMM(2))
+            VMOVHPS(MEM(RCX,RSI,1,16), XMM(2))
+            VMOVLPS(MEM(RCX,RSI,2,16), XMM(3))
+            VMOVHPS(MEM(RCX,R13,1,16), XMM(3))
+            VEXTRACTF128(XMM(2), YMM(2), IMM(1))
+            VEXTRACTF128(XMM(3), YMM(3), IMM(1))
+            VMOVLPS(MEM(RCX,RSI,4,16), XMM(2))
+            VMOVHPS(MEM(RCX,R15,1,16), XMM(2))
+            VMOVLPS(MEM(RCX,R13,2,16), XMM(3))
+            VMOVHPS(MEM(RCX,R10,1,16), XMM(3))
+
+            VUNPCKLPS(YMM( 2), YMM(5), YMM( 7))
+            VUNPCKHPS(YMM( 3), YMM(5), YMM( 7))
+            VUNPCKLPS(YMM( 7), YMM(9), YMM(11))
+            VUNPCKHPS(YMM(11), YMM(9), YMM(11))
+            VSHUFPS (YMM( 0), YMM(2), YMM( 7), IMM(0x4e))
+            VBLENDPS(YMM( 5), YMM(2), YMM( 0), IMM(0xcc))
+            VBLENDPS(YMM( 7), YMM(0), YMM( 7), IMM(0xcc))
+            VSHUFPS (YMM( 0), YMM(3), YMM(11), IMM(0x4e))
+            VBLENDPS(YMM( 9), YMM(3), YMM( 0), IMM(0xcc))
+            VBLENDPS(YMM(11), YMM(0), YMM(11), IMM(0xcc))
+            VMOVUPS(XMM(2), MEM(RDX,     ))
+            VMOVUPS(XMM(3), MEM(RDX,RSI,1))
+            VINSERTF128(YMM(2), YMM(2), MEM(RDX,RSI,4), IMM(1))
+            VINSERTF128(YMM(3), YMM(3), MEM(RDX,R15,1), IMM(1))
+            VFMADD231PS(YMM(5), YMM(1), YMM(2))
+            VFMADD231PS(YMM(7), YMM(1), YMM(3))
+            VMOVUPS(MEM(RDX,     ), XMM(5))
+            VMOVUPS(MEM(RDX,RSI,1), XMM(7))
+            VEXTRACTF128(MEM(RDX,RSI,4), YMM(5), IMM(1))
+            VEXTRACTF128(MEM(RDX,R15,1), YMM(7), IMM(1))
+            VMOVUPS(XMM(2), MEM(RDX,RSI,2))
+            VMOVUPS(XMM(3), MEM(RDX,R13,1))
+            VINSERTF128(YMM(2), YMM(2), MEM(RDX,R13,2), IMM(1))
+            VINSERTF128(YMM(3), YMM(3), MEM(RDX,R10,1), IMM(1))
+            VFMADD231PS(YMM( 9), YMM(1), YMM(2))
+            VFMADD231PS(YMM(11), YMM(1), YMM(3))
+            VMOVUPS(MEM(RDX,RSI,2), XMM( 9))
+            VMOVUPS(MEM(RDX,R13,1), XMM(11))
+            VEXTRACTF128(MEM(RDX,R13,2), YMM( 9), IMM(1))
+            VEXTRACTF128(MEM(RDX,R10,1), YMM(11), IMM(1))
+
+            VUNPCKLPS(YMM(2), YMM(13), YMM(15))
+            VUNPCKHPS(YMM(3), YMM(13), YMM(15))
+            VMOVLPS(XMM(13), XMM(13), MEM(RDX,      16))
+            VMOVHPS(XMM(13), XMM(13), MEM(RDX,RSI,1,16))
+            VMOVLPS(XMM(0), XMM(0), MEM(RDX,RSI,4,16))
+            VMOVHPS(XMM(0), XMM(0), MEM(RDX,R15,1,16))
+            VINSERTF128(YMM(13), YMM(13), XMM(0), IMM(1))
+            VMOVLPS(XMM(15), XMM(15), MEM(RDX,RSI,2,16))
+            VMOVHPS(XMM(15), XMM(15), MEM(RDX,R13,1,16))
+            VMOVLPS(XMM(0), XMM(0), MEM(RDX,R13,2,16))
+            VMOVHPS(XMM(0), XMM(0), MEM(RDX,R10,1,16))
+            VINSERTF128(YMM(15), YMM(15), XMM(0), IMM(1))
+            VFMADD231PS(YMM(2), YMM(1), YMM(13))
+            VFMADD231PS(YMM(3), YMM(1), YMM(15))
+            VMOVLPS(MEM(RDX,      16), XMM(2))
+            VMOVHPS(MEM(RDX,RSI,1,16), XMM(2))
+            VMOVLPS(MEM(RDX,RSI,2,16), XMM(3))
+            VMOVHPS(MEM(RDX,R13,1,16), XMM(3))
+            VEXTRACTF128(XMM(2), YMM(2), IMM(1))
+            VEXTRACTF128(XMM(3), YMM(3), IMM(1))
+            VMOVLPS(MEM(RDX,RSI,4,16), XMM(2))
+            VMOVHPS(MEM(RDX,R15,1,16), XMM(2))
+            VMOVLPS(MEM(RDX,R13,2,16), XMM(3))
+            VMOVHPS(MEM(RDX,R10,1,16), XMM(3))
+
+    JMP(.SDONE)
+    LABEL(.SBETAZERO)
+
+        CMP(RSI, IMM(4))
+        JE(.SCOLSTORBZ)
+
+        CMP(RDI, IMM(4))
+        JE(.SROWSTORBZ)
+
+        LABEL(.SGENSTORBZ)
+
+            SGEMM_GS_BZ(4)
+            ADD(RCX, RDI)
+            SGEMM_GS_BZ(6)
+            ADD(RCX, RDI)
+            SGEMM_GS_BZ(8)
+            ADD(RCX, RDI)
+            SGEMM_GS_BZ(10)
+            ADD(RCX, RDI)
+            SGEMM_GS_BZ(12)
+            ADD(RCX, RDI)
+            SGEMM_GS_BZ(14)
+            MOV(RCX, RDX)
+            SGEMM_GS_BZ(5)
+            ADD(RCX, RDI)
+            SGEMM_GS_BZ(7)
+            ADD(RCX, RDI)
+            SGEMM_GS_BZ(9)
+            ADD(RCX, RDI)
+            SGEMM_GS_BZ(11)
+            ADD(RCX, RDI)
+            SGEMM_GS_BZ(13)
+            ADD(RCX, RDI)
+            SGEMM_GS_BZ(15)
+
+        JMP(.SDONE)
+        LABEL(.SCOLSTORBZ)
+
+            VMOVUPS(MEM(RCX), YMM(4))
+            VMOVUPS(MEM(RDX), YMM(5))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VMOVUPS(MEM(RCX), YMM(6))
+            VMOVUPS(MEM(RDX), YMM(7))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VMOVUPS(MEM(RCX), YMM(8))
+            VMOVUPS(MEM(RDX), YMM(9))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VMOVUPS(MEM(RCX), YMM(10))
+            VMOVUPS(MEM(RDX), YMM(11))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VMOVUPS(MEM(RCX), YMM(12))
+            VMOVUPS(MEM(RDX), YMM(13))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VMOVUPS(MEM(RCX), YMM(14))
+            VMOVUPS(MEM(RDX), YMM(15))
+
+        JMP(.SDONE)
+        LABEL(.SROWSTORBZ)
+
+            //
+            // Transpose and write out in four quadrants:
+            //
+            // +-------------------------------+-------------------------------+
+            // |c00-c01-c02-c03-c04-c05-c06-c07|c08-c09-c0a-c0b-c0c-c0d-c0e-c0f|
+            // |                               |                               |     +------+------+
+            // |c10-c11-c12-c13-c14-c15-c16-c17|c18-c19-c1a-c1b-c1c-c1d-c1e-c1f|     |      |      |
+            // |                               |                               |     |  Q1  |  Q3  |
+            // |c20-c21-c22-c23-c24-c25-c26-c27|c28-c29-c2a-c2b-c2c-c2d-c2e-c2f|     |      |      |
+            // |                               |                               |  =  +------+------+
+            // |c30-c31-c32-c33-c34-c35-c36-c37|c38-c39-c3a-c3b-c3c-c3d-c3e-c3f|     |      |      |
+            // +-------------------------------+-------------------------------+     |  Q2  |  Q4  |
+            // |c40-c41-c42-c43-c44-c45-c46-c47|c48-c49-c4a-c4b-c4c-c4d-c4e-c4f|     |      |      |
+            // |                               |                               |     +------+------+
+            // |c50-c51-c52-c53-c54-c55-c56-c57|c58-c59-c5a-c5b-c5c-c5d-c5e-c5f|
+            // +-------------------------------+-------------------------------+
+            //
+            //                                ||
+            //                                \/
+            //
+            // +-------------------------------+-------------------------------+
+            // |c00 c01 c02 c03 c04 c05 c06 c07|c08 c09 c0a c0b c0c c0d c0e c0f|
+            // | |   |   |   |   |   |   |   | | |   |   |   |   |   |   |   | |
+            // |c10 c11 c12 c13 c14 c15 c16 c17|c18 c19 c1a c1b c1c c1d c1e c1f|
+            // | |   |   |   |   |   |   |   | | |   |   |   |   |   |   |   | |
+            // |c20 c21 c22 c23 c24 c25 c26 c27|c28 c29 c2a c2b c2c c2d c2e c2f|
+            // | |   |   |   |   |   |   |   | | |   |   |   |   |   |   |   | |
+            // |c30 c31 c32 c33 c34 c35 c36 c37|c38 c39 c3a c3b c3c c3d c3e c3f|
+            // +-------------------------------+-------------------------------+
+            // |c40 c41 c42 c43 c44 c45 c46 c47|c48 c49 c4a c4b c4c c4d c4e c4f|
+            // | |   |   |   |   |   |   |   | | |   |   |   |   |   |   |   | |
+            // |c50 c51 c52 c53 c54 c55 c56 c57|c58 c59 c5a c5b c5c c5d c5e c5f|
+            // +-------------------------------+-------------------------------+
+            //
+
+            VUNPCKLPS(YMM( 2), YMM(4), YMM( 6))
+            VUNPCKHPS(YMM( 3), YMM(4), YMM( 6))
+            VUNPCKLPS(YMM( 6), YMM(8), YMM(10))
+            VUNPCKHPS(YMM(10), YMM(8), YMM(10))
+            VSHUFPS (YMM( 0), YMM(2), YMM( 6), IMM(0x4e))
+            VBLENDPS(YMM( 4), YMM(2), YMM( 0), IMM(0xcc))
+            VBLENDPS(YMM( 6), YMM(0), YMM( 6), IMM(0xcc))
+            VSHUFPS (YMM( 0), YMM(3), YMM(10), IMM(0x4e))
+            VBLENDPS(YMM( 8), YMM(3), YMM( 0), IMM(0xcc))
+            VBLENDPS(YMM(10), YMM(0), YMM(10), IMM(0xcc))
+            VMOVUPS(MEM(RCX,     ), XMM(4))
+            VMOVUPS(MEM(RCX,RSI,1), XMM(6))
+            VEXTRACTF128(MEM(RCX,RSI,4), YMM(4), IMM(1))
+            VEXTRACTF128(MEM(RCX,R15,1), YMM(6), IMM(1))
+            VMOVUPS(MEM(RCX,RSI,2), XMM( 8))
+            VMOVUPS(MEM(RCX,R13,1), XMM(10))
+            VEXTRACTF128(MEM(RCX,R13,2), YMM( 8), IMM(1))
+            VEXTRACTF128(MEM(RCX,R10,1), YMM(10), IMM(1))
+
+            VUNPCKLPS(YMM(2), YMM(12), YMM(14))
+            VUNPCKHPS(YMM(3), YMM(12), YMM(14))
+            VMOVLPS(MEM(RCX,      16), XMM(2))
+            VMOVHPS(MEM(RCX,RSI,1,16), XMM(2))
+            VMOVLPS(MEM(RCX,RSI,2,16), XMM(3))
+            VMOVHPS(MEM(RCX,R13,1,16), XMM(3))
+            VEXTRACTF128(XMM(2), YMM(2), IMM(1))
+            VEXTRACTF128(XMM(3), YMM(3), IMM(1))
+            VMOVLPS(MEM(RCX,RSI,4,16), XMM(2))
+            VMOVHPS(MEM(RCX,R15,1,16), XMM(2))
+            VMOVLPS(MEM(RCX,R13,2,16), XMM(3))
+            VMOVHPS(MEM(RCX,R10,1,16), XMM(3))
+
+            VUNPCKLPS(YMM( 2), YMM(5), YMM( 7))
+            VUNPCKHPS(YMM( 3), YMM(5), YMM( 7))
+            VUNPCKLPS(YMM( 7), YMM(9), YMM(11))
+            VUNPCKHPS(YMM(11), YMM(9), YMM(11))
+            VSHUFPS (YMM( 0), YMM(2), YMM( 7), IMM(0x4e))
+            VBLENDPS(YMM( 5), YMM(2), YMM( 0), IMM(0xcc))
+            VBLENDPS(YMM( 7), YMM(0), YMM( 7), IMM(0xcc))
+            VSHUFPS (YMM( 0), YMM(3), YMM(11), IMM(0x4e))
+            VBLENDPS(YMM( 9), YMM(3), YMM( 0), IMM(0xcc))
+            VBLENDPS(YMM(11), YMM(0), YMM(11), IMM(0xcc))
+            VMOVUPS(MEM(RDX,     ), XMM(5))
+            VMOVUPS(MEM(RDX,RSI,1), XMM(7))
+            VEXTRACTF128(MEM(RDX,RSI,4), YMM(5), IMM(1))
+            VEXTRACTF128(MEM(RDX,R15,1), YMM(7), IMM(1))
+            VMOVUPS(MEM(RDX,RSI,2), XMM( 9))
+            VMOVUPS(MEM(RDX,R13,1), XMM(11))
+            VEXTRACTF128(MEM(RDX,R13,2), YMM( 9), IMM(1))
+            VEXTRACTF128(MEM(RDX,R10,1), YMM(11), IMM(1))
+
+            VUNPCKLPS(YMM(2), YMM(13), YMM(15))
+            VUNPCKHPS(YMM(3), YMM(13), YMM(15))
+            VMOVLPS(MEM(RDX,      16), XMM(2))
+            VMOVHPS(MEM(RDX,RSI,1,16), XMM(2))
+            VMOVLPS(MEM(RDX,RSI,2,16), XMM(3))
+            VMOVHPS(MEM(RDX,R13,1,16), XMM(3))
+            VEXTRACTF128(XMM(2), YMM(2), IMM(1))
+            VEXTRACTF128(XMM(3), YMM(3), IMM(1))
+            VMOVLPS(MEM(RDX,RSI,4,16), XMM(2))
+            VMOVHPS(MEM(RDX,R15,1,16), XMM(2))
+            VMOVLPS(MEM(RDX,R13,2,16), XMM(3))
+            VMOVHPS(MEM(RDX,R10,1,16), XMM(3))
+
+    LABEL(.SDONE)
+
+    VZEROUPPER()
+
+    END_ASM
+    (
+        : // output operands (none)
+        : // input operands
+          [k]     "m" (k),
+          [a]     "m" (a),
+          [b]     "m" (b),
+          [alpha] "m" (alpha),
+          [beta]  "m" (beta),
+          [c]     "m" (c),
+          [rs_c]  "m" (rs_c),
+          [cs_c]  "m" (cs_c)
+        : // register clobber list
+          "rax", "rbx", "rcx", "rdx", "rsi", "rdi",
+          "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
+          "xmm0", "xmm1", "xmm2", "xmm3",
+          "xmm4", "xmm5", "xmm6", "xmm7",
+          "xmm8", "xmm9", "xmm10", "xmm11",
+          "xmm12", "xmm13", "xmm14", "xmm15",
+          "memory"
+    )
 }
 
-#define DGEMM_INPUT_GS_BETA_NZ \
-	"vmovlpd    (%%rcx        ),  %%xmm0,  %%xmm0  \n\t" \
-	"vmovhpd    (%%rcx,%%rsi,1),  %%xmm0,  %%xmm0  \n\t" \
-	"vmovlpd    (%%rcx,%%rsi,2),  %%xmm1,  %%xmm1  \n\t" \
-	"vmovhpd    (%%rcx,%%r13  ),  %%xmm1,  %%xmm1  \n\t" \
-	"vperm2f128 $0x20,   %%ymm1,  %%ymm0,  %%ymm0  \n\t" /*\
-	"vmovlps    (%%rcx,%%rsi,4),  %%xmm2,  %%xmm2  \n\t" \
-	"vmovhps    (%%rcx,%%r15  ),  %%xmm2,  %%xmm2  \n\t" \
-	"vmovlps    (%%rcx,%%r13,2),  %%xmm1,  %%xmm1  \n\t" \
-	"vmovhps    (%%rcx,%%r10  ),  %%xmm1,  %%xmm1  \n\t" \
-	"vperm2f128 $0x20,   %%ymm1,  %%ymm2,  %%ymm2  \n\t"*/
+#define DGEMM_GS(n) \
+    VMOVAPD(XMM(0), XMM(n)) \
+    VFMADD231SD(XMM(0), XMM(1), MEM(RCX)) \
+    VMOVSD(MEM(RCX), XMM(0)) \
+    \
+    VUNPCKHPD(XMM(0), XMM(0), XMM(0)) \
+    VFMADD231SD(XMM(0), XMM(1), MEM(RCX,RSI,1)) \
+    VMOVSD(MEM(RCX,RSI,1), XMM(0)) \
+    \
+    VEXTRACTF128(XMM(2), YMM(n), IMM(1)) \
+    VMOVAPD(XMM(2), XMM(0)) \
+    VFMADD231SD(XMM(0), XMM(1), MEM(RCX,RSI,2)) \
+    VMOVSD(MEM(RCX,RSI,2), XMM(0)) \
+    \
+    VUNPCKHPD(XMM(0), XMM(0), XMM(0)) \
+    VFMADD231SD(XMM(0), XMM(1), MEM(RCX,R13,1)) \
+    VMOVSD(MEM(RCX,R13,1), XMM(0))
 
-#define DGEMM_OUTPUT_GS_BETA_NZ \
-	"vextractf128  $1, %%ymm0,  %%xmm1           \n\t" \
-	"vmovlpd           %%xmm0,  (%%rcx        )  \n\t" \
-	"vmovhpd           %%xmm0,  (%%rcx,%%rsi  )  \n\t" \
-	"vmovlpd           %%xmm1,  (%%rcx,%%rsi,2)  \n\t" \
-	"vmovhpd           %%xmm1,  (%%rcx,%%r13  )  \n\t" /*\
-	"vextractf128  $1, %%ymm2,  %%xmm1           \n\t" \
-	"vmovlpd           %%xmm2,  (%%rcx,%%rsi,4)  \n\t" \
-	"vmovhpd           %%xmm2,  (%%rcx,%%r15  )  \n\t" \
-	"vmovlpd           %%xmm1,  (%%rcx,%%r13,2)  \n\t" \
-	"vmovhpd           %%xmm1,  (%%rcx,%%r10  )  \n\t"*/
+#define DGEMM_GS_BZ(n) \
+    VMOVAPD(XMM(0), XMM(n)) \
+    VMOVSD(MEM(RCX), XMM(0)) \
+    \
+    VUNPCKHPD(XMM(0), XMM(0), XMM(0)) \
+    VMOVSD(MEM(RCX,RSI,1), XMM(0)) \
+    \
+    VEXTRACTF128(XMM(2), YMM(n), IMM(1)) \
+    VMOVAPD(XMM(2), XMM(0)) \
+    VMOVSD(MEM(RCX,RSI,2), XMM(0)) \
+    \
+    VUNPCKHPD(XMM(0), XMM(0), XMM(0)) \
+    VMOVSD(MEM(RCX,R13,1), XMM(0))
 
-void bli_dgemm_asm_8x6
+#define DGEMM_ITERATION(n) \
+    VBROADCASTSD(YMM(2), MEM(RAX,8*(0+6*n))) \
+    VBROADCASTSD(YMM(3), MEM(RAX,8*(1+6*n))) \
+    VFMADD231PD(YMM(4), YMM(2), YMM(0)) \
+    VFMADD231PD(YMM(5), YMM(2), YMM(1)) \
+    VFMADD231PD(YMM(6), YMM(3), YMM(0)) \
+    VFMADD231PD(YMM(7), YMM(3), YMM(1)) \
+    \
+    VBROADCASTSD(YMM(2), MEM(RAX,8*(2+6*n))) \
+    VBROADCASTSD(YMM(3), MEM(RAX,8*(3+6*n))) \
+    VFMADD231PD(YMM(8), YMM(2), YMM(0)) \
+    VFMADD231PD(YMM(9), YMM(2), YMM(1)) \
+    VFMADD231PD(YMM(10), YMM(3), YMM(0)) \
+    VFMADD231PD(YMM(11), YMM(3), YMM(1)) \
+    \
+    VBROADCASTSD(YMM(2), MEM(RAX,8*(4+6*n))) \
+    VBROADCASTSD(YMM(3), MEM(RAX,8*(5+6*n))) \
+    VFMADD231PD(YMM(12), YMM(2), YMM(0)) \
+    VFMADD231PD(YMM(13), YMM(2), YMM(1)) \
+    VFMADD231PD(YMM(14), YMM(3), YMM(0)) \
+    VFMADD231PD(YMM(15), YMM(3), YMM(1)) \
+    \
+    VMOVAPD(YMM(0), MEM(RBX,32*(-4+2*n))) \
+    VMOVAPD(YMM(1), MEM(RBX,32*(-3+2*n)))
+
+void bli_dgemm_asm_6x8
      (
-       dim_t               k,
+       dim_t               k_,
        double*    restrict alpha,
        double*    restrict a,
        double*    restrict b,
        double*    restrict beta,
-       double*    restrict c, inc_t rs_c, inc_t cs_c,
+       double*    restrict c, inc_t rs_c_, inc_t cs_c_,
        auxinfo_t* restrict data,
        cntx_t*    restrict cntx
      )
 {
-	//void*   a_next = bli_auxinfo_next_a( data );
-	//void*   b_next = bli_auxinfo_next_b( data );
+    //void*   a_next = bli_auxinfo_next_a( data );
+    //void*   b_next = bli_auxinfo_next_b( data );
 
-	dim_t   k_iter = k / 4;
-	dim_t   k_left = k % 4;
+    int64_t k = k_;
+    int64_t rs_c = rs_c_;
+    int64_t cs_c = cs_c_;
 
-	__asm__ volatile
-	(
-	"                                            \n\t"
-	"vzeroall                                    \n\t" // zero all xmm/ymm registers.
-	"                                            \n\t"
-	"                                            \n\t"
-	"movq                %2, %%rax               \n\t" // load address of a.
-	"movq                %3, %%rbx               \n\t" // load address of b.
-	//"movq                %9, %%r15               \n\t" // load address of b_next.
-	"                                            \n\t"
-	"addq           $32 * 4, %%rax               \n\t"
-	"                                            \n\t" // initialize loop by pre-loading
-	"vmovaps           -4 * 32(%%rax), %%ymm0    \n\t"
-	"vmovaps           -3 * 32(%%rax), %%ymm1    \n\t"
-	"                                            \n\t"
-	"movq                %6, %%rcx               \n\t" // load address of c
-	"movq                %8, %%rdi               \n\t" // load cs_c
-	"leaq        (,%%rdi,8), %%rdi               \n\t" // cs_c *= sizeof(double)
-	"                                            \n\t"
-	"leaq   (%%rdi,%%rdi,2), %%r13               \n\t" // r13 = 3*cs_c;
-	"leaq   (%%rcx,%%r13,1), %%rdx               \n\t" // rdx = c + 3*cs_c;
-	"prefetcht0   7 * 8(%%rcx)                   \n\t" // prefetch c + 0*cs_c
-	"prefetcht0   7 * 8(%%rcx,%%rdi)             \n\t" // prefetch c + 1*cs_c
-	"prefetcht0   7 * 8(%%rcx,%%rdi,2)           \n\t" // prefetch c + 2*cs_c
-	"prefetcht0   7 * 8(%%rdx)                   \n\t" // prefetch c + 3*cs_c
-	"prefetcht0   7 * 8(%%rdx,%%rdi)             \n\t" // prefetch c + 4*cs_c
-	"prefetcht0   7 * 8(%%rdx,%%rdi,2)           \n\t" // prefetch c + 5*cs_c
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"movq      %0, %%rsi                         \n\t" // i = k_iter;
-	"testq  %%rsi, %%rsi                         \n\t" // check i via logical AND.
-	"je     .DCONSIDKLEFT                        \n\t" // if i == 0, jump to code that
-	"                                            \n\t" // contains the k_left loop.
-	"                                            \n\t"
-	"                                            \n\t"
-	".DLOOPKITER:                                \n\t" // MAIN LOOP
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t" // iteration 0
-	"prefetcht0   64 * 8(%%rax)                  \n\t"
-	"                                            \n\t"
-	"vbroadcastsd       0 *  8(%%rbx), %%ymm2    \n\t"
-	"vbroadcastsd       1 *  8(%%rbx), %%ymm3    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm2, %%ymm4    \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm2, %%ymm5    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm3, %%ymm6    \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm3, %%ymm7    \n\t"
-	"                                            \n\t"
-	"vbroadcastsd       2 *  8(%%rbx), %%ymm2    \n\t"
-	"vbroadcastsd       3 *  8(%%rbx), %%ymm3    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm2, %%ymm8    \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm2, %%ymm9    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm3, %%ymm10   \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm3, %%ymm11   \n\t"
-	"                                            \n\t"
-	"vbroadcastsd       4 *  8(%%rbx), %%ymm2    \n\t"
-	"vbroadcastsd       5 *  8(%%rbx), %%ymm3    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm2, %%ymm12   \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm2, %%ymm13   \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm3, %%ymm14   \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm3, %%ymm15   \n\t"
-	"                                            \n\t"
-	"vmovaps           -2 * 32(%%rax), %%ymm0    \n\t"
-	"vmovaps           -1 * 32(%%rax), %%ymm1    \n\t"
-	"                                            \n\t"
-	"                                            \n\t" // iteration 1
-	"vbroadcastsd       6 *  8(%%rbx), %%ymm2    \n\t"
-	"vbroadcastsd       7 *  8(%%rbx), %%ymm3    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm2, %%ymm4    \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm2, %%ymm5    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm3, %%ymm6    \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm3, %%ymm7    \n\t"
-	"                                            \n\t"
-	"vbroadcastsd       8 *  8(%%rbx), %%ymm2    \n\t"
-	"vbroadcastsd       9 *  8(%%rbx), %%ymm3    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm2, %%ymm8    \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm2, %%ymm9    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm3, %%ymm10   \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm3, %%ymm11   \n\t"
-	"                                            \n\t"
-	"vbroadcastsd      10 *  8(%%rbx), %%ymm2    \n\t"
-	"vbroadcastsd      11 *  8(%%rbx), %%ymm3    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm2, %%ymm12   \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm2, %%ymm13   \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm3, %%ymm14   \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm3, %%ymm15   \n\t"
-	"                                            \n\t"
-	"vmovaps            0 * 32(%%rax), %%ymm0    \n\t"
-	"vmovaps            1 * 32(%%rax), %%ymm1    \n\t"
-	"                                            \n\t"
-	"                                            \n\t" // iteration 2
-	"prefetcht0   76 * 8(%%rax)                  \n\t"
-	"                                            \n\t"
-	"vbroadcastsd      12 *  8(%%rbx), %%ymm2    \n\t"
-	"vbroadcastsd      13 *  8(%%rbx), %%ymm3    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm2, %%ymm4    \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm2, %%ymm5    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm3, %%ymm6    \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm3, %%ymm7    \n\t"
-	"                                            \n\t"
-	"vbroadcastsd      14 *  8(%%rbx), %%ymm2    \n\t"
-	"vbroadcastsd      15 *  8(%%rbx), %%ymm3    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm2, %%ymm8    \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm2, %%ymm9    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm3, %%ymm10   \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm3, %%ymm11   \n\t"
-	"                                            \n\t"
-	"vbroadcastsd      16 *  8(%%rbx), %%ymm2    \n\t"
-	"vbroadcastsd      17 *  8(%%rbx), %%ymm3    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm2, %%ymm12   \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm2, %%ymm13   \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm3, %%ymm14   \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm3, %%ymm15   \n\t"
-	"                                            \n\t"
-	"vmovaps            2 * 32(%%rax), %%ymm0    \n\t"
-	"vmovaps            3 * 32(%%rax), %%ymm1    \n\t"
-	"                                            \n\t"
-	"                                            \n\t" // iteration 3
-	"vbroadcastsd      18 *  8(%%rbx), %%ymm2    \n\t"
-	"vbroadcastsd      19 *  8(%%rbx), %%ymm3    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm2, %%ymm4    \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm2, %%ymm5    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm3, %%ymm6    \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm3, %%ymm7    \n\t"
-	"                                            \n\t"
-	"vbroadcastsd      20 *  8(%%rbx), %%ymm2    \n\t"
-	"vbroadcastsd      21 *  8(%%rbx), %%ymm3    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm2, %%ymm8    \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm2, %%ymm9    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm3, %%ymm10   \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm3, %%ymm11   \n\t"
-	"                                            \n\t"
-	"vbroadcastsd      22 *  8(%%rbx), %%ymm2    \n\t"
-	"vbroadcastsd      23 *  8(%%rbx), %%ymm3    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm2, %%ymm12   \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm2, %%ymm13   \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm3, %%ymm14   \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm3, %%ymm15   \n\t"
-	"                                            \n\t"
-	"addq           $4 * 8 * 8, %%rax            \n\t" // a += 4*8 (unroll x mr)
-	"addq           $4 * 6 * 8, %%rbx            \n\t" // b += 4*6 (unroll x nr)
-	"                                            \n\t"
-	"vmovaps           -4 * 32(%%rax), %%ymm0    \n\t"
-	"vmovaps           -3 * 32(%%rax), %%ymm1    \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"decq   %%rsi                                \n\t" // i -= 1;
-	"jne    .DLOOPKITER                          \n\t" // iterate again if i != 0.
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	".DCONSIDKLEFT:                              \n\t"
-	"                                            \n\t"
-	"movq      %1, %%rsi                         \n\t" // i = k_left;
-	"testq  %%rsi, %%rsi                         \n\t" // check i via logical AND.
-	"je     .DPOSTACCUM                          \n\t" // if i == 0, we're done; jump to end.
-	"                                            \n\t" // else, we prepare to enter k_left loop.
-	"                                            \n\t"
-	"                                            \n\t"
-	".DLOOPKLEFT:                                \n\t" // EDGE LOOP
-	"                                            \n\t"
-	"prefetcht0   64 * 8(%%rax)                  \n\t"
-	"                                            \n\t"
-	"vbroadcastsd       0 *  8(%%rbx), %%ymm2    \n\t"
-	"vbroadcastsd       1 *  8(%%rbx), %%ymm3    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm2, %%ymm4    \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm2, %%ymm5    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm3, %%ymm6    \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm3, %%ymm7    \n\t"
-	"                                            \n\t"
-	"vbroadcastsd       2 *  8(%%rbx), %%ymm2    \n\t"
-	"vbroadcastsd       3 *  8(%%rbx), %%ymm3    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm2, %%ymm8    \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm2, %%ymm9    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm3, %%ymm10   \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm3, %%ymm11   \n\t"
-	"                                            \n\t"
-	"vbroadcastsd       4 *  8(%%rbx), %%ymm2    \n\t"
-	"vbroadcastsd       5 *  8(%%rbx), %%ymm3    \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm2, %%ymm12   \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm2, %%ymm13   \n\t"
-	"vfmadd231pd       %%ymm0, %%ymm3, %%ymm14   \n\t"
-	"vfmadd231pd       %%ymm1, %%ymm3, %%ymm15   \n\t"
-	"                                            \n\t"
-	"addq           $1 * 8 * 8, %%rax            \n\t" // a += 1*8 (unroll x mr)
-	"addq           $1 * 6 * 8, %%rbx            \n\t" // b += 1*6 (unroll x nr)
-	"                                            \n\t"
-	"vmovaps           -4 * 32(%%rax), %%ymm0    \n\t"
-	"vmovaps           -3 * 32(%%rax), %%ymm1    \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"decq   %%rsi                                \n\t" // i -= 1;
-	"jne    .DLOOPKLEFT                          \n\t" // iterate again if i != 0.
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	".DPOSTACCUM:                                \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"movq         %4, %%rax                      \n\t" // load address of alpha
-	"movq         %5, %%rbx                      \n\t" // load address of beta 
-	"vbroadcastsd    (%%rax), %%ymm0             \n\t" // load alpha and duplicate
-	"vbroadcastsd    (%%rbx), %%ymm3             \n\t" // load beta and duplicate
-	"                                            \n\t"
-	"vmulpd           %%ymm0,  %%ymm4,  %%ymm4   \n\t" // scale by alpha
-	"vmulpd           %%ymm0,  %%ymm5,  %%ymm5   \n\t"
-	"vmulpd           %%ymm0,  %%ymm6,  %%ymm6   \n\t"
-	"vmulpd           %%ymm0,  %%ymm7,  %%ymm7   \n\t"
-	"vmulpd           %%ymm0,  %%ymm8,  %%ymm8   \n\t"
-	"vmulpd           %%ymm0,  %%ymm9,  %%ymm9   \n\t"
-	"vmulpd           %%ymm0,  %%ymm10, %%ymm10  \n\t"
-	"vmulpd           %%ymm0,  %%ymm11, %%ymm11  \n\t"
-	"vmulpd           %%ymm0,  %%ymm12, %%ymm12  \n\t"
-	"vmulpd           %%ymm0,  %%ymm13, %%ymm13  \n\t"
-	"vmulpd           %%ymm0,  %%ymm14, %%ymm14  \n\t"
-	"vmulpd           %%ymm0,  %%ymm15, %%ymm15  \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"movq                %7, %%rsi               \n\t" // load rs_c
-	"leaq        (,%%rsi,8), %%rsi               \n\t" // rsi = rs_c * sizeof(double)
-	"                                            \n\t"
-	"leaq   (%%rcx,%%rsi,4), %%rdx               \n\t" // load address of c +  4*rs_c;
-	"                                            \n\t"
-	"leaq   (%%rsi,%%rsi,2), %%r13               \n\t" // r13 = 3*rs_c;
-	//"leaq   (%%rsi,%%rsi,4), %%r15               \n\t" // r15 = 5*rs_c;
-	//"leaq   (%%r13,%%rsi,4), %%r10               \n\t" // r10 = 7*rs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t" // determine if
-	"                                            \n\t" //    c    % 32 == 0, AND
-	"                                            \n\t" //  8*cs_c % 32 == 0, AND
-	"                                            \n\t" //    rs_c      == 1
-	"                                            \n\t" // ie: aligned, ldim aligned, and
-	"                                            \n\t" // column-stored
-	"                                            \n\t"
-	"cmpq       $8, %%rsi                        \n\t" // set ZF if (8*rs_c) == 8.
-	"sete           %%bl                         \n\t" // bl = ( ZF == 1 ? 1 : 0 );
-	"testq     $31, %%rcx                        \n\t" // set ZF if c & 32 is zero.
-	"setz           %%bh                         \n\t" // bh = ( ZF == 0 ? 1 : 0 );
-	"testq     $31, %%rdi                        \n\t" // set ZF if (8*cs_c) & 32 is zero.
-	"setz           %%al                         \n\t" // al = ( ZF == 0 ? 1 : 0 );
-	"                                            \n\t" // and(bl,bh) followed by
-	"                                            \n\t" // and(bh,al) will reveal result
-	"                                            \n\t"
-	"                                            \n\t" // now avoid loading C if beta == 0
-	"                                            \n\t"
-	"vxorpd    %%ymm0,  %%ymm0,  %%ymm0          \n\t" // set ymm0 to zero.
-	"vucomisd  %%xmm0,  %%xmm3                   \n\t" // set ZF if beta == 0.
-	"je      .DBETAZERO                          \n\t" // if ZF = 1, jump to beta == 0 case
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t" // check if aligned/column-stored
-	"andb     %%bl, %%bh                         \n\t" // set ZF if bl & bh == 1.
-	"andb     %%bh, %%al                         \n\t" // set ZF if bh & al == 1.
-	"jne     .DCOLSTORED                         \n\t" // jump to column storage case
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	".DGENSTORED:                                \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	DGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213pd      %%ymm4,  %%ymm3,  %%ymm0   \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	DGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213pd      %%ymm6,  %%ymm3,  %%ymm0   \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	DGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213pd      %%ymm8,  %%ymm3,  %%ymm0   \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	DGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213pd      %%ymm10, %%ymm3,  %%ymm0   \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	DGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213pd      %%ymm12, %%ymm3,  %%ymm0   \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	DGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213pd      %%ymm14, %%ymm3,  %%ymm0   \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	//"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"movq      %%rdx, %%rcx                      \n\t" // rcx = c + 4*rs_c
-	"                                            \n\t"
-	"                                            \n\t"
-	DGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213pd      %%ymm5,  %%ymm3,  %%ymm0   \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	DGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213pd      %%ymm7,  %%ymm3,  %%ymm0   \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	DGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213pd      %%ymm9,  %%ymm3,  %%ymm0   \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	DGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213pd      %%ymm11, %%ymm3,  %%ymm0   \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	DGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213pd      %%ymm13, %%ymm3,  %%ymm0   \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	DGEMM_INPUT_GS_BETA_NZ
-	"vfmadd213pd      %%ymm15, %%ymm3,  %%ymm0   \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	//"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"jmp    .DDONE                               \n\t" // jump to end.
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	".DCOLSTORED:                                \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps    (%%rcx),       %%ymm0            \n\t"
-	"vfmadd213pd      %%ymm4,  %%ymm3,  %%ymm0   \n\t"
-	"vmovaps          %%ymm0,  (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps    (%%rdx),       %%ymm1            \n\t"
-	"vfmadd213pd      %%ymm5,  %%ymm3,  %%ymm1   \n\t"
-	"vmovaps          %%ymm1,  (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps    (%%rcx),       %%ymm0            \n\t"
-	"vfmadd213pd      %%ymm6,  %%ymm3,  %%ymm0   \n\t"
-	"vmovaps          %%ymm0,  (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps    (%%rdx),       %%ymm1            \n\t"
-	"vfmadd213pd      %%ymm7,  %%ymm3,  %%ymm1   \n\t"
-	"vmovaps          %%ymm1,  (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps    (%%rcx),       %%ymm0            \n\t"
-	"vfmadd213pd      %%ymm8,  %%ymm3,  %%ymm0   \n\t"
-	"vmovaps          %%ymm0,  (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps    (%%rdx),       %%ymm1            \n\t"
-	"vfmadd213pd      %%ymm9,  %%ymm3,  %%ymm1   \n\t"
-	"vmovaps          %%ymm1,  (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps    (%%rcx),       %%ymm0            \n\t"
-	"vfmadd213pd      %%ymm10, %%ymm3,  %%ymm0   \n\t"
-	"vmovaps          %%ymm0,  (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps    (%%rdx),       %%ymm1            \n\t"
-	"vfmadd213pd      %%ymm11, %%ymm3,  %%ymm1   \n\t"
-	"vmovaps          %%ymm1,  (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps    (%%rcx),       %%ymm0            \n\t"
-	"vfmadd213pd      %%ymm12, %%ymm3,  %%ymm0   \n\t"
-	"vmovaps          %%ymm0,  (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps    (%%rdx),       %%ymm1            \n\t"
-	"vfmadd213pd      %%ymm13, %%ymm3,  %%ymm1   \n\t"
-	"vmovaps          %%ymm1,  (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps    (%%rcx),       %%ymm0            \n\t"
-	"vfmadd213pd      %%ymm14, %%ymm3,  %%ymm0   \n\t"
-	"vmovaps          %%ymm0,  (%%rcx)           \n\t"
-	//"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps    (%%rdx),       %%ymm1            \n\t"
-	"vfmadd213pd      %%ymm15, %%ymm3,  %%ymm1   \n\t"
-	"vmovaps          %%ymm1,  (%%rdx)           \n\t"
-	//"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"jmp    .DDONE                               \n\t" // jump to end.
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	".DBETAZERO:                                 \n\t"
-	"                                            \n\t" // check if aligned/column-stored
-	"andb     %%bl, %%bh                         \n\t" // set ZF if bl & bh == 1.
-	"andb     %%bh, %%al                         \n\t" // set ZF if bh & al == 1.
-	"jne     .DCOLSTORBZ                         \n\t" // jump to column storage case
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	".DGENSTORBZ:                                \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm4,  %%ymm0           \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm6,  %%ymm0           \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm8,  %%ymm0           \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm10, %%ymm0           \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm12, %%ymm0           \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm14, %%ymm0           \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	//"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"movq      %%rdx, %%rcx                      \n\t" // rcx = c + 4*rs_c
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm5,  %%ymm0           \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm7,  %%ymm0           \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm9,  %%ymm0           \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm11, %%ymm0           \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm13, %%ymm0           \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps           %%ymm15, %%ymm0           \n\t"
-	DGEMM_OUTPUT_GS_BETA_NZ
-	//"addq      %%rdi, %%rcx                      \n\t" // c += cs_c;
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"jmp    .DDONE                               \n\t" // jump to end.
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	".DCOLSTORBZ:                                \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps          %%ymm4,  (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps          %%ymm5,  (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"vmovaps          %%ymm6,  (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps          %%ymm7,  (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps          %%ymm8,  (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps          %%ymm9,  (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps          %%ymm10, (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps          %%ymm11, (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps          %%ymm12, (%%rcx)           \n\t"
-	"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps          %%ymm13, (%%rdx)           \n\t"
-	"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"vmovaps          %%ymm14, (%%rcx)           \n\t"
-	//"addq      %%rdi, %%rcx                      \n\t"
-	"vmovaps          %%ymm15, (%%rdx)           \n\t"
-	//"addq      %%rdi, %%rdx                      \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	"                                            \n\t"
-	".DDONE:                                     \n\t"
-	"                                            \n\t"
+    BEGIN_ASM
 
-	: // output operands (none)
-	: // input operands
-	  "m" (k_iter), // 0
-	  "m" (k_left), // 1
-	  "m" (a),      // 2
-	  "m" (b),      // 3
-	  "m" (alpha),  // 4
-	  "m" (beta),   // 5
-	  "m" (c),      // 6
-	  "m" (rs_c),   // 7
-	  "m" (cs_c)/*,   // 8
-	  "m" (b_next), // 9
-	  "m" (a_next)*/  // 10
-	: // register clobber list
-	  "rax", "rbx", "rcx", "rdx", "rsi", "rdi", 
-	  "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
-	  "xmm0", "xmm1", "xmm2", "xmm3",
-	  "xmm4", "xmm5", "xmm6", "xmm7",
-	  "xmm8", "xmm9", "xmm10", "xmm11",
-	  "xmm12", "xmm13", "xmm14", "xmm15",
-	  "memory"
-	);
+    VZEROALL()
+
+    MOV(RAX, VAR(b))
+    MOV(RBX, VAR(a))
+
+    VMOVAPS(YMM(0), MEM(RBX,0*32)) // initialize loop by pre-loading
+    VMOVAPS(YMM(1), MEM(RBX,1*32))
+
+    ADD(RBX, IMM(32*6))
+
+    MOV(RCX, VAR(c))
+    MOV(RDI, VAR(rs_c))
+    MOV(RSI, VAR(cs_c))
+    LEA(RDI, MEM(,RDI,8)) // rs_c *= sizeof(double)
+    LEA(RSI, MEM(,RSI,8)) // cs_c *= sizeof(double)
+
+    CMP(RSI, IMM(4))
+    JNE(.DROWSTORPF)
+
+        LEA(R13, MEM(RDI,RDI,2)) // r13 = 3*cs_c
+        MOV(RDX, RCX)
+
+        PREFETCH(0, MEM(RDX      ))
+        PREFETCH(0, MEM(RDX,RDI,1))
+        PREFETCH(0, MEM(RDX,RDI,2))
+        LEA(RDX, MEM(RDX,R13,1))
+        PREFETCH(0, MEM(RDX      ))
+        PREFETCH(0, MEM(RDX,RDI,1))
+        PREFETCH(0, MEM(RDX,RDI,2))
+        LEA(RDX, MEM(RDX,R13,1))
+        PREFETCH(1, MEM(RDX      ))
+        PREFETCH(1, MEM(RDX,RDI,1))
+        PREFETCH(1, MEM(RDX,RDI,2))
+        LEA(RDX, MEM(RDX,R13,1))
+        PREFETCH(1, MEM(RDX      ))
+        PREFETCH(1, MEM(RDX,RDI,1))
+        PREFETCH(1, MEM(RDX,RDI,2))
+
+    JMP(.DACCUM)
+    LABEL(.DROWSTORPF)
+
+        LEA(R13, MEM(RSI,RSI,2)) // r13 = 3*rs_c
+        MOV(RDX, RCX)
+
+        PREFETCH(0, MEM(RDX      ))
+        PREFETCH(0, MEM(RDX,RSI,1))
+        PREFETCH(0, MEM(RDX,RSI,2))
+        PREFETCH(0, MEM(RDX,R13,1))
+        PREFETCH(1, MEM(RDX,      64))
+        PREFETCH(1, MEM(RDX,RSI,1,64))
+        PREFETCH(1, MEM(RDX,RSI,2,64))
+        PREFETCH(1, MEM(RDX,R13,1,64))
+        LEA(RDX, MEM(RDX,RSI,4))
+        PREFETCH(0, MEM(RDX      ))
+        PREFETCH(0, MEM(RDX,RSI,1))
+        PREFETCH(0, MEM(RDX,RSI,2))
+        PREFETCH(0, MEM(RDX,R13,1))
+        PREFETCH(1, MEM(RDX,      64))
+        PREFETCH(1, MEM(RDX,RSI,1,64))
+        PREFETCH(1, MEM(RDX,RSI,2,64))
+        PREFETCH(1, MEM(RDX,R13,1,64))
+
+    LABEL(.DACCUM)
+
+    MOV(RSI, VAR(k))
+    MOV(R8, RSI)
+    SAR(RSI, IMM(2))
+    JZ(.DCONSIDKLEFT)
+
+    LABEL(.DLOOPKITER)
+
+        PREFETCH(0, MEM(RBX,64*8))
+
+        DGEMM_ITERATION(0)
+
+        PREFETCH(0, MEM(RBX,72*8))
+
+        DGEMM_ITERATION(1)
+
+        PREFETCH(0, MEM(RBX,80*8))
+
+        DGEMM_ITERATION(2)
+
+        PREFETCH(0, MEM(RBX,88*8))
+
+        DGEMM_ITERATION(3)
+
+        ADD(RAX, IMM(4*6*8))
+        ADD(RBX, IMM(4*8*8))
+
+        DEC(RSI)
+
+    JNZ(.DLOOPKITER)
+
+    LABEL(.DCONSIDKLEFT)
+
+    MOV(RSI, R8)
+    AND(RSI, IMM(3))
+    JZ(.DPOSTACCUM)
+
+    LABEL(.DLOOPKLEFT)
+
+        PREFETCH(0, MEM(RBX,64*8))
+
+        DGEMM_ITERATION(0)
+
+        ADD(RAX, IMM(1*6*8))
+        ADD(RBX, IMM(1*8*8))
+
+        DEC(RSI)
+
+    JNZ(.DLOOPKLEFT)
+
+    LABEL(.DPOSTACCUM)
+
+    MOV(RAX, VAR(alpha))
+    MOV(RBX, VAR(beta))
+    VBROADCASTSD(YMM(0), MEM(RAX))
+    VBROADCASTSD(YMM(1), MEM(RBX))
+
+    VMULPD(YMM( 4), YMM( 4), YMM(0))
+    VMULPD(YMM( 5), YMM( 5), YMM(0))
+    VMULPD(YMM( 6), YMM( 6), YMM(0))
+    VMULPD(YMM( 7), YMM( 7), YMM(0))
+    VMULPD(YMM( 8), YMM( 8), YMM(0))
+    VMULPD(YMM( 9), YMM( 9), YMM(0))
+    VMULPD(YMM(10), YMM(10), YMM(0))
+    VMULPD(YMM(11), YMM(11), YMM(0))
+    VMULPD(YMM(12), YMM(12), YMM(0))
+    VMULPD(YMM(13), YMM(13), YMM(0))
+    VMULPD(YMM(14), YMM(14), YMM(0))
+    VMULPD(YMM(15), YMM(15), YMM(0))
+
+    MOV(RSI, VAR(rs_c))
+    LEA(RSI, MEM(,RSI,8))
+
+    LEA(RDX, MEM(RCX,RSI,4))
+
+    LEA(R13, MEM(RSI,RSI,2))
+
+    VXORPD(YMM(0), YMM(0), YMM(0))
+    VUCOMISD(XMM(1), XMM(0))
+    JZ(.DBETAZERO)
+
+        CMP(RSI, IMM(8))
+        JE(.DCOLSTORED)
+
+        CMP(RDI, IMM(8))
+        JE(.DROWSTORED)
+
+        LABEL(.DGENSTORED)
+
+            DGEMM_GS(4)
+            ADD(RCX, RDI)
+            DGEMM_GS(6)
+            ADD(RCX, RDI)
+            DGEMM_GS(8)
+            ADD(RCX, RDI)
+            DGEMM_GS(10)
+            ADD(RCX, RDI)
+            DGEMM_GS(12)
+            ADD(RCX, RDI)
+            DGEMM_GS(14)
+            MOV(RCX, RDX)
+            DGEMM_GS(5)
+            ADD(RCX, RDI)
+            DGEMM_GS(7)
+            ADD(RCX, RDI)
+            DGEMM_GS(9)
+            ADD(RCX, RDI)
+            DGEMM_GS(11)
+            ADD(RCX, RDI)
+            DGEMM_GS(13)
+            ADD(RCX, RDI)
+            DGEMM_GS(15)
+
+        JMP(.DDONE)
+        LABEL(.DCOLSTORED)
+
+            VFMADD231PD(YMM(4), YMM(1), MEM(RCX))
+            VFMADD231PD(YMM(5), YMM(1), MEM(RDX))
+            VMOVUPD(MEM(RCX), YMM(4))
+            VMOVUPD(MEM(RDX), YMM(5))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VFMADD231PD(YMM(6), YMM(1), MEM(RCX))
+            VFMADD231PD(YMM(7), YMM(1), MEM(RDX))
+            VMOVUPD(MEM(RCX), YMM(6))
+            VMOVUPD(MEM(RDX), YMM(7))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VFMADD231PD(YMM(8), YMM(1), MEM(RCX))
+            VFMADD231PD(YMM(9), YMM(1), MEM(RDX))
+            VMOVUPD(MEM(RCX), YMM(8))
+            VMOVUPD(MEM(RDX), YMM(9))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VFMADD231PD(YMM(10), YMM(1), MEM(RCX))
+            VFMADD231PD(YMM(11), YMM(1), MEM(RDX))
+            VMOVUPD(MEM(RCX), YMM(10))
+            VMOVUPD(MEM(RDX), YMM(11))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VFMADD231PD(YMM(12), YMM(1), MEM(RCX))
+            VFMADD231PD(YMM(13), YMM(1), MEM(RDX))
+            VMOVUPD(MEM(RCX), YMM(12))
+            VMOVUPD(MEM(RDX), YMM(13))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VFMADD231PD(YMM(14), YMM(1), MEM(RCX))
+            VFMADD231PD(YMM(15), YMM(1), MEM(RDX))
+            VMOVUPD(MEM(RCX), YMM(14))
+            VMOVUPD(MEM(RDX), YMM(15))
+
+        JMP(.DDONE)
+        LABEL(.DROWSTORED)
+
+            //
+            // Transpose and write out in four quadrants:
+            //
+            // +---------------+---------------+
+            // |c00-c01-c02-c03|c04-c05-c06-c07|
+            // |               |               |      +------+------+
+            // |c10-c11-c12-c13|c14-c15-c16-c17|      |      |      |
+            // |               |               |      |  Q1  |  Q3  |
+            // |c20-c21-c22-c23|c24-c25-c26-c27|      |      |      |
+            // |               |               |   =  +------+------+
+            // |c30-c31-c32-c33|c34-c35-c36-c37|      |      |      |
+            // +---------------+---------------+      |  Q2  |  Q4  |
+            // |c40-c41-c42-c43|c44-c45-c46-c47|      |      |      |
+            // |               |               |      +------+------+
+            // |c50-c51-c52-c53|c54-c55-c56-c57|
+            // +---------------+---------------+
+            //
+            //                ||
+            //                \/
+            //
+            // +---------------+---------------+
+            // |c00 c01 c02 c03|c04 c05 c06 c07|
+            // | |   |   |   | | |   |   |   | |
+            // |c10 c11 c12 c13|c14 c15 c16 c17|
+            // | |   |   |   | | |   |   |   | |
+            // |c20 c21 c22 c23|c24 c25 c26 c27|
+            // | |   |   |   | | |   |   |   | |
+            // |c30 c31 c32 c33|c34 c35 c36 c37|
+            // +---------------+---------------+
+            // |c40 c41 c42 c43|c44 c45 c46 c47|
+            // | |   |   |   | | |   |   |   | |
+            // |c50 c51 c52 c53|c54 c55 c56 c57|
+            // +---------------+---------------+
+            //
+
+            VUNPCKLPD(YMM(2), YMM(4), YMM( 6))
+            VUNPCKHPD(YMM(6), YMM(4), YMM( 6))
+            VUNPCKHPD(YMM(3), YMM(8), YMM(10))
+            VUNPCKLPD(YMM(8), YMM(8), YMM(10))
+            VPERM2F128(YMM( 4), YMM(2), YMM(8), IMM(0x21))
+            VPERM2F128(YMM(10), YMM(6), YMM(3), IMM(0x21))
+            VBLENDPD(YMM( 8), YMM( 8), YMM( 4), IMM(0x3))
+            VBLENDPD(YMM( 4), YMM( 4), YMM( 2), IMM(0x3))
+            VBLENDPD(YMM( 6), YMM(10), YMM( 6), IMM(0x3))
+            VBLENDPD(YMM(10), YMM( 3), YMM(10), IMM(0x3))
+            VFMADD231PD(YMM( 4), YMM(1), MEM(RCX      ))
+            VFMADD231PD(YMM( 6), YMM(1), MEM(RCX,RSI,1))
+            VFMADD231PD(YMM( 8), YMM(1), MEM(RCX,RSI,2))
+            VFMADD231PD(YMM(10), YMM(1), MEM(RCX,R13,1))
+            VMOVUPD(MEM(RCX      ), YMM( 4))
+            VMOVUPD(MEM(RCX,RSI,1), YMM( 6))
+            VMOVUPD(MEM(RCX,RSI,2), YMM( 8))
+            VMOVUPD(MEM(RCX,R13,1), YMM(10))
+
+            VUNPCKLPD(YMM(2), YMM(12), YMM(14))
+            VUNPCKHPD(YMM(3), YMM(12), YMM(14))
+            VMOVUPD(XMM(12), MEM(RCX,      32))
+            VMOVUPD(XMM(14), MEM(RCX,RSI,1,32))
+            VINSERTF128(YMM(12), YMM(12), MEM(RCX,RSI,2,32), IMM(1))
+            VINSERTF128(YMM(14), YMM(14), MEM(RCX,R13,1,32), IMM(1))
+            VFMADD231PD(YMM(2), YMM(1), YMM(12))
+            VFMADD231PD(YMM(3), YMM(1), YMM(14))
+            VMOVUPD(MEM(RCX,      32), XMM(2))
+            VMOVUPD(MEM(RCX,RSI,1,32), XMM(3))
+            VEXTRACTF128(MEM(RCX,RSI,2,32), YMM(2), IMM(1))
+            VEXTRACTF128(MEM(RCX,R13,1,32), YMM(3), IMM(1))
+
+            VUNPCKLPD(YMM(2), YMM(5), YMM( 7))
+            VUNPCKHPD(YMM(7), YMM(5), YMM( 7))
+            VUNPCKHPD(YMM(3), YMM(9), YMM(11))
+            VUNPCKLPD(YMM(9), YMM(9), YMM(11))
+            VPERM2F128(YMM( 5), YMM(2), YMM(9), IMM(0x21))
+            VPERM2F128(YMM(11), YMM(7), YMM(3), IMM(0x21))
+            VBLENDPD(YMM( 9), YMM( 9), YMM( 5), IMM(0x3))
+            VBLENDPD(YMM( 5), YMM( 5), YMM( 2), IMM(0x3))
+            VBLENDPD(YMM( 7), YMM(11), YMM( 7), IMM(0x3))
+            VBLENDPD(YMM(11), YMM( 3), YMM(11), IMM(0x3))
+            VFMADD231PD(YMM( 5), YMM(1), MEM(RDX      ))
+            VFMADD231PD(YMM( 7), YMM(1), MEM(RDX,RSI,1))
+            VFMADD231PD(YMM( 9), YMM(1), MEM(RDX,RSI,2))
+            VFMADD231PD(YMM(11), YMM(1), MEM(RDX,R13,1))
+            VMOVUPD(MEM(RDX      ), YMM( 5))
+            VMOVUPD(MEM(RDX,RSI,1), YMM( 7))
+            VMOVUPD(MEM(RDX,RSI,2), YMM( 9))
+            VMOVUPD(MEM(RDX,R13,1), YMM(11))
+
+            VUNPCKLPD(YMM(2), YMM(13), YMM(15))
+            VUNPCKHPD(YMM(3), YMM(13), YMM(15))
+            VMOVUPD(XMM(13), MEM(RDX,      32))
+            VMOVUPD(XMM(15), MEM(RDX,RSI,1,32))
+            VINSERTF128(YMM(13), YMM(13), MEM(RDX,RSI,2,32), IMM(1))
+            VINSERTF128(YMM(15), YMM(15), MEM(RDX,R13,1,32), IMM(1))
+            VFMADD231PD(YMM(2), YMM(1), YMM(13))
+            VFMADD231PD(YMM(3), YMM(1), YMM(15))
+            VMOVUPD(MEM(RDX,      32), XMM(2))
+            VMOVUPD(MEM(RDX,RSI,1,32), XMM(3))
+            VEXTRACTF128(MEM(RDX,RSI,2,32), YMM(2), IMM(1))
+            VEXTRACTF128(MEM(RDX,R13,1,32), YMM(3), IMM(1))
+
+    JMP(.DDONE)
+    LABEL(.DBETAZERO)
+
+        CMP(RSI, IMM(8))
+        JE(.DCOLSTORBZ)
+
+        CMP(RDI, IMM(8))
+        JE(.DROWSTORBZ)
+
+        LABEL(.DGENSTORBZ)
+
+            DGEMM_GS_BZ(4)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(6)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(8)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(10)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(12)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(14)
+            MOV(RCX, RDX)
+            DGEMM_GS_BZ(5)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(7)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(9)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(11)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(13)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(15)
+
+        JMP(.DDONE)
+        LABEL(.DCOLSTORBZ)
+
+            VMOVUPD(MEM(RCX), YMM(4))
+            VMOVUPD(MEM(RDX), YMM(5))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VMOVUPD(MEM(RCX), YMM(6))
+            VMOVUPD(MEM(RDX), YMM(7))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VMOVUPD(MEM(RCX), YMM(8))
+            VMOVUPD(MEM(RDX), YMM(9))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VMOVUPD(MEM(RCX), YMM(10))
+            VMOVUPD(MEM(RDX), YMM(11))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VMOVUPD(MEM(RCX), YMM(12))
+            VMOVUPD(MEM(RDX), YMM(13))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VMOVUPD(MEM(RCX), YMM(14))
+            VMOVUPD(MEM(RDX), YMM(15))
+
+        JMP(.DDONE)
+        LABEL(.DROWSTORBZ)
+
+            //
+            // Transpose and write out in four quadrants:
+            //
+            // +---------------+---------------+
+            // |c00-c01-c02-c03|c04-c05-c06-c07|
+            // |               |               |      +------+------+
+            // |c10-c11-c12-c13|c14-c15-c16-c17|      |      |      |
+            // |               |               |      |  Q1  |  Q3  |
+            // |c20-c21-c22-c23|c24-c25-c26-c27|      |      |      |
+            // |               |               |   =  +------+------+
+            // |c30-c31-c32-c33|c34-c35-c36-c37|      |      |      |
+            // +---------------+---------------+      |  Q2  |  Q4  |
+            // |c40-c41-c42-c43|c44-c45-c46-c47|      |      |      |
+            // |               |               |      +------+------+
+            // |c50-c51-c52-c53|c54-c55-c56-c57|
+            // +---------------+---------------+
+            //
+            //                ||
+            //                \/
+            //
+            // +---------------+---------------+
+            // |c00 c01 c02 c03|c04 c05 c06 c07|
+            // | |   |   |   | | |   |   |   | |
+            // |c10 c11 c12 c13|c14 c15 c16 c17|
+            // | |   |   |   | | |   |   |   | |
+            // |c20 c21 c22 c23|c24 c25 c26 c27|
+            // | |   |   |   | | |   |   |   | |
+            // |c30 c31 c32 c33|c34 c35 c36 c37|
+            // +---------------+---------------+
+            // |c40 c41 c42 c43|c44 c45 c46 c47|
+            // | |   |   |   | | |   |   |   | |
+            // |c50 c51 c52 c53|c54 c55 c56 c57|
+            // +---------------+---------------+
+            //
+
+            VUNPCKLPD(YMM(2), YMM(4), YMM( 6))
+            VUNPCKHPD(YMM(6), YMM(4), YMM( 6))
+            VUNPCKHPD(YMM(3), YMM(8), YMM(10))
+            VUNPCKLPD(YMM(8), YMM(8), YMM(10))
+            VPERM2F128(YMM( 4), YMM(2), YMM(8), IMM(0x21))
+            VPERM2F128(YMM(10), YMM(6), YMM(3), IMM(0x21))
+            VBLENDPD(YMM( 8), YMM( 8), YMM( 4), IMM(0x3))
+            VBLENDPD(YMM( 4), YMM( 4), YMM( 2), IMM(0x3))
+            VBLENDPD(YMM( 6), YMM(10), YMM( 6), IMM(0x3))
+            VBLENDPD(YMM(10), YMM( 3), YMM(10), IMM(0x3))
+            VMOVUPD(MEM(RCX      ), YMM( 4))
+            VMOVUPD(MEM(RCX,RSI,1), YMM( 6))
+            VMOVUPD(MEM(RCX,RSI,2), YMM( 8))
+            VMOVUPD(MEM(RCX,R13,1), YMM(10))
+
+            VUNPCKLPD(YMM(2), YMM(12), YMM(14))
+            VUNPCKHPD(YMM(3), YMM(12), YMM(14))
+            VMOVUPD(MEM(RCX,      32), XMM(2))
+            VMOVUPD(MEM(RCX,RSI,1,32), XMM(3))
+            VEXTRACTF128(MEM(RCX,RSI,2,32), YMM(2), IMM(1))
+            VEXTRACTF128(MEM(RCX,R13,1,32), YMM(3), IMM(1))
+
+            VUNPCKLPD(YMM(2), YMM(5), YMM( 7))
+            VUNPCKHPD(YMM(7), YMM(5), YMM( 7))
+            VUNPCKHPD(YMM(3), YMM(9), YMM(11))
+            VUNPCKLPD(YMM(9), YMM(9), YMM(11))
+            VPERM2F128(YMM( 5), YMM(2), YMM(9), IMM(0x21))
+            VPERM2F128(YMM(11), YMM(7), YMM(3), IMM(0x21))
+            VBLENDPD(YMM( 9), YMM( 9), YMM( 5), IMM(0x3))
+            VBLENDPD(YMM( 5), YMM( 5), YMM( 2), IMM(0x3))
+            VBLENDPD(YMM( 7), YMM(11), YMM( 7), IMM(0x3))
+            VBLENDPD(YMM(11), YMM( 3), YMM(11), IMM(0x3))
+            VMOVUPD(MEM(RDX      ), YMM( 5))
+            VMOVUPD(MEM(RDX,RSI,1), YMM( 7))
+            VMOVUPD(MEM(RDX,RSI,2), YMM( 9))
+            VMOVUPD(MEM(RDX,R13,1), YMM(11))
+
+            VUNPCKLPD(YMM(2), YMM(13), YMM(15))
+            VUNPCKHPD(YMM(3), YMM(13), YMM(15))
+            VMOVUPD(MEM(RDX,      32), XMM(2))
+            VMOVUPD(MEM(RDX,RSI,1,32), XMM(3))
+            VEXTRACTF128(MEM(RDX,RSI,2,32), YMM(2), IMM(1))
+            VEXTRACTF128(MEM(RDX,R13,1,32), YMM(3), IMM(1))
+
+    LABEL(.DDONE)
+
+    VZEROUPPER()
+
+    END_ASM
+    (
+        : // output operands (none)
+        : // input operands
+          [k]     "m" (k),
+          [a]     "m" (a),
+          [b]     "m" (b),
+          [alpha] "m" (alpha),
+          [beta]  "m" (beta),
+          [c]     "m" (c),
+          [rs_c]  "m" (rs_c),
+          [cs_c]  "m" (cs_c)
+        : // register clobber list
+          "rax", "rbx", "rcx", "rdx", "rsi", "rdi",
+          "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
+          "xmm0", "xmm1", "xmm2", "xmm3",
+          "xmm4", "xmm5", "xmm6", "xmm7",
+          "xmm8", "xmm9", "xmm10", "xmm11",
+          "xmm12", "xmm13", "xmm14", "xmm15",
+          "memory"
+    )
 }
 
 #if 0
@@ -1279,11 +1298,11 @@ void bli_cgemm_asm_
        cntx_t*    restrict cntx
      )
 {
-	//void*   a_next = bli_auxinfo_next_a( data );
-	//void*   b_next = bli_auxinfo_next_b( data );
+    //void*   a_next = bli_auxinfo_next_a( data );
+    //void*   b_next = bli_auxinfo_next_b( data );
 
-	//dim_t   k_iter = k / 4;
-	//dim_t   k_left = k % 4;
+    //dim_t   k_iter = k / 4;
+    //dim_t   k_left = k % 4;
 
 }
 
@@ -1301,11 +1320,11 @@ void bli_zgemm_asm_
        cntx_t*    restrict cntx
      )
 {
-	//void*   a_next = bli_auxinfo_next_a( data );
-	//void*   b_next = bli_auxinfo_next_b( data );
+    //void*   a_next = bli_auxinfo_next_a( data );
+    //void*   b_next = bli_auxinfo_next_b( data );
 
-	//dim_t   k_iter = k / 4;
-	//dim_t   k_left = k % 4;
+    //dim_t   k_iter = k / 4;
+    //dim_t   k_left = k % 4;
 
 }
 

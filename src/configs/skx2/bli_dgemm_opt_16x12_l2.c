@@ -427,7 +427,7 @@
 static int64_t offsets[16] __attribute__((aligned(64))) =
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15};
 
-void bli_dgemm_opt_12x16_l2(
+void bli_dgemm_opt_16x12_l2(
                              dim_t            k_,
                              double* restrict alpha,
                              double* restrict a,
@@ -475,8 +475,8 @@ void bli_dgemm_opt_12x16_l2(
     VMOVAPD(YMM(31), YMM(8))
 
     MOV(RSI, VAR(k)) //loop index
-    MOV(RAX, VAR(a)) //load address of a
-    MOV(RBX, VAR(b)) //load address of b
+    MOV(RAX, VAR(b)) //load address of b
+    MOV(RBX, VAR(a)) //load address of a
     MOV(RCX, VAR(c)) //load address of c
 
     TEST(RSI, RSI)
@@ -489,59 +489,59 @@ void bli_dgemm_opt_12x16_l2(
     VMOVAPD(ZMM(1), MEM(RBX, 8*8)) //pre-load b
     LEA(RBX, MEM(RBX,R9,1)) //adjust b for pre-load
 
-    MOV(R12, VAR(rs_c))
+    MOV(R12, VAR(cs_c))
     LEA(R12, MEM(,R12,8))
-    MOV(R10, VAR(cs_c))
+    MOV(R10, VAR(rs_c))
     LEA(R10, MEM(,R10,8))
 
     //prefetch C into L2 for the next jr iteration,
     //which is 16*cs_c elements ahead
 
     CMP(R12, IMM(8))
-    JE(COLSTORPF2)
+    JE(ROWSTORPF2)
 
         LEA(R13, MEM(R12,R12,2)) //*3
         LEA(R14, MEM(R12,R12,4)) //*5
         LEA(R15, MEM(R14,R12,2)) //*7
-        LEA(RDX, MEM(RCX,R12,8)) //c + 8*rs_c
-        PREFETCH(1, MEM(RCX,      2*64)) PREFETCH(1, MEM(RCX,      3*64))
-        PREFETCH(1, MEM(RCX,R12,1,2*64)) PREFETCH(1, MEM(RCX,R12,1,3*64))
-        PREFETCH(1, MEM(RCX,R12,2,2*64)) PREFETCH(1, MEM(RCX,R12,2,3*64))
-        PREFETCH(1, MEM(RCX,R13,1,2*64)) PREFETCH(1, MEM(RCX,R13,1,3*64))
-        PREFETCH(1, MEM(RCX,R12,4,2*64)) PREFETCH(1, MEM(RCX,R12,4,3*64))
-        PREFETCH(1, MEM(RCX,R14,1,2*64)) PREFETCH(1, MEM(RCX,R14,1,3*64))
-        PREFETCH(1, MEM(RCX,R13,2,2*64)) PREFETCH(1, MEM(RCX,R13,2,3*64))
-        PREFETCH(1, MEM(RCX,R15,1,2*64)) PREFETCH(1, MEM(RCX,R15,1,3*64))
-        PREFETCH(1, MEM(RDX,      2*64)) PREFETCH(1, MEM(RDX,      3*64))
-        PREFETCH(1, MEM(RDX,R12,1,2*64)) PREFETCH(1, MEM(RDX,R12,1,3*64))
-        PREFETCH(1, MEM(RDX,R12,2,2*64)) PREFETCH(1, MEM(RDX,R12,2,3*64))
-        PREFETCH(1, MEM(RDX,R13,1,2*64)) PREFETCH(1, MEM(RDX,R13,1,3*64))
+        LEA(RDX, MEM(RCX,R13,4)) //c + 12*cs_c
+        PREFETCH(1, MEM(RDX      )) PREFETCH(1, MEM(RDX,      64))
+        PREFETCH(1, MEM(RDX,R12,1)) PREFETCH(1, MEM(RDX,R12,1,64))
+        PREFETCH(1, MEM(RDX,R12,2)) PREFETCH(1, MEM(RDX,R12,2,64))
+        PREFETCH(1, MEM(RDX,R13,1)) PREFETCH(1, MEM(RDX,R13,1,64))
+        PREFETCH(1, MEM(RDX,R12,4)) PREFETCH(1, MEM(RDX,R12,4,64))
+        PREFETCH(1, MEM(RDX,R14,1)) PREFETCH(1, MEM(RDX,R14,1,64))
+        PREFETCH(1, MEM(RDX,R13,2)) PREFETCH(1, MEM(RDX,R13,2,64))
+        PREFETCH(1, MEM(RDX,R15,1)) PREFETCH(1, MEM(RDX,R15,1,64))
+        LEA(RDX, MEM(RDX,R12,8)) //c + 20*cs_c
+        PREFETCH(1, MEM(RDX      )) PREFETCH(1, MEM(RDX,      64))
+        PREFETCH(1, MEM(RDX,R12,1)) PREFETCH(1, MEM(RDX,R12,1,64))
+        PREFETCH(1, MEM(RDX,R12,2)) PREFETCH(1, MEM(RDX,R12,2,64))
+        PREFETCH(1, MEM(RDX,R13,1)) PREFETCH(1, MEM(RDX,R13,1,64))
 
     JMP(PFDONE2)
-    LABEL(COLSTORPF2)
+    LABEL(ROWSTORPF2)
 
         LEA(R13, MEM(R10,R10,2)) //*3
         LEA(R14, MEM(R10,R10,4)) //*5
         LEA(R15, MEM(R14,R10,2)) //*7
-        LEA(RDX, MEM(RCX,R10,8))
-        LEA(RDX, MEM(RDX,R10,8)) //c + 16*cs_c
-        PREFETCH(1, MEM(RDX      )) PREFETCH(1, MEM(RDX,      64))
-        PREFETCH(1, MEM(RDX,R10,1)) PREFETCH(1, MEM(RDX,R10,1,64))
-        PREFETCH(1, MEM(RDX,R10,2)) PREFETCH(1, MEM(RDX,R10,2,64))
-        PREFETCH(1, MEM(RDX,R13,1)) PREFETCH(1, MEM(RDX,R13,1,64))
-        PREFETCH(1, MEM(RDX,R10,4)) PREFETCH(1, MEM(RDX,R10,1,64))
-        PREFETCH(1, MEM(RDX,R14,1)) PREFETCH(1, MEM(RDX,R14,1,64))
-        PREFETCH(1, MEM(RDX,R13,2)) PREFETCH(1, MEM(RDX,R13,2,64))
-        PREFETCH(1, MEM(RDX,R15,1)) PREFETCH(1, MEM(RDX,R15,1,64))
-        LEA(RDX, MEM(RDX,R10,8)) //c + 24*cs_c
-        PREFETCH(1, MEM(RDX      )) PREFETCH(1, MEM(RDX,      64))
-        PREFETCH(1, MEM(RDX,R10,1)) PREFETCH(1, MEM(RDX,R10,1,64))
-        PREFETCH(1, MEM(RDX,R10,2)) PREFETCH(1, MEM(RDX,R10,2,64))
-        PREFETCH(1, MEM(RDX,R13,1)) PREFETCH(1, MEM(RDX,R13,1,64))
-        PREFETCH(1, MEM(RDX,R10,4)) PREFETCH(1, MEM(RDX,R10,1,64))
-        PREFETCH(1, MEM(RDX,R14,1)) PREFETCH(1, MEM(RDX,R14,1,64))
-        PREFETCH(1, MEM(RDX,R13,2)) PREFETCH(1, MEM(RDX,R13,2,64))
-        PREFETCH(1, MEM(RDX,R15,1)) PREFETCH(1, MEM(RDX,R15,1,64))
+        MOV(RDX, RCX)
+        PREFETCH(1, MEM(RDX,      96)) PREFETCH(1, MEM(RDX,      160))
+        PREFETCH(1, MEM(RDX,R10,1,96)) PREFETCH(1, MEM(RDX,R10,1,160))
+        PREFETCH(1, MEM(RDX,R10,2,96)) PREFETCH(1, MEM(RDX,R10,2,160))
+        PREFETCH(1, MEM(RDX,R13,1,96)) PREFETCH(1, MEM(RDX,R13,1,160))
+        PREFETCH(1, MEM(RDX,R10,4,96)) PREFETCH(1, MEM(RDX,R10,1,160))
+        PREFETCH(1, MEM(RDX,R14,1,96)) PREFETCH(1, MEM(RDX,R14,1,160))
+        PREFETCH(1, MEM(RDX,R13,2,96)) PREFETCH(1, MEM(RDX,R13,2,160))
+        PREFETCH(1, MEM(RDX,R15,1,96)) PREFETCH(1, MEM(RDX,R15,1,160))
+        LEA(RDX, MEM(RDX,R10,8)) //c + 8*rs_c
+        PREFETCH(1, MEM(RDX,      96)) PREFETCH(1, MEM(RDX,      160))
+        PREFETCH(1, MEM(RDX,R10,1,96)) PREFETCH(1, MEM(RDX,R10,1,160))
+        PREFETCH(1, MEM(RDX,R10,2,96)) PREFETCH(1, MEM(RDX,R10,2,160))
+        PREFETCH(1, MEM(RDX,R13,1,96)) PREFETCH(1, MEM(RDX,R13,1,160))
+        PREFETCH(1, MEM(RDX,R10,4,96)) PREFETCH(1, MEM(RDX,R10,1,160))
+        PREFETCH(1, MEM(RDX,R14,1,96)) PREFETCH(1, MEM(RDX,R14,1,160))
+        PREFETCH(1, MEM(RDX,R13,2,96)) PREFETCH(1, MEM(RDX,R13,2,160))
+        PREFETCH(1, MEM(RDX,R15,1,96)) PREFETCH(1, MEM(RDX,R15,1,160))
 
     LABEL(PFDONE2)
 
@@ -572,42 +572,44 @@ void bli_dgemm_opt_12x16_l2(
     //prefetch current C into L1
 
     CMP(R12, IMM(8))
-    JE(COLSTORPF)
-
-        PREFETCH(0, MEM(RCX,      0*64)) PREFETCH(0, MEM(RCX,      1*64))
-        PREFETCH(0, MEM(RCX,R12,1,0*64)) PREFETCH(0, MEM(RCX,R12,1,1*64))
-        PREFETCH(0, MEM(RCX,R12,2,0*64)) PREFETCH(0, MEM(RCX,R12,2,1*64))
-        PREFETCH(0, MEM(RCX,R13,1,0*64)) PREFETCH(0, MEM(RCX,R13,1,1*64))
-        PREFETCH(0, MEM(RCX,R12,4,0*64)) PREFETCH(0, MEM(RCX,R12,4,1*64))
-        PREFETCH(0, MEM(RCX,R14,1,0*64)) PREFETCH(0, MEM(RCX,R14,1,1*64))
-        PREFETCH(0, MEM(RCX,R13,2,0*64)) PREFETCH(0, MEM(RCX,R13,2,1*64))
-        PREFETCH(0, MEM(RCX,R15,1,0*64)) PREFETCH(0, MEM(RCX,R15,1,1*64))
-        PREFETCH(0, MEM(RDX,      0*64)) PREFETCH(0, MEM(RDX,      1*64))
-        PREFETCH(0, MEM(RDX,R12,1,0*64)) PREFETCH(0, MEM(RDX,R12,1,1*64))
-        PREFETCH(0, MEM(RDX,R12,2,0*64)) PREFETCH(0, MEM(RDX,R12,2,1*64))
-        PREFETCH(0, MEM(RDX,R13,1,0*64)) PREFETCH(0, MEM(RDX,R13,1,1*64))
-
-    JMP(PFDONE)
-    LABEL(COLSTORPF)
+    JE(ROWSTORPF)
 
         MOV(RDX, RCX)
-        PREFETCH(1, MEM(RDX      )) PREFETCH(1, MEM(RDX,      64))
-        PREFETCH(1, MEM(RDX,R10,1)) PREFETCH(1, MEM(RDX,R10,1,64))
-        PREFETCH(1, MEM(RDX,R10,2)) PREFETCH(1, MEM(RDX,R10,2,64))
-        PREFETCH(1, MEM(RDX,R13,1)) PREFETCH(1, MEM(RDX,R13,1,64))
-        PREFETCH(1, MEM(RDX,R10,4)) PREFETCH(1, MEM(RDX,R10,1,64))
-        PREFETCH(1, MEM(RDX,R14,1)) PREFETCH(1, MEM(RDX,R14,1,64))
-        PREFETCH(1, MEM(RDX,R13,2)) PREFETCH(1, MEM(RDX,R13,2,64))
-        PREFETCH(1, MEM(RDX,R15,1)) PREFETCH(1, MEM(RDX,R15,1,64))
-        LEA(RDX, MEM(RDX,R10,8)) //c + 8*cs_c
-        PREFETCH(1, MEM(RDX      )) PREFETCH(1, MEM(RDX,      64))
-        PREFETCH(1, MEM(RDX,R10,1)) PREFETCH(1, MEM(RDX,R10,1,64))
-        PREFETCH(1, MEM(RDX,R10,2)) PREFETCH(1, MEM(RDX,R10,2,64))
-        PREFETCH(1, MEM(RDX,R13,1)) PREFETCH(1, MEM(RDX,R13,1,64))
-        PREFETCH(1, MEM(RDX,R10,4)) PREFETCH(1, MEM(RDX,R10,1,64))
-        PREFETCH(1, MEM(RDX,R14,1)) PREFETCH(1, MEM(RDX,R14,1,64))
-        PREFETCH(1, MEM(RDX,R13,2)) PREFETCH(1, MEM(RDX,R13,2,64))
-        PREFETCH(1, MEM(RDX,R15,1)) PREFETCH(1, MEM(RDX,R15,1,64))
+        PREFETCH(0, MEM(RDX      )) PREFETCH(1, MEM(RDX,      64))
+        PREFETCH(0, MEM(RDX,R12,1)) PREFETCH(1, MEM(RDX,R12,1,64))
+        PREFETCH(0, MEM(RDX,R12,2)) PREFETCH(1, MEM(RDX,R12,2,64))
+        PREFETCH(0, MEM(RDX,R13,1)) PREFETCH(1, MEM(RDX,R13,1,64))
+        PREFETCH(0, MEM(RDX,R12,4)) PREFETCH(1, MEM(RDX,R12,4,64))
+        PREFETCH(0, MEM(RDX,R14,1)) PREFETCH(1, MEM(RDX,R14,1,64))
+        PREFETCH(0, MEM(RDX,R13,2)) PREFETCH(1, MEM(RDX,R13,2,64))
+        PREFETCH(0, MEM(RDX,R15,1)) PREFETCH(1, MEM(RDX,R15,1,64))
+        LEA(RDX, MEM(RCX,R12,8)) //c + 8*cs_c
+        PREFETCH(0, MEM(RDX      )) PREFETCH(1, MEM(RDX,      64))
+        PREFETCH(0, MEM(RDX,R12,1)) PREFETCH(1, MEM(RDX,R12,1,64))
+        PREFETCH(0, MEM(RDX,R12,2)) PREFETCH(1, MEM(RDX,R12,2,64))
+        PREFETCH(0, MEM(RDX,R13,1)) PREFETCH(1, MEM(RDX,R13,1,64))
+
+    JMP(PFDONE)
+    LABEL(ROWSTORPF)
+
+        MOV(RDX, RCX)
+        PREFETCH(0, MEM(RDX      )) PREFETCH(1, MEM(RDX,      64))
+        PREFETCH(0, MEM(RDX,R10,1)) PREFETCH(1, MEM(RDX,R10,1,64))
+        PREFETCH(0, MEM(RDX,R10,2)) PREFETCH(1, MEM(RDX,R10,2,64))
+        PREFETCH(0, MEM(RDX,R13,1)) PREFETCH(1, MEM(RDX,R13,1,64))
+        PREFETCH(0, MEM(RDX,R10,4)) PREFETCH(1, MEM(RDX,R10,1,64))
+        PREFETCH(0, MEM(RDX,R14,1)) PREFETCH(1, MEM(RDX,R14,1,64))
+        PREFETCH(0, MEM(RDX,R13,2)) PREFETCH(1, MEM(RDX,R13,2,64))
+        PREFETCH(0, MEM(RDX,R15,1)) PREFETCH(1, MEM(RDX,R15,1,64))
+        LEA(RDX, MEM(RDX,R10,8)) //c + 8*rs_c
+        PREFETCH(0, MEM(RDX      )) PREFETCH(1, MEM(RDX,      64))
+        PREFETCH(0, MEM(RDX,R10,1)) PREFETCH(1, MEM(RDX,R10,1,64))
+        PREFETCH(0, MEM(RDX,R10,2)) PREFETCH(1, MEM(RDX,R10,2,64))
+        PREFETCH(0, MEM(RDX,R13,1)) PREFETCH(1, MEM(RDX,R13,1,64))
+        PREFETCH(0, MEM(RDX,R10,4)) PREFETCH(1, MEM(RDX,R10,1,64))
+        PREFETCH(0, MEM(RDX,R14,1)) PREFETCH(1, MEM(RDX,R14,1,64))
+        PREFETCH(0, MEM(RDX,R13,2)) PREFETCH(1, MEM(RDX,R13,2,64))
+        PREFETCH(0, MEM(RDX,R15,1)) PREFETCH(1, MEM(RDX,R15,1,64))
 
     LABEL(PFDONE)
 
@@ -651,17 +653,17 @@ void bli_dgemm_opt_12x16_l2(
     VBROADCASTSD(ZMM(0), MEM(RAX))
     VBROADCASTSD(ZMM(1), MEM(RBX))
 
-    MOV(RAX, VAR(rs_c))
+    MOV(RAX, VAR(cs_c))
     LEA(RAX, MEM(,RAX,8))
-    MOV(RBX, VAR(cs_c))
+    MOV(RBX, VAR(rs_c))
     LEA(RBX, MEM(,RBX,8))
 
-    // Check if C is row stride.
+    // Check if C is column stride.
     CMP(RBX, IMM(8))
-    JNE(COLSTORED)
+    JNE(ROWSTORED)
 
         VCOMISD(XMM(1), XMM(7))
-        JE(ROWSTORBZ)
+        JE(COLSTORBZ)
 
             UPDATE_C( 8, 9,10,11)
             UPDATE_C(12,13,14,15)
@@ -671,7 +673,7 @@ void bli_dgemm_opt_12x16_l2(
             UPDATE_C(28,29,30,31)
 
         JMP(END)
-        LABEL(ROWSTORBZ)
+        LABEL(COLSTORBZ)
 
             UPDATE_C_BZ( 8, 9,10,11)
             UPDATE_C_BZ(12,13,14,15)
@@ -681,9 +683,9 @@ void bli_dgemm_opt_12x16_l2(
             UPDATE_C_BZ(28,29,30,31)
 
     JMP(END)
-    LABEL(COLSTORED)
+    LABEL(ROWSTORED)
 
-    // Check if C is column stride. If not, jump to the slow scattered update
+    // Check if C is row stride. If not, jump to the slow scattered update
     CMP(RAX, IMM(8))
     JNE(SCATTEREDUPDATE)
 
@@ -751,7 +753,7 @@ void bli_dgemm_opt_12x16_l2(
         LEA(R10, MEM(R15,RBX,2))
 
         VCOMISD(XMM(1), XMM(7))
-        JE(COLSTORBZ)
+        JE(ROWSTORBZ)
 
             UPDATE_C_TRANS8X8( 8,10,12,14,16,18,20,22)
             UPDATE_C_TRANS8X4(24,26,28,30)
@@ -762,7 +764,7 @@ void bli_dgemm_opt_12x16_l2(
             UPDATE_C_TRANS8X4(25,27,29,31)
 
         JMP(END)
-        LABEL(COLSTORBZ)
+        LABEL(ROWSTORBZ)
 
             UPDATE_C_TRANS8X8_BZ( 8,10,12,14,16,18,20,22)
             UPDATE_C_TRANS8X4_BZ(24,26,28,30)

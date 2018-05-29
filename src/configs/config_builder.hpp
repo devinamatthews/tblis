@@ -101,8 +101,6 @@ config cfg##_config_instance = config(cfg##_config());
     TBLIS_CONFIG_PARAMETER(trans_row_major, bool, S,D,C,Z, false,false,false,false)
 #define TBLIS_CONFIG_GEMM_ROW_MAJOR(S,D,C,Z) \
     TBLIS_CONFIG_PARAMETER(gemm_row_major, bool, S,D,C,Z, false,false,false,false)
-#define TBLIS_CONFIG_GEMM_FLIP_UKR(S,D,C,Z) \
-    TBLIS_CONFIG_PARAMETER(gemm_flip_ukr, bool, S,D,C,Z, false,false,false,false)
 
 #define TBLIS_CONFIG_M_THREAD_RATIO(S,D,C,Z) \
     TBLIS_CONFIG_PARAMETER(m_thread_ratio, unsigned, S,D,C,Z, 2,2,2,2)
@@ -156,6 +154,8 @@ config cfg##_config_instance = config(cfg##_config());
 
 #define TBLIS_CONFIG_GEMM_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, gemm_ukr, gemm_ukr_t, S,D,C,Z, gemm_ukr_def)
+#define TBLIS_CONFIG_GEMM_FLIP_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR2(this_config, gemm_flip_ukr, gemm_ukr_t, S,D,C,Z, gemm_flip_ukr_def)
 
 #define TBLIS_CONFIG_PACK_NN_MR_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR3(this_config, matrix_constants::MAT_A, pack_nn_mr_ukr, pack_nn_ukr_t, S,D,C,Z, pack_nn_ukr_def)
@@ -301,8 +301,8 @@ struct config_template
     TBLIS_CONFIG_GEMM_NC(_,_,_,_)
     TBLIS_CONFIG_GEMM_KC(_,_,_,_)
     TBLIS_CONFIG_GEMM_UKR(_,_,_,_)
-    TBLIS_CONFIG_GEMM_ROW_MAJOR(_,_,_,_)
     TBLIS_CONFIG_GEMM_FLIP_UKR(_,_,_,_)
+    TBLIS_CONFIG_GEMM_ROW_MAJOR(_,_,_,_)
 
     TBLIS_CONFIG_PACK_NN_MR_UKR(_,_,_,_)
     TBLIS_CONFIG_PACK_NN_NR_UKR(_,_,_,_)

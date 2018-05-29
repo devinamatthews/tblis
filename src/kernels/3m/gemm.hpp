@@ -23,16 +23,13 @@ void (*)(stride_type k,
         const T* beta,
         T* c, stride_type rs_c, stride_type cs_c);
 
-template <typename Config, typename T>
-void gemm_ukr_def(stride_type k,
-                  const T* TBLIS_RESTRICT alpha,
-                  const T* TBLIS_RESTRICT p_a, const T* TBLIS_RESTRICT p_b,
-                  const T* TBLIS_RESTRICT beta,
-                  T* TBLIS_RESTRICT p_c, stride_type rs_c, stride_type cs_c)
+template <typename T, len_type MR, len_type NR>
+void gemm_ukr_def_(stride_type k,
+                   const T* TBLIS_RESTRICT alpha,
+                   const T* TBLIS_RESTRICT p_a, const T* TBLIS_RESTRICT p_b,
+                   const T* TBLIS_RESTRICT beta,
+                   T* TBLIS_RESTRICT p_c, stride_type rs_c, stride_type cs_c)
 {
-    constexpr len_type MR = Config::template gemm_mr<T>::def;
-    constexpr len_type NR = Config::template gemm_nr<T>::def;
-
     T p_ab[MR*NR] __attribute__((aligned(64))) = {};
 
     while (k --> 0)
@@ -70,6 +67,32 @@ void gemm_ukr_def(stride_type k,
             }
         }
     }
+}
+
+template <typename Config, typename T>
+void gemm_ukr_def(stride_type k,
+                  const T* TBLIS_RESTRICT alpha,
+                  const T* TBLIS_RESTRICT p_a, const T* TBLIS_RESTRICT p_b,
+                  const T* TBLIS_RESTRICT beta,
+                  T* TBLIS_RESTRICT p_c, stride_type rs_c, stride_type cs_c)
+{
+    constexpr len_type MR = Config::template gemm_mr<T>::def;
+    constexpr len_type NR = Config::template gemm_nr<T>::def;
+
+    gemm_ukr_def_<T,MR,NR>(k, alpha, p_a, p_b, beta, p_c, rs_c, cs_c);
+}
+
+template <typename Config, typename T>
+void gemm_flip_ukr_def(stride_type k,
+                       const T* TBLIS_RESTRICT alpha,
+                       const T* TBLIS_RESTRICT p_a, const T* TBLIS_RESTRICT p_b,
+                       const T* TBLIS_RESTRICT beta,
+                       T* TBLIS_RESTRICT p_c, stride_type rs_c, stride_type cs_c)
+{
+    constexpr len_type MR = Config::template gemm_mr<T>::def;
+    constexpr len_type NR = Config::template gemm_nr<T>::def;
+
+    gemm_ukr_def_<T,NR,MR>(k, alpha, p_a, p_b, beta, p_c, rs_c, cs_c);
 }
 
 #define EXTERN_PACK_NN_UKR(T, name) \

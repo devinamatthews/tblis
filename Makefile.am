@@ -372,6 +372,7 @@ noinst_LTLIBRARIES += lib/libskx2.la
 lib_libtblis_la_LIBADD += lib/libskx2.la
 lib_libskx2_la_SOURCES = src/configs/skx2/bli_sgemm_opt_12x32_l2.c \
                          src/configs/skx2/bli_dgemm_opt_12x16_l2.c \
+                         src/configs/skx2/bli_dgemm_opt_16x12_l2.c \
                          src/configs/skx2/vpu_count.cxx \
                          src/configs/skx2/config.cxx
 #                        src/configs/skx2/bli_dgemm_opt_12x16_l1.c \

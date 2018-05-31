@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <assert.h>
 
 #if TCI_USE_OPENMP_THREADS
 
@@ -283,19 +284,18 @@ void tci_partition_2x2(unsigned nthread,
 {
     max1 = TCI_MIN(TCI_MAX(max1, 1), nthread);
     max2 = TCI_MIN(TCI_MAX(max2, 1), nthread);
-    nthread = TCI_MIN(nthread, max1*max2);
 
     if (nthread < 4)
     {
         if (max2 < max1 || (max1 == max2 && work1 >= work2))
         {
-            *nt1 = max1;
+            *nt1 = nthread;
             *nt2 = 1;
         }
         else
         {
             *nt1 = 1;
-            *nt2 = max2;
+            *nt2 = nthread;
         }
         return;
     }
@@ -311,35 +311,15 @@ void tci_partition_2x2(unsigned nthread,
     unsigned f;
     while ((f = tci_next_prime_factor(&factors)) > 1)
     {
-        if ((work1 >= work2 || num2*f > max2) && num1*f <= max1)
-        {
-            work1 /= f;
-            num1 *= f;
-        }
-        else if (num2*f > max2) // also implies num1*f > max1
-        {
-            unsigned f1 = max1/num1;
-            unsigned f2 = max2/num2;
-
-            if (f1 == 1 && f2 == 1) break;
-
-            if (f2 < f1 ||
-                (f1 == f2 &&
-                 work1 >= work2))
-            {
-                work1 /= f1;
-                num1 = max1;
-            }
-            else
-            {
-                work2 /= f2;
-                num2 = max2;
-            }
-        }
-        else
+        if ((work2 >= work1 || num1*f > max1) && num2*f <= max2)
         {
             work2 /= f;
             num2 *= f;
+        }
+        else
+        {
+            work1 /= f;
+            num1 *= f;
         }
     }
 
@@ -409,4 +389,6 @@ void tci_partition_2x2(unsigned nthread,
     }
 
     #endif
+
+    assert((*nt1)*(*nt2) == nthread);
 }

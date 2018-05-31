@@ -16,8 +16,7 @@ void reduce(const communicator& comm, const config& cfg, reduce_t op,
         std::swap(rs_A, cs_A);
     }
 
-    atomic_reducer<T> local_result;
-    reduce_init(op, local_result);
+    atomic_reducer<T> local_result{reduce_init<T>(op)};
 
     comm.distribute_over_threads(m, n,
     [&](len_type m_min, len_type m_max, len_type n_min, len_type n_max)

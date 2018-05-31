@@ -91,6 +91,11 @@ class indexed_varray : public indexed_varray_base<Type, indexed_varray<Type, All
             reset(len, idx, uninitialized, layout);
         }
 
+        ~indexed_varray()
+        {
+            reset();
+        }
+
         /***********************************************************************
          *
          * Base operations

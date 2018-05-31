@@ -33,7 +33,7 @@ void set(const communicator& comm, const config& cfg,
         for (len_type i = n1_min;i < n1_max;i++)
         {
             iter_A.next(A1);
-            cfg.set_ukr.call<T>(n0_max-n0_min, alpha, A1, stride0);
+            cfg.shift_ukr.call<T>(n0_max-n0_min, alpha, T(0), false, A1, stride0);
         }
     });
 

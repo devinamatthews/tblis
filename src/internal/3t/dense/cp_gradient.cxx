@@ -30,27 +30,34 @@ void cp_gradient_naive(const communicator& comm, const config& cfg,
 {
     auto len_K = len_m;
     len_K.push_back(len_r);
-    varray<T> K(len_K, uninitialized, COLUMN_MAJOR);
+    varray<T> K;
+    if (comm.master()) K.reset(len_K, uninitialized, COLUMN_MAJOR);
 
-    stride_vector stride_K_m(K.strides().begin(), K.strides().end()-1);
-    stride_type stride_K_r = K.strides().back();
+    comm.broadcast(
+    [&](varray<T>& K)
+    {
+        assert(&K);
+        stride_vector stride_K_m(K.strides().begin(), K.strides().end()-1);
+        stride_type stride_K_r = K.strides().back();
 
-    /*
-     * K_ijk...r = U_ir U_jr U_kr ...
-     */
-    khatri_rao(comm, cfg, len_m, len_r,
-               T(1), U, stride_U_m, stride_U_r,
-               T(0), K.data(), stride_K_m, stride_K_r);
+        /*
+         * K_ijk...r = U_ir U_jr U_kr ...
+         */
+        khatri_rao(comm, cfg, len_m, len_r,
+                   T(1), U, stride_U_m, stride_U_r,
+                   T(0), K.data(), stride_K_m, stride_K_r);
 
-    /*
-     * G_nr = A_ijk...n K_ijk...r
-     *
-     *      = A_ijk...n U_ir U_jr U_kr ...
-     */
-    mult(comm, cfg, len_m, {len_n}, {len_r}, {},
-         T(1), false,        A, stride_A_m, {stride_A_n}, {},
-               false, K.data(), stride_K_m, {stride_K_r}, {},
-         T(0), false,        G, {stride_G_n}, {stride_G_r}, {});
+        /*
+         * G_nr = A_ijk...n K_ijk...r
+         *
+         *      = A_ijk...n U_ir U_jr U_kr ...
+         */
+        mult(comm, cfg, len_m, {len_n}, {len_r}, {},
+             T(1), false,        A, stride_A_m, {stride_A_n}, {},
+                   false, K.data(), stride_K_m, {stride_K_r}, {},
+             T(0), false,        G, {stride_G_n}, {stride_G_r}, {});
+    },
+    K);
 }
 
 template <typename T>
@@ -126,75 +133,81 @@ void cp_gradient_phan(const communicator& comm, const config& cfg,
     ptr_vector<const T> UR(U.begin(), U.begin()+ndim_R);
 
     len_R_m.push_back(len_r);
-    varray<T> R(len_R_m, uninitialized, COLUMN_MAJOR);
+    varray<T> R;
+    if (comm.master()) R.reset(len_R_m, uninitialized, COLUMN_MAJOR);
     len_R_m.pop_back();
 
-    stride_vector stride_R_m(R.strides().begin(), R.strides().end()-1);
-    stride_type stride_R_r(R.strides().back());
-
-    /*
-     * R_kl...r = U_kr U_lr ...
-     */
-    khatri_rao(comm, cfg, len_R_m, len_r,
-               T(1), UR, stride_UR_m, stride_UR_r,
-               T(0), R.data(), stride_R_m, stride_R_r);
+    len_L_m.push_back(len_r);
+    varray<T> L;
+    if (comm.master()) L.reset(len_L_m, uninitialized, COLUMN_MAJOR);
+    len_L_m.pop_back();
 
     len_vector len_P = len_L_m;
     len_P.push_back(len_n);
     len_P.push_back(len_r);
-    varray<T> P(len_P, uninitialized, COLUMN_MAJOR);
+    varray<T> P;
+    if (comm.master()) P.reset(len_P, uninitialized, COLUMN_MAJOR);
 
-    stride_vector stride_P_m(P.strides().begin(), P.strides().end()-2);
-    stride_type stride_P_n = P.strides()[P.dimension()-2];
-    stride_type stride_P_r = P.strides()[P.dimension()-1];
+    comm.broadcast(
+    [&](varray<T>& R, varray<T>& L, varray<T>& P)
+    {
+        stride_vector stride_R_m(R.strides().begin(), R.strides().end()-1);
+        stride_type stride_R_r(R.strides().back());
 
-    len_L_m.push_back(len_n);
-    stride_AL_m.push_back(stride_A_n);
-    stride_P_m.push_back(stride_P_n);
+        stride_vector stride_L_m(L.strides().begin(), L.strides().end()-1);
+        stride_type stride_L_r(L.strides().back());
 
-    /*
-     * P_ij...nr = A_ij...kl...n R_kl...r
-     */
-    mult(comm, cfg, len_R_m, len_L_m, {len_r}, {},
-         T(1), false,        A, stride_AR_m, stride_AL_m, {},
-               false, R.data(), stride_R_m, {stride_R_r}, {},
-         T(0), false, P.data(), stride_P_m, {stride_P_r}, {});
+        stride_vector stride_P_m(P.strides().begin(), P.strides().end()-2);
+        stride_type stride_P_n = P.strides()[P.dimension()-2];
+        stride_type stride_P_r = P.strides()[P.dimension()-1];
 
-    len_L_m.pop_back();
-    stride_AL_m.pop_back();
-    stride_P_m.pop_back();
+        /*
+         * R_kl...r = U_kr U_lr ...
+         */
+        khatri_rao(comm, cfg, len_R_m, len_r,
+                   T(1), UR, stride_UR_m, stride_UR_r,
+                   T(0), R.data(), stride_R_m, stride_R_r);
 
-    R.reset();
+        /*
+         * P_ij...nr = A_ij...kl...n R_kl...r
+         */
+        len_L_m.push_back(len_n);
+        stride_AL_m.push_back(stride_A_n);
+        stride_P_m.push_back(stride_P_n);
 
-    len_L_m.push_back(len_r);
-    varray<T> L(len_L_m, uninitialized, COLUMN_MAJOR);
-    len_L_m.pop_back();
+        mult(comm, cfg, len_R_m, len_L_m, {len_r}, {},
+             T(1), false,        A, stride_AR_m, stride_AL_m, {},
+                   false, R.data(), stride_R_m, {stride_R_r}, {},
+             T(0), false, P.data(), stride_P_m, {stride_P_r}, {});
 
-    stride_vector stride_L_m(L.strides().begin(), L.strides().end()-1);
-    stride_type stride_L_r(L.strides().back());
+        len_L_m.pop_back();
+        stride_AL_m.pop_back();
+        stride_P_m.pop_back();
 
-    /*
-     * L_ij...r = U_ir U_jr ...
-     */
-    khatri_rao(comm, cfg, len_L_m, len_r,
-               T(1), UL, stride_UL_m, stride_UL_r,
-               T(0), L.data(), stride_L_m, stride_L_r);
+        /*
+         * L_ij...r = U_ir U_jr ...
+         */
+        khatri_rao(comm, cfg, len_L_m, len_r,
+                   T(1), UL, stride_UL_m, stride_UL_r,
+                   T(0), L.data(), stride_L_m, stride_L_r);
 
-    /*
-     * G_nr = P_ij...nr L_ij...r
-     *
-     *      = A_ij...kl...n U_ir U_jr ... U_kr U_lr ...
-     */
-    mult(comm, cfg, len_L_m, {len_n}, {}, {len_r},
-         T(1), false, P.data(), stride_P_m, {stride_P_n}, {stride_P_r},
-               false, L.data(), stride_L_m, {}, {stride_L_r},
-         T(0), false,        G, {stride_G_n}, {}, {stride_G_r});
+        /*
+         * G_nr = P_ij...nr L_ij...r
+         *
+         *      = A_ij...kl...n U_ir U_jr ... U_kr U_lr ...
+         */
+        mult(comm, cfg, len_L_m, {len_n}, {}, {len_r},
+             T(1), false, P.data(), stride_P_m, {stride_P_n}, {stride_P_r},
+                   false, L.data(), stride_L_m, {}, {stride_L_r},
+             T(0), false,        G, {stride_G_n}, {}, {stride_G_r});
+    },
+    R, L, P);
 }
 
 template <typename T>
 void cp_gradient_direct(const communicator& comm, const config& cfg,
                         const len_vector& len_m, len_type len_n, len_type len_r,
-                        const T* A,
+                        const T* A_,
                         const stride_vector& stride_A_m, stride_type stride_A_n,
                         const ptr_vector<const T>& U,
                         const stride_vector& stride_U_m,
@@ -220,6 +233,8 @@ void cp_gradient_direct(const communicator& comm, const config& cfg,
         comm.distribute_over_threads(m_tot/len_m[0],
         [&](len_type m_min, len_type m_max)
         {
+            if (m_max == m_min) return;
+
             matrix<T> P({len_r, ndim_m - 1}, uninitialized, COLUMN_MAJOR);
             matrix<T> G_local;
 
@@ -230,6 +245,7 @@ void cp_gradient_direct(const communicator& comm, const config& cfg,
 
             viterator<1> iter_m(len_vector(len_m.begin()+1, len_m.end()),
                                 stride_vector(stride_A_m.begin()+1, stride_A_m.end()));
+            auto A = A_;
             iter_m.position(m_min, A);
 
             len_vector prev(ndim_m-1, -1);

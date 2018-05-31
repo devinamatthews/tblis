@@ -12,7 +12,7 @@ extern "C" {
 typedef struct tci_context
 {
     tci_barrier barrier;
-    void* buffer;
+    volatile void* buffer;
     volatile unsigned refcount;
 } tci_context;
 

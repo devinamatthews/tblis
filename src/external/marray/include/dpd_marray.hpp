@@ -112,6 +112,11 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
             reset(irrep, nirrep, len, uninitialized, depth, layout);
         }
 
+        ~dpd_marray()
+        {
+            reset();
+        }
+
         /***********************************************************************
          *
          * Base operations

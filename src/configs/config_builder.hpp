@@ -134,15 +134,11 @@ config cfg##_config_instance = config(cfg##_config());
         type<scomplex>, TBLIS_GET_VALUE_OR_DEFAULT(C,(def_ker<config,scomplex,mat>)), \
         type<dcomplex>, TBLIS_GET_VALUE_OR_DEFAULT(Z,(def_ker<config,dcomplex,mat>))> {};
 
-#define TBLIS_CONFIG_TRANS_ADD_UKR(S,D,C,Z) \
-    TBLIS_CONFIG_UKR2(this_config, trans_add_ukr, trans_add_ukr_t, S,D,C,Z, trans_add_ukr_def)
-#define TBLIS_CONFIG_TRANS_COPY_UKR(S,D,C,Z) \
-    TBLIS_CONFIG_UKR2(this_config, trans_copy_ukr, trans_copy_ukr_t, S,D,C,Z, trans_copy_ukr_def)
+#define TBLIS_CONFIG_TRANS_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR2(this_config, trans_ukr, trans_ukr_t, S,D,C,Z, trans_ukr_def)
 
 #define TBLIS_CONFIG_ADD_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, add_ukr, add_ukr_t, S,D,C,Z, add_ukr_def)
-#define TBLIS_CONFIG_COPY_UKR(S,D,C,Z) \
-    TBLIS_CONFIG_UKR2(this_config, copy_ukr, copy_ukr_t, S,D,C,Z, copy_ukr_def)
 #define TBLIS_CONFIG_DOT_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, dot_ukr, dot_ukr_t, S,D,C,Z, dot_ukr_def)
 #define TBLIS_CONFIG_MULT_UKR(S,D,C,Z) \
@@ -151,8 +147,6 @@ config cfg##_config_instance = config(cfg##_config());
     TBLIS_CONFIG_UKR2(this_config, reduce_ukr, reduce_ukr_t, S,D,C,Z, reduce_ukr_def)
 #define TBLIS_CONFIG_SCALE_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, scale_ukr, scale_ukr_t, S,D,C,Z, scale_ukr_def)
-#define TBLIS_CONFIG_SET_UKR(S,D,C,Z) \
-    TBLIS_CONFIG_UKR2(this_config, set_ukr, set_ukr_t, S,D,C,Z, set_ukr_def)
 #define TBLIS_CONFIG_SHIFT_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, shift_ukr, shift_ukr_t, S,D,C,Z, shift_ukr_def)
 
@@ -287,18 +281,15 @@ struct config_template
     typedef Config this_config;
 
     TBLIS_CONFIG_ADD_UKR(_,_,_,_)
-    TBLIS_CONFIG_COPY_UKR(_,_,_,_)
     TBLIS_CONFIG_DOT_UKR(_,_,_,_)
     TBLIS_CONFIG_MULT_UKR(_,_,_,_)
     TBLIS_CONFIG_REDUCE_UKR(_,_,_,_)
     TBLIS_CONFIG_SCALE_UKR(_,_,_,_)
-    TBLIS_CONFIG_SET_UKR(_,_,_,_)
     TBLIS_CONFIG_SHIFT_UKR(_,_,_,_)
 
     TBLIS_CONFIG_TRANS_MR(_,_,_,_)
     TBLIS_CONFIG_TRANS_NR(_,_,_,_)
-    TBLIS_CONFIG_TRANS_ADD_UKR(_,_,_,_)
-    TBLIS_CONFIG_TRANS_COPY_UKR(_,_,_,_)
+    TBLIS_CONFIG_TRANS_UKR(_,_,_,_)
     TBLIS_CONFIG_TRANS_ROW_MAJOR(_,_,_,_)
 
     TBLIS_CONFIG_GEMM_MR(_,_,_,_)

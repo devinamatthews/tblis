@@ -24,8 +24,7 @@ void reduce(const communicator& comm, const config& cfg, reduce_t op,
     stride_type stride0 = (empty ? 1 : stride_A[0]);
     len_vector stride1(stride_A.begin() + !empty, stride_A.end());
 
-    atomic_reducer<T> local_result;
-    reduce_init(op, local_result);
+    atomic_reducer<T> local_result{reduce_init<T>(op)};
 
     comm.distribute_over_threads(n0, n1,
     [&](len_type n0_min, len_type n0_max, len_type n1_min, len_type n1_max)

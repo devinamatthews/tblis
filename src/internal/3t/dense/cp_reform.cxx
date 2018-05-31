@@ -25,7 +25,7 @@ void cp_reform(const communicator& comm, const config& cfg,
                T alpha, const ptr_vector<const T>& U_,
                const stride_vector& stride_U_m_,
                const stride_vector& stride_U_r_,
-               T  beta, T* A,
+               T  beta, T* A_,
                const stride_vector& stride_A_m_)
 {
     len_type m_tot = stl_ext::prod(len_m_);
@@ -36,11 +36,11 @@ void cp_reform(const communicator& comm, const config& cfg,
     {
         if (beta == T(1))
         {
-            set(comm, cfg, len_m_, T(0), A, stride_A_m_);
+            set(comm, cfg, len_m_, T(0), A_, stride_A_m_);
         }
         else
         {
-            scale(comm, cfg, len_m_, beta, false, A, stride_A_m_);
+            scale(comm, cfg, len_m_, beta, false, A_, stride_A_m_);
         }
 
         return;
@@ -77,6 +77,7 @@ void cp_reform(const communicator& comm, const config& cfg,
 
             viterator<1> iter_m(len_vector(len_m.begin()+2, len_m.end()),
                                 stride_vector(stride_A_m.begin()+2, stride_A_m.end()));
+            auto A = A_;
             iter_m.position(m_min, A);
 
             len_vector prev(ndim_m-2, -1);

@@ -26,6 +26,7 @@
 
 #include "iface/3t/cp_gradient.h"
 #include "iface/3t/cp_reform.h"
+#include "iface/3t/hosvd.h"
 #include "iface/3t/khatri_rao.h"
 #include "iface/3t/mult.h"
 

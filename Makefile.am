@@ -95,6 +95,13 @@ lib_libtblis_la_SOURCES = \
     src/util/random.cxx \
     src/util/thread.cxx
     
+if ENABLE_LAPACK
+lib_libtblis_la_SOURCES += \
+	src/iface/3t/hosvd.cxx \
+	\
+	src/internal/3t/dense/hosvd.cxx
+endif
+    
 pkginclude_HEADERS = src/tblis.h src/tblis_config.h
 
 utilincludedir = $(pkgincludedir)/util

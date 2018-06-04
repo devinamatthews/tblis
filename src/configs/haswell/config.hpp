@@ -93,6 +93,11 @@ TBLIS_BEGIN_CONFIG(haswell_d6x8)
                           _,
                           _)
 
+    TBLIS_CONFIG_GEMM_FLIP_UKR(_,
+                               bli_dgemm_asm_8x6,
+                               _,
+                               _)
+
     TBLIS_CONFIG_GEMM_ROW_MAJOR(true, true, _, _)
 
     TBLIS_CONFIG_CHECK(haswell_check)

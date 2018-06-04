@@ -294,7 +294,6 @@ lib_libtblis_la_LIBADD += lib/libhaswell.la
 lib_libhaswell_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
                             src/configs/haswell/config.cxx
 #                            src/configs/haswell/bli_gemm_asm_d12x4.c \
-#                            src/configs/haswell/bli_gemm_asm_d8x6.c \
 #                            src/configs/haswell/bli_gemm_asm_d4x12.c
 if ENABLE_INTEL_COMPILER
 lib_libhaswell_la_CFLAGS = -O3 -xCORE-AVX2
@@ -316,7 +315,6 @@ lib_libknl_la_SOURCES = src/configs/knl/bli_spackm_opt_24x16.c \
                         src/configs/knl/config.cxx
 #                        src/configs/knl/bli_dgemm_opt_12x16.c \
 #                        src/configs/knl/bli_dgemm_opt_30x8.c \
-#                        src/configs/knl/bli_dgemm_opt_8x24.c \
 #                        src/configs/knl/bli_sgemm_opt_30x16_knc.c \
 #                        src/configs/knl/bli_dgemm_opt_30x8_knc.c
 if ENABLE_INTEL_COMPILER
@@ -372,7 +370,6 @@ noinst_LTLIBRARIES += lib/libskx2.la
 lib_libtblis_la_LIBADD += lib/libskx2.la
 lib_libskx2_la_SOURCES = src/configs/skx2/bli_sgemm_opt_12x32_l2.c \
                          src/configs/skx2/bli_dgemm_opt_12x16_l2.c \
-                         src/configs/skx2/bli_dgemm_opt_16x12_l2.c \
                          src/configs/skx2/vpu_count.cxx \
                          src/configs/skx2/config.cxx
 #                        src/configs/skx2/bli_dgemm_opt_12x16_l1.c \

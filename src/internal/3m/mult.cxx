@@ -4,6 +4,8 @@
 
 #include "nodes/gemm.hpp"
 
+#include "configs/ambi.hpp"
+
 namespace tblis
 {
 
@@ -26,8 +28,11 @@ void mult(const communicator& comm, const config& cfg_,
 
     const bool row_major = cfg.gemm_row_major.value<T>();
 
-    //if ((row_major ? rs_C : cs_C) == 1)
+#if AMBI_METHOD == OLD
+    if ((row_major ? rs_C : cs_C) == 1)
+#else
     if (n > m)
+#endif
     {
         /*
          * Compute C^T = B^T * A^T instead
@@ -39,7 +44,7 @@ void mult(const communicator& comm, const config& cfg_,
         std::swap(rs_C, cs_C);
     }
 
-#if 1
+#if AMBI_METHOD == FLIP
     if ((row_major ? rs_C : cs_C) == 1)
     {
         cfg.gemm_row_major.value<T>() ^= true;

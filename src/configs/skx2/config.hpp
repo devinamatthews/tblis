@@ -387,7 +387,7 @@ TBLIS_BEGIN_CONFIG(skx_16x12_l2)
                                _,
                                _)
 
-    TBLIS_CONFIG_GEMM_ROW_MAJOR(false, false, _, _)
+    TBLIS_CONFIG_GEMM_ROW_MAJOR(_, false, _, _)
 
     TBLIS_CONFIG_CHECK(skx2_check)
 

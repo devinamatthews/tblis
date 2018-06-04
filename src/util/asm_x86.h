@@ -130,6 +130,10 @@
 #define MEM_1TO16(...) MEM(__VA_ARGS__) MASK(1to16)
 #define MEM_BCAST(...) MEM(__VA_ARGS__) MASK(b)
 
+#define VAR_1TO8(...) VAR(__VA_ARGS__) MASK(1to8)
+#define VAR_1TO16(...) VAR(__VA_ARGS__) MASK(1to16)
+#define VAR_BCAST(...) VAR(__VA_ARGS__) MASK(b)
+
 // Instructions
 
 #define INSTR(name,...) GET_MACRO(__VA_ARGS__,INSTR_4,INSTR_3,INSTR_2, \
@@ -299,6 +303,7 @@
 #define VFMADD132PD(_0, _1, _2) INSTR(vfmadd132pd, _0, _1, _2)
 #define VFMADD213PD(_0, _1, _2) INSTR(vfmadd213pd, _0, _1, _2)
 #define VFMADD231PD(_0, _1, _2) INSTR(vfmadd231pd, _0, _1, _2)
+#define V4FMADDPS(_0, _1, _2) INSTR(v4fmaddps, _0, _1, _2)
 
 // Vector shuffles
 

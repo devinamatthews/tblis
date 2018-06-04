@@ -35,6 +35,8 @@
 #include "blis.h"
 #include "util/asm_x86.h"
 
+#include "../ambi.hpp"
+
 #define SGEMM_GS(n) \
     VMOVAPS(XMM(0), XMM(n)) \
     VFMADD231SS(XMM(0), XMM(1), MEM(RCX)) \
@@ -778,6 +780,19 @@ void bli_sgemm_asm_6x16
     VMOVAPD(YMM(0), MEM(RBX,32*(-4+2*n))) \
     VMOVAPD(YMM(1), MEM(RBX,32*(-3+2*n)))
 
+#define PREFETCH_C_6(level,C,s1,s3,s5,off) \
+   PREFETCH(level, MEM(C,     off)) \
+   PREFETCH(level, MEM(C,s1,1,off)) \
+   PREFETCH(level, MEM(C,s1,2,off)) \
+   PREFETCH(level, MEM(C,s3,1,off)) \
+   PREFETCH(level, MEM(C,s1,4,off)) \
+   PREFETCH(level, MEM(C,s5,1,off))
+
+#define PREFETCH_C_8(level,C,s1,s3,s5,s7,off) \
+   PREFETCH_C_6(level,C,s1,s3,s5,off) \
+   PREFETCH(level, MEM(C,s3,2,off)) \
+   PREFETCH(level, MEM(C,s7,1,off))
+
 void bli_dgemm_asm_6x8
      (
        dim_t               k_,
@@ -819,46 +834,32 @@ void bli_dgemm_asm_6x8
     JNE(.DCOLSTORPF)
 
         LEA(R13, MEM(RDI,RDI,2)) // r13 = 3*rs_c
-        LEA(RDX, MEM(RCX,R13,1)) // rdx = c + 3*rs_c;
+        LEA(R14, MEM(RDI,RDI,4)) // r14 = 5*rs_c
 
-        PREFETCH(0, MEM(RCX      ))
-        PREFETCH(0, MEM(RCX,RDI,1))
-        PREFETCH(0, MEM(RCX,RDI,2))
-        PREFETCH(1, MEM(RCX,      64))
-        PREFETCH(1, MEM(RCX,RDI,1,64))
-        PREFETCH(1, MEM(RCX,RDI,2,64))
-        PREFETCH(0, MEM(RDX      ))
-        PREFETCH(0, MEM(RDX,RDI,1))
-        PREFETCH(0, MEM(RDX,RDI,2))
-        PREFETCH(1, MEM(RDX,      64))
-        PREFETCH(1, MEM(RDX,RDI,1,64))
-        PREFETCH(1, MEM(RDX,RDI,2,64))
+#if PF_C_L2 == PF_JR || PF_C_L2 == PF_NEAR
+        PREFETCH_C_6(1,RCX,RDI,R13,R14,64)
+#else
+        LEA(RDX, MEM(RCX,R13,2)) // rdx = c + 6*rs_c;
+        PREFETCH_C_6(1,RDX,RDI,R13,R14,0)
+#endif
+
+        PREFETCH_C_6(0,RCX,RDI,R13,R14,0)
 
     JMP(.DACCUM)
     LABEL(.DCOLSTORPF)
 
         LEA(R13, MEM(RSI,RSI,2)) // r13 = 3*cs_c
-        MOV(RDX, RCX)
+        LEA(R14, MEM(RSI,RSI,4)) // r14 = 5*cs_c
+        LEA(R15, MEM(RSI,R13,2)) // r15 = 7*cs_c
 
-        PREFETCH(0, MEM(RDX      ))
-        PREFETCH(0, MEM(RDX,RSI,1))
-        PREFETCH(0, MEM(RDX,RSI,2))
-        PREFETCH(0, MEM(RDX,R13,1))
-        LEA(RDX, MEM(RDX,RSI,4))
-        PREFETCH(0, MEM(RDX      ))
-        PREFETCH(0, MEM(RDX,RSI,1))
-        PREFETCH(0, MEM(RDX,RSI,2))
-        PREFETCH(0, MEM(RDX,R13,1))
-        LEA(RDX, MEM(RDX,RSI,4))
-        PREFETCH(1, MEM(RDX      ))
-        PREFETCH(1, MEM(RDX,RSI,1))
-        PREFETCH(1, MEM(RDX,RSI,2))
-        PREFETCH(1, MEM(RDX,R13,1))
-        LEA(RDX, MEM(RDX,RSI,4))
-        PREFETCH(1, MEM(RDX      ))
-        PREFETCH(1, MEM(RDX,RSI,1))
-        PREFETCH(1, MEM(RDX,RSI,2))
-        PREFETCH(1, MEM(RDX,R13,1))
+#if PF_C_L2 == PF_IR || PF_C_L2 == PF_NEAR
+        PREFETCH_C_8(1,RCX,RSI,R13,R14,R15,48)
+#else
+        LEA(RDX, MEM(RCX,RSI,8)) // rdx = c + 8*cs_c;
+        PREFETCH_C_8(1,RDX,RSI,R13,R14,R15,0)
+#endif
+
+        PREFETCH_C_8(0,RCX,RSI,R13,R14,R15,0)
 
     LABEL(.DACCUM)
 
@@ -942,8 +943,10 @@ void bli_dgemm_asm_6x8
         CMP(RSI, IMM(8))
         JE(.DROWSTORED)
 
+#if AMBI_METHOD != GS
         CMP(RDI, IMM(8))
         JE(.DCOLSTORED)
+#endif
 
         LABEL(.DGENSTORED)
 
@@ -1122,8 +1125,10 @@ void bli_dgemm_asm_6x8
         CMP(RSI, IMM(8))
         JE(.DROWSTORBZ)
 
+#if AMBI_METHOD != GS
         CMP(RDI, IMM(8))
         JE(.DCOLSTORBZ)
+#endif
 
         LABEL(.DGENSTORBZ)
 
@@ -1184,6 +1189,512 @@ void bli_dgemm_asm_6x8
 
         JMP(.DDONE)
         LABEL(.DCOLSTORBZ)
+
+            //
+            // Transpose and write out in four quadrants:
+            //
+            // +---------------+---------------+
+            // |c00-c01-c02-c03|c04-c05-c06-c07|
+            // |               |               |      +------+------+
+            // |c10-c11-c12-c13|c14-c15-c16-c17|      |      |      |
+            // |               |               |      |  Q1  |  Q3  |
+            // |c20-c21-c22-c23|c24-c25-c26-c27|      |      |      |
+            // |               |               |   =  +------+------+
+            // |c30-c31-c32-c33|c34-c35-c36-c37|      |      |      |
+            // +---------------+---------------+      |  Q2  |  Q4  |
+            // |c40-c41-c42-c43|c44-c45-c46-c47|      |      |      |
+            // |               |               |      +------+------+
+            // |c50-c51-c52-c53|c54-c55-c56-c57|
+            // +---------------+---------------+
+            //
+            //                ||
+            //                \/
+            //
+            // +---------------+---------------+
+            // |c00 c01 c02 c03|c04 c05 c06 c07|
+            // | |   |   |   | | |   |   |   | |
+            // |c10 c11 c12 c13|c14 c15 c16 c17|
+            // | |   |   |   | | |   |   |   | |
+            // |c20 c21 c22 c23|c24 c25 c26 c27|
+            // | |   |   |   | | |   |   |   | |
+            // |c30 c31 c32 c33|c34 c35 c36 c37|
+            // +---------------+---------------+
+            // |c40 c41 c42 c43|c44 c45 c46 c47|
+            // | |   |   |   | | |   |   |   | |
+            // |c50 c51 c52 c53|c54 c55 c56 c57|
+            // +---------------+---------------+
+            //
+
+            VUNPCKLPD(YMM(2), YMM(4), YMM( 6))
+            VUNPCKHPD(YMM(6), YMM(4), YMM( 6))
+            VUNPCKHPD(YMM(3), YMM(8), YMM(10))
+            VUNPCKLPD(YMM(8), YMM(8), YMM(10))
+            VPERM2F128(YMM( 4), YMM(2), YMM(8), IMM(0x21))
+            VPERM2F128(YMM(10), YMM(6), YMM(3), IMM(0x21))
+            VBLENDPD(YMM( 8), YMM( 8), YMM( 4), IMM(0x3))
+            VBLENDPD(YMM( 4), YMM( 4), YMM( 2), IMM(0x3))
+            VBLENDPD(YMM( 6), YMM(10), YMM( 6), IMM(0x3))
+            VBLENDPD(YMM(10), YMM( 3), YMM(10), IMM(0x3))
+            VMOVUPD(MEM(RCX      ), YMM( 4))
+            VMOVUPD(MEM(RCX,RSI,1), YMM( 6))
+            VMOVUPD(MEM(RCX,RSI,2), YMM( 8))
+            VMOVUPD(MEM(RCX,R13,1), YMM(10))
+
+            VUNPCKLPD(YMM(2), YMM(12), YMM(14))
+            VUNPCKHPD(YMM(3), YMM(12), YMM(14))
+            VMOVUPD(MEM(RCX,      32), XMM(2))
+            VMOVUPD(MEM(RCX,RSI,1,32), XMM(3))
+            VEXTRACTF128(MEM(RCX,RSI,2,32), YMM(2), IMM(1))
+            VEXTRACTF128(MEM(RCX,R13,1,32), YMM(3), IMM(1))
+
+            VUNPCKLPD(YMM(2), YMM(5), YMM( 7))
+            VUNPCKHPD(YMM(7), YMM(5), YMM( 7))
+            VUNPCKHPD(YMM(3), YMM(9), YMM(11))
+            VUNPCKLPD(YMM(9), YMM(9), YMM(11))
+            VPERM2F128(YMM( 5), YMM(2), YMM(9), IMM(0x21))
+            VPERM2F128(YMM(11), YMM(7), YMM(3), IMM(0x21))
+            VBLENDPD(YMM( 9), YMM( 9), YMM( 5), IMM(0x3))
+            VBLENDPD(YMM( 5), YMM( 5), YMM( 2), IMM(0x3))
+            VBLENDPD(YMM( 7), YMM(11), YMM( 7), IMM(0x3))
+            VBLENDPD(YMM(11), YMM( 3), YMM(11), IMM(0x3))
+            VMOVUPD(MEM(RDX      ), YMM( 5))
+            VMOVUPD(MEM(RDX,RSI,1), YMM( 7))
+            VMOVUPD(MEM(RDX,RSI,2), YMM( 9))
+            VMOVUPD(MEM(RDX,R13,1), YMM(11))
+
+            VUNPCKLPD(YMM(2), YMM(13), YMM(15))
+            VUNPCKHPD(YMM(3), YMM(13), YMM(15))
+            VMOVUPD(MEM(RDX,      32), XMM(2))
+            VMOVUPD(MEM(RDX,RSI,1,32), XMM(3))
+            VEXTRACTF128(MEM(RDX,RSI,2,32), YMM(2), IMM(1))
+            VEXTRACTF128(MEM(RDX,R13,1,32), YMM(3), IMM(1))
+
+    LABEL(.DDONE)
+
+    VZEROUPPER()
+
+    END_ASM
+    (
+        : // output operands (none)
+        : // input operands
+          [k]     "m" (k),
+          [a]     "m" (a),
+          [b]     "m" (b),
+          [alpha] "m" (alpha),
+          [beta]  "m" (beta),
+          [c]     "m" (c),
+          [rs_c]  "m" (rs_c),
+          [cs_c]  "m" (cs_c)
+        : // register clobber list
+          "rax", "rbx", "rcx", "rdx", "rsi", "rdi",
+          "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
+          "xmm0", "xmm1", "xmm2", "xmm3",
+          "xmm4", "xmm5", "xmm6", "xmm7",
+          "xmm8", "xmm9", "xmm10", "xmm11",
+          "xmm12", "xmm13", "xmm14", "xmm15",
+          "memory"
+    )
+}
+
+void bli_dgemm_asm_8x6
+     (
+       dim_t               k_,
+       double*    restrict alpha,
+       double*    restrict b,
+       double*    restrict a,
+       double*    restrict beta,
+       double*    restrict c, inc_t cs_c_, inc_t rs_c_,
+       auxinfo_t* restrict data,
+       cntx_t*    restrict cntx
+     )
+{
+    //void*   a_next = bli_auxinfo_next_a( data );
+    //void*   b_next = bli_auxinfo_next_b( data );
+
+    int64_t k = k_;
+    int64_t rs_c = rs_c_;
+    int64_t cs_c = cs_c_;
+
+    BEGIN_ASM
+
+    VZEROALL()
+
+    MOV(RAX, VAR(a))
+    MOV(RBX, VAR(b))
+
+    VMOVAPS(YMM(0), MEM(RBX,0*32)) // initialize loop by pre-loading
+    VMOVAPS(YMM(1), MEM(RBX,1*32))
+
+    ADD(RBX, IMM(32*6))
+
+    MOV(RCX, VAR(c))
+    MOV(RDI, VAR(rs_c))
+    MOV(RSI, VAR(cs_c))
+    LEA(RDI, MEM(,RDI,8)) // rs_c *= sizeof(double)
+    LEA(RSI, MEM(,RSI,8)) // cs_c *= sizeof(double)
+
+    CMP(RSI, IMM(8))
+    JNE(.DROWSTORPF)
+
+        LEA(R13, MEM(RDI,RDI,2)) // r13 = 3*rs_c
+        LEA(R14, MEM(RDI,RDI,4)) // r14 = 5*rs_c
+
+#if PF_C_L2 == PF_IR || PF_C_L2 == PF_NEAR
+        PREFETCH_C_6(1,RCX,RDI,R13,R14,64)
+#else
+        LEA(RDX, MEM(RCX,R13,2)) // rdx = c + 6*rs_c;
+        PREFETCH_C_6(1,RDX,RDI,R13,R14,0)
+#endif
+
+        PREFETCH_C_6(0,RCX,RDI,R13,R14,0)
+
+    JMP(.DACCUM)
+    LABEL(.DROWSTORPF)
+
+        LEA(R13, MEM(RSI,RSI,2)) // r13 = 3*cs_c
+        LEA(R14, MEM(RSI,RSI,4)) // r14 = 5*cs_c
+        LEA(R15, MEM(RSI,R13,2)) // r15 = 7*cs_c
+
+#if PF_C_L2 == PF_JR || PF_C_L2 == PF_NEAR
+        PREFETCH_C_8(1,RCX,RSI,R13,R14,R15,48)
+#else
+        LEA(RDX, MEM(RCX,RSI,8)) // rdx = c + 8*cs_c;
+        PREFETCH_C_8(1,RDX,RSI,R13,R14,R15,0)
+#endif
+
+        PREFETCH_C_8(0,RCX,RSI,R13,R14,R15,0)
+
+    LABEL(.DACCUM)
+
+    MOV(RSI, VAR(k))
+    MOV(R8, RSI)
+    SAR(RSI, IMM(2))
+    JZ(.DCONSIDKLEFT)
+
+    LABEL(.DLOOPKITER)
+
+        PREFETCH(0, MEM(RBX,64*8))
+
+        DGEMM_ITERATION(0)
+
+        PREFETCH(0, MEM(RBX,72*8))
+
+        DGEMM_ITERATION(1)
+
+        PREFETCH(0, MEM(RBX,80*8))
+
+        DGEMM_ITERATION(2)
+
+        PREFETCH(0, MEM(RBX,88*8))
+
+        DGEMM_ITERATION(3)
+
+        ADD(RAX, IMM(4*6*8))
+        ADD(RBX, IMM(4*8*8))
+
+        DEC(RSI)
+
+    JNZ(.DLOOPKITER)
+
+    LABEL(.DCONSIDKLEFT)
+
+    MOV(RSI, R8)
+    AND(RSI, IMM(3))
+    JZ(.DPOSTACCUM)
+
+    LABEL(.DLOOPKLEFT)
+
+        PREFETCH(0, MEM(RBX,64*8))
+
+        DGEMM_ITERATION(0)
+
+        ADD(RAX, IMM(1*6*8))
+        ADD(RBX, IMM(1*8*8))
+
+        DEC(RSI)
+
+    JNZ(.DLOOPKLEFT)
+
+    LABEL(.DPOSTACCUM)
+
+    MOV(RAX, VAR(alpha))
+    MOV(RBX, VAR(beta))
+    VBROADCASTSD(YMM(0), MEM(RAX))
+    VBROADCASTSD(YMM(1), MEM(RBX))
+
+    VMULPD(YMM( 4), YMM( 4), YMM(0))
+    VMULPD(YMM( 5), YMM( 5), YMM(0))
+    VMULPD(YMM( 6), YMM( 6), YMM(0))
+    VMULPD(YMM( 7), YMM( 7), YMM(0))
+    VMULPD(YMM( 8), YMM( 8), YMM(0))
+    VMULPD(YMM( 9), YMM( 9), YMM(0))
+    VMULPD(YMM(10), YMM(10), YMM(0))
+    VMULPD(YMM(11), YMM(11), YMM(0))
+    VMULPD(YMM(12), YMM(12), YMM(0))
+    VMULPD(YMM(13), YMM(13), YMM(0))
+    VMULPD(YMM(14), YMM(14), YMM(0))
+    VMULPD(YMM(15), YMM(15), YMM(0))
+
+    MOV(RSI, VAR(cs_c))
+    LEA(RSI, MEM(,RSI,8))
+
+    LEA(RDX, MEM(RCX,RSI,4))
+
+    LEA(R13, MEM(RSI,RSI,2))
+
+    VXORPD(YMM(0), YMM(0), YMM(0))
+    VUCOMISD(XMM(1), XMM(0))
+    JZ(.DBETAZERO)
+
+        CMP(RSI, IMM(8))
+        JE(.DCOLSTORED)
+
+#if AMBI_METHOD != GS
+        CMP(RDI, IMM(8))
+        JE(.DROWSTORED)
+#endif
+
+        LABEL(.DGENSTORED)
+
+            DGEMM_GS(4)
+            ADD(RCX, RDI)
+            DGEMM_GS(6)
+            ADD(RCX, RDI)
+            DGEMM_GS(8)
+            ADD(RCX, RDI)
+            DGEMM_GS(10)
+            ADD(RCX, RDI)
+            DGEMM_GS(12)
+            ADD(RCX, RDI)
+            DGEMM_GS(14)
+            MOV(RCX, RDX)
+            DGEMM_GS(5)
+            ADD(RCX, RDI)
+            DGEMM_GS(7)
+            ADD(RCX, RDI)
+            DGEMM_GS(9)
+            ADD(RCX, RDI)
+            DGEMM_GS(11)
+            ADD(RCX, RDI)
+            DGEMM_GS(13)
+            ADD(RCX, RDI)
+            DGEMM_GS(15)
+
+        JMP(.DDONE)
+        LABEL(.DCOLSTORED)
+
+            VFMADD231PD(YMM(4), YMM(1), MEM(RCX))
+            VFMADD231PD(YMM(5), YMM(1), MEM(RDX))
+            VMOVUPD(MEM(RCX), YMM(4))
+            VMOVUPD(MEM(RDX), YMM(5))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VFMADD231PD(YMM(6), YMM(1), MEM(RCX))
+            VFMADD231PD(YMM(7), YMM(1), MEM(RDX))
+            VMOVUPD(MEM(RCX), YMM(6))
+            VMOVUPD(MEM(RDX), YMM(7))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VFMADD231PD(YMM(8), YMM(1), MEM(RCX))
+            VFMADD231PD(YMM(9), YMM(1), MEM(RDX))
+            VMOVUPD(MEM(RCX), YMM(8))
+            VMOVUPD(MEM(RDX), YMM(9))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VFMADD231PD(YMM(10), YMM(1), MEM(RCX))
+            VFMADD231PD(YMM(11), YMM(1), MEM(RDX))
+            VMOVUPD(MEM(RCX), YMM(10))
+            VMOVUPD(MEM(RDX), YMM(11))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VFMADD231PD(YMM(12), YMM(1), MEM(RCX))
+            VFMADD231PD(YMM(13), YMM(1), MEM(RDX))
+            VMOVUPD(MEM(RCX), YMM(12))
+            VMOVUPD(MEM(RDX), YMM(13))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VFMADD231PD(YMM(14), YMM(1), MEM(RCX))
+            VFMADD231PD(YMM(15), YMM(1), MEM(RDX))
+            VMOVUPD(MEM(RCX), YMM(14))
+            VMOVUPD(MEM(RDX), YMM(15))
+
+        JMP(.DDONE)
+        LABEL(.DROWSTORED)
+
+            //
+            // Transpose and write out in four quadrants:
+            //
+            // +---------------+---------------+
+            // |c00-c01-c02-c03|c04-c05-c06-c07|
+            // |               |               |      +------+------+
+            // |c10-c11-c12-c13|c14-c15-c16-c17|      |      |      |
+            // |               |               |      |  Q1  |  Q3  |
+            // |c20-c21-c22-c23|c24-c25-c26-c27|      |      |      |
+            // |               |               |   =  +------+------+
+            // |c30-c31-c32-c33|c34-c35-c36-c37|      |      |      |
+            // +---------------+---------------+      |  Q2  |  Q4  |
+            // |c40-c41-c42-c43|c44-c45-c46-c47|      |      |      |
+            // |               |               |      +------+------+
+            // |c50-c51-c52-c53|c54-c55-c56-c57|
+            // +---------------+---------------+
+            //
+            //                ||
+            //                \/
+            //
+            // +---------------+---------------+
+            // |c00 c01 c02 c03|c04 c05 c06 c07|
+            // | |   |   |   | | |   |   |   | |
+            // |c10 c11 c12 c13|c14 c15 c16 c17|
+            // | |   |   |   | | |   |   |   | |
+            // |c20 c21 c22 c23|c24 c25 c26 c27|
+            // | |   |   |   | | |   |   |   | |
+            // |c30 c31 c32 c33|c34 c35 c36 c37|
+            // +---------------+---------------+
+            // |c40 c41 c42 c43|c44 c45 c46 c47|
+            // | |   |   |   | | |   |   |   | |
+            // |c50 c51 c52 c53|c54 c55 c56 c57|
+            // +---------------+---------------+
+            //
+
+            VUNPCKLPD(YMM(2), YMM(4), YMM( 6))
+            VUNPCKHPD(YMM(6), YMM(4), YMM( 6))
+            VUNPCKHPD(YMM(3), YMM(8), YMM(10))
+            VUNPCKLPD(YMM(8), YMM(8), YMM(10))
+            VPERM2F128(YMM( 4), YMM(2), YMM(8), IMM(0x21))
+            VPERM2F128(YMM(10), YMM(6), YMM(3), IMM(0x21))
+            VBLENDPD(YMM( 8), YMM( 8), YMM( 4), IMM(0x3))
+            VBLENDPD(YMM( 4), YMM( 4), YMM( 2), IMM(0x3))
+            VBLENDPD(YMM( 6), YMM(10), YMM( 6), IMM(0x3))
+            VBLENDPD(YMM(10), YMM( 3), YMM(10), IMM(0x3))
+            VFMADD231PD(YMM( 4), YMM(1), MEM(RCX      ))
+            VFMADD231PD(YMM( 6), YMM(1), MEM(RCX,RSI,1))
+            VFMADD231PD(YMM( 8), YMM(1), MEM(RCX,RSI,2))
+            VFMADD231PD(YMM(10), YMM(1), MEM(RCX,R13,1))
+            VMOVUPD(MEM(RCX      ), YMM( 4))
+            VMOVUPD(MEM(RCX,RSI,1), YMM( 6))
+            VMOVUPD(MEM(RCX,RSI,2), YMM( 8))
+            VMOVUPD(MEM(RCX,R13,1), YMM(10))
+
+            VUNPCKLPD(YMM(2), YMM(12), YMM(14))
+            VUNPCKHPD(YMM(3), YMM(12), YMM(14))
+            VMOVUPD(XMM(12), MEM(RCX,      32))
+            VMOVUPD(XMM(14), MEM(RCX,RSI,1,32))
+            VINSERTF128(YMM(12), YMM(12), MEM(RCX,RSI,2,32), IMM(1))
+            VINSERTF128(YMM(14), YMM(14), MEM(RCX,R13,1,32), IMM(1))
+            VFMADD231PD(YMM(2), YMM(1), YMM(12))
+            VFMADD231PD(YMM(3), YMM(1), YMM(14))
+            VMOVUPD(MEM(RCX,      32), XMM(2))
+            VMOVUPD(MEM(RCX,RSI,1,32), XMM(3))
+            VEXTRACTF128(MEM(RCX,RSI,2,32), YMM(2), IMM(1))
+            VEXTRACTF128(MEM(RCX,R13,1,32), YMM(3), IMM(1))
+
+            VUNPCKLPD(YMM(2), YMM(5), YMM( 7))
+            VUNPCKHPD(YMM(7), YMM(5), YMM( 7))
+            VUNPCKHPD(YMM(3), YMM(9), YMM(11))
+            VUNPCKLPD(YMM(9), YMM(9), YMM(11))
+            VPERM2F128(YMM( 5), YMM(2), YMM(9), IMM(0x21))
+            VPERM2F128(YMM(11), YMM(7), YMM(3), IMM(0x21))
+            VBLENDPD(YMM( 9), YMM( 9), YMM( 5), IMM(0x3))
+            VBLENDPD(YMM( 5), YMM( 5), YMM( 2), IMM(0x3))
+            VBLENDPD(YMM( 7), YMM(11), YMM( 7), IMM(0x3))
+            VBLENDPD(YMM(11), YMM( 3), YMM(11), IMM(0x3))
+            VFMADD231PD(YMM( 5), YMM(1), MEM(RDX      ))
+            VFMADD231PD(YMM( 7), YMM(1), MEM(RDX,RSI,1))
+            VFMADD231PD(YMM( 9), YMM(1), MEM(RDX,RSI,2))
+            VFMADD231PD(YMM(11), YMM(1), MEM(RDX,R13,1))
+            VMOVUPD(MEM(RDX      ), YMM( 5))
+            VMOVUPD(MEM(RDX,RSI,1), YMM( 7))
+            VMOVUPD(MEM(RDX,RSI,2), YMM( 9))
+            VMOVUPD(MEM(RDX,R13,1), YMM(11))
+
+            VUNPCKLPD(YMM(2), YMM(13), YMM(15))
+            VUNPCKHPD(YMM(3), YMM(13), YMM(15))
+            VMOVUPD(XMM(13), MEM(RDX,      32))
+            VMOVUPD(XMM(15), MEM(RDX,RSI,1,32))
+            VINSERTF128(YMM(13), YMM(13), MEM(RDX,RSI,2,32), IMM(1))
+            VINSERTF128(YMM(15), YMM(15), MEM(RDX,R13,1,32), IMM(1))
+            VFMADD231PD(YMM(2), YMM(1), YMM(13))
+            VFMADD231PD(YMM(3), YMM(1), YMM(15))
+            VMOVUPD(MEM(RDX,      32), XMM(2))
+            VMOVUPD(MEM(RDX,RSI,1,32), XMM(3))
+            VEXTRACTF128(MEM(RDX,RSI,2,32), YMM(2), IMM(1))
+            VEXTRACTF128(MEM(RDX,R13,1,32), YMM(3), IMM(1))
+
+    JMP(.DDONE)
+    LABEL(.DBETAZERO)
+
+        CMP(RSI, IMM(8))
+        JE(.DCOLSTORBZ)
+
+#if AMBI_METHOD != GS
+        CMP(RDI, IMM(8))
+        JE(.DROWSTORBZ)
+#endif
+
+        LABEL(.DGENSTORBZ)
+
+            DGEMM_GS_BZ(4)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(6)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(8)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(10)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(12)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(14)
+            MOV(RCX, RDX)
+            DGEMM_GS_BZ(5)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(7)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(9)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(11)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(13)
+            ADD(RCX, RDI)
+            DGEMM_GS_BZ(15)
+
+        JMP(.DDONE)
+        LABEL(.DCOLSTORBZ)
+
+            VMOVUPD(MEM(RCX), YMM(4))
+            VMOVUPD(MEM(RDX), YMM(5))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VMOVUPD(MEM(RCX), YMM(6))
+            VMOVUPD(MEM(RDX), YMM(7))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VMOVUPD(MEM(RCX), YMM(8))
+            VMOVUPD(MEM(RDX), YMM(9))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VMOVUPD(MEM(RCX), YMM(10))
+            VMOVUPD(MEM(RDX), YMM(11))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VMOVUPD(MEM(RCX), YMM(12))
+            VMOVUPD(MEM(RDX), YMM(13))
+            ADD(RCX, RDI)
+            ADD(RDX, RDI)
+
+            VMOVUPD(MEM(RCX), YMM(14))
+            VMOVUPD(MEM(RDX), YMM(15))
+
+        JMP(.DDONE)
+        LABEL(.DROWSTORBZ)
 
             //
             // Transpose and write out in four quadrants:

@@ -33,9 +33,9 @@
 */
 
 #include "blis.h"
-#include <assert.h>
+#include "util/asm_x86.h"
 
-#include "../../util/asm_x86.h"
+#include "../ambi.hpp"
 
 #define UNROLL_K 32
 
@@ -308,13 +308,25 @@
         VFMADD231PD(ZMM(30), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+22)*8)) \
         VFMADD231PD(ZMM(31), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+23)*8))
 
+#define PREFETCH_C_8(level,vsib1,off) \
+        KXNORW(K(1), K(0), K(0)) \
+        KXNORW(K(2), K(0), K(0)) \
+        KXNORW(K(3), K(0), K(0)) \
+        VSCATTERPFDPD(level, MEM(RCX,YMM(vsib1),8,off+0*64) MASK_K(1)) \
+        VSCATTERPFDPD(level, MEM(RCX,YMM(vsib1),8,off+1*64) MASK_K(2)) \
+        VSCATTERPFDPD(level, MEM(RCX,YMM(vsib1),8,off+2*64) MASK_K(3))
+
+#define PREFETCH_C_24(level,vsib1,vsib2,off) \
+        KXNORW(K(1), K(0), K(0)) \
+        KXNORW(K(2), K(0), K(0)) \
+        VSCATTERPFDPS(level, MEM(RCX,ZMM(vsib1),8,off) MASK_K(1)) \
+        VSCATTERPFDPD(level, MEM(RCX,YMM(vsib2),8,off) MASK_K(2))
+
 //This is an array used for the scatter/gather instructions.
 static int32_t offsets[32] __attribute__((aligned(64))) =
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
      16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31};
 
-//#define MONITORS
-//#define LOOPMON
 void bli_dgemm_opt_24x8(
                     dim_t            k_,
                     double* restrict alpha,
@@ -339,7 +351,7 @@ void bli_dgemm_opt_24x8(
 
     BEGIN_ASM
 
-    VPXORD(ZMM(8), ZMM(8), ZMM(8)) //clear out registers
+    VXORD(ZMM(8), ZMM(8), ZMM(8)) //clear out registers
     VMOVAPD(ZMM( 9), ZMM(8))
     VMOVAPD(ZMM(10), ZMM(8))
     VMOVAPD(ZMM(11), ZMM(8))
@@ -365,15 +377,16 @@ void bli_dgemm_opt_24x8(
     VMOVAPD(ZMM(31), ZMM(8))
 
     MOV(R12, VAR(rs_c))
+    LEA(R12, MEM(,R12,8))
     MOV(RSI, VAR(k)) //loop index
     MOV(RAX, VAR(a)) //load address of a
     MOV(RBX, VAR(b)) //load address of b
     MOV(RCX, VAR(c)) //load address of c
     VMOVAPD(ZMM(0), MEM(RBX)) //pre-load b
 
-    MOV(RDI, VAR(offsetPtr))
-    VMOVDQA32(ZMM(4), MEM(RDI))
-    VMOVDQA32(ZMM(3), MEM(RDI,64))
+    MOV(R15, VAR(offsetPtr))
+    VMOVDQA32(ZMM(3), MEM(R15))
+    VMOVDQA32(ZMM(4), MEM(R15,64))
 
     MOV(R8, IMM(4*24*8))     //offset for 4 iterations
     LEA(R9, MEM(R8,R8,2))    //*3
@@ -382,35 +395,39 @@ void bli_dgemm_opt_24x8(
 
     //prefetch C into L2
 
-    CMP(R12, IMM(1))
+    CMP(R12, IMM(8))
     JE(COLSTORPF2)
 
-        KXNORW(K(1), K(0), K(0))
-        KXNORW(K(2), K(0), K(0))
-        VPBROADCASTD(ZMM(5), VAR(rs_c))
-        VPMULLD(ZMM(2), ZMM(4), ZMM(5))
-        VPMULLD(YMM(3), YMM(3), YMM(5))
-        VSCATTERPFDPS(1, MEM(RCX,ZMM(2),8,64) MASK_K(1))
-        VSCATTERPFDPD(1, MEM(RCX,YMM(3),8,64) MASK_K(2))
+        VPMULLD(ZMM(3), ZMM(3), VAR_1TO16(rs_c))
+        VPMULLD(ZMM(4), ZMM(4), VAR_1TO16(rs_c))
+#if PF_C_L2 == PF_JR || PF_C_L2 == PF_NEAR
+        PREFETCH_C_24(1,3,4,64)
+#else
+        MOV(RDX, RCX)
+        LEA(RCX, MEM(RCX,R12,8))
+        LEA(RCX, MEM(RCX,R12,8))
+        LEA(RCX, MEM(RCX,R12,8))
+        PREFETCH_C_24(1,3,4,0)
+        MOV(RCX, RDX)
+#endif
 
     JMP(PFDONE2)
     LABEL(COLSTORPF2)
 
-        KXNORW(K(1), K(0), K(0))
-        KXNORW(K(2), K(0), K(0))
-        KXNORW(K(3), K(0), K(0))
-        VPBROADCASTD(ZMM(5), VAR(cs_c))
-        VPMULLD(ZMM(2), ZMM(3), ZMM(5))
-        VSCATTERPFDPD(1, MEM(RCX,YMM(2),8,0*64) MASK_K(1))
-        VSCATTERPFDPD(1, MEM(RCX,YMM(2),8,1*64) MASK_K(2))
-        VSCATTERPFDPD(1, MEM(RCX,YMM(2),8,2*64) MASK_K(3))
+        VPMULLD(ZMM(3), ZMM(3), VAR_1TO16(cs_c))
+        VPMULLD(ZMM(4), ZMM(4), VAR_1TO16(cs_c))
+#if PF_C_L2 == PF_IR || PF_C_L2 == PF_NEAR
+        PREFETCH_C_8(1,3,192)
+#else
+        PREFETCH_C_8(1,4,0)
+#endif
 
     LABEL(PFDONE2)
 
     MOV(RDI, RSI)
-    AND(RDI, IMM(31))
-    SAR(RSI, IMM(5))
-    JZ(REM_1)
+    AND(RDI, IMM(63))
+    SAR(RSI, IMM(6))
+    JZ(PREFETCHC)
 
     LOOP_ALIGN
     LABEL(MAIN_LOOP)
@@ -457,24 +474,17 @@ void bli_dgemm_opt_24x8(
 
     //prefetch C into L1
 
-    CMP(R12, IMM(1))
+    LABEL(PREFETCHC)
+
+    CMP(R12, IMM(8))
     JE(COLSTORPF)
 
-        KXNORW(K(1), K(0), K(0))
-        KXNORW(K(2), K(0), K(0))
-        VSCATTERPFDPS(0, MEM(RCX,ZMM(2),8) MASK_K(1))
-        VSCATTERPFDPD(0, MEM(RCX,YMM(3),8) MASK_K(2))
+        PREFETCH_C_24(0,3,4,0)
 
     JMP(PFDONE)
     LABEL(COLSTORPF)
 
-        KXNORW(K(1), K(0), K(0))
-        KXNORW(K(2), K(0), K(0))
-        KXNORW(K(3), K(0), K(0))
-        VPMULLD(ZMM(2), ZMM(4), ZMM(5))
-        VSCATTERPFDPD(0, MEM(RCX,YMM(2),8,0*64) MASK_K(1))
-        VSCATTERPFDPD(0, MEM(RCX,YMM(2),8,1*64) MASK_K(2))
-        VSCATTERPFDPD(0, MEM(RCX,YMM(2),8,2*64) MASK_K(3))
+        PREFETCH_C_8(0,3,0)
 
     LABEL(PFDONE)
 
@@ -484,68 +494,107 @@ void bli_dgemm_opt_24x8(
     SAR(RDI)
     JNC(REM_2)
 
-    SUBITER(0,1,0,RAX)
-    VMOVAPD(ZMM(0), ZMM(1))
-    ADD(RAX, IMM(24*8))
-    ADD(RBX, IMM( 8*8))
+        SUBITER(0,1,0,RAX)
+        VMOVAPD(ZMM(0), ZMM(1))
+        ADD(RAX, IMM(24*8))
+        ADD(RBX, IMM( 8*8))
 
     LABEL(REM_2)
     SAR(RDI)
     JNC(REM_4)
 
-    SUBITER(0,1,0,RAX)
-    SUBITER(1,0,1,RAX)
-    ADD(RAX, IMM(2*24*8))
-    ADD(RBX, IMM(2* 8*8))
+        SUBITER(0,1,0,RAX)
+        SUBITER(1,0,1,RAX)
+        ADD(RAX, IMM(2*24*8))
+        ADD(RBX, IMM(2* 8*8))
 
     LABEL(REM_4)
     SAR(RDI)
     JNC(REM_8)
 
-    SUBITER(0,1,0,RAX)
-    SUBITER(1,0,1,RAX)
-    SUBITER(2,1,0,RAX)
-    SUBITER(3,0,1,RAX)
-    ADD(RAX, IMM(4*24*8))
-    ADD(RBX, IMM(4* 8*8))
+        SUBITER(0,1,0,RAX)
+        SUBITER(1,0,1,RAX)
+        SUBITER(2,1,0,RAX)
+        SUBITER(3,0,1,RAX)
+        ADD(RAX, IMM(4*24*8))
+        ADD(RBX, IMM(4* 8*8))
 
     LABEL(REM_8)
     SAR(RDI)
     JNC(REM_16)
 
-    SUBITER(0,1,0,RAX     )
-    SUBITER(1,0,1,RAX     )
-    SUBITER(2,1,0,RAX     )
-    SUBITER(3,0,1,RAX     )
-    SUBITER(4,1,0,RAX,R8,1)
-    SUBITER(5,0,1,RAX,R8,1)
-    SUBITER(6,1,0,RAX,R8,1)
-    SUBITER(7,0,1,RAX,R8,1)
-    ADD(RAX, IMM(8*24*8))
-    ADD(RBX, IMM(8* 8*8))
+        SUBITER(0,1,0,RAX     )
+        SUBITER(1,0,1,RAX     )
+        SUBITER(2,1,0,RAX     )
+        SUBITER(3,0,1,RAX     )
+        SUBITER(4,1,0,RAX,R8,1)
+        SUBITER(5,0,1,RAX,R8,1)
+        SUBITER(6,1,0,RAX,R8,1)
+        SUBITER(7,0,1,RAX,R8,1)
+        ADD(RAX, IMM(8*24*8))
+        ADD(RBX, IMM(8* 8*8))
 
     LABEL(REM_16)
     SAR(RDI)
+    JNC(REM_32)
+
+        SUBITER( 0,1,0,RAX      )
+        SUBITER( 1,0,1,RAX      )
+        SUBITER( 2,1,0,RAX      )
+        SUBITER( 3,0,1,RAX      )
+        SUBITER( 4,1,0,RAX,R8, 1)
+        SUBITER( 5,0,1,RAX,R8, 1)
+        SUBITER( 6,1,0,RAX,R8, 1)
+        SUBITER( 7,0,1,RAX,R8, 1)
+        SUBITER( 8,1,0,RAX,R8, 2)
+        SUBITER( 9,0,1,RAX,R8, 2)
+        SUBITER(10,1,0,RAX,R8, 2)
+        SUBITER(11,0,1,RAX,R8, 2)
+        SUBITER(12,1,0,RAX,R9, 1)
+        SUBITER(13,0,1,RAX,R9, 1)
+        SUBITER(14,1,0,RAX,R9, 1)
+        SUBITER(15,0,1,RAX,R9, 1)
+        ADD(RAX, IMM(16*24*8))
+        ADD(RBX, IMM(16* 8*8))
+
+    LABEL(REM_32)
+    SAR(RDI)
     JNC(POSTACCUM)
 
-    SUBITER( 0,1,0,RAX      )
-    SUBITER( 1,0,1,RAX      )
-    SUBITER( 2,1,0,RAX      )
-    SUBITER( 3,0,1,RAX      )
-    SUBITER( 4,1,0,RAX,R8, 1)
-    SUBITER( 5,0,1,RAX,R8, 1)
-    SUBITER( 6,1,0,RAX,R8, 1)
-    SUBITER( 7,0,1,RAX,R8, 1)
-    SUBITER( 8,1,0,RAX,R8, 2)
-    SUBITER( 9,0,1,RAX,R8, 2)
-    SUBITER(10,1,0,RAX,R8, 2)
-    SUBITER(11,0,1,RAX,R8, 2)
-    SUBITER(12,1,0,RAX,R9, 1)
-    SUBITER(13,0,1,RAX,R9, 1)
-    SUBITER(14,1,0,RAX,R9, 1)
-    SUBITER(15,0,1,RAX,R9, 1)
-    ADD(RAX, IMM(16*24*8))
-    ADD(RBX, IMM(16* 8*8))
+        SUBITER( 0,1,0,RAX      )
+        SUBITER( 1,0,1,RAX      )
+        SUBITER( 2,1,0,RAX      )
+        SUBITER( 3,0,1,RAX      )
+        SUBITER( 4,1,0,RAX,R8, 1)
+        SUBITER( 5,0,1,RAX,R8, 1)
+        SUBITER( 6,1,0,RAX,R8, 1)
+        SUBITER( 7,0,1,RAX,R8, 1)
+        SUBITER( 8,1,0,RAX,R8, 2)
+        SUBITER( 9,0,1,RAX,R8, 2)
+        SUBITER(10,1,0,RAX,R8, 2)
+        SUBITER(11,0,1,RAX,R8, 2)
+        SUBITER(12,1,0,RAX,R9, 1)
+        SUBITER(13,0,1,RAX,R9, 1)
+        SUBITER(14,1,0,RAX,R9, 1)
+        SUBITER(15,0,1,RAX,R9, 1)
+        SUBITER(16,1,0,RAX,R8, 4)
+        SUBITER(17,0,1,RAX,R8, 4)
+        SUBITER(18,1,0,RAX,R8, 4)
+        SUBITER(19,0,1,RAX,R8, 4)
+        SUBITER(20,1,0,RAX,R10,1)
+        SUBITER(21,0,1,RAX,R10,1)
+        SUBITER(22,1,0,RAX,R10,1)
+        SUBITER(23,0,1,RAX,R10,1)
+        SUBITER(24,1,0,RAX,R9, 2)
+        SUBITER(25,0,1,RAX,R9, 2)
+        SUBITER(26,1,0,RAX,R9, 2)
+        SUBITER(27,0,1,RAX,R9, 2)
+        SUBITER(28,1,0,RAX,R11,1)
+        SUBITER(29,0,1,RAX,R11,1)
+        SUBITER(30,1,0,RAX,R11,1)
+        SUBITER(31,0,1,RAX,R11,1)
+        ADD(RAX, IMM(32*24*8))
+        ADD(RBX, IMM(32* 8*8))
 
     LABEL(POSTACCUM)
 
@@ -562,7 +611,11 @@ void bli_dgemm_opt_24x8(
 
     // Check if C is row stride.
     CMP(RBX, IMM(8))
+#if AMBI_METHOD == GS
+    JNE(SCATTEREDUPDATE)
+#else
     JNE(COLSTORED)
+#endif
 
         VMOVQ(RDX, XMM(1))
         SAL(RDX) //shift out sign bit
@@ -622,7 +675,441 @@ void bli_dgemm_opt_24x8(
     LABEL(SCATTEREDUPDATE)
 
         VPBROADCASTD(ZMM(5), VAR(rs_c))
-        VPMULLD(ZMM(2), ZMM(4), ZMM(5))
+        VPMULLD(ZMM(2), ZMM(5), MEM(R15))
+
+        VMOVQ(RDX, XMM(1))
+        SAL(RDX) //shift out sign bit
+        JZ(SCATTERBZ)
+
+            UPDATE_C_ROW_SCATTERED( 8)
+            UPDATE_C_ROW_SCATTERED( 9)
+            UPDATE_C_ROW_SCATTERED(10)
+            UPDATE_C_ROW_SCATTERED(11)
+            UPDATE_C_ROW_SCATTERED(12)
+            UPDATE_C_ROW_SCATTERED(13)
+            UPDATE_C_ROW_SCATTERED(14)
+            UPDATE_C_ROW_SCATTERED(15)
+            UPDATE_C_ROW_SCATTERED(16)
+            UPDATE_C_ROW_SCATTERED(17)
+            UPDATE_C_ROW_SCATTERED(18)
+            UPDATE_C_ROW_SCATTERED(19)
+            UPDATE_C_ROW_SCATTERED(20)
+            UPDATE_C_ROW_SCATTERED(21)
+            UPDATE_C_ROW_SCATTERED(22)
+            UPDATE_C_ROW_SCATTERED(23)
+            UPDATE_C_ROW_SCATTERED(24)
+            UPDATE_C_ROW_SCATTERED(25)
+            UPDATE_C_ROW_SCATTERED(26)
+            UPDATE_C_ROW_SCATTERED(27)
+            UPDATE_C_ROW_SCATTERED(28)
+            UPDATE_C_ROW_SCATTERED(29)
+            UPDATE_C_ROW_SCATTERED(30)
+            UPDATE_C_ROW_SCATTERED(31)
+
+        JMP(END)
+        LABEL(SCATTERBZ)
+
+            UPDATE_C_BZ_ROW_SCATTERED( 8)
+            UPDATE_C_BZ_ROW_SCATTERED( 9)
+            UPDATE_C_BZ_ROW_SCATTERED(10)
+            UPDATE_C_BZ_ROW_SCATTERED(11)
+            UPDATE_C_BZ_ROW_SCATTERED(12)
+            UPDATE_C_BZ_ROW_SCATTERED(13)
+            UPDATE_C_BZ_ROW_SCATTERED(14)
+            UPDATE_C_BZ_ROW_SCATTERED(15)
+            UPDATE_C_BZ_ROW_SCATTERED(16)
+            UPDATE_C_BZ_ROW_SCATTERED(17)
+            UPDATE_C_BZ_ROW_SCATTERED(18)
+            UPDATE_C_BZ_ROW_SCATTERED(19)
+            UPDATE_C_BZ_ROW_SCATTERED(20)
+            UPDATE_C_BZ_ROW_SCATTERED(21)
+            UPDATE_C_BZ_ROW_SCATTERED(22)
+            UPDATE_C_BZ_ROW_SCATTERED(23)
+            UPDATE_C_BZ_ROW_SCATTERED(24)
+            UPDATE_C_BZ_ROW_SCATTERED(25)
+            UPDATE_C_BZ_ROW_SCATTERED(26)
+            UPDATE_C_BZ_ROW_SCATTERED(27)
+            UPDATE_C_BZ_ROW_SCATTERED(28)
+            UPDATE_C_BZ_ROW_SCATTERED(29)
+            UPDATE_C_BZ_ROW_SCATTERED(30)
+            UPDATE_C_BZ_ROW_SCATTERED(31)
+
+    LABEL(END)
+
+    END_ASM
+    (
+        : // output operands
+        : // input operands
+          [k]         "m" (k),
+          [a]         "m" (a),
+          [b]         "m" (b),
+          [alpha]     "m" (alpha),
+          [beta]      "m" (beta),
+          [c]         "m" (c),
+          [rs_c]      "m" (rs_c),
+          [cs_c]      "m" (cs_c),
+          [a_next]    "m" (a_next),
+          [b_next]    "m" (b_next),
+          [offsetPtr] "m" (offsetPtr)
+        : // register clobber list
+          "rax", "rbx", "rcx", "rdx", "rdi", "rsi", "r8", "r9", "r10", "r11", "r12",
+          "r13", "r14", "r15", "zmm0", "zmm1", "zmm2", "zmm3", "zmm4", "zmm5",
+          "zmm6", "zmm7", "zmm8", "zmm9", "zmm10", "zmm11", "zmm12", "zmm13",
+          "zmm14", "zmm15", "zmm16", "zmm17", "zmm18", "zmm19", "zmm20", "zmm21",
+          "zmm22", "zmm23", "zmm24", "zmm25", "zmm26", "zmm27", "zmm28", "zmm29",
+          "zmm30", "zmm31", "memory"
+    )
+}
+
+void bli_dgemm_opt_8x24(
+                    dim_t            k_,
+                    double* restrict alpha,
+                    double* restrict b,
+                    double* restrict a,
+                    double* restrict beta,
+                    double* restrict c, inc_t cs_c_, inc_t rs_c_,
+                    auxinfo_t*       data,
+                    cntx_t* restrict cntx
+                  )
+{
+    (void)data;
+    (void)cntx;
+
+    const double * a_next = bli_auxinfo_next_a( data );
+    const double * b_next = bli_auxinfo_next_b( data );
+
+    const int32_t * offsetPtr = &offsets[0];
+    const int64_t k = k_;
+    const int64_t rs_c = rs_c_;
+    const int64_t cs_c = cs_c_;
+
+    BEGIN_ASM
+
+    VXORPD(ZMM(8), ZMM(8), ZMM(8)) //clear out registers
+    VMOVAPD(ZMM( 9), ZMM(8))
+    VMOVAPD(ZMM(10), ZMM(8))
+    VMOVAPD(ZMM(11), ZMM(8))
+    VMOVAPD(ZMM(12), ZMM(8))
+    VMOVAPD(ZMM(13), ZMM(8))
+    VMOVAPD(ZMM(14), ZMM(8))
+    VMOVAPD(ZMM(15), ZMM(8))
+    VMOVAPD(ZMM(16), ZMM(8))
+    VMOVAPD(ZMM(17), ZMM(8))
+    VMOVAPD(ZMM(18), ZMM(8))
+    VMOVAPD(ZMM(19), ZMM(8))
+    VMOVAPD(ZMM(20), ZMM(8))
+    VMOVAPD(ZMM(21), ZMM(8))
+    VMOVAPD(ZMM(22), ZMM(8))
+    VMOVAPD(ZMM(23), ZMM(8))
+    VMOVAPD(ZMM(24), ZMM(8))
+    VMOVAPD(ZMM(25), ZMM(8))
+    VMOVAPD(ZMM(26), ZMM(8))
+    VMOVAPD(ZMM(27), ZMM(8))
+    VMOVAPD(ZMM(28), ZMM(8))
+    VMOVAPD(ZMM(29), ZMM(8))
+    VMOVAPD(ZMM(30), ZMM(8))
+    VMOVAPD(ZMM(31), ZMM(8))
+
+    MOV(R12, VAR(rs_c))
+    LEA(R12, MEM(,R12,8))
+    MOV(RSI, VAR(k)) //loop index
+    MOV(RAX, VAR(a)) //load address of a
+    MOV(RBX, VAR(b)) //load address of b
+    MOV(RCX, VAR(c)) //load address of c
+    VMOVAPD(ZMM(0), MEM(RBX)) //pre-load b
+
+    MOV(R15, VAR(offsetPtr))
+    VMOVDQA32(ZMM(3), MEM(R15))
+    VMOVDQA32(ZMM(4), MEM(R15,64))
+
+    MOV(R8, IMM(4*24*8))     //offset for 4 iterations
+    LEA(R9, MEM(R8,R8,2))    //*3
+    LEA(R10, MEM(R8,R8,4))   //*5
+    LEA(R11, MEM(R9,R8,4))   //*7
+
+    //prefetch C into L2
+
+    CMP(R12, IMM(8))
+    JE(ROWSTORPF2)
+
+        VPMULLD(ZMM(3), ZMM(3), VAR_1TO16(rs_c))
+        VPMULLD(ZMM(4), ZMM(4), VAR_1TO16(rs_c))
+#if PF_C_L2 == PF_IR || PF_C_L2 == PF_NEAR
+        PREFETCH_C_24(1,3,4,64)
+#else
+        MOV(RDX, RCX)
+        LEA(RCX, MEM(RCX,R12,8))
+        LEA(RCX, MEM(RCX,R12,8))
+        LEA(RCX, MEM(RCX,R12,8))
+        PREFETCH_C_24(1,3,4,0)
+        MOV(RCX, RDX)
+#endif
+
+    JMP(PFDONE2)
+    LABEL(ROWSTORPF2)
+
+        VPMULLD(ZMM(3), ZMM(3), VAR_1TO16(cs_c))
+        VPMULLD(ZMM(4), ZMM(4), VAR_1TO16(cs_c))
+#if PF_C_L2 == PF_JR || PF_C_L2 == PF_NEAR
+        PREFETCH_C_8(1,3,192)
+#else
+        PREFETCH_C_8(1,4,0)
+#endif
+
+    LABEL(PFDONE2)
+
+    MOV(RDI, RSI)
+    AND(RDI, IMM(63))
+    SAR(RSI, IMM(6))
+    JZ(PREFETCHC)
+
+    LOOP_ALIGN
+    LABEL(MAIN_LOOP)
+
+        SUBITER( 0,1,0,RAX      )
+        SUBITER( 1,0,1,RAX      )
+        SUBITER( 2,1,0,RAX      )
+        SUBITER( 3,0,1,RAX      )
+        SUBITER( 4,1,0,RAX,R8, 1)
+        SUBITER( 5,0,1,RAX,R8, 1)
+        SUBITER( 6,1,0,RAX,R8, 1)
+        SUBITER( 7,0,1,RAX,R8, 1)
+        SUBITER( 8,1,0,RAX,R8, 2)
+        SUBITER( 9,0,1,RAX,R8, 2)
+        SUBITER(10,1,0,RAX,R8, 2)
+        SUBITER(11,0,1,RAX,R8, 2)
+        SUBITER(12,1,0,RAX,R9, 1)
+        SUBITER(13,0,1,RAX,R9, 1)
+        SUBITER(14,1,0,RAX,R9, 1)
+        SUBITER(15,0,1,RAX,R9, 1)
+        SUBITER(16,1,0,RAX,R8, 4)
+        SUBITER(17,0,1,RAX,R8, 4)
+        SUBITER(18,1,0,RAX,R8, 4)
+        SUBITER(19,0,1,RAX,R8, 4)
+        SUBITER(20,1,0,RAX,R10,1)
+        SUBITER(21,0,1,RAX,R10,1)
+        SUBITER(22,1,0,RAX,R10,1)
+        SUBITER(23,0,1,RAX,R10,1)
+        SUBITER(24,1,0,RAX,R9, 2)
+        SUBITER(25,0,1,RAX,R9, 2)
+        SUBITER(26,1,0,RAX,R9, 2)
+        SUBITER(27,0,1,RAX,R9, 2)
+        SUBITER(28,1,0,RAX,R11,1)
+        SUBITER(29,0,1,RAX,R11,1)
+        SUBITER(30,1,0,RAX,R11,1)
+        SUBITER(31,0,1,RAX,R11,1)
+
+        ADD(RAX, IMM(32*24*8))
+        ADD(RBX, IMM(32* 8*8))
+
+        SUB(RSI, IMM(1))
+
+    JNZ(MAIN_LOOP)
+
+    //prefetch C into L1
+
+    LABEL(PREFETCHC)
+
+    CMP(R12, IMM(8))
+    JE(ROWSTORPF)
+
+        PREFETCH_C_24(0,3,4,0)
+
+    JMP(PFDONE)
+    LABEL(ROWSTORPF)
+
+        PREFETCH_C_8(0,3,0)
+
+    LABEL(PFDONE)
+
+    // unrolled cleanup loop
+
+    LABEL(REM_1)
+    SAR(RDI)
+    JNC(REM_2)
+
+        SUBITER(0,1,0,RAX)
+        VMOVAPD(ZMM(0), ZMM(1))
+        ADD(RAX, IMM(24*8))
+        ADD(RBX, IMM( 8*8))
+
+    LABEL(REM_2)
+    SAR(RDI)
+    JNC(REM_4)
+
+        SUBITER(0,1,0,RAX)
+        SUBITER(1,0,1,RAX)
+        ADD(RAX, IMM(2*24*8))
+        ADD(RBX, IMM(2* 8*8))
+
+    LABEL(REM_4)
+    SAR(RDI)
+    JNC(REM_8)
+
+        SUBITER(0,1,0,RAX)
+        SUBITER(1,0,1,RAX)
+        SUBITER(2,1,0,RAX)
+        SUBITER(3,0,1,RAX)
+        ADD(RAX, IMM(4*24*8))
+        ADD(RBX, IMM(4* 8*8))
+
+    LABEL(REM_8)
+    SAR(RDI)
+    JNC(REM_16)
+
+        SUBITER(0,1,0,RAX     )
+        SUBITER(1,0,1,RAX     )
+        SUBITER(2,1,0,RAX     )
+        SUBITER(3,0,1,RAX     )
+        SUBITER(4,1,0,RAX,R8,1)
+        SUBITER(5,0,1,RAX,R8,1)
+        SUBITER(6,1,0,RAX,R8,1)
+        SUBITER(7,0,1,RAX,R8,1)
+        ADD(RAX, IMM(8*24*8))
+        ADD(RBX, IMM(8* 8*8))
+
+    LABEL(REM_16)
+    SAR(RDI)
+    JNC(REM_32)
+
+        SUBITER( 0,1,0,RAX      )
+        SUBITER( 1,0,1,RAX      )
+        SUBITER( 2,1,0,RAX      )
+        SUBITER( 3,0,1,RAX      )
+        SUBITER( 4,1,0,RAX,R8, 1)
+        SUBITER( 5,0,1,RAX,R8, 1)
+        SUBITER( 6,1,0,RAX,R8, 1)
+        SUBITER( 7,0,1,RAX,R8, 1)
+        SUBITER( 8,1,0,RAX,R8, 2)
+        SUBITER( 9,0,1,RAX,R8, 2)
+        SUBITER(10,1,0,RAX,R8, 2)
+        SUBITER(11,0,1,RAX,R8, 2)
+        SUBITER(12,1,0,RAX,R9, 1)
+        SUBITER(13,0,1,RAX,R9, 1)
+        SUBITER(14,1,0,RAX,R9, 1)
+        SUBITER(15,0,1,RAX,R9, 1)
+        ADD(RAX, IMM(16*24*8))
+        ADD(RBX, IMM(16* 8*8))
+
+    LABEL(REM_32)
+    SAR(RDI)
+    JNC(POSTACCUM)
+
+        SUBITER( 0,1,0,RAX      )
+        SUBITER( 1,0,1,RAX      )
+        SUBITER( 2,1,0,RAX      )
+        SUBITER( 3,0,1,RAX      )
+        SUBITER( 4,1,0,RAX,R8, 1)
+        SUBITER( 5,0,1,RAX,R8, 1)
+        SUBITER( 6,1,0,RAX,R8, 1)
+        SUBITER( 7,0,1,RAX,R8, 1)
+        SUBITER( 8,1,0,RAX,R8, 2)
+        SUBITER( 9,0,1,RAX,R8, 2)
+        SUBITER(10,1,0,RAX,R8, 2)
+        SUBITER(11,0,1,RAX,R8, 2)
+        SUBITER(12,1,0,RAX,R9, 1)
+        SUBITER(13,0,1,RAX,R9, 1)
+        SUBITER(14,1,0,RAX,R9, 1)
+        SUBITER(15,0,1,RAX,R9, 1)
+        SUBITER(16,1,0,RAX,R8, 4)
+        SUBITER(17,0,1,RAX,R8, 4)
+        SUBITER(18,1,0,RAX,R8, 4)
+        SUBITER(19,0,1,RAX,R8, 4)
+        SUBITER(20,1,0,RAX,R10,1)
+        SUBITER(21,0,1,RAX,R10,1)
+        SUBITER(22,1,0,RAX,R10,1)
+        SUBITER(23,0,1,RAX,R10,1)
+        SUBITER(24,1,0,RAX,R9, 2)
+        SUBITER(25,0,1,RAX,R9, 2)
+        SUBITER(26,1,0,RAX,R9, 2)
+        SUBITER(27,0,1,RAX,R9, 2)
+        SUBITER(28,1,0,RAX,R11,1)
+        SUBITER(29,0,1,RAX,R11,1)
+        SUBITER(30,1,0,RAX,R11,1)
+        SUBITER(31,0,1,RAX,R11,1)
+        ADD(RAX, IMM(32*24*8))
+        ADD(RBX, IMM(32* 8*8))
+
+    LABEL(POSTACCUM)
+
+    MOV(RAX, VAR(alpha))
+    MOV(RBX, VAR(beta))
+    VBROADCASTSD(ZMM(0), MEM(RAX))
+    VBROADCASTSD(ZMM(1), MEM(RBX))
+
+    MOV(RAX, VAR(rs_c))
+    LEA(RAX, MEM(,RAX,8))
+    MOV(RBX, VAR(cs_c))
+    LEA(RBX, MEM(,RBX,8))
+    LEA(RDI, MEM(RAX,RAX,2))
+
+    // Check if C is column stride.
+    CMP(RBX, IMM(8))
+#if AMBI_METHOD == GS
+    JNE(SCATTEREDUPDATE)
+#else
+    JNE(ROWSTORED)
+#endif
+
+        VMOVQ(RDX, XMM(1))
+        SAL(RDX) //shift out sign bit
+        JZ(COLSTORBZ)
+
+            UPDATE_C_FOUR_ROWS( 8, 9,10,11)
+            UPDATE_C_FOUR_ROWS(12,13,14,15)
+            UPDATE_C_FOUR_ROWS(16,17,18,19)
+            UPDATE_C_FOUR_ROWS(20,21,22,23)
+            UPDATE_C_FOUR_ROWS(24,25,26,27)
+            UPDATE_C_FOUR_ROWS(28,29,30,31)
+
+        JMP(END)
+        LABEL(COLSTORBZ)
+
+            UPDATE_C_BZ_FOUR_ROWS( 8, 9,10,11)
+            UPDATE_C_BZ_FOUR_ROWS(12,13,14,15)
+            UPDATE_C_BZ_FOUR_ROWS(16,17,18,19)
+            UPDATE_C_BZ_FOUR_ROWS(20,21,22,23)
+            UPDATE_C_BZ_FOUR_ROWS(24,25,26,27)
+            UPDATE_C_BZ_FOUR_ROWS(28,29,30,31)
+
+    JMP(END)
+    LABEL(ROWSTORED)
+
+    // Check if C is row stride. If not, jump to the slow scattered update
+    CMP(RAX, IMM(8))
+    JNE(SCATTEREDUPDATE)
+
+        LEA(R13, MEM(RBX,RBX,2))
+        LEA(R15, MEM(RBX,RBX,4))
+        LEA(R10, MEM(R15,RBX,2))
+
+        MOV(ESI, IMM(0x33))
+        KMOV(K(1), ESI)
+
+        VMOVQ(RDX, XMM(1))
+        SAL(RDX) //shift out sign bit
+        JZ(ROWSTORBZ)
+
+            UPDATE_C_TRANS8X8( 8, 9,10,11,12,13,14,15)
+            ADD(RCX, IMM(64))
+            UPDATE_C_TRANS8X8(16,17,18,19,20,21,22,23)
+            ADD(RCX, IMM(64))
+            UPDATE_C_TRANS8X8(24,25,26,27,28,29,30,31)
+
+        JMP(END)
+        LABEL(ROWSTORBZ)
+
+            UPDATE_C_TRANS8X8_BZ( 8, 9,10,11,12,13,14,15)
+            ADD(RCX, IMM(64))
+            UPDATE_C_TRANS8X8_BZ(16,17,18,19,20,21,22,23)
+            ADD(RCX, IMM(64))
+            UPDATE_C_TRANS8X8_BZ(24,25,26,27,28,29,30,31)
+
+    JMP(END)
+    LABEL(SCATTEREDUPDATE)
+
+        VPBROADCASTD(ZMM(5), VAR(rs_c))
+        VPMULLD(ZMM(2), ZMM(5), MEM(R15))
 
         VMOVQ(RDX, XMM(1))
         SAL(RDX) //shift out sign bit

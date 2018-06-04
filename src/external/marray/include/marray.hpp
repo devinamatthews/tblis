@@ -95,6 +95,11 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
             reset(data, layout);
         }
 
+        ~marray()
+        {
+            reset();
+        }
+
         /***********************************************************************
          *
          * Base operations

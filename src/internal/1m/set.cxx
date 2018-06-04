@@ -20,8 +20,8 @@ void set(const communicator& comm, const config& cfg, len_type m, len_type n,
     {
         for (len_type j = n_min;j < n_max;j++)
         {
-            cfg.set_ukr.call<T>(m_max-m_min,
-                                alpha, A + m_min*rs_A + j*cs_A, rs_A);
+            cfg.shift_ukr.call<T>(m_max-m_min,
+                                  alpha, T(0), false, A + m_min*rs_A + j*cs_A, rs_A);
         }
     });
 

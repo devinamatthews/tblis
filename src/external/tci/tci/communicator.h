@@ -168,7 +168,7 @@ class communicator
             {
                 std::tuple<Args&&...> refs(std::forward<Args>(args)...);
                 auto ptr = &refs;
-                tci_comm_bcast_nowait(comm, reinterpret_cast<void**>(&ptr), root);
+                tci_comm_bcast(comm, reinterpret_cast<void**>(&ptr), root);
                 func(std::get<I>(*ptr)...);
                 comm.barrier();
             }

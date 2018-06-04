@@ -23,7 +23,7 @@ void khatri_rao(const communicator& comm, const config& cfg,
                 T alpha, const ptr_vector<const T>& U_,
                 const stride_vector& stride_U_m_,
                 const stride_vector& stride_U_r_,
-                T  beta, T* A,
+                T  beta, T* A_,
                 const stride_vector& stride_A_m_,
                 stride_type stride_A_r)
 {
@@ -41,11 +41,11 @@ void khatri_rao(const communicator& comm, const config& cfg,
 
         if (beta == T(1))
         {
-            set(comm, cfg, len_A, T(0), A, stride_A);
+            set(comm, cfg, len_A, T(0), A_, stride_A);
         }
         else
         {
-            scale(comm, cfg, len_A, beta, false, A, stride_A);
+            scale(comm, cfg, len_A, beta, false, A_, stride_A);
         }
 
         return;
@@ -57,7 +57,7 @@ void khatri_rao(const communicator& comm, const config& cfg,
     {
         add(comm, cfg, {}, {}, {len_m_[0], len_r},
             alpha, false, U_[0], {}, {stride_U_m_[0], stride_U_r_[0]},
-             beta, false,     A, {}, {stride_A_m_[0], stride_A_r});
+             beta, false,    A_, {}, {stride_A_m_[0], stride_A_r});
         return;
     }
     else if (ndim_m == 2)
@@ -65,7 +65,7 @@ void khatri_rao(const communicator& comm, const config& cfg,
         mult(comm, cfg, {}, {len_m_[0]}, {len_m_[1]}, {len_r},
              alpha, false, U_[0], {}, {stride_U_m_[0]}, {stride_U_r_[0]},
                     false, U_[1], {}, {stride_U_m_[1]}, {stride_U_r_[1]},
-              beta, false,     A, {stride_A_m_[0]}, {stride_A_m_[1]}, {stride_A_r});
+              beta, false,    A_, {stride_A_m_[0]}, {stride_A_m_[1]}, {stride_A_r});
         return;
     }
 
@@ -99,6 +99,7 @@ void khatri_rao(const communicator& comm, const config& cfg,
 
             viterator<1> iter_m(len_vector(len_m.begin()+1, len_m.end()),
                                 stride_vector(stride_A_m.begin()+1, stride_A_m.end()));
+            auto A = A_;
             iter_m.position(m_min, A);
 
             len_vector prev(ndim_m-1, -1);

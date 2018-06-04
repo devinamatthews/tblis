@@ -518,6 +518,24 @@ void permute(T& v, const U& p)
 }
 
 template <typename T, typename U>
+T unpermuted(const T& v, const U& p)
+{
+    T v2; v2.reserve(v.size());
+    for (size_t i = 0;i < v.size();i++)
+    {
+        size_t j = std::find(p.begin(), p.end(), i) - p.begin();
+        v2.push_back(v[j]);
+    }
+    return v2;
+}
+
+template <typename T, typename U>
+void unpermute(T& v, const U& p)
+{
+    v = unpermuted(v, p);
+}
+
+template <typename T, typename U>
 T select_from(const T& v, const U& s, const U& match)
 {
     T v2; v2.reserve(match.size());

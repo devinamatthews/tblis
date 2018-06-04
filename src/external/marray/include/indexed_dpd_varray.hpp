@@ -140,6 +140,11 @@ class indexed_dpd_varray : public indexed_dpd_varray_base<Type, indexed_dpd_varr
             reset(irrep, nirrep, len, idx_irrep, idx, uninitialized, depth, layout);
         }
 
+        ~indexed_dpd_varray()
+        {
+            reset();
+        }
+
         /***********************************************************************
          *
          * Base operations

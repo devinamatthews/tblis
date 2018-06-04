@@ -182,25 +182,12 @@ void add(const communicator& comm, const config& cfg,
             A1 += n0_min*stride_A0;
             B1 += n0_min*stride_B0;
 
-            if (beta == T(0))
+            for (len_type i = n1_min;i < n1_max;i++)
             {
-                for (len_type i = n1_min;i < n1_max;i++)
-                {
-                    iter_AB.next(A1, B1);
-                    cfg.copy_ukr.call<T>(n0_max-n0_min,
-                                         alpha, conj_A, A1, stride_A0,
-                                                        B1, stride_B0);
-                }
-            }
-            else
-            {
-                for (len_type i = n1_min;i < n1_max;i++)
-                {
-                    iter_AB.next(A1, B1);
-                    cfg.add_ukr.call<T>(n0_max-n0_min,
-                                        alpha, conj_A, A1, stride_A0,
-                                         beta, conj_B, B1, stride_B0);
-                }
+                iter_AB.next(A1, B1);
+                cfg.add_ukr.call<T>(n0_max-n0_min,
+                                    alpha, conj_A, A1, stride_A0,
+                                     beta, conj_B, B1, stride_B0);
             }
         });
     }

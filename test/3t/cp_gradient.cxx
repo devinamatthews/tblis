@@ -11,11 +11,9 @@ void random_cp(stride_type N, vector<matrix<T>>& U,
                               varray<T>& A, label_vector& idx_A)
 {
     unsigned ndim_A = random_number(2,8);
-    ndim_A = 5;
 
     len_vector len_A;
     random_lengths(N/sizeof(T), ndim_A+1, len_A);
-    len_A = {10, 10, 10, 10, 10, 1};
     len_type len_r = len_A.back();
     len_A.pop_back();
 
@@ -96,11 +94,6 @@ REPLICATED_TEMPLATED_TEST_CASE(cp_gradient, R, T, all_types)
 
     random_cp(N, U, idx_U_, A, idx_A);
 
-    //A = 1;
-    //U[0] = 1;
-    //U[1] = 1;
-    //U[2] = 1;
-
     unsigned dim = random_number(U.size()-1);
     auto G = U[dim];
     auto idx_G = idx_U_[dim];
@@ -131,13 +124,6 @@ REPLICATED_TEMPLATED_TEST_CASE(cp_gradient, R, T, all_types)
     C.reset(G.lengths(), uninitialized);
     cp_gradient<T>(A, idx_A.data(), U, idx_U, C, idx_G.data());
 
-    //PRINT_TENSOR(A);
-    //PRINT_MATRIX(U[0]);
-    //PRINT_MATRIX(U[1]);
-    //PRINT_MATRIX(U[2]);
-    //PRINT_MATRIX(B);
-    //PRINT_MATRIX(C);
-
     add<T>(T(-1), B, T(1), C);
     T error = reduce<T>(REDUCE_NORM_2, C).first;
 
@@ -146,13 +132,6 @@ REPLICATED_TEMPLATED_TEST_CASE(cp_gradient, R, T, all_types)
     internal::cp_impl = DIRECT;
     C.reset(G.lengths(), uninitialized);
     cp_gradient<T>(A, idx_A.data(), U, idx_U, C, idx_G.data());
-
-    //PRINT_TENSOR(A);
-    //PRINT_MATRIX(U[0]);
-    //PRINT_MATRIX(U[1]);
-    //PRINT_MATRIX(U[2]);
-    //PRINT_MATRIX(B);
-    //PRINT_MATRIX(C);
 
     add<T>(T(-1), B, T(1), C);
     error = reduce<T>(REDUCE_NORM_2, C).first;

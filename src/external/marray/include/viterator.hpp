@@ -81,6 +81,24 @@ class viterator
             return true;
         }
 
+        void prev()
+        {
+            if (empty_ || ndim_ == 0) return;
+
+            for (unsigned i = 0;i < ndim_;i++)
+            {
+                if (pos_[i] == 0)
+                {
+                    pos_[i] = len_[i]-1;
+                }
+                else
+                {
+                    pos_[i]--;
+                    return;
+                }
+            }
+        }
+
         template <typename... Offsets,
                   typename=typename std::enable_if<sizeof...(Offsets) == N>::type>
         void position(stride_type pos, Offsets&... off)
@@ -121,11 +139,6 @@ class viterator
         unsigned dimension() const
         {
             return ndim_;
-        }
-
-        len_type position(unsigned dim) const
-        {
-            return pos_[dim];
         }
 
         const len_vector& position() const

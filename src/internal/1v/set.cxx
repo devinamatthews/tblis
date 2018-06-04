@@ -12,7 +12,7 @@ void set(const communicator& comm, const config& cfg, len_type n,
     comm.distribute_over_threads(n,
     [&](len_type n_min, len_type n_max)
     {
-        cfg.set_ukr.call<T>(n_max-n_min, alpha, A+n_min*inc_A, inc_A);
+        cfg.shift_ukr.call<T>(n_max-n_min, alpha, T(0), false, A+n_min*inc_A, inc_A);
     });
 }
 

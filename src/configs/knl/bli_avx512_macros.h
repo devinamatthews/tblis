@@ -71,6 +71,9 @@
 #define MEM_1TO8(...) GET_MACRO(__VA_ARGS__,MEM_1TO8_4,MEM_1TO8_3,MEM_1TO8_2,MEM_1TO8_1)(__VA_ARGS__)
 #define MEM_1TO16(...) GET_MACRO(__VA_ARGS__,MEM_1TO16_4,MEM_1TO16_3,MEM_1TO16_2,MEM_1TO16_1)(__VA_ARGS__)
 
+#define VAR_1TO8(...) VAR(__VA_ARGS__) %{1to8%}
+#define VAR_1TO16(...) VAR(__VA_ARGS__) %{1to16%}
+
 #define MASK_K(n) %{%%k##n%}
 #define MASK_KZ(n) %{%%k##n%}%{z%}
 #define KMOV(to,from) ASM(kmovw from, to)

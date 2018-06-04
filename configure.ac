@@ -138,12 +138,12 @@ AC_ARG_ENABLE([config],
                           possible values are:
                           
                           reference, bulldozer, piledriver, excavator, zen,
-                          core2, sandybridge, haswell, skx1, skx2, knl, auto
+                          core2, sandybridge, haswell, skx1, skx2, knl, knm, auto
 
                           the following meta-configurations are also available:
  
                           skx = skx1,skx2
-                          intel = core2,sandybridge,haswell,skx,knl
+                          intel = core2,sandybridge,haswell,skx,knl,knm
                           amd = bulldozer,piledriver,excavator,zen
                           x86 = intel,amd],
               [], [enable_config=auto])
@@ -174,14 +174,14 @@ if ( echo $enable_config | grep -qv reference ) && test x$using_default_configs 
 fi
 
 configs=`echo $enable_config | sed 's/x86/intel,amd/' \
-                             | sed 's/intel/core2,sandybridge,haswell,skx,knl/' \
+                             | sed 's/intel/core2,sandybridge,haswell,skx,knl,knm/' \
                              | sed 's/amd/bulldozer,piledriver,excavator,zen/' \
                              | sed 's/skx,/skx1,skx2,/' \
                              | sed 's/skx$/skx1,skx2/' \
                              | sed 's/,/ /g'`
 
 for config in $configs; do
-    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|bulldozer|piledriver|excavator|zen)$' ); then
+    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|knm|bulldozer|piledriver|excavator|zen)$' ); then
         AC_MSG_ERROR([Unknown configuration $config])
     fi
 done
@@ -237,6 +237,7 @@ fi
 # haswell: any
 # knl: icc 14.1+, gcc 5.0+, clang 3.5+
 # skx[12]: icc 15.1+, gcc 6.0+, clang 3.9+
+# knm: icc ??, gcc 8.0+, clang ??
 #
 if test x"$cc_vendor" = xicc; then
     if test $cc_major -lt 15; then
@@ -248,6 +249,7 @@ if test x"$cc_vendor" = xicc; then
                                    | sed 's/ *skx2 */ /'`
         fi
     fi
+    configs=`echo $configs | sed 's/ *knm */ /'`
 elif test x"$cc_vendor" = xgcc; then
     if test $cc_major -lt 4; then
         AC_MSG_ERROR([Unsupported compiler version.])
@@ -265,6 +267,9 @@ elif test x"$cc_vendor" = xgcc; then
         configs=`echo $configs | sed 's/ *skx1 */ /' \
                                | sed 's/ *skx2 */ /' \
                                | sed 's/ *zen */ /'`
+    fi
+    if test $cc_major -lt 8; then
+        configs=`echo $configs | sed 's/ *knm */ /'`
     fi
 elif test x"$cc_vendor" = xclang; then
     if test $cc_major -lt 3; then
@@ -286,6 +291,7 @@ elif test x"$cc_vendor" = xclang; then
     if test $cc_major -lt 4; then
         configs=`echo $configs | sed 's/ *zen */ /'`
     fi
+    configs=`echo $configs | sed 's/ *knm */ /'`
 fi
 
 if ( echo $configs | grep -q sandybridge ); then
@@ -302,7 +308,7 @@ if ( echo $configs | grep -q sandybridge ); then
     fi
 fi
 
-if ( echo $configs | $EGREP -q 'haswell|piledriver|excavator|skx' ); then
+if ( echo $configs | $EGREP -q 'haswell|piledriver|excavator|skx1' ); then
     AC_MSG_CHECKING([whether inline FMA3 can be compiled])
     AC_TRY_ASSEMBLE([
         vzeroall
@@ -310,12 +316,11 @@ if ( echo $configs | $EGREP -q 'haswell|piledriver|excavator|skx' ); then
         ], [enable_fma3=yes], [enable_fma3=no])
     AC_MSG_RESULT([$enable_fma3])
     if test "x$enable_fma3" = xno; then
-        AC_MSG_WARN([FMA3 cannot be compiled; disabling haswell, piledriver, excavator, skx, and zen configurations])
+        AC_MSG_WARN([FMA3 cannot be compiled; disabling haswell, piledriver, excavator, skx1, and zen configurations])
         configs=`echo $configs | sed 's/ *haswell */ /' \
                                | sed 's/ *piledriver */ /' \
                                | sed 's/ *excavator */ /' \
                                | sed 's/ *skx1 */ /' \
-                               | sed 's/ *skx2 */ /' \
                                | sed 's/ *zen */ /'`
     fi
 fi
@@ -333,7 +338,7 @@ if ( echo $configs | grep -q bulldozer ); then
     fi
 fi
 
-if ( echo $configs | $EGREP -q 'knl|skx' ); then
+if ( echo $configs | $EGREP -q 'knl|knm|skx2' ); then
     CPPFLAGS_save="$CPPFLAGS"
     if test `uname -s` = Darwin; then
         CPPFLAGS="$CPPFLAGS -Wa,-march=knl"
@@ -346,15 +351,15 @@ if ( echo $configs | $EGREP -q 'knl|skx' ); then
         ], [enable_avx512f=yes], [enable_avx512f=no])
     AC_MSG_RESULT([$enable_avx512f])
     if test "x$enable_avx512f" = xno; then
-        AC_MSG_WARN([AVX-512F cannot be compiled; disabling knl and skx configurations])
+        AC_MSG_WARN([AVX-512F cannot be compiled; disabling knl, knm, and skx2 configurations])
         configs=`echo $configs | sed 's/ *knl */ /' \
-                               | sed 's/ *skx1 */ /' \
+                               | sed 's/ *knm */ /' \
                                | sed 's/ *skx2 */ /'`
     fi
     CPPFLAGS="$CPPFLAGS_save"
 fi
 
-if ( echo $configs | $EGREP -q 'skx' ); then
+if ( echo $configs | $EGREP -q 'skx2' ); then
     CPPFLAGS_save="$CPPFLAGS"
     if test `uname -s` = Darwin; then
         CPPFLAGS="$CPPFLAGS -Wa,-march=skylake-avx512"
@@ -366,8 +371,21 @@ if ( echo $configs | $EGREP -q 'skx' ); then
     AC_MSG_RESULT([$enable_avx512dq])
     if test "x$enable_avx512dq" = xno; then
         AC_MSG_WARN([AVX-512DQ cannot be compiled; disabling skx configuration])
-        configs=`echo $configs | sed 's/ *skx1 */ /' \
-                               | sed 's/ *skx2 */ /'`
+        configs=`echo $configs | sed 's/ *skx2 */ /'`
+    fi
+    CPPFLAGS="$CPPFLAGS_save"
+fi
+
+if ( echo $configs | $EGREP -q 'knm' ); then
+    CPPFLAGS_save="$CPPFLAGS"
+    AC_MSG_CHECKING([whether inline AVX-5124FMAPS can be compiled])
+    AC_TRY_ASSEMBLE([
+        v4fmaps (%rax), %zmm0, %zmm4
+        ], [enable_avx5124fmaps=yes], [enable_avx5124fmaps=no])
+    AC_MSG_RESULT([$enable_avx5124fmaps])
+    if test "x$enable_avx5124fmaps" = xno; then
+        AC_MSG_WARN([AVX-5124FMAPS cannot be compiled; disabling knm configuration])
+        configs=`echo $configs | sed 's/ *knm */ /'`
     fi
     CPPFLAGS="$CPPFLAGS_save"
 fi
@@ -395,6 +413,7 @@ AM_CONDITIONAL(ENABLE_HASWELL, [echo $configs | grep -q haswell])
 AM_CONDITIONAL(ENABLE_SKX1, [echo $configs | grep -q skx1])
 AM_CONDITIONAL(ENABLE_SKX2, [echo $configs | grep -q skx2])
 AM_CONDITIONAL(ENABLE_KNL, [echo $configs | grep -q knl])
+AM_CONDITIONAL(ENABLE_KNM, [echo $configs | grep -q knm])
 AM_CONDITIONAL(ENABLE_LOONGSON3A, [echo $configs | grep -q loongson3a])
 AM_CONDITIONAL(ENABLE_MIC, [echo $configs | grep -q mic])
 AM_CONDITIONAL(ENABLE_PILEDRIVER, [echo $configs | grep -q piledriver])

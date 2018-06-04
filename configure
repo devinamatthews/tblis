@@ -673,6 +673,8 @@ ENABLE_MIC_FALSE
 ENABLE_MIC_TRUE
 ENABLE_LOONGSON3A_FALSE
 ENABLE_LOONGSON3A_TRUE
+ENABLE_KNM_FALSE
+ENABLE_KNM_TRUE
 ENABLE_KNL_FALSE
 ENABLE_KNL_TRUE
 ENABLE_SKX2_FALSE
@@ -735,7 +737,6 @@ am__nodep
 AMDEPBACKSLASH
 AMDEP_FALSE
 AMDEP_TRUE
-am__quote
 am__include
 DEPDIR
 OBJEXT
@@ -812,7 +813,8 @@ PACKAGE_VERSION
 PACKAGE_TARNAME
 PACKAGE_NAME
 PATH_SEPARATOR
-SHELL'
+SHELL
+am__quote'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
@@ -1483,12 +1485,12 @@ Optional Features:
                           possible values are:
 
                           reference, bulldozer, piledriver, excavator, zen,
-                          core2, sandybridge, haswell, skx1, skx2, knl, auto
+                          core2, sandybridge, haswell, skx1, skx2, knl, knm, auto
 
                           the following meta-configurations are also available:
 
                           skx = skx1,skx2
-                          intel = core2,sandybridge,haswell,skx,knl
+                          intel = core2,sandybridge,haswell,skx,knl,knm
                           amd = bulldozer,piledriver,excavator,zen
                           x86 = intel,amd
   --enable-shared[=PKGS]  build shared libraries [default=yes]
@@ -2557,7 +2559,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-am__api_version='1.15'
+am__api_version='1.16'
 
 ac_aux_dir=
 for ac_dir in "$srcdir" "$srcdir/.." "$srcdir/../.."; do
@@ -3102,8 +3104,8 @@ MAKEINFO=${MAKEINFO-"${am_missing_run}makeinfo"}
 
 # For better backward compatibility.  To be removed once Automake 1.9.x
 # dies out for good.  For more background, see:
-# <http://lists.gnu.org/archive/html/automake/2012-07/msg00001.html>
-# <http://lists.gnu.org/archive/html/automake/2012-07/msg00014.html>
+# <https://lists.gnu.org/archive/html/automake/2012-07/msg00001.html>
+# <https://lists.gnu.org/archive/html/automake/2012-07/msg00014.html>
 mkdir_p='$(MKDIR_P)'
 
 # We need awk for the "check" target (and possibly the TAP driver).  The
@@ -3154,7 +3156,7 @@ END
 Aborting the configuration process, to ensure you take notice of the issue.
 
 You can download and install GNU coreutils to get an 'rm' implementation
-that behaves properly: <http://www.gnu.org/software/coreutils/>.
+that behaves properly: <https://www.gnu.org/software/coreutils/>.
 
 If you want to complete the configuration process using your problematic
 'rm' anyway, export the environment variable ACCEPT_INFERIOR_RM_PROGRAM
@@ -3895,45 +3897,45 @@ DEPDIR="${am__leading_dot}deps"
 
 ac_config_commands="$ac_config_commands depfiles"
 
-
-am_make=${MAKE-make}
-cat > confinc << 'END'
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${MAKE-make} supports the include directive" >&5
+$as_echo_n "checking whether ${MAKE-make} supports the include directive... " >&6; }
+cat > confinc.mk << 'END'
 am__doit:
-	@echo this is the am__doit target
+	@echo this is the am__doit target >confinc.out
 .PHONY: am__doit
 END
-# If we don't find an include directive, just comment out the code.
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for style of include used by $am_make" >&5
-$as_echo_n "checking for style of include used by $am_make... " >&6; }
 am__include="#"
 am__quote=
-_am_result=none
-# First try GNU make style include.
-echo "include confinc" > confmf
-# Ignore all kinds of additional output from 'make'.
-case `$am_make -s -f confmf 2> /dev/null` in #(
-*the\ am__doit\ target*)
-  am__include=include
-  am__quote=
-  _am_result=GNU
-  ;;
-esac
-# Now try BSD make style include.
-if test "$am__include" = "#"; then
-   echo '.include "confinc"' > confmf
-   case `$am_make -s -f confmf 2> /dev/null` in #(
-   *the\ am__doit\ target*)
-     am__include=.include
-     am__quote="\""
-     _am_result=BSD
+# BSD make does it like this.
+echo '.include "confinc.mk" # ignored' > confmf.BSD
+# Other make implementations (GNU, Solaris 10, AIX) do it like this.
+echo 'include confinc.mk # ignored' > confmf.GNU
+_am_result=no
+for s in GNU BSD; do
+  { echo "$as_me:$LINENO: ${MAKE-make} -f confmf.$s && cat confinc.out" >&5
+   (${MAKE-make} -f confmf.$s && cat confinc.out) >&5 2>&5
+   ac_status=$?
+   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+   (exit $ac_status); }
+  case $?:`cat confinc.out 2>/dev/null` in #(
+  '0:this is the am__doit target') :
+    case $s in #(
+  BSD) :
+    am__include='.include' am__quote='"' ;; #(
+  *) :
+    am__include='include' am__quote='' ;;
+esac ;; #(
+  *) :
      ;;
-   esac
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $_am_result" >&5
-$as_echo "$_am_result" >&6; }
-rm -f confinc confmf
+esac
+  if test "$am__include" != "#"; then
+    _am_result="yes ($s style)"
+    break
+  fi
+done
+rm -f confinc.* confmf.*
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${_am_result}" >&5
+$as_echo "${_am_result}" >&6; }
 
 # Check whether --enable-dependency-tracking was given.
 if test "${enable_dependency_tracking+set}" = set; then :
@@ -6254,14 +6256,14 @@ if ( echo $enable_config | grep -qv reference ) && test x$using_default_configs 
 fi
 
 configs=`echo $enable_config | sed 's/x86/intel,amd/' \
-                             | sed 's/intel/core2,sandybridge,haswell,skx,knl/' \
+                             | sed 's/intel/core2,sandybridge,haswell,skx,knl,knm/' \
                              | sed 's/amd/bulldozer,piledriver,excavator,zen/' \
                              | sed 's/skx,/skx1,skx2,/' \
                              | sed 's/skx$/skx1,skx2/' \
                              | sed 's/,/ /g'`
 
 for config in $configs; do
-    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|bulldozer|piledriver|excavator|zen)$' ); then
+    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|knm|bulldozer|piledriver|excavator|zen)$' ); then
         as_fn_error $? "Unknown configuration $config" "$LINENO" 5
     fi
 done
@@ -6322,6 +6324,7 @@ fi
 # haswell: any
 # knl: icc 14.1+, gcc 5.0+, clang 3.5+
 # skx[12]: icc 15.1+, gcc 6.0+, clang 3.9+
+# knm: icc ??, gcc 8.0+, clang ??
 #
 if test x"$cc_vendor" = xicc; then
     if test $cc_major -lt 15; then
@@ -6333,6 +6336,7 @@ if test x"$cc_vendor" = xicc; then
                                    | sed 's/ *skx2 */ /'`
         fi
     fi
+    configs=`echo $configs | sed 's/ *knm */ /'`
 elif test x"$cc_vendor" = xgcc; then
     if test $cc_major -lt 4; then
         as_fn_error $? "Unsupported compiler version." "$LINENO" 5
@@ -6350,6 +6354,9 @@ elif test x"$cc_vendor" = xgcc; then
         configs=`echo $configs | sed 's/ *skx1 */ /' \
                                | sed 's/ *skx2 */ /' \
                                | sed 's/ *zen */ /'`
+    fi
+    if test $cc_major -lt 8; then
+        configs=`echo $configs | sed 's/ *knm */ /'`
     fi
 elif test x"$cc_vendor" = xclang; then
     if test $cc_major -lt 3; then
@@ -6371,6 +6378,7 @@ elif test x"$cc_vendor" = xclang; then
     if test $cc_major -lt 4; then
         configs=`echo $configs | sed 's/ *zen */ /'`
     fi
+    configs=`echo $configs | sed 's/ *knm */ /'`
 fi
 
 if ( echo $configs | grep -q sandybridge ); then
@@ -6411,7 +6419,7 @@ $as_echo "$as_me: WARNING: AVX cannot be compiled; disabling sandybridge configu
     fi
 fi
 
-if ( echo $configs | $EGREP -q 'haswell|piledriver|excavator|skx' ); then
+if ( echo $configs | $EGREP -q 'haswell|piledriver|excavator|skx1' ); then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether inline FMA3 can be compiled" >&5
 $as_echo_n "checking whether inline FMA3 can be compiled... " >&6; }
     ac_c_ext=$ac_ext
@@ -6442,13 +6450,12 @@ rm -rf conftest*
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_fma3" >&5
 $as_echo "$enable_fma3" >&6; }
     if test "x$enable_fma3" = xno; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: FMA3 cannot be compiled; disabling haswell, piledriver, excavator, skx, and zen configurations" >&5
-$as_echo "$as_me: WARNING: FMA3 cannot be compiled; disabling haswell, piledriver, excavator, skx, and zen configurations" >&2;}
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: FMA3 cannot be compiled; disabling haswell, piledriver, excavator, skx1, and zen configurations" >&5
+$as_echo "$as_me: WARNING: FMA3 cannot be compiled; disabling haswell, piledriver, excavator, skx1, and zen configurations" >&2;}
         configs=`echo $configs | sed 's/ *haswell */ /' \
                                | sed 's/ *piledriver */ /' \
                                | sed 's/ *excavator */ /' \
                                | sed 's/ *skx1 */ /' \
-                               | sed 's/ *skx2 */ /' \
                                | sed 's/ *zen */ /'`
     fi
 fi
@@ -6490,7 +6497,7 @@ $as_echo "$as_me: WARNING: FMA4 cannot be compiled; disabling bulldozer configur
     fi
 fi
 
-if ( echo $configs | $EGREP -q 'knl|skx' ); then
+if ( echo $configs | $EGREP -q 'knl|knm|skx2' ); then
     CPPFLAGS_save="$CPPFLAGS"
     if test `uname -s` = Darwin; then
         CPPFLAGS="$CPPFLAGS -Wa,-march=knl"
@@ -6526,16 +6533,16 @@ rm -rf conftest*
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_avx512f" >&5
 $as_echo "$enable_avx512f" >&6; }
     if test "x$enable_avx512f" = xno; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: AVX-512F cannot be compiled; disabling knl and skx configurations" >&5
-$as_echo "$as_me: WARNING: AVX-512F cannot be compiled; disabling knl and skx configurations" >&2;}
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: AVX-512F cannot be compiled; disabling knl, knm, and skx2 configurations" >&5
+$as_echo "$as_me: WARNING: AVX-512F cannot be compiled; disabling knl, knm, and skx2 configurations" >&2;}
         configs=`echo $configs | sed 's/ *knl */ /' \
-                               | sed 's/ *skx1 */ /' \
+                               | sed 's/ *knm */ /' \
                                | sed 's/ *skx2 */ /'`
     fi
     CPPFLAGS="$CPPFLAGS_save"
 fi
 
-if ( echo $configs | $EGREP -q 'skx' ); then
+if ( echo $configs | $EGREP -q 'skx2' ); then
     CPPFLAGS_save="$CPPFLAGS"
     if test `uname -s` = Darwin; then
         CPPFLAGS="$CPPFLAGS -Wa,-march=skylake-avx512"
@@ -6571,8 +6578,45 @@ $as_echo "$enable_avx512dq" >&6; }
     if test "x$enable_avx512dq" = xno; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: AVX-512DQ cannot be compiled; disabling skx configuration" >&5
 $as_echo "$as_me: WARNING: AVX-512DQ cannot be compiled; disabling skx configuration" >&2;}
-        configs=`echo $configs | sed 's/ *skx1 */ /' \
-                               | sed 's/ *skx2 */ /'`
+        configs=`echo $configs | sed 's/ *skx2 */ /'`
+    fi
+    CPPFLAGS="$CPPFLAGS_save"
+fi
+
+if ( echo $configs | $EGREP -q 'knm' ); then
+    CPPFLAGS_save="$CPPFLAGS"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether inline AVX-5124FMAPS can be compiled" >&5
+$as_echo_n "checking whether inline AVX-5124FMAPS can be compiled... " >&6; }
+    ac_c_ext=$ac_ext
+ ac_ext=${ac_s_ext-s}
+ cat > conftest.$ac_ext <<EOF
+ .file "configure"
+
+        v4fmaps (%rax), %zmm0, %zmm4
+
+EOF
+if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  ac_ext=$ac_c_ext
+    enable_avx5124fmaps=yes
+  rm -rf conftest*
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  ac_ext=$ac_c_ext
+  rm -rf conftest*
+  enable_avx5124fmaps=no
+fi
+rm -rf conftest*
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_avx5124fmaps" >&5
+$as_echo "$enable_avx5124fmaps" >&6; }
+    if test "x$enable_avx5124fmaps" = xno; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: AVX-5124FMAPS cannot be compiled; disabling knm configuration" >&5
+$as_echo "$as_me: WARNING: AVX-5124FMAPS cannot be compiled; disabling knm configuration" >&2;}
+        configs=`echo $configs | sed 's/ *knm */ /'`
     fi
     CPPFLAGS="$CPPFLAGS_save"
 fi
@@ -6698,6 +6742,14 @@ fi
 else
   ENABLE_KNL_TRUE='#'
   ENABLE_KNL_FALSE=
+fi
+
+ if echo $configs | grep -q knm; then
+  ENABLE_KNM_TRUE=
+  ENABLE_KNM_FALSE='#'
+else
+  ENABLE_KNM_TRUE='#'
+  ENABLE_KNM_FALSE=
 fi
 
  if echo $configs | grep -q loongson3a; then
@@ -17927,6 +17979,10 @@ if test -z "${ENABLE_KNL_TRUE}" && test -z "${ENABLE_KNL_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_KNL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${ENABLE_KNM_TRUE}" && test -z "${ENABLE_KNM_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_KNM\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${ENABLE_LOONGSON3A_TRUE}" && test -z "${ENABLE_LOONGSON3A_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_LOONGSON3A\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -18538,7 +18594,7 @@ cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
 #
 # INIT-COMMANDS
 #
-AMDEP_TRUE="$AMDEP_TRUE" ac_aux_dir="$ac_aux_dir"
+AMDEP_TRUE="$AMDEP_TRUE" MAKE="${MAKE-make}"
 
 
 # The HP-UX ksh and POSIX shell print the target directory to stdout
@@ -19538,29 +19594,35 @@ $as_echo "$as_me: executing $ac_file commands" >&6;}
   # Older Autoconf quotes --file arguments for eval, but not when files
   # are listed without --file.  Let's play safe and only enable the eval
   # if we detect the quoting.
-  case $CONFIG_FILES in
-  *\'*) eval set x "$CONFIG_FILES" ;;
-  *)   set x $CONFIG_FILES ;;
-  esac
+  # TODO: see whether this extra hack can be removed once we start
+  # requiring Autoconf 2.70 or later.
+  case $CONFIG_FILES in #(
+  *\'*) :
+    eval set x "$CONFIG_FILES" ;; #(
+  *) :
+    set x $CONFIG_FILES ;; #(
+  *) :
+     ;;
+esac
   shift
-  for mf
+  # Used to flag and report bootstrapping failures.
+  am_rc=0
+  for am_mf
   do
     # Strip MF so we end up with the name of the file.
-    mf=`echo "$mf" | sed -e 's/:.*$//'`
-    # Check whether this is an Automake generated Makefile or not.
-    # We used to match only the files named 'Makefile.in', but
-    # some people rename them; so instead we look at the file content.
-    # Grep'ing the first line is not enough: some people post-process
-    # each Makefile.in and add a new line on top of each file to say so.
-    # Grep'ing the whole file is not good either: AIX grep has a line
+    am_mf=`$as_echo "$am_mf" | sed -e 's/:.*$//'`
+    # Check whether this is an Automake generated Makefile which includes
+    # dependency-tracking related rules and includes.
+    # Grep'ing the whole file directly is not great: AIX grep has a line
     # limit of 2048, but all sed's we know have understand at least 4000.
-    if sed -n 's,^#.*generated by automake.*,X,p' "$mf" | grep X >/dev/null 2>&1; then
-      dirpart=`$as_dirname -- "$mf" ||
-$as_expr X"$mf" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
-	 X"$mf" : 'X\(//\)[^/]' \| \
-	 X"$mf" : 'X\(//\)$' \| \
-	 X"$mf" : 'X\(/\)' \| . 2>/dev/null ||
-$as_echo X"$mf" |
+    sed -n 's,^am--depfiles:.*,X,p' "$am_mf" | grep X >/dev/null 2>&1 \
+      || continue
+    am_dirpart=`$as_dirname -- "$am_mf" ||
+$as_expr X"$am_mf" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
+	 X"$am_mf" : 'X\(//\)[^/]' \| \
+	 X"$am_mf" : 'X\(//\)$' \| \
+	 X"$am_mf" : 'X\(/\)' \| . 2>/dev/null ||
+$as_echo X"$am_mf" |
     sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{
 	    s//\1/
 	    q
@@ -19578,53 +19640,48 @@ $as_echo X"$mf" |
 	    q
 	  }
 	  s/.*/./; q'`
-    else
-      continue
-    fi
-    # Extract the definition of DEPDIR, am__include, and am__quote
-    # from the Makefile without running 'make'.
-    DEPDIR=`sed -n 's/^DEPDIR = //p' < "$mf"`
-    test -z "$DEPDIR" && continue
-    am__include=`sed -n 's/^am__include = //p' < "$mf"`
-    test -z "$am__include" && continue
-    am__quote=`sed -n 's/^am__quote = //p' < "$mf"`
-    # Find all dependency output files, they are included files with
-    # $(DEPDIR) in their names.  We invoke sed twice because it is the
-    # simplest approach to changing $(DEPDIR) to its actual value in the
-    # expansion.
-    for file in `sed -n "
-      s/^$am__include $am__quote\(.*(DEPDIR).*\)$am__quote"'$/\1/p' <"$mf" | \
-	 sed -e 's/\$(DEPDIR)/'"$DEPDIR"'/g'`; do
-      # Make sure the directory exists.
-      test -f "$dirpart/$file" && continue
-      fdir=`$as_dirname -- "$file" ||
-$as_expr X"$file" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
-	 X"$file" : 'X\(//\)[^/]' \| \
-	 X"$file" : 'X\(//\)$' \| \
-	 X"$file" : 'X\(/\)' \| . 2>/dev/null ||
-$as_echo X"$file" |
-    sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{
+    am_filepart=`$as_basename -- "$am_mf" ||
+$as_expr X/"$am_mf" : '.*/\([^/][^/]*\)/*$' \| \
+	 X"$am_mf" : 'X\(//\)$' \| \
+	 X"$am_mf" : 'X\(/\)' \| . 2>/dev/null ||
+$as_echo X/"$am_mf" |
+    sed '/^.*\/\([^/][^/]*\)\/*$/{
 	    s//\1/
 	    q
 	  }
-	  /^X\(\/\/\)[^/].*/{
+	  /^X\/\(\/\/\)$/{
 	    s//\1/
 	    q
 	  }
-	  /^X\(\/\/\)$/{
-	    s//\1/
-	    q
-	  }
-	  /^X\(\/\).*/{
+	  /^X\/\(\/\).*/{
 	    s//\1/
 	    q
 	  }
 	  s/.*/./; q'`
-      as_dir=$dirpart/$fdir; as_fn_mkdir_p
-      # echo "creating $dirpart/$file"
-      echo '# dummy' > "$dirpart/$file"
-    done
+    { echo "$as_me:$LINENO: cd "$am_dirpart" \
+      && sed -e '/# am--include-marker/d' "$am_filepart" \
+        | $MAKE -f - am--depfiles" >&5
+   (cd "$am_dirpart" \
+      && sed -e '/# am--include-marker/d' "$am_filepart" \
+        | $MAKE -f - am--depfiles) >&5 2>&5
+   ac_status=$?
+   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+   (exit $ac_status); } || am_rc=$?
   done
+  if test $am_rc -ne 0; then
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "Something went wrong bootstrapping makefile fragments
+    for automatic dependency tracking.  Try re-running configure with the
+    '--disable-dependency-tracking' option to at least be able to build
+    the package (albeit without support for automatic dependency tracking).
+See \`config.log' for more details" "$LINENO" 5; }
+  fi
+  { am_dirpart=; unset am_dirpart;}
+  { am_filepart=; unset am_filepart;}
+  { am_mf=; unset am_mf;}
+  { am_rc=; unset am_rc;}
+  rm -f conftest-deps.mk
 }
  ;;
     "libtool":C)

@@ -333,6 +333,20 @@ endif
 endif
 endif
 
+if ENABLE_KNM
+noinst_LTLIBRARIES += lib/libknm.la
+lib_libtblis_la_LIBADD += lib/libknm.la
+lib_libknm_la_SOURCES = src/configs/knm/bli_sgemm_opt_24x16.c \
+                        src/configs/knm/config.cxx
+if ENABLE_INTEL_COMPILER
+lib_libknm_la_CFLAGS = -O3 -xKNM
+lib_libknm_la_CXXFLAGS = -O3 -xKNM
+else
+lib_libknm_la_CFLAGS = -O3 -march=knm
+lib_libknm_la_CXXFLAGS = -O3 -march=knm
+endif
+endif
+
 if ENABLE_SKX1
 noinst_LTLIBRARIES += lib/libskx1.la
 lib_libtblis_la_LIBADD += lib/libskx1.la

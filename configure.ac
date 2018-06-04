@@ -357,7 +357,7 @@ fi
 if ( echo $configs | $EGREP -q 'skx' ); then
     CPPFLAGS_save="$CPPFLAGS"
     if test `uname -s` = Darwin; then
-        CPPFLAGS="$CPPFLAGS -Wa,-march=skylake-avx512"
+        CPPFLAGS="$CPPFLAGS -march=skylake-avx512 -Wa,-march=skylake-avx512"
     fi
     AC_MSG_CHECKING([whether inline AVX-512DQ can be compiled])
     AC_TRY_ASSEMBLE([

@@ -229,8 +229,8 @@ noinst_LTLIBRARIES += lib/libbulldozer.la
 lib_libtblis_la_LIBADD += lib/libbulldozer.la
 lib_libbulldozer_la_SOURCES = src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c \
                              src/configs/bulldozer/config.cxx
-lib_libbulldozer_la_CFLAGS = -O3 -mavx -mfma4 -march=bdver1 -mfpmath=sse
-lib_libbulldozer_la_CXXFLAGS = -O3 -mavx -mfma4 -march=bdver1 -mfpmath=sse
+lib_libbulldozer_la_CFLAGS = -O3 -march=bdver1
+lib_libbulldozer_la_CXXFLAGS = -O3 -march=bdver1
 endif
 
 if ENABLE_PILEDRIVER
@@ -238,8 +238,8 @@ noinst_LTLIBRARIES += lib/libpiledriver.la
 lib_libtblis_la_LIBADD += lib/libpiledriver.la
 lib_libpiledriver_la_SOURCES = src/configs/piledriver/bli_gemm_asm_d8x3.c \
                                src/configs/piledriver/config.cxx
-lib_libpiledriver_la_CFLAGS = -O3 -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse
-lib_libpiledriver_la_CXXFLAGS = -O3 -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse
+lib_libpiledriver_la_CFLAGS = -O3 -march=bdver2 -mno-fma4
+lib_libpiledriver_la_CXXFLAGS = -O3 -march=bdver2 -mno-fma4
 endif
 
 if ENABLE_EXCAVATOR
@@ -251,8 +251,8 @@ lib_libexcavator_la_SOURCES = src/configs/excavator/bli_gemm_asm_d8x3.c \
 else
 lib_libexcavator_la_SOURCES = src/configs/excavator/config.cxx
 endif
-lib_libexcavator_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
-lib_libexcavator_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
+lib_libexcavator_la_CFLAGS = -O3 -march=bdver4 -mno-fma4
+lib_libexcavator_la_CXXFLAGS = -O3 -march=bdver4 -mno-fma4
 endif
 
 if ENABLE_ZEN
@@ -264,8 +264,8 @@ lib_libzen_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
 else
 lib_libzen_la_SOURCES = src/configs/zen/config.cxx
 endif
-lib_libzen_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=znver1 -mfpmath=sse
-lib_libzen_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=znver1 -mfpmath=sse
+lib_libzen_la_CFLAGS = -O3 -march=znver1
+lib_libzen_la_CXXFLAGS = -O3 -march=znver1
 endif
 
 #
@@ -281,8 +281,8 @@ if ENABLE_INTEL_COMPILER
 lib_libcore2_la_CFLAGS = -O3 -xSSSE3
 lib_libcore2_la_CXXFLAGS = -O3 -xSSSE3
 else
-lib_libcore2_la_CFLAGS = -O3 -msse3 -mssse3 -march=core2 -mfpmath=sse
-lib_libcore2_la_CXXFLAGS = -O3 -msse3 -mssse3 -march=core2 -mfpmath=sse
+lib_libcore2_la_CFLAGS = -O3 -march=core2
+lib_libcore2_la_CXXFLAGS = -O3 -march=core2
 endif
 endif
 
@@ -295,8 +295,8 @@ if ENABLE_INTEL_COMPILER
 lib_libsandybridge_la_CFLAGS = -O3 -xAVX
 lib_libsandybridge_la_CXXFLAGS = -O3 -xAVX
 else
-lib_libsandybridge_la_CFLAGS = -O3 -mavx -march=corei7-avx -mfpmath=sse
-lib_libsandybridge_la_CXXFLAGS = -O3 -mavx -march=corei7-avx -mfpmath=sse
+lib_libsandybridge_la_CFLAGS = -O3 -march=corei7-avx
+lib_libsandybridge_la_CXXFLAGS = -O3 -march=corei7-avx
 endif
 endif
 
@@ -312,8 +312,8 @@ if ENABLE_INTEL_COMPILER
 lib_libhaswell_la_CFLAGS = -O3 -xCORE-AVX2
 lib_libhaswell_la_CXXFLAGS = -O3 -xCORE-AVX2
 else
-lib_libhaswell_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=core-avx2 -mfpmath=sse
-lib_libhaswell_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=core-avx2 -mfpmath=sse
+lib_libhaswell_la_CFLAGS = -O3 -march=core-avx2
+lib_libhaswell_la_CXXFLAGS = -O3 -march=core-avx2
 endif
 endif
 
@@ -336,11 +336,11 @@ lib_libknl_la_CFLAGS = -O3 -xMIC-AVX512
 lib_libknl_la_CXXFLAGS = -O3 -xMIC-AVX512
 else
 if IS_OSX
-lib_libknl_la_CFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse -Wa,-march=knl
-lib_libknl_la_CXXFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse -Wa,-march=knl
+lib_libknl_la_CFLAGS = -O3 -march=knl -Wa,-march=knl
+lib_libknl_la_CXXFLAGS = -O3 -march=knl -Wa,-march=knl
 else
-lib_libknl_la_CFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse
-lib_libknl_la_CXXFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse
+lib_libknl_la_CFLAGS = -O3 -march=knl
+lib_libknl_la_CXXFLAGS = -O3 -march=knl
 endif
 endif
 endif
@@ -370,11 +370,11 @@ lib_libskx1_la_CFLAGS = -O3 -xCORE-AVX512
 lib_libskx1_la_CXXFLAGS = -O3 -xCORE-AVX512
 else
 if IS_OSX
-lib_libskx1_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
-lib_libskx1_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
+lib_libskx1_la_CFLAGS = -O3 -march=skylake-avx512 -Wa,-march=skylake-avx512
+lib_libskx1_la_CXXFLAGS = -O3 -march=skylake-avx512 -Wa,-march=skylake-avx512
 else
-lib_libskx1_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
-lib_libskx1_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
+lib_libskx1_la_CFLAGS = -O3 -march=skylake-avx512
+lib_libskx1_la_CXXFLAGS = -O3 -march=skylake-avx512
 endif
 endif
 endif
@@ -399,11 +399,11 @@ lib_libskx2_la_CFLAGS = -O3 -xCORE-AVX512
 lib_libskx2_la_CXXFLAGS = -O3 -xCORE-AVX512
 else
 if IS_OSX
-lib_libskx2_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
-lib_libskx2_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
+lib_libskx2_la_CFLAGS = -O3 -march=skylake-avx512 -Wa,-march=skylake-avx512
+lib_libskx2_la_CXXFLAGS = -O3 -march=skylake-avx512 -Wa,-march=skylake-avx512
 else
-lib_libskx2_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
-lib_libskx2_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
+lib_libskx2_la_CFLAGS = -O3 -march=skylake-avx512
+lib_libskx2_la_CXXFLAGS = -O3 -march=skylake-avx512
 endif
 endif
 endif

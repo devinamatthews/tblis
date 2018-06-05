@@ -139,6 +139,7 @@
 #define VFMADD132PD(_0, _1, _2) ASM(vfmadd132pd _2, _1, _0)
 #define VFMADD213PD(_0, _1, _2) ASM(vfmadd213pd _2, _1, _0)
 #define VFMADD231PD(_0, _1, _2) ASM(vfmadd231pd _2, _1, _0)
+#define V4FMADDPS(_0, _1, _2) ASM(v4fmaddps _2, _1, _0)
 #define VMOVDQA(_0, _1) ASM(vmovdqa _1, _0)
 #define VMOVDQA32(_0, _1) ASM(vmovdqa32 _1, _0)
 #define VMOVDQA64(_0, _1) ASM(vmovdqa64 _1, _0)

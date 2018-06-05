@@ -19,7 +19,9 @@ constexpr auto num_configs = sizeof(configs)/sizeof(configs[0]);
  *  general stride = 2
  */
 char A_buf[64*1024*16] __attribute__((aligned(64)));
+char Ap_buf[64*1024*16] __attribute__((aligned(64)));
 char B_buf[64*1024*16] __attribute__((aligned(64)));
+char Bp_buf[64*1024*16] __attribute__((aligned(64)));
 char C_buf[64*64*16*2] __attribute__((aligned(64)));
 char D_buf[64*64*16*2] __attribute__((aligned(64)));
 
@@ -58,7 +60,7 @@ TEMPLATED_TEST_CASE(gemm_ukr, T, all_types)
             auto m = mn[0];
             auto n = mn[1];
 
-            for (auto k : (len_type[8]){0, 1, KC-1, KC, KC+1, KX-1, KX, KX+1})
+            for (auto k : (len_type[9]){0, 1, KR, KC-1, KC, KC+1, KX-1, KX, KX+1})
             {
                 INFO("m, n, k = " << m << ", " << n << ", " << k);
 
@@ -75,7 +77,9 @@ TEMPLATED_TEST_CASE(gemm_ukr, T, all_types)
                         INFO("beta = " << beta);
 
                         matrix_view<T> A({m, k}, reinterpret_cast<T*>(A_buf), {1, ME});
+                        matrix_view<T> Ap({m, k}, reinterpret_cast<T*>(Ap_buf), {1, ME});
                         matrix_view<T> B({k, n}, reinterpret_cast<T*>(B_buf), {NE, 1});
+                        matrix_view<T> Bp({k, n}, reinterpret_cast<T*>(Bp_buf), {NE, 1});
                         matrix_view<T> C({m, n}, reinterpret_cast<T*>(C_buf), {rs_c, cs_c});
                         matrix_view<T> D({m, n}, reinterpret_cast<T*>(D_buf), {rs_c, cs_c});
 
@@ -86,9 +90,12 @@ TEMPLATED_TEST_CASE(gemm_ukr, T, all_types)
                         for (len_type j = 0;j < MR*NR*2;j++)
                             C.data()[j] = D.data()[j] = random_unit<T>();
 
+                        cfg.pack_nn_mr_ukr.call<T>(MR, k, A.data(), 1, ME, Ap.data());
+                        cfg.pack_nn_nr_ukr.call<T>(NR, k, B.data(), 1, NE, Bp.data());
+
                         INFO("C before:\n" << C);
 
-                        gemm_micro_kernel{}(single, cfg, alpha, A, B, beta, C);
+                        gemm_micro_kernel{}(single, cfg, alpha, Ap, Bp, beta, C);
 
                         INFO("C after:\n" << C);
 

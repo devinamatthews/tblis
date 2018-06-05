@@ -100,10 +100,10 @@
 //
 #define SUBITER4(n,...) \
 \
-    VMOVAPD(ZMM(0), MEM(RBX,(n+0)*64)) \
-    VMOVAPD(ZMM(1), MEM(RBX,(n+1)*64)) \
-    VMOVAPD(ZMM(2), MEM(RBX,(n+2)*64)) \
-    VMOVAPD(ZMM(3), MEM(RBX,(n+3)*64)) \
+    VMOVAPS(ZMM(0), MEM(RBX,(n+0)*64)) \
+    VMOVAPS(ZMM(1), MEM(RBX,(n+1)*64)) \
+    VMOVAPS(ZMM(2), MEM(RBX,(n+2)*64)) \
+    VMOVAPS(ZMM(3), MEM(RBX,(n+3)*64)) \
     V4FMADDPS(ZMM( 8), ZMM(0), MEM(__VA_ARGS__, 0*4*4)) \
     V4FMADDPS(ZMM( 9), ZMM(0), MEM(__VA_ARGS__, 1*4*4)) \
     V4FMADDPS(ZMM(10), ZMM(0), MEM(__VA_ARGS__, 2*4*4)) \
@@ -141,28 +141,28 @@
 
 #define SUBITER(...) \
 \
-    VMOVAPD(ZMM(0), MEM(RBX)) \
+    VMOVAPS(ZMM(0), MEM(RBX)) \
     VFMADD231PS(ZMM( 8), ZMM(0), MEM_1TO16(__VA_ARGS__, 0*4)) \
     VFMADD231PS(ZMM( 9), ZMM(0), MEM_1TO16(__VA_ARGS__, 1*4)) \
     VFMADD231PS(ZMM(10), ZMM(0), MEM_1TO16(__VA_ARGS__, 2*4)) \
     VFMADD231PS(ZMM(11), ZMM(0), MEM_1TO16(__VA_ARGS__, 3*4)) \
     VFMADD231PS(ZMM(12), ZMM(0), MEM_1TO16(__VA_ARGS__, 4*4)) \
     VFMADD231PS(ZMM(13), ZMM(0), MEM_1TO16(__VA_ARGS__, 5*4)) \
-    PREFETCH_A_L1(n,0) \
+    PREFETCH_A_L1(0,0) \
     VFMADD231PS(ZMM(14), ZMM(0), MEM_1TO16(__VA_ARGS__, 6*4)) \
     VFMADD231PS(ZMM(15), ZMM(0), MEM_1TO16(__VA_ARGS__, 7*4)) \
     VFMADD231PS(ZMM(16), ZMM(0), MEM_1TO16(__VA_ARGS__, 8*4)) \
     VFMADD231PS(ZMM(17), ZMM(0), MEM_1TO16(__VA_ARGS__, 9*4)) \
     VFMADD231PS(ZMM(18), ZMM(0), MEM_1TO16(__VA_ARGS__,10*4)) \
     VFMADD231PS(ZMM(19), ZMM(0), MEM_1TO16(__VA_ARGS__,11*4)) \
-    PREFETCH_A_L1(n,64) \
+    PREFETCH_A_L1(0,64) \
     VFMADD231PS(ZMM(20), ZMM(0), MEM_1TO16(__VA_ARGS__,12*4)) \
     VFMADD231PS(ZMM(21), ZMM(0), MEM_1TO16(__VA_ARGS__,13*4)) \
     VFMADD231PS(ZMM(22), ZMM(0), MEM_1TO16(__VA_ARGS__,14*4)) \
     VFMADD231PS(ZMM(23), ZMM(0), MEM_1TO16(__VA_ARGS__,15*4)) \
     VFMADD231PS(ZMM(24), ZMM(0), MEM_1TO16(__VA_ARGS__,16*4)) \
     VFMADD231PS(ZMM(25), ZMM(0), MEM_1TO16(__VA_ARGS__,17*4)) \
-    PREFETCH_B_L1(n,0) \
+    PREFETCH_B_L1(0,0) \
     VFMADD231PS(ZMM(26), ZMM(0), MEM_1TO16(__VA_ARGS__,18*4)) \
     VFMADD231PS(ZMM(27), ZMM(0), MEM_1TO16(__VA_ARGS__,19*4)) \
     VFMADD231PS(ZMM(28), ZMM(0), MEM_1TO16(__VA_ARGS__,20*4)) \
@@ -187,7 +187,7 @@ static int32_t offsets[32] __attribute__((aligned(64))) =
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
      16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31};
 
-void bli_sgemm_opt_24x16(
+void bli_sgemm_knm_24x16(
                           dim_t            k_,
                           float* restrict  alpha,
                           float* restrict  a,
@@ -201,8 +201,8 @@ void bli_sgemm_opt_24x16(
     (void)data;
     (void)cntx;
 
-    const double * a_next = bli_auxinfo_next_a( data );
-    const double * b_next = bli_auxinfo_next_b( data );
+    const float * a_next = bli_auxinfo_next_a( data );
+    const float * b_next = bli_auxinfo_next_b( data );
 
     const int32_t * offsetPtr = &offsets[0];
     const int64_t k = k_;
@@ -212,6 +212,7 @@ void bli_sgemm_opt_24x16(
     __asm__ __volatile__ (
 
     VPXORD(ZMM(8), ZMM(8), ZMM(8)) //clear out registers
+    VMOVAPS(ZMM( 7), ZMM(8))
     VMOVAPS(ZMM( 9), ZMM(8))
     VMOVAPS(ZMM(10), ZMM(8))
     VMOVAPS(ZMM(11), ZMM(8))
@@ -270,9 +271,12 @@ void bli_sgemm_opt_24x16(
 
     LABEL(PFDONE2)
 
+    SUB(RSI, IMM(32))
     MOV(RDI, RSI)
-    AND(RDI, IMM(63))
-    SAR(RSI, IMM(6))
+    JLE(PREFETCHC)
+
+    AND(RDI, IMM(31))
+    SAR(RSI, IMM(5))
     JZ(PREFETCHC)
 
     LOOP_ALIGN
@@ -310,6 +314,7 @@ void bli_sgemm_opt_24x16(
 
     LABEL(PFDONE)
 
+    ADD(RDI, IMM(32))
     MOV(RSI, RDI)
     AND(RSI, IMM(3))
     SAR(RDI, IMM(2))
@@ -348,8 +353,8 @@ void bli_sgemm_opt_24x16(
 
     MOV(RAX, VAR(alpha))
     MOV(RBX, VAR(beta))
-    VBROADCASTSD(ZMM(0), MEM(RAX))
-    VBROADCASTSD(ZMM(1), MEM(RBX))
+    VBROADCASTSS(ZMM(0), MEM(RAX))
+    VBROADCASTSS(ZMM(1), MEM(RBX))
 
     MOV(RAX, VAR(rs_c))
     LEA(RAX, MEM(,RAX,4))
@@ -361,9 +366,8 @@ void bli_sgemm_opt_24x16(
     CMP(RBX, IMM(4))
     JNE(SCATTEREDUPDATE)
 
-        VMOVQ(RDX, XMM(1))
-        SAL1(RDX) //shift out sign bit
-        JZ(ROWSTORBZ)
+        VCOMISS(XMM(1), XMM(7))
+        JE(ROWSTORBZ)
 
             UPDATE_C_FOUR_ROWS( 8, 9,10,11)
             UPDATE_C_FOUR_ROWS(12,13,14,15)
@@ -385,12 +389,11 @@ void bli_sgemm_opt_24x16(
     JMP(END)
     LABEL(SCATTEREDUPDATE)
 
-        VPBROADCASTD(ZMM(5), VAR(rs_c))
+        VPBROADCASTD(ZMM(5), VAR(cs_c))
         VPMULLD(ZMM(2), ZMM(5), MEM(R15))
 
-        VMOVQ(RDX, XMM(1))
-        SAL1(RDX) //shift out sign bit
-        JZ(SCATTERBZ)
+        VCOMISS(XMM(1), XMM(7))
+        JE(SCATTERBZ)
 
             UPDATE_C_ROW_SCATTERED( 8)
             UPDATE_C_ROW_SCATTERED( 9)
@@ -470,7 +473,7 @@ void bli_sgemm_opt_24x16(
     );
 }
 
-void bli_sgemm_opt_16x24(
+void bli_sgemm_knm_16x24(
                           dim_t            k_,
                           float* restrict  alpha,
                           float* restrict  b,
@@ -484,8 +487,8 @@ void bli_sgemm_opt_16x24(
     (void)data;
     (void)cntx;
 
-    const double * a_next = bli_auxinfo_next_a( data );
-    const double * b_next = bli_auxinfo_next_b( data );
+    const float * a_next = bli_auxinfo_next_a( data );
+    const float * b_next = bli_auxinfo_next_b( data );
 
     const int32_t * offsetPtr = &offsets[0];
     const int64_t k = k_;
@@ -495,6 +498,7 @@ void bli_sgemm_opt_16x24(
     __asm__ __volatile__ (
 
     VPXORD(ZMM(8), ZMM(8), ZMM(8)) //clear out registers
+    VMOVAPS(ZMM( 7), ZMM(8))
     VMOVAPS(ZMM( 9), ZMM(8))
     VMOVAPS(ZMM(10), ZMM(8))
     VMOVAPS(ZMM(11), ZMM(8))
@@ -557,9 +561,12 @@ void bli_sgemm_opt_16x24(
 
     LABEL(.PFDONE2)
 
+    SUB(RSI, IMM(32))
     MOV(RDI, RSI)
-    AND(RDI, IMM(63))
-    SAR(RSI, IMM(6))
+    JLE(PREFETCHC)
+
+    AND(RDI, IMM(31))
+    SAR(RSI, IMM(5))
     JZ(.PREFETCHC)
 
     LOOP_ALIGN
@@ -597,6 +604,7 @@ void bli_sgemm_opt_16x24(
 
     LABEL(.PFDONE)
 
+    ADD(RDI, IMM(32))
     MOV(RSI, RDI)
     AND(RSI, IMM(3))
     SAR(RDI, IMM(2))
@@ -635,8 +643,8 @@ void bli_sgemm_opt_16x24(
 
     MOV(RAX, VAR(alpha))
     MOV(RBX, VAR(beta))
-    VBROADCASTSD(ZMM(0), MEM(RAX))
-    VBROADCASTSD(ZMM(1), MEM(RBX))
+    VBROADCASTSS(ZMM(0), MEM(RAX))
+    VBROADCASTSS(ZMM(1), MEM(RBX))
 
     MOV(RAX, VAR(rs_c))
     LEA(RAX, MEM(,RAX,4))
@@ -648,9 +656,8 @@ void bli_sgemm_opt_16x24(
     CMP(RBX, IMM(4))
     JNE(.SCATTEREDUPDATE)
 
-        VMOVQ(RDX, XMM(1))
-        SAL1(RDX) //shift out sign bit
-        JZ(.COLSTORBZ)
+        VCOMISS(XMM(1), XMM(7))
+        JE(.COLSTORBZ)
 
             UPDATE_C_FOUR_ROWS( 8, 9,10,11)
             UPDATE_C_FOUR_ROWS(12,13,14,15)
@@ -672,12 +679,11 @@ void bli_sgemm_opt_16x24(
     JMP(.END)
     LABEL(.SCATTEREDUPDATE)
 
-        VPBROADCASTD(ZMM(5), VAR(rs_c))
+        VPBROADCASTD(ZMM(5), VAR(cs_c))
         VPMULLD(ZMM(2), ZMM(5), MEM(R15))
 
-        VMOVQ(RDX, XMM(1))
-        SAL1(RDX) //shift out sign bit
-        JZ(.SCATTERBZ)
+        VCOMISS(XMM(1), XMM(7))
+        JE(.SCATTERBZ)
 
             UPDATE_C_ROW_SCATTERED( 8)
             UPDATE_C_ROW_SCATTERED( 9)

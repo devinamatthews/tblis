@@ -16,7 +16,7 @@ void knm_spackm_24xk(len_type m, len_type k,
     if (m == MR && rs_a == 1)
     {
         len_type p = 0;
-        for (;p < k-KR;p += KR)
+        for (;p <= k-KR;p += KR)
         {
             for (len_type mr = 0;mr < MR;mr++)
             {
@@ -41,7 +41,7 @@ void knm_spackm_24xk(len_type m, len_type k,
     else if (m == MR && cs_a == 1)
     {
         len_type p = 0;
-        for (;p < k-KR;p += KR)
+        for (;p <= k-KR;p += KR)
         {
             for (len_type mr = 0;mr < MR;mr++)
             {
@@ -66,7 +66,7 @@ void knm_spackm_24xk(len_type m, len_type k,
     else
     {
         len_type p = 0;
-        for (;p < k-KR;p += KR)
+        for (;p <= k-KR;p += KR)
         {
             for (len_type mr = 0;mr < m;mr++)
             {

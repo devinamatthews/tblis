@@ -236,8 +236,8 @@ fi
 # sandybridge: any
 # haswell: any
 # knl: icc 14.1+, gcc 5.0+, clang 3.5+
-# skx[12]: icc 15.1+, gcc 6.0+, clang 3.9+
-# knm: icc ??, gcc 8.0+, clang ??
+# skx[12]: icc 15.0.1+, gcc 6.0+, clang 3.9+
+# knm: icc 18.0.0+, gcc 8.0+, clang ??
 #
 if test x"$cc_vendor" = xicc; then
     if test $cc_major -lt 15; then
@@ -249,7 +249,9 @@ if test x"$cc_vendor" = xicc; then
                                    | sed 's/ *skx2 */ /'`
         fi
     fi
-    configs=`echo $configs | sed 's/ *knm */ /'`
+    if test $cc_major -lt 18; then
+        configs=`echo $configs | sed 's/ *knm */ /'`
+    fi
 elif test x"$cc_vendor" = xgcc; then
     if test $cc_major -lt 4; then
         AC_MSG_ERROR([Unsupported compiler version.])
@@ -380,7 +382,7 @@ if ( echo $configs | $EGREP -q 'knm' ); then
     CPPFLAGS_save="$CPPFLAGS"
     AC_MSG_CHECKING([whether inline AVX-5124FMAPS can be compiled])
     AC_TRY_ASSEMBLE([
-        v4fmaps (%rax), %zmm0, %zmm4
+        v4fmaddps (%rax), %zmm0, %zmm4
         ], [enable_avx5124fmaps=yes], [enable_avx5124fmaps=no])
     AC_MSG_RESULT([$enable_avx5124fmaps])
     if test "x$enable_avx5124fmaps" = xno; then

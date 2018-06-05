@@ -6,8 +6,8 @@
 extern "C"
 {
 
-EXTERN_GEMM_UKR( float, bli_sgemm_opt_24x16);
-EXTERN_GEMM_UKR( float, bli_sgemm_opt_16x24);
+EXTERN_GEMM_UKR( float, bli_sgemm_knm_24x16);
+EXTERN_GEMM_UKR( float, bli_sgemm_knm_16x24);
 
 }
 
@@ -28,7 +28,7 @@ TBLIS_BEGIN_CONFIG(knm_s24x16)
     TBLIS_CONFIG_GEMM_KC_MAX(  336, _, _, _,
                                408, _, _, _)
 
-    TBLIS_CONFIG_GEMM_UKR(bli_sgemm_opt_24x16, _ , _, _)
+    TBLIS_CONFIG_GEMM_UKR(bli_sgemm_knm_24x16, _ , _, _)
 
     TBLIS_CONFIG_PACK_NN_MR_UKR(knm_spackm_24xk, _, _, _)
     TBLIS_CONFIG_PACK_NN_NR_UKR(_, _ , _, _)
@@ -52,7 +52,7 @@ TBLIS_BEGIN_CONFIG(knm_s16x24)
     TBLIS_CONFIG_GEMM_KC_MAX(  336, _, _, _,
                                408, _, _, _)
 
-    TBLIS_CONFIG_GEMM_UKR(bli_sgemm_opt_16x24, _ , _, _)
+    TBLIS_CONFIG_GEMM_UKR(bli_sgemm_knm_16x24, _ , _, _)
 
     TBLIS_CONFIG_PACK_NN_MR_UKR(_, _, _, _)
     TBLIS_CONFIG_PACK_NN_NR_UKR(knm_spackm_24xk, _ , _, _)

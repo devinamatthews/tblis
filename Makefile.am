@@ -336,7 +336,7 @@ endif
 if ENABLE_KNM
 noinst_LTLIBRARIES += lib/libknm.la
 lib_libtblis_la_LIBADD += lib/libknm.la
-lib_libknm_la_SOURCES = src/configs/knm/bli_sgemm_opt_24x16.c \
+lib_libknm_la_SOURCES = src/configs/knm/bli_sgemm_knm_24x16.c \
                         src/configs/knm/config.cxx
 if ENABLE_INTEL_COMPILER
 lib_libknm_la_CFLAGS = -O3 -xKNM

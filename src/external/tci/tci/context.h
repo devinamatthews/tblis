@@ -1,7 +1,7 @@
 #ifndef _TCI_CONTEXT_H_
 #define _TCI_CONTEXT_H_
 
-#include "tci_config.h"
+#include "tci_global.h"
 
 #include "barrier.h"
 
@@ -12,7 +12,7 @@ extern "C" {
 typedef struct tci_context
 {
     tci_barrier barrier;
-    void* buffer;
+    volatile void* buffer;
     volatile unsigned refcount;
 } tci_context;
 

@@ -38,7 +38,7 @@ int tci_context_barrier(tci_context* context, unsigned tid)
 
 int tci_context_send(tci_context* context, unsigned tid, void* object)
 {
-    context->buffer = object;
+    __atomic_store_n(&context->buffer, object, __ATOMIC_RELEASE);
     int ret = tci_context_barrier(context, tid);
     if (ret != 0) return ret;
     return tci_context_barrier(context, tid);
@@ -47,7 +47,7 @@ int tci_context_send(tci_context* context, unsigned tid, void* object)
 int tci_context_send_nowait(tci_context* context,
                             unsigned tid, void* object)
 {
-    context->buffer = object;
+    __atomic_store_n(&context->buffer, object, __ATOMIC_RELEASE);
     return tci_context_barrier(context, tid);
 }
 
@@ -55,7 +55,7 @@ int tci_context_receive(tci_context* context, unsigned tid, void** object)
 {
     int ret = tci_context_barrier(context, tid);
     if (ret != 0) return ret;
-    *object = context->buffer;
+    __atomic_load(&context->buffer, object, __ATOMIC_ACQUIRE);
     return tci_context_barrier(context, tid);
 }
 
@@ -64,6 +64,6 @@ int tci_context_receive_nowait(tci_context* context,
 {
     int ret = tci_context_barrier(context, tid);
     if (ret != 0) return ret;
-    *object = context->buffer;
+    __atomic_load(&context->buffer, object, __ATOMIC_ACQUIRE);
     return 0;
 }

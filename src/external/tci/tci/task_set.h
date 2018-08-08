@@ -1,7 +1,7 @@
 #ifndef _TCI_TASK_SET_H_
 #define _TCI_TASK_SET_H_
 
-#include "tci_config.h"
+#include "tci_global.h"
 
 #include "parallel.h"
 #include "slot.h"

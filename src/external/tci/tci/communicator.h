@@ -1,7 +1,7 @@
 #ifndef _TCI_COMMUNICATOR_H_
 #define _TCI_COMMUNICATOR_H_
 
-#include "tci_config.h"
+#include "tci_global.h"
 
 #include "context.h"
 
@@ -168,7 +168,7 @@ class communicator
             {
                 std::tuple<Args&&...> refs(std::forward<Args>(args)...);
                 auto ptr = &refs;
-                tci_comm_bcast_nowait(comm, reinterpret_cast<void**>(&ptr), root);
+                tci_comm_bcast(comm, reinterpret_cast<void**>(&ptr), root);
                 func(std::get<I>(*ptr)...);
                 comm.barrier();
             }
@@ -323,7 +323,7 @@ class communicator
         void distribute_over_gangs(const tci_range& n, Func&& func) const
         {
             tci_comm_distribute_over_gangs(*this, n,
-            [](tci_comm* comm, uint64_t first, uint64_t last, void* payload)
+            [](tci_comm*, uint64_t first, uint64_t last, void* payload)
             {
                 (*(typename std::decay<Func>::type*)payload)(first, last);
             }, &func);
@@ -344,7 +344,7 @@ class communicator
                                    Func&& func) const
         {
             tci_comm_distribute_over_gangs_2d(*this, m, n,
-            [](tci_comm* comm, uint64_t mfirst, uint64_t mlast,
+            [](tci_comm*, uint64_t mfirst, uint64_t mlast,
                uint64_t nfirst, uint64_t nlast, void* payload)
             {
                 (*(typename std::decay<Func>::type*)payload)
@@ -366,6 +366,86 @@ class communicator
         }
 
         template <typename Func>
+        void iterate_over_gangs(unsigned n, Func&& func) const
+        {
+            tci_comm_distribute_over_gangs(*this, n,
+            [](tci_comm*, uint64_t first, uint64_t last, void* payload)
+            {
+                for (unsigned i = first;i < last;i++)
+                {
+                    (*(typename std::decay<Func>::type*)payload)(i);
+                }
+            }, &func);
+        }
+
+        template <typename Func>
+        void iterate_over_threads(unsigned n, Func&& func) const
+        {
+            tci_comm_distribute_over_threads(*this, n,
+            [](tci_comm*, uint64_t first, uint64_t last, void* payload)
+            {
+                for (unsigned i = first;i < last;i++)
+                {
+                    (*(typename std::decay<Func>::type*)payload)(i);
+                }
+            }, &func);
+        }
+
+        template <typename Func>
+        void iterate_over_gangs(unsigned m, unsigned n, Func&& func) const
+        {
+            typedef std::pair<typename std::decay<Func>::type,unsigned> payload_type;
+
+            payload_type payload{&func, n};
+
+            tci_comm_distribute_over_gangs(*this, m*n,
+            [](tci_comm*, uint64_t first, uint64_t last, void* payload)
+            {
+                unsigned n = ((payload_type*)payload)->second;
+                unsigned m0 = first / n;
+                unsigned n0 = first % n;
+                unsigned m1 = last / n;
+                unsigned n1 = last % n;
+
+                for (unsigned i = m0;i <= m1;i++)
+                {
+                    for (unsigned j = (i == m0 ? n0 : 0);
+                                  j < (i == m1 ? n1 : n);j++)
+                    {
+                        ((payload_type*)payload)->first(i, j);
+                    }
+                }
+            }, &payload);
+        }
+
+        template <typename Func>
+        void iterate_over_threads(unsigned m, unsigned n, Func&& func) const
+        {
+            typedef std::pair<typename std::decay<Func>::type,unsigned> payload_type;
+
+            payload_type payload{&func, n};
+
+            tci_comm_distribute_over_threads(*this, m*n,
+            [](tci_comm*, uint64_t first, uint64_t last, void* payload)
+            {
+                unsigned n = ((payload_type*)payload)->second;
+                unsigned m0 = first / n;
+                unsigned n0 = first % n;
+                unsigned m1 = last / n;
+                unsigned n1 = last % n;
+
+                for (unsigned i = m0;i <= m1;i++)
+                {
+                    for (unsigned j = (i == m0 ? n0 : 0);
+                                  j < (i == m1 ? n1 : n);j++)
+                    {
+                        ((payload_type*)payload)->first(i, j);
+                    }
+                }
+            }, &payload);
+        }
+
+        template <typename Func>
         void do_tasks_deferred(unsigned ntask, int64_t work, Func&& func) const
         {
             deferred_task_set tasks(*this, ntask, work);
@@ -375,7 +455,7 @@ class communicator
         template <typename Func>
         void do_tasks_deferred(unsigned ntask, Func&& func) const
         {
-            do_tasks_deferred(ntask, -1, func);
+            do_tasks_deferred(ntask, 0, func);
         }
 
         template <typename Func>
@@ -388,7 +468,7 @@ class communicator
         template <typename Func>
         void do_tasks(unsigned ntask, Func&& func) const
         {
-            do_tasks(ntask, -1, func);
+            do_tasks(ntask, 0, func);
         }
 
         operator tci_comm*() const { return const_cast<tci_comm*>(&_comm); }

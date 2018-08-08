@@ -72,13 +72,13 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
             std::array<len_type, 2> block_round = {ME, NE};
 
             data_ = A.tensor_.data();
-            const unsigned nirrep = A.tensor_.num_irreps();
-            const unsigned irrep_mask = nirrep - 1;
-            const unsigned irrep_bits = __builtin_popcount(irrep_mask);
-            const auto rscat_max = cscat;
-            const auto cscat_max = rbs;
-            const auto rbs_max = cbs;
-            const auto cbs_max = cbs + (rbs - cscat);
+            unsigned nirrep = A.tensor_.num_irreps();
+            unsigned irrep_mask = nirrep - 1;
+            unsigned irrep_bits = __builtin_popcount(irrep_mask);
+            auto rscat_max = cscat;
+            auto cscat_max = rbs;
+            auto rbs_max = cbs;
+            auto cbs_max = cbs + (rbs - cscat);
 
             TBLIS_ASSERT(A.block_offset_[0] >= 0);
             TBLIS_ASSERT(A.block_offset_[1] >= 0);

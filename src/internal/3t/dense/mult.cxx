@@ -322,6 +322,123 @@ void mult_vec(const communicator& comm, const config& cfg,
 }
 
 template <typename T>
+void mult_blis(const communicator& comm, const config& cfg,
+               const len_vector& len_AB,
+               const len_vector& len_AC,
+               const len_vector& len_BC,
+               const len_vector& len_ABC,
+               T alpha, bool conj_A, const T* A,
+               const stride_vector& stride_A_AB,
+               const stride_vector& stride_A_AC,
+               const stride_vector& stride_A_ABC,
+                        bool conj_B, const T* B,
+               const stride_vector& stride_B_AB,
+               const stride_vector& stride_B_BC,
+               const stride_vector& stride_B_ABC,
+               T  beta, bool conj_C,       T* C,
+               const stride_vector& stride_C_AC,
+               const stride_vector& stride_C_BC,
+               const stride_vector& stride_C_ABC)
+{
+    //TODO
+    TBLIS_ASSERT(!conj_A && !conj_B && !conj_C);
+
+    auto reorder_AC = detail::sort_by_stride(stride_C_AC, stride_A_AC);
+    auto reorder_BC = detail::sort_by_stride(stride_C_BC, stride_B_BC);
+    auto reorder_AB = detail::sort_by_stride(stride_A_AB, stride_B_AB);
+    auto reorder_ABC = detail::sort_by_stride(stride_C_ABC, stride_A_ABC, stride_B_ABC);
+
+    len_type m = stl_ext::prod(len_AC);
+    len_type n = stl_ext::prod(len_BC);
+    len_type k = stl_ext::prod(len_AB);
+    len_type l = stl_ext::prod(len_ABC);
+
+    if (comm.master()) flops += 2*m*n*k*l;
+
+    unsigned nt_l, nt_mn;
+    std::tie(nt_l, nt_mn) =
+        partition_2x2(comm.num_threads(), l, l, m*n, m*n);
+
+    auto subcomm = comm.gang(TCI_EVENLY, nt_l);
+
+    subcomm.distribute_over_gangs(l,
+    [&](len_type l_min, len_type l_max)
+    {
+        tensor_matrix<T> at(stl_ext::permuted(len_AC, reorder_AC),
+                            stl_ext::permuted(len_AB, reorder_AB),
+                            nullptr,
+                            stl_ext::permuted(stride_A_AC, reorder_AC),
+                            stl_ext::permuted(stride_A_AB, reorder_AB));
+
+        tensor_matrix<T> bt(stl_ext::permuted(len_AB, reorder_AB),
+                            stl_ext::permuted(len_BC, reorder_BC),
+                            nullptr,
+                            stl_ext::permuted(stride_B_AB, reorder_AB),
+                            stl_ext::permuted(stride_B_BC, reorder_BC));
+
+        tensor_matrix<T> ct(stl_ext::permuted(len_AC, reorder_AC),
+                            stl_ext::permuted(len_BC, reorder_BC),
+                            nullptr,
+                            stl_ext::permuted(stride_C_AC, reorder_AC),
+                            stl_ext::permuted(stride_C_BC, reorder_BC));
+
+        auto perm_stride_A_ABC = stl_ext::permuted(stride_A_ABC, reorder_ABC);
+        auto perm_stride_B_ABC = stl_ext::permuted(stride_B_ABC, reorder_ABC);
+
+        const bool row_major = cfg.gemm_row_major.value<T>();
+
+        if (ct.stride(!row_major) == 1 && 0)
+        {
+            /*
+             * Compute C^T = B^T * A^T instead
+             */
+            at.swap(bt);
+            at.transpose();
+            bt.transpose();
+            ct.transpose();
+            std::swap(m, n);
+            perm_stride_A_ABC.swap(perm_stride_B_ABC);
+        }
+
+        auto tc = make_gemm_thread_config<T>(cfg, nt_mn, m, n, k);
+
+        communicator comm_nc = subcomm.gang(TCI_EVENLY, tc.jc_nt);
+        communicator comm_kc = comm_nc.gang(TCI_EVENLY,        1);
+        communicator comm_mc = comm_kc.gang(TCI_EVENLY, tc.ic_nt);
+        communicator comm_nr = comm_mc.gang(TCI_EVENLY, tc.jr_nt);
+        communicator comm_mr = comm_nr.gang(TCI_EVENLY, tc.ir_nt);
+
+        TensorGEMM gemm;
+        step<0>(gemm).subcomm = &comm_nc;
+        step<1>(gemm).subcomm = &comm_kc;
+        step<4>(gemm).subcomm = &comm_mc;
+        step<8>(gemm).subcomm = &comm_nr;
+        step<9>(gemm).subcomm = &comm_mr;
+
+        viterator<3> iter_ABC(stl_ext::permuted(len_ABC, reorder_ABC),
+                              perm_stride_A_ABC, perm_stride_B_ABC,
+                              stl_ext::permuted(stride_C_ABC, reorder_ABC));
+
+        auto A1 = A;
+        auto B1 = B;
+        auto C1 = C;
+
+        iter_ABC.position(l_min, A1, B1, C1);
+
+        for (len_type l = l_min;l < l_max;l++)
+        {
+            iter_ABC.next(A1, B1, C1);
+
+            at.data(const_cast<T*>(A1));
+            bt.data(const_cast<T*>(B1));
+            ct.data(C1);
+
+            gemm(subcomm, cfg, alpha, at, bt, beta, ct);
+        }
+    });
+}
+
+template <typename T>
 void outer_prod_blas(const communicator& comm, const config& cfg,
                      const len_vector& len_AC,
                      const len_vector& len_BC,
@@ -544,11 +661,21 @@ void mult(const communicator& comm, const config& cfg,
                       beta, conj_C, C, stride_C_ABC);
             break;
         case HAS_AC+HAS_BC:
-        //    outer_prod_blas(comm, cfg, len_AC, len_BC,
-        //                    alpha, conj_A, A, stride_A_AC,
-        //                           conj_B, B, stride_B_BC,
-        //                     beta, conj_C, C, stride_C_AC, stride_C_BC);
-        //    break;
+            if (impl == BLAS_BASED)
+            {
+                outer_prod_blas(comm, cfg, len_AC, len_BC,
+                                alpha, conj_A, A, stride_A_AC,
+                                       conj_B, B, stride_B_BC,
+                                 beta, conj_C, C, stride_C_AC, stride_C_BC);
+            }
+            else
+            {
+                contract_blis(comm, cfg, {}, len_AC, len_BC,
+                              alpha, conj_A, A, {}, stride_A_AC,
+                                     conj_B, B, {}, stride_B_BC,
+                               beta, conj_C, C, stride_C_AC, stride_C_BC);
+            }
+            break;
         //TODO: gemv
         case HAS_AB+HAS_AC:
         case HAS_AB+HAS_BC:
@@ -601,19 +728,40 @@ void mult(const communicator& comm, const config& cfg,
             }
             break;
         case HAS_AC+HAS_BC+HAS_ABC:
-            weight_blas(comm, cfg, len_AC, len_BC, len_ABC,
-                        alpha, conj_A, A, stride_A_AC, stride_A_ABC,
-                               conj_B, B, stride_B_BC, stride_B_ABC,
-                         beta, conj_C, C, stride_C_AC, stride_C_BC, stride_C_ABC);
+            if (impl == BLAS_BASED)
+            {
+                weight_blas(comm, cfg, len_AC, len_BC, len_ABC,
+                            alpha, conj_A, A, stride_A_AC, stride_A_ABC,
+                                   conj_B, B, stride_B_BC, stride_B_ABC,
+                             beta, conj_C, C, stride_C_AC, stride_C_BC, stride_C_ABC);
+            }
+            else
+            {
+                mult_blis(comm, cfg, {}, len_AC, len_BC, len_ABC,
+                          alpha, conj_A, A, {}, stride_A_AC, stride_A_ABC,
+                                 conj_B, B, {}, stride_B_BC, stride_B_ABC,
+                           beta, conj_C, C, stride_C_AC, stride_C_BC, stride_C_ABC);
+            }
             break;
         case HAS_AB+HAS_AC+HAS_ABC:
         case HAS_AB+HAS_BC+HAS_ABC:
         case HAS_AB+HAS_AC+HAS_BC+HAS_ABC:
-            mult_blas(comm, cfg,
-                      len_AB, len_AC, len_BC, len_ABC,
-                      alpha, conj_A, A, stride_A_AB, stride_A_AC, stride_A_ABC,
-                             conj_B, B, stride_B_AB, stride_B_BC, stride_B_ABC,
-                       beta, conj_C, C, stride_C_AC, stride_C_BC, stride_C_ABC);
+            if (impl == BLAS_BASED)
+            {
+                mult_blas(comm, cfg,
+                          len_AB, len_AC, len_BC, len_ABC,
+                          alpha, conj_A, A, stride_A_AB, stride_A_AC, stride_A_ABC,
+                                 conj_B, B, stride_B_AB, stride_B_BC, stride_B_ABC,
+                           beta, conj_C, C, stride_C_AC, stride_C_BC, stride_C_ABC);
+            }
+            else
+            {
+                mult_blis(comm, cfg,
+                          len_AB, len_AC, len_BC, len_ABC,
+                          alpha, conj_A, A, stride_A_AB, stride_A_AC, stride_A_ABC,
+                                 conj_B, B, stride_B_AB, stride_B_BC, stride_B_ABC,
+                           beta, conj_C, C, stride_C_AC, stride_C_BC, stride_C_ABC);
+            }
             break;
     }
 

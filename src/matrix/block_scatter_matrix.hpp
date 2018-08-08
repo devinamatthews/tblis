@@ -9,6 +9,7 @@
 
 #include "normal_matrix.hpp"
 #include "tensor_matrix.hpp"
+#include "dpd_tensor_matrix.hpp"
 
 namespace tblis
 {
@@ -85,7 +86,7 @@ class block_scatter_matrix : public abstract_matrix<T>
         }
 
     public:
-        block_scatter_matrix();
+        block_scatter_matrix() {}
 
         block_scatter_matrix(const communicator& comm, const tensor_matrix<T>& A,
                              len_type MB, stride_type* rscat, stride_type* rbs,
@@ -93,7 +94,7 @@ class block_scatter_matrix : public abstract_matrix<T>
         {
             data_ = A.data_;
             tot_len_ = cur_len_ = A.cur_len_;
-            scatter_= {rscat, cscat};
+            scatter_ = {rscat, cscat};
             block_stride_ = {rbs, cbs};
             block_size_ = {MB, NB};
 
@@ -106,6 +107,13 @@ class block_scatter_matrix : public abstract_matrix<T>
             }
 
             comm.barrier();
+        }
+
+        block_scatter_matrix(const communicator& comm, const dpd_tensor_matrix<T>& A,
+                             len_type MB, stride_type* rscat, stride_type* rbs,
+                             len_type NB, stride_type* cscat, stride_type* cbs)
+        {
+            assert(0);
         }
 
         len_type block_size(unsigned dim) const
@@ -160,14 +168,13 @@ class block_scatter_matrix : public abstract_matrix<T>
             comm.distribute_over_threads({m_a, MR}, {k_a, KR},
             [&](len_type m_first, len_type m_last, len_type k_first, len_type k_last)
             {
-                T* p_ap = Ap.data() + (m_first/MR)*ME*k_a + k_first*ME;
+                T* p_ap = Ap.data() + (m_first/MR)*ME*Ap.stride(trans) + k_first*ME;
                 scatter_type rscat_a = scatter_[ trans] + off_[ trans] + m_first;
                 scatter_type cscat_a = scatter_[!trans] + off_[!trans] + k_first;
                 scatter_type rbs_a = block_stride_[ trans] + (off_[ trans] + m_first)/block_size_[ trans];
                 scatter_type cbs_a = block_stride_[!trans] + (off_[!trans] + k_first)/block_size_[!trans];
 
-                len_type m_off = m_first;
-                while (m_off < m_last)
+                for (len_type m_off = m_first;m_off < m_last;)
                 {
                     TBLIS_ASSERT(rscat_a - scatter_[ trans] < tot_len_[ trans]);
                     TBLIS_ASSERT(cscat_a - scatter_[!trans] < tot_len_[!trans]);
@@ -179,7 +186,7 @@ class block_scatter_matrix : public abstract_matrix<T>
                     stride_type rs_a = *rbs_a;
                     const T* p_a = data_ + (rs_a ? *rscat_a : 0);
 
-                    TBLIS_ASSERT(p_ap + k*ME <= Ap.data() + Ap.length(0)*Ap.length(1));
+                    TBLIS_ASSERT(p_ap + k*ME <= Ap.data() + ceil_div(Ap.length(trans), MR)*ME*Ap.length(!trans));
 
                     if (rs_a)
                     {
@@ -196,7 +203,7 @@ class block_scatter_matrix : public abstract_matrix<T>
                             cfg.pack_sb_nr_ukr.call<T>(m, k, p_a, rscat_a, cscat_a, cbs_a, p_ap);
                     }
 
-                    p_ap += ME*k_a;
+                    p_ap += ME*Ap.stride(trans);
                     m_off += MR;
                     rscat_a += MR;
                     rbs_a++;

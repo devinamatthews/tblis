@@ -8,12 +8,10 @@
 #include "memory/memory_pool.hpp"
 
 #include "matrix/normal_matrix.hpp"
-#include "matrix/diag_scaled_matrix.hpp"
-#include "matrix/block_scatter_matrix.hpp"
 
 #include "configs/configs.hpp"
 
-#include "iface/1m/reduce.h"
+#include "iface/1v/reduce.h"
 
 #define TBLIS_MAX_UNROLL 8
 
@@ -30,6 +28,21 @@ template <> struct pack_and_run<matrix_constants::MAT_A>
     {
         A.pack(comm, cfg, false, P);
         comm.barrier();
+#if 0
+        if (comm.master())
+        {
+            printf("[%d] packing A: %.15g\n", comm.gang_num(), std::abs(reduce(single, REDUCE_NORM_1,
+                row_view<const T>{{P.length(0)*P.length(1)}, P.data()}).first));
+
+            auto ME = cfg.gemm_mr.extent<T>();
+
+            for (len_type m = 0;m < P.length(0);m += ME)
+                std::cout << matrix_view<const T>{{P.length(1), ME}, P.data() + m*P.length(1), {ME, 1}} << std::endl;
+
+            printf("\n\n");
+        }
+        comm.barrier();
+#endif
         run(comm, cfg, alpha, P, B, beta, C);
         comm.barrier();
     }
@@ -43,6 +56,21 @@ template <> struct pack_and_run<matrix_constants::MAT_B>
     {
         B.pack(comm, cfg, true, P);
         comm.barrier();
+#if 0
+        if (comm.master())
+        {
+            printf("[%d] packing B: %.15g\n", comm.gang_num(), std::abs(reduce(single, REDUCE_NORM_1,
+                row_view<const T>{{P.length(0)*P.length(1)}, P.data()}).first));
+
+            auto ME = cfg.gemm_nr.extent<T>();
+
+            for (len_type m = 0;m < P.length(1);m += ME)
+                std::cout << matrix_view<const T>{{P.length(0), ME}, P.data() + m*P.length(0), {ME, 1}} << std::endl;
+
+                printf("\n\n");
+        }
+        comm.barrier();
+#endif
         run(comm, cfg, alpha, A, P, beta, C);
         comm.barrier();
     }

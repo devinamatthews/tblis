@@ -595,9 +595,9 @@ void tblis_init_tensor_z(tblis_tensor* t,
 inline void __attribute__((format(printf, 2, 3),noreturn))
 tblis_abort_with_message(const char* cond, const char* fmt, ...)
 {
-    if (strlen(fmt) == 0)
+    if (strlen(fmt) == 1)
     {
-        fprintf(stderr, "%s", cond);
+        fprintf(stderr, "%s\n", cond);
     }
     else
     {
@@ -606,14 +606,13 @@ tblis_abort_with_message(const char* cond, const char* fmt, ...)
         vfprintf(stderr, fmt, args);
         va_end(args);
     }
-    fprintf(stderr, "\n");
     abort();
 }
 
 #ifdef TBLIS_DEBUG
 
 #define TBLIS_ASSERT(x,...) ((x) ? (void)(x) : \
-    tblis_abort_with_message(TBLIS_STRINGIZE(x), "" __VA_ARGS__))
+    tblis_abort_with_message(TBLIS_STRINGIZE(x), "" __VA_ARGS__ "\n"))
 
 #else
 

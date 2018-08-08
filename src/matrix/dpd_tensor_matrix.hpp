@@ -9,12 +9,15 @@ namespace tblis
 class irrep_iterator
 {
     protected:
-        unsigned irrep_;
+        const unsigned irrep_;
+        const unsigned irrep_bits_;
+        const unsigned irrep_mask_;
         viterator<0> it_;
 
     public:
         irrep_iterator(unsigned irrep, unsigned nirrep, unsigned ndim)
-        : irrep_(irrep), it_(irrep_vector(ndim ? ndim-1 : 0, nirrep)) {}
+        : irrep_(irrep), irrep_bits_(__builtin_popcount(nirrep-1)),
+          irrep_mask_ (nirrep-1), it_(irrep_vector(ndim ? ndim-1 : 0, nirrep)) {}
 
         bool next()
         {
@@ -23,14 +26,25 @@ class irrep_iterator
 
         unsigned nblock() const
         {
-            unsigned n = 1;
-            for (unsigned l : it_.lengths()) n *= l;
-            return n;
+            return 1u << (irrep_bits_*it_.dimension());
         }
 
         void block(unsigned b)
         {
-            it_.position(b);
+            irrep_vector irreps(it_.dimension());
+
+            for (unsigned i = 0;i < it_.dimension();i++)
+            {
+                irreps[i] = b & irrep_mask_;
+                b >>= irrep_bits_;
+            }
+
+            it_.position(irreps);
+        }
+
+        void reset()
+        {
+            it_.reset();
         }
 
         unsigned irrep(unsigned dim)
@@ -173,6 +187,7 @@ class dpd_tensor_matrix : public abstract_matrix<T>
             while (n > 0 && n >= block_size_[dim][block_[dim]])
                 n -= block_size_[dim][block_[dim]++];
 
+            TBLIS_ASSERT(n >= 0);
             block_offset_[dim] = n;
         }
 

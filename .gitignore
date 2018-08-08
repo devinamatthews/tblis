@@ -28,3 +28,6 @@ stamp-h1
 libtool
 Makefile
 tblis_config.h
+src/external/tci/.git/
+src/external/marray/.git/
+src/external/stl_ext/.git/

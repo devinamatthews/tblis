@@ -26,6 +26,11 @@ class abstract_matrix
         abstract_matrix(len_type m, len_type n, T* ptr)
         : data_(ptr), tot_len_{m, n}, cur_len_{m, n} {}
 
+        T* data() const
+        {
+            return data_;
+        }
+
         len_type length(unsigned dim) const
         {
             TBLIS_ASSERT(dim < 2);

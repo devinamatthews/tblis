@@ -182,12 +182,12 @@ void reduce_init(reduce_t op, T& value, len_type& idx)
 }
 
 template <typename T>
-void reduce_init(reduce_t op, atomic_reducer<T>& pair)
+atomic_reducer_helper<T> reduce_init(reduce_t op)
 {
     T tmp1;
     len_type tmp2;
     reduce_init(op, tmp1, tmp2);
-    pair = {tmp1, tmp2};
+    return {tmp1, tmp2};
 }
 
 template <typename T>

@@ -9,6 +9,8 @@ namespace tblis
 template <typename T>
 class normal_matrix : public abstract_matrix<T>
 {
+    template <typename> friend class patch_block_scatter_matrix;
+
     public:
         typedef T value_type;
 

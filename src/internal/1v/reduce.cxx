@@ -9,8 +9,7 @@ template <typename T>
 void reduce(const communicator& comm, const config& cfg, reduce_t op, len_type n,
             const T* A, stride_type inc_A, T& result, len_type& idx)
 {
-    atomic_reducer<T> local_result;
-    reduce_init(op, local_result);
+    atomic_reducer<T> local_result{reduce_init<T>(op)};
 
     comm.distribute_over_threads(n,
     [&](len_type n_min, len_type n_max)

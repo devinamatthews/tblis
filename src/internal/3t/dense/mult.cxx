@@ -382,41 +382,9 @@ void mult_blis(const communicator& comm, const config& cfg,
                             stl_ext::permuted(stride_C_AC, reorder_AC),
                             stl_ext::permuted(stride_C_BC, reorder_BC));
 
-        auto perm_stride_A_ABC = stl_ext::permuted(stride_A_ABC, reorder_ABC);
-        auto perm_stride_B_ABC = stl_ext::permuted(stride_B_ABC, reorder_ABC);
-
-        const bool row_major = cfg.gemm_row_major.value<T>();
-
-        if (ct.stride(!row_major) == 1 && 0)
-        {
-            /*
-             * Compute C^T = B^T * A^T instead
-             */
-            at.swap(bt);
-            at.transpose();
-            bt.transpose();
-            ct.transpose();
-            std::swap(m, n);
-            perm_stride_A_ABC.swap(perm_stride_B_ABC);
-        }
-
-        auto tc = make_gemm_thread_config<T>(cfg, nt_mn, m, n, k);
-
-        communicator comm_nc = subcomm.gang(TCI_EVENLY, tc.jc_nt);
-        communicator comm_kc = comm_nc.gang(TCI_EVENLY,        1);
-        communicator comm_mc = comm_kc.gang(TCI_EVENLY, tc.ic_nt);
-        communicator comm_nr = comm_mc.gang(TCI_EVENLY, tc.jr_nt);
-        communicator comm_mr = comm_nr.gang(TCI_EVENLY, tc.ir_nt);
-
-        TensorGEMM gemm;
-        step<0>(gemm).subcomm = &comm_nc;
-        step<1>(gemm).subcomm = &comm_kc;
-        step<4>(gemm).subcomm = &comm_mc;
-        step<8>(gemm).subcomm = &comm_nr;
-        step<9>(gemm).subcomm = &comm_mr;
-
         viterator<3> iter_ABC(stl_ext::permuted(len_ABC, reorder_ABC),
-                              perm_stride_A_ABC, perm_stride_B_ABC,
+                              stl_ext::permuted(stride_A_ABC, reorder_ABC),
+                              stl_ext::permuted(stride_B_ABC, reorder_ABC),
                               stl_ext::permuted(stride_C_ABC, reorder_ABC));
 
         auto A1 = A;
@@ -433,7 +401,7 @@ void mult_blis(const communicator& comm, const config& cfg,
             bt.data(const_cast<T*>(B1));
             ct.data(C1);
 
-            gemm(subcomm, cfg, alpha, at, bt, beta, ct);
+            TensorGEMM{}(subcomm, cfg, alpha, at, bt, beta, ct);
         }
     });
 }

@@ -99,7 +99,7 @@ struct gemm
 
     template <typename T, typename MatrixA, typename MatrixB, typename MatrixC>
     void operator()(const communicator& comm, const config& cfg,
-                    T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
+                    T alpha, const MatrixA& A, const MatrixB& B, T beta, const MatrixC& C)
     {
         using namespace matrix_constants;
 
@@ -116,9 +116,6 @@ struct gemm
              * Compute C^T = B^T * A^T instead
              */
             std::swap(m, n);
-            A.transpose();
-            B.transpose();
-            C.transpose();
         }
 
         if (comm.master()) flops += 2*m*n*k;
@@ -143,7 +140,15 @@ struct gemm
             /*
              * Compute C^T = B^T * A^T instead
              */
-            child(comm, cfg, alpha, B, A, beta, C);
+            auto At = A;
+            auto Bt = B;
+            auto Ct = C;
+
+            At.transpose();
+            Bt.transpose();
+            Ct.transpose();
+
+            child(comm, cfg, alpha, Bt, At, beta, Ct);
         }
         else
         {

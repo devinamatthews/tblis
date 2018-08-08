@@ -31,6 +31,12 @@ class abstract_matrix
             return data_;
         }
 
+        T* data(T* ptr)
+        {
+            std::swap(ptr, data_);
+            return ptr;
+        }
+
         len_type length(unsigned dim) const
         {
             TBLIS_ASSERT(dim < 2);

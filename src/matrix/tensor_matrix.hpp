@@ -81,11 +81,6 @@ class tensor_matrix : public abstract_matrix<T>
             cur_len_ = tot_len_;
         }
 
-        T* data() const
-        {
-            return data_;
-        }
-
         stride_type stride(unsigned dim) const
         {
             TBLIS_ASSERT(dim < 2);

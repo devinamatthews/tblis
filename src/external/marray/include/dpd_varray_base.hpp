@@ -14,6 +14,7 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
     template <typename, typename, bool> friend class dpd_varray_base;
     template <typename> friend class dpd_varray_view;
     template <typename, typename> friend class dpd_varray;
+    template <typename, typename, bool> friend class indexed_dpd_varray_base;
 
     public:
         typedef Type value_type;

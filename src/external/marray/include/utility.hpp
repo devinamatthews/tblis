@@ -61,6 +61,8 @@ typedef short_vector<stride_type,MARRAY_OPT_NDIM> stride_vector;
 typedef short_vector<unsigned,MARRAY_OPT_NDIM> dim_vector;
 typedef short_vector<len_type,MARRAY_OPT_NDIM> index_vector;
 typedef short_vector<unsigned,MARRAY_OPT_NDIM> irrep_vector;
+template <typename T>
+using ptr_vector = short_vector<T*,MARRAY_OPT_NDIM>;
 
 #ifndef MARRAY_DEFAULT_LAYOUT
 #define MARRAY_DEFAULT_LAYOUT ROW_MAJOR

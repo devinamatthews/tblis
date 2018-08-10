@@ -119,7 +119,7 @@ class indexed_dpd_varray_base : detail::dpd_base<indexed_dpd_varray_base<Type, D
         void reset(dpd_varray_base<U, D, O>& other)
         {
             size_.reset(other.size_);
-            idx_irrep_ = 0;
+            idx_irrep_ = {};
             leaf_ = other.leaf_;
             parent_ = other.parent_;
             perm_ = other.perm_;
@@ -609,6 +609,12 @@ class indexed_dpd_varray_base : detail::dpd_base<indexed_dpd_varray_base<Type, D
         }
 
         const Type& factor(len_type idx) const
+        {
+            MARRAY_ASSERT(0 <= idx && idx < num_indices());
+            return factor_[idx];
+        }
+
+        Type& factor(len_type idx)
         {
             MARRAY_ASSERT(0 <= idx && idx < num_indices());
             return factor_[idx];

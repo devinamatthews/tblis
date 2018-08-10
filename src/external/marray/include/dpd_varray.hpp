@@ -112,6 +112,11 @@ class dpd_varray : public dpd_varray_base<Type, dpd_varray<Type, Allocator>, tru
             reset(irrep, nirrep, len, uninitialized, depth, layout);
         }
 
+        ~dpd_varray()
+        {
+            reset();
+        }
+
         /***********************************************************************
          *
          * Base operations

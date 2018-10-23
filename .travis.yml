@@ -28,7 +28,7 @@ before_install:
         rm /usr/local/include/c++;
         brew update && brew install gcc@6 tbb llvm@3.9;
         rm /usr/local/include/c++;
-        brew link --force --overwrite llvm@3.9;
+        sudo softwareupdate -i "Command Line Tools (macOS High Sierra version 10.13) for Xcode-9.4";
     fi'
 
 addons:

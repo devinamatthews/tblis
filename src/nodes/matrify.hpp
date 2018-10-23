@@ -32,9 +32,9 @@ template <int Mat> struct matrify_and_run;
 template <int Mat, blocksize config::*MBS, blocksize config::*NBS, MemoryPool& Pool, typename Child>
 struct matrify;
 
-template <int Mat, blocksize config::*MBS, blocksize config::*NBS, MemoryPool& Pool, typename Child, typename MatrixA>
+template <typename Matrify, typename Child, typename MatrixA>
 detail::enable_if_t<!detail::is_pack<Child>::value>
-allocate_buffers(len_type MB, len_type NB, matrify<Mat, MBS, NBS, Pool, Child>& parent, Child&,
+allocate_buffers(len_type MB, len_type NB, Matrify& parent, Child&,
                  const communicator& comm, MatrixA& A)
 {
     if (!parent.rscat)
@@ -47,7 +47,7 @@ allocate_buffers(len_type MB, len_type NB, matrify<Mat, MBS, NBS, Pool, Child>& 
         if (comm.master())
         {
             len_type patch_size = size_as_type<block_scatter_matrix<float>,stride_type>(mp*np);
-            parent.scat_buffer = Pool.allocate<stride_type>(2*m*np + 2*n*mp + patch_size);
+            parent.scat_buffer = parent.pool.template allocate<stride_type>(2*m*np + 2*n*mp + patch_size);
             parent.rscat = parent.scat_buffer.template get<stride_type>();
         }
 
@@ -60,9 +60,9 @@ allocate_buffers(len_type MB, len_type NB, matrify<Mat, MBS, NBS, Pool, Child>& 
     }
 }
 
-template <int Mat, blocksize config::*MBS, blocksize config::*NBS, MemoryPool& Pool, typename Child, typename MatrixA>
+template <typename Matrify, typename Child, typename MatrixA>
 detail::enable_if_t<detail::is_pack<Child>::value>
-allocate_buffers(len_type MB, len_type NB, matrify<Mat, MBS, NBS, Pool, Child>& parent, Child& child,
+allocate_buffers(len_type MB, len_type NB, Matrify& parent, Child& child,
                  const communicator& comm, MatrixA& A)
 {
     typedef typename MatrixA::value_type T;
@@ -78,7 +78,7 @@ allocate_buffers(len_type MB, len_type NB, matrify<Mat, MBS, NBS, Pool, Child>& 
         {
             len_type scatter_size = size_as_type<stride_type,T>(2*m*np + 2*n*mp) +
                                     size_as_type<block_scatter_matrix<float>,T>(mp*np);
-            child.pack_buffer = Pool.allocate<T>(m*n + std::max(m,n)*TBLIS_MAX_UNROLL + scatter_size);
+            child.pack_buffer = parent.pool.template allocate<T>(m*n + std::max(m,n)*TBLIS_MAX_UNROLL + scatter_size);
             child.pack_ptr = child.pack_buffer.get();
         }
 
@@ -140,6 +140,7 @@ template <> struct matrify_and_run<matrix_constants::MAT_C>
 template <int Mat, blocksize config::*MBS, blocksize config::*NBS, MemoryPool& Pool, typename Child>
 struct matrify
 {
+    static constexpr MemoryPool& pool = Pool;
     Child child;
     MemoryPool::Block scat_buffer;
     stride_type* rscat = nullptr;

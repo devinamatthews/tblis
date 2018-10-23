@@ -19,7 +19,7 @@
 #ifdef MARRAY_ENABLE_ASSERTS
 #define MARRAY_ASSERT(e) assert(e)
 #else
-#define MARRAY_ASSERT(e)
+#define MARRAY_ASSERT(e) ((void)0)
 #endif
 
 #include "short_vector.hpp"

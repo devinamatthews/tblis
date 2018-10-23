@@ -17,6 +17,9 @@ class indexed_dpd_varray_view : public indexed_dpd_varray_base<Type, indexed_dpd
         typedef indexed_dpd_varray_base<Type, indexed_dpd_varray_view, false> base;
 
         using base::size_;
+        using base::len_;
+        using base::off_;
+        using base::stride_;
         using base::idx_irrep_;
         using base::leaf_;
         using base::parent_;
@@ -166,7 +169,6 @@ class indexed_dpd_varray_view : public indexed_dpd_varray_base<Type, indexed_dpd
         using base::dimension;
         using base::dense_dimension;
         using base::indexed_dimension;
-        using base::dense_size;
 
         Type& factor(len_type idx)
         {

@@ -14,6 +14,9 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
         typedef std::allocator_traits<Allocator> alloc_traits;
 
         using base::size_;
+        using base::len_;
+        using base::off_;
+        using base::stride_;
         using base::leaf_;
         using base::parent_;
         using base::perm_;
@@ -126,6 +129,11 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
         dpd_marray& operator=(const dpd_marray& other)
         {
             return base::operator=(other);
+        }
+
+        stride_type size() const
+        {
+            return size_[2*NDim-2][irrep_];
         }
 
         using base::operator=;

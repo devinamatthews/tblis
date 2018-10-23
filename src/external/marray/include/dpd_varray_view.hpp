@@ -13,6 +13,8 @@ class dpd_varray_view : public dpd_varray_base<Type, dpd_varray_view<Type>, fals
         typedef dpd_varray_base<Type, dpd_varray_view, false> base;
 
         using base::size_;
+        using base::len_;
+        using base::off_;
         using base::leaf_;
         using base::parent_;
         using base::perm_;

@@ -14,6 +14,8 @@ class dpd_varray : public dpd_varray_base<Type, dpd_varray<Type, Allocator>, tru
         typedef std::allocator_traits<Allocator> alloc_traits;
 
         using base::size_;
+        using base::len_;
+        using base::off_;
         using base::leaf_;
         using base::parent_;
         using base::perm_;
@@ -126,6 +128,11 @@ class dpd_varray : public dpd_varray_base<Type, dpd_varray<Type, Allocator>, tru
         dpd_varray& operator=(const dpd_varray& other)
         {
             return base::operator=(other);
+        }
+
+        stride_type size() const
+        {
+            return size_[2*dimension()-2][irrep_];
         }
 
         using base::operator=;

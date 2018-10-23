@@ -28,7 +28,7 @@ before_install:
         rm /usr/local/include/c++;
         brew update && brew install gcc@6 tbb llvm@3.9;
         rm /usr/local/include/c++;
-        brew link --force llvm@3.9;
+        brew link --force --overwrite llvm@3.9;
     fi'
 
 addons:

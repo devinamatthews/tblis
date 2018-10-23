@@ -106,8 +106,11 @@ void dot_block(const communicator& comm, const config& cfg,
                     stride_vector stride_A_AB, stride_B_AB;
                     stride_type off_A_AB, off_B_AB;
                     get_local_geometry(indices_A[idx_A].idx[0], group_AB, len_AB,
-                                       local_A, off_A_AB, stride_A_AB, 0,
-                                       local_B, off_B_AB, stride_B_AB, 1);
+                                       local_A, stride_A_AB, 0,
+                                       local_B, stride_B_AB, 1);
+                    get_local_offset(indices_A[idx_A].idx[0], group_AB,
+                                     local_A, off_A_AB, 0,
+                                     local_B, off_B_AB, 1);
 
                     auto data_A = local_A.data() + indices_A[idx_A].offset + off_A_AB;
                     auto data_B = local_B.data() + indices_B[idx_B].offset + off_B_AB;

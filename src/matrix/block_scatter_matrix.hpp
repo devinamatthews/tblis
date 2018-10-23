@@ -73,7 +73,7 @@ class block_scatter_matrix : public abstract_matrix<T>
                 p0 = 0;
             }
 
-            for (len_type i = 0, b = 0;i < size;i += BS, b++)
+            for (len_type i = 0;i < size;i += BS)
             {
                 len_type bl = std::min(size-i, BS);
                 stride_type s = bl > 1 ? scat[i+1]-scat[i] : 1;
@@ -81,7 +81,7 @@ class block_scatter_matrix : public abstract_matrix<T>
                 {
                     if (scat[j+1]-scat[j] != s) s = 0;
                 }
-                bs[b] = s;
+                bs[i] = s;
             }
         }
 
@@ -141,8 +141,8 @@ class block_scatter_matrix : public abstract_matrix<T>
             TBLIS_ASSERT(off_[0]%block_size_[0] == 0);
             TBLIS_ASSERT(off_[1]%block_size_[1] == 0);
 
-            rbs = block_stride_[0][off_[0]/block_size_[0]];
-            cbs = block_stride_[1][off_[1]/block_size_[1]];
+            rbs = block_stride_[0][off_[0]];
+            cbs = block_stride_[1][off_[1]];
 
             rbl = std::min(block_size_[0], cur_len_[0]);
             cbl = std::min(block_size_[1], cur_len_[1]);
@@ -171,15 +171,15 @@ class block_scatter_matrix : public abstract_matrix<T>
                 T* p_ap = Ap.data() + (m_first/MR)*ME*Ap.stride(trans) + k_first*ME;
                 scatter_type rscat_a = scatter_[ trans] + off_[ trans] + m_first;
                 scatter_type cscat_a = scatter_[!trans] + off_[!trans] + k_first;
-                scatter_type rbs_a = block_stride_[ trans] + (off_[ trans] + m_first)/block_size_[ trans];
-                scatter_type cbs_a = block_stride_[!trans] + (off_[!trans] + k_first)/block_size_[!trans];
+                scatter_type rbs_a = block_stride_[ trans] + off_[ trans] + m_first;
+                scatter_type cbs_a = block_stride_[!trans] + off_[!trans] + k_first;
 
                 for (len_type m_off = m_first;m_off < m_last;)
                 {
                     TBLIS_ASSERT(rscat_a - scatter_[ trans] < tot_len_[ trans]);
                     TBLIS_ASSERT(cscat_a - scatter_[!trans] < tot_len_[!trans]);
-                    TBLIS_ASSERT(rbs_a - block_stride_[ trans] < ceil_div(tot_len_[ trans], block_size_[ trans]));
-                    TBLIS_ASSERT(cbs_a - block_stride_[!trans] < ceil_div(tot_len_[!trans], block_size_[!trans]));
+                    TBLIS_ASSERT(rbs_a - block_stride_[ trans] < tot_len_[ trans]);
+                    TBLIS_ASSERT(cbs_a - block_stride_[!trans] < tot_len_[!trans]);
 
                     len_type m = std::min(MR, m_last - m_off);
                     len_type k = k_last - k_first;
@@ -206,7 +206,7 @@ class block_scatter_matrix : public abstract_matrix<T>
                     p_ap += ME*Ap.stride(trans);
                     m_off += MR;
                     rscat_a += MR;
-                    rbs_a++;
+                    rbs_a += MR;
                 }
             });
         }

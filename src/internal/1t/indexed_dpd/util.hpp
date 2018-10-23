@@ -290,17 +290,13 @@ template <unsigned I, unsigned N, typename T, typename... Args>
 void get_local_geometry_helper(const len_vector& idx,
                                const dpd_index_group<N>& group,
                                len_vector& len,  const varray_view<T>& local_A,
-                               stride_type& off, stride_vector& stride,
+                               stride_vector& stride,
                                unsigned i, Args&&... args)
 {
     if (I == 0)
         len = stl_ext::select_from(local_A.lengths(), group.dense_idx[I]);
 
     stride = stl_ext::select_from(local_A.strides(), group.dense_idx[I]);
-
-    off = 0;
-    for (unsigned j = 0;j < group.mixed_idx[i].size();j++)
-        off += idx[group.mixed_pos[i][j]]*local_A.stride(group.mixed_idx[i][j]);
 
     get_local_geometry_helper<I+1>(idx, group, len, std::forward<Args>(args)...);
 }
@@ -310,6 +306,31 @@ void get_local_geometry(const len_vector& idx, const dpd_index_group<N>& group,
                         len_vector& len, Args&&... args)
 {
     get_local_geometry_helper<0>(idx, group, len, std::forward<Args>(args)...);
+}
+
+template <unsigned I, unsigned N>
+void get_local_offset_helper(const len_vector& idx,
+                             const dpd_index_group<N>& group) {}
+
+template <unsigned I, unsigned N, typename T, typename... Args>
+void get_local_offset_helper(const len_vector& idx,
+                             const dpd_index_group<N>& group,
+                             const T& A, stride_type& off,
+                             unsigned i, Args&&... args)
+{
+    off = 0;
+    for (unsigned j = 0;j < group.mixed_idx[i].size();j++)
+        off += idx[group.mixed_pos[i][j]]*
+            A.stride(group.mixed_idx[i][j]);
+
+    get_local_offset_helper<I+1>(idx, group, std::forward<Args>(args)...);
+}
+
+template <unsigned N, typename... Args>
+void get_local_offset(const len_vector& idx, const dpd_index_group<N>& group,
+                      Args&&... args)
+{
+    get_local_offset_helper<0>(idx, group, std::forward<Args>(args)...);
 }
 
 }

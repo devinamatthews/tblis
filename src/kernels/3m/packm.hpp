@@ -351,46 +351,98 @@ void pack_nb_ukr_def(len_type m, len_type k,
                                           : Config::template gemm_nr<T>::extent);
     constexpr len_type KR = Config::template gemm_kr<T>::def;
 
-    for (len_type p = 0;p < k;p += KR)
+    if (m == MR && rs_a == 1)
     {
-        len_type k_loc = std::min(KR, k-p);
-        stride_type cs_a = *cbs_a;
-        stride_type off_a = *cscat_a;
-
-        if (cs_a)
+        for (len_type p = 0;p < k;p += KR)
         {
-            for (len_type kr = 0;kr < k_loc;kr++)
-            {
-                for (len_type mr = 0;mr < m;mr++)
-                {
-                    p_ap[mr + ME*kr] = p_a[rs_a*mr + cs_a*kr + off_a];
-                }
+            len_type k_loc = std::min(KR, k-p);
+            stride_type cs_a = *cbs_a;
+            stride_type off_a = *cscat_a;
 
-                for (len_type mr = m;mr < MR;mr++)
+            if (cs_a)
+            {
+                for (len_type kr = 0;kr < k_loc;kr++)
                 {
-                    p_ap[mr + ME*kr] = T();
+                    for (len_type mr = 0;mr < MR;mr++)
+                    {
+                        p_ap[mr + ME*kr] = p_a[mr + cs_a*kr + off_a];
+                    }
                 }
             }
-        }
-        else
-        {
-            for (len_type kr = 0;kr < k_loc;kr++)
+            else
             {
-                for (len_type mr = 0;mr < m;mr++)
+                for (len_type kr = 0;kr < k_loc;kr++)
                 {
-                    p_ap[mr + ME*kr] = p_a[rs_a*mr + cscat_a[kr]];
-                }
-
-                for (len_type mr = m;mr < MR;mr++)
-                {
-                    p_ap[mr + ME*kr] = T();
+                    for (len_type mr = 0;mr < MR;mr++)
+                    {
+                        p_ap[mr + ME*kr] = p_a[mr + cscat_a[kr]];
+                    }
                 }
             }
-        }
 
-        p_ap += ME*KR;
-        cscat_a += KR;
-        cbs_a++;
+            p_ap += ME*KR;
+            cscat_a += KR;
+            cbs_a += KR;
+        }
+    }
+    else if (m == MR)
+    {
+        for (len_type p = 0;p < k;p += KR)
+        {
+            len_type k_loc = std::min(KR, k-p);
+            stride_type cs_a = *cbs_a;
+            stride_type off_a = *cscat_a;
+
+            if (cs_a == 1)
+            {
+                for (len_type kr = 0;kr < k_loc;kr++)
+                {
+                    for (len_type mr = 0;mr < MR;mr++)
+                    {
+                        p_ap[mr + ME*kr] = p_a[rs_a*mr + kr + off_a];
+                    }
+                }
+            }
+            else if (cs_a)
+            {
+                for (len_type kr = 0;kr < k_loc;kr++)
+                {
+                    for (len_type mr = 0;mr < MR;mr++)
+                    {
+                        p_ap[mr + ME*kr] = p_a[rs_a*mr + cs_a*kr + off_a];
+                    }
+                }
+            }
+            else
+            {
+                for (len_type kr = 0;kr < k_loc;kr++)
+                {
+                    for (len_type mr = 0;mr < MR;mr++)
+                    {
+                        p_ap[mr + ME*kr] = p_a[rs_a*mr + cscat_a[kr]];
+                    }
+                }
+            }
+
+            p_ap += ME*KR;
+            cscat_a += KR;
+            cbs_a += KR;
+        }
+    }
+    else
+    {
+        for (len_type p = 0;p < k;p++)
+        {
+            for (len_type mr = 0;mr < m;mr++)
+            {
+                p_ap[mr + ME*p] = p_a[rs_a*mr + cscat_a[p]];
+            }
+
+            for (len_type mr = m;mr < MR;mr++)
+            {
+                p_ap[mr + ME*p] = T();
+            }
+        }
     }
 }
 

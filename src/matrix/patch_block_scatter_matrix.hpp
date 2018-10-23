@@ -4,6 +4,7 @@
 #include "util/basic_types.h"
 #include "util/macros.h"
 #include "util/thread.h"
+#include "util/tensor.hpp"
 
 #include "memory/alignment.hpp"
 
@@ -64,8 +65,8 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
         }
 
         patch_block_scatter_matrix(const communicator& comm, const dpd_tensor_matrix<T>& A,
-                                   len_type MB, len_type ME, stride_type* rscat, stride_type* rbs,
-                                   len_type NB, len_type NE, stride_type* cscat, stride_type* cbs,
+                                   len_type MB, len_type ME, stride_type* rscat_, stride_type* rbs_,
+                                   len_type NB, len_type NE, stride_type* cscat_, stride_type* cbs_,
                                    patch_type patches)
         {
             block_size_ = {MB, NB};
@@ -75,10 +76,11 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
             unsigned nirrep = A.tensor_.num_irreps();
             unsigned irrep_mask = nirrep - 1;
             unsigned irrep_bits = __builtin_popcount(irrep_mask);
-            auto rscat_max = cscat;
-            auto cscat_max = rbs;
-            auto rbs_max = cbs;
-            auto cbs_max = cbs + (rbs - cscat);
+
+            std::array<stride_type*, 2> scat = {rscat_, cscat_};
+            std::array<stride_type*, 2> bs = {rbs_, cbs_};
+            std::array<stride_type*, 2> scat_max = {cscat_, rbs_};
+            std::array<stride_type*, 2> bs_max = {cbs_, cbs_ + (rbs_ - cscat_)};
 
             TBLIS_ASSERT(A.block_offset_[0] >= 0);
             TBLIS_ASSERT(A.block_offset_[1] >= 0);
@@ -120,80 +122,74 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
 
             cur_len_ = tot_len_;
 
-            patches_.reset({npatch[0], npatch[1]}, patches);
+            patches_.reset(npatch, patches);
 
             comm.do_tasks_deferred(npatch[0]*npatch[1],
             [&](auto& tasks)
             {
-                for (unsigned row_patch = 0;row_patch < npatch[0];row_patch++)
+                std::array<unsigned,2> patch;
+
+                for (patch[0] = 0;patch[0] < npatch[0];patch[0]++)
                 {
-                    for (unsigned col_patch = 0;col_patch < npatch[1];col_patch++)
+                    for (patch[1] = 0;patch[1] < npatch[1];patch[1]++)
                     {
                         std::array<unsigned, 2> block =
-                            {A.block_[0]+row_patch, A.block_[1]+col_patch};
+                            {A.block_[0]+patch[0], A.block_[1]+patch[1]};
                         std::array<len_type, 2> loc =
-                            {row_patch == 0 ? first_size[0] :
-                             row_patch == npatch[0]-1 ? last_size[0] :
+                            {patch[0] == 0 ? first_size[0] :
+                             patch[0] == npatch[0]-1 ? last_size[0] :
                              A.block_size_[0][block[0]],
-                             col_patch == 0 ? first_size[1] :
-                             col_patch == npatch[1]-1 ? last_size[1] :
+                             patch[1] == 0 ? first_size[1] :
+                             patch[1] == npatch[1]-1 ? last_size[1] :
                              A.block_size_[1][block[1]]};
 
-                        tasks.visit(row_patch + col_patch*npatch[0],
-                        [&,row_patch,col_patch,block,loc,rscat,rbs,cscat,cbs]
+                        tasks.visit(patch[0] + patch[1]*npatch[0],
+                        [&,patch,block,loc,scat,bs]
                         (const communicator& comm)
                         {
                             if (!comm.master()) return;
 
                             irrep_vector irreps(A.tensor_.dimension());
 
-                            if (!A.dims_[0].empty())
-                            {
-                                unsigned idx = A.block_idx_[0][block[0]];
-                                irreps[A.dims_[0][0]] = A.irrep_[0];
-                                for (unsigned i = 1;i < A.dims_[0].size();i++)
-                                {
-                                    irreps[A.dims_[0][0]] ^=
-                                        irreps[A.dims_[0][i]] = idx & irrep_mask;
-                                    idx >>= irrep_bits;
-                                }
-                            }
+                            for (unsigned i = 0;i < A.extra_dims_.size();i++)
+                                irreps[A.extra_dims_[i]] = A.extra_irreps_[i];
 
-                            if (!A.dims_[1].empty())
+                            for (unsigned dim : {0,1})
                             {
-                                unsigned idx = A.block_idx_[1][block[1]];
-                                irreps[A.dims_[1][0]] = A.irrep_[1];
-                                for (unsigned i = 1;i < A.dims_[1].size();i++)
+                                if (A.dims_[dim].empty()) continue;
+
+                                unsigned idx = A.block_idx_[dim][block[dim]];
+                                irreps[A.dims_[dim][0]] = A.irrep_[dim];
+                                for (unsigned i = 1;i < A.dims_[dim].size();i++)
                                 {
-                                    irreps[A.dims_[1][0]] ^=
-                                        irreps[A.dims_[1][i]] = idx & irrep_mask;
+                                    irreps[A.dims_[dim][0]] ^=
+                                        irreps[A.dims_[dim][i]] = idx & irrep_mask;
                                     idx >>= irrep_bits;
                                 }
                             }
 
                             TBLIS_ASSERT(loc[0] != 0);
                             TBLIS_ASSERT(loc[1] != 0);
-                            TBLIS_ASSERT(rscat+loc[0] <= rscat_max);
-                            TBLIS_ASSERT(cscat+loc[1] <= cscat_max);
-                            TBLIS_ASSERT(rbs+ceil_div(loc[0],block_size_[0]) <= rbs_max);
-                            TBLIS_ASSERT(cbs+ceil_div(loc[1],block_size_[1]) <= cbs_max);
+                            TBLIS_ASSERT(scat[0]+loc[0] <= scat_max[0]);
+                            TBLIS_ASSERT(scat[1]+loc[1] <= scat_max[1]);
+                            TBLIS_ASSERT(bs[0]+loc[0] <= bs_max[0]);
+                            TBLIS_ASSERT(bs[1]+loc[1] <= bs_max[1]);
 
                             auto A2 = A.tensor_(irreps);
 
-                            len_type tot = 1;
-                            for (len_type l : A2.lengths()) tot *= l;
-                            TBLIS_ASSERT(tot == A.block_size_[0][block[0]]*
-                                                A.block_size_[1][block[1]]);
+                            TBLIS_ASSERT(stl_ext::prod(A2.lengths()) ==
+                                         A.block_size_[0][block[0]]*
+                                         A.block_size_[1][block[1]]);
 
-                            auto& patch = patches_[row_patch][col_patch];
-                            patch.data_ = A2.data();
-                            patch.off_ = {};
-                            patch.cur_len_ = loc;
-                            patch.tot_len_ = {round_up(loc[0], block_round[0]),
-                                              round_up(loc[1], block_round[1])};
-                            patch.scatter_ = {rscat, cscat};
-                            patch.block_stride_ = {rbs, cbs};
-                            patch.block_size_ = block_size_;
+                            auto& this_patch = patches_[patch[0]][patch[1]];
+                            this_patch.data_ = A2.data();
+                            this_patch.off_ = {};
+                            this_patch.cur_len_ = loc;
+                            this_patch.tot_len_ = {round_up(loc[0], block_round[0]),
+                                                   round_up(loc[1], block_round[1])};
+                            this_patch.scatter_ = scat;
+                            this_patch.block_stride_ = bs;
+                            this_patch.block_size_ = block_size_;
 
                             //printf("loc for %d,%d of %d,%d: %ld (%ld,%ld,%ld), %ld (%ld,%ld,%ld), %ld\n",
                             //       row_patch, col_patch, npatch[0], npatch[1],
@@ -201,38 +197,22 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
                             //       loc[1], first_size[1], A.block_size_[1][col_patch], last_size[1],
                             //       patch.data_ - data_);
 
-                            len_vector row_len(A.dims_[0].size());
-                            stride_vector row_stride(A.dims_[0].size());
-                            for (unsigned i = 0;i < A.dims_[0].size();i++)
+                            for (unsigned dim : {0,1})
                             {
-                                row_len[i] = A2.length(A.dims_[0][i]);
-                                row_stride[i] = A2.stride(A.dims_[0][i]);
+                                auto len = stl_ext::select_from(A2.lengths(), A.dims_[dim]);
+                                auto stride = stl_ext::select_from(A2.strides(), A.dims_[dim]);
+
+                                block_scatter_matrix<T>::fill_block_scatter(
+                                    len, stride, block_size_[dim],
+                                    patch[dim] == 0 ? A.block_offset_[dim] : 0,
+                                    loc[dim], scat[dim], bs[dim]);
                             }
-
-                            block_scatter_matrix<T>::fill_block_scatter(
-                                row_len, row_stride, block_size_[0],
-                                row_patch == 0 ? A.block_offset_[0] : 0,
-                                loc[0], rscat, rbs);
-
-                            len_vector col_len(A.dims_[1].size());
-                            stride_vector col_stride(A.dims_[1].size());
-                            for (unsigned i = 0;i < A.dims_[1].size();i++)
-                            {
-                                col_len[i] = A2.length(A.dims_[1][i]);
-                                col_stride[i] = A2.stride(A.dims_[1][i]);
-                            }
-
-                            block_scatter_matrix<T>::fill_block_scatter(
-                                col_len, col_stride, block_size_[1],
-                                col_patch == 0 ? A.block_offset_[1] : 0,
-                                loc[1], cscat, cbs);
                         });
 
-                        rscat += loc[0];
-                        rbs += ceil_div(loc[0], block_size_[0]);
-
-                        cscat += loc[1];
-                        cbs += ceil_div(loc[1], block_size_[1]);
+                        scat[0] += loc[0];
+                        scat[1] += loc[1];
+                        bs[0] += loc[0];
+                        bs[1] += loc[1];
                     }
                 }
             });
@@ -266,8 +246,8 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
             TBLIS_ASSERT(patch_off_[0] % block_size_[0] == 0);
             TBLIS_ASSERT(patch_off_[1] % block_size_[1] == 0);
 
-            rbs = patch.block_stride_[0][patch_off_[0]/block_size_[0]];
-            cbs = patch.block_stride_[1][patch_off_[1]/block_size_[1]];
+            rbs = patch.block_stride_[0][patch_off_[0]];
+            cbs = patch.block_stride_[1][patch_off_[1]];
 
             rbl = std::min({block_size_[0], patch.cur_len_[0] - patch_off_[0], cur_len_[0]});
             cbl = std::min({block_size_[1], patch.cur_len_[1] - patch_off_[1], cur_len_[1]});

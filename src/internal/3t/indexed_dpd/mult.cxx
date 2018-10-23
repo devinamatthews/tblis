@@ -7,6 +7,10 @@
 #include "util/gemm_thread.hpp"
 #include "util/tensor.hpp"
 
+#include "matrix/tensor_matrix.hpp"
+
+#include "nodes/gemm.hpp"
+
 #include "external/stl_ext/include/iostream.hpp"
 
 namespace MArray
@@ -83,6 +87,124 @@ void mult_full(const communicator& comm, const config& cfg,
     },
     A2, B2, C2);
 }
+
+/*
+template <typename T>
+void contract_block(const communicator& comm, const config& cfg,
+                    T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A,
+                    dim_vector idx_A_AB,
+                    dim_vector idx_A_AC,
+                             bool conj_B, const indexed_dpd_varray_view<const T>& B,
+                    dim_vector idx_B_AB,
+                    dim_vector idx_B_BC,
+                                          const indexed_dpd_varray_view<      T>& C,
+                    dim_vector idx_C_AC,
+                    dim_vector idx_C_BC)
+{
+    unsigned nirrep = A.num_irreps();
+
+    dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
+    dpd_index_group<2> group_AC(A, idx_A_AC, C, idx_C_AC);
+    dpd_index_group<2> group_BC(B, idx_B_BC, C, idx_C_BC);
+
+    group_indices<T, 2> indices_A(A, group_AC, 0, group_AB, 0);
+    group_indices<T, 2> indices_B(B, group_BC, 0, group_AB, 1);
+    group_indices<T, 2> indices_C(C, group_AC, 1, group_BC, 1);
+    auto nidx_A = indices_A.size();
+    auto nidx_B = indices_B.size();
+    auto nidx_C = indices_C.size();
+
+    auto dpd_A = A[0];
+    auto dpd_B = B[0];
+    auto dpd_C = C[0];
+
+    stride_type idx = 0;
+    stride_type idx_A = 0;
+    stride_type idx_C = 0;
+
+    comm.do_tasks_deferred(nirrep*nidx_C,
+                           group_AB.dense_size*group_AC.dense_size*group_BC.dense_size*inout_ratio,
+    [&](communicator::deferred_task_set& tasks)
+    {
+        for (unsigned irrep_AB0 = 0;irrep_AB0 < nirrep;irrep_AB0++)
+        {
+            unsigned irrep_AB = irrep_AB0;
+            unsigned irrep_AC = A.irrep()^irrep_AB0;
+            unsigned irrep_BC = B.irrep()^irrep_AB0;
+
+            for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
+            for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
+            for (auto irrep : group_BC.batch_irrep) irrep_BC ^= irrep;
+
+            dpd_tensor_matrix<T> at(dpd_A, group_AC.dense_idx[0], group_AB.dense_idx[0], irrep_AB);
+            dpd_tensor_matrix<T> bt(dpd_B, group_AB.dense_idx[1], group_BC.dense_idx[0], irrep_BC);
+            dpd_tensor_matrix<T> ct(dpd_C, group_AC.dense_idx[1], group_BC.dense_idx[1], irrep_BC);
+
+            if (at.length(0) == 1 ||
+                ct.length(0) == 0 ||
+                ct.length(1) == 0) continue;
+
+            for_each_match<true, true>(idx_A, nidx_A, indices_A, 0,
+                                       idx_C, nidx_C, indices_C, 0,
+            [&](stride_type next_A, stride_type next_C)
+            {
+                stride_type idx_B = 0;
+
+                for_each_match<true, false>(idx_B, nidx_B, indices_B, 0,
+                                            idx_C, next_C, indices_C, 1,
+                [&](stride_type next_B)
+                {
+                    if (indices_C[idx_C].factor == T(0)) return;
+
+                    tasks.visit(idx++,
+                    [&,idx_A,idx_B,idx_C,next_A,next_B,
+                     irrep_AB,irrep_AC,irrep_BC]
+                    (const communicator& subcomm)
+                    {
+                        auto local_idx_A = idx_A;
+                        auto local_idx_B = idx_B;
+
+                        stride_type off_A_AC, off_C_AC;
+                        get_local_offset(indices_A[local_idx_A].idx[0], group_AC,
+                                         dpd_A, off_A_AC, 0,
+                                         dpd_C, off_C_AC, 1);
+
+                        stride_type off_B_BC, off_C_BC;
+                        get_local_offset(indices_B[local_idx_B].idx[0], group_BC,
+                                         dpd_B, off_B_BC, 0,
+                                         dpd_C, off_C_BC, 1);
+
+                        ct.data(C.data(0) + indices_C[idx_C].offset +
+                                off_C_AC + off_C_BC);
+
+                        for_each_match<false, false>(local_idx_A, next_A, indices_A, 1,
+                                                     local_idx_B, next_B, indices_B, 1,
+                        [&]
+                        {
+                            auto factor = alpha*indices_A[local_idx_A].factor*
+                                                indices_B[local_idx_B].factor*
+                                                indices_C[idx_C].factor;
+                            if (factor == T(0)) return;
+
+                            stride_type off_A_AB, off_B_AB;
+                            get_local_offset(indices_A[local_idx_A].idx[1], group_AB,
+                                             dpd_A, off_A_AB, 0,
+                                             dpd_B, off_B_AB, 1);
+
+                            at.data(A.data(0) + indices_A[local_idx_A].offset +
+                                    off_A_AB + off_A_AC);
+                            bt.data(B.data(0) + indices_B[local_idx_B].offset +
+                                    off_B_AB + off_B_BC);
+
+                            TensorGEMM{}(subcomm, cfg, alpha, at, bt, 1.0, ct);
+                        });
+                    });
+                });
+            });
+        }
+    });
+}
+*/
 
 template <typename T>
 void contract_block(const communicator& comm, const config& cfg,
@@ -199,21 +321,33 @@ void contract_block(const communicator& comm, const config& cfg,
                                 stride_vector stride_A_AC, stride_C_AC;
                                 stride_type off_A_AC, off_C_AC;
                                 get_local_geometry(indices_A[local_idx_A].idx[0], group_AC, len_AC,
-                                                   local_A, off_A_AC, stride_A_AC, 0,
-                                                   local_C, off_C_AC, stride_C_AC, 1);
+                                                   local_A, stride_A_AC, 0,
+                                                   local_C, stride_C_AC, 1);
+                                get_local_offset(indices_A[local_idx_A].idx[0], group_AC,
+                                                 local_A, off_A_AC, 0,
+                                                 local_C, off_C_AC, 1);
 
                                 len_vector len_BC;
                                 stride_vector stride_B_BC, stride_C_BC;
                                 stride_type off_B_BC, off_C_BC;
                                 get_local_geometry(indices_B[local_idx_B].idx[0], group_BC, len_BC,
-                                                   local_B, off_B_BC, stride_B_BC, 0,
-                                                   local_C, off_C_BC, stride_C_BC, 1);
+                                                   local_B, stride_B_BC, 0,
+                                                   local_C, stride_C_BC, 1);
+                                get_local_offset(indices_B[local_idx_B].idx[0], group_BC,
+                                                 local_B, off_B_BC, 0,
+                                                 local_C, off_C_BC, 1);
+
+                                len_vector len_AB;
+                                stride_vector stride_A_AB, stride_B_AB;
+                                get_local_geometry(indices_A[local_idx_A].idx[1], group_AB, len_AB,
+                                                   local_A, stride_A_AB, 0,
+                                                   local_B, stride_B_AB, 1);
 
                                 auto data_C = local_C.data() + indices_C[idx_C].offset +
                                               off_C_AC + off_C_BC;
 
                                 for_each_match<false, false>(local_idx_A, next_A, indices_A, 1,
-                                                            local_idx_B, next_B, indices_B, 1,
+                                                             local_idx_B, next_B, indices_B, 1,
                                 [&]
                                 {
                                     auto factor = alpha*indices_A[local_idx_A].factor*
@@ -221,12 +355,10 @@ void contract_block(const communicator& comm, const config& cfg,
                                                         indices_C[idx_C].factor;
                                     if (factor == T(0)) return;
 
-                                    len_vector len_AB;
-                                    stride_vector stride_A_AB, stride_B_AB;
                                     stride_type off_A_AB, off_B_AB;
-                                    get_local_geometry(indices_A[local_idx_A].idx[1], group_AB, len_AB,
-                                                       local_A, off_A_AB, stride_A_AB, 0,
-                                                       local_B, off_B_AB, stride_B_AB, 1);
+                                    get_local_offset(indices_A[local_idx_A].idx[1], group_AB,
+                                                     local_A, off_A_AB, 0,
+                                                     local_B, off_B_AB, 1);
 
                                     auto data_A = local_A.data() + indices_A[local_idx_A].offset +
                                                   off_A_AB + off_A_AC;
@@ -386,23 +518,39 @@ void mult_block(const communicator& comm, const config& cfg,
                                     stride_vector stride_A_ABC, stride_B_ABC, stride_C_ABC;
                                     stride_type off_A_ABC, off_B_ABC, off_C_ABC;
                                     get_local_geometry(indices_A[local_idx_A].idx[0], group_ABC, len_ABC,
-                                                       local_A, off_A_ABC, stride_A_ABC, 0,
-                                                       local_B, off_B_ABC, stride_B_ABC, 1,
-                                                       local_C, off_C_ABC, stride_C_ABC, 2);
+                                                       local_A, stride_A_ABC, 0,
+                                                       local_B, stride_B_ABC, 1,
+                                                       local_C, stride_C_ABC, 2);
+                                    get_local_offset(indices_A[local_idx_A].idx[0], group_ABC,
+                                                     local_A, off_A_ABC, 0,
+                                                     local_B, off_B_ABC, 1,
+                                                     local_C, off_C_ABC, 2);
 
                                     len_vector len_AC;
                                     stride_vector stride_A_AC, stride_C_AC;
                                     stride_type off_A_AC, off_C_AC;
                                     get_local_geometry(indices_A[local_idx_A].idx[1], group_AC, len_AC,
-                                                       local_A, off_A_AC, stride_A_AC, 0,
-                                                       local_C, off_C_AC, stride_C_AC, 1);
+                                                       local_A, stride_A_AC, 0,
+                                                       local_C, stride_C_AC, 1);
+                                    get_local_offset(indices_A[local_idx_A].idx[1], group_AC,
+                                                     local_A, off_A_AC, 0,
+                                                     local_C, off_C_AC, 1);
 
                                     len_vector len_BC;
                                     stride_vector stride_B_BC, stride_C_BC;
                                     stride_type off_B_BC, off_C_BC;
                                     get_local_geometry(indices_B[local_idx_B].idx[1], group_BC, len_BC,
-                                                       local_B, off_B_BC, stride_B_BC, 0,
-                                                       local_C, off_C_BC, stride_C_BC, 1);
+                                                       local_B, stride_B_BC, 0,
+                                                       local_C, stride_C_BC, 1);
+                                    get_local_offset(indices_B[local_idx_B].idx[1], group_BC,
+                                                     local_B, off_B_BC, 0,
+                                                     local_C, off_C_BC, 1);
+
+                                    len_vector len_AB;
+                                    stride_vector stride_A_AB, stride_B_AB;
+                                    get_local_geometry(indices_A[local_idx_A].idx[2], group_AB, len_AB,
+                                                       local_A, stride_A_AB, 0,
+                                                       local_B, stride_B_AB, 1);
 
                                     auto data_C = local_C.data() + indices_C[idx_C].offset +
                                                   off_C_AC + off_C_BC + off_C_ABC;
@@ -416,12 +564,10 @@ void mult_block(const communicator& comm, const config& cfg,
                                                             indices_C[idx_C].factor;
                                         if (factor == T(0)) return;
 
-                                        len_vector len_AB;
-                                        stride_vector stride_A_AB, stride_B_AB;
                                         stride_type off_A_AB, off_B_AB;
-                                        get_local_geometry(indices_A[local_idx_A].idx[2], group_AB, len_AB,
-                                                           local_A, off_A_AB, stride_A_AB, 0,
-                                                           local_B, off_B_AB, stride_B_AB, 1);
+                                        get_local_offset(indices_A[local_idx_A].idx[2], group_AB,
+                                                         local_A, off_A_AB, 0,
+                                                         local_B, off_B_AB, 1);
 
                                         auto data_A = local_A.data() + indices_A[local_idx_A].offset +
                                                       off_A_AB + off_A_AC + off_A_ABC;
@@ -531,13 +677,10 @@ void mult(const communicator& comm, const config& cfg,
     }
     else if (idx_C_ABC.empty())
     {
-        if (A.irrep()^B.irrep()^C.irrep() == 0)
-        {
-            contract_block(comm, cfg,
-                           alpha, conj_A, A, idx_A_AB, idx_A_AC,
-                                  conj_B, B, idx_B_AB, idx_B_BC,
-                                          C, idx_C_AC, idx_C_BC);
-        }
+        contract_block(comm, cfg,
+                       alpha, conj_A, A, idx_A_AB, idx_A_AC,
+                              conj_B, B, idx_B_AB, idx_B_BC,
+                                      C, idx_C_AC, idx_C_BC);
     }
     else
     {

@@ -77,6 +77,8 @@ class dpd_tensor_matrix : public abstract_matrix<T>
         using abstract_matrix<T>::off_;
         dpd_varray_view<T>& tensor_;
         std::array<dim_vector, 2> dims_ = {};
+        dim_vector extra_dims_ = {};
+        irrep_vector extra_irreps_ = {};
         std::array<unsigned, 2> irrep_ = {};
         std::array<unsigned, 2> block_ = {};
         std::array<len_vector, 2> block_size_ = {};
@@ -87,14 +89,17 @@ class dpd_tensor_matrix : public abstract_matrix<T>
     public:
         dpd_tensor_matrix();
 
-        template <typename U, typename V>
+        template <typename U, typename V, typename W, typename X>
         dpd_tensor_matrix(dpd_varray_view<T>& other,
                           const U& row_inds,
                           const V& col_inds,
-                          unsigned col_irrep)
+                          unsigned col_irrep,
+                          const W& extra_inds,
+                          const X& extra_irreps)
         : tensor_(other)
         {
-            TBLIS_ASSERT(row_inds.size()+col_inds.size() == other.dimension());
+            TBLIS_ASSERT(row_inds.size()+col_inds.size()+extra_inds.size() ==
+                         other.dimension());
 
             const unsigned nirrep = other.num_irreps();
 
@@ -102,6 +107,11 @@ class dpd_tensor_matrix : public abstract_matrix<T>
             dims_[0].assign(row_inds.begin(), row_inds.end());
             dims_[1].assign(col_inds.begin(), col_inds.end());
             irrep_ = {col_irrep^other.irrep(), col_irrep};
+            extra_dims_.assign(extra_inds.begin(), extra_inds.end());
+            extra_irreps_.assign(extra_irreps.begin(), extra_irreps.end());
+
+            for (unsigned irrep : extra_irreps)
+                irrep_[0] ^= irrep;
 
             for (unsigned dim : {0,1})
             {
@@ -144,6 +154,25 @@ class dpd_tensor_matrix : public abstract_matrix<T>
             leading_stride_ = {row_inds.empty() ? 1 : stride[other.permutation()[row_inds[0]]],
                                col_inds.empty() ? 1 : stride[other.permutation()[col_inds[0]]]};
         }
+
+        template <typename U, typename V, typename W, typename X>
+        dpd_tensor_matrix(dpd_varray_view<const T>& other,
+                          const U& row_inds,
+                          const V& col_inds,
+                          unsigned col_irrep,
+                          const W& extra_inds,
+                          const X& extra_irreps)
+        : dpd_tensor_matrix(reinterpret_cast<dpd_varray_view<T>&>(other),
+                            row_inds, col_inds, col_irrep,
+                            extra_inds, extra_irreps) {}
+
+        template <typename U, typename V>
+        dpd_tensor_matrix(dpd_varray_view<T>& other,
+                          const U& row_inds,
+                          const V& col_inds,
+                          unsigned col_irrep)
+        : dpd_tensor_matrix(other, row_inds, col_inds, col_irrep,
+                            dim_vector{}, irrep_vector{}) {}
 
         template <typename U, typename V>
         dpd_tensor_matrix(dpd_varray_view<const T>& other,
@@ -196,6 +225,12 @@ class dpd_tensor_matrix : public abstract_matrix<T>
             TBLIS_ASSERT(dim < 2);
             return block_size_[dim].size();
         }
+
+        using abstract_matrix<T>::data;
+        using abstract_matrix<T>::length;
+        using abstract_matrix<T>::lengths;
+        using abstract_matrix<T>::shift;
+        using abstract_matrix<T>::transpose;
 };
 
 }

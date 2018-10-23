@@ -41,23 +41,22 @@ allocate_buffers(len_type MB, len_type NB, matrify<Mat, MBS, NBS, Pool, Child>& 
     {
         unsigned mp = A.num_patches(0);
         unsigned np = A.num_patches(1);
-        unsigned p = mp*np;
         len_type m = A.length(0) + (MB-1)*mp;
         len_type n = A.length(1) + (NB-1)*np;
 
         if (comm.master())
         {
-            len_type patch_size = size_as_type<block_scatter_matrix<float>,stride_type>(p);
-            parent.scat_buffer = Pool.allocate<stride_type>(2*m*p + 2*n*p + patch_size);
+            len_type patch_size = size_as_type<block_scatter_matrix<float>,stride_type>(mp*np);
+            parent.scat_buffer = Pool.allocate<stride_type>(2*m*np + 2*n*mp + patch_size);
             parent.rscat = parent.scat_buffer.template get<stride_type>();
         }
 
         comm.broadcast_value(parent.rscat);
 
-        parent.cscat = parent.rscat+m*p;
-        parent.rbs = parent.cscat+n*p;
-        parent.cbs = parent.rbs+m*p;
-        parent.patches = convert_and_align<stride_type,block_scatter_matrix<float>>(parent.cbs+n*p);
+        parent.cscat = parent.rscat+m*np;
+        parent.rbs = parent.cscat+n*mp;
+        parent.cbs = parent.rbs+m*np;
+        parent.patches = convert_and_align<stride_type,block_scatter_matrix<float>>(parent.cbs+n*mp);
     }
 }
 
@@ -72,14 +71,13 @@ allocate_buffers(len_type MB, len_type NB, matrify<Mat, MBS, NBS, Pool, Child>& 
     {
         unsigned mp = A.num_patches(0);
         unsigned np = A.num_patches(1);
-        unsigned p = mp*np;
         len_type m = A.length(0) + (MB-1)*mp;
         len_type n = A.length(1) + (NB-1)*np;
 
         if (comm.master())
         {
-            len_type scatter_size = size_as_type<stride_type,T>(2*m*p + 2*n*p) +
-                                    size_as_type<block_scatter_matrix<float>,T>(p);
+            len_type scatter_size = size_as_type<stride_type,T>(2*m*np + 2*n*mp) +
+                                    size_as_type<block_scatter_matrix<float>,T>(mp*np);
             child.pack_buffer = Pool.allocate<T>(m*n + std::max(m,n)*TBLIS_MAX_UNROLL + scatter_size);
             child.pack_ptr = child.pack_buffer.get();
         }
@@ -87,10 +85,10 @@ allocate_buffers(len_type MB, len_type NB, matrify<Mat, MBS, NBS, Pool, Child>& 
         comm.broadcast_value(child.pack_ptr);
 
         parent.rscat = convert_and_align<T,stride_type>(static_cast<T*>(child.pack_ptr) + m*n);
-        parent.cscat = parent.rscat+m*p;
-        parent.rbs = parent.cscat+n*p;
-        parent.cbs = parent.rbs+m*p;
-        parent.patches = convert_and_align<stride_type,block_scatter_matrix<float>>(parent.cbs+n*p);
+        parent.cscat = parent.rscat+m*np;
+        parent.rbs = parent.cscat+n*mp;
+        parent.cbs = parent.rbs+m*np;
+        parent.patches = convert_and_align<stride_type,block_scatter_matrix<float>>(parent.cbs+n*mp);
     }
 }
 

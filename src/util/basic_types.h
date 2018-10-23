@@ -616,7 +616,7 @@ tblis_abort_with_message(const char* cond, const char* fmt, ...)
 
 #else
 
-#define TBLIS_ASSERT(...) {}
+#define TBLIS_ASSERT(...) ((void)0)
 
 #endif
 

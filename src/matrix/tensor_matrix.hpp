@@ -24,6 +24,7 @@ class tensor_matrix : public abstract_matrix<T>
         using abstract_matrix<T>::off_;
         std::array<len_vector, 2> lens_ = {};
         std::array<stride_vector, 2> strides_ = {};
+        std::array<bool, 2> pack_3d_ = {};
 
     public:
         tensor_matrix();
@@ -31,7 +32,10 @@ class tensor_matrix : public abstract_matrix<T>
         template <typename U, typename V>
         tensor_matrix(varray_view<const T> other,
                       const U& row_inds,
-                      const V& col_inds)
+                      const V& col_inds,
+                      bool pack_row_3d = false,
+                      bool pack_col_3d = false)
+        : pack_3d_{pack_row_3d, pack_col_3d}
         {
             TBLIS_ASSERT(row_inds.size()+col_inds.size() == other.dimension());
 
@@ -61,7 +65,10 @@ class tensor_matrix : public abstract_matrix<T>
                       const V& len_n,
                       T* ptr,
                       const W& stride_m,
-                      const X& stride_n)
+                      const X& stride_n,
+                      bool pack_m_3d = false,
+                      bool pack_n_3d = false)
+        : pack_3d_{pack_m_3d, pack_n_3d}
         {
             TBLIS_ASSERT(len_m.size() == stride_m.size());
             TBLIS_ASSERT(len_n.size() == stride_n.size());
@@ -98,6 +105,7 @@ class tensor_matrix : public abstract_matrix<T>
             abstract_matrix<T>::transpose();
             swap(lens_[0], lens_[1]);
             swap(strides_[0], strides_[1]);
+            swap(pack_3d_[0], pack_3d_[1]);
         }
 
         constexpr unsigned num_patches(unsigned dim) const

@@ -270,8 +270,7 @@ void contract_blis(const communicator& comm, const config& cfg,
 
     std::array<len_vector,3> len;
     std::array<stride_vector,3> stride;
-    dense_total_lengths_and_strides(len, stride, A, idx_A_AB, B, idx_B_AB,
-                                    C, idx_C_AC);
+    dense_total_lengths_and_strides(len, stride, A, idx_A_AB, B, idx_B_AB, C, idx_C_AC);
 
     auto perm_AC = detail::sort_by_stride(stl_ext::select_from(stride[2], idx_C_AC),
                                           stl_ext::select_from(stride[0], idx_A_AC));
@@ -287,14 +286,103 @@ void contract_blis(const communicator& comm, const config& cfg,
     stl_ext::permute(idx_C_AC, perm_AC);
     stl_ext::permute(idx_C_BC, perm_BC);
 
+    unsigned unit_A_AC = perm_AC.size();
+    for (unsigned i = 0;i < perm_AC.size();i++)
+    {
+        if (stride[0][idx_A_AC[i]] == 1)
+        {
+            unit_A_AC = i;
+            break;
+        }
+    }
+
+    unsigned unit_C_AC = perm_AC.size();
+    for (unsigned i = 0;i < perm_AC.size();i++)
+    {
+        if (stride[2][idx_C_AC[i]] == 1)
+        {
+            unit_C_AC = i;
+            break;
+        }
+    }
+
+    unsigned unit_B_BC = perm_BC.size();
+    for (unsigned i = 0;i < perm_BC.size();i++)
+    {
+        if (stride[1][idx_B_BC[i]] == 1)
+        {
+            unit_B_BC = i;
+            break;
+        }
+    }
+
+    unsigned unit_C_BC = perm_BC.size();
+    for (unsigned i = 0;i < perm_BC.size();i++)
+    {
+        if (stride[2][idx_C_BC[i]] == 1)
+        {
+            unit_C_BC = i;
+            break;
+        }
+    }
+
+    unsigned unit_A_AB = perm_AB.size();
+    for (unsigned i = 0;i < perm_AB.size();i++)
+    {
+        if (stride[0][idx_A_AB[i]] == 1)
+        {
+            unit_A_AB = i;
+            break;
+        }
+    }
+
+    unsigned unit_B_AB = perm_AB.size();
+    for (unsigned i = 0;i < perm_AB.size();i++)
+    {
+        if (stride[1][idx_B_AB[i]] == 1)
+        {
+            unit_B_AB = i;
+            break;
+        }
+    }
+
+    TBLIS_ASSERT(unit_C_AC == 0 || unit_C_AC == perm_AC.size());
+    TBLIS_ASSERT(unit_C_BC == 0 || unit_C_BC == perm_BC.size());
+    TBLIS_ASSERT(unit_A_AB == 0 || unit_B_AB == 0 ||
+                 (unit_A_AB == perm_AB.size() && unit_B_AB == perm_AB.size()));
+
+    bool pack_M_3d = unit_A_AC > 0 && unit_A_AC < perm_AC.size();
+    bool pack_N_3d = unit_B_BC > 0 && unit_B_BC < perm_BC.size();
+    bool pack_K_3d = (unit_A_AB > 0 && unit_A_AB < perm_AB.size()) ||
+                     (unit_B_AB > 0 && unit_B_AB < perm_AB.size());
+
+    if (pack_M_3d)
+    {
+        std::rotate(idx_A_AC.begin()+1, idx_A_AC.begin()+unit_A_AC, idx_A_AC.end());
+        std::rotate(idx_C_AC.begin()+1, idx_C_AC.begin()+unit_A_AC, idx_C_AC.end());
+    }
+
+    if (pack_N_3d)
+    {
+        std::rotate(idx_B_BC.begin()+1, idx_B_BC.begin()+unit_B_BC, idx_B_BC.end());
+        std::rotate(idx_C_BC.begin()+1, idx_C_BC.begin()+unit_B_BC, idx_C_BC.end());
+    }
+
+    if (pack_K_3d)
+    {
+        auto unit_AB = std::max(unit_A_AB, unit_B_AB);
+        std::rotate(idx_A_AB.begin()+1, idx_A_AB.begin()+unit_AB, idx_A_AB.end());
+        std::rotate(idx_B_AB.begin()+1, idx_B_AB.begin()+unit_AB, idx_B_AB.end());
+    }
+
     for (unsigned irrep_AB = 0;irrep_AB < nirrep;irrep_AB++)
     {
         unsigned irrep_AC = A.irrep()^irrep_AB;
         unsigned irrep_BC = B.irrep()^irrep_AB;
 
-        dpd_tensor_matrix<T> at(A, idx_A_AC, idx_A_AB, irrep_AB);
-        dpd_tensor_matrix<T> bt(B, idx_B_AB, idx_B_BC, irrep_BC);
-        dpd_tensor_matrix<T> ct(C, idx_C_AC, idx_C_BC, irrep_BC);
+        dpd_tensor_matrix<T> at(A, idx_A_AC, idx_A_AB, irrep_AB, pack_M_3d, pack_K_3d);
+        dpd_tensor_matrix<T> bt(B, idx_B_AB, idx_B_BC, irrep_BC, pack_K_3d, pack_N_3d);
+        dpd_tensor_matrix<T> ct(C, idx_C_AC, idx_C_BC, irrep_BC, pack_M_3d, pack_N_3d);
 
         if (ct.length(0) == 0 || ct.length(1) == 0) continue;
 

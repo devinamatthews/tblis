@@ -85,6 +85,7 @@ class dpd_tensor_matrix : public abstract_matrix<T>
         std::array<len_vector, 2> block_idx_ = {};
         std::array<len_type, 2> block_offset_ = {};
         std::array<stride_type, 2> leading_stride_ = {};
+        std::array<bool, 2> pack_3d_ = {};
 
     public:
         dpd_tensor_matrix();
@@ -95,8 +96,10 @@ class dpd_tensor_matrix : public abstract_matrix<T>
                           const V& col_inds,
                           unsigned col_irrep,
                           const W& extra_inds,
-                          const X& extra_irreps)
-        : tensor_(other)
+                          const X& extra_irreps,
+                          bool pack_row_3d = false,
+                          bool pack_col_3d = false)
+        : tensor_(other), pack_3d_{pack_row_3d, pack_col_3d}
         {
             TBLIS_ASSERT(row_inds.size()+col_inds.size()+extra_inds.size() ==
                          other.dimension());
@@ -161,26 +164,35 @@ class dpd_tensor_matrix : public abstract_matrix<T>
                           const V& col_inds,
                           unsigned col_irrep,
                           const W& extra_inds,
-                          const X& extra_irreps)
+                          const X& extra_irreps,
+                          bool pack_row_3d = false,
+                          bool pack_col_3d = false)
         : dpd_tensor_matrix(reinterpret_cast<dpd_varray_view<T>&>(other),
                             row_inds, col_inds, col_irrep,
-                            extra_inds, extra_irreps) {}
+                            extra_inds, extra_irreps,
+                            pack_row_3d, pack_col_3d) {}
 
         template <typename U, typename V>
         dpd_tensor_matrix(dpd_varray_view<T>& other,
                           const U& row_inds,
                           const V& col_inds,
-                          unsigned col_irrep)
+                          unsigned col_irrep,
+                          bool pack_row_3d = false,
+                          bool pack_col_3d = false)
         : dpd_tensor_matrix(other, row_inds, col_inds, col_irrep,
-                            dim_vector{}, irrep_vector{}) {}
+                            dim_vector{}, irrep_vector{},
+                            pack_row_3d, pack_col_3d) {}
 
         template <typename U, typename V>
         dpd_tensor_matrix(dpd_varray_view<const T>& other,
                           const U& row_inds,
                           const V& col_inds,
-                          unsigned col_irrep)
+                          unsigned col_irrep,
+                          bool pack_row_3d = false,
+                          bool pack_col_3d = false)
         : dpd_tensor_matrix(reinterpret_cast<dpd_varray_view<T>&>(other),
-                            row_inds, col_inds, col_irrep) {}
+                            row_inds, col_inds, col_irrep,
+                            pack_row_3d, pack_col_3d) {}
 
         dpd_tensor_matrix& operator=(const dpd_tensor_matrix& other) = delete;
 
@@ -195,6 +207,7 @@ class dpd_tensor_matrix : public abstract_matrix<T>
             swap(block_idx_[0], block_idx_[1]);
             swap(block_offset_[0], block_offset_[1]);
             swap(leading_stride_[0], leading_stride_[1]);
+            swap(pack_3d_[0], pack_3d_[1]);
         }
 
         stride_type stride(unsigned dim) const

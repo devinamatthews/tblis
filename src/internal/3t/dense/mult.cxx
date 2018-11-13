@@ -95,23 +95,105 @@ void contract_blis(const communicator& comm, const config& cfg,
     auto reorder_BC = detail::sort_by_stride(stride_C_BC, stride_B_BC);
     auto reorder_AB = detail::sort_by_stride(stride_A_AB, stride_B_AB);
 
+    unsigned unit_A_AC = len_AC.size();
+    for (unsigned i = 0;i < len_AC.size();i++)
+    {
+        if (stride_A_AC[reorder_AC[i]] == 1)
+        {
+            unit_A_AC = i;
+            break;
+        }
+    }
+
+    unsigned unit_C_AC = len_AC.size();
+    for (unsigned i = 0;i < len_AC.size();i++)
+    {
+        if (stride_C_AC[reorder_AC[i]] == 1)
+        {
+            unit_C_AC = i;
+            break;
+        }
+    }
+
+    unsigned unit_B_BC = len_BC.size();
+    for (unsigned i = 0;i < len_BC.size();i++)
+    {
+        if (stride_B_BC[reorder_BC[i]] == 1)
+        {
+            unit_B_BC = i;
+            break;
+        }
+    }
+
+    unsigned unit_C_BC = len_BC.size();
+    for (unsigned i = 0;i < len_BC.size();i++)
+    {
+        if (stride_C_BC[reorder_BC[i]] == 1)
+        {
+            unit_C_BC = i;
+            break;
+        }
+    }
+
+    unsigned unit_A_AB = len_AB.size();
+    for (unsigned i = 0;i < len_AB.size();i++)
+    {
+        if (stride_A_AB[reorder_AB[i]] == 1)
+        {
+            unit_A_AB = i;
+            break;
+        }
+    }
+
+    unsigned unit_B_AB = len_AB.size();
+    for (unsigned i = 0;i < len_AB.size();i++)
+    {
+        if (stride_B_AB[reorder_AB[i]] == 1)
+        {
+            unit_B_AB = i;
+            break;
+        }
+    }
+
+    TBLIS_ASSERT(unit_C_AC == 0 || unit_C_AC == len_AC.size());
+    TBLIS_ASSERT(unit_C_BC == 0 || unit_C_BC == len_BC.size());
+    TBLIS_ASSERT(unit_A_AB == 0 || unit_B_AB == 0 ||
+                 (unit_A_AB == len_AB.size() && unit_B_AB == len_AB.size()));
+
+    bool pack_M_3d = unit_A_AC > 0 && unit_A_AC < len_AC.size();
+    bool pack_N_3d = unit_B_BC > 0 && unit_B_BC < len_BC.size();
+    bool pack_K_3d = (unit_A_AB > 0 && unit_A_AB < len_AB.size()) ||
+                     (unit_B_AB > 0 && unit_B_AB < len_AB.size());
+
+    if (pack_M_3d)
+        std::rotate(reorder_AC.begin()+1, reorder_AC.begin()+unit_A_AC, reorder_AC.end());
+
+    if (pack_N_3d)
+        std::rotate(reorder_BC.begin()+1, reorder_BC.begin()+unit_B_BC, reorder_BC.end());
+
+    if (pack_K_3d)
+        std::rotate(reorder_AB.begin()+1, reorder_AB.begin()+std::max(unit_A_AB, unit_B_AB), reorder_AB.end());
+
     tensor_matrix<T> at(stl_ext::permuted(len_AC, reorder_AC),
                         stl_ext::permuted(len_AB, reorder_AB),
                         const_cast<T*>(A),
                         stl_ext::permuted(stride_A_AC, reorder_AC),
-                        stl_ext::permuted(stride_A_AB, reorder_AB));
+                        stl_ext::permuted(stride_A_AB, reorder_AB),
+                        pack_M_3d, pack_K_3d);
 
     tensor_matrix<T> bt(stl_ext::permuted(len_AB, reorder_AB),
                         stl_ext::permuted(len_BC, reorder_BC),
                         const_cast<T*>(B),
                         stl_ext::permuted(stride_B_AB, reorder_AB),
-                        stl_ext::permuted(stride_B_BC, reorder_BC));
+                        stl_ext::permuted(stride_B_BC, reorder_BC),
+                        pack_K_3d, pack_N_3d);
 
     tensor_matrix<T> ct(stl_ext::permuted(len_AC, reorder_AC),
                         stl_ext::permuted(len_BC, reorder_BC),
                         C,
                         stl_ext::permuted(stride_C_AC, reorder_AC),
-                        stl_ext::permuted(stride_C_BC, reorder_BC));
+                        stl_ext::permuted(stride_C_BC, reorder_BC),
+                        pack_M_3d, pack_N_3d);
 
     TensorGEMM{}(comm, cfg, alpha, at, bt, beta, ct);
 }
@@ -348,6 +430,85 @@ void mult_blis(const communicator& comm, const config& cfg,
     auto reorder_AB = detail::sort_by_stride(stride_A_AB, stride_B_AB);
     auto reorder_ABC = detail::sort_by_stride(stride_C_ABC, stride_A_ABC, stride_B_ABC);
 
+    unsigned unit_A_AC = len_AC.size();
+    for (unsigned i = 0;i < len_AC.size();i++)
+    {
+        if (stride_A_AC[reorder_AC[i]] == 1)
+        {
+            unit_A_AC = i;
+            break;
+        }
+    }
+
+    unsigned unit_C_AC = len_AC.size();
+    for (unsigned i = 0;i < len_AC.size();i++)
+    {
+        if (stride_C_AC[reorder_AC[i]] == 1)
+        {
+            unit_C_AC = i;
+            break;
+        }
+    }
+
+    unsigned unit_B_BC = len_BC.size();
+    for (unsigned i = 0;i < len_BC.size();i++)
+    {
+        if (stride_B_BC[reorder_BC[i]] == 1)
+        {
+            unit_B_BC = i;
+            break;
+        }
+    }
+
+    unsigned unit_C_BC = len_BC.size();
+    for (unsigned i = 0;i < len_BC.size();i++)
+    {
+        if (stride_C_BC[reorder_BC[i]] == 1)
+        {
+            unit_C_BC = i;
+            break;
+        }
+    }
+
+    unsigned unit_A_AB = len_AB.size();
+    for (unsigned i = 0;i < len_AB.size();i++)
+    {
+        if (stride_A_AB[reorder_AB[i]] == 1)
+        {
+            unit_A_AB = i;
+            break;
+        }
+    }
+
+    unsigned unit_B_AB = len_AB.size();
+    for (unsigned i = 0;i < len_AB.size();i++)
+    {
+        if (stride_B_AB[reorder_AB[i]] == 1)
+        {
+            unit_B_AB = i;
+            break;
+        }
+    }
+
+    TBLIS_ASSERT(unit_C_AC == 0 || unit_C_AC == len_AC.size());
+    TBLIS_ASSERT(unit_C_BC == 0 || unit_C_BC == len_BC.size());
+    TBLIS_ASSERT(unit_A_AB == 0 || unit_B_AB == 0 ||
+                 (unit_A_AB == len_AB.size() && unit_B_AB == len_AB.size()));
+
+    bool pack_M_3d = unit_A_AC > 0 && unit_A_AC < len_AC.size();
+    bool pack_N_3d = unit_B_BC > 0 && unit_B_BC < len_BC.size();
+    bool pack_K_3d = (unit_A_AB > 0 && unit_A_AB < len_AB.size()) ||
+                     (unit_B_AB > 0 && unit_B_AB < len_AB.size());
+
+    if (pack_M_3d)
+        std::rotate(reorder_AC.begin()+1, reorder_AC.begin()+unit_A_AC, reorder_AC.end());
+
+    if (pack_N_3d)
+        std::rotate(reorder_BC.begin()+1, reorder_BC.begin()+unit_B_BC, reorder_BC.end());
+
+    if (pack_K_3d)
+        std::rotate(reorder_AB.begin()+1, reorder_AB.begin()+std::max(unit_A_AB, unit_B_AB), reorder_AB.end());
+
     len_type m = stl_ext::prod(len_AC);
     len_type n = stl_ext::prod(len_BC);
     len_type k = stl_ext::prod(len_AB);
@@ -368,19 +529,22 @@ void mult_blis(const communicator& comm, const config& cfg,
                             stl_ext::permuted(len_AB, reorder_AB),
                             nullptr,
                             stl_ext::permuted(stride_A_AC, reorder_AC),
-                            stl_ext::permuted(stride_A_AB, reorder_AB));
+                            stl_ext::permuted(stride_A_AB, reorder_AB),
+                            pack_M_3d, pack_K_3d);
 
         tensor_matrix<T> bt(stl_ext::permuted(len_AB, reorder_AB),
                             stl_ext::permuted(len_BC, reorder_BC),
                             nullptr,
                             stl_ext::permuted(stride_B_AB, reorder_AB),
-                            stl_ext::permuted(stride_B_BC, reorder_BC));
+                            stl_ext::permuted(stride_B_BC, reorder_BC),
+                            pack_K_3d, pack_N_3d);
 
         tensor_matrix<T> ct(stl_ext::permuted(len_AC, reorder_AC),
                             stl_ext::permuted(len_BC, reorder_BC),
                             nullptr,
                             stl_ext::permuted(stride_C_AC, reorder_AC),
-                            stl_ext::permuted(stride_C_BC, reorder_BC));
+                            stl_ext::permuted(stride_C_BC, reorder_BC),
+                            pack_M_3d, pack_N_3d);
 
         viterator<3> iter_ABC(stl_ext::permuted(len_ABC, reorder_ABC),
                               stl_ext::permuted(stride_A_ABC, reorder_ABC),

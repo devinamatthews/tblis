@@ -30,6 +30,7 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
         std::array<unsigned, 2> patch_ = {};
         std::array<len_type, 2> patch_off_ = {};
         std::array<len_type, 2> block_size_ = {};
+
     public:
         patch_block_scatter_matrix() {}
 
@@ -56,9 +57,9 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
                 patch.block_size_ = block_size_;
 
                 patch.fill_block_scatter(A.lens_[0], A.strides_[0], MB, A.off_[0],
-                                         tot_len_[0], rscat, rbs);
+                                         tot_len_[0], rscat, rbs, A.pack_3d_[0]);
                 patch.fill_block_scatter(A.lens_[1], A.strides_[1], NB, A.off_[1],
-                                         tot_len_[1], cscat, cbs);
+                                         tot_len_[1], cscat, cbs, A.pack_3d_[1]);
             }
 
             comm.barrier();
@@ -205,7 +206,7 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
                                 block_scatter_matrix<T>::fill_block_scatter(
                                     len, stride, block_size_[dim],
                                     patch[dim] == 0 ? A.block_offset_[dim] : 0,
-                                    loc[dim], scat[dim], bs[dim]);
+                                    loc[dim], scat[dim], bs[dim], A.pack_3d_[dim]);
                             }
                         });
 

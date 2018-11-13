@@ -105,6 +105,18 @@ struct sort_by_stride_helper
 
     bool operator()(unsigned i, unsigned j) const
     {
+        auto min_i = (*strides[0])[i];
+        auto min_j = (*strides[0])[j];
+
+        for (size_t k = 1;k < N;k++)
+        {
+            min_i = std::min(min_i, (*strides[k])[i]);
+            min_j = std::min(min_j, (*strides[k])[j]);
+        }
+
+        if (min_i < min_j) return true;
+        if (min_i > min_j) return false;
+
         for (size_t k = 0;k < N;k++)
         {
             auto s_i = (*strides[k])[i];

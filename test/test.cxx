@@ -25,7 +25,7 @@ template <> const string& type_name<dcomplex>()
     return name;
 }
 
-stride_type N = 1024*1024;
+stride_type N = 10*1024*1024;
 int R = 50;
 
 template <typename T>
@@ -1347,7 +1347,7 @@ int main(int argc, char **argv)
 
     int arg;
     int index;
-    while ((arg = getopt_long(argc, argv, "n:r:s:v", opts, &index)) != -1)
+    while ((arg = getopt_long(argc, argv, "n:r:s:vf:", opts, &index)) != -1)
     {
         istringstream iss;
         switch (arg)

@@ -14,6 +14,39 @@
 namespace tblis
 {
 
+inline len_type gcd(len_type a, len_type b)
+{
+    a = std::abs(a);
+    b = std::abs(b);
+
+    if (a == 0) return b;
+    if (b == 0) return a;
+
+    unsigned d = __builtin_ctzl(a|b);
+
+    a >>= __builtin_ctzl(a);
+    b >>= __builtin_ctzl(b);
+
+    while (a != b)
+    {
+        if (a > b)
+        {
+            a = (a-b)>>1;
+        }
+        else
+        {
+            b = (b-a)>>1;
+        }
+    }
+
+    return a<<d;
+}
+
+inline len_type lcm(len_type a, len_type b)
+{
+    return a*b/gcd(a,b);
+}
+
 template <typename T>
 class block_scatter_matrix : public abstract_matrix<T>
 {
@@ -33,9 +66,12 @@ class block_scatter_matrix : public abstract_matrix<T>
 
         static void fill_block_scatter(len_vector len, stride_vector stride, len_type BS,
                                        stride_type off, stride_type size,
-                                       stride_type* scat, stride_type* bs)
+                                       stride_type* scat, stride_type* bs,
+                                       bool pack_3d = false)
         {
             if (size == 0) return;
+
+            constexpr len_type CL = 64 / sizeof(T);
 
             if (len.empty())
             {
@@ -50,27 +86,147 @@ class block_scatter_matrix : public abstract_matrix<T>
             TBLIS_ASSERT(size >= 0);
             TBLIS_ASSERT(off+size <= tot_len);
 
-            len_type m0 = (len.empty() ? 1 : len[0]);
-            stride_type s0 = (stride.empty() ? 0 : stride[0]);
+            len_type m0 = len[0];
+            stride_type s0 = stride[0];
 
             len.erase(len.begin());
             stride.erase(stride.begin());
-            viterator<> it(len, stride);
 
-            len_type p0 = off%m0;
-            stride_type pos = 0;
-            it.position(off/m0, pos);
-
-            for (len_type idx = 0;idx < size && it.next(pos);)
+            if (!pack_3d)
             {
-                auto pos2 = pos + p0*s0;
-                auto imax = std::min(m0-p0,size-idx);
-                for (len_type i = 0;i < imax;i++)
+                viterator<> it(len, stride);
+
+                len_type p0 = off%m0;
+                stride_type pos = 0;
+                it.position(off/m0, pos);
+
+                for (len_type idx = 0;idx < size && it.next(pos);)
                 {
-                    scat[idx++] = pos2;
-                    pos2 += s0;
+                    auto pos2 = pos + p0*s0;
+                    auto imax = std::min(m0-p0,size-idx);
+                    for (len_type i = 0;i < imax;i++)
+                    {
+                        scat[idx++] = pos2;
+                        pos2 += s0;
+                    }
+                    p0 = 0;
                 }
-                p0 = 0;
+            }
+            else
+            {
+                TBLIS_ASSERT(!len.empty());
+
+                len_type m1 = len[0];
+                stride_type s1 = stride[0];
+
+                len_type BS0 = std::min(lcm(BS, CL), std::max(BS, m0 - m0%BS));
+                len_type BS1 = std::min(        CL , std::max(BS, m1 - m1%BS));
+
+                len.erase(len.begin());
+                stride.erase(stride.begin());
+
+                viterator<> it(len, stride);
+
+                len_type p01 = off%(m0*m1);
+                len_type p0 = p01%m0;
+                len_type p1 = p01/m0;
+                len_type q01 = (off+size-1)%(m0*m1);
+                len_type q0 = q01%m0;
+                len_type q1 = q01/m0;
+                len_type r0 = q0 - q0%BS0;
+                stride_type pos = 0;
+                len_type b_min = off/(m0*m1);
+                len_type b_max = (off+size-1)/(m0*m1)+1;
+
+                if (p0 == 0) p1--;
+                if (q0 == m0-1) q1++;
+
+                it.position(b_min, pos);
+                auto it0 = it;
+                auto pos0 = pos;
+
+                /*
+                 *                  p0  q0      r0
+                 *    +---+---+---+---+---+---+---+
+                 *    |   |   |   |   |   |   |   |
+                 *    +---+---+---#===============#
+                 * p1 |   |   |   #p01| C | C | C #
+                 *    #=======#===#===#=======#===#
+                 *    # A | A # A | A # A | A # B #
+                 *    #---+---#---+---#---+---#---#
+                 *    # A | A # A | A # A | A # B #
+                 *    #=======#=======#=======#===#
+                 *    # A'| A'# A'| A'# A'| A'# B'#
+                 *    #=======#=======#===#===#===#
+                 * q1 # D | D | D | D |q01#   |   |
+                 *    #===================#---+---+
+                 *    |   |   |   |   |   |   |   |
+                 *    +---+---+---+---+---+---+---+
+                 */
+
+                /*
+                 * A:  Full BS0*BS1 blocks
+                 * A': Partial BS0*n blocks
+                 */
+
+                len_type idx = 0;
+
+                if (r0 > 0)
+                {
+                    for (len_type b = b_min;b < b_max && it.next(pos);b++)
+                    {
+                        len_type min1 = b == b_min ? p1+1 : 0;
+                        len_type max1 = b == b_max-1 ? q1 : m1;
+
+                        for (len_type i1 = min1;i1 < max1;i1 += BS1)
+                        for (len_type i0 = 0;i0 < r0;i0 += BS0)
+                        for (len_type j1 = 0;j1 < std::min(BS1, max1-i1);j1++)
+                        for (len_type j0 = 0;j0 < BS0;j0++)
+                            scat[idx++] = pos + (i0+j0)*s0 + (i1+j1)*s1;
+                    }
+
+                    it = it0;
+                    pos = pos0;
+                }
+
+                /*
+                 * B:  Partial m*BS1 blocks
+                 * B': Partial m*n block
+                 * C:  First partial row
+                 * D:  Last partial row
+                 */
+
+                for (len_type b = b_min;b < b_max && it.next(pos);b++)
+                {
+                    len_type min1 = b == b_min ? p1+1 : 0;
+                    len_type max1 = b == b_max-1 ? q1 : m1;
+
+                    for (len_type j1 = min1;j1 < max1;j1++)
+                    for (len_type j0 = r0;j0 < m0;j0++)
+                        scat[idx++] = pos + j0*s0 + j1*s1;
+
+                    bool do_p = b == b_min && p0 > 0;
+                    bool do_q = b == b_max-1 && q0 < m0-1;
+
+                    if (do_p && do_q && p1 == q1)
+                    {
+                        // p01 and q01 are on the same row
+                        for (len_type j0 = p0;j0 <= q0;j0++)
+                            scat[idx++] = pos + j0*s0 + p1*s1;
+                    }
+                    else
+                    {
+                        if (do_p)
+                            for (len_type j0 = p0;j0 < m0;j0++)
+                                scat[idx++] = pos + j0*s0 + p1*s1;
+
+                        if (do_q)
+                            for (len_type j0 = 0;j0 <= q0;j0++)
+                                scat[idx++] = pos + j0*s0 + q1*s1;
+                    }
+                }
+
+                TBLIS_ASSERT(idx == size);
             }
 
             for (len_type i = 0;i < size;i += BS)
@@ -101,9 +257,9 @@ class block_scatter_matrix : public abstract_matrix<T>
             if (comm.master())
             {
                 fill_block_scatter(A.lens_[0], A.strides_[0], block_size_[0], A.off_[0],
-                                   tot_len_[0], scatter_[0], block_stride_[0]);
+                                   tot_len_[0], scatter_[0], block_stride_[0], A.pack_3d_[0]);
                 fill_block_scatter(A.lens_[1], A.strides_[1], block_size_[1], A.off_[1],
-                                   tot_len_[1], scatter_[1], block_stride_[1]);
+                                   tot_len_[1], scatter_[1], block_stride_[1], A.pack_3d_[1]);
             }
 
             comm.barrier();
@@ -113,7 +269,7 @@ class block_scatter_matrix : public abstract_matrix<T>
                              len_type MB, stride_type* rscat, stride_type* rbs,
                              len_type NB, stride_type* cscat, stride_type* cbs)
         {
-            assert(0);
+            abort();
         }
 
         len_type block_size(unsigned dim) const

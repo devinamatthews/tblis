@@ -496,6 +496,10 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
             len_vector len(ndim);
             stride_vector stride(ndim);
 
+            unsigned irrep = 0;
+            for (auto& i: irreps) irrep ^= i;
+            MARRAY_ASSERT(irrep == irrep_);
+
             pointer ptr = data();
             this->get_block(irreps, len, ptr, stride);
 

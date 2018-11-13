@@ -1149,7 +1149,8 @@ class marray_base
                 int end = (i == NSplit ? NDim-1 : split[i]-1);
                 if (begin > end) continue;
 
-                if (stride_[begin] < stride_[end])
+                if (stride_[begin] < stride_[end] ||
+                    (stride_[begin] == stride_[end] && len_[begin] == 1))
                 {
                     newlen[i] = len_[end];
                     newstride[i] = stride_[begin];

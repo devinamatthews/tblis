@@ -184,14 +184,12 @@ struct dpd_base
         short_vector<stride_type, 2*MARRAY_OPT_NDIM-1> dpd_stride(2*ndim-1);
         dpd_stride[2*ndim-2] = 1;
 
-        auto irrep = derived().irrep_;
         auto it = irreps.begin();
         for (unsigned i = 0;i < ndim;i++)
         {
-            irrep ^= dpd_irrep[leaf[perm[i]]] = *it;
+            dpd_irrep[leaf[perm[i]]] = *it;
             ++it;
         }
-        MARRAY_ASSERT(irrep == 0);
 
         for (unsigned i = 0;i < ndim-1;i++)
         {
@@ -678,6 +676,10 @@ class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, D
             std::array<stride_type, NDim> stride;
 
             irreps_.slurp(irreps);
+
+            unsigned irrep = 0;
+            for (auto& i: irreps) irrep ^= i;
+            MARRAY_ASSERT(irrep == irrep_);
 
             pointer ptr = data();
             this->get_block(irreps, len, ptr, stride);

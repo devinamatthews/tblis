@@ -18,7 +18,6 @@ void tci_task_set_init(tci_task_set* set, tci_comm* comm, unsigned ntask,
         set->slots = (tci_slot*)malloc((ntask+1)*sizeof(tci_slot));
         for (unsigned task = 0;task < ntask;task++)
             tci_slot_init(set->slots+task+1, 0);
-        *(volatile unsigned*)set->slots = 0;
     }
     tci_comm_bcast(comm, (void**)&set->slots, 0);
 
@@ -31,8 +30,8 @@ void tci_task_set_init(tci_task_set* set, tci_comm* comm, unsigned ntask,
 
 void tci_task_set_destroy(tci_task_set* set)
 {
-    tci_comm_destroy(&set->subcomm);
     tci_comm_barrier(set->comm);
+    tci_comm_destroy(&set->subcomm);
     if (tci_comm_is_master(set->comm))
         free((void*)set->slots);
 }
@@ -52,12 +51,12 @@ int tci_task_set_visit(tci_task_set* set, tci_task_func func, unsigned task,
 int tci_task_set_visit_all(tci_task_set* set, tci_task_func func,
                            void* payload)
 {
-    for (;;)
+    for (unsigned task = 0;task < set->ntask;task++)
     {
-        unsigned task = __atomic_fetch_add((volatile unsigned*)set->slots, 1, __ATOMIC_ACQUIRE);
-        if (task >= set->ntask) break;
-        func(&set->subcomm, task, payload);
+        int ret = tci_task_set_visit(set, func, task, payload);
+        if (ret != 0) return ret;
     }
+
     return 0;
 }
 

@@ -15,7 +15,6 @@ class abstract_matrix
         typedef T value_type;
 
     protected:
-        T* data_ = nullptr;
         std::array<len_type,2> tot_len_ = {};
         std::array<len_type,2> cur_len_ = {};
         std::array<len_type,2> off_ = {};
@@ -23,19 +22,8 @@ class abstract_matrix
     public:
         abstract_matrix() {}
 
-        abstract_matrix(len_type m, len_type n, T* ptr)
-        : data_(ptr), tot_len_{m, n}, cur_len_{m, n} {}
-
-        T* data() const
-        {
-            return data_;
-        }
-
-        T* data(T* ptr)
-        {
-            std::swap(ptr, data_);
-            return ptr;
-        }
+        abstract_matrix(len_type m, len_type n)
+        : tot_len_{m, n}, cur_len_{m, n} {}
 
         len_type length(unsigned dim) const
         {

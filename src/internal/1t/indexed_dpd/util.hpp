@@ -185,6 +185,7 @@ struct dpd_index_group
     unsigned batch_ndim = 0;
     unsigned dense_nblock = 1;
     stride_type dense_size = 0;
+    bool pack_3d = false;
 
     std::array<dim_vector,N> dense_idx;
 
@@ -241,11 +242,18 @@ struct dpd_index_group
         dense_total_lengths_and_strides(dense_len, dense_stride,
                                         A, idx_A, args...);
 
-        dense_size = stl_ext::prod(batch_len);
-        for (unsigned i = 0;i < dense_ndim;i++) dense_nblock *= nirrep;
-        dense_size /= dense_nblock;
+        dense_size = 1;
+        for (unsigned i = 0;i < dense_ndim;i++)
+        {
+            dense_size *= dense_len[0][i];
+            dense_nblock *= nirrep;
+        }
 
-        if (dense_nblock > 1) dense_nblock /= nirrep;
+        if (dense_nblock > 1)
+        {
+            dense_size = std::max<stride_type>(1, dense_size/nirrep);
+            dense_nblock /= nirrep;
+        }
 
         std::array<stride_vector,N> dense_stride_sub;
         for (unsigned i = 0;i < N;i++)
@@ -257,6 +265,24 @@ struct dpd_index_group
 
         for (unsigned i = 0;i < N;i++)
             stl_ext::permute(dense_idx[i], reorder);
+
+        unsigned unit = 0;
+        for (unsigned i = 0;i < N;i++)
+        {
+            for (unsigned j = 1;j < dense_ndim;j++)
+            {
+                if (dense_stride[i][reorder[j]] == 1)
+                {
+                    pack_3d = true;
+                    unit = std::max(unit, j);
+                    break;
+                }
+            }
+        }
+
+        if (pack_3d)
+            for (unsigned i = 0;i < N;i++)
+                std::rotate(dense_idx[i].begin()+1, dense_idx[i].begin()+unit, dense_idx[i].end());
     }
 };
 

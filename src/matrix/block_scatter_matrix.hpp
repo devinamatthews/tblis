@@ -56,10 +56,10 @@ class block_scatter_matrix : public abstract_matrix<T>
         typedef const stride_type* scatter_type;
 
     protected:
-        using abstract_matrix<T>::data_;
         using abstract_matrix<T>::tot_len_;
         using abstract_matrix<T>::cur_len_;
         using abstract_matrix<T>::off_;
+        T* data_ = nullptr;
         std::array<stride_type*, 2> scatter_ = {};
         std::array<stride_type*, 2> block_stride_ = {};
         std::array<len_type, 2> block_size_ = {};

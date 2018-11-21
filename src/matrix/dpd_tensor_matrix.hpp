@@ -3,64 +3,10 @@
 
 #include "abstract_matrix.hpp"
 
+#include "internal/1t/dpd/util.hpp"
+
 namespace tblis
 {
-
-class irrep_iterator
-{
-    protected:
-        const unsigned irrep_;
-        const unsigned irrep_bits_;
-        const unsigned irrep_mask_;
-        viterator<0> it_;
-
-    public:
-        irrep_iterator(unsigned irrep, unsigned nirrep, unsigned ndim)
-        : irrep_(irrep), irrep_bits_(__builtin_popcount(nirrep-1)),
-          irrep_mask_ (nirrep-1), it_(irrep_vector(ndim ? ndim-1 : 0, nirrep)) {}
-
-        bool next()
-        {
-            return it_.next();
-        }
-
-        unsigned nblock() const
-        {
-            return 1u << (irrep_bits_*it_.dimension());
-        }
-
-        void block(unsigned b)
-        {
-            irrep_vector irreps(it_.dimension());
-
-            for (unsigned i = 0;i < it_.dimension();i++)
-            {
-                irreps[i] = b & irrep_mask_;
-                b >>= irrep_bits_;
-            }
-
-            it_.position(irreps);
-        }
-
-        void reset()
-        {
-            it_.reset();
-        }
-
-        unsigned irrep(unsigned dim)
-        {
-            TBLIS_ASSERT(dim <= it_.dimension());
-
-            if (dim == 0)
-            {
-                unsigned irr0 = irrep_;
-                for (unsigned irr : it_.position()) irr0 ^= irr;
-                return irr0;
-            }
-
-            return it_.position()[dim-1];
-        }
-};
 
 template <typename T>
 class dpd_tensor_matrix : public abstract_matrix<T>
@@ -71,7 +17,6 @@ class dpd_tensor_matrix : public abstract_matrix<T>
         typedef const stride_type* scatter_type;
 
     protected:
-        using abstract_matrix<T>::data_;
         using abstract_matrix<T>::cur_len_;
         using abstract_matrix<T>::tot_len_;
         using abstract_matrix<T>::off_;
@@ -79,6 +24,7 @@ class dpd_tensor_matrix : public abstract_matrix<T>
         std::array<dim_vector, 2> dims_ = {};
         dim_vector extra_dims_ = {};
         irrep_vector extra_irreps_ = {};
+        len_vector extra_idx_ = {};
         std::array<unsigned, 2> irrep_ = {};
         std::array<unsigned, 2> block_ = {};
         std::array<len_vector, 2> block_size_ = {};
@@ -90,13 +36,14 @@ class dpd_tensor_matrix : public abstract_matrix<T>
     public:
         dpd_tensor_matrix();
 
-        template <typename U, typename V, typename W, typename X>
+        template <typename U, typename V, typename W, typename X, typename Y>
         dpd_tensor_matrix(dpd_varray_view<T>& other,
                           const U& row_inds,
                           const V& col_inds,
                           unsigned col_irrep,
                           const W& extra_inds,
                           const X& extra_irreps,
+                          const Y& extra_idx,
                           bool pack_row_3d = false,
                           bool pack_col_3d = false)
         : tensor_(other), pack_3d_{pack_row_3d, pack_col_3d}
@@ -106,18 +53,26 @@ class dpd_tensor_matrix : public abstract_matrix<T>
 
             const unsigned nirrep = other.num_irreps();
 
-            data_ = other.data();
             dims_[0].assign(row_inds.begin(), row_inds.end());
             dims_[1].assign(col_inds.begin(), col_inds.end());
             irrep_ = {col_irrep^other.irrep(), col_irrep};
             extra_dims_.assign(extra_inds.begin(), extra_inds.end());
             extra_irreps_.assign(extra_irreps.begin(), extra_irreps.end());
+            extra_idx_.assign(extra_idx.begin(), extra_idx.end());
 
             for (unsigned irrep : extra_irreps)
                 irrep_[0] ^= irrep;
 
+            TBLIS_ASSERT(dims_[0].size() + dims_[1].size() + extra_dims_.size() == other.dimension());
+            TBLIS_ASSERT(extra_dims_.size() == extra_irreps_.size());
+            TBLIS_ASSERT(extra_dims_.size() == extra_idx_.size());
+
             for (unsigned dim : {0,1})
             {
+                for (auto& i : dims_[dim])
+                    for (auto& j : extra_dims_)
+                        TBLIS_ASSERT(i != j);
+
                 if (dims_[dim].empty())
                 {
                     tot_len_[dim] = irrep_[dim] == 0 ? 1 : 0;
@@ -127,7 +82,7 @@ class dpd_tensor_matrix : public abstract_matrix<T>
                 else
                 {
                     tot_len_[dim] = 0;
-                    irrep_iterator it(irrep_[dim], nirrep, dims_[dim].size());
+                    internal::irrep_iterator it(irrep_[dim], nirrep, dims_[dim].size());
                     for (unsigned idx = 0;it.next();idx++)
                     {
                         stride_type size = 1;
@@ -145,31 +100,27 @@ class dpd_tensor_matrix : public abstract_matrix<T>
 
             cur_len_ = tot_len_;
 
-            len_vector stride(other.dimension(), 1);
+            std::array<len_vector,1> len;
+            std::array<stride_vector,1> stride;
+            internal::dense_total_lengths_and_strides(len, stride, other, row_inds);
 
-            for (unsigned i = 0;i < other.dimension();i++)
-            {
-                for (unsigned irrep = 0;irrep < nirrep;irrep++)
-                    stride[other.permutation()[i]] += other.length(i, irrep);
-                if (i > 0) stride[i] *= stride[i-1];
-            }
-
-            leading_stride_ = {row_inds.empty() ? 1 : stride[other.permutation()[row_inds[0]]],
-                               col_inds.empty() ? 1 : stride[other.permutation()[col_inds[0]]]};
+            leading_stride_ = {row_inds.empty() ? 1 : stride[0][row_inds[0]],
+                               col_inds.empty() ? 1 : stride[0][col_inds[0]]};
         }
 
-        template <typename U, typename V, typename W, typename X>
+        template <typename U, typename V, typename W, typename X, typename Y>
         dpd_tensor_matrix(dpd_varray_view<const T>& other,
                           const U& row_inds,
                           const V& col_inds,
                           unsigned col_irrep,
                           const W& extra_inds,
                           const X& extra_irreps,
+                          const Y& extra_idx,
                           bool pack_row_3d = false,
                           bool pack_col_3d = false)
         : dpd_tensor_matrix(reinterpret_cast<dpd_varray_view<T>&>(other),
                             row_inds, col_inds, col_irrep,
-                            extra_inds, extra_irreps,
+                            extra_inds, extra_irreps, extra_idx,
                             pack_row_3d, pack_col_3d) {}
 
         template <typename U, typename V>
@@ -180,7 +131,7 @@ class dpd_tensor_matrix : public abstract_matrix<T>
                           bool pack_row_3d = false,
                           bool pack_col_3d = false)
         : dpd_tensor_matrix(other, row_inds, col_inds, col_irrep,
-                            dim_vector{}, irrep_vector{},
+                            dim_vector{}, irrep_vector{}, len_vector{},
                             pack_row_3d, pack_col_3d) {}
 
         template <typename U, typename V>
@@ -239,11 +190,8 @@ class dpd_tensor_matrix : public abstract_matrix<T>
             return block_size_[dim].size();
         }
 
-        using abstract_matrix<T>::data;
         using abstract_matrix<T>::length;
         using abstract_matrix<T>::lengths;
-        using abstract_matrix<T>::shift;
-        using abstract_matrix<T>::transpose;
 };
 
 }

@@ -15,21 +15,27 @@ class normal_matrix : public abstract_matrix<T>
         typedef T value_type;
 
     protected:
-        using abstract_matrix<T>::data_;
         using abstract_matrix<T>::tot_len_;
         using abstract_matrix<T>::cur_len_;
         using abstract_matrix<T>::off_;
+        T* data_ = nullptr;
         std::array<stride_type,2> stride_ = {};
 
     public:
         normal_matrix() {}
 
         normal_matrix(len_type m, len_type n, T* ptr, stride_type rs, stride_type cs)
-        : abstract_matrix<T>(m, n, ptr), stride_{rs, cs} {}
+        : abstract_matrix<T>(m, n), data_(ptr), stride_{rs, cs} {}
 
         T* data() const
         {
             return data_ + off_[0]*stride_[0] + off_[1]*stride_[1];
+        }
+
+        T* data(T* ptr)
+        {
+            std::swap(data_, ptr);
+            return ptr;
         }
 
         stride_type stride(unsigned dim) const

@@ -88,62 +88,89 @@ void mult_full(const communicator& comm, const config& cfg,
     A2, B2, C2);
 }
 
-/*
+template <typename T, typename U>
+void append(T& t, const U& u)
+{
+    t.insert(t.end(), u.begin(), u.end());
+}
+
+template <typename T, typename U>
+T appended(T t, const U& u)
+{
+    append(t, u);
+    return t;
+}
+
 template <typename T>
-void contract_block(const communicator& comm, const config& cfg,
-                    T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A,
-                    dim_vector idx_A_AB,
-                    dim_vector idx_A_AC,
-                             bool conj_B, const indexed_dpd_varray_view<const T>& B,
-                    dim_vector idx_B_AB,
-                    dim_vector idx_B_BC,
-                                          const indexed_dpd_varray_view<      T>& C,
-                    dim_vector idx_C_AC,
-                    dim_vector idx_C_BC)
+void contract_block_nofuse(const communicator& comm, const config& cfg,
+                           T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A,
+                           dim_vector idx_A_AB,
+                           dim_vector idx_A_AC,
+                                    bool conj_B, const indexed_dpd_varray_view<const T>& B,
+                           dim_vector idx_B_AB,
+                           dim_vector idx_B_BC,
+                                                 const indexed_dpd_varray_view<      T>& C,
+                           dim_vector idx_C_AC,
+                           dim_vector idx_C_BC)
 {
     unsigned nirrep = A.num_irreps();
 
-    dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
-    dpd_index_group<2> group_AC(A, idx_A_AC, C, idx_C_AC);
-    dpd_index_group<2> group_BC(B, idx_B_BC, C, idx_C_BC);
+    unsigned ndim_AC = idx_C_AC.size();
+    unsigned ndim_BC = idx_C_BC.size();
+    unsigned ndim_AB = idx_A_AB.size();
 
-    group_indices<T, 2> indices_A(A, group_AC, 0, group_AB, 0);
-    group_indices<T, 2> indices_B(B, group_BC, 0, group_AB, 1);
-    group_indices<T, 2> indices_C(C, group_AC, 1, group_BC, 1);
+    dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
+    dpd_index_group<2> group_AC(C, idx_C_AC, A, idx_A_AC);
+    dpd_index_group<2> group_BC(C, idx_C_BC, B, idx_B_BC);
+
+    for (auto& len : group_AB.batch_len) if (len == 0) return;
+    for (auto& len : group_AC.batch_len) if (len == 0) return;
+    for (auto& len : group_BC.batch_len) if (len == 0) return;
+
+    group_indices<T, 2> indices_A(A, group_AC, 1, group_AB, 0);
+    group_indices<T, 2> indices_B(B, group_BC, 1, group_AB, 1);
+    group_indices<T, 2> indices_C(C, group_AC, 0, group_BC, 0);
+
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
     auto nidx_C = indices_C.size();
 
-    auto dpd_A = A[0];
-    auto dpd_B = B[0];
-    auto dpd_C = C[0];
+    auto mixed_dim_A = appended(group_AC.mixed_idx[1],
+                                group_AB.mixed_idx[0]);
+    auto mixed_dim_B = appended(group_AB.mixed_idx[1],
+                                group_BC.mixed_idx[1]);
+    auto mixed_dim_C = appended(group_AC.mixed_idx[0],
+                                group_BC.mixed_idx[0]);
 
-    stride_type idx = 0;
-    stride_type idx_A = 0;
-    stride_type idx_C = 0;
+    auto mixed_irrep_A = appended(stl_ext::select_from(group_AC.batch_irrep, group_AC.mixed_pos[1]),
+                                  stl_ext::select_from(group_AB.batch_irrep, group_AB.mixed_pos[0]));
+    auto mixed_irrep_B = appended(stl_ext::select_from(group_AB.batch_irrep, group_AB.mixed_pos[1]),
+                                  stl_ext::select_from(group_BC.batch_irrep, group_BC.mixed_pos[1]));
+    auto mixed_irrep_C = appended(stl_ext::select_from(group_AC.batch_irrep, group_AC.mixed_pos[0]),
+                                  stl_ext::select_from(group_BC.batch_irrep, group_BC.mixed_pos[0]));
 
-    comm.do_tasks_deferred(nirrep*nidx_C,
-                           group_AB.dense_size*group_AC.dense_size*group_BC.dense_size*inout_ratio,
-    [&](communicator::deferred_task_set& tasks)
+    for (unsigned irrep_AB0 = 0;irrep_AB0 < nirrep;irrep_AB0++)
     {
-        for (unsigned irrep_AB0 = 0;irrep_AB0 < nirrep;irrep_AB0++)
+        unsigned irrep_AB = irrep_AB0;
+        unsigned irrep_AC = A.irrep()^irrep_AB0;
+        unsigned irrep_BC = B.irrep()^irrep_AB0;
+
+        for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
+        for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
+        for (auto irrep : group_BC.batch_irrep) irrep_BC ^= irrep;
+
+        if (group_AB.dense_ndim == 0 && irrep_AB != 0) continue;
+        if (group_AC.dense_ndim == 0 && irrep_AC != 0) continue;
+        if (group_BC.dense_ndim == 0 && irrep_BC != 0) continue;
+
+        stride_type idx = 0;
+        stride_type idx_A = 0;
+        stride_type idx_C = 0;
+
+        comm.do_tasks_deferred(nidx_C,
+                               group_AB.dense_size*group_AC.dense_size*group_BC.dense_size/inout_ratio,
+        [&](communicator::deferred_task_set& tasks)
         {
-            unsigned irrep_AB = irrep_AB0;
-            unsigned irrep_AC = A.irrep()^irrep_AB0;
-            unsigned irrep_BC = B.irrep()^irrep_AB0;
-
-            for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
-            for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
-            for (auto irrep : group_BC.batch_irrep) irrep_BC ^= irrep;
-
-            dpd_tensor_matrix<T> at(dpd_A, group_AC.dense_idx[0], group_AB.dense_idx[0], irrep_AB);
-            dpd_tensor_matrix<T> bt(dpd_B, group_AB.dense_idx[1], group_BC.dense_idx[0], irrep_BC);
-            dpd_tensor_matrix<T> ct(dpd_C, group_AC.dense_idx[1], group_BC.dense_idx[1], irrep_BC);
-
-            if (at.length(0) == 1 ||
-                ct.length(0) == 0 ||
-                ct.length(1) == 0) continue;
-
             for_each_match<true, true>(idx_A, nidx_A, indices_A, 0,
                                        idx_C, nidx_C, indices_C, 0,
             [&](stride_type next_A, stride_type next_C)
@@ -157,25 +184,15 @@ void contract_block(const communicator& comm, const config& cfg,
                     if (indices_C[idx_C].factor == T(0)) return;
 
                     tasks.visit(idx++,
-                    [&,idx_A,idx_B,idx_C,next_A,next_B,
-                     irrep_AB,irrep_AC,irrep_BC]
+                    [&,idx,idx_A,idx_B,idx_C,next_A,next_B]
                     (const communicator& subcomm)
                     {
                         auto local_idx_A = idx_A;
                         auto local_idx_B = idx_B;
 
-                        stride_type off_A_AC, off_C_AC;
-                        get_local_offset(indices_A[local_idx_A].idx[0], group_AC,
-                                         dpd_A, off_A_AC, 0,
-                                         dpd_C, off_C_AC, 1);
-
-                        stride_type off_B_BC, off_C_BC;
-                        get_local_offset(indices_B[local_idx_B].idx[0], group_BC,
-                                         dpd_B, off_B_BC, 0,
-                                         dpd_C, off_C_BC, 1);
-
-                        ct.data(C.data(0) + indices_C[idx_C].offset +
-                                off_C_AC + off_C_BC);
+                        auto dpd_A = A[0];
+                        auto dpd_B = B[0];
+                        auto dpd_C = C[0];
 
                         for_each_match<false, false>(local_idx_A, next_A, indices_A, 1,
                                                      local_idx_B, next_B, indices_B, 1,
@@ -183,201 +200,49 @@ void contract_block(const communicator& comm, const config& cfg,
                         {
                             auto factor = alpha*indices_A[local_idx_A].factor*
                                                 indices_B[local_idx_B].factor*
-                                                indices_C[idx_C].factor;
+                                                indices_C[      idx_C].factor;
                             if (factor == T(0)) return;
 
-                            stride_type off_A_AB, off_B_AB;
-                            get_local_offset(indices_A[local_idx_A].idx[1], group_AB,
-                                             dpd_A, off_A_AB, 0,
-                                             dpd_B, off_B_AB, 1);
+                            dpd_A.data(A.data(0) + indices_A[local_idx_A].offset);
+                            dpd_B.data(B.data(0) + indices_B[local_idx_B].offset);
+                            dpd_C.data(C.data(0) + indices_C[      idx_C].offset);
 
-                            at.data(A.data(0) + indices_A[local_idx_A].offset +
-                                    off_A_AB + off_A_AC);
-                            bt.data(B.data(0) + indices_B[local_idx_B].offset +
-                                    off_B_AB + off_B_BC);
+                            auto mixed_idx_A = appended(stl_ext::select_from(indices_A[local_idx_A].idx[0], group_AC.mixed_pos[1]),
+                                                        stl_ext::select_from(indices_A[local_idx_A].idx[1], group_AB.mixed_pos[0]));
+                            auto mixed_idx_B = appended(stl_ext::select_from(indices_B[local_idx_B].idx[1], group_AB.mixed_pos[1]),
+                                                        stl_ext::select_from(indices_B[local_idx_B].idx[0], group_BC.mixed_pos[1]));
+                            auto mixed_idx_C = appended(stl_ext::select_from(indices_C[      idx_C].idx[0], group_AC.mixed_pos[0]),
+                                                        stl_ext::select_from(indices_C[      idx_C].idx[1], group_BC.mixed_pos[0]));
 
-                            TensorGEMM{}(subcomm, cfg, alpha, at, bt, 1.0, ct);
+                            dpd_tensor_matrix<T> at(dpd_A, group_AC.dense_idx[1], group_AB.dense_idx[0], irrep_AB,
+                                                    mixed_dim_A, mixed_irrep_A, mixed_idx_A, group_AC.pack_3d, group_AB.pack_3d);
+                            dpd_tensor_matrix<T> bt(dpd_B, group_AB.dense_idx[1], group_BC.dense_idx[1], irrep_BC,
+                                                    mixed_dim_B, mixed_irrep_B, mixed_idx_B, group_AB.pack_3d, group_BC.pack_3d);
+                            dpd_tensor_matrix<T> ct(dpd_C, group_AC.dense_idx[0], group_BC.dense_idx[0], irrep_BC,
+                                                    mixed_dim_C, mixed_irrep_C, mixed_idx_C, group_AC.pack_3d, group_BC.pack_3d);
+
+                            TensorGEMM{}(subcomm, cfg, factor, at, bt, T(1), ct);
                         });
                     });
                 });
             });
-        }
-    });
+        });
+    }
 }
-*/
 
 template <typename T>
-void contract_block(const communicator& comm, const config& cfg,
-                    T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A,
-                    dim_vector idx_A_AB,
-                    dim_vector idx_A_AC,
-                             bool conj_B, const indexed_dpd_varray_view<const T>& B,
-                    dim_vector idx_B_AB,
-                    dim_vector idx_B_BC,
-                                          const indexed_dpd_varray_view<      T>& C,
-                    dim_vector idx_C_AC,
-                    dim_vector idx_C_BC)
+void contract_block_fuse_AB(const communicator& comm, const config& cfg,
+                            T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A,
+                            dim_vector idx_A_AB,
+                            dim_vector idx_A_AC,
+                                     bool conj_B, const indexed_dpd_varray_view<const T>& B,
+                            dim_vector idx_B_AB,
+                            dim_vector idx_B_BC,
+                                                  const indexed_dpd_varray_view<      T>& C,
+                            dim_vector idx_C_AC,
+                            dim_vector idx_C_BC)
 {
-    unsigned nirrep = A.num_irreps();
-
-    unsigned ndim_AC = idx_C_AC.size();
-    unsigned ndim_BC = idx_C_BC.size();
-    unsigned ndim_AB = idx_A_AB.size();
-
-    dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
-    dpd_index_group<2> group_AC(A, idx_A_AC, C, idx_C_AC);
-    dpd_index_group<2> group_BC(B, idx_B_BC, C, idx_C_BC);
-
-    irrep_vector irreps_A(A.dense_dimension());
-    irrep_vector irreps_B(B.dense_dimension());
-    irrep_vector irreps_C(C.dense_dimension());
-    assign_irreps(group_AB, irreps_A, irreps_B);
-    assign_irreps(group_AC, irreps_A, irreps_C);
-    assign_irreps(group_BC, irreps_B, irreps_C);
-
-    group_indices<T, 2> indices_A(A, group_AC, 0, group_AB, 0);
-    group_indices<T, 2> indices_B(B, group_BC, 0, group_AB, 1);
-    group_indices<T, 2> indices_C(C, group_AC, 1, group_BC, 1);
-    auto nidx_A = indices_A.size();
-    auto nidx_B = indices_B.size();
-    auto nidx_C = indices_C.size();
-
-    auto dpd_A = A[0];
-    auto dpd_B = B[0];
-    auto dpd_C = C[0];
-
-    stride_type idx = 0;
-    stride_type idx_A = 0;
-    stride_type idx_C = 0;
-
-    comm.do_tasks_deferred(nirrep*nidx_C*group_AC.dense_nblock*group_BC.dense_nblock,
-                           group_AB.dense_size*group_AC.dense_size*group_BC.dense_size*inout_ratio,
-    [&](communicator::deferred_task_set& tasks)
-    {
-        for_each_match<true, true>(idx_A, nidx_A, indices_A, 0,
-                                   idx_C, nidx_C, indices_C, 0,
-        [&](stride_type next_A, stride_type next_C)
-        {
-            stride_type idx_B = 0;
-
-            for_each_match<true, false>(idx_B, nidx_B, indices_B, 0,
-                                        idx_C, next_C, indices_C, 1,
-            [&](stride_type next_B)
-            {
-                if (indices_C[idx_C].factor == T(0)) return;
-
-                for (unsigned irrep_AB0 = 0;irrep_AB0 < nirrep;irrep_AB0++)
-                {
-                    unsigned irrep_AB = irrep_AB0;
-                    unsigned irrep_AC = A.irrep()^irrep_AB0;
-                    unsigned irrep_BC = B.irrep()^irrep_AB0;
-
-                    for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
-                    for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
-                    for (auto irrep : group_BC.batch_irrep) irrep_BC ^= irrep;
-
-                    if (group_AB.dense_ndim == 0 && irrep_AB != 0) continue;
-                    if (group_AC.dense_ndim == 0 && irrep_AC != 0) continue;
-                    if (group_BC.dense_ndim == 0 && irrep_BC != 0) continue;
-
-                    for (stride_type block_AC = 0;block_AC < group_AC.dense_nblock;block_AC++)
-                    for (stride_type block_BC = 0;block_BC < group_BC.dense_nblock;block_BC++)
-                    {
-                        tasks.visit(idx++,
-                        [&,idx_A,idx_B,idx_C,next_A,next_B,
-                         irrep_AB,irrep_AC,irrep_BC,block_AC,block_BC]
-                        (const communicator& subcomm)
-                        {
-                            auto local_irreps_A = irreps_A;
-                            auto local_irreps_B = irreps_B;
-                            auto local_irreps_C = irreps_C;
-
-                            assign_irreps(group_AC.dense_ndim, irrep_AC, nirrep, block_AC,
-                                          local_irreps_A, group_AC.dense_idx[0],
-                                          local_irreps_C, group_AC.dense_idx[1]);
-
-                            assign_irreps(group_BC.dense_ndim, irrep_BC, nirrep, block_BC,
-                                          local_irreps_B, group_BC.dense_idx[0],
-                                          local_irreps_C, group_BC.dense_idx[1]);
-
-                            if (is_block_empty(dpd_C, local_irreps_C)) return;
-
-                            auto local_C = dpd_C(local_irreps_C);
-
-                            for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
-                            {
-                                assign_irreps(group_AB.dense_ndim, irrep_AB, nirrep, block_AB,
-                                              local_irreps_A, group_AB.dense_idx[0],
-                                              local_irreps_B, group_AB.dense_idx[1]);
-
-                                if (is_block_empty(dpd_A, local_irreps_A)) continue;
-
-                                auto local_idx_A = idx_A;
-                                auto local_idx_B = idx_B;
-                                auto local_A = dpd_A(local_irreps_A);
-                                auto local_B = dpd_B(local_irreps_B);
-
-                                len_vector len_AC;
-                                stride_vector stride_A_AC, stride_C_AC;
-                                stride_type off_A_AC, off_C_AC;
-                                get_local_geometry(indices_A[local_idx_A].idx[0], group_AC, len_AC,
-                                                   local_A, stride_A_AC, 0,
-                                                   local_C, stride_C_AC, 1);
-                                get_local_offset(indices_A[local_idx_A].idx[0], group_AC,
-                                                 local_A, off_A_AC, 0,
-                                                 local_C, off_C_AC, 1);
-
-                                len_vector len_BC;
-                                stride_vector stride_B_BC, stride_C_BC;
-                                stride_type off_B_BC, off_C_BC;
-                                get_local_geometry(indices_B[local_idx_B].idx[0], group_BC, len_BC,
-                                                   local_B, stride_B_BC, 0,
-                                                   local_C, stride_C_BC, 1);
-                                get_local_offset(indices_B[local_idx_B].idx[0], group_BC,
-                                                 local_B, off_B_BC, 0,
-                                                 local_C, off_C_BC, 1);
-
-                                len_vector len_AB;
-                                stride_vector stride_A_AB, stride_B_AB;
-                                get_local_geometry(indices_A[local_idx_A].idx[1], group_AB, len_AB,
-                                                   local_A, stride_A_AB, 0,
-                                                   local_B, stride_B_AB, 1);
-
-                                auto data_C = local_C.data() + indices_C[idx_C].offset +
-                                              off_C_AC + off_C_BC;
-
-                                for_each_match<false, false>(local_idx_A, next_A, indices_A, 1,
-                                                             local_idx_B, next_B, indices_B, 1,
-                                [&]
-                                {
-                                    auto factor = alpha*indices_A[local_idx_A].factor*
-                                                        indices_B[local_idx_B].factor*
-                                                        indices_C[idx_C].factor;
-                                    if (factor == T(0)) return;
-
-                                    stride_type off_A_AB, off_B_AB;
-                                    get_local_offset(indices_A[local_idx_A].idx[1], group_AB,
-                                                     local_A, off_A_AB, 0,
-                                                     local_B, off_B_AB, 1);
-
-                                    auto data_A = local_A.data() + indices_A[local_idx_A].offset +
-                                                  off_A_AB + off_A_AC;
-                                    auto data_B = local_B.data() + indices_B[local_idx_B].offset +
-                                                  off_B_AB + off_B_BC;
-
-                                    mult(subcomm, cfg,
-                                         len_AB, len_AC, len_BC, {},
-                                         factor, conj_A, data_A, stride_A_AB, stride_A_AC, {},
-                                                 conj_B, data_B, stride_B_AB, stride_B_BC, {},
-                                           T(1),  false, data_C, stride_C_AC, stride_C_BC, {});
-                                });
-                            }
-                        });
-                    }
-                }
-            });
-        });
-    });
+    //TODO
 }
 
 template <typename T>
@@ -677,10 +542,10 @@ void mult(const communicator& comm, const config& cfg,
     }
     else if (idx_C_ABC.empty())
     {
-        contract_block(comm, cfg,
-                       alpha, conj_A, A, idx_A_AB, idx_A_AC,
-                              conj_B, B, idx_B_AB, idx_B_BC,
-                                      C, idx_C_AC, idx_C_BC);
+        contract_block_nofuse(comm, cfg,
+                              alpha, conj_A, A, idx_A_AB, idx_A_AC,
+                                     conj_B, B, idx_B_AB, idx_B_BC,
+                                             C, idx_C_AC, idx_C_BC);
     }
     else
     {

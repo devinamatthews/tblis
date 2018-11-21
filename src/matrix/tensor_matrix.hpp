@@ -18,10 +18,10 @@ class tensor_matrix : public abstract_matrix<T>
         typedef const stride_type* scatter_type;
 
     protected:
-        using abstract_matrix<T>::data_;
         using abstract_matrix<T>::tot_len_;
         using abstract_matrix<T>::cur_len_;
         using abstract_matrix<T>::off_;
+        T* data_ = nullptr;
         std::array<len_vector, 2> lens_ = {};
         std::array<stride_vector, 2> strides_ = {};
         std::array<bool, 2> pack_3d_ = {};
@@ -86,6 +86,17 @@ class tensor_matrix : public abstract_matrix<T>
             for (len_type len : lens_[1]) tot_len_[1] *= len;
 
             cur_len_ = tot_len_;
+        }
+
+        T* data() const
+        {
+            return data_;
+        }
+
+        T* data(T* ptr)
+        {
+            std::swap(data_, ptr);
+            return ptr;
         }
 
         stride_type stride(unsigned dim) const

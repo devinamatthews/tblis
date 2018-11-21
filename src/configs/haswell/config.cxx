@@ -21,11 +21,11 @@ int haswell_check()
         return -1;
     }
 
-    if (!check_features(features, FEATURE_FMA3))
-    {   
-        if (get_verbose() >= 1) printf("tblis: haswell: Doesn't support FMA3.\n");
-        return -1;
-    }
+    //if (!check_features(features, FEATURE_FMA3))
+    //{
+    //    if (get_verbose() >= 1) printf("tblis: haswell: Doesn't support FMA3.\n");
+    //    return -1;
+    //}
 
     if (!check_features(features, FEATURE_AVX2))
     {

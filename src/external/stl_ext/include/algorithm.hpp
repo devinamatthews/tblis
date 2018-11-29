@@ -507,7 +507,7 @@ template <typename T, typename U>
 T permuted(const T& v, const U& p)
 {
     T v2; v2.reserve(v.size());
-    for (size_t i = 0;i < v.size();i++) v2.push_back(v[p[i]]);
+    for (auto& i : p) v2.push_back(v[i]);
     return v2;
 }
 
@@ -561,6 +561,26 @@ T select_from(const T& v, const U& idx)
     T v2; v2.reserve(idx.size());
     for (auto& i : idx) v2.push_back(v[i]);
     return v2;
+}
+
+template <typename T, typename U>
+void append(T& t, const U& u)
+{
+    t.insert(t.end(), u.begin(), u.end());
+}
+
+template <typename T, typename U, typename V, typename... W>
+void append(T& t, const U& u, const V& v, const W&... w)
+{
+    append(t, u);
+    append(t, v, w...);
+}
+
+template <typename T, typename... U>
+T appended(T t, const U&... u)
+{
+    append(t, u...);
+    return t;
 }
 
 }

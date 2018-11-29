@@ -21,24 +21,41 @@ void mult_ukr_def(len_type n,
                            bool conj_B, const T* TBLIS_RESTRICT B, stride_type inc_B,
                   T  beta, bool conj_C,       T* TBLIS_RESTRICT C, stride_type inc_C)
 {
-    TBLIS_SPECIAL_CASE(is_complex<T>::value && conj_A,
-    TBLIS_SPECIAL_CASE(is_complex<T>::value && conj_B,
-    TBLIS_SPECIAL_CASE(is_complex<T>::value && conj_C,
+    if (is_complex<T>::value && conj_B && !conj_A)
     {
-        if (beta == T(0))
+        std::swap(conj_A, conj_B);
+        std::swap(A, B);
+        std::swap(inc_A, inc_B);
+    }
+
+    if (beta == T(0))
+    {
+        if (is_complex<T>::value && conj_A && conj_B)
         {
             if (inc_A == 1 && inc_B == 1 && inc_C == 1)
             {
                 #pragma omp simd
                 for (len_type i = 0;i < n;i++)
-                    C[i] = alpha*(conj_A ? conj(A[i]) : A[i])*
-                                 (conj_B ? conj(B[i]) : B[i]);
+                    C[i] = alpha*conj(A[i])*conj(B[i]);
             }
             else
             {
                 for (len_type i = 0;i < n;i++)
-                    C[i*inc_C] = alpha*(conj_A ? conj(A[i*inc_A]) : A[i*inc_A])*
-                                       (conj_B ? conj(B[i*inc_B]) : B[i*inc_B]);
+                    C[i*inc_C] = alpha*conj(A[i*inc_A])*conj(B[i*inc_B]);
+            }
+        }
+        else if (is_complex<T>::value && conj_A)
+        {
+            if (inc_A == 1 && inc_B == 1 && inc_C == 1)
+            {
+                #pragma omp simd
+                for (len_type i = 0;i < n;i++)
+                    C[i] = alpha*conj(A[i])*B[i];
+            }
+            else
+            {
+                for (len_type i = 0;i < n;i++)
+                    C[i*inc_C] = alpha*conj(A[i*inc_A])*B[i*inc_B];
             }
         }
         else
@@ -47,20 +64,107 @@ void mult_ukr_def(len_type n,
             {
                 #pragma omp simd
                 for (len_type i = 0;i < n;i++)
-                    C[i] = alpha*(conj_A ? conj(A[i]) : A[i])*
-                                 (conj_B ? conj(B[i]) : B[i]) +
-                            beta*(conj_C ? conj(C[i]) : C[i]);
+                    C[i] = alpha*A[i]*B[i];
             }
             else
             {
                 for (len_type i = 0;i < n;i++)
-                    C[i*inc_C] = alpha*(conj_A ? conj(A[i*inc_A]) : A[i*inc_A])*
-                                       (conj_B ? conj(B[i*inc_B]) : B[i*inc_B]) +
-                                  beta*(conj_C ? conj(C[i*inc_C]) : C[i*inc_C]);
+                    C[i*inc_C] = alpha*A[i*inc_A]*B[i*inc_B];
             }
         }
     }
-    )))
+    else
+    {
+        if (is_complex<T>::value && conj_A && conj_B && conj_C)
+        {
+            if (inc_A == 1 && inc_B == 1 && inc_C == 1)
+            {
+                #pragma omp simd
+                for (len_type i = 0;i < n;i++)
+                    C[i] = alpha*conj(A[i])*conj(B[i]) + beta*conj(C[i]);
+            }
+            else
+            {
+                for (len_type i = 0;i < n;i++)
+                    C[i*inc_C] = alpha*conj(A[i*inc_A])*conj(B[i*inc_B]) +
+                                  beta*conj(C[i*inc_C]);
+            }
+        }
+        else if (is_complex<T>::value && conj_A && conj_C)
+        {
+            if (inc_A == 1 && inc_B == 1 && inc_C == 1)
+            {
+                #pragma omp simd
+                for (len_type i = 0;i < n;i++)
+                    C[i] = alpha*conj(A[i])*B[i] + beta*conj(C[i]);
+            }
+            else
+            {
+                for (len_type i = 0;i < n;i++)
+                    C[i*inc_C] = alpha*conj(A[i*inc_A])*B[i*inc_B] +
+                                  beta*conj(C[i*inc_C]);
+            }
+        }
+        else if (is_complex<T>::value && conj_C)
+        {
+            if (inc_A == 1 && inc_B == 1 && inc_C == 1)
+            {
+                #pragma omp simd
+                for (len_type i = 0;i < n;i++)
+                    C[i] = alpha*A[i]*B[i] + beta*conj(C[i]);
+            }
+            else
+            {
+                for (len_type i = 0;i < n;i++)
+                    C[i*inc_C] = alpha*A[i*inc_A]*B[i*inc_B] +
+                                  beta*conj(C[i*inc_C]);
+            }
+        }
+        else if (is_complex<T>::value && conj_A && conj_B)
+        {
+            if (inc_A == 1 && inc_B == 1 && inc_C == 1)
+            {
+                #pragma omp simd
+                for (len_type i = 0;i < n;i++)
+                    C[i] = alpha*conj(A[i])*conj(B[i]) + beta*C[i];
+            }
+            else
+            {
+                for (len_type i = 0;i < n;i++)
+                    C[i*inc_C] = alpha*conj(A[i*inc_A])*conj(B[i*inc_B]) +
+                                  beta*C[i*inc_C];
+            }
+        }
+        else if (is_complex<T>::value && conj_A)
+        {
+            if (inc_A == 1 && inc_B == 1 && inc_C == 1)
+            {
+                #pragma omp simd
+                for (len_type i = 0;i < n;i++)
+                    C[i] = alpha*conj(A[i])*B[i] + beta*C[i];
+            }
+            else
+            {
+                for (len_type i = 0;i < n;i++)
+                    C[i*inc_C] = alpha*conj(A[i*inc_A])*B[i*inc_B] +
+                                  beta*C[i*inc_C];
+            }
+        }
+        else
+        {
+            if (inc_A == 1 && inc_B == 1 && inc_C == 1)
+            {
+                #pragma omp simd
+                for (len_type i = 0;i < n;i++)
+                    C[i] = alpha*A[i]*B[i] + beta*C[i];
+            }
+            else
+            {
+                for (len_type i = 0;i < n;i++)
+                    C[i*inc_C] = alpha*A[i*inc_A]*B[i*inc_B] + beta*C[i*inc_C];
+            }
+        }
+    }
 }
 
 }

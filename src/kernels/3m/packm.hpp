@@ -111,27 +111,14 @@ void pack_nn_ukr_def(len_type m, len_type k,
 
     if (m == MR && rs_a == 1)
     {
-        len_type p = 0;
-        for (;p < k-KR;p += KR)
+        for (len_type p = 0;p < k;p++)
         {
-            for (len_type kr = 0;kr < KR;kr++)
-            {
-                for (len_type mr = 0;mr < MR;mr++)
-                {
-                    p_ap[mr + ME*kr] = p_a[mr + cs_a*kr];
-                }
-            }
-
-            p_a += cs_a*KR;
-            p_ap += ME*KR;
-        }
-
-        for (len_type kr = 0;kr < k-p;kr++)
-        {
+            #pragma omp simd
             for (len_type mr = 0;mr < MR;mr++)
-            {
-                p_ap[mr + ME*kr] = p_a[mr + cs_a*kr];
-            }
+                p_ap[mr] = p_a[mr];
+
+            p_a += cs_a;
+            p_ap += ME;
         }
     }
     else if (m == MR && cs_a == 1)
@@ -140,38 +127,26 @@ void pack_nn_ukr_def(len_type m, len_type k,
         for (;p < k-KR;p += KR)
         {
             for (len_type kr = 0;kr < KR;kr++)
-            {
                 for (len_type mr = 0;mr < MR;mr++)
-                {
                     p_ap[mr + ME*kr] = p_a[rs_a*mr + kr];
-                }
-            }
 
             p_a += KR;
             p_ap += ME*KR;
         }
 
         for (len_type kr = 0;kr < k-p;kr++)
-        {
             for (len_type mr = 0;mr < MR;mr++)
-            {
                 p_ap[mr + ME*kr] = p_a[rs_a*mr + kr];
-            }
-        }
     }
     else
     {
         for (len_type p = 0;p < k;p++)
         {
             for (len_type mr = 0;mr < m;mr++)
-            {
                 p_ap[mr + ME*p] = p_a[rs_a*mr + cs_a*p];
-            }
 
             for (len_type mr = m;mr < MR;mr++)
-            {
                 p_ap[mr + ME*p] = T();
-            }
         }
     }
 }
@@ -189,71 +164,46 @@ void pack_nnd_ukr_def(len_type m, len_type k,
                                           : Config::template gemm_nr<T>::extent);
     constexpr len_type KR = Config::template gemm_kr<T>::def;
 
-    if (m == MR && rs_a == 1 && inc_d == 1)
+    if (m == MR && rs_a == 1)
     {
-        len_type p = 0;
-        for (;p < k-KR;p += KR)
+        for (len_type p = 0;p < k;p++)
         {
-            for (len_type kr = 0;kr < KR;kr++)
-            {
-                for (len_type mr = 0;mr < MR;mr++)
-                {
-                    p_ap[mr + ME*kr] = p_a[mr + cs_a*kr] * p_d[kr];
-                }
-            }
-
-            p_a += cs_a*KR;
-            p_d += KR;
-            p_ap += ME*KR;
-        }
-
-        for (len_type kr = 0;kr < k-p;kr++)
-        {
+            #pragma omp simd
             for (len_type mr = 0;mr < MR;mr++)
-            {
-                p_ap[mr + ME*kr] = p_a[mr + cs_a*kr] * p_d[kr];
-            }
+                p_ap[mr] = p_a[mr] * (*p_d);
+
+            p_a += cs_a;
+            p_d += inc_d;
+            p_ap += ME;
         }
     }
-    else if (m == MR && cs_a == 1 && inc_d == 1)
+    else if (m == MR && cs_a == 1)
     {
         len_type p = 0;
         for (;p < k-KR;p += KR)
         {
             for (len_type kr = 0;kr < KR;kr++)
-            {
                 for (len_type mr = 0;mr < MR;mr++)
-                {
-                    p_ap[mr + ME*kr] = p_a[rs_a*mr + kr] * p_d[kr];
-                }
-            }
+                    p_ap[mr + ME*kr] = p_a[rs_a*mr + kr] * p_d[kr*inc_d];
 
             p_a += KR;
-            p_d += KR;
+            p_d += inc_d*KR;
             p_ap += ME*KR;
         }
 
         for (len_type kr = 0;kr < k-p;kr++)
-        {
             for (len_type mr = 0;mr < MR;mr++)
-            {
-                p_ap[mr + ME*kr] = p_a[rs_a*mr + kr] * p_d[kr];
-            }
-        }
+                p_ap[mr + ME*kr] = p_a[rs_a*mr + kr] * p_d[kr*inc_d];
     }
     else
     {
         for (len_type p = 0;p < k;p++)
         {
             for (len_type mr = 0;mr < m;mr++)
-            {
                 p_ap[mr + ME*p] = p_a[rs_a*mr + cs_a*p] * p_d[inc_d*p];
-            }
 
             for (len_type mr = m;mr < MR;mr++)
-            {
                 p_ap[mr + ME*p] = T();
-            }
         }
     }
 }
@@ -273,14 +223,10 @@ void pack_sn_ukr_def(len_type m, len_type k,
     for (len_type p = 0;p < k;p++)
     {
         for (len_type mr = 0;mr < m;mr++)
-        {
             p_ap[mr + ME*p] = p_a[rscat_a[mr] + cs_a*p];
-        }
 
         for (len_type mr = m;mr < MR;mr++)
-        {
             p_ap[mr + ME*p] = T();
-        }
     }
 }
 
@@ -299,14 +245,10 @@ void pack_ns_ukr_def(len_type m, len_type k,
     for (len_type p = 0;p < k;p++)
     {
         for (len_type mr = 0;mr < m;mr++)
-        {
             p_ap[mr + ME*p] = p_a[rs_a*mr + cscat_a[p]];
-        }
 
         for (len_type mr = m;mr < MR;mr++)
-        {
             p_ap[mr + ME*p] = T();
-        }
     }
 }
 
@@ -326,14 +268,10 @@ void pack_ss_ukr_def(len_type m, len_type k,
     for (len_type p = 0;p < k;p++)
     {
         for (len_type mr = 0;mr < m;mr++)
-        {
             p_ap[mr + ME*p] = p_a[rscat_a[mr] + cscat_a[p]];
-        }
 
         for (len_type mr = m;mr < MR;mr++)
-        {
             p_ap[mr + ME*p] = T();
-        }
     }
 }
 
@@ -362,22 +300,16 @@ void pack_nb_ukr_def(len_type m, len_type k,
             if (cs_a)
             {
                 for (len_type kr = 0;kr < k_loc;kr++)
-                {
+                    #pragma omp simd
                     for (len_type mr = 0;mr < MR;mr++)
-                    {
                         p_ap[mr + ME*kr] = p_a[mr + cs_a*kr + off_a];
-                    }
-                }
             }
             else
             {
                 for (len_type kr = 0;kr < k_loc;kr++)
-                {
+                    #pragma omp simd
                     for (len_type mr = 0;mr < MR;mr++)
-                    {
                         p_ap[mr + ME*kr] = p_a[mr + cscat_a[kr]];
-                    }
-                }
             }
 
             p_ap += ME*KR;
@@ -396,32 +328,20 @@ void pack_nb_ukr_def(len_type m, len_type k,
             if (cs_a == 1)
             {
                 for (len_type kr = 0;kr < k_loc;kr++)
-                {
                     for (len_type mr = 0;mr < MR;mr++)
-                    {
                         p_ap[mr + ME*kr] = p_a[rs_a*mr + kr + off_a];
-                    }
-                }
             }
             else if (cs_a)
             {
                 for (len_type kr = 0;kr < k_loc;kr++)
-                {
                     for (len_type mr = 0;mr < MR;mr++)
-                    {
                         p_ap[mr + ME*kr] = p_a[rs_a*mr + cs_a*kr + off_a];
-                    }
-                }
             }
             else
             {
                 for (len_type kr = 0;kr < k_loc;kr++)
-                {
                     for (len_type mr = 0;mr < MR;mr++)
-                    {
                         p_ap[mr + ME*kr] = p_a[rs_a*mr + cscat_a[kr]];
-                    }
-                }
             }
 
             p_ap += ME*KR;
@@ -434,14 +354,10 @@ void pack_nb_ukr_def(len_type m, len_type k,
         for (len_type p = 0;p < k;p++)
         {
             for (len_type mr = 0;mr < m;mr++)
-            {
                 p_ap[mr + ME*p] = p_a[rs_a*mr + cscat_a[p]];
-            }
 
             for (len_type mr = m;mr < MR;mr++)
-            {
                 p_ap[mr + ME*p] = T();
-            }
         }
     }
 }
@@ -465,14 +381,10 @@ void pack_sb_ukr_def(len_type m, len_type k,
     for (len_type p = 0;p < k;p++)
     {
         for (len_type mr = 0;mr < m;mr++)
-        {
             p_ap[mr + ME*p] = p_a[rscat_a[mr] + cscat_a[p]];
-        }
 
         for (len_type mr = m;mr < MR;mr++)
-        {
             p_ap[mr + ME*p] = T();
-        }
     }
 }
 

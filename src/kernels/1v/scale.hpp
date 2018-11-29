@@ -30,21 +30,34 @@ void scale_ukr_def(len_type n,
     }
     else
     {
-        TBLIS_SPECIAL_CASE(is_complex<T>::value && conj_A,
+        if (is_complex<T>::value && conj_A)
         {
             if (inc_A == 1)
             {
                 #pragma omp simd
                 for (len_type i = 0;i < n;i++)
-                    A[i] = alpha*(conj_A ? conj(A[i]) : A[i]);
+                    A[i] = alpha*conj(A[i]);
             }
             else
             {
                 for (len_type i = 0;i < n;i++)
-                    A[i*inc_A] = alpha*(conj_A ? conj(A[i*inc_A]) : A[i*inc_A]);
+                    A[i*inc_A] = alpha*conj(A[i*inc_A]);
             }
         }
-        )
+        else
+        {
+            if (inc_A == 1)
+            {
+                #pragma omp simd
+                for (len_type i = 0;i < n;i++)
+                    A[i] = alpha*A[i];
+            }
+            else
+            {
+                for (len_type i = 0;i < n;i++)
+                    A[i*inc_A] = alpha*A[i*inc_A];
+            }
+        }
     }
 }
 

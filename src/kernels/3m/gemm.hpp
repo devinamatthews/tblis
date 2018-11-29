@@ -37,13 +37,10 @@ void gemm_ukr_def(stride_type k,
 
     while (k --> 0)
     {
-        for (int j = 0;j < NR;j++)
-        {
-            for (int i = 0;i < MR;i++)
-            {
-                p_ab[i + MR*j] += p_a[i] * p_b[j];
-            }
-        }
+        for (int i = 0;i < MR;i++)
+            #pragma omp simd
+            for (int j = 0;j < NR;j++)
+                p_ab[i*NR + j] += p_a[i] * p_b[j];
 
         p_a += MR;
         p_b += NR;
@@ -51,24 +48,16 @@ void gemm_ukr_def(stride_type k,
 
     if (*beta == T(0))
     {
-        for (len_type j = 0;j < NR;j++)
-        {
-            for (len_type i = 0;i < MR;i++)
-            {
-                p_c[i*rs_c + j*cs_c] = (*alpha)*p_ab[i + MR*j];
-            }
-        }
+        for (len_type i = 0;i < MR;i++)
+            for (len_type j = 0;j < NR;j++)
+                p_c[i*rs_c + j*cs_c] = (*alpha)*p_ab[i*NR + j];
     }
     else
     {
-        for (len_type j = 0;j < NR;j++)
-        {
-            for (len_type i = 0;i < MR;i++)
-            {
-                p_c[i*rs_c + j*cs_c] = (*alpha)*p_ab[i + MR*j] +
+        for (len_type i = 0;i < MR;i++)
+            for (len_type j = 0;j < NR;j++)
+                p_c[i*rs_c + j*cs_c] = (*alpha)*p_ab[i*NR + j] +
                                        (*beta)*p_c[i*rs_c + j*cs_c];
-            }
-        }
     }
 }
 

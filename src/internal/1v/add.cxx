@@ -13,18 +13,9 @@ void add(const communicator& comm, const config& cfg, len_type n,
     comm.distribute_over_threads(n,
     [&](len_type n_min, len_type n_max)
     {
-        if (beta == T(0))
-        {
-            cfg.copy_ukr.call<T>(n_max-n_min,
-                                 alpha, conj_A, A + n_min*inc_A, inc_A,
-                                                B + n_min*inc_B, inc_B);
-        }
-        else
-        {
-            cfg.add_ukr.call<T>(n_max-n_min,
-                                alpha, conj_A, A + n_min*inc_A, inc_A,
-                                 beta, conj_B, B + n_min*inc_B, inc_B);
-        }
+        cfg.add_ukr.call<T>(n_max-n_min,
+                            alpha, conj_A, A + n_min*inc_A, inc_A,
+                             beta, conj_B, B + n_min*inc_B, inc_B);
     });
 }
 

@@ -7,15 +7,17 @@
 #include "util/env.hpp"
 
 #include "kernels/1v/add.hpp"
-#include "kernels/1v/copy.hpp"
 #include "kernels/1v/dot.hpp"
+#include "kernels/1v/mult.hpp"
 #include "kernels/1v/reduce.hpp"
 #include "kernels/1v/scale.hpp"
 #include "kernels/1v/set.hpp"
 #include "kernels/1v/shift.hpp"
 
-#include "kernels/1m/trans_add.hpp"
-#include "kernels/1m/trans_copy.hpp"
+#include "kernels/1f/addf.hpp"
+#include "kernels/1f/dotf.hpp"
+
+#include "kernels/1m/trans.hpp"
 
 #include "kernels/3m/gemm.hpp"
 #include "kernels/3m/packm.hpp"
@@ -97,12 +99,22 @@ struct config
      */
 
     microkernel<add_ukr_t> add_ukr;
-    microkernel<copy_ukr_t> copy_ukr;
     microkernel<dot_ukr_t> dot_ukr;
+    microkernel<mult_ukr_t> mult_ukr;
     microkernel<reduce_ukr_t> reduce_ukr;
     microkernel<scale_ukr_t> scale_ukr;
     microkernel<set_ukr_t> set_ukr;
     microkernel<shift_ukr_t> shift_ukr;
+
+    /*
+     * Level 1f kernels
+     */
+
+    blocksize addf_nf;
+    blocksize dotf_nf;
+
+    microkernel<addf_ukr_t> addf_ukr;
+    microkernel<dotf_ukr_t> dotf_ukr;
 
     /*
      * Level 1m kernels
@@ -111,10 +123,7 @@ struct config
     blocksize trans_mr;
     blocksize trans_nr;
 
-    microkernel<trans_add_ukr_t> trans_add_ukr;
-    microkernel<trans_copy_ukr_t> trans_copy_ukr;
-
-    parameter<bool> trans_row_major;
+    microkernel<trans_ukr_t> trans_ukr;
 
     /*
      * GEMM blocksizes and kernels
@@ -157,20 +166,23 @@ struct config
 
     template <typename Traits> config(const Traits&)
     : add_ukr(typename Traits::template add_ukr<float>()),
-      copy_ukr(typename Traits::template copy_ukr<float>()),
       dot_ukr(typename Traits::template dot_ukr<float>()),
+      mult_ukr(typename Traits::template mult_ukr<float>()),
       reduce_ukr(typename Traits::template reduce_ukr<float>()),
       scale_ukr(typename Traits::template scale_ukr<float>()),
       set_ukr(typename Traits::template set_ukr<float>()),
       shift_ukr(typename Traits::template shift_ukr<float>()),
 
+      addf_nf(typename Traits::template addf_nf<float>()),
+      dotf_nf(typename Traits::template dotf_nf<float>()),
+
+      addf_ukr(typename Traits::template addf_ukr<float>()),
+      dotf_ukr(typename Traits::template dotf_ukr<float>()),
+
       trans_mr(typename Traits::template trans_mr<float>()),
       trans_nr(typename Traits::template trans_nr<float>()),
 
-      trans_add_ukr(typename Traits::template trans_add_ukr<float>()),
-      trans_copy_ukr(typename Traits::template trans_copy_ukr<float>()),
-
-      trans_row_major(typename Traits::template trans_row_major<float>()),
+      trans_ukr(typename Traits::template trans_ukr<float>()),
 
       gemm_mr(typename Traits::template gemm_mr<float>()),
       gemm_nr(typename Traits::template gemm_nr<float>()),

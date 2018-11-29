@@ -26,12 +26,20 @@ void dot_ukr_def(len_type n,
     }
 
     TBLIS_SPECIAL_CASE(is_complex<T>::value && conj_B,
-    TBLIS_SPECIAL_CASE(inc_A == 1 && inc_B == 1,
     {
-        for (len_type i = 0;i < n;i++)
-            value += A[i*inc_A] * (conj_B ? conj(B[i*inc_B]) : B[i*inc_B]);
+        if (inc_A == 1 && inc_B == 1)
+        {
+            #pragma omp simd
+            for (len_type i = 0;i < n;i++)
+                value += A[i] * (conj_B ? conj(B[i]) : B[i]);
+        }
+        else
+        {
+            for (len_type i = 0;i < n;i++)
+                value += A[i*inc_A] * (conj_B ? conj(B[i*inc_B]) : B[i*inc_B]);
+        }
     }
-    ))
+    )
 
     if (conj_A)
     {

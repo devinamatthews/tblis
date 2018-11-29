@@ -481,6 +481,15 @@ void matricize(varray_view<T>  A,
     matricize<T>(A, reinterpret_cast<matrix_view<const T>&>(AM), split);
 }
 
+inline unsigned unit_dim(const stride_vector& stride, const dim_vector& reorder)
+{
+    for (unsigned i = 0;i < reorder.size();i++)
+        if (stride[reorder[i]] == 1)
+            return i;
+
+    return reorder.size();
+}
+
 }
 
 #endif

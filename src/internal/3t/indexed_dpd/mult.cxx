@@ -88,19 +88,6 @@ void mult_full(const communicator& comm, const config& cfg,
     A2, B2, C2);
 }
 
-template <typename T, typename U>
-void append(T& t, const U& u)
-{
-    t.insert(t.end(), u.begin(), u.end());
-}
-
-template <typename T, typename U>
-T appended(T t, const U& u)
-{
-    append(t, u);
-    return t;
-}
-
 template <typename T>
 void contract_block_nofuse(const communicator& comm, const config& cfg,
                            T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A,
@@ -135,19 +122,19 @@ void contract_block_nofuse(const communicator& comm, const config& cfg,
     auto nidx_B = indices_B.size();
     auto nidx_C = indices_C.size();
 
-    auto mixed_dim_A = appended(group_AC.mixed_idx[1],
-                                group_AB.mixed_idx[0]);
-    auto mixed_dim_B = appended(group_AB.mixed_idx[1],
-                                group_BC.mixed_idx[1]);
-    auto mixed_dim_C = appended(group_AC.mixed_idx[0],
-                                group_BC.mixed_idx[0]);
+    auto mixed_dim_A = stl_ext::appended(group_AC.mixed_idx[1],
+                                         group_AB.mixed_idx[0]);
+    auto mixed_dim_B = stl_ext::appended(group_AB.mixed_idx[1],
+                                         group_BC.mixed_idx[1]);
+    auto mixed_dim_C = stl_ext::appended(group_AC.mixed_idx[0],
+                                         group_BC.mixed_idx[0]);
 
-    auto mixed_irrep_A = appended(stl_ext::select_from(group_AC.batch_irrep, group_AC.mixed_pos[1]),
-                                  stl_ext::select_from(group_AB.batch_irrep, group_AB.mixed_pos[0]));
-    auto mixed_irrep_B = appended(stl_ext::select_from(group_AB.batch_irrep, group_AB.mixed_pos[1]),
-                                  stl_ext::select_from(group_BC.batch_irrep, group_BC.mixed_pos[1]));
-    auto mixed_irrep_C = appended(stl_ext::select_from(group_AC.batch_irrep, group_AC.mixed_pos[0]),
-                                  stl_ext::select_from(group_BC.batch_irrep, group_BC.mixed_pos[0]));
+    auto mixed_irrep_A = stl_ext::appended(stl_ext::select_from(group_AC.batch_irrep, group_AC.mixed_pos[1]),
+                                           stl_ext::select_from(group_AB.batch_irrep, group_AB.mixed_pos[0]));
+    auto mixed_irrep_B = stl_ext::appended(stl_ext::select_from(group_AB.batch_irrep, group_AB.mixed_pos[1]),
+                                           stl_ext::select_from(group_BC.batch_irrep, group_BC.mixed_pos[1]));
+    auto mixed_irrep_C = stl_ext::appended(stl_ext::select_from(group_AC.batch_irrep, group_AC.mixed_pos[0]),
+                                           stl_ext::select_from(group_BC.batch_irrep, group_BC.mixed_pos[0]));
 
     for (unsigned irrep_AB0 = 0;irrep_AB0 < nirrep;irrep_AB0++)
     {
@@ -207,12 +194,12 @@ void contract_block_nofuse(const communicator& comm, const config& cfg,
                             dpd_B.data(B.data(0) + indices_B[local_idx_B].offset);
                             dpd_C.data(C.data(0) + indices_C[      idx_C].offset);
 
-                            auto mixed_idx_A = appended(stl_ext::select_from(indices_A[local_idx_A].idx[0], group_AC.mixed_pos[1]),
-                                                        stl_ext::select_from(indices_A[local_idx_A].idx[1], group_AB.mixed_pos[0]));
-                            auto mixed_idx_B = appended(stl_ext::select_from(indices_B[local_idx_B].idx[1], group_AB.mixed_pos[1]),
-                                                        stl_ext::select_from(indices_B[local_idx_B].idx[0], group_BC.mixed_pos[1]));
-                            auto mixed_idx_C = appended(stl_ext::select_from(indices_C[      idx_C].idx[0], group_AC.mixed_pos[0]),
-                                                        stl_ext::select_from(indices_C[      idx_C].idx[1], group_BC.mixed_pos[0]));
+                            auto mixed_idx_A = stl_ext::appended(stl_ext::select_from(indices_A[local_idx_A].idx[0], group_AC.mixed_pos[1]),
+                                                                 stl_ext::select_from(indices_A[local_idx_A].idx[1], group_AB.mixed_pos[0]));
+                            auto mixed_idx_B = stl_ext::appended(stl_ext::select_from(indices_B[local_idx_B].idx[1], group_AB.mixed_pos[1]),
+                                                                 stl_ext::select_from(indices_B[local_idx_B].idx[0], group_BC.mixed_pos[1]));
+                            auto mixed_idx_C = stl_ext::appended(stl_ext::select_from(indices_C[      idx_C].idx[0], group_AC.mixed_pos[0]),
+                                                                 stl_ext::select_from(indices_C[      idx_C].idx[1], group_BC.mixed_pos[0]));
 
                             dpd_tensor_matrix<T> at(dpd_A, group_AC.dense_idx[1], group_AB.dense_idx[0], irrep_AB,
                                                     mixed_dim_A, mixed_irrep_A, mixed_idx_A, group_AC.pack_3d, group_AB.pack_3d);

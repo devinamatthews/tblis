@@ -3,6 +3,7 @@ lib_libtblis_la_SOURCES = \
     \
     src/iface/1v/add.cxx \
     src/iface/1v/dot.cxx \
+    src/iface/1v/mult.cxx \
     src/iface/1v/reduce.cxx \
     src/iface/1v/scale.cxx \
     src/iface/1v/set.cxx \
@@ -22,12 +23,15 @@ lib_libtblis_la_SOURCES = \
     src/iface/1t/set.cxx \
     src/iface/1t/shift.cxx \
     \
+    src/iface/2m/mult.cxx \
+    \
     src/iface/3m/mult.cxx \
     \
     src/iface/3t/mult.cxx \
     \
     src/internal/1v/add.cxx \
     src/internal/1v/dot.cxx \
+    src/internal/1v/mult.cxx \
     src/internal/1v/reduce.cxx \
     src/internal/1v/scale.cxx \
     src/internal/1v/set.cxx \
@@ -67,6 +71,8 @@ lib_libtblis_la_SOURCES = \
     src/internal/1t/indexed_dpd/scale.cxx \
     src/internal/1t/indexed_dpd/set.cxx \
     src/internal/1t/indexed_dpd/shift.cxx \
+    \
+    src/internal/2m/mult.cxx \
     \
     src/internal/3m/mult.cxx \
     \

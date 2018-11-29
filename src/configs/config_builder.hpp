@@ -57,6 +57,11 @@ config cfg##_config_instance = config(cfg##_config());
         TBLIS_GET_VALUE_OR_DEFAULT(CM,TBLIS_GET_VALUE_OR_DEFAULT(C,CD)), \
         TBLIS_GET_VALUE_OR_DEFAULT(ZM,TBLIS_GET_VALUE_OR_DEFAULT(Z,ZD))> {};
 
+#define TBLIS_CONFIG_ADDF_NF(S,D,C,Z) \
+    TBLIS_CONFIG_REGISTER_BLOCKSIZE(addf_nf, S,D,C,Z, S,D,C,Z, 8,8,8,8)
+#define TBLIS_CONFIG_DOTF_NF(S,D,C,Z) \
+    TBLIS_CONFIG_REGISTER_BLOCKSIZE(dotf_nf, S,D,C,Z, S,D,C,Z, 8,8,8,8)
+
 #define TBLIS_CONFIG_TRANS_MR(S,D,C,Z) \
     TBLIS_CONFIG_REGISTER_BLOCKSIZE(trans_mr, S,D,C,Z, S,D,C,Z, 8,4,4,4)
 #define TBLIS_CONFIG_TRANS_NR(S,D,C,Z) \
@@ -97,8 +102,6 @@ config cfg##_config_instance = config(cfg##_config());
         TBLIS_GET_VALUE_OR_DEFAULT(C,CD), \
         TBLIS_GET_VALUE_OR_DEFAULT(Z,ZD)> {};
 
-#define TBLIS_CONFIG_TRANS_ROW_MAJOR(S,D,C,Z) \
-    TBLIS_CONFIG_PARAMETER(trans_row_major, bool, S,D,C,Z, false,false,false,false)
 #define TBLIS_CONFIG_GEMM_ROW_MAJOR(S,D,C,Z) \
     TBLIS_CONFIG_PARAMETER(gemm_row_major, bool, S,D,C,Z, false,false,false,false)
 #define TBLIS_CONFIG_GEMM_FLIP_UKR(S,D,C,Z) \
@@ -134,17 +137,15 @@ config cfg##_config_instance = config(cfg##_config());
         type<scomplex>, TBLIS_GET_VALUE_OR_DEFAULT(C,(def_ker<config,scomplex,mat>)), \
         type<dcomplex>, TBLIS_GET_VALUE_OR_DEFAULT(Z,(def_ker<config,dcomplex,mat>))> {};
 
-#define TBLIS_CONFIG_TRANS_ADD_UKR(S,D,C,Z) \
-    TBLIS_CONFIG_UKR2(this_config, trans_add_ukr, trans_add_ukr_t, S,D,C,Z, trans_add_ukr_def)
-#define TBLIS_CONFIG_TRANS_COPY_UKR(S,D,C,Z) \
-    TBLIS_CONFIG_UKR2(this_config, trans_copy_ukr, trans_copy_ukr_t, S,D,C,Z, trans_copy_ukr_def)
+#define TBLIS_CONFIG_TRANS_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR2(this_config, trans_ukr, trans_ukr_t, S,D,C,Z, trans_ukr_def)
 
 #define TBLIS_CONFIG_ADD_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, add_ukr, add_ukr_t, S,D,C,Z, add_ukr_def)
-#define TBLIS_CONFIG_COPY_UKR(S,D,C,Z) \
-    TBLIS_CONFIG_UKR2(this_config, copy_ukr, copy_ukr_t, S,D,C,Z, copy_ukr_def)
 #define TBLIS_CONFIG_DOT_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, dot_ukr, dot_ukr_t, S,D,C,Z, dot_ukr_def)
+#define TBLIS_CONFIG_MULT_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR2(this_config, mult_ukr, mult_ukr_t, S,D,C,Z, mult_ukr_def)
 #define TBLIS_CONFIG_REDUCE_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, reduce_ukr, reduce_ukr_t, S,D,C,Z, reduce_ukr_def)
 #define TBLIS_CONFIG_SCALE_UKR(S,D,C,Z) \
@@ -153,6 +154,11 @@ config cfg##_config_instance = config(cfg##_config());
     TBLIS_CONFIG_UKR2(this_config, set_ukr, set_ukr_t, S,D,C,Z, set_ukr_def)
 #define TBLIS_CONFIG_SHIFT_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, shift_ukr, shift_ukr_t, S,D,C,Z, shift_ukr_def)
+
+#define TBLIS_CONFIG_ADDF_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR2(this_config, addf_ukr, addf_ukr_t, S,D,C,Z, addf_ukr_def)
+#define TBLIS_CONFIG_DOTF_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR2(this_config, dotf_ukr, dotf_ukr_t, S,D,C,Z, dotf_ukr_def)
 
 #define TBLIS_CONFIG_GEMM_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, gemm_ukr, gemm_ukr_t, S,D,C,Z, gemm_ukr_def)
@@ -281,18 +287,21 @@ struct config_template
     typedef Config this_config;
 
     TBLIS_CONFIG_ADD_UKR(_,_,_,_)
-    TBLIS_CONFIG_COPY_UKR(_,_,_,_)
     TBLIS_CONFIG_DOT_UKR(_,_,_,_)
+    TBLIS_CONFIG_MULT_UKR(_,_,_,_)
     TBLIS_CONFIG_REDUCE_UKR(_,_,_,_)
     TBLIS_CONFIG_SCALE_UKR(_,_,_,_)
     TBLIS_CONFIG_SET_UKR(_,_,_,_)
     TBLIS_CONFIG_SHIFT_UKR(_,_,_,_)
 
+    TBLIS_CONFIG_ADDF_NF(_,_,_,_)
+    TBLIS_CONFIG_DOTF_NF(_,_,_,_)
+    TBLIS_CONFIG_ADDF_UKR(_,_,_,_)
+    TBLIS_CONFIG_DOTF_UKR(_,_,_,_)
+
     TBLIS_CONFIG_TRANS_MR(_,_,_,_)
     TBLIS_CONFIG_TRANS_NR(_,_,_,_)
-    TBLIS_CONFIG_TRANS_ADD_UKR(_,_,_,_)
-    TBLIS_CONFIG_TRANS_COPY_UKR(_,_,_,_)
-    TBLIS_CONFIG_TRANS_ROW_MAJOR(_,_,_,_)
+    TBLIS_CONFIG_TRANS_UKR(_,_,_,_)
 
     TBLIS_CONFIG_GEMM_MR(_,_,_,_)
     TBLIS_CONFIG_GEMM_NR(_,_,_,_)

@@ -17,10 +17,14 @@ template <typename Config, typename T>
 void set_ukr_def(len_type n,
                  T alpha, T* A, stride_type inc_A)
 {
-    TBLIS_SPECIAL_CASE(inc_A == 1,
+    if (inc_A == 1)
     {
-        for (int i = 0;i < n;i++) A[i*inc_A] = alpha;
-    })
+        for (len_type i = 0;i < n;i++) A[i] = alpha;
+    }
+    else
+    {
+        for (len_type i = 0;i < n;i++) A[i*inc_A] = alpha;
+    }
 }
 
 }

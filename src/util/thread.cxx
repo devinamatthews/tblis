@@ -60,7 +60,7 @@ struct thread_configuration
 
             std::string s;
             int c;
-            while ((c = fgetc(fd)) != EOF) s.push_back(c);
+            while ((c = fgetc(fd)) != EOF) s.push_back(c+1);
 
             pclose(fd);
 

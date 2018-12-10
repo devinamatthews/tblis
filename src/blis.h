@@ -11,11 +11,12 @@ using namespace tblis;
 typedef len_type dim_t;
 typedef stride_type inc_t;
 
-typedef struct {} auxinfo_t;
+typedef struct { const void *a_next, *b_next;
+                       void *c_prefetch; } auxinfo_t;
 typedef struct {} cntx_t;
 
-#define bli_auxinfo_next_a(x) a
-#define bli_auxinfo_next_b(x) b
+#define bli_auxinfo_next_a(x) x->a_next;
+#define bli_auxinfo_next_b(x) x->b_next;
 
 typedef enum
 {

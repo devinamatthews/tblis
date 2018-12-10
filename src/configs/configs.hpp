@@ -113,7 +113,8 @@ struct config
     blocksize addf_nf;
     blocksize dotf_nf;
 
-    microkernel<addf_ukr_t> addf_ukr;
+    microkernel<addf_sum_ukr_t> addf_sum_ukr;
+    microkernel<addf_rep_ukr_t> addf_rep_ukr;
     microkernel<dotf_ukr_t> dotf_ukr;
 
     /*
@@ -155,6 +156,8 @@ struct config
     microkernel<pack_nb_ukr_t> pack_nb_nr_ukr;
     microkernel<pack_sb_ukr_t> pack_sb_mr_ukr;
     microkernel<pack_sb_ukr_t> pack_sb_nr_ukr;
+    microkernel<pack_ss_scal_ukr_t> pack_ss_scal_mr_ukr;
+    microkernel<pack_ss_scal_ukr_t> pack_ss_scal_nr_ukr;
 
     parameter<unsigned> m_thread_ratio;
     parameter<unsigned> n_thread_ratio;
@@ -176,7 +179,8 @@ struct config
       addf_nf(typename Traits::template addf_nf<float>()),
       dotf_nf(typename Traits::template dotf_nf<float>()),
 
-      addf_ukr(typename Traits::template addf_ukr<float>()),
+      addf_sum_ukr(typename Traits::template addf_sum_ukr<float>()),
+      addf_rep_ukr(typename Traits::template addf_rep_ukr<float>()),
       dotf_ukr(typename Traits::template dotf_ukr<float>()),
 
       trans_mr(typename Traits::template trans_mr<float>()),
@@ -210,6 +214,8 @@ struct config
       pack_nb_nr_ukr(typename Traits::template pack_nb_nr_ukr<float>()),
       pack_sb_mr_ukr(typename Traits::template pack_sb_mr_ukr<float>()),
       pack_sb_nr_ukr(typename Traits::template pack_sb_nr_ukr<float>()),
+      pack_ss_scal_mr_ukr(typename Traits::template pack_ss_scal_mr_ukr<float>()),
+      pack_ss_scal_nr_ukr(typename Traits::template pack_ss_scal_nr_ukr<float>()),
 
       m_thread_ratio(typename Traits::template m_thread_ratio<float>()),
       n_thread_ratio(typename Traits::template n_thread_ratio<float>()),

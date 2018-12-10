@@ -25,6 +25,12 @@ struct is_pack : std::false_type {};
 template <int Mat, blocksize config::*BS, MemoryPool& Pool, typename Child>
 struct is_pack<pack<Mat, BS, Pool, Child>> : std::true_type {};
 
+template <typename Matrix, typename=void>
+struct needs_matrify : std::false_type {};
+
+template <typename Matrix>
+struct needs_matrify<Matrix, std::enable_if_t<Matrix::needs_matrify>> : std::true_type {};
+
 }
 
 template <int Mat> struct matrify_and_run;
@@ -33,7 +39,16 @@ template <int Mat, blocksize config::*MBS, blocksize config::*NBS, MemoryPool& P
 struct matrify;
 
 template <typename Matrify, typename Child, typename MatrixA>
-detail::enable_if_t<!detail::is_pack<Child>::value>
+detail::enable_if_t<!detail::is_pack<Child>::value &&
+                    !detail::needs_matrify<MatrixA>::value>
+allocate_buffers(len_type MB, len_type NB, Matrify& parent, Child&,
+                 const communicator& comm, MatrixA& A)
+{
+}
+
+template <typename Matrify, typename Child, typename MatrixA>
+detail::enable_if_t<!detail::is_pack<Child>::value &&
+                    detail::needs_matrify<MatrixA>::value>
 allocate_buffers(len_type MB, len_type NB, Matrify& parent, Child&,
                  const communicator& comm, MatrixA& A)
 {
@@ -61,7 +76,31 @@ allocate_buffers(len_type MB, len_type NB, Matrify& parent, Child&,
 }
 
 template <typename Matrify, typename Child, typename MatrixA>
-detail::enable_if_t<detail::is_pack<Child>::value>
+detail::enable_if_t<detail::is_pack<Child>::value &&
+                    !detail::needs_matrify<MatrixA>::value>
+allocate_buffers(len_type MB, len_type NB, Matrify& parent, Child& child,
+                 const communicator& comm, MatrixA& A)
+{
+    typedef typename MatrixA::value_type T;
+
+    if (!child.pack_ptr)
+    {
+        len_type m = A.length(0);
+        len_type n = A.length(1);
+
+        if (comm.master())
+        {
+            child.pack_buffer = parent.pool().template allocate<T>(m*n + std::max(m,n)*TBLIS_MAX_UNROLL);
+            child.pack_ptr = child.pack_buffer.get();
+        }
+
+        comm.broadcast_value(child.pack_ptr);
+    }
+}
+
+template <typename Matrify, typename Child, typename MatrixA>
+detail::enable_if_t<detail::is_pack<Child>::value &&
+                    detail::needs_matrify<MatrixA>::value>
 allocate_buffers(len_type MB, len_type NB, Matrify& parent, Child& child,
                  const communicator& comm, MatrixA& A)
 {
@@ -96,7 +135,17 @@ template <> struct matrify_and_run<matrix_constants::MAT_A>
 {
     template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
     matrify_and_run(len_type MB, len_type NB, Parent& parent, const communicator& comm, const config& cfg,
-                    T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
+                    T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C,
+                    std::enable_if_t<!detail::needs_matrify<MatrixA>::value>* = 0)
+    {
+        allocate_buffers(MB, NB, parent, parent.child, comm, A);
+        parent.child(comm, cfg, alpha, A, B, beta, C);
+    }
+
+    template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
+    matrify_and_run(len_type MB, len_type NB, Parent& parent, const communicator& comm, const config& cfg,
+                    T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C,
+                    std::enable_if_t<detail::needs_matrify<MatrixA>::value>* = 0)
     {
         allocate_buffers(MB, NB, parent, parent.child, comm, A);
         patch_block_scatter_matrix<T> M(comm, A,
@@ -111,7 +160,17 @@ template <> struct matrify_and_run<matrix_constants::MAT_B>
 {
     template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
     matrify_and_run(len_type MB, len_type NB, Parent& parent, const communicator& comm, const config& cfg,
-                    T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
+                    T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C,
+                    std::enable_if_t<!detail::needs_matrify<MatrixB>::value>* = 0)
+    {
+        allocate_buffers(MB, NB, parent, parent.child, comm, B);
+        parent.child(comm, cfg, alpha, A, B, beta, C);
+    }
+
+    template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
+    matrify_and_run(len_type MB, len_type NB, Parent& parent, const communicator& comm, const config& cfg,
+                    T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C,
+                    std::enable_if_t<detail::needs_matrify<MatrixB>::value>* = 0)
     {
         allocate_buffers(MB, NB, parent, parent.child, comm, B);
         patch_block_scatter_matrix<T> M(comm, B,
@@ -126,7 +185,17 @@ template <> struct matrify_and_run<matrix_constants::MAT_C>
 {
     template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
     matrify_and_run(len_type MB, len_type NB, Parent& parent, const communicator& comm, const config& cfg,
-                    T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
+                    T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C,
+                    std::enable_if_t<!detail::needs_matrify<MatrixC>::value>* = 0)
+    {
+        allocate_buffers(MB, NB, parent, parent.child, comm, C);
+        parent.child(comm, cfg, alpha, A, B, beta, C);
+    }
+
+    template <typename T, typename Parent, typename MatrixA, typename MatrixB, typename MatrixC>
+    matrify_and_run(len_type MB, len_type NB, Parent& parent, const communicator& comm, const config& cfg,
+                    T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C,
+                    std::enable_if_t<detail::needs_matrify<MatrixC>::value>* = 0)
     {
         allocate_buffers(MB, NB, parent, parent.child, comm, C);
         patch_block_scatter_matrix<T> M(comm, C,

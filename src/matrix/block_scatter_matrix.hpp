@@ -9,6 +9,7 @@
 
 #include "normal_matrix.hpp"
 #include "tensor_matrix.hpp"
+#include "scatter_tensor_matrix.hpp"
 #include "dpd_tensor_matrix.hpp"
 
 namespace tblis
@@ -64,10 +65,9 @@ class block_scatter_matrix : public abstract_matrix<T>
         std::array<stride_type*, 2> block_stride_ = {};
         std::array<len_type, 2> block_size_ = {};
 
-        static void fill_block_scatter(len_vector len, stride_vector stride, len_type BS,
-                                       stride_type off, stride_type size,
-                                       stride_type* scat, stride_type* bs,
-                                       bool pack_3d = false)
+        static void fill_scatter(len_vector len, stride_vector stride, len_type BS,
+                                 stride_type off, stride_type size,
+                                 stride_type* scat, bool pack_3d = false)
         {
             if (size == 0) return;
 
@@ -76,7 +76,6 @@ class block_scatter_matrix : public abstract_matrix<T>
             if (len.empty())
             {
                 *scat = 0;
-                *bs = 1;
                 return;
             }
 
@@ -228,6 +227,12 @@ class block_scatter_matrix : public abstract_matrix<T>
 
                 TBLIS_ASSERT(idx == size);
             }
+        }
+
+        static void fill_block_stride(len_type BS, stride_type size,
+                                      stride_type* scat, stride_type* bs)
+        {
+            if (size == 0) return;
 
             for (len_type i = 0;i < size;i += BS)
             {
@@ -239,6 +244,17 @@ class block_scatter_matrix : public abstract_matrix<T>
                 }
                 bs[i] = s;
             }
+        }
+
+        static void fill_block_scatter(len_vector len, stride_vector stride, len_type BS,
+                                       stride_type off, stride_type size,
+                                       stride_type* scat, stride_type* bs,
+                                       bool pack_3d = false)
+        {
+            if (size == 0) return;
+
+            fill_scatter(len, stride, BS, off, size, scat, pack_3d);
+            fill_block_stride(BS, size, scat, bs);
         }
 
     public:
@@ -260,6 +276,53 @@ class block_scatter_matrix : public abstract_matrix<T>
                                    tot_len_[0], scatter_[0], block_stride_[0], A.pack_3d_[0]);
                 fill_block_scatter(A.lens_[1], A.strides_[1], block_size_[1], A.off_[1],
                                    tot_len_[1], scatter_[1], block_stride_[1], A.pack_3d_[1]);
+            }
+
+            comm.barrier();
+        }
+
+        block_scatter_matrix(const communicator& comm, const scatter_tensor_matrix<T>& A,
+                             len_type MB, stride_type* rscat, stride_type* rbs,
+                             len_type NB, stride_type* cscat, stride_type* cbs)
+        {
+            data_ = A.data_;
+            tot_len_ = cur_len_ = A.cur_len_;
+            scatter_ = {rscat, cscat};
+            block_stride_ = {rbs, cbs};
+            block_size_ = {MB, NB};
+
+            if (comm.master())
+            {
+                for (unsigned dim : {0,1})
+                {
+                    len_type off = A.off_[dim] % A.sub_len_[dim];
+                    len_type idx = A.off_[dim] / A.sub_len_[dim];
+                    len_type len = tot_len_[dim];
+                    auto scat = scatter_[dim];
+
+                    while (len > 0)
+                    {
+                        len_type sub_len = std::min(len, A.sub_len_[dim] - off);
+
+                        fill_scatter(A.lens_[dim], A.strides_[dim], block_size_[dim], off,
+                                     sub_len, scat, A.pack_3d_[dim]);
+
+                        if (A.scat_[dim].length(0))
+                        {
+                            auto idx_scat = A.scat_[dim][idx];
+                            for (len_type i = 0;i < sub_len;i++)
+                                scat[i] += idx_scat;
+                        }
+
+                        off = 0;
+                        scat += sub_len;
+                        len -= sub_len;
+                        idx++;
+                    }
+
+                    fill_block_stride(block_size_[dim], tot_len_[dim],
+                                      scatter_[dim], block_stride_[dim]);
+                }
             }
 
             comm.barrier();

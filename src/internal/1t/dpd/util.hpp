@@ -175,11 +175,15 @@ void dense_total_lengths_and_strides(std::array<len_vector,N>& len,
 template <typename T>
 bool is_block_empty(const dpd_varray_view<T>& A, const irrep_vector& irreps)
 {
+    unsigned irrep = 0;
+
     for (unsigned i = 0;i < A.dimension();i++)
     {
+        irrep ^= irreps[i];
         if (!A.length(i, irreps[i])) return true;
     }
-    return false;
+
+    return irrep != A.irrep();
 }
 
 inline unsigned assign_irrep(unsigned dim, unsigned irrep)

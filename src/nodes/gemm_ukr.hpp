@@ -156,13 +156,15 @@ struct gemm_micro_kernel
         {
             if (flip_ukr)
             {
+                auxinfo_t aux{p_b, p_a, p_c};
                 cfg.gemm_ukr.call<T>(k, &alpha, p_b, p_a,
-                                     &beta, p_c, cs_c, rs_c);
+                                     &beta, p_c, cs_c, rs_c, &aux);
             }
             else
             {
+                auxinfo_t aux{p_a, p_b, p_c};
                 cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
-                                     &beta, p_c, rs_c, cs_c);
+                                     &beta, p_c, rs_c, cs_c, &aux);
             }
         }
         else
@@ -172,13 +174,15 @@ struct gemm_micro_kernel
 
             if (flip_ukr)
             {
+                auxinfo_t aux{p_b, p_a, p_c};
                 cfg.gemm_ukr.call<T>(k, &alpha, p_b, p_a,
-                                     &zero, &p_ab[0], cs_ab, rs_ab);
+                                     &zero, &p_ab[0], cs_ab, rs_ab, &aux);
             }
             else
             {
+                auxinfo_t aux{p_a, p_b, p_c};
                 cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
-                                     &zero, &p_ab[0], rs_ab, cs_ab);
+                                     &zero, &p_ab[0], rs_ab, cs_ab, &aux);
             }
 
             accum_utile(m, n, p_ab, rs_ab, cs_ab,
@@ -214,18 +218,21 @@ struct gemm_micro_kernel
         const stride_type *rscat_c, *cscat_c;
 
         C.block(p_c, rscat_c, rs_c, m, cscat_c, cs_c, n);
+        auto c_prefetch = p_c + (rs_c ? 0 : *rscat_c) + (cs_c ? 0 : *cscat_c);
 
         if (m == MR && n == NR && rs_c && cs_c)
         {
             if (flip_ukr)
             {
+                auxinfo_t aux{p_b, p_a, c_prefetch};
                 cfg.gemm_ukr.call<T>(k, &alpha, p_b, p_a,
-                                     &beta, p_c, cs_c, rs_c);
+                                     &beta, p_c, cs_c, rs_c, &aux);
             }
             else
             {
+                auxinfo_t aux{p_a, p_b, c_prefetch};
                 cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
-                                     &beta, p_c, rs_c, cs_c);
+                                     &beta, p_c, rs_c, cs_c, &aux);
             }
         }
         else
@@ -235,13 +242,15 @@ struct gemm_micro_kernel
 
             if (flip_ukr)
             {
+                auxinfo_t aux{p_b, p_a, c_prefetch};
                 cfg.gemm_ukr.call<T>(k, &alpha, p_b, p_a,
-                                     &zero, &p_ab[0], cs_ab, rs_ab);
+                                     &zero, &p_ab[0], cs_ab, rs_ab, &aux);
             }
             else
             {
+                auxinfo_t aux{p_a, p_b, c_prefetch};
                 cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
-                                     &zero, &p_ab[0], rs_ab, cs_ab);
+                                     &zero, &p_ab[0], rs_ab, cs_ab, &aux);
             }
 
             if (rs_c && cs_c)
@@ -295,18 +304,21 @@ struct gemm_micro_kernel
         const stride_type *rscat_c, *cscat_c;
 
         C.block(p_c, rscat_c, rs_c, m, cscat_c, cs_c, n);
+        auto c_prefetch = p_c + (rs_c ? 0 : *rscat_c) + (cs_c ? 0 : *cscat_c);
 
         if (m == MR && n == NR && rs_c && cs_c)
         {
             if (flip_ukr)
             {
+                auxinfo_t aux{p_b, p_a, c_prefetch};
                 cfg.gemm_ukr.call<T>(k, &alpha, p_b, p_a,
-                                     &beta, p_c, cs_c, rs_c);
+                                     &beta, p_c, cs_c, rs_c, &aux);
             }
             else
             {
+                auxinfo_t aux{p_a, p_b, c_prefetch};
                 cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
-                                     &beta, p_c, rs_c, cs_c);
+                                     &beta, p_c, rs_c, cs_c, &aux);
             }
         }
         else
@@ -316,13 +328,15 @@ struct gemm_micro_kernel
 
             if (flip_ukr)
             {
+                auxinfo_t aux{p_b, p_a, c_prefetch};
                 cfg.gemm_ukr.call<T>(k, &alpha, p_b, p_a,
-                                     &zero, &p_ab[0], cs_ab, rs_ab);
+                                     &zero, &p_ab[0], cs_ab, rs_ab, &aux);
             }
             else
             {
+                auxinfo_t aux{p_a, p_b, c_prefetch};
                 cfg.gemm_ukr.call<T>(k, &alpha, p_a, p_b,
-                                     &zero, &p_ab[0], rs_ab, cs_ab);
+                                     &zero, &p_ab[0], rs_ab, cs_ab, &aux);
             }
 
             if (rs_c && cs_c)

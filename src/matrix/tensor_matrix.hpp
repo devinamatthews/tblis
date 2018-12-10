@@ -17,6 +17,8 @@ class tensor_matrix : public abstract_matrix<T>
     public:
         typedef const stride_type* scatter_type;
 
+        static constexpr bool needs_matrify = true;
+
     protected:
         using abstract_matrix<T>::tot_len_;
         using abstract_matrix<T>::cur_len_;

@@ -49,7 +49,8 @@ INFO_OR_PRINT("dense stride_" #t " = " << t.dense_strides()); \
 INFO_OR_PRINT("idx len_" #t "      = " << t.indexed_lengths()); \
 INFO_OR_PRINT("data_" #t "         = \n" << t.data()); \
 INFO_OR_PRINT("indices_" #t "      = \n" << t.indices()); \
-INFO_OR_PRINT("idx_" #t "          = " << idx_##t);
+INFO_OR_PRINT("idx_" #t "          = " << idx_##t.substr(0,t.dense_dimension()) << \
+                                   " " << idx_##t.substr(t.dense_dimension()));
 
 #define INDEXED_DPD_TENSOR_INFO(t) \
 INFO_OR_PRINT("irrep_" #t "       = " << t.irrep()); \
@@ -57,9 +58,11 @@ INFO_OR_PRINT("dense irrep_" #t " = " << t.dense_irrep()); \
 INFO_OR_PRINT("dense len_" #t "   = \n" << t.dense_lengths()); \
 INFO_OR_PRINT("idx irrep_" #t "   = " << t.indexed_irreps()); \
 INFO_OR_PRINT("idx len_" #t "     = " << t.indexed_lengths()); \
+INFO_OR_PRINT("nidx_" #t "        = " << t.num_indices()); \
 INFO_OR_PRINT("data_" #t "        = \n" << t.data()); \
 INFO_OR_PRINT("indices_" #t "     = \n" << t.indices()); \
-INFO_OR_PRINT("idx_" #t "         = " << idx_##t);
+INFO_OR_PRINT("idx_" #t "          = " << idx_##t.substr(0,t.dense_dimension()) << \
+                                   " " << idx_##t.substr(t.dense_dimension()));
 
 #define PRINT_TENSOR(t) \
 cout << "\n" #t ":\n"; \
@@ -69,12 +72,24 @@ t.for_each_element( \
     if (std::abs(e) > 1e-13) cout << pos << " " << e << endl; \
 });
 
+template <typename T>
+auto data(const varray<T>& v) { return v.data(); }
+
+template <typename T>
+auto data(const dpd_varray<T>& v) { return v.data(); }
+
+template <typename T>
+auto data(const indexed_varray<T>& v) { return v.data(0); }
+
+template <typename T>
+auto data(const indexed_dpd_varray<T>& v) { return v.data(0); }
+
 #define PRINT_DPD_TENSOR(t) \
 cout << "\n" #t ":\n"; \
 t.for_each_element( \
-[](const typename decltype(t)::value_type & e, const irrep_vector& irreps, const index_vector& pos) \
+[&t](const typename decltype(t)::value_type & e, const irrep_vector& irreps, const index_vector& pos) \
 { \
-    if (std::abs(e) > 1e-13) cout << irreps << " " << pos << " " << e << endl; \
+    if (std::abs(e) > 1e-13) cout << irreps << " " << pos << " " << e << " " << (&e - data(t)) << endl; \
 });
 
 template <typename T>

@@ -97,6 +97,20 @@ void (*)(len_type m, len_type k,
          const stride_type* cbs_a,
          T* p_ap);
 
+#define EXTERN_PACK_SS_SCAL_UKR(T, name) \
+extern void name(tblis::len_type m, tblis::len_type k, \
+                 const T* p_a, const tblis::stride_type* rscat_a, \
+                               const T* rscale_a, \
+                               const tblis::stride_type* cscat_a, \
+                               const T* cscale_a, \
+                 T* p_ap);
+
+template <typename T>
+using pack_ss_scal_ukr_t =
+void (*)(len_type m, len_type k,
+         const T* p_a, const stride_type* rscat_a, const T* rscale_a,
+         const stride_type* cscat_a, const T* cscale_a, T* p_ap);
+
 template <typename Config, typename T, int Mat>
 void pack_nn_ukr_def(len_type m, len_type k,
                      const T* TBLIS_RESTRICT p_a, stride_type rs_a, stride_type cs_a,
@@ -385,6 +399,40 @@ void pack_sb_ukr_def(len_type m, len_type k,
 
         for (len_type mr = m;mr < MR;mr++)
             p_ap[mr + ME*p] = T();
+    }
+}
+
+template <typename Config, typename T, int Mat>
+void pack_ss_scal_ukr_def(len_type m, len_type k,
+                          const T* TBLIS_RESTRICT p_a,
+                          const stride_type* TBLIS_RESTRICT rscat_a,
+                          const T* TBLIS_RESTRICT rscale_a,
+                          const stride_type* TBLIS_RESTRICT cscat_a,
+                          const T* TBLIS_RESTRICT cscale_a,
+                          T* TBLIS_RESTRICT p_ap)
+{
+    using namespace matrix_constants;
+    constexpr len_type MR = (Mat == MAT_A ? Config::template gemm_mr<T>::def
+                                          : Config::template gemm_nr<T>::def);
+    constexpr len_type ME = (Mat == MAT_A ? Config::template gemm_mr<T>::extent
+                                          : Config::template gemm_nr<T>::extent);
+
+    if (m == MR)
+    {
+        for (len_type p = 0;p < k;p++)
+            for (len_type mr = 0;mr < MR;mr++)
+                p_ap[mr + ME*p] = p_a[rscat_a[mr] + cscat_a[p]] * rscale_a[mr] * cscale_a[p];
+    }
+    else
+    {
+        for (len_type p = 0;p < k;p++)
+        {
+            for (len_type mr = 0;mr < m;mr++)
+                p_ap[mr + ME*p] = p_a[rscat_a[mr] + cscat_a[p]] * rscale_a[mr] * cscale_a[p];
+
+            for (len_type mr = m;mr < MR;mr++)
+                p_ap[mr + ME*p] = T();
+        }
     }
 }
 

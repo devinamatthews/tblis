@@ -202,6 +202,11 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_contract, R, T, all_types)
     E.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
+    //PRINT_DPD_TENSOR(A);
+    //PRINT_DPD_TENSOR(B);
+    //PRINT_DPD_TENSOR(D);
+    //PRINT_DPD_TENSOR(E);
+
     add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 

@@ -58,9 +58,9 @@ config cfg##_config_instance = config(cfg##_config());
         TBLIS_GET_VALUE_OR_DEFAULT(ZM,TBLIS_GET_VALUE_OR_DEFAULT(Z,ZD))> {};
 
 #define TBLIS_CONFIG_ADDF_NF(S,D,C,Z) \
-    TBLIS_CONFIG_REGISTER_BLOCKSIZE(addf_nf, S,D,C,Z, S,D,C,Z, 8,8,8,8)
+    TBLIS_CONFIG_REGISTER_BLOCKSIZE(addf_nf, S,D,C,Z, S,D,C,Z, 4,4,4,4)
 #define TBLIS_CONFIG_DOTF_NF(S,D,C,Z) \
-    TBLIS_CONFIG_REGISTER_BLOCKSIZE(dotf_nf, S,D,C,Z, S,D,C,Z, 8,8,8,8)
+    TBLIS_CONFIG_REGISTER_BLOCKSIZE(dotf_nf, S,D,C,Z, S,D,C,Z, 4,4,4,4)
 
 #define TBLIS_CONFIG_TRANS_MR(S,D,C,Z) \
     TBLIS_CONFIG_REGISTER_BLOCKSIZE(trans_mr, S,D,C,Z, S,D,C,Z, 8,4,4,4)
@@ -155,8 +155,10 @@ config cfg##_config_instance = config(cfg##_config());
 #define TBLIS_CONFIG_SHIFT_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, shift_ukr, shift_ukr_t, S,D,C,Z, shift_ukr_def)
 
-#define TBLIS_CONFIG_ADDF_UKR(S,D,C,Z) \
-    TBLIS_CONFIG_UKR2(this_config, addf_ukr, addf_ukr_t, S,D,C,Z, addf_ukr_def)
+#define TBLIS_CONFIG_ADDF_SUM_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR2(this_config, addf_sum_ukr, addf_sum_ukr_t, S,D,C,Z, addf_sum_ukr_def)
+#define TBLIS_CONFIG_ADDF_REP_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR2(this_config, addf_rep_ukr, addf_rep_ukr_t, S,D,C,Z, addf_rep_ukr_def)
 #define TBLIS_CONFIG_DOTF_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, dotf_ukr, dotf_ukr_t, S,D,C,Z, dotf_ukr_def)
 
@@ -191,6 +193,10 @@ config cfg##_config_instance = config(cfg##_config());
     TBLIS_CONFIG_UKR3(this_config, matrix_constants::MAT_A, pack_sb_mr_ukr, pack_sb_ukr_t, S,D,C,Z, pack_sb_ukr_def)
 #define TBLIS_CONFIG_PACK_SB_NR_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR3(this_config, matrix_constants::MAT_B, pack_sb_nr_ukr, pack_sb_ukr_t, S,D,C,Z, pack_sb_ukr_def)
+#define TBLIS_CONFIG_PACK_SS_SCAL_MR_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR3(this_config, matrix_constants::MAT_A, pack_ss_scal_mr_ukr, pack_ss_scal_ukr_t, S,D,C,Z, pack_ss_scal_ukr_def)
+#define TBLIS_CONFIG_PACK_SS_SCAL_NR_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR3(this_config, matrix_constants::MAT_B, pack_ss_scal_nr_ukr, pack_ss_scal_ukr_t, S,D,C,Z, pack_ss_scal_ukr_def)
 
 #define TBLIS_CONFIG_CHECK(func) static constexpr check_fn_t check = func;
 
@@ -296,7 +302,8 @@ struct config_template
 
     TBLIS_CONFIG_ADDF_NF(_,_,_,_)
     TBLIS_CONFIG_DOTF_NF(_,_,_,_)
-    TBLIS_CONFIG_ADDF_UKR(_,_,_,_)
+    TBLIS_CONFIG_ADDF_SUM_UKR(_,_,_,_)
+    TBLIS_CONFIG_ADDF_REP_UKR(_,_,_,_)
     TBLIS_CONFIG_DOTF_UKR(_,_,_,_)
 
     TBLIS_CONFIG_TRANS_MR(_,_,_,_)
@@ -327,6 +334,8 @@ struct config_template
     TBLIS_CONFIG_PACK_NB_NR_UKR(_,_,_,_)
     TBLIS_CONFIG_PACK_SB_MR_UKR(_,_,_,_)
     TBLIS_CONFIG_PACK_SB_NR_UKR(_,_,_,_)
+    TBLIS_CONFIG_PACK_SS_SCAL_MR_UKR(_,_,_,_)
+    TBLIS_CONFIG_PACK_SS_SCAL_NR_UKR(_,_,_,_)
 
     TBLIS_CONFIG_M_THREAD_RATIO(_,_,_,_)
     TBLIS_CONFIG_N_THREAD_RATIO(_,_,_,_)

@@ -2,6 +2,8 @@
 #define _TBLIS_KERNELS_3M_GEMM_HPP_
 
 #include "util/basic_types.h"
+#include "blis.h"
+
 #include <type_traits>
 
 namespace tblis
@@ -13,7 +15,8 @@ extern void name(tblis::stride_type k, \
                  const T* a, const T* b, \
                  const T* beta, \
                  T* c, tblis::stride_type rs_c, \
-                       tblis::stride_type cs_c);
+                       tblis::stride_type cs_c, \
+                       auxinfo_t* aux);
 
 template <typename T>
 using gemm_ukr_t =
@@ -21,14 +24,16 @@ void (*)(stride_type k,
         const T* alpha,
         const T* a, const T* b,
         const T* beta,
-        T* c, stride_type rs_c, stride_type cs_c);
+        T* c, stride_type rs_c, stride_type cs_c,
+        auxinfo_t* aux);
 
 template <typename Config, typename T>
 void gemm_ukr_def(stride_type k,
                   const T* TBLIS_RESTRICT alpha,
                   const T* TBLIS_RESTRICT p_a, const T* TBLIS_RESTRICT p_b,
                   const T* TBLIS_RESTRICT beta,
-                  T* TBLIS_RESTRICT p_c, stride_type rs_c, stride_type cs_c)
+                  T* TBLIS_RESTRICT p_c, stride_type rs_c, stride_type cs_c,
+                  auxinfo_t*)
 {
     constexpr len_type MR = Config::template gemm_mr<T>::def;
     constexpr len_type NR = Config::template gemm_nr<T>::def;

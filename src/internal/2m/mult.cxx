@@ -13,6 +13,8 @@ void mult(const communicator& comm, const config& cfg,
                    bool conj_B, const T* B, stride_type inc_B,
           T  beta, bool conj_C,       T* C, stride_type inc_C)
 {
+    if (comm.master()) flops += 2*m*n;
+
     if (rs_A <= cs_A)
     {
         const len_type NF = cfg.addf_nf.def<T>();
@@ -23,12 +25,17 @@ void mult(const communicator& comm, const config& cfg,
             auto local_beta = beta;
             auto local_conj_C = conj_C;
 
+            const T* As[16];
+
             for (len_type j = 0;j < n;j += NF)
             {
-                cfg.addf_ukr.call<T>(m_max-m_min, std::min(NF, n-j),
-                                     alpha, conj_A, A + m_min*rs_A + j*cs_A, rs_A, cs_A,
-                                            conj_B, B + j*inc_B, inc_B,
-                                     local_beta, local_conj_C, C + m_min*inc_C, inc_C);
+                for (len_type k = 0;k < NF;k++)
+                    As[k] = A + m_min*rs_A + (j+k)*cs_A;
+
+                cfg.addf_sum_ukr.call<T>(m_max-m_min, std::min(NF, n-j),
+                                         alpha, conj_A, As, rs_A,
+                                                conj_B, B + j*inc_B, inc_B,
+                                         local_beta, local_conj_C, C + m_min*inc_C, inc_C);
 
                 local_beta = T(1);
                 local_conj_C = false;
@@ -70,6 +77,8 @@ void mult(const communicator& comm, const config& cfg,
                    bool conj_B, const T* B, stride_type inc_B,
           T  beta, bool conj_C,       T* C, stride_type rs_C, stride_type cs_C)
 {
+    if (comm.master()) flops += 2*m*n;
+
     if (rs_C > cs_C)
     {
         std::swap(m, n);
@@ -79,15 +88,22 @@ void mult(const communicator& comm, const config& cfg,
         std::swap(rs_C, cs_C);
     }
 
+    const len_type NF = cfg.addf_nf.def<T>();
+
     comm.distribute_over_threads(m, n,
     [&](len_type m_min, len_type m_max, len_type n_min, len_type n_max)
     {
-        for (len_type j = n_min;j < n_max;j++)
+        T* Cs[16];
+
+        for (len_type j = n_min;j < n_max;j += NF)
         {
-            cfg.add_ukr.call<T>(m_max-m_min,
-                                alpha*(conj_B ? conj(B[j*inc_B]) : B[j*inc_B]),
-                                conj_A, A + m_min*inc_A, inc_A,
-                                beta, conj_C, C + m_min*rs_C + j*cs_C, rs_C);
+            for (len_type k = 0;k < NF;k++)
+                Cs[k] = C + m_min*rs_C + (j+k)*cs_C;
+
+            cfg.addf_rep_ukr.call<T>(m_max-m_min, std::min(NF, n_max-j),
+                                     alpha, conj_A, A + m_min*inc_A, inc_A,
+                                            conj_B, B + j*inc_B, inc_B,
+                                      beta, conj_C, Cs, rs_C);
         }
     });
 

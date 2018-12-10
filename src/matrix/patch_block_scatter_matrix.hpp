@@ -9,6 +9,8 @@
 #include "memory/alignment.hpp"
 
 #include "normal_matrix.hpp"
+#include "tensor_matrix.hpp"
+#include "scatter_tensor_matrix.hpp"
 #include "dpd_tensor_matrix.hpp"
 
 namespace tblis
@@ -44,21 +46,27 @@ class patch_block_scatter_matrix : public abstract_matrix<T>
             patches_.reset({1, 1}, patches);
 
             if (comm.master())
-            {
-                auto& patch = patches_[0][0];
+                new (&patches_[0][0]) block_scatter_matrix<T>(single, A,
+                                                              MB, rscat, rbs,
+                                                              NB, cscat, cbs);
 
-                patch.data_ = A.data_;
-                patch.off_ = {};
-                patch.tot_len_ = patch.cur_len_ = cur_len_;
-                patch.scatter_ = {rscat, cscat};
-                patch.block_stride_ = {rbs, cbs};
-                patch.block_size_ = block_size_;
+            comm.barrier();
+        }
 
-                patch.fill_block_scatter(A.lens_[0], A.strides_[0], MB, A.off_[0],
-                                         tot_len_[0], rscat, rbs, A.pack_3d_[0]);
-                patch.fill_block_scatter(A.lens_[1], A.strides_[1], NB, A.off_[1],
-                                         tot_len_[1], cscat, cbs, A.pack_3d_[1]);
-            }
+        patch_block_scatter_matrix(const communicator& comm, const scatter_tensor_matrix<T>& A,
+                                   len_type MB, len_type, stride_type* rscat, stride_type* rbs,
+                                   len_type NB, len_type, stride_type* cscat, stride_type* cbs,
+                                   patch_type patches)
+        {
+            tot_len_ = cur_len_ = {A.cur_len_[0], A.cur_len_[1]};
+            block_size_ = {MB, NB};
+
+            patches_.reset({1, 1}, patches);
+
+            if (comm.master())
+                new (&patches_[0][0]) block_scatter_matrix<T>(single, A,
+                                                              MB, rscat, rbs,
+                                                              NB, cscat, cbs);
 
             comm.barrier();
         }

@@ -16,6 +16,8 @@ class indexed_dpd_tensor_matrix : public dpd_tensor_matrix<T>
     public:
         typedef const stride_type* scatter_type;
 
+        static constexpr bool needs_matrify = true;
+
     protected:
         using dpd_tensor_matrix<T>::cur_len_;
         using dpd_tensor_matrix<T>::tot_len_;

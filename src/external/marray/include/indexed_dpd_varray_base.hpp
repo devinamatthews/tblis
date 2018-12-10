@@ -606,7 +606,7 @@ class indexed_dpd_varray_base : detail::dpd_base<indexed_dpd_varray_base<Type, D
             return data_[idx];
         }
 
-        const std::vector<Type>& factors() const
+        const std::vector<typename std::remove_const<Type>::type>& factors() const
         {
             return factor_;
         }

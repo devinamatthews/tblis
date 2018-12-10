@@ -211,6 +211,12 @@ bool contains(const T& v, const typename T::value_type& e)
     return find(v.begin(), v.end(), e) != v.end();
 }
 
+template <typename T, typename Predicate>
+bool matches(const T& v, Predicate&& pred)
+{
+    return std::find_if(v.begin(), v.end(), std::forward<Predicate>(pred)) != v.end();
+}
+
 template <typename T>
 T& sort(T& v)
 {

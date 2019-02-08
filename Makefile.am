@@ -157,6 +157,7 @@ marrayinclude_HEADERS = \
     src/external/marray/include/dpd_marray_base.hpp \
     src/external/marray/include/dpd_marray_view.hpp \
     src/external/marray/include/dpd_marray.hpp \
+    src/external/marray/include/dpd_range.hpp \
     src/external/marray/include/dpd_varray_base.hpp \
     src/external/marray/include/dpd_varray_view.hpp \
     src/external/marray/include/dpd_varray.hpp \

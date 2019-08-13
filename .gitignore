@@ -28,3 +28,4 @@ stamp-h1
 libtool
 Makefile
 tblis_config.h
+src/external/*/.git/

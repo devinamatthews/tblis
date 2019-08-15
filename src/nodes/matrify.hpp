@@ -85,8 +85,8 @@ allocate_buffers(len_type MB, len_type NB, Matrify& parent, Child& child,
 
     if (!child.pack_ptr)
     {
-        len_type m = A.length(0);
-        len_type n = A.length(1);
+        len_type m = A.length(0) + (MB-1);
+        len_type n = A.length(1) + (NB-1);
 
         if (comm.master())
         {

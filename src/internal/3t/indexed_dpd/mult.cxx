@@ -941,7 +941,7 @@ void mult_block(const communicator& comm, const config& cfg,
                 {
                     if (indices_C[idx_C].factor == T(0)) return;
 
-                    tasks.visit(idx++,
+                    tasks.visit(idx,
                     [&,idx,idx_A,idx_B,idx_C,next_A,next_B]
                     (const communicator& subcomm)
                     {
@@ -982,6 +982,8 @@ void mult_block(const communicator& comm, const config& cfg,
                             TensorGEMM{}(subcomm, cfg, factor, at, bt, T(1), ct);
                         });
                     });
+
+                    idx++;
                 });
             });
         });

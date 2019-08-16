@@ -1,4 +1,4 @@
-AC_INIT(tblis, m4_esyscmd_s([cat version]), dmatthews@utexas.edu, tblis, http://www.github.com/devinamatthews/tblis)
+AC_INIT(tblis, 1.2.0, dmatthews@utexas.edu, tblis, http://www.github.com/devinamatthews/tblis)
 AM_INIT_AUTOMAKE([foreign silent-rules subdir-objects])
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE([disable])

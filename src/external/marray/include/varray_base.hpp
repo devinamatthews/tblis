@@ -332,7 +332,7 @@ class varray_base
                                                          std::initializer_list<stride_type> stride)
         {
             return is_contiguous<std::initializer_list<len_type>,
-                                 std::initializer_list<stride_type>>(len, stride);
+                                 std::initializer_list<stride_type>,void>(len, stride);
         }
 
         template <typename U, typename V,

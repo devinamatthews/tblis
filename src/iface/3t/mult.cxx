@@ -267,7 +267,7 @@ void mult(const communicator& comm,
         }
     }
 
-    if (alpha == T(0) || (idx_ABC.empty() && (A.irrep()^B.irrep() != C.irrep())))
+    if (alpha == T(0) || (idx_ABC.empty() && ((A.irrep()^B.irrep()) != C.irrep())))
     {
         if (beta == T(0))
         {
@@ -511,7 +511,7 @@ void mult(const communicator& comm,
         }
     }
 
-    if (alpha == T(0) || (idx_ABC.empty() && (A.irrep()^B.irrep() != C.irrep())))
+    if (alpha == T(0) || (idx_ABC.empty() && ((A.irrep()^B.irrep()) != C.irrep())))
     {
         if (beta == T(0))
         {

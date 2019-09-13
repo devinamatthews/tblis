@@ -28,7 +28,7 @@
 
 #include "../external/stl_ext/include/complex.hpp"
 
-#ifdef TBLIS_DEBUG
+#if defined(TBLIS_DEBUG) && !defined(MARRAY_ENABLE_ASSERTS)
 #define MARRAY_ENABLE_ASSERTS
 #endif
 

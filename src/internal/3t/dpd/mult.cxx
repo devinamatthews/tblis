@@ -232,7 +232,7 @@ void mult_blis(const communicator& comm, const config& cfg,
                dim_vector idx_C_AC,
                dim_vector idx_C_BC)
 {
-    if (A.irrep()^B.irrep() != C.irrep())
+    if ((A.irrep()^B.irrep()) != C.irrep())
     {
         if (beta == T(0))
         {

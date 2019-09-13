@@ -813,9 +813,10 @@ void mult_block(const communicator& comm, const config& cfg,
     std::vector<std::pair<double,int>> fuse;
 
     double baseline = relative_perf(dense_AC, dense_BC, dense_AB);
+    //printf("\nmnk: %ld %ld %ld\n", dense_AC, dense_BC, dense_AB);
 
     fuse.emplace_back(relative_perf(dense_AC, dense_BC, dense_AB*idx_AB), FUSE_AB);
-    //printf("\nAB: %g %g %g\n", (double)stl_ext::prod(group_AB.batch_len), sqrt(frac_A*frac_B), fuse.back().first/baseline);
+    //printf("AB: %g %g %g\n", (double)stl_ext::prod(group_AB.batch_len), sqrt(frac_A*frac_B), fuse.back().first/baseline);
 
     fuse.emplace_back(relative_perf(dense_AC*idx_AC, dense_BC, dense_AB), FUSE_AC);
     //printf("AC: %g %g %g\n", (double)stl_ext::prod(group_AC.batch_len), sqrt(frac_A*frac_C), fuse.back().first/baseline);

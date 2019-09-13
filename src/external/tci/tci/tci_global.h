@@ -3,6 +3,17 @@
 
 #include "tci_config.h"
 
+#if TCI_USE_OPENMP_THREADS || TCI_USE_PTHREADS_THREADS || TCI_USE_WINDOWS_THREADS
+#define TCI_IS_TASK_BASED 0
+#define TCI_IS_THREAD_BASED 1
+#elif TCI_USE_TBB_THREADS || TCI_USE_OMPTASK_THREADS || TCI_USE_DISPATCH_THREADS || TCI_USE_PPL_THREADS
+#define TCI_IS_TASK_BASED 1
+#define TCI_IS_THREAD_BASED 0
+#else
+#define TCI_IS_TASK_BASED 0
+#define TCI_IS_THREAD_BASED 0
+#endif
+
 #if defined(__MIC__)
 #define TCI_ARCH_MIC 1
 #elif defined(__ia64) || defined(__itanium__) || defined(_M_IA64)

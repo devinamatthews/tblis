@@ -48,18 +48,6 @@ int tci_task_set_visit(tci_task_set* set, tci_task_func func, unsigned task,
     return 0;
 }
 
-int tci_task_set_visit_all(tci_task_set* set, tci_task_func func,
-                           void* payload)
-{
-    for (unsigned task = 0;task < set->ntask;task++)
-    {
-        int ret = tci_task_set_visit(set, func, task, payload);
-        if (ret != 0) return ret;
-    }
-
-    return 0;
-}
-
 #elif TCI_USE_TBB_THREADS
 
 void tci_task_set_init(tci_task_set* set, tci_comm* comm, unsigned ntask, uint64_t work)
@@ -96,18 +84,6 @@ int tci_task_set_visit(tci_task_set* set, tci_task_func func, unsigned task,
     return 0;
 }
 
-int tci_task_set_visit_all(tci_task_set* set, tci_task_func func,
-                           void* payload)
-{
-    for (unsigned task = 0;task < set->ntask;task++)
-    {
-        int ret = tci_task_set_visit(set, func, task, payload);
-        if (ret != 0) return ret;
-    }
-
-    return 0;
-}
-
 #elif TCI_USE_OMPTASK_THREADS
 
 void tci_task_set_init(tci_task_set* set, tci_comm* comm, unsigned ntask, uint64_t work)
@@ -136,18 +112,6 @@ int tci_task_set_visit(tci_task_set* set, tci_task_func func, unsigned task,
     #pragma omp task
     {
         func(tci_single, task, payload);
-    }
-
-    return 0;
-}
-
-int tci_task_set_visit_all(tci_task_set* set, tci_task_func func,
-                           void* payload)
-{
-    for (unsigned task = 0;task < set->ntask;task++)
-    {
-        int ret = tci_task_set_visit(set, func, task, payload);
-        if (ret != 0) return ret;
     }
 
     return 0;
@@ -205,18 +169,6 @@ int tci_task_set_visit(tci_task_set* set, tci_task_func func, unsigned task,
     return 0;
 }
 
-int tci_task_set_visit_all(tci_task_set* set, tci_task_func func,
-                           void* payload)
-{
-    for (unsigned task = 0;task < set->ntask;task++)
-    {
-        int ret = tci_task_set_visit(set, func, task, payload);
-        if (ret != 0) return ret;
-    }
-
-    return 0;
-}
-
 #elif TCI_USE_PPL_THREADS
 
 void tci_task_set_init(tci_task_set* set, tci_comm* comm, unsigned ntask, uint64_t work)
@@ -253,18 +205,6 @@ int tci_task_set_visit(tci_task_set* set, tci_task_func func, unsigned task,
     return 0;
 }
 
-int tci_task_set_visit_all(tci_task_set* set, tci_task_func func,
-                           void* payload)
-{
-    for (unsigned task = 0;task < set->ntask;task++)
-    {
-        int ret = tci_task_set_visit(set, func, task, payload);
-        if (ret != 0) return ret;
-    }
-
-    return 0;
-}
-
 #else // single threaded
 
 void tci_task_set_init(tci_task_set* set, tci_comm* comm, unsigned ntask,
@@ -288,15 +228,24 @@ int tci_task_set_visit(tci_task_set* set, tci_task_func func, unsigned task,
     return 0;
 }
 
+#endif
+
 int tci_task_set_visit_all(tci_task_set* set, tci_task_func func,
                            void* payload)
 {
-    for (unsigned task = 0;task < set->ntask;task++)
-        func(tci_single, task, payload);
-    return 0;
-}
+    int ret = 0;
 
-#endif
+    for (unsigned task = 0;task < set->ntask;task++)
+    {
+        ret = tci_task_set_visit(set, func, task, payload);
+        if (ret == EINVAL) break;
+    }
+
+    int ret2 = tci_comm_barrier(set->comm);
+    if (ret != EINVAL) ret = ret2;
+
+    return ret;
+}
 
 #ifdef __cplusplus
 }

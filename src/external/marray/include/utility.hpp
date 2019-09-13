@@ -53,7 +53,7 @@ typedef MARRAY_LEN_TYPE len_type;
 typedef MARRAY_STRIDE_TYPE stride_type;
 
 #ifndef MARRAY_OPT_NDIM
-#define MARRAY_OPT_NDIM 6
+#define MARRAY_OPT_NDIM 8
 #endif
 
 typedef short_vector<len_type,MARRAY_OPT_NDIM> len_vector;
@@ -91,18 +91,20 @@ constexpr uninitialized_t uninitialized;
  */
 struct layout
 {
+    struct construct {};
+
     int type;
 
-    constexpr explicit layout(int type) : type(type) {}
+    constexpr explicit layout(int type, construct) : type(type) {}
 
     bool operator==(layout other) const { return type == other.type; }
     bool operator!=(layout other) const { return type != other.type; }
 };
 
-struct column_major_layout : layout { constexpr column_major_layout() : layout(0) {} };
+struct column_major_layout : layout { constexpr column_major_layout() : layout(0, construct{}) {} };
 constexpr column_major_layout COLUMN_MAJOR;
 
-struct row_major_layout : layout { constexpr row_major_layout() : layout(1) {} };
+struct row_major_layout : layout { constexpr row_major_layout() : layout(1, construct{}) {} };
 constexpr row_major_layout ROW_MAJOR;
 
 constexpr decltype(MARRAY_DEFAULT_LAYOUT) DEFAULT;

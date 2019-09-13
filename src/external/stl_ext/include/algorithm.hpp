@@ -205,16 +205,40 @@ typename T::value_type prod(const T& v)
     return s;
 }
 
-template <typename T>
-bool contains(const T& v, const typename T::value_type& e)
+template <typename T, typename U>
+auto find(const T& v, const U& e)
 {
-    return find(v.begin(), v.end(), e) != v.end();
+    return std::find(v.begin(), v.end(), e);
+}
+
+template <typename T, typename Predicate>
+auto find_if(const T& v, Predicate&& pred)
+{
+    return std::find_if(v.begin(), v.end(), std::forward<Predicate>(pred));
+}
+
+template <typename T, typename U>
+auto index_of(const T& v, const U& e)
+{
+    return find(v, e) - v.begin();
+}
+
+template <typename T, typename U>
+bool contains(const T& v, const U& e)
+{
+    return find(v, e) != v.end();
 }
 
 template <typename T, typename Predicate>
 bool matches(const T& v, Predicate&& pred)
 {
-    return std::find_if(v.begin(), v.end(), std::forward<Predicate>(pred)) != v.end();
+    return find_if(v, std::forward<Predicate>(pred)) != v.end();
+}
+
+template <typename T, typename Predicate>
+auto count_if(const T& v, Predicate&& pred)
+{
+    return std::count_if(v.begin(), v.end(), std::forward<Predicate>(pred));
 }
 
 template <typename T>
@@ -575,17 +599,24 @@ void append(T& t, const U& u)
     t.insert(t.end(), u.begin(), u.end());
 }
 
-template <typename T, typename U, typename V, typename... W>
-void append(T& t, const U& u, const V& v, const W&... w)
+template <typename T, typename U>
+void append(T& t, U&& u)
 {
-    append(t, u);
-    append(t, v, w...);
+    t.insert(t.end(), std::make_move_iterator(u.begin()),
+                      std::make_move_iterator(u.end()));
+}
+
+template <typename T, typename U, typename V, typename... W>
+void append(T& t, U&& u, V&& v, W&&... w)
+{
+    append(t, std::forward<U&&>(u));
+    append(t, std::forward<V&&>(v), std::forward<W&&>(w)...);
 }
 
 template <typename T, typename... U>
-T appended(T t, const U&... u)
+T appended(T t, U&&... u)
 {
-    append(t, u...);
+    append(t, std::forward<U&&>(u)...);
     return t;
 }
 

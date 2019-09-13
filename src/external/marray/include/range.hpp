@@ -208,6 +208,13 @@ range_t<T> range(T to)
 }
 
 template <typename T, typename U>
+range_t<typename std::common_type<T,U>::type> rangeN(T from, U N)
+{
+    typedef typename std::common_type<T,U>::type V;
+    return {V(from), V(from+N), V(1)};
+}
+
+template <typename T, typename U>
 range_t<typename std::common_type<T,U>::type> range(T from, U to)
 {
     typedef typename std::common_type<T,U>::type V;

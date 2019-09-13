@@ -148,6 +148,11 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
         using base::dimension;
         using base::size;
 
+        stride_type size() const
+        {
+            return storage_.size;
+        }
+
         /***********************************************************************
          *
          * Reset

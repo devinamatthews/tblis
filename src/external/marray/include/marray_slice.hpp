@@ -287,6 +287,12 @@ class marray_slice
             return {len, data_, stride};
         }
 
+        template <unsigned NewNDim_=NewNDim, typename=detail::enable_if_t<NewNDim_==2>>
+        marray_view<Type, NewNDim> T() const
+        {
+            return view().T();
+        }
+
         friend marray_view<const Type, NewNDim> cview(const marray_slice& x)
         {
             return x.cview();

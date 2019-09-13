@@ -189,13 +189,19 @@ class communicator
                 void visit(unsigned task, Func&& func)
                 {
                     typedef typename std::decay<Func>::type RealFunc;
+                    #if TCI_IS_TASK_BASED
                     RealFunc* payload = new RealFunc(std::forward<Func>(func));
+                    #else
+                    RealFunc* payload = &func;
+                    #endif
                     tci_task_set_visit(&_tasks,
                     [](tci_comm* comm, unsigned, void* payload_)
                     {
                         RealFunc* payload = (RealFunc*)payload_;
                         (*payload)(*reinterpret_cast<const communicator*>(comm));
+                        #if TCI_IS_TASK_BASED
                         delete payload;
+                        #endif
                     }, task, payload);
                 }
 

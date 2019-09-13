@@ -10,6 +10,8 @@ namespace stl_ext
 namespace detail
 {
 
+using std::ptrdiff_t;
+
 template <class T, class U>
 struct doublet
 {

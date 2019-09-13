@@ -89,7 +89,7 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
 
         dpd_marray(unsigned irrep, unsigned nirrep,
                    const detail::array_2d<len_type>& len,
-                   dpd_layout layout = DEFAULT)
+                   dpd_layout layout)
         {
             reset(irrep, nirrep, len, Type(), layout);
         }

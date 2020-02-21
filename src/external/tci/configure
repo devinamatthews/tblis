@@ -16706,11 +16706,11 @@ if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_prog_c_openmp='none needed'
 else
   ac_cv_prog_c_openmp='unsupported'
-	  	  	  	  	  	  	                                	  	  	  	  	  	  for ac_option in -fopenmp -xopenmp -openmp -mp -omp -qsmp=omp -homp \
-                           -Popenmp --openmp; do
-	    ac_save_CFLAGS=$CFLAGS
-	    CFLAGS="$CFLAGS $ac_option"
-	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+                                                                                                            for ac_option in -qopenmp -fopenmp -xopenmp -openmp -mp -omp -qsmp=omp -homp \
+                           -Popenmp --openmp "-Wp,-fopenmp -lomp -Wno-unused-command-line-argument"; do
+        ac_save_CFLAGS=$CFLAGS
+        CFLAGS="$CFLAGS $ac_option"
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 #ifndef _OPENMP
@@ -16721,15 +16721,15 @@ int main () { return omp_get_num_threads (); }
 
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_prog_c_openmp=$ac_option
+  ac_cv_prog_c_openmp="$ac_option"
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-	    CFLAGS=$ac_save_CFLAGS
-	    if test "$ac_cv_prog_c_openmp" != unsupported; then
-	      break
-	    fi
-	  done
+        CFLAGS=$ac_save_CFLAGS
+        if test "$ac_cv_prog_c_openmp" != unsupported; then
+          break
+        fi
+      done
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -16738,9 +16738,9 @@ fi
 $as_echo "$ac_cv_prog_c_openmp" >&6; }
     case $ac_cv_prog_c_openmp in #(
       "none needed" | unsupported)
-	;; #(
+    ;; #(
       *)
-	OPENMP_CFLAGS=$ac_cv_prog_c_openmp ;;
+    OPENMP_CFLAGS="$ac_cv_prog_c_openmp" ;;
     esac
   fi
 

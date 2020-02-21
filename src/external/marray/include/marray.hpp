@@ -6,6 +6,10 @@
 namespace MArray
 {
 
+template <typename Expr, typename=void> struct is_expression;
+template <typename Expr, typename=void> struct expression_type;
+template <typename Expr, typename=void> struct expr_dimension;
+
 template <typename Type, unsigned NDim, typename Allocator>
 class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, true>
 {
@@ -93,6 +97,22 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
         marray(initializer_type data, layout layout = DEFAULT)
         {
             reset(data, layout);
+        }
+
+        template <typename Expression,
+            typename=detail::enable_if_t<is_expression<Expression>::value>>
+        marray(const Expression& other)
+        {
+            typedef typename expression_type<detail::decay_t<Expression>>::type expr_type;
+
+            static_assert(NDim == expr_dimension<expr_type>::value,
+                          "Dimensionality of the expression must equal that of the target");
+
+            std::array<len_type,NDim> len;
+            get_expr_lengths(other, len);
+            reset(len, uninitialized);
+
+            assign_expr(*this, other);
         }
 
         ~marray()

@@ -118,8 +118,6 @@ struct array_expr
 
 template <typename Expr, typename=void> struct is_array_expression;
 
-template <typename Expr, typename=void> struct is_expression;
-
 template <typename Expr, typename=void> struct is_unary_expression;
 
 template <typename Expr, typename=void> struct is_binary_expression;
@@ -615,9 +613,6 @@ struct is_marray
     static constexpr bool value = decltype(check((Array*)0))::value;
 };
 
-template <typename Expr, typename=void>
-struct expression_type;
-
 template <typename Expr>
 struct expression_type<Expr, detail::enable_if_t<is_marray<Expr>::value>>
 {
@@ -905,8 +900,6 @@ sqrt(const Expr& expr)
     return {make_expression(expr)};
 }
 
-template <typename Expr, typename=void> struct expr_dimension;
-
 template <typename T, typename... Dims>
 struct expr_dimension<array_expr<T, Dims...>>
     : std::integral_constant<unsigned, sizeof...(Dims)> {};
@@ -1008,6 +1001,53 @@ detail::enable_if_t<is_unary_expression<Expr>::value,bool>
 check_expr_lengths(const Expr& expr, const std::array<len_type, NDim>& len)
 {
     return check_expr_lengths(expr.expr, len);
+}
+
+inline bool get_expr_length(const bcast_dim&, len_type&)
+{
+    return true;
+}
+
+inline bool get_expr_length(const slice_dim& dim, len_type& len)
+{
+    len = dim.len;
+    return true;
+}
+
+template <typename T, typename... Dims, size_t NDim, size_t... I>
+void get_expr_lengths_helper(const array_expr<T, Dims...>& array,
+                             std::array<len_type, NDim>& len,
+                             detail::integer_sequence<size_t, I...>)
+{
+    std::array<bool, sizeof...(Dims)> values =
+        {get_expr_length(std::get<I>(array.dims),
+                         len[NDim-sizeof...(Dims)+I])...};
+}
+
+template <typename T, typename... Dims, size_t NDim>
+void get_expr_lengths(const array_expr<T, Dims...>& array,
+                      std::array<len_type, NDim>& len)
+{
+    get_expr_lengths_helper(array, len, detail::static_range<size_t, sizeof...(Dims)>());
+}
+
+template <typename Expr, size_t NDim>
+detail::enable_if_t<is_scalar<Expr>::value>
+get_expr_lengths(const Expr&, std::array<len_type, NDim>&) {}
+
+template <typename Expr, size_t NDim>
+detail::enable_if_t<is_binary_expression<Expr>::value>
+get_expr_lengths(const Expr& expr, std::array<len_type, NDim>& len)
+{
+    get_expr_lengths(expr.first, len);
+    get_expr_lengths(expr.second, len);
+}
+
+template <typename Expr, size_t NDim>
+detail::enable_if_t<is_unary_expression<Expr>::value>
+get_expr_lengths(const Expr& expr, std::array<len_type, NDim>& len)
+{
+    get_expr_lengths(expr.expr, len);
 }
 
 /*

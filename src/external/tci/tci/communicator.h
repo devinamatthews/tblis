@@ -91,6 +91,8 @@ void tci_comm_distribute_over_threads_2d(tci_comm* comm, tci_range range_m,
 #include <system_error>
 #include <tuple>
 #include <utility>
+#include <stdexcept>
+#include <sstream>
 
 namespace tci
 {
@@ -194,7 +196,8 @@ class communicator
                     #else
                     RealFunc* payload = &func;
                     #endif
-                    tci_task_set_visit(&_tasks,
+
+                    int ret = tci_task_set_visit(&_tasks,
                     [](tci_comm* comm, unsigned, void* payload_)
                     {
                         RealFunc* payload = (RealFunc*)payload_;
@@ -203,6 +206,19 @@ class communicator
                         delete payload;
                         #endif
                     }, task, payload);
+
+                    if (ret == EINVAL)
+                    {
+                        std::ostringstream oss;
+                        oss << "Task " << task << " already visited";
+                        throw std::runtime_error(oss.str());
+                    }
+                    #if TCI_IS_TASK_BASED
+                    else if (ret == EALREADY)
+                    {
+                        delete payload;
+                    }
+                    #endif
                 }
 
             protected:

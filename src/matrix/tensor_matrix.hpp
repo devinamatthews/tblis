@@ -441,12 +441,12 @@ class tensor_matrix : public abstract_matrix_adapter<tensor_matrix,tensor_matrix
             const stride_type cs_ab = row_major ? 1 : MR;
             const len_type k_p = round_up(k, KE);
 
-            constexpr static dcomplex zero{};
-            char p_ab[8192] __attribute__((aligned(64)));
-
             comm.distribute_over_threads(ceil_div(n, NR),
             [&](len_type n_first, len_type n_last)
             {
+                constexpr static dcomplex zero{};
+                char p_ab[8192] __attribute__((aligned(64)));
+
                 for (len_type n_off = n_first;n_off < n_last;n_off++)
                 for (len_type m_off = m_first;m_off < m_last;m_off++)
                 {

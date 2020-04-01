@@ -38,7 +38,6 @@ struct partition
         subcomm->distribute_over_gangs({std::min(m_u, m_v), M_iota},
         [&](len_type m_first, len_type m_last)
         {
-            auto child = this->child;
             auto local_A = A;
             auto local_B = B;
             auto local_C = C;

@@ -1,9 +1,5 @@
 #include "../test.hpp"
 
-#include "nodes/gemm.hpp"
-#include "matrix/normal_matrix.hpp"
-#include "matrix/tensor_matrix.hpp"
-
 /*
  * Creates a random matrix multiplication operation, where each matrix
  * has a storage size of N or fewer elements. All possibilities are sampled

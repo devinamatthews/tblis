@@ -156,7 +156,13 @@ using GotoGEMM = gemm<
                        pack_b<BuffersForB,
                          partition_gemm_mc<
                            pack_a<BuffersForA,
-                             gemm_kernel<BuffersForC>>>>>>>;
+                             gemm_kernel<BuffersForC>
+                           >
+                         >
+                       >
+                     >
+                   >
+                 >;
 
 }
 

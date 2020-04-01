@@ -10,7 +10,7 @@
 namespace tblis
 {
 
-template <int Mat, blocksize config::*BS, MemoryPool& Pool, typename Child>
+template <int Mat, MemoryPool& Pool, typename Child>
 struct pack
 {
     Child child;
@@ -21,25 +21,21 @@ struct pack
         if (Mat == matrix_constants::MAT_A)
         {
             auto P = A.pack(comm, cfg, Mat, Pool);
-            comm.barrier();
             child(comm, cfg, P, B, C);
-            comm.barrier();
         }
         else
         {
             auto P = B.pack(comm, cfg, Mat, Pool);
-            comm.barrier();
             child(comm, cfg, A, P, C);
-            comm.barrier();
         }
     }
 };
 
 template <MemoryPool& Pool, typename Child>
-using pack_a = pack<matrix_constants::MAT_A, &config::gemm_mr, Pool, Child>;
+using pack_a = pack<matrix_constants::MAT_A, Pool, Child>;
 
 template <MemoryPool& Pool, typename Child>
-using pack_b = pack<matrix_constants::MAT_B, &config::gemm_nr, Pool, Child>;
+using pack_b = pack<matrix_constants::MAT_B, Pool, Child>;
 
 }
 

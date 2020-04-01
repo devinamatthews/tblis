@@ -623,13 +623,6 @@ void mult_block_fuse_AB_BC(type_t type, const communicator& comm, const config& 
         stride_type idx_A = 0;
         stride_type idx_C = 0;
 
-        std::vector<std::tuple<double,double,stride_type,stride_type>> scat_AB;
-        std::vector<std::tuple<double,double,stride_type,stride_type>> scat_BC;
-        stride_vector scat_A_AB;
-        stride_vector scat_C_BC;
-        stride_vector scat_B_AB;
-        stride_vector scat_B_BC;
-
         for_each_match<true, true>(idx_A, nidx_A, indices_A, 0,
                                    idx_C, nidx_C, indices_C, 0,
         [&](stride_type next_A, stride_type next_C)
@@ -656,6 +649,13 @@ void mult_block_fuse_AB_BC(type_t type, const communicator& comm, const config& 
                      irrep_AB,irrep_AC,irrep_BC,block_AC,block_BC]
                     (const communicator& subcomm)
                     {
+                        std::vector<std::tuple<double,double,stride_type,stride_type>> scat_AB;
+                        std::vector<std::tuple<double,double,stride_type,stride_type>> scat_BC;
+                        stride_vector scat_A_AB;
+                        stride_vector scat_C_BC;
+                        stride_vector scat_B_AB;
+                        stride_vector scat_B_BC;
+
                         auto local_irreps_A = irreps_A;
                         auto local_irreps_B = irreps_B;
                         auto local_irreps_C = irreps_C;

@@ -92,8 +92,8 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
         {
             iter_AC.next(A1, C1);
 
-            auto local_beta = beta;
-            auto local_conj_C = conj_C;
+            auto beta1 = beta;
+            auto conj_C1 = conj_C;
 
             while (iter_AB.next(A1, B1))
             {
@@ -102,9 +102,11 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
                     const len_type NF = cfg.addf_nf.def(type);
 
                     subcomm.distribute_over_threads(m,
-                    [&,local_beta,local_conj_C](len_type m_min, len_type m_max) mutable
+                    [&](len_type m_min, len_type m_max)
                     {
                         const void* As[16];
+                        auto beta2 = beta1;
+                        auto conj_C2 = conj_C1;
 
                         for (len_type j = 0;j < n;j += NF)
                         {
@@ -112,12 +114,12 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
                                 As[k] = A1 + m_min*rs_A*ts + (j+k)*cs_A*ts;
 
                             cfg.addf_sum_ukr.call(type, m_max-m_min, std::min(NF, n-j),
-                                                       &alpha,       conj_A, As, rs_A,
-                                                                     conj_B, B1 + j*inc_B*ts, inc_B,
-                                                  &local_beta, local_conj_C, C1 + m_min*inc_C*ts, inc_C);
+                                                  &alpha, conj_A,  As,                  rs_A,
+                                                          conj_B,  B1 +     j*inc_B*ts, inc_B,
+                                                  &beta2, conj_C2, C1 + m_min*inc_C*ts, inc_C);
 
-                            local_beta = 1.0;
-                            local_conj_C = false;
+                            beta2 = 1.0;
+                            conj_C2 = false;
                         }
                     });
                 }
@@ -131,17 +133,17 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
                         for (len_type i = m_min;i < m_max;i += NF)
                         {
                             cfg.dotf_ukr.call(type, std::min(NF, m_max-i), n,
-                                                   &alpha,       conj_A, A1 + i*rs_A*ts, rs_A, cs_A,
-                                                                 conj_B, B1, inc_B,
-                                              &local_beta, local_conj_C, C1 + i*inc_C*ts, inc_C);
+                                              &alpha, conj_A,  A1 + i* rs_A*ts, rs_A, cs_A,
+                                                      conj_B,  B1,              inc_B,
+                                              &beta1, conj_C1, C1 + i*inc_C*ts, inc_C);
                         }
                     });
                 }
 
                 subcomm.barrier();
 
-                local_beta = 1.0;
-                local_conj_C = false;
+                beta1 = 1.0;
+                conj_C1 = false;
             }
         }
     });
@@ -414,8 +416,8 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
         {
             iter_ABC.next(A1, B1, C1);
 
-            auto local_beta = beta;
-            auto local_conj_C = conj_C;
+            auto beta1 = beta;
+            auto conj_C1 = conj_C;
 
             while (iter_AB.next(A1, B1))
             {
@@ -424,9 +426,11 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
                     const len_type NF = cfg.addf_nf.def(type);
 
                     subcomm.distribute_over_threads(m,
-                    [&,local_beta,local_conj_C](len_type m_min, len_type m_max) mutable
+                    [&](len_type m_min, len_type m_max)
                     {
                         const void* As[16];
+                        auto beta2 = beta1;
+                        auto conj_C2 = conj_C1;
 
                         for (len_type j = 0;j < n;j += NF)
                         {
@@ -434,12 +438,12 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
                                 As[k] = A1 + m_min*rs_A*ts + (j+k)*cs_A*ts;
 
                             cfg.addf_sum_ukr.call(type, m_max-m_min, std::min(NF, n-j),
-                                                       &alpha,       conj_A, As, rs_A,
-                                                                     conj_B, B1 + j*inc_B*ts, inc_B,
-                                                  &local_beta, local_conj_C, C1 + m_min*inc_C*ts, inc_C);
+                                                  &alpha, conj_A,  As,                  rs_A,
+                                                          conj_B,  B1 +     j*inc_B*ts, inc_B,
+                                                  &beta2, conj_C2, C1 + m_min*inc_C*ts, inc_C);
 
-                            local_beta = 1.0;
-                            local_conj_C = false;
+                            beta2 = 1.0;
+                            conj_C2 = false;
                         }
                     });
                 }
@@ -453,17 +457,17 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
                         for (len_type i = m_min;i < m_max;i += NF)
                         {
                             cfg.dotf_ukr.call(type, std::min(NF, m_max-i), n,
-                                                   &alpha,       conj_A, A1 + i*rs_A*ts, rs_A, cs_A,
-                                                                 conj_B, B1, inc_B,
-                                              &local_beta, local_conj_C, C1 + i*inc_C*ts, inc_C);
+                                              &alpha, conj_A,  A1 + i* rs_A*ts, rs_A, cs_A,
+                                                      conj_B,  B1,              inc_B,
+                                              &beta1, conj_C1, C1 + i*inc_C*ts, inc_C);
                         }
                     });
                 }
 
                 subcomm.barrier();
 
-                local_beta = 1.0;
-                local_conj_C = false;
+                beta1 = 1.0;
+                conj_C1 = false;
             }
         }
     });

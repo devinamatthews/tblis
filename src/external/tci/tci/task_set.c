@@ -152,6 +152,7 @@ static void tci_task_launcher(void* data_)
 {
     tci_task_func_data* data = (tci_task_func_data*)data_;
     data->func(tci_single, data->task, data->payload);
+    free(data);
 }
 
 int tci_task_set_visit(tci_task_set* set, tci_task_func func, unsigned task,
@@ -160,11 +161,14 @@ int tci_task_set_visit(tci_task_set* set, tci_task_func func, unsigned task,
     if (task > set->ntask) return EINVAL;
     if (!tci_slot_try_fill(set->slots+task, 0, 1)) return EALREADY;
 
-    tci_task_func_data data = {func, task, payload};
+    tci_task_func_data* data = malloc(sizeof(tci_task_func_data));
+    data->func = func;
+    data->task = task;
+    data->payload = payload;
     dispatch_group_t group = *(dispatch_group_t*)&set->comm;
     dispatch_queue_t queue = *(dispatch_queue_t*)&set->subcomm;
 
-    dispatch_group_async_f(group, queue, &data, tci_task_launcher);
+    dispatch_group_async_f(group, queue, data, tci_task_launcher);
 
     return 0;
 }

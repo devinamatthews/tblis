@@ -82,6 +82,9 @@ int tci_parallelize(tci_thread_func func, void* payload,
     pthread_t threads[nthread];
     tci_thread_data data[nthread];
 
+    tci_comm comm0;
+    tci_comm_init(&comm0, context, nthread, 0, 1, 0);
+
     for (unsigned i = 1;i < nthread;i++)
     {
         data[i].func = func;
@@ -98,8 +101,6 @@ int tci_parallelize(tci_thread_func func, void* payload,
         }
     }
 
-    tci_comm comm0;
-    tci_comm_init(&comm0, context, nthread, 0, 1, 0);
     func(&comm0, payload);
 
     for (unsigned i = 1;i < nthread;i++)

@@ -9,12 +9,7 @@
 namespace MArray
 {
 
-struct bcast_dim
-{
-    len_type len;
-
-    bcast_dim(len_type len) : len(len) {}
-};
+struct bcast_dim {};
 
 struct slice_dim
 {

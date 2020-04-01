@@ -22,7 +22,7 @@ class irrep_iterator
     public:
         irrep_iterator(unsigned irrep, unsigned nirrep, unsigned ndim)
         : irrep_(irrep), irrep_bits_(__builtin_popcount(nirrep-1)),
-          irrep_mask_ (nirrep-1), it_(irrep_vector(ndim ? ndim-1 : 0, nirrep)) {}
+          irrep_mask_(nirrep-1), it_(irrep_vector(ndim ? ndim-1 : 0, nirrep)) {}
 
         bool next()
         {
@@ -67,15 +67,15 @@ class irrep_iterator
         }
 };
 
-template <typename T, typename U>
+template <typename T>
 void block_to_full(const communicator& comm, const config& cfg,
-                   const dpd_varray_view<T>& A, varray<U>& A2)
+                   const dpd_varray_view<T>& A, varray<T>& A2)
 {
     unsigned nirrep = A.num_irreps();
     unsigned ndim_A = A.dimension();
 
     len_vector len_A(ndim_A);
-    matrix<len_type> off_A({ndim_A, nirrep});
+    matrix<len_type> off_A{{ndim_A, nirrep}};
     for (unsigned i = 0;i < ndim_A;i++)
     {
         for (unsigned irrep = 0;irrep < nirrep;irrep++)
@@ -95,20 +95,20 @@ void block_to_full(const communicator& comm, const config& cfg,
         for (unsigned i = 0;i < ndim_A;i++)
             data_A2 += off_A[i][irreps_A[i]]*A2.stride(i);
 
-        add<U>(comm, cfg, {}, {}, local_A.lengths(),
-               1, false, local_A.data(), {}, local_A.strides(),
-               0, false,        data_A2, {},      A2.strides());
+        add(type_tag<T>::value, comm, cfg, {}, {}, local_A.lengths(),
+            T(1), false, reinterpret_cast<char*>(local_A.data()), {}, local_A.strides(),
+            T(0), false, reinterpret_cast<char*>(       data_A2), {},      A2.strides());
     });
 }
 
-template <typename T, typename U>
+template <typename T>
 void full_to_block(const communicator& comm, const config& cfg,
-                   const varray<U>& A2, const dpd_varray_view<T>& A)
+                   varray<T>& A2, const dpd_varray_view<T>& A)
 {
     unsigned nirrep = A.num_irreps();
     unsigned ndim_A = A.dimension();
 
-    matrix<len_type> off_A({ndim_A, nirrep});
+    matrix<len_type> off_A{{ndim_A, nirrep}};
     for (unsigned i = 0;i < ndim_A;i++)
     {
         len_type off = 0;
@@ -126,9 +126,9 @@ void full_to_block(const communicator& comm, const config& cfg,
         for (unsigned i = 0;i < ndim_A;i++)
             data_A2 += off_A[i][irreps_A[i]]*A2.stride(i);
 
-        add<U>(comm, cfg, {}, {}, local_A.lengths(),
-               1, false,        data_A2, {},      A2.strides(),
-               0, false, local_A.data(), {}, local_A.strides());
+        add(type_tag<T>::value, comm, cfg, {}, {}, local_A.lengths(),
+            T(1), false, reinterpret_cast<char*>(       data_A2), {},      A2.strides(),
+            T(0), false, reinterpret_cast<char*>(local_A.data()), {}, local_A.strides());
     });
 }
 
@@ -186,7 +186,7 @@ bool is_block_empty(const dpd_varray_view<T>& A, const irrep_vector& irreps)
     return irrep != A.irrep();
 }
 
-inline unsigned assign_irrep(unsigned dim, unsigned irrep)
+inline unsigned assign_irrep(unsigned, unsigned irrep)
 {
     return irrep;
 }

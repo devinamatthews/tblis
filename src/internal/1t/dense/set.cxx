@@ -7,19 +7,27 @@ namespace tblis
 namespace internal
 {
 
-template <typename T>
-void set(const communicator& comm, const config& cfg,
+void set(type_t type, const communicator& comm, const config& cfg,
          const len_vector& len_A,
-         T alpha, T* A, const stride_vector& stride_A)
+         const scalar& alpha, char* A, const stride_vector& stride_A)
 {
-    bool empty = len_A.size() == 0;
+    if (len_A.size() == 0)
+    {
+        alpha.to(A);
+        comm.barrier();
+        return;
+    }
 
-    len_type n0 = (empty ? 1 : len_A[0]);
-    len_vector len1(len_A.begin() + !empty, len_A.end());
+    const len_type ts = type_size[type];
+
+    len_type n0 = len_A[0];
+    len_vector len1(len_A.begin() + 1, len_A.end());
     len_type n1 = stl_ext::prod(len1);
 
-    stride_type stride0 = (empty ? 1 : stride_A[0]);
-    len_vector stride1(stride_A.begin() + !empty, stride_A.end());
+    stride_type stride0 = stride_A[0];
+    len_vector stride1;
+    for (unsigned i = 1;i < stride_A.size();i++)
+        stride1.push_back(stride_A[i]*ts);
 
     comm.distribute_over_threads(n0, n1,
     [&](len_type n0_min, len_type n0_max, len_type n1_min, len_type n1_max)
@@ -28,23 +36,17 @@ void set(const communicator& comm, const config& cfg,
 
         viterator<1> iter_A(len1, stride1);
         iter_A.position(n1_min, A1);
-        A1 += n0_min*stride0;
+        A1 += n0_min*stride0*ts;
 
         for (len_type i = n1_min;i < n1_max;i++)
         {
             iter_A.next(A1);
-            cfg.set_ukr.call<T>(n0_max-n0_min, alpha, A1, stride0);
+            cfg.set_ukr.call(type, n0_max-n0_min, &alpha, A1, stride0);
         }
     });
 
     comm.barrier();
 }
-
-#define FOREACH_TYPE(T) \
-template void set(const communicator& comm, const config& cfg, \
-                  const len_vector& len_A, \
-                  T alpha, T* A, const stride_vector& stride_A);
-#include "configs/foreach_type.h"
 
 }
 }

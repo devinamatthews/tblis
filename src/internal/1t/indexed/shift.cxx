@@ -10,39 +10,42 @@ namespace tblis
 namespace internal
 {
 
-template <typename T>
-void shift(const communicator& comm, const config& cfg,
-           T alpha, T beta, bool conj_A, const indexed_varray_view<T>& A,
-           const dim_vector& idx_A_A)
+void shift(type_t type, const communicator& comm, const config& cfg,
+           const scalar& alpha, const scalar& beta, bool conj_A,
+           const indexed_varray_view<char>& A, const dim_vector&)
 {
     for (len_type i = 0;i < A.num_indices();i++)
     {
-        if (A.factor(i) == T(0))
+        scalar alpha_fac = alpha;
+
+        switch (type)
         {
-            if (beta == T(0))
+            case TYPE_FLOAT:    alpha_fac.data.s *= reinterpret_cast<const indexed_varray_view<   float>&>(A).factor(i); break;
+            case TYPE_DOUBLE:   alpha_fac.data.d *= reinterpret_cast<const indexed_varray_view<  double>&>(A).factor(i); break;
+            case TYPE_SCOMPLEX: alpha_fac.data.c *= reinterpret_cast<const indexed_varray_view<scomplex>&>(A).factor(i); break;
+            case TYPE_DCOMPLEX: alpha_fac.data.z *= reinterpret_cast<const indexed_varray_view<dcomplex>&>(A).factor(i); break;
+        }
+
+        if (alpha_fac.is_zero())
+        {
+            if (beta.is_zero())
             {
-                set(comm, cfg, A.dense_lengths(),
-                    T(0), A.data(i), A.dense_strides());
+                set(type, comm, cfg, A.dense_lengths(),
+                    beta, A.data(i), A.dense_strides());
             }
-            else if (beta != T(1) || (is_complex<T>::value && conj_A))
+            else if (!beta.is_one() || (beta.is_complex() && conj_A))
             {
-                scale(comm, cfg, A.dense_lengths(),
+                scale(type, comm, cfg, A.dense_lengths(),
                       beta, conj_A, A.data(i), A.dense_strides());
             }
         }
         else
         {
-            shift(comm, cfg, A.dense_lengths(),
-                  A.factor(i)*alpha, beta, conj_A, A.data(i), A.dense_strides());
+            shift(type, comm, cfg, A.dense_lengths(),
+                  alpha_fac, beta, conj_A, A.data(i), A.dense_strides());
         }
     }
 }
-
-#define FOREACH_TYPE(T) \
-template void shift(const communicator& comm, const config& cfg, \
-                    T alpha, T beta, bool conj_A, const indexed_varray_view<T>& A, \
-                    const dim_vector&);
-#include "configs/foreach_type.h"
 
 }
 }

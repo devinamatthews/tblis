@@ -70,7 +70,6 @@ struct dpd_base
     {
         auto& leaf = derived().leaf_;
         auto& parent = derived().parent_;
-        auto nirrep = derived().nirrep_;
         unsigned ndim = leaf.size();
         dim_vector depth(derived().depth_.begin(), derived().depth_.end());
         dim_vector node(ndim);
@@ -325,7 +324,7 @@ class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, D
             reset(irrep, nirrep, len, ptr,
                   this->default_depth(layout, NDim), layout.base());
         }
-        
+
         void reset(unsigned irrep, unsigned nirrep,
                    const detail::array_2d<len_type>& len, pointer ptr,
                    const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
@@ -708,9 +707,11 @@ class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, D
                             (detail::sliced_dimension<Slices...>::value > 0) &&
                             (detail::sliced_dimension<Slices...>::value < NDim),
                             dpd_marray_view<Type, detail::sliced_dimension<Slices...>::value>>
-        operator()(const Slices&... slices)
+        operator()(const Slices&...)
         {
             constexpr unsigned NDim2 = detail::sliced_dimension<Slices...>::value;
+
+            (void)NDim2;
 
             abort();
             //TODO

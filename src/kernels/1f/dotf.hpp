@@ -5,25 +5,31 @@
 #include "util/basic_types.h"
 #include "util/macros.h"
 
-#include "../1v/dot.hpp"
+#pragma clang diagnostic ignored "-Wpass-failed"
 
 namespace tblis
 {
 
-template <typename T>
 using dotf_ukr_t =
     void (*)(len_type m, len_type n,
-             T alpha, bool conj_A, const T* A, stride_type rs_A, stride_type cs_A,
-                      bool conj_B, const T* B, stride_type inc_B,
-             T  beta, bool conj_C,       T* C, stride_type inc_C);
+             const void* alpha, bool conj_A, const void* A, stride_type rs_A, stride_type cs_A,
+                                bool conj_B, const void* B, stride_type inc_B,
+             const void*  beta, bool conj_C,       void* C, stride_type inc_C);
 
 template <typename Config, typename T>
 void dotf_ukr_def(len_type m, len_type n,
-                  T alpha, bool conj_A, const T* TBLIS_RESTRICT A, stride_type rs_A, stride_type cs_A,
-                           bool conj_B, const T* TBLIS_RESTRICT B, stride_type inc_B,
-                  T  beta, bool conj_C,       T* TBLIS_RESTRICT C, stride_type inc_C)
+                  const void* alpha_, bool conj_A, const void* A_, stride_type rs_A, stride_type cs_A,
+                                      bool conj_B, const void* B_, stride_type inc_B,
+                  const void*  beta_, bool conj_C,       void* C_, stride_type inc_C)
 {
     constexpr len_type NF = Config::template dotf_nf<T>::def;
+
+    T alpha = *static_cast<const T*>(alpha_);
+    T beta  = *static_cast<const T*>(beta_ );
+
+    const T* TBLIS_RESTRICT A = static_cast<const T*>(A_);
+    const T* TBLIS_RESTRICT B = static_cast<const T*>(B_);
+          T* TBLIS_RESTRICT C = static_cast<      T*>(C_);
 
     T AB[NF] = {};
 

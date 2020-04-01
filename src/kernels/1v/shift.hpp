@@ -5,18 +5,24 @@
 #include "util/basic_types.h"
 #include "util/macros.h"
 
+#pragma clang diagnostic ignored "-Wpass-failed"
+
 namespace tblis
 {
 
-template <typename T>
 using shift_ukr_t =
     void (*)(len_type n,
-             T alpha, T beta, bool conj_A, T* A, stride_type inc_A);
+             const void* alpha, const void* beta, bool conj_A, void* A, stride_type inc_A);
 
 template <typename Config, typename T>
 void shift_ukr_def(len_type n,
-                   T alpha, T beta, bool conj_A, T* A, stride_type inc_A)
+                   const void* alpha_, const void* beta_, bool conj_A, void* A_, stride_type inc_A)
 {
+    T alpha = *static_cast<const T*>(alpha_);
+    T beta  = *static_cast<const T*>(beta_ );
+
+    T* TBLIS_RESTRICT A = static_cast<T*>(A_);
+
     if (beta == T(0))
     {
         if (inc_A == 1)

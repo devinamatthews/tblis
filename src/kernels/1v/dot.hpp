@@ -5,20 +5,26 @@
 #include "util/basic_types.h"
 #include "util/macros.h"
 
+#pragma clang diagnostic ignored "-Wpass-failed"
+
 namespace tblis
 {
 
-template <typename T>
 using dot_ukr_t =
     void (*)(len_type n,
-             bool conj_A, const T* A, stride_type inc_A,
-             bool conj_B, const T* B, stride_type inc_B, T& value);
+             bool conj_A, const void* A, stride_type inc_A,
+             bool conj_B, const void* B, stride_type inc_B, void* value);
 
 template <typename Config, typename T>
 void dot_ukr_def(len_type n,
-                 bool conj_A, const T* TBLIS_RESTRICT A, stride_type inc_A,
-                 bool conj_B, const T* TBLIS_RESTRICT B, stride_type inc_B, T& value)
+                 bool conj_A, const void* A_, stride_type inc_A,
+                 bool conj_B, const void* B_, stride_type inc_B, void* value_)
 {
+    const T* TBLIS_RESTRICT A = static_cast<const T*>(A_);
+    const T* TBLIS_RESTRICT B = static_cast<const T*>(B_);
+
+    T& TBLIS_RESTRICT value = *static_cast<T*>(value_);
+
     if (conj_A)
     {
         value = conj(value);

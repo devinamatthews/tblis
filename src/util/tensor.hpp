@@ -135,7 +135,7 @@ template <typename T, typename... Ts>
 size_t check_sizes(const T& arg, const Ts&... args)
 {
     size_t sz = arg.size();
-    if (sizeof...(Ts)) TBLIS_ASSERT(sz == check_sizes(args...));
+    TBLIS_ASSERT(sizeof...(Ts) == 0 || sz == check_sizes(args...));
     return sz;
 }
 
@@ -412,8 +412,7 @@ inline void diagonal(unsigned& ndim,
 }
 
 template <typename T>
-void matricize(varray_view<const T>  A,
-               matrix_view<const T>& AM, unsigned split)
+matrix_view<const T> matricize(const varray_view<const T>& A, unsigned split)
 {
     unsigned ndim = A.dimension();
     TBLIS_ASSERT(split <= ndim);
@@ -471,14 +470,26 @@ void matricize(varray_view<const T>  A,
         cs = (split == ndim ? 1 : A.stride( ndim-1));
     }
 
-    AM.reset({m, n}, A.data(), {rs, cs});
+    return {{m, n}, A.data(), {rs, cs}};
 }
 
 template <typename T>
-void matricize(varray_view<T>  A,
-               matrix_view<T>& AM, unsigned split)
+matrix_view<T> matricize(const varray_view<T>& A, unsigned split)
 {
-    matricize<T>(A, reinterpret_cast<matrix_view<const T>&>(AM), split);
+    auto AM = matricize<T>(reinterpret_cast<const varray_view<const T>&>(A), split);
+    return reinterpret_cast<matrix_view<T>&>(AM);
+}
+
+template <typename T>
+matrix_view<T> matricize(varray<T>& A, unsigned split)
+{
+    return matricize(A.view(), split);
+}
+
+template <typename T>
+matrix_view<const T> matricize(const varray<T>& A, unsigned split)
+{
+    return matricize(A.view(), split);
 }
 
 inline unsigned unit_dim(const stride_vector& stride, const dim_vector& reorder)

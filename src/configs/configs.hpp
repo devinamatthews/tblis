@@ -44,6 +44,11 @@ struct blocksize
     len_type   _iota[4];
     len_type _extent[4];
 
+    len_type    def(type_t type) const { return    _def[type]; }
+    len_type    max(type_t type) const { return    _max[type]; }
+    len_type   iota(type_t type) const { return   _iota[type]; }
+    len_type extent(type_t type) const { return _extent[type]; }
+
     template <typename T> len_type    def() const { return    _def[type_idx<T>::value]; }
     template <typename T> len_type    max() const { return    _max[type_idx<T>::value]; }
     template <typename T> len_type   iota() const { return   _iota[type_idx<T>::value]; }
@@ -56,21 +61,27 @@ struct blocksize
       _extent{BS<float>::extent, BS<double>::extent, BS<scomplex>::extent, BS<dcomplex>::extent} {}
 };
 
-template <template <typename> class ukr_t>
+template <typename ukr_t>
 struct microkernel
 {
-    void (*_ukr[4])(void);
+    ukr_t _ukr[4];
 
     template <template <typename> class ukr, typename T> microkernel(const ukr<T>&)
-    : _ukr{(void(*)(void))ukr<   float>::value,
-           (void(*)(void))ukr<  double>::value,
-           (void(*)(void))ukr<scomplex>::value,
-           (void(*)(void))ukr<dcomplex>::value} {}
+    : _ukr{ukr<   float>::value,
+           ukr<  double>::value,
+           ukr<scomplex>::value,
+           ukr<dcomplex>::value} {}
+
+    template <typename... Args>
+    void call(type_t type, Args&&... args) const
+    {
+        _ukr[type](std::forward<Args>(args)...);
+    }
 
     template <typename T, typename... Args>
     void call(Args&&... args) const
     {
-        ((ukr_t<T>)_ukr[type_idx<T>::value])(std::forward<Args>(args)...);
+        _ukr[type_tag<T>::value](std::forward<Args>(args)...);
     }
 };
 
@@ -84,6 +95,11 @@ struct parameter
            param<  double>::value,
            param<scomplex>::value,
            param<dcomplex>::value} {}
+
+    U value(type_t type) const
+    {
+        return _val[type];
+    }
 
     template <typename T>
     U value() const
@@ -144,20 +160,15 @@ struct config
 
     microkernel<pack_nn_ukr_t> pack_nn_mr_ukr;
     microkernel<pack_nn_ukr_t> pack_nn_nr_ukr;
-    microkernel<pack_nnd_ukr_t> pack_nnd_mr_ukr;
-    microkernel<pack_nnd_ukr_t> pack_nnd_nr_ukr;
-    microkernel<pack_sn_ukr_t> pack_sn_mr_ukr;
-    microkernel<pack_sn_ukr_t> pack_sn_nr_ukr;
-    microkernel<pack_ns_ukr_t> pack_ns_mr_ukr;
-    microkernel<pack_ns_ukr_t> pack_ns_nr_ukr;
     microkernel<pack_ss_ukr_t> pack_ss_mr_ukr;
     microkernel<pack_ss_ukr_t> pack_ss_nr_ukr;
     microkernel<pack_nb_ukr_t> pack_nb_mr_ukr;
     microkernel<pack_nb_ukr_t> pack_nb_nr_ukr;
-    microkernel<pack_sb_ukr_t> pack_sb_mr_ukr;
-    microkernel<pack_sb_ukr_t> pack_sb_nr_ukr;
     microkernel<pack_ss_scal_ukr_t> pack_ss_scal_mr_ukr;
     microkernel<pack_ss_scal_ukr_t> pack_ss_scal_nr_ukr;
+
+    microkernel<update_nn_ukr_t> update_nn_ukr;
+    microkernel<update_ss_ukr_t> update_ss_ukr;
 
     parameter<unsigned> m_thread_ratio;
     parameter<unsigned> n_thread_ratio;
@@ -202,20 +213,15 @@ struct config
 
       pack_nn_mr_ukr(typename Traits::template pack_nn_mr_ukr<float>()),
       pack_nn_nr_ukr(typename Traits::template pack_nn_nr_ukr<float>()),
-      pack_nnd_mr_ukr(typename Traits::template pack_nnd_mr_ukr<float>()),
-      pack_nnd_nr_ukr(typename Traits::template pack_nnd_nr_ukr<float>()),
-      pack_sn_mr_ukr(typename Traits::template pack_sn_mr_ukr<float>()),
-      pack_sn_nr_ukr(typename Traits::template pack_sn_nr_ukr<float>()),
-      pack_ns_mr_ukr(typename Traits::template pack_ns_mr_ukr<float>()),
-      pack_ns_nr_ukr(typename Traits::template pack_ns_nr_ukr<float>()),
       pack_ss_mr_ukr(typename Traits::template pack_ss_mr_ukr<float>()),
       pack_ss_nr_ukr(typename Traits::template pack_ss_nr_ukr<float>()),
       pack_nb_mr_ukr(typename Traits::template pack_nb_mr_ukr<float>()),
       pack_nb_nr_ukr(typename Traits::template pack_nb_nr_ukr<float>()),
-      pack_sb_mr_ukr(typename Traits::template pack_sb_mr_ukr<float>()),
-      pack_sb_nr_ukr(typename Traits::template pack_sb_nr_ukr<float>()),
       pack_ss_scal_mr_ukr(typename Traits::template pack_ss_scal_mr_ukr<float>()),
       pack_ss_scal_nr_ukr(typename Traits::template pack_ss_scal_nr_ukr<float>()),
+
+      update_nn_ukr(typename Traits::template update_nn_ukr<float>()),
+      update_ss_ukr(typename Traits::template update_ss_ukr<float>()),
 
       m_thread_ratio(typename Traits::template m_thread_ratio<float>()),
       n_thread_ratio(typename Traits::template n_thread_ratio<float>()),

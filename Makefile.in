@@ -140,12 +140,11 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/as-gcc-inline-assembly.m4 \
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
-	$(am__configure_deps) $(iface1minclude_HEADERS) \
-	$(iface1tinclude_HEADERS) $(iface1vinclude_HEADERS) \
-	$(iface3minclude_HEADERS) $(iface3tinclude_HEADERS) \
-	$(marrayinclude_HEADERS) $(memoryinclude_HEADERS) \
-	$(pkginclude_HEADERS) $(stl_extinclude_HEADERS) \
-	$(utilinclude_HEADERS) $(am__DIST_COMMON)
+	$(am__configure_deps) $(iface1tinclude_HEADERS) \
+	$(iface3tinclude_HEADERS) $(marrayinclude_HEADERS) \
+	$(memoryinclude_HEADERS) $(pkginclude_HEADERS) \
+	$(stl_extinclude_HEADERS) $(utilinclude_HEADERS) \
+	$(am__DIST_COMMON)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
@@ -189,10 +188,7 @@ am__uninstall_files_from_dir = { \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
 am__installdirs = "$(DESTDIR)$(libdir)" \
-	"$(DESTDIR)$(iface1mincludedir)" \
 	"$(DESTDIR)$(iface1tincludedir)" \
-	"$(DESTDIR)$(iface1vincludedir)" \
-	"$(DESTDIR)$(iface3mincludedir)" \
 	"$(DESTDIR)$(iface3tincludedir)" \
 	"$(DESTDIR)$(marrayincludedir)" \
 	"$(DESTDIR)$(memoryincludedir)" "$(DESTDIR)$(pkgincludedir)" \
@@ -344,23 +340,11 @@ lib_libtblis_la_DEPENDENCIES = src/external/tci/lib/libtci.la \
 	$(am__append_8) $(am__append_10) $(am__append_12) \
 	$(am__append_14) $(am__append_16) $(am__append_18) \
 	$(am__append_20) $(am__append_22)
-am_lib_libtblis_la_OBJECTS = src/iface/1v/add.lo src/iface/1v/dot.lo \
-	src/iface/1v/mult.lo src/iface/1v/reduce.lo \
-	src/iface/1v/scale.lo src/iface/1v/set.lo \
-	src/iface/1v/shift.lo src/iface/1m/add.lo src/iface/1m/dot.lo \
-	src/iface/1m/reduce.lo src/iface/1m/scale.lo \
-	src/iface/1m/set.lo src/iface/1m/shift.lo src/iface/1t/add.lo \
-	src/iface/1t/dot.lo src/iface/1t/reduce.lo \
-	src/iface/1t/scale.lo src/iface/1t/set.lo \
-	src/iface/1t/shift.lo src/iface/2m/mult.lo \
-	src/iface/3m/mult.lo src/iface/3t/mult.lo \
-	src/internal/1v/add.lo src/internal/1v/dot.lo \
-	src/internal/1v/mult.lo src/internal/1v/reduce.lo \
-	src/internal/1v/scale.lo src/internal/1v/set.lo \
-	src/internal/1v/shift.lo src/internal/1m/add.lo \
-	src/internal/1m/dot.lo src/internal/1m/reduce.lo \
-	src/internal/1m/scale.lo src/internal/1m/set.lo \
-	src/internal/1m/shift.lo src/internal/1t/dense/add.lo \
+am_lib_libtblis_la_OBJECTS = src/iface/1t/add.lo src/iface/1t/dot.lo \
+	src/iface/1t/reduce.lo src/iface/1t/scale.lo \
+	src/iface/1t/set.lo src/iface/1t/shift.lo src/iface/3t/mult.lo \
+	src/internal/0/add.lo src/internal/0/mult.lo \
+	src/internal/0/reduce.lo src/internal/1t/dense/add.lo \
 	src/internal/1t/dense/dot.lo src/internal/1t/dense/reduce.lo \
 	src/internal/1t/dense/scale.lo src/internal/1t/dense/set.lo \
 	src/internal/1t/dense/shift.lo src/internal/1t/dpd/add.lo \
@@ -377,12 +361,13 @@ am_lib_libtblis_la_OBJECTS = src/iface/1v/add.lo src/iface/1v/dot.lo \
 	src/internal/1t/indexed_dpd/reduce.lo \
 	src/internal/1t/indexed_dpd/scale.lo \
 	src/internal/1t/indexed_dpd/set.lo \
-	src/internal/1t/indexed_dpd/shift.lo src/internal/2m/mult.lo \
-	src/internal/3m/mult.lo src/internal/3t/dense/mult.lo \
-	src/internal/3t/dpd/mult.lo src/internal/3t/indexed/mult.lo \
+	src/internal/1t/indexed_dpd/shift.lo \
+	src/internal/3t/dense/mult.lo src/internal/3t/dpd/mult.lo \
+	src/internal/3t/indexed/mult.lo \
 	src/internal/3t/indexed_dpd/mult.lo src/configs/configs.lo \
-	src/util/basic_types.lo src/util/configs.lo src/util/cpuid.lo \
-	src/util/env.lo src/util/random.lo src/util/thread.lo
+	src/util/basic_types.lo src/util/configs.lo \
+	src/util/gemm_thread.lo src/util/cpuid.lo src/util/env.lo \
+	src/util/random.lo src/util/thread.lo
 lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
 lib_libzen_la_LIBADD =
 am__lib_libzen_la_SOURCES_DIST =  \
@@ -461,31 +446,15 @@ am__depfiles_remade = src/configs/$(DEPDIR)/configs.Plo \
 	src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config.Plo \
 	src/configs/skx2/$(DEPDIR)/lib_libskx2_la-vpu_count.Plo \
 	src/configs/zen/$(DEPDIR)/lib_libzen_la-config.Plo \
-	src/iface/1m/$(DEPDIR)/add.Plo src/iface/1m/$(DEPDIR)/dot.Plo \
-	src/iface/1m/$(DEPDIR)/reduce.Plo \
-	src/iface/1m/$(DEPDIR)/scale.Plo \
-	src/iface/1m/$(DEPDIR)/set.Plo \
-	src/iface/1m/$(DEPDIR)/shift.Plo \
 	src/iface/1t/$(DEPDIR)/add.Plo src/iface/1t/$(DEPDIR)/dot.Plo \
 	src/iface/1t/$(DEPDIR)/reduce.Plo \
 	src/iface/1t/$(DEPDIR)/scale.Plo \
 	src/iface/1t/$(DEPDIR)/set.Plo \
 	src/iface/1t/$(DEPDIR)/shift.Plo \
-	src/iface/1v/$(DEPDIR)/add.Plo src/iface/1v/$(DEPDIR)/dot.Plo \
-	src/iface/1v/$(DEPDIR)/mult.Plo \
-	src/iface/1v/$(DEPDIR)/reduce.Plo \
-	src/iface/1v/$(DEPDIR)/scale.Plo \
-	src/iface/1v/$(DEPDIR)/set.Plo \
-	src/iface/1v/$(DEPDIR)/shift.Plo \
-	src/iface/2m/$(DEPDIR)/mult.Plo \
-	src/iface/3m/$(DEPDIR)/mult.Plo \
 	src/iface/3t/$(DEPDIR)/mult.Plo \
-	src/internal/1m/$(DEPDIR)/add.Plo \
-	src/internal/1m/$(DEPDIR)/dot.Plo \
-	src/internal/1m/$(DEPDIR)/reduce.Plo \
-	src/internal/1m/$(DEPDIR)/scale.Plo \
-	src/internal/1m/$(DEPDIR)/set.Plo \
-	src/internal/1m/$(DEPDIR)/shift.Plo \
+	src/internal/0/$(DEPDIR)/add.Plo \
+	src/internal/0/$(DEPDIR)/mult.Plo \
+	src/internal/0/$(DEPDIR)/reduce.Plo \
 	src/internal/1t/dense/$(DEPDIR)/add.Plo \
 	src/internal/1t/dense/$(DEPDIR)/dot.Plo \
 	src/internal/1t/dense/$(DEPDIR)/reduce.Plo \
@@ -510,32 +479,23 @@ am__depfiles_remade = src/configs/$(DEPDIR)/configs.Plo \
 	src/internal/1t/indexed_dpd/$(DEPDIR)/scale.Plo \
 	src/internal/1t/indexed_dpd/$(DEPDIR)/set.Plo \
 	src/internal/1t/indexed_dpd/$(DEPDIR)/shift.Plo \
-	src/internal/1v/$(DEPDIR)/add.Plo \
-	src/internal/1v/$(DEPDIR)/dot.Plo \
-	src/internal/1v/$(DEPDIR)/mult.Plo \
-	src/internal/1v/$(DEPDIR)/reduce.Plo \
-	src/internal/1v/$(DEPDIR)/scale.Plo \
-	src/internal/1v/$(DEPDIR)/set.Plo \
-	src/internal/1v/$(DEPDIR)/shift.Plo \
-	src/internal/2m/$(DEPDIR)/mult.Plo \
-	src/internal/3m/$(DEPDIR)/mult.Plo \
 	src/internal/3t/dense/$(DEPDIR)/mult.Plo \
 	src/internal/3t/dpd/$(DEPDIR)/mult.Plo \
 	src/internal/3t/indexed/$(DEPDIR)/mult.Plo \
 	src/internal/3t/indexed_dpd/$(DEPDIR)/mult.Plo \
 	src/util/$(DEPDIR)/basic_types.Plo \
 	src/util/$(DEPDIR)/configs.Plo src/util/$(DEPDIR)/cpuid.Plo \
-	src/util/$(DEPDIR)/env.Plo src/util/$(DEPDIR)/random.Plo \
-	src/util/$(DEPDIR)/thread.Plo test/$(DEPDIR)/batched_bench.Po \
-	test/$(DEPDIR)/bench.Po test/$(DEPDIR)/skx_bench.Po \
-	test/$(DEPDIR)/test.Po test/1t/$(DEPDIR)/dot.Po \
-	test/1t/$(DEPDIR)/reduce.Po test/1t/$(DEPDIR)/replicate.Po \
-	test/1t/$(DEPDIR)/scale.Po test/1t/$(DEPDIR)/trace.Po \
-	test/1t/$(DEPDIR)/transpose.Po test/3m/$(DEPDIR)/gemm.Po \
-	test/3m/$(DEPDIR)/gemm_ukr.Po test/3m/$(DEPDIR)/gemv.Po \
-	test/3m/$(DEPDIR)/ger.Po test/3t/$(DEPDIR)/contract.Po \
-	test/3t/$(DEPDIR)/mult.Po test/3t/$(DEPDIR)/outer_prod.Po \
-	test/3t/$(DEPDIR)/weight.Po
+	src/util/$(DEPDIR)/env.Plo src/util/$(DEPDIR)/gemm_thread.Plo \
+	src/util/$(DEPDIR)/random.Plo src/util/$(DEPDIR)/thread.Plo \
+	test/$(DEPDIR)/batched_bench.Po test/$(DEPDIR)/bench.Po \
+	test/$(DEPDIR)/skx_bench.Po test/$(DEPDIR)/test.Po \
+	test/1t/$(DEPDIR)/dot.Po test/1t/$(DEPDIR)/reduce.Po \
+	test/1t/$(DEPDIR)/replicate.Po test/1t/$(DEPDIR)/scale.Po \
+	test/1t/$(DEPDIR)/trace.Po test/1t/$(DEPDIR)/transpose.Po \
+	test/3m/$(DEPDIR)/gemm.Po test/3m/$(DEPDIR)/gemm_ukr.Po \
+	test/3m/$(DEPDIR)/gemv.Po test/3m/$(DEPDIR)/ger.Po \
+	test/3t/$(DEPDIR)/contract.Po test/3t/$(DEPDIR)/mult.Po \
+	test/3t/$(DEPDIR)/outer_prod.Po test/3t/$(DEPDIR)/weight.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -608,11 +568,10 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
-HEADERS = $(iface1minclude_HEADERS) $(iface1tinclude_HEADERS) \
-	$(iface1vinclude_HEADERS) $(iface3minclude_HEADERS) \
-	$(iface3tinclude_HEADERS) $(marrayinclude_HEADERS) \
-	$(memoryinclude_HEADERS) $(pkginclude_HEADERS) \
-	$(stl_extinclude_HEADERS) $(utilinclude_HEADERS)
+HEADERS = $(iface1tinclude_HEADERS) $(iface3tinclude_HEADERS) \
+	$(marrayinclude_HEADERS) $(memoryinclude_HEADERS) \
+	$(pkginclude_HEADERS) $(stl_extinclude_HEADERS) \
+	$(utilinclude_HEADERS)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 am__recursive_targets = \
@@ -822,21 +781,6 @@ top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = lib/libtblis.la
 lib_libtblis_la_SOURCES = \
     \
-    src/iface/1v/add.cxx \
-    src/iface/1v/dot.cxx \
-    src/iface/1v/mult.cxx \
-    src/iface/1v/reduce.cxx \
-    src/iface/1v/scale.cxx \
-    src/iface/1v/set.cxx \
-    src/iface/1v/shift.cxx \
-    \
-    src/iface/1m/add.cxx \
-    src/iface/1m/dot.cxx \
-    src/iface/1m/reduce.cxx \
-    src/iface/1m/scale.cxx \
-    src/iface/1m/set.cxx \
-    src/iface/1m/shift.cxx \
-    \
     src/iface/1t/add.cxx \
     src/iface/1t/dot.cxx \
     src/iface/1t/reduce.cxx \
@@ -844,26 +788,11 @@ lib_libtblis_la_SOURCES = \
     src/iface/1t/set.cxx \
     src/iface/1t/shift.cxx \
     \
-    src/iface/2m/mult.cxx \
-    \
-    src/iface/3m/mult.cxx \
-    \
     src/iface/3t/mult.cxx \
     \
-    src/internal/1v/add.cxx \
-    src/internal/1v/dot.cxx \
-    src/internal/1v/mult.cxx \
-    src/internal/1v/reduce.cxx \
-    src/internal/1v/scale.cxx \
-    src/internal/1v/set.cxx \
-    src/internal/1v/shift.cxx \
-    \
-    src/internal/1m/add.cxx \
-    src/internal/1m/dot.cxx \
-    src/internal/1m/reduce.cxx \
-    src/internal/1m/scale.cxx \
-    src/internal/1m/set.cxx \
-    src/internal/1m/shift.cxx \
+    src/internal/0/add.cxx \
+    src/internal/0/mult.cxx \
+    src/internal/0/reduce.cxx \
     \
     src/internal/1t/dense/add.cxx \
     src/internal/1t/dense/dot.cxx \
@@ -893,10 +822,6 @@ lib_libtblis_la_SOURCES = \
     src/internal/1t/indexed_dpd/set.cxx \
     src/internal/1t/indexed_dpd/shift.cxx \
     \
-    src/internal/2m/mult.cxx \
-    \
-    src/internal/3m/mult.cxx \
-    \
     src/internal/3t/dense/mult.cxx \
     \
     src/internal/3t/dpd/mult.cxx \
@@ -909,6 +834,7 @@ lib_libtblis_la_SOURCES = \
     \
     src/util/basic_types.cxx \
     src/util/configs.cxx \
+    src/util/gemm_thread.cxx \
     src/util/cpuid.cxx \
     src/util/env.cxx \
     src/util/random.cxx \
@@ -931,26 +857,6 @@ memoryinclude_HEADERS = \
     src/memory/memory_pool.hpp \
     src/memory/stack_allocator.hpp
 
-iface1vincludedir = $(pkgincludedir)/iface/1v
-iface1vinclude_HEADERS = \
-    \
-    src/iface/1v/add.h \
-    src/iface/1v/dot.h \
-    src/iface/1v/reduce.h \
-    src/iface/1v/scale.h \
-    src/iface/1v/set.h \
-    src/iface/1v/shift.h
-
-iface1mincludedir = $(pkgincludedir)/iface/1m
-iface1minclude_HEADERS = \
-    \
-    src/iface/1m/add.h \
-    src/iface/1m/dot.h \
-    src/iface/1m/reduce.h \
-    src/iface/1m/scale.h \
-    src/iface/1m/set.h \
-    src/iface/1m/shift.h
-
 iface1tincludedir = $(pkgincludedir)/iface/1t
 iface1tinclude_HEADERS = \
     \
@@ -960,11 +866,6 @@ iface1tinclude_HEADERS = \
     src/iface/1t/scale.h \
     src/iface/1t/set.h \
     src/iface/1t/shift.h
-
-iface3mincludedir = $(pkgincludedir)/iface/3m
-iface3minclude_HEADERS = \
-    \
-    src/iface/3m/mult.h
 
 iface3tincludedir = $(pkgincludedir)/iface/3t
 iface3tinclude_HEADERS = \
@@ -1456,44 +1357,6 @@ src/configs/skx2/lib_libskx2_la-config.lo:  \
 
 lib/libskx2.la: $(lib_libskx2_la_OBJECTS) $(lib_libskx2_la_DEPENDENCIES) $(EXTRA_lib_libskx2_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CXXLD)$(lib_libskx2_la_LINK) $(am_lib_libskx2_la_rpath) $(lib_libskx2_la_OBJECTS) $(lib_libskx2_la_LIBADD) $(LIBS)
-src/iface/1v/$(am__dirstamp):
-	@$(MKDIR_P) src/iface/1v
-	@: > src/iface/1v/$(am__dirstamp)
-src/iface/1v/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/iface/1v/$(DEPDIR)
-	@: > src/iface/1v/$(DEPDIR)/$(am__dirstamp)
-src/iface/1v/add.lo: src/iface/1v/$(am__dirstamp) \
-	src/iface/1v/$(DEPDIR)/$(am__dirstamp)
-src/iface/1v/dot.lo: src/iface/1v/$(am__dirstamp) \
-	src/iface/1v/$(DEPDIR)/$(am__dirstamp)
-src/iface/1v/mult.lo: src/iface/1v/$(am__dirstamp) \
-	src/iface/1v/$(DEPDIR)/$(am__dirstamp)
-src/iface/1v/reduce.lo: src/iface/1v/$(am__dirstamp) \
-	src/iface/1v/$(DEPDIR)/$(am__dirstamp)
-src/iface/1v/scale.lo: src/iface/1v/$(am__dirstamp) \
-	src/iface/1v/$(DEPDIR)/$(am__dirstamp)
-src/iface/1v/set.lo: src/iface/1v/$(am__dirstamp) \
-	src/iface/1v/$(DEPDIR)/$(am__dirstamp)
-src/iface/1v/shift.lo: src/iface/1v/$(am__dirstamp) \
-	src/iface/1v/$(DEPDIR)/$(am__dirstamp)
-src/iface/1m/$(am__dirstamp):
-	@$(MKDIR_P) src/iface/1m
-	@: > src/iface/1m/$(am__dirstamp)
-src/iface/1m/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/iface/1m/$(DEPDIR)
-	@: > src/iface/1m/$(DEPDIR)/$(am__dirstamp)
-src/iface/1m/add.lo: src/iface/1m/$(am__dirstamp) \
-	src/iface/1m/$(DEPDIR)/$(am__dirstamp)
-src/iface/1m/dot.lo: src/iface/1m/$(am__dirstamp) \
-	src/iface/1m/$(DEPDIR)/$(am__dirstamp)
-src/iface/1m/reduce.lo: src/iface/1m/$(am__dirstamp) \
-	src/iface/1m/$(DEPDIR)/$(am__dirstamp)
-src/iface/1m/scale.lo: src/iface/1m/$(am__dirstamp) \
-	src/iface/1m/$(DEPDIR)/$(am__dirstamp)
-src/iface/1m/set.lo: src/iface/1m/$(am__dirstamp) \
-	src/iface/1m/$(DEPDIR)/$(am__dirstamp)
-src/iface/1m/shift.lo: src/iface/1m/$(am__dirstamp) \
-	src/iface/1m/$(DEPDIR)/$(am__dirstamp)
 src/iface/1t/$(am__dirstamp):
 	@$(MKDIR_P) src/iface/1t
 	@: > src/iface/1t/$(am__dirstamp)
@@ -1512,22 +1375,6 @@ src/iface/1t/set.lo: src/iface/1t/$(am__dirstamp) \
 	src/iface/1t/$(DEPDIR)/$(am__dirstamp)
 src/iface/1t/shift.lo: src/iface/1t/$(am__dirstamp) \
 	src/iface/1t/$(DEPDIR)/$(am__dirstamp)
-src/iface/2m/$(am__dirstamp):
-	@$(MKDIR_P) src/iface/2m
-	@: > src/iface/2m/$(am__dirstamp)
-src/iface/2m/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/iface/2m/$(DEPDIR)
-	@: > src/iface/2m/$(DEPDIR)/$(am__dirstamp)
-src/iface/2m/mult.lo: src/iface/2m/$(am__dirstamp) \
-	src/iface/2m/$(DEPDIR)/$(am__dirstamp)
-src/iface/3m/$(am__dirstamp):
-	@$(MKDIR_P) src/iface/3m
-	@: > src/iface/3m/$(am__dirstamp)
-src/iface/3m/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/iface/3m/$(DEPDIR)
-	@: > src/iface/3m/$(DEPDIR)/$(am__dirstamp)
-src/iface/3m/mult.lo: src/iface/3m/$(am__dirstamp) \
-	src/iface/3m/$(DEPDIR)/$(am__dirstamp)
 src/iface/3t/$(am__dirstamp):
 	@$(MKDIR_P) src/iface/3t
 	@: > src/iface/3t/$(am__dirstamp)
@@ -1536,44 +1383,18 @@ src/iface/3t/$(DEPDIR)/$(am__dirstamp):
 	@: > src/iface/3t/$(DEPDIR)/$(am__dirstamp)
 src/iface/3t/mult.lo: src/iface/3t/$(am__dirstamp) \
 	src/iface/3t/$(DEPDIR)/$(am__dirstamp)
-src/internal/1v/$(am__dirstamp):
-	@$(MKDIR_P) src/internal/1v
-	@: > src/internal/1v/$(am__dirstamp)
-src/internal/1v/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/internal/1v/$(DEPDIR)
-	@: > src/internal/1v/$(DEPDIR)/$(am__dirstamp)
-src/internal/1v/add.lo: src/internal/1v/$(am__dirstamp) \
-	src/internal/1v/$(DEPDIR)/$(am__dirstamp)
-src/internal/1v/dot.lo: src/internal/1v/$(am__dirstamp) \
-	src/internal/1v/$(DEPDIR)/$(am__dirstamp)
-src/internal/1v/mult.lo: src/internal/1v/$(am__dirstamp) \
-	src/internal/1v/$(DEPDIR)/$(am__dirstamp)
-src/internal/1v/reduce.lo: src/internal/1v/$(am__dirstamp) \
-	src/internal/1v/$(DEPDIR)/$(am__dirstamp)
-src/internal/1v/scale.lo: src/internal/1v/$(am__dirstamp) \
-	src/internal/1v/$(DEPDIR)/$(am__dirstamp)
-src/internal/1v/set.lo: src/internal/1v/$(am__dirstamp) \
-	src/internal/1v/$(DEPDIR)/$(am__dirstamp)
-src/internal/1v/shift.lo: src/internal/1v/$(am__dirstamp) \
-	src/internal/1v/$(DEPDIR)/$(am__dirstamp)
-src/internal/1m/$(am__dirstamp):
-	@$(MKDIR_P) src/internal/1m
-	@: > src/internal/1m/$(am__dirstamp)
-src/internal/1m/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/internal/1m/$(DEPDIR)
-	@: > src/internal/1m/$(DEPDIR)/$(am__dirstamp)
-src/internal/1m/add.lo: src/internal/1m/$(am__dirstamp) \
-	src/internal/1m/$(DEPDIR)/$(am__dirstamp)
-src/internal/1m/dot.lo: src/internal/1m/$(am__dirstamp) \
-	src/internal/1m/$(DEPDIR)/$(am__dirstamp)
-src/internal/1m/reduce.lo: src/internal/1m/$(am__dirstamp) \
-	src/internal/1m/$(DEPDIR)/$(am__dirstamp)
-src/internal/1m/scale.lo: src/internal/1m/$(am__dirstamp) \
-	src/internal/1m/$(DEPDIR)/$(am__dirstamp)
-src/internal/1m/set.lo: src/internal/1m/$(am__dirstamp) \
-	src/internal/1m/$(DEPDIR)/$(am__dirstamp)
-src/internal/1m/shift.lo: src/internal/1m/$(am__dirstamp) \
-	src/internal/1m/$(DEPDIR)/$(am__dirstamp)
+src/internal/0/$(am__dirstamp):
+	@$(MKDIR_P) src/internal/0
+	@: > src/internal/0/$(am__dirstamp)
+src/internal/0/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/internal/0/$(DEPDIR)
+	@: > src/internal/0/$(DEPDIR)/$(am__dirstamp)
+src/internal/0/add.lo: src/internal/0/$(am__dirstamp) \
+	src/internal/0/$(DEPDIR)/$(am__dirstamp)
+src/internal/0/mult.lo: src/internal/0/$(am__dirstamp) \
+	src/internal/0/$(DEPDIR)/$(am__dirstamp)
+src/internal/0/reduce.lo: src/internal/0/$(am__dirstamp) \
+	src/internal/0/$(DEPDIR)/$(am__dirstamp)
 src/internal/1t/dense/$(am__dirstamp):
 	@$(MKDIR_P) src/internal/1t/dense
 	@: > src/internal/1t/dense/$(am__dirstamp)
@@ -1659,22 +1480,6 @@ src/internal/1t/indexed_dpd/set.lo:  \
 src/internal/1t/indexed_dpd/shift.lo:  \
 	src/internal/1t/indexed_dpd/$(am__dirstamp) \
 	src/internal/1t/indexed_dpd/$(DEPDIR)/$(am__dirstamp)
-src/internal/2m/$(am__dirstamp):
-	@$(MKDIR_P) src/internal/2m
-	@: > src/internal/2m/$(am__dirstamp)
-src/internal/2m/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/internal/2m/$(DEPDIR)
-	@: > src/internal/2m/$(DEPDIR)/$(am__dirstamp)
-src/internal/2m/mult.lo: src/internal/2m/$(am__dirstamp) \
-	src/internal/2m/$(DEPDIR)/$(am__dirstamp)
-src/internal/3m/$(am__dirstamp):
-	@$(MKDIR_P) src/internal/3m
-	@: > src/internal/3m/$(am__dirstamp)
-src/internal/3m/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/internal/3m/$(DEPDIR)
-	@: > src/internal/3m/$(DEPDIR)/$(am__dirstamp)
-src/internal/3m/mult.lo: src/internal/3m/$(am__dirstamp) \
-	src/internal/3m/$(DEPDIR)/$(am__dirstamp)
 src/internal/3t/dense/$(am__dirstamp):
 	@$(MKDIR_P) src/internal/3t/dense
 	@: > src/internal/3t/dense/$(am__dirstamp)
@@ -1726,6 +1531,8 @@ src/util/$(DEPDIR)/$(am__dirstamp):
 src/util/basic_types.lo: src/util/$(am__dirstamp) \
 	src/util/$(DEPDIR)/$(am__dirstamp)
 src/util/configs.lo: src/util/$(am__dirstamp) \
+	src/util/$(DEPDIR)/$(am__dirstamp)
+src/util/gemm_thread.lo: src/util/$(am__dirstamp) \
 	src/util/$(DEPDIR)/$(am__dirstamp)
 src/util/cpuid.lo: src/util/$(am__dirstamp) \
 	src/util/$(DEPDIR)/$(am__dirstamp)
@@ -1859,20 +1666,12 @@ mostlyclean-compile:
 	-rm -f src/configs/skx2/*.lo
 	-rm -f src/configs/zen/*.$(OBJEXT)
 	-rm -f src/configs/zen/*.lo
-	-rm -f src/iface/1m/*.$(OBJEXT)
-	-rm -f src/iface/1m/*.lo
 	-rm -f src/iface/1t/*.$(OBJEXT)
 	-rm -f src/iface/1t/*.lo
-	-rm -f src/iface/1v/*.$(OBJEXT)
-	-rm -f src/iface/1v/*.lo
-	-rm -f src/iface/2m/*.$(OBJEXT)
-	-rm -f src/iface/2m/*.lo
-	-rm -f src/iface/3m/*.$(OBJEXT)
-	-rm -f src/iface/3m/*.lo
 	-rm -f src/iface/3t/*.$(OBJEXT)
 	-rm -f src/iface/3t/*.lo
-	-rm -f src/internal/1m/*.$(OBJEXT)
-	-rm -f src/internal/1m/*.lo
+	-rm -f src/internal/0/*.$(OBJEXT)
+	-rm -f src/internal/0/*.lo
 	-rm -f src/internal/1t/dense/*.$(OBJEXT)
 	-rm -f src/internal/1t/dense/*.lo
 	-rm -f src/internal/1t/dpd/*.$(OBJEXT)
@@ -1881,12 +1680,6 @@ mostlyclean-compile:
 	-rm -f src/internal/1t/indexed/*.lo
 	-rm -f src/internal/1t/indexed_dpd/*.$(OBJEXT)
 	-rm -f src/internal/1t/indexed_dpd/*.lo
-	-rm -f src/internal/1v/*.$(OBJEXT)
-	-rm -f src/internal/1v/*.lo
-	-rm -f src/internal/2m/*.$(OBJEXT)
-	-rm -f src/internal/2m/*.lo
-	-rm -f src/internal/3m/*.$(OBJEXT)
-	-rm -f src/internal/3m/*.lo
 	-rm -f src/internal/3t/dense/*.$(OBJEXT)
 	-rm -f src/internal/3t/dense/*.lo
 	-rm -f src/internal/3t/dpd/*.$(OBJEXT)
@@ -1934,34 +1727,16 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/lib_libskx2_la-vpu_count.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/zen/$(DEPDIR)/lib_libzen_la-config.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1m/$(DEPDIR)/add.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1m/$(DEPDIR)/dot.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1m/$(DEPDIR)/reduce.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1m/$(DEPDIR)/scale.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1m/$(DEPDIR)/set.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1m/$(DEPDIR)/shift.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/iface/1t/$(DEPDIR)/add.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/iface/1t/$(DEPDIR)/dot.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/iface/1t/$(DEPDIR)/reduce.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/iface/1t/$(DEPDIR)/scale.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/iface/1t/$(DEPDIR)/set.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/iface/1t/$(DEPDIR)/shift.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1v/$(DEPDIR)/add.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1v/$(DEPDIR)/dot.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1v/$(DEPDIR)/mult.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1v/$(DEPDIR)/reduce.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1v/$(DEPDIR)/scale.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1v/$(DEPDIR)/set.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/iface/1v/$(DEPDIR)/shift.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/iface/2m/$(DEPDIR)/mult.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/iface/3m/$(DEPDIR)/mult.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/iface/3t/$(DEPDIR)/mult.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1m/$(DEPDIR)/add.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1m/$(DEPDIR)/dot.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1m/$(DEPDIR)/reduce.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1m/$(DEPDIR)/scale.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1m/$(DEPDIR)/set.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1m/$(DEPDIR)/shift.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/0/$(DEPDIR)/add.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/0/$(DEPDIR)/mult.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/internal/0/$(DEPDIR)/reduce.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/dense/$(DEPDIR)/add.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/dense/$(DEPDIR)/dot.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/dense/$(DEPDIR)/reduce.Plo@am__quote@ # am--include-marker
@@ -1986,15 +1761,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/indexed_dpd/$(DEPDIR)/scale.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/indexed_dpd/$(DEPDIR)/set.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/1t/indexed_dpd/$(DEPDIR)/shift.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1v/$(DEPDIR)/add.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1v/$(DEPDIR)/dot.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1v/$(DEPDIR)/mult.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1v/$(DEPDIR)/reduce.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1v/$(DEPDIR)/scale.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1v/$(DEPDIR)/set.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/internal/1v/$(DEPDIR)/shift.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/internal/2m/$(DEPDIR)/mult.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/internal/3m/$(DEPDIR)/mult.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/3t/dense/$(DEPDIR)/mult.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/3t/dpd/$(DEPDIR)/mult.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/internal/3t/indexed/$(DEPDIR)/mult.Plo@am__quote@ # am--include-marker
@@ -2003,6 +1769,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/configs.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/cpuid.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/env.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/gemm_thread.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/random.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/util/$(DEPDIR)/thread.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/batched_bench.Po@am__quote@ # am--include-marker
@@ -2293,20 +2060,13 @@ clean-libtool:
 	-rm -rf src/configs/skx1/.libs src/configs/skx1/_libs
 	-rm -rf src/configs/skx2/.libs src/configs/skx2/_libs
 	-rm -rf src/configs/zen/.libs src/configs/zen/_libs
-	-rm -rf src/iface/1m/.libs src/iface/1m/_libs
 	-rm -rf src/iface/1t/.libs src/iface/1t/_libs
-	-rm -rf src/iface/1v/.libs src/iface/1v/_libs
-	-rm -rf src/iface/2m/.libs src/iface/2m/_libs
-	-rm -rf src/iface/3m/.libs src/iface/3m/_libs
 	-rm -rf src/iface/3t/.libs src/iface/3t/_libs
-	-rm -rf src/internal/1m/.libs src/internal/1m/_libs
+	-rm -rf src/internal/0/.libs src/internal/0/_libs
 	-rm -rf src/internal/1t/dense/.libs src/internal/1t/dense/_libs
 	-rm -rf src/internal/1t/dpd/.libs src/internal/1t/dpd/_libs
 	-rm -rf src/internal/1t/indexed/.libs src/internal/1t/indexed/_libs
 	-rm -rf src/internal/1t/indexed_dpd/.libs src/internal/1t/indexed_dpd/_libs
-	-rm -rf src/internal/1v/.libs src/internal/1v/_libs
-	-rm -rf src/internal/2m/.libs src/internal/2m/_libs
-	-rm -rf src/internal/3m/.libs src/internal/3m/_libs
 	-rm -rf src/internal/3t/dense/.libs src/internal/3t/dense/_libs
 	-rm -rf src/internal/3t/dpd/.libs src/internal/3t/dpd/_libs
 	-rm -rf src/internal/3t/indexed/.libs src/internal/3t/indexed/_libs
@@ -2315,27 +2075,6 @@ clean-libtool:
 
 distclean-libtool:
 	-rm -f libtool config.lt
-install-iface1mincludeHEADERS: $(iface1minclude_HEADERS)
-	@$(NORMAL_INSTALL)
-	@list='$(iface1minclude_HEADERS)'; test -n "$(iface1mincludedir)" || list=; \
-	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(iface1mincludedir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(iface1mincludedir)" || exit 1; \
-	fi; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(iface1mincludedir)'"; \
-	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(iface1mincludedir)" || exit $$?; \
-	done
-
-uninstall-iface1mincludeHEADERS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(iface1minclude_HEADERS)'; test -n "$(iface1mincludedir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	dir='$(DESTDIR)$(iface1mincludedir)'; $(am__uninstall_files_from_dir)
 install-iface1tincludeHEADERS: $(iface1tinclude_HEADERS)
 	@$(NORMAL_INSTALL)
 	@list='$(iface1tinclude_HEADERS)'; test -n "$(iface1tincludedir)" || list=; \
@@ -2357,48 +2096,6 @@ uninstall-iface1tincludeHEADERS:
 	@list='$(iface1tinclude_HEADERS)'; test -n "$(iface1tincludedir)" || list=; \
 	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
 	dir='$(DESTDIR)$(iface1tincludedir)'; $(am__uninstall_files_from_dir)
-install-iface1vincludeHEADERS: $(iface1vinclude_HEADERS)
-	@$(NORMAL_INSTALL)
-	@list='$(iface1vinclude_HEADERS)'; test -n "$(iface1vincludedir)" || list=; \
-	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(iface1vincludedir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(iface1vincludedir)" || exit 1; \
-	fi; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(iface1vincludedir)'"; \
-	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(iface1vincludedir)" || exit $$?; \
-	done
-
-uninstall-iface1vincludeHEADERS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(iface1vinclude_HEADERS)'; test -n "$(iface1vincludedir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	dir='$(DESTDIR)$(iface1vincludedir)'; $(am__uninstall_files_from_dir)
-install-iface3mincludeHEADERS: $(iface3minclude_HEADERS)
-	@$(NORMAL_INSTALL)
-	@list='$(iface3minclude_HEADERS)'; test -n "$(iface3mincludedir)" || list=; \
-	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(iface3mincludedir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(iface3mincludedir)" || exit 1; \
-	fi; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(iface3mincludedir)'"; \
-	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(iface3mincludedir)" || exit $$?; \
-	done
-
-uninstall-iface3mincludeHEADERS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(iface3minclude_HEADERS)'; test -n "$(iface3mincludedir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	dir='$(DESTDIR)$(iface3mincludedir)'; $(am__uninstall_files_from_dir)
 install-iface3tincludeHEADERS: $(iface3tinclude_HEADERS)
 	@$(NORMAL_INSTALL)
 	@list='$(iface3tinclude_HEADERS)'; test -n "$(iface3tincludedir)" || list=; \
@@ -2828,7 +2525,7 @@ check: check-recursive
 all-am: Makefile $(PROGRAMS) $(LTLIBRARIES) $(HEADERS) config.h
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(iface1mincludedir)" "$(DESTDIR)$(iface1tincludedir)" "$(DESTDIR)$(iface1vincludedir)" "$(DESTDIR)$(iface3mincludedir)" "$(DESTDIR)$(iface3tincludedir)" "$(DESTDIR)$(marrayincludedir)" "$(DESTDIR)$(memoryincludedir)" "$(DESTDIR)$(pkgincludedir)" "$(DESTDIR)$(stl_extincludedir)" "$(DESTDIR)$(utilincludedir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(iface1tincludedir)" "$(DESTDIR)$(iface3tincludedir)" "$(DESTDIR)$(marrayincludedir)" "$(DESTDIR)$(memoryincludedir)" "$(DESTDIR)$(pkgincludedir)" "$(DESTDIR)$(stl_extincludedir)" "$(DESTDIR)$(utilincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-recursive
@@ -2883,20 +2580,12 @@ distclean-generic:
 	-rm -f src/configs/skx2/$(am__dirstamp)
 	-rm -f src/configs/zen/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/configs/zen/$(am__dirstamp)
-	-rm -f src/iface/1m/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/iface/1m/$(am__dirstamp)
 	-rm -f src/iface/1t/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/iface/1t/$(am__dirstamp)
-	-rm -f src/iface/1v/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/iface/1v/$(am__dirstamp)
-	-rm -f src/iface/2m/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/iface/2m/$(am__dirstamp)
-	-rm -f src/iface/3m/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/iface/3m/$(am__dirstamp)
 	-rm -f src/iface/3t/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/iface/3t/$(am__dirstamp)
-	-rm -f src/internal/1m/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/internal/1m/$(am__dirstamp)
+	-rm -f src/internal/0/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/internal/0/$(am__dirstamp)
 	-rm -f src/internal/1t/dense/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/internal/1t/dense/$(am__dirstamp)
 	-rm -f src/internal/1t/dpd/$(DEPDIR)/$(am__dirstamp)
@@ -2905,12 +2594,6 @@ distclean-generic:
 	-rm -f src/internal/1t/indexed/$(am__dirstamp)
 	-rm -f src/internal/1t/indexed_dpd/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/internal/1t/indexed_dpd/$(am__dirstamp)
-	-rm -f src/internal/1v/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/internal/1v/$(am__dirstamp)
-	-rm -f src/internal/2m/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/internal/2m/$(am__dirstamp)
-	-rm -f src/internal/3m/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/internal/3m/$(am__dirstamp)
 	-rm -f src/internal/3t/dense/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/internal/3t/dense/$(am__dirstamp)
 	-rm -f src/internal/3t/dpd/$(DEPDIR)/$(am__dirstamp)
@@ -2970,34 +2653,16 @@ distclean: distclean-recursive
 	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config.Plo
 	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-vpu_count.Plo
 	-rm -f src/configs/zen/$(DEPDIR)/lib_libzen_la-config.Plo
-	-rm -f src/iface/1m/$(DEPDIR)/add.Plo
-	-rm -f src/iface/1m/$(DEPDIR)/dot.Plo
-	-rm -f src/iface/1m/$(DEPDIR)/reduce.Plo
-	-rm -f src/iface/1m/$(DEPDIR)/scale.Plo
-	-rm -f src/iface/1m/$(DEPDIR)/set.Plo
-	-rm -f src/iface/1m/$(DEPDIR)/shift.Plo
 	-rm -f src/iface/1t/$(DEPDIR)/add.Plo
 	-rm -f src/iface/1t/$(DEPDIR)/dot.Plo
 	-rm -f src/iface/1t/$(DEPDIR)/reduce.Plo
 	-rm -f src/iface/1t/$(DEPDIR)/scale.Plo
 	-rm -f src/iface/1t/$(DEPDIR)/set.Plo
 	-rm -f src/iface/1t/$(DEPDIR)/shift.Plo
-	-rm -f src/iface/1v/$(DEPDIR)/add.Plo
-	-rm -f src/iface/1v/$(DEPDIR)/dot.Plo
-	-rm -f src/iface/1v/$(DEPDIR)/mult.Plo
-	-rm -f src/iface/1v/$(DEPDIR)/reduce.Plo
-	-rm -f src/iface/1v/$(DEPDIR)/scale.Plo
-	-rm -f src/iface/1v/$(DEPDIR)/set.Plo
-	-rm -f src/iface/1v/$(DEPDIR)/shift.Plo
-	-rm -f src/iface/2m/$(DEPDIR)/mult.Plo
-	-rm -f src/iface/3m/$(DEPDIR)/mult.Plo
 	-rm -f src/iface/3t/$(DEPDIR)/mult.Plo
-	-rm -f src/internal/1m/$(DEPDIR)/add.Plo
-	-rm -f src/internal/1m/$(DEPDIR)/dot.Plo
-	-rm -f src/internal/1m/$(DEPDIR)/reduce.Plo
-	-rm -f src/internal/1m/$(DEPDIR)/scale.Plo
-	-rm -f src/internal/1m/$(DEPDIR)/set.Plo
-	-rm -f src/internal/1m/$(DEPDIR)/shift.Plo
+	-rm -f src/internal/0/$(DEPDIR)/add.Plo
+	-rm -f src/internal/0/$(DEPDIR)/mult.Plo
+	-rm -f src/internal/0/$(DEPDIR)/reduce.Plo
 	-rm -f src/internal/1t/dense/$(DEPDIR)/add.Plo
 	-rm -f src/internal/1t/dense/$(DEPDIR)/dot.Plo
 	-rm -f src/internal/1t/dense/$(DEPDIR)/reduce.Plo
@@ -3022,15 +2687,6 @@ distclean: distclean-recursive
 	-rm -f src/internal/1t/indexed_dpd/$(DEPDIR)/scale.Plo
 	-rm -f src/internal/1t/indexed_dpd/$(DEPDIR)/set.Plo
 	-rm -f src/internal/1t/indexed_dpd/$(DEPDIR)/shift.Plo
-	-rm -f src/internal/1v/$(DEPDIR)/add.Plo
-	-rm -f src/internal/1v/$(DEPDIR)/dot.Plo
-	-rm -f src/internal/1v/$(DEPDIR)/mult.Plo
-	-rm -f src/internal/1v/$(DEPDIR)/reduce.Plo
-	-rm -f src/internal/1v/$(DEPDIR)/scale.Plo
-	-rm -f src/internal/1v/$(DEPDIR)/set.Plo
-	-rm -f src/internal/1v/$(DEPDIR)/shift.Plo
-	-rm -f src/internal/2m/$(DEPDIR)/mult.Plo
-	-rm -f src/internal/3m/$(DEPDIR)/mult.Plo
 	-rm -f src/internal/3t/dense/$(DEPDIR)/mult.Plo
 	-rm -f src/internal/3t/dpd/$(DEPDIR)/mult.Plo
 	-rm -f src/internal/3t/indexed/$(DEPDIR)/mult.Plo
@@ -3039,6 +2695,7 @@ distclean: distclean-recursive
 	-rm -f src/util/$(DEPDIR)/configs.Plo
 	-rm -f src/util/$(DEPDIR)/cpuid.Plo
 	-rm -f src/util/$(DEPDIR)/env.Plo
+	-rm -f src/util/$(DEPDIR)/gemm_thread.Plo
 	-rm -f src/util/$(DEPDIR)/random.Plo
 	-rm -f src/util/$(DEPDIR)/thread.Plo
 	-rm -f test/$(DEPDIR)/batched_bench.Po
@@ -3075,12 +2732,10 @@ info: info-recursive
 
 info-am:
 
-install-data-am: install-iface1mincludeHEADERS \
-	install-iface1tincludeHEADERS install-iface1vincludeHEADERS \
-	install-iface3mincludeHEADERS install-iface3tincludeHEADERS \
-	install-marrayincludeHEADERS install-memoryincludeHEADERS \
-	install-pkgincludeHEADERS install-stl_extincludeHEADERS \
-	install-utilincludeHEADERS
+install-data-am: install-iface1tincludeHEADERS \
+	install-iface3tincludeHEADERS install-marrayincludeHEADERS \
+	install-memoryincludeHEADERS install-pkgincludeHEADERS \
+	install-stl_extincludeHEADERS install-utilincludeHEADERS
 
 install-dvi: install-dvi-recursive
 
@@ -3140,34 +2795,16 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config.Plo
 	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-vpu_count.Plo
 	-rm -f src/configs/zen/$(DEPDIR)/lib_libzen_la-config.Plo
-	-rm -f src/iface/1m/$(DEPDIR)/add.Plo
-	-rm -f src/iface/1m/$(DEPDIR)/dot.Plo
-	-rm -f src/iface/1m/$(DEPDIR)/reduce.Plo
-	-rm -f src/iface/1m/$(DEPDIR)/scale.Plo
-	-rm -f src/iface/1m/$(DEPDIR)/set.Plo
-	-rm -f src/iface/1m/$(DEPDIR)/shift.Plo
 	-rm -f src/iface/1t/$(DEPDIR)/add.Plo
 	-rm -f src/iface/1t/$(DEPDIR)/dot.Plo
 	-rm -f src/iface/1t/$(DEPDIR)/reduce.Plo
 	-rm -f src/iface/1t/$(DEPDIR)/scale.Plo
 	-rm -f src/iface/1t/$(DEPDIR)/set.Plo
 	-rm -f src/iface/1t/$(DEPDIR)/shift.Plo
-	-rm -f src/iface/1v/$(DEPDIR)/add.Plo
-	-rm -f src/iface/1v/$(DEPDIR)/dot.Plo
-	-rm -f src/iface/1v/$(DEPDIR)/mult.Plo
-	-rm -f src/iface/1v/$(DEPDIR)/reduce.Plo
-	-rm -f src/iface/1v/$(DEPDIR)/scale.Plo
-	-rm -f src/iface/1v/$(DEPDIR)/set.Plo
-	-rm -f src/iface/1v/$(DEPDIR)/shift.Plo
-	-rm -f src/iface/2m/$(DEPDIR)/mult.Plo
-	-rm -f src/iface/3m/$(DEPDIR)/mult.Plo
 	-rm -f src/iface/3t/$(DEPDIR)/mult.Plo
-	-rm -f src/internal/1m/$(DEPDIR)/add.Plo
-	-rm -f src/internal/1m/$(DEPDIR)/dot.Plo
-	-rm -f src/internal/1m/$(DEPDIR)/reduce.Plo
-	-rm -f src/internal/1m/$(DEPDIR)/scale.Plo
-	-rm -f src/internal/1m/$(DEPDIR)/set.Plo
-	-rm -f src/internal/1m/$(DEPDIR)/shift.Plo
+	-rm -f src/internal/0/$(DEPDIR)/add.Plo
+	-rm -f src/internal/0/$(DEPDIR)/mult.Plo
+	-rm -f src/internal/0/$(DEPDIR)/reduce.Plo
 	-rm -f src/internal/1t/dense/$(DEPDIR)/add.Plo
 	-rm -f src/internal/1t/dense/$(DEPDIR)/dot.Plo
 	-rm -f src/internal/1t/dense/$(DEPDIR)/reduce.Plo
@@ -3192,15 +2829,6 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f src/internal/1t/indexed_dpd/$(DEPDIR)/scale.Plo
 	-rm -f src/internal/1t/indexed_dpd/$(DEPDIR)/set.Plo
 	-rm -f src/internal/1t/indexed_dpd/$(DEPDIR)/shift.Plo
-	-rm -f src/internal/1v/$(DEPDIR)/add.Plo
-	-rm -f src/internal/1v/$(DEPDIR)/dot.Plo
-	-rm -f src/internal/1v/$(DEPDIR)/mult.Plo
-	-rm -f src/internal/1v/$(DEPDIR)/reduce.Plo
-	-rm -f src/internal/1v/$(DEPDIR)/scale.Plo
-	-rm -f src/internal/1v/$(DEPDIR)/set.Plo
-	-rm -f src/internal/1v/$(DEPDIR)/shift.Plo
-	-rm -f src/internal/2m/$(DEPDIR)/mult.Plo
-	-rm -f src/internal/3m/$(DEPDIR)/mult.Plo
 	-rm -f src/internal/3t/dense/$(DEPDIR)/mult.Plo
 	-rm -f src/internal/3t/dpd/$(DEPDIR)/mult.Plo
 	-rm -f src/internal/3t/indexed/$(DEPDIR)/mult.Plo
@@ -3209,6 +2837,7 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f src/util/$(DEPDIR)/configs.Plo
 	-rm -f src/util/$(DEPDIR)/cpuid.Plo
 	-rm -f src/util/$(DEPDIR)/env.Plo
+	-rm -f src/util/$(DEPDIR)/gemm_thread.Plo
 	-rm -f src/util/$(DEPDIR)/random.Plo
 	-rm -f src/util/$(DEPDIR)/thread.Plo
 	-rm -f test/$(DEPDIR)/batched_bench.Po
@@ -3245,10 +2874,7 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-iface1mincludeHEADERS \
-	uninstall-iface1tincludeHEADERS \
-	uninstall-iface1vincludeHEADERS \
-	uninstall-iface3mincludeHEADERS \
+uninstall-am: uninstall-iface1tincludeHEADERS \
 	uninstall-iface3tincludeHEADERS uninstall-libLTLIBRARIES \
 	uninstall-marrayincludeHEADERS uninstall-memoryincludeHEADERS \
 	uninstall-pkgincludeHEADERS uninstall-stl_extincludeHEADERS \
@@ -3267,23 +2893,18 @@ uninstall-am: uninstall-iface1mincludeHEADERS \
 	distdir distuninstallcheck dvi dvi-am html html-am info \
 	info-am install install-am install-data install-data-am \
 	install-dvi install-dvi-am install-exec install-exec-am \
-	install-html install-html-am install-iface1mincludeHEADERS \
-	install-iface1tincludeHEADERS install-iface1vincludeHEADERS \
-	install-iface3mincludeHEADERS install-iface3tincludeHEADERS \
-	install-info install-info-am install-libLTLIBRARIES \
-	install-man install-marrayincludeHEADERS \
-	install-memoryincludeHEADERS install-pdf install-pdf-am \
-	install-pkgincludeHEADERS install-ps install-ps-am \
-	install-stl_extincludeHEADERS install-strip \
-	install-utilincludeHEADERS installcheck installcheck-am \
-	installdirs installdirs-am maintainer-clean \
+	install-html install-html-am install-iface1tincludeHEADERS \
+	install-iface3tincludeHEADERS install-info install-info-am \
+	install-libLTLIBRARIES install-man \
+	install-marrayincludeHEADERS install-memoryincludeHEADERS \
+	install-pdf install-pdf-am install-pkgincludeHEADERS \
+	install-ps install-ps-am install-stl_extincludeHEADERS \
+	install-strip install-utilincludeHEADERS installcheck \
+	installcheck-am installdirs installdirs-am maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags tags-am uninstall uninstall-am \
-	uninstall-iface1mincludeHEADERS \
 	uninstall-iface1tincludeHEADERS \
-	uninstall-iface1vincludeHEADERS \
-	uninstall-iface3mincludeHEADERS \
 	uninstall-iface3tincludeHEADERS uninstall-libLTLIBRARIES \
 	uninstall-marrayincludeHEADERS uninstall-memoryincludeHEADERS \
 	uninstall-pkgincludeHEADERS uninstall-stl_extincludeHEADERS \

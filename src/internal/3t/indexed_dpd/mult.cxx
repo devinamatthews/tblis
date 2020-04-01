@@ -10,6 +10,7 @@
 #include "util/tensor.hpp"
 
 #include "matrix/tensor_matrix.hpp"
+#include "matrix/dpd_tensor_matrix.hpp"
 #include "matrix/scatter_matrix.hpp"
 #include "matrix/scatter_tensor_matrix.hpp"
 
@@ -33,9 +34,9 @@ namespace tblis
 namespace internal
 {
 
-
+/*
 template <typename T, unsigned N>
-std::ostream& operator<<(std::ostream& os, const index_set<T, N>& v)
+std::ostream& operator<<(std::ostream& os, const index_set<N>& v)
 {
     os << "\n{\n";
     os << "\toffset, factor: " << v.offset << " " << v.factor << '\n';
@@ -57,6 +58,7 @@ make_complex_if(real_type_t<T> r, real_type_t<T> i)
 {
     return {r, i};
 }
+*/
 
 double relative_perf(double m, double n, double k)
 {
@@ -67,15 +69,15 @@ double relative_perf(double m, double n, double k)
 
 template <typename T>
 void mult_full(const communicator& comm, const config& cfg,
-               T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A,
+               T alpha, bool conj_A, const indexed_dpd_varray_view<T>& A,
                const dim_vector& idx_A_AB,
                const dim_vector& idx_A_AC,
                const dim_vector& idx_A_ABC,
-                        bool conj_B, const indexed_dpd_varray_view<const T>& B,
+                        bool conj_B, const indexed_dpd_varray_view<T>& B,
                const dim_vector& idx_B_AB,
                const dim_vector& idx_B_BC,
                const dim_vector& idx_B_ABC,
-                                     const indexed_dpd_varray_view<      T>& C,
+                                     const indexed_dpd_varray_view<T>& C,
                const dim_vector& idx_C_AC,
                const dim_vector& idx_C_BC,
                const dim_vector& idx_C_ABC)
@@ -103,35 +105,31 @@ void mult_full(const communicator& comm, const config& cfg,
         auto stride_B_ABC = stl_ext::select_from(B2.strides(), idx_B_ABC);
         auto stride_C_ABC = stl_ext::select_from(C2.strides(), idx_C_ABC);
 
-        mult(comm, cfg, len_AB, len_AC, len_BC, len_ABC,
-             alpha, conj_A, A2.data(), stride_A_AB, stride_A_AC, stride_A_ABC,
-                    conj_B, B2.data(), stride_B_AB, stride_B_BC, stride_B_ABC,
-              T(0),  false, C2.data(), stride_C_AC, stride_C_BC, stride_C_ABC);
+        mult(type_tag<T>::value, comm, cfg, len_AB, len_AC, len_BC, len_ABC,
+             alpha, conj_A, reinterpret_cast<char*>(A2.data()), stride_A_AB, stride_A_AC, stride_A_ABC,
+                    conj_B, reinterpret_cast<char*>(B2.data()), stride_B_AB, stride_B_BC, stride_B_ABC,
+              T(0),  false, reinterpret_cast<char*>(C2.data()), stride_C_AC, stride_C_BC, stride_C_ABC);
 
         full_to_block(comm, cfg, C2, C);
     },
     A2, B2, C2);
 }
 
-template <typename T>
-void mult_block_fuse_AB(const communicator& comm, const config& cfg,
-                        T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A,
+void mult_block_fuse_AB(type_t type, const communicator& comm, const config& cfg,
+                        const scalar& alpha,
+                        bool conj_A, const indexed_dpd_varray_view<char>& A,
                         dim_vector idx_A_AB,
                         dim_vector idx_A_AC,
-                                 bool conj_B, const indexed_dpd_varray_view<const T>& B,
+                        bool conj_B, const indexed_dpd_varray_view<char>& B,
                         dim_vector idx_B_AB,
                         dim_vector idx_B_BC,
-                                              const indexed_dpd_varray_view<      T>& C,
+                                     const indexed_dpd_varray_view<char>& C,
                         dim_vector idx_C_AC,
                         dim_vector idx_C_BC)
 {
-    typedef real_type_t<T> U;
+    const len_type ts = type_size[type];
 
-    unsigned nirrep = A.num_irreps();
-
-    unsigned ndim_AC = idx_C_AC.size();
-    unsigned ndim_BC = idx_C_BC.size();
-    unsigned ndim_AB = idx_A_AB.size();
+    const unsigned nirrep = A.num_irreps();
 
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
     dpd_index_group<2> group_AC(A, idx_A_AC, C, idx_C_AC);
@@ -144,12 +142,14 @@ void mult_block_fuse_AB(const communicator& comm, const config& cfg,
     assign_irreps(group_AC, irreps_A, irreps_C);
     assign_irreps(group_BC, irreps_B, irreps_C);
 
-    group_indices<T, 2> indices_A(A, group_AC, 0, group_AB, 0);
-    group_indices<T, 2> indices_B(B, group_BC, 0, group_AB, 1);
-    group_indices<T, 2> indices_C(C, group_AC, 1, group_BC, 1);
+    group_indices<2> indices_A(type, A, group_AC, 0, group_AB, 0);
+    group_indices<2> indices_B(type, B, group_BC, 0, group_AB, 1);
+    group_indices<2> indices_C(type, C, group_AC, 1, group_BC, 1);
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
     auto nidx_C = indices_C.size();
+
+    scalar one(1.0, type);
 
     auto dpd_A = A[0];
     auto dpd_B = B[0];
@@ -173,7 +173,7 @@ void mult_block_fuse_AB(const communicator& comm, const config& cfg,
                                         idx_C, next_C, indices_C, 1,
             [&](stride_type next_B)
             {
-                if (indices_C[idx_C].factor == T(0)) return;
+                if (indices_C[idx_C].factor.is_zero()) return;
 
                 for (unsigned irrep_AB0 = 0;irrep_AB0 < nirrep;irrep_AB0++)
                 {
@@ -199,7 +199,7 @@ void mult_block_fuse_AB(const communicator& comm, const config& cfg,
                         {
                             std::vector<stride_type> scat_A_AB;
                             std::vector<stride_type> scat_B_AB;
-                            std::vector<std::tuple<U,U,stride_type,stride_type>> scat_AB;
+                            std::vector<std::tuple<double,double,stride_type,stride_type>> scat_AB;
 
                             auto local_irreps_A = irreps_A;
                             auto local_irreps_B = irreps_B;
@@ -215,7 +215,7 @@ void mult_block_fuse_AB(const communicator& comm, const config& cfg,
 
                             if (is_block_empty(dpd_C, local_irreps_C)) return;
 
-                            auto local_C = dpd_C(local_irreps_C);
+                            varray_view<char> local_C = dpd_C(local_irreps_C);
 
                             for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
                             {
@@ -225,8 +225,8 @@ void mult_block_fuse_AB(const communicator& comm, const config& cfg,
 
                                 if (is_block_empty(dpd_A, local_irreps_A)) continue;
 
-                                auto local_A = dpd_A(local_irreps_A);
-                                auto local_B = dpd_B(local_irreps_B);
+                                varray_view<char> local_A = dpd_A(local_irreps_A);
+                                varray_view<char> local_B = dpd_B(local_irreps_B);
 
                                 len_vector len_AC;
                                 stride_vector stride_A_AC, stride_C_AC;
@@ -266,26 +266,48 @@ void mult_block_fuse_AB(const communicator& comm, const config& cfg,
                                     auto factor = alpha*indices_A[local_idx_A].factor*
                                                         indices_B[local_idx_B].factor*
                                                         indices_C[idx_C].factor;
-                                    if (factor == T(0)) return;
+                                    if (factor.is_zero()) return;
 
                                     stride_type off_A_AB, off_B_AB;
                                     get_local_offset(indices_A[local_idx_A].idx[1], group_AB,
                                                      local_A, off_A_AB, 0,
                                                      local_B, off_B_AB, 1);
 
-                                    scat_AB.emplace_back(std::real(factor), std::imag(factor),
-                                                         indices_A[local_idx_A].offset + off_A_AB,
-                                                         indices_B[local_idx_B].offset + off_B_AB);
+                                    switch (type)
+                                    {
+                                        case TYPE_FLOAT:
+                                            scat_AB.emplace_back(factor.template get<float>(), 0.0,
+                                                                 indices_A[local_idx_A].offset + off_A_AB,
+                                                                 indices_B[local_idx_B].offset + off_B_AB);
+                                            break;
+                                        case TYPE_DOUBLE:
+                                            scat_AB.emplace_back(factor.template get<double>(), 0.0,
+                                                                 indices_A[local_idx_A].offset + off_A_AB,
+                                                                 indices_B[local_idx_B].offset + off_B_AB);
+                                            break;
+                                        case TYPE_SCOMPLEX:
+                                            scat_AB.emplace_back(factor.template get<scomplex>().real(),
+                                                                 factor.template get<scomplex>().imag(),
+                                                                 indices_A[local_idx_A].offset + off_A_AB,
+                                                                 indices_B[local_idx_B].offset + off_B_AB);
+                                            break;
+                                        case TYPE_DCOMPLEX:
+                                            scat_AB.emplace_back(factor.template get<dcomplex>().real(),
+                                                                 factor.template get<dcomplex>().imag(),
+                                                                 indices_A[local_idx_A].offset + off_A_AB,
+                                                                 indices_B[local_idx_B].offset + off_B_AB);
+                                            break;
+                                    }
                                 });
 
                                 if (scat_AB.empty()) continue;
 
                                 std::sort(scat_AB.begin(), scat_AB.end());
 
-                                T* data_A = const_cast<T*>(local_A.data() + off_A_AC);
-                                T* data_B = const_cast<T*>(local_B.data() + off_B_BC);
-                                T* data_C = const_cast<T*>(local_C.data() + indices_C[idx_C].offset +
-                                                           off_C_AC + off_C_BC);
+                                auto data_A = A.data(0) + (local_A.data() - A.data(0) + off_A_AC)*ts;
+                                auto data_B = B.data(0) + (local_B.data() - B.data(0) + off_B_BC)*ts;
+                                auto data_C = C.data(0) + (local_C.data() - C.data(0) +
+                                    indices_C[idx_C].offset + off_C_AC + off_C_BC)*ts;
 
                                 for (unsigned i = 0;i < scat_AB.size();i++)
                                 {
@@ -296,16 +318,16 @@ void mult_block_fuse_AB(const communicator& comm, const config& cfg,
                                         std::get<0>(scat_AB[i]) != std::get<0>(scat_AB[i+1]) ||
                                         std::get<1>(scat_AB[i]) != std::get<1>(scat_AB[i+1]))
                                     {
-                                        T alpha = make_complex_if<T>(std::get<0>(scat_AB[i]),
-                                                                     std::get<1>(scat_AB[i]));
+                                        scalar alpha(dcomplex(std::get<0>(scat_AB[i]),
+                                                              std::get<1>(scat_AB[i])), type);
 
-                                        scatter_tensor_matrix<T> at(len_AC, len_AB, data_A, stride_A_AC, stride_A_AB,
+                                        scatter_tensor_matrix at(alpha, conj_A, len_AC, len_AB, data_A, stride_A_AC, stride_A_AB,
                                                                     {}, {{scat_A_AB.size()}, scat_A_AB.data()});
-                                        scatter_tensor_matrix<T> bt(len_AB, len_BC, data_B, stride_B_AB, stride_B_BC,
+                                        scatter_tensor_matrix bt(  one, conj_B, len_AB, len_BC, data_B, stride_B_AB, stride_B_BC,
                                                                     {{scat_B_AB.size()}, scat_B_AB.data()}, {});
-                                        tensor_matrix<T> ct(len_AC, len_BC, data_C, stride_C_AC, stride_C_BC);
+                                                tensor_matrix ct(  one,  false, len_AC, len_BC, data_C, stride_C_AC, stride_C_BC);
 
-                                        TensorGEMM{}(subcomm, cfg, alpha, at, bt, T(1), ct);
+                                        GotoGEMM{}(subcomm, cfg, at, bt, ct);
 
                                         scat_A_AB.clear();
                                         scat_B_AB.clear();
@@ -320,25 +342,21 @@ void mult_block_fuse_AB(const communicator& comm, const config& cfg,
     });
 }
 
-template <typename T>
-void mult_block_fuse_BC(const communicator& comm, const config& cfg,
-                        T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A,
+void mult_block_fuse_BC(type_t type, const communicator& comm, const config& cfg,
+                        const scalar& alpha,
+                        bool conj_A, const indexed_dpd_varray_view<char>& A,
                         dim_vector idx_A_AB,
                         dim_vector idx_A_AC,
-                                 bool conj_B, const indexed_dpd_varray_view<const T>& B,
+                        bool conj_B, const indexed_dpd_varray_view<char>& B,
                         dim_vector idx_B_AB,
                         dim_vector idx_B_BC,
-                                              const indexed_dpd_varray_view<      T>& C,
+                                     const indexed_dpd_varray_view<char>& C,
                         dim_vector idx_C_AC,
                         dim_vector idx_C_BC)
 {
-    typedef real_type_t<T> U;
+    const len_type ts = type_size[type];
 
-    unsigned nirrep = A.num_irreps();
-
-    unsigned ndim_AC = idx_C_AC.size();
-    unsigned ndim_BC = idx_C_BC.size();
-    unsigned ndim_AB = idx_A_AB.size();
+    const unsigned nirrep = A.num_irreps();
 
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
     dpd_index_group<2> group_AC(A, idx_A_AC, C, idx_C_AC);
@@ -351,12 +369,14 @@ void mult_block_fuse_BC(const communicator& comm, const config& cfg,
     assign_irreps(group_AC, irreps_A, irreps_C);
     assign_irreps(group_BC, irreps_B, irreps_C);
 
-    group_indices<T, 2> indices_A(A, group_AC, 0, group_AB, 0);
-    group_indices<T, 2> indices_B(B, group_AB, 1, group_BC, 0);
-    group_indices<T, 2> indices_C(C, group_AC, 1, group_BC, 1);
+    group_indices<2> indices_A(type, A, group_AC, 0, group_AB, 0);
+    group_indices<2> indices_B(type, B, group_AB, 1, group_BC, 0);
+    group_indices<2> indices_C(type, C, group_AC, 1, group_BC, 1);
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
     auto nidx_C = indices_C.size();
+
+    scalar one(1.0, type);
 
     auto dpd_A = A[0];
     auto dpd_B = B[0];
@@ -398,7 +418,7 @@ void mult_block_fuse_BC(const communicator& comm, const config& cfg,
                     {
                         std::vector<stride_type> scat_B_BC;
                         std::vector<stride_type> scat_C_BC;
-                        std::vector<std::tuple<U,U,stride_type,stride_type>> scat_BC;
+                        std::vector<std::tuple<double,double,stride_type,stride_type>> scat_BC;
 
                         auto local_irreps_A = irreps_A;
                         auto local_irreps_B = irreps_B;
@@ -414,7 +434,7 @@ void mult_block_fuse_BC(const communicator& comm, const config& cfg,
 
                         if (is_block_empty(dpd_C, local_irreps_C)) return;
 
-                        auto local_C = dpd_C(local_irreps_C);
+                        varray_view<char> local_C = dpd_C(local_irreps_C);
 
                         for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
                         {
@@ -424,8 +444,8 @@ void mult_block_fuse_BC(const communicator& comm, const config& cfg,
 
                             if (is_block_empty(dpd_A, local_irreps_A)) continue;
 
-                            auto local_A = dpd_A(local_irreps_A);
-                            auto local_B = dpd_B(local_irreps_B);
+                            varray_view<char> local_A = dpd_A(local_irreps_A);
+                            varray_view<char> local_B = dpd_B(local_irreps_B);
 
                             len_type local_idx_A = idx_A;
                             len_type local_idx_B = 0;
@@ -456,7 +476,7 @@ void mult_block_fuse_BC(const communicator& comm, const config& cfg,
                                                         local_idx_B, nidx_B, indices_B, 0,
                             [&](stride_type next_B)
                             {
-                                if (indices_A[local_idx_A].factor == T(0)) return;
+                                if (indices_A[local_idx_A].factor.is_zero()) return;
 
                                 stride_type off_A_AB, off_B_AB;
                                 get_local_offset(indices_A[local_idx_A].idx[1], group_AB,
@@ -474,26 +494,48 @@ void mult_block_fuse_BC(const communicator& comm, const config& cfg,
                                     auto factor = alpha*indices_A[local_idx_A].factor*
                                                         indices_B[local_idx_B].factor*
                                                         indices_C[local_idx_C].factor;
-                                    if (factor == T(0)) return;
+                                    if (factor.is_zero()) return;
 
                                     stride_type off_B_BC, off_C_BC;
                                     get_local_offset(indices_C[local_idx_C].idx[1], group_BC,
                                                      local_B, off_B_BC, 0,
                                                      local_C, off_C_BC, 1);
 
-                                    scat_BC.emplace_back(std::real(factor), std::imag(factor),
-                                                         indices_B[local_idx_B].offset + off_B_BC,
-                                                         indices_C[local_idx_C].offset + off_C_BC);
+                                    switch (type)
+                                    {
+                                        case TYPE_FLOAT:
+                                            scat_BC.emplace_back(factor.template get<float>(), 0.0,
+                                                                 indices_B[local_idx_B].offset + off_B_BC,
+                                                                 indices_C[local_idx_C].offset + off_C_BC);
+                                            break;
+                                        case TYPE_DOUBLE:
+                                            scat_BC.emplace_back(factor.template get<double>(), 0.0,
+                                                                 indices_B[local_idx_B].offset + off_B_BC,
+                                                                 indices_C[local_idx_C].offset + off_C_BC);
+                                            break;
+                                        case TYPE_SCOMPLEX:
+                                            scat_BC.emplace_back(factor.template get<scomplex>().real(),
+                                                                 factor.template get<scomplex>().imag(),
+                                                                 indices_B[local_idx_B].offset + off_B_BC,
+                                                                 indices_C[local_idx_C].offset + off_C_BC);
+                                            break;
+                                        case TYPE_DCOMPLEX:
+                                            scat_BC.emplace_back(factor.template get<dcomplex>().real(),
+                                                                 factor.template get<dcomplex>().imag(),
+                                                                 indices_B[local_idx_B].offset + off_B_BC,
+                                                                 indices_C[local_idx_C].offset + off_C_BC);
+                                            break;
+                                    }
                                 });
 
                                 if (scat_BC.empty()) return;
 
                                 std::sort(scat_BC.begin(), scat_BC.end());
 
-                                T* data_A = const_cast<T*>(local_A.data() + indices_A[local_idx_A].offset +
-                                                           off_A_AB + off_A_AC);
-                                T* data_B = const_cast<T*>(local_B.data() + off_B_AB);
-                                T* data_C = const_cast<T*>(local_C.data() + off_C_AC);
+                                auto data_A = A.data(0) + (local_A.data() - A.data(0) +
+                                    indices_A[local_idx_A].offset + off_A_AB + off_A_AC)*ts;
+                                auto data_B = B.data(0) + (local_B.data() - B.data(0) + off_B_AB)*ts;
+                                auto data_C = C.data(0) + (local_C.data() - C.data(0) + off_C_AC)*ts;
 
                                 for (unsigned i = 0;i < scat_BC.size();i++)
                                 {
@@ -504,16 +546,16 @@ void mult_block_fuse_BC(const communicator& comm, const config& cfg,
                                         std::get<0>(scat_BC[i]) != std::get<0>(scat_BC[i+1]) ||
                                         std::get<1>(scat_BC[i]) != std::get<1>(scat_BC[i+1]))
                                     {
-                                        T alpha = make_complex_if<T>(std::get<0>(scat_BC[i]),
-                                                                     std::get<1>(scat_BC[i]));
+                                        scalar alpha(dcomplex(std::get<0>(scat_BC[i]),
+                                                              std::get<1>(scat_BC[i])), type);
 
-                                        tensor_matrix<T> at(len_AC, len_AB, data_A, stride_A_AC, stride_A_AB);
-                                        scatter_tensor_matrix<T> bt(len_AB, len_BC, data_B, stride_B_AB, stride_B_BC,
-                                                                    {}, {{scat_B_BC.size()}, scat_B_BC.data()});
-                                        scatter_tensor_matrix<T> ct(len_AC, len_BC, data_C, stride_C_AC, stride_C_BC,
-                                                                    {}, {{scat_C_BC.size()}, scat_C_BC.data()});
+                                                tensor_matrix at(alpha, conj_A, len_AC, len_AB, data_A, stride_A_AC, stride_A_AB);
+                                        scatter_tensor_matrix bt(  one, conj_B, len_AB, len_BC, data_B, stride_B_AB, stride_B_BC,
+                                                                 {}, {{scat_B_BC.size()}, scat_B_BC.data()});
+                                        scatter_tensor_matrix ct(  one, conj_B, len_AC, len_BC, data_C, stride_C_AC, stride_C_BC,
+                                                                 {}, {{scat_C_BC.size()}, scat_C_BC.data()});
 
-                                        TensorGEMM{}(subcomm, cfg, alpha, at, bt, T(1), ct);
+                                        GotoGEMM{}(subcomm, cfg, at, bt, ct);
 
                                         scat_B_BC.clear();
                                         scat_C_BC.clear();
@@ -528,25 +570,21 @@ void mult_block_fuse_BC(const communicator& comm, const config& cfg,
     });
 }
 
-template <typename T>
-void mult_block_fuse_AB_BC(const communicator& comm, const config& cfg,
-                           T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A,
+void mult_block_fuse_AB_BC(type_t type, const communicator& comm, const config& cfg,
+                           const scalar& alpha,
+                           bool conj_A, const indexed_dpd_varray_view<char>& A,
                            dim_vector idx_A_AB,
                            dim_vector idx_A_AC,
-                                    bool conj_B, const indexed_dpd_varray_view<const T>& B,
+                           bool conj_B, const indexed_dpd_varray_view<char>& B,
                            dim_vector idx_B_AB,
                            dim_vector idx_B_BC,
-                                                 const indexed_dpd_varray_view<      T>& C,
+                                        const indexed_dpd_varray_view<char>& C,
                            dim_vector idx_C_AC,
                            dim_vector idx_C_BC)
 {
-    typedef real_type_t<T> U;
+    const len_type ts = type_size[type];
 
-    unsigned nirrep = A.num_irreps();
-
-    unsigned ndim_AC = idx_C_AC.size();
-    unsigned ndim_BC = idx_C_BC.size();
-    unsigned ndim_AB = idx_A_AB.size();
+    const unsigned nirrep = A.num_irreps();
 
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
     dpd_index_group<2> group_AC(A, idx_A_AC, C, idx_C_AC);
@@ -563,11 +601,15 @@ void mult_block_fuse_AB_BC(const communicator& comm, const config& cfg,
     assign_irreps(group_AC, irreps_A, irreps_C);
     assign_irreps(group_BC, irreps_B, irreps_C);
 
-    group_indices<T, 2> indices_A(A, group_AC, 0, group_AB, 0);
+    group_indices<2> indices_A(type, A, group_AC, 0, group_AB, 0);
     TBLIS_ASSERT(B.indexed_dimension() == 0);
-    group_indices<T, 2> indices_C(C, group_AC, 1, group_BC, 1);
+    group_indices<2> indices_C(type, C, group_AC, 1, group_BC, 1);
     auto nidx_A = indices_A.size();
     auto nidx_C = indices_C.size();
+
+    scalar one(1.0, type);
+    scalar factor_B(0.0, type);
+    factor_B.from(B.factors().data());
 
     auto dpd_A = A[0];
     auto dpd_B = B[0];
@@ -581,8 +623,8 @@ void mult_block_fuse_AB_BC(const communicator& comm, const config& cfg,
         stride_type idx_A = 0;
         stride_type idx_C = 0;
 
-        std::vector<std::tuple<U,U,stride_type,stride_type>> scat_AB;
-        std::vector<std::tuple<U,U,stride_type,stride_type>> scat_BC;
+        std::vector<std::tuple<double,double,stride_type,stride_type>> scat_AB;
+        std::vector<std::tuple<double,double,stride_type,stride_type>> scat_BC;
         stride_vector scat_A_AB;
         stride_vector scat_C_BC;
         stride_vector scat_B_AB;
@@ -627,7 +669,7 @@ void mult_block_fuse_AB_BC(const communicator& comm, const config& cfg,
 
                         if (is_block_empty(dpd_C, local_irreps_C)) return;
 
-                        auto local_C = dpd_C(local_irreps_C);
+                        varray_view<char> local_C = dpd_C(local_irreps_C);
 
                         for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
                         {
@@ -637,8 +679,8 @@ void mult_block_fuse_AB_BC(const communicator& comm, const config& cfg,
 
                             if (is_block_empty(dpd_A, local_irreps_A)) continue;
 
-                            auto local_A = dpd_A(local_irreps_A);
-                            auto local_B = dpd_B(local_irreps_B);
+                            varray_view<char> local_A = dpd_A(local_irreps_A);
+                            varray_view<char> local_B = dpd_B(local_irreps_B);
 
                             len_vector len_AB;
                             stride_vector stride_A_AB, stride_B_AB;
@@ -667,17 +709,39 @@ void mult_block_fuse_AB_BC(const communicator& comm, const config& cfg,
 
                             for (auto local_idx_A = idx_A;local_idx_A < next_A;local_idx_A++)
                             {
-                                auto factor = alpha*indices_A[local_idx_A].factor*B.factor(0);
-                                if (factor == T(0)) continue;
+                                auto factor = alpha*indices_A[local_idx_A].factor*factor_B;
+                                if (factor.is_zero()) continue;
 
                                 stride_type off_A_AB, off_B_AB;
                                 get_local_offset(indices_A[local_idx_A].idx[1], group_AB,
                                                  local_A, off_A_AB, 0,
                                                  local_B, off_B_AB, 1);
 
-                                scat_AB.emplace_back(std::real(factor), std::imag(factor),
-                                                     off_A_AB + indices_A[local_idx_A].offset,
-                                                     off_B_AB);
+                                switch (type)
+                                {
+                                    case TYPE_FLOAT:
+                                        scat_AB.emplace_back(factor.template get<float>(), 0.0,
+                                                             off_A_AB + indices_A[local_idx_A].offset,
+                                                             off_B_AB);
+                                        break;
+                                    case TYPE_DOUBLE:
+                                        scat_AB.emplace_back(factor.template get<double>(), 0.0,
+                                                             off_A_AB + indices_A[local_idx_A].offset,
+                                                             off_B_AB);
+                                        break;
+                                    case TYPE_SCOMPLEX:
+                                        scat_AB.emplace_back(factor.template get<scomplex>().real(),
+                                                             factor.template get<scomplex>().imag(),
+                                                             off_A_AB + indices_A[local_idx_A].offset,
+                                                             off_B_AB);
+                                        break;
+                                    case TYPE_DCOMPLEX:
+                                        scat_AB.emplace_back(factor.template get<dcomplex>().real(),
+                                                             factor.template get<dcomplex>().imag(),
+                                                             off_A_AB + indices_A[local_idx_A].offset,
+                                                             off_B_AB);
+                                        break;
+                                }
                             }
 
                             if (scat_AB.empty()) return;
@@ -685,23 +749,45 @@ void mult_block_fuse_AB_BC(const communicator& comm, const config& cfg,
                             for (auto local_idx_C = idx_C;local_idx_C < next_C;local_idx_C++)
                             {
                                 auto factor = indices_C[local_idx_C].factor;
-                                if (factor == T(0)) continue;
+                                if (factor.is_zero()) continue;
 
                                 stride_type off_B_BC, off_C_BC;
                                 get_local_offset(indices_C[local_idx_C].idx[1], group_BC,
                                                  local_B, off_B_BC, 0,
                                                  local_C, off_C_BC, 1);
 
-                                scat_BC.emplace_back(std::real(factor), std::imag(factor),
-                                                     off_B_BC,
-                                                     off_C_BC + indices_C[local_idx_C].offset);
+                                switch (type)
+                                {
+                                    case TYPE_FLOAT:
+                                        scat_BC.emplace_back(factor.get<float>(), 0.0,
+                                                             off_B_BC,
+                                                             off_C_BC + indices_C[local_idx_C].offset);
+                                        break;
+                                    case TYPE_DOUBLE:
+                                        scat_BC.emplace_back(factor.get<double>(), 0.0,
+                                                             off_B_BC,
+                                                             off_C_BC + indices_C[local_idx_C].offset);
+                                        break;
+                                    case TYPE_SCOMPLEX:
+                                        scat_BC.emplace_back(factor.get<scomplex>().real(),
+                                                             factor.get<scomplex>().imag(),
+                                                             off_B_BC,
+                                                             off_C_BC + indices_C[local_idx_C].offset);
+                                        break;
+                                    case TYPE_DCOMPLEX:
+                                        scat_BC.emplace_back(factor.get<dcomplex>().real(),
+                                                             factor.get<dcomplex>().imag(),
+                                                             off_B_BC,
+                                                             off_C_BC + indices_C[local_idx_C].offset);
+                                        break;
+                                }
                             }
 
                             if (scat_BC.empty()) return;
 
-                            T* data_A = const_cast<T*>(local_A.data() + off_A_AC);
-                            T* data_B = const_cast<T*>(local_B.data());
-                            T* data_C = const_cast<T*>(local_C.data() + off_C_AC);
+                            auto data_A = A.data(0) + (local_A.data() - A.data(0) + off_A_AC)*ts;
+                            auto data_B = B.data(0) + (local_B.data() - B.data(0))*ts;
+                            auto data_C = C.data(0) + (local_C.data() - C.data(0) + off_C_AC)*ts;
 
                             for (unsigned i = 0;i < scat_AB.size();i++)
                             {
@@ -712,8 +798,8 @@ void mult_block_fuse_AB_BC(const communicator& comm, const config& cfg,
                                     std::get<0>(scat_AB[i]) != std::get<0>(scat_AB[i+1]) ||
                                     std::get<1>(scat_AB[i]) != std::get<1>(scat_AB[i+1]))
                                 {
-                                    T alpha_ = make_complex_if<T>(std::get<0>(scat_AB[i]),
-                                                                  std::get<1>(scat_AB[i]));
+                                    scalar alpha_(dcomplex(std::get<0>(scat_AB[i]),
+                                                           std::get<1>(scat_AB[i])), type);
 
                                     for (unsigned j = 0;j < scat_BC.size();j++)
                                     {
@@ -724,31 +810,32 @@ void mult_block_fuse_AB_BC(const communicator& comm, const config& cfg,
                                             std::get<0>(scat_BC[j]) != std::get<0>(scat_BC[j+1]) ||
                                             std::get<1>(scat_BC[j]) != std::get<1>(scat_BC[j+1]))
                                         {
-                                            T alpha = make_complex_if<T>(std::get<0>(scat_BC[j]),
-                                                                         std::get<1>(scat_BC[j]))*alpha_;
+                                            scalar alpha(dcomplex(std::get<0>(scat_BC[j]),
+                                                                  std::get<1>(scat_BC[j])), type);
+                                            alpha *= alpha_;
 
                                             if (len_AB.empty() && len_BC.empty())
                                             {
-                                                scatter_tensor_matrix<T> at(len_AC, len_AB, data_A, stride_A_AC, stride_A_AB, {},
-                                                                            {{scat_A_AB.size()}, scat_A_AB.data()});
-                                                scatter_matrix<T> bt(data_B, {{scat_B_AB.size()}, scat_B_AB.data()},
-                                                                             {{scat_B_BC.size()}, scat_B_BC.data()});
-                                                scatter_tensor_matrix<T> ct(len_AC, len_BC, data_C, stride_C_AC, stride_C_BC, {},
-                                                                            {{scat_C_BC.size()}, scat_C_BC.data()});
+                                                scatter_tensor_matrix at(alpha, conj_A, len_AC, len_AB, data_A, stride_A_AC, stride_A_AB, {},
+                                                                         {{scat_A_AB.size()}, scat_A_AB.data()});
+                                                       scatter_matrix bt(  one, conj_B, data_B, {{scat_B_AB.size()}, scat_B_AB.data()},
+                                                                         {{scat_B_BC.size()}, scat_B_BC.data()});
+                                                scatter_tensor_matrix ct(  one,  false, len_AC, len_BC, data_C, stride_C_AC, stride_C_BC, {},
+                                                                         {{scat_C_BC.size()}, scat_C_BC.data()});
 
-                                                TensorGEMM{}(subcomm, cfg, alpha, at, bt, T(1), ct);
+                                                GotoGEMM{}(subcomm, cfg, at, bt, ct);
                                             }
                                             else
                                             {
-                                                scatter_tensor_matrix<T> at(len_AC, len_AB, data_A, stride_A_AC, stride_A_AB, {},
-                                                                            {{scat_A_AB.size()}, scat_A_AB.data()});
-                                                scatter_tensor_matrix<T> bt(len_AB, len_BC, data_B, stride_B_AB, stride_B_BC,
-                                                                            {{scat_B_AB.size()}, scat_B_AB.data()},
-                                                                            {{scat_B_BC.size()}, scat_B_BC.data()});
-                                                scatter_tensor_matrix<T> ct(len_AC, len_BC, data_C, stride_C_AC, stride_C_BC, {},
-                                                                            {{scat_C_BC.size()}, scat_C_BC.data()});
+                                                scatter_tensor_matrix at(alpha, conj_A, len_AC, len_AB, data_A, stride_A_AC, stride_A_AB, {},
+                                                                         {{scat_A_AB.size()}, scat_A_AB.data()});
+                                                scatter_tensor_matrix bt(  one, conj_B, len_AB, len_BC, data_B, stride_B_AB, stride_B_BC,
+                                                                         {{scat_B_AB.size()}, scat_B_AB.data()},
+                                                                         {{scat_B_BC.size()}, scat_B_BC.data()});
+                                                scatter_tensor_matrix ct(  one,  false, len_AC, len_BC, data_C, stride_C_AC, stride_C_BC, {},
+                                                                         {{scat_C_BC.size()}, scat_C_BC.data()});
 
-                                                TensorGEMM{}(subcomm, cfg, alpha, at, bt, T(1), ct);
+                                                GotoGEMM{}(subcomm, cfg, at, bt, ct);
                                             }
 
                                             scat_B_BC.clear();
@@ -768,25 +855,20 @@ void mult_block_fuse_AB_BC(const communicator& comm, const config& cfg,
     });
 }
 
-template <typename T>
-void mult_block(const communicator& comm, const config& cfg,
-                T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A,
+void mult_block(type_t type, const communicator& comm, const config& cfg,
+                const scalar& alpha,
+                bool conj_A, const indexed_dpd_varray_view<char>& A,
                 dim_vector idx_A_AB,
                 dim_vector idx_A_AC,
-                         bool conj_B, const indexed_dpd_varray_view<const T>& B,
+                bool conj_B, const indexed_dpd_varray_view<char>& B,
                 dim_vector idx_B_AB,
                 dim_vector idx_B_BC,
-                                      const indexed_dpd_varray_view<      T>& C,
+                             const indexed_dpd_varray_view<char>& C,
                 dim_vector idx_C_AC,
                 dim_vector idx_C_BC)
 {
-    TBLIS_ASSERT(!conj_A && !conj_B);
-
-    unsigned nirrep = A.num_irreps();
-
-    unsigned ndim_AC = idx_C_AC.size();
-    unsigned ndim_BC = idx_C_BC.size();
-    unsigned ndim_AB = idx_A_AB.size();
+    const len_type ts = type_size[type];
+    const unsigned nirrep = A.num_irreps();
 
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
     dpd_index_group<2> group_AC(C, idx_C_AC, A, idx_A_AC);
@@ -812,7 +894,7 @@ void mult_block(const communicator& comm, const config& cfg,
 
     std::vector<std::pair<double,int>> fuse;
 
-    double baseline = relative_perf(dense_AC, dense_BC, dense_AB);
+    //double baseline = relative_perf(dense_AC, dense_BC, dense_AB);
     //printf("\nmnk: %ld %ld %ld\n", dense_AC, dense_BC, dense_AB);
 
     fuse.emplace_back(relative_perf(dense_AC, dense_BC, dense_AB*idx_AB), FUSE_AB);
@@ -843,41 +925,46 @@ void mult_block(const communicator& comm, const config& cfg,
         case FUSE_AB_AC:
         {
             //printf("fuse AB AC\n");
-            mult_block_fuse_AB_BC(comm, cfg, alpha, conj_B, B, idx_B_AB, idx_B_BC,
-                                                    conj_A, A, idx_A_AB, idx_A_AC,
-                                                            C, idx_C_BC, idx_C_AC);
+            mult_block_fuse_AB_BC(type, comm, cfg, alpha,
+                                  conj_B, B, idx_B_AB, idx_B_BC,
+                                  conj_A, A, idx_A_AB, idx_A_AC,
+                                          C, idx_C_BC, idx_C_AC);
         }
         break;
         case FUSE_AB_BC:
         {
             //printf("fuse AB BC\n");
-            mult_block_fuse_AB_BC(comm, cfg, alpha, conj_A, A, idx_A_AB, idx_A_AC,
-                                                    conj_B, B, idx_B_AB, idx_B_BC,
-                                                            C, idx_C_AC, idx_C_BC);
+            mult_block_fuse_AB_BC(type, comm, cfg, alpha,
+                                  conj_A, A, idx_A_AB, idx_A_AC,
+                                  conj_B, B, idx_B_AB, idx_B_BC,
+                                          C, idx_C_AC, idx_C_BC);
         }
         break;
         case FUSE_AC:
         {
             //printf("fuse AC\n");
-            mult_block_fuse_BC(comm, cfg, alpha, conj_B, B, idx_B_AB, idx_B_BC,
-                                                 conj_A, A, idx_A_AB, idx_A_AC,
-                                                         C, idx_C_BC, idx_C_AC);
+            mult_block_fuse_BC(type, comm, cfg, alpha,
+                               conj_B, B, idx_B_AB, idx_B_BC,
+                               conj_A, A, idx_A_AB, idx_A_AC,
+                                       C, idx_C_BC, idx_C_AC);
         }
         break;
         case FUSE_BC:
         {
             //printf("fuse BC\n");
-            mult_block_fuse_BC(comm, cfg, alpha, conj_A, A, idx_A_AB, idx_A_AC,
-                                                 conj_B, B, idx_B_AB, idx_B_BC,
-                                                         C, idx_C_AC, idx_C_BC);
+            mult_block_fuse_BC(type, comm, cfg, alpha,
+                               conj_A, A, idx_A_AB, idx_A_AC,
+                               conj_B, B, idx_B_AB, idx_B_BC,
+                                       C, idx_C_AC, idx_C_BC);
         }
         break;
         case FUSE_AB:
         {
             //printf("fuse AB\n");
-            mult_block_fuse_AB(comm, cfg, alpha, conj_A, A, idx_A_AB, idx_A_AC,
-                                                 conj_B, B, idx_B_AB, idx_B_BC,
-                                                         C, idx_C_AC, idx_C_BC);
+            mult_block_fuse_AB(type, comm, cfg, alpha,
+                               conj_A, A, idx_A_AB, idx_A_AC,
+                               conj_B, B, idx_B_AB, idx_B_BC,
+                                       C, idx_C_AC, idx_C_BC);
         }
         break;
     }
@@ -886,9 +973,9 @@ void mult_block(const communicator& comm, const config& cfg,
 
 #endif
 
-    group_indices<T, 2> indices_A(A, group_AC, 1, group_AB, 0);
-    group_indices<T, 2> indices_B(B, group_BC, 1, group_AB, 1);
-    group_indices<T, 2> indices_C(C, group_AC, 0, group_BC, 0);
+    group_indices<2> indices_A(type, A, group_AC, 1, group_AB, 0);
+    group_indices<2> indices_B(type, B, group_BC, 1, group_AB, 1);
+    group_indices<2> indices_C(type, C, group_AC, 0, group_BC, 0);
 
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
@@ -922,6 +1009,8 @@ void mult_block(const communicator& comm, const config& cfg,
         if (group_AC.dense_ndim == 0 && irrep_AC != 0) continue;
         if (group_BC.dense_ndim == 0 && irrep_BC != 0) continue;
 
+        scalar one(1.0, type);
+
         stride_type idx = 0;
         stride_type idx_A = 0;
         stride_type idx_C = 0;
@@ -940,10 +1029,10 @@ void mult_block(const communicator& comm, const config& cfg,
                                             idx_C, next_C, indices_C, 1,
                 [&](stride_type next_B)
                 {
-                    if (indices_C[idx_C].factor == T(0)) return;
+                    if (indices_C[idx_C].factor.is_zero()) return;
 
-                    tasks.visit(idx,
-                    [&,idx,idx_A,idx_B,idx_C,next_A,next_B]
+                    tasks.visit(idx++,
+                    [&,idx_A,idx_B,idx_C,next_A,next_B]
                     (const communicator& subcomm)
                     {
                         auto local_idx_A = idx_A;
@@ -960,11 +1049,11 @@ void mult_block(const communicator& comm, const config& cfg,
                             auto factor = alpha*indices_A[local_idx_A].factor*
                                                 indices_B[local_idx_B].factor*
                                                 indices_C[      idx_C].factor;
-                            if (factor == T(0)) return;
+                            if (factor.is_zero()) return;
 
-                            dpd_A.data(A.data(0) + indices_A[local_idx_A].offset);
-                            dpd_B.data(B.data(0) + indices_B[local_idx_B].offset);
-                            dpd_C.data(C.data(0) + indices_C[      idx_C].offset);
+                            dpd_A.data(A.data(0) + indices_A[local_idx_A].offset*ts);
+                            dpd_B.data(B.data(0) + indices_B[local_idx_B].offset*ts);
+                            dpd_C.data(C.data(0) + indices_C[      idx_C].offset*ts);
 
                             auto mixed_idx_A = stl_ext::appended(stl_ext::select_from(indices_A[local_idx_A].idx[0], group_AC.mixed_pos[1]),
                                                                  stl_ext::select_from(indices_A[local_idx_A].idx[1], group_AB.mixed_pos[0]));
@@ -973,45 +1062,40 @@ void mult_block(const communicator& comm, const config& cfg,
                             auto mixed_idx_C = stl_ext::appended(stl_ext::select_from(indices_C[      idx_C].idx[0], group_AC.mixed_pos[0]),
                                                                  stl_ext::select_from(indices_C[      idx_C].idx[1], group_BC.mixed_pos[0]));
 
-                            dpd_tensor_matrix<T> at(dpd_A, group_AC.dense_idx[1], group_AB.dense_idx[0], irrep_AB,
-                                                    mixed_dim_A, mixed_irrep_A, mixed_idx_A, group_AC.pack_3d, group_AB.pack_3d);
-                            dpd_tensor_matrix<T> bt(dpd_B, group_AB.dense_idx[1], group_BC.dense_idx[1], irrep_BC,
-                                                    mixed_dim_B, mixed_irrep_B, mixed_idx_B, group_AB.pack_3d, group_BC.pack_3d);
-                            dpd_tensor_matrix<T> ct(dpd_C, group_AC.dense_idx[0], group_BC.dense_idx[0], irrep_BC,
-                                                    mixed_dim_C, mixed_irrep_C, mixed_idx_C, group_AC.pack_3d, group_BC.pack_3d);
+                            dpd_tensor_matrix at(factor, conj_A, dpd_A, group_AC.dense_idx[1], group_AB.dense_idx[0], irrep_AB,
+                                                 mixed_dim_A, mixed_irrep_A, mixed_idx_A, group_AC.pack_3d, group_AB.pack_3d);
+                            dpd_tensor_matrix bt(   one, conj_B, dpd_B, group_AB.dense_idx[1], group_BC.dense_idx[1], irrep_BC,
+                                                 mixed_dim_B, mixed_irrep_B, mixed_idx_B, group_AB.pack_3d, group_BC.pack_3d);
+                            dpd_tensor_matrix ct(   one,  false, dpd_C, group_AC.dense_idx[0], group_BC.dense_idx[0], irrep_BC,
+                                                 mixed_dim_C, mixed_irrep_C, mixed_idx_C, group_AC.pack_3d, group_BC.pack_3d);
 
-                            TensorGEMM{}(subcomm, cfg, factor, at, bt, T(1), ct);
+                            GotoGEMM{}(subcomm, cfg, at, bt, ct);
                         });
                     });
-
-                    idx++;
                 });
             });
         });
     }
 }
 
-template <typename T>
-void mult_block(const communicator& comm, const config& cfg,
-                T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A,
+void mult_block(type_t type, const communicator& comm, const config& cfg,
+                const scalar& alpha,
+                bool conj_A, const indexed_dpd_varray_view<char>& A,
                 dim_vector idx_A_AB,
                 dim_vector idx_A_AC,
                 dim_vector idx_A_ABC,
-                         bool conj_B, const indexed_dpd_varray_view<const T>& B,
+                bool conj_B, const indexed_dpd_varray_view<char>& B,
                 dim_vector idx_B_AB,
                 dim_vector idx_B_BC,
                 dim_vector idx_B_ABC,
-                                      const indexed_dpd_varray_view<      T>& C,
+                             const indexed_dpd_varray_view<char>& C,
                 dim_vector idx_C_AC,
                 dim_vector idx_C_BC,
                 dim_vector idx_C_ABC)
 {
-    unsigned nirrep = A.num_irreps();
+    const len_type ts = type_size[type];
 
-    unsigned ndim_ABC = idx_C_ABC.size();
-    unsigned ndim_AC = idx_C_AC.size();
-    unsigned ndim_BC = idx_C_BC.size();
-    unsigned ndim_AB = idx_A_AB.size();
+    const unsigned nirrep = A.num_irreps();
 
     dpd_index_group<3> group_ABC(A, idx_A_ABC, B, idx_B_ABC, C, idx_C_ABC);
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
@@ -1026,12 +1110,14 @@ void mult_block(const communicator& comm, const config& cfg,
     assign_irreps(group_AC, irreps_A, irreps_C);
     assign_irreps(group_BC, irreps_B, irreps_C);
 
-    group_indices<T, 3> indices_A(A, group_ABC, 0, group_AC, 0, group_AB, 0);
-    group_indices<T, 3> indices_B(B, group_ABC, 1, group_BC, 0, group_AB, 1);
-    group_indices<T, 3> indices_C(C, group_ABC, 2, group_AC, 1, group_BC, 1);
+    group_indices<3> indices_A(type, A, group_ABC, 0, group_AC, 0, group_AB, 0);
+    group_indices<3> indices_B(type, B, group_ABC, 1, group_BC, 0, group_AB, 1);
+    group_indices<3> indices_C(type, C, group_ABC, 2, group_AC, 1, group_BC, 1);
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
     auto nidx_C = indices_C.size();
+
+    scalar one(1.0, type);
 
     auto dpd_A = A[0];
     auto dpd_B = B[0];
@@ -1066,7 +1152,7 @@ void mult_block(const communicator& comm, const config& cfg,
                                            idx_C,  next_C_AC, indices_C, 2,
                 [&](stride_type next_B_AB)
                 {
-                    if (indices_C[idx_C].factor == T(0)) return;
+                    if (indices_C[idx_C].factor.is_zero()) return;
 
                     for (unsigned irrep_AB0 = 0;irrep_AB0 < nirrep;irrep_AB0++)
                     {
@@ -1110,7 +1196,7 @@ void mult_block(const communicator& comm, const config& cfg,
 
                                 if (is_block_empty(dpd_C, local_irreps_C)) return;
 
-                                auto local_C = dpd_C(local_irreps_C);
+                                varray_view<char> local_C = dpd_C(local_irreps_C);
 
                                 for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
                                 {
@@ -1122,8 +1208,9 @@ void mult_block(const communicator& comm, const config& cfg,
 
                                     auto local_idx_A = idx_A;
                                     auto local_idx_B = idx_B;
-                                    auto local_A = dpd_A(local_irreps_A);
-                                    auto local_B = dpd_B(local_irreps_B);
+
+                                    varray_view<char> local_A = dpd_A(local_irreps_A);
+                                    varray_view<char> local_B = dpd_B(local_irreps_B);
 
                                     len_vector len_ABC;
                                     stride_vector stride_A_ABC, stride_B_ABC, stride_C_ABC;
@@ -1163,33 +1250,33 @@ void mult_block(const communicator& comm, const config& cfg,
                                                        local_A, stride_A_AB, 0,
                                                        local_B, stride_B_AB, 1);
 
-                                    auto data_C = local_C.data() + indices_C[idx_C].offset +
-                                                  off_C_AC + off_C_BC + off_C_ABC;
+                                    auto data_C = C.data(0) + (local_C.data() - C.data(0) +
+                                        indices_C[idx_C].offset + off_C_AC + off_C_BC + off_C_ABC)*ts;
 
                                     for_each_match<false, false>(local_idx_A, next_A_AB, indices_A, 2,
-                                                                local_idx_B, next_B_AB, indices_B, 2,
+                                                                 local_idx_B, next_B_AB, indices_B, 2,
                                     [&]
                                     {
                                         auto factor = alpha*indices_A[local_idx_A].factor*
                                                             indices_B[local_idx_B].factor*
                                                             indices_C[idx_C].factor;
-                                        if (factor == T(0)) return;
+                                        if (factor.is_zero()) return;
 
                                         stride_type off_A_AB, off_B_AB;
                                         get_local_offset(indices_A[local_idx_A].idx[2], group_AB,
                                                          local_A, off_A_AB, 0,
                                                          local_B, off_B_AB, 1);
 
-                                        auto data_A = local_A.data() + indices_A[local_idx_A].offset +
-                                                      off_A_AB + off_A_AC + off_A_ABC;
-                                        auto data_B = local_B.data() + indices_B[local_idx_B].offset +
-                                                      off_B_AB + off_B_BC + off_B_ABC;
+                                        auto data_A = A.data(0) + (local_A.data() - A.data(0) +
+                                            indices_A[local_idx_A].offset + off_A_AB + off_A_AC + off_A_ABC)*ts;
+                                        auto data_B = B.data(0) + (local_B.data() - B.data(0) +
+                                            indices_B[local_idx_B].offset + off_B_AB + off_B_BC + off_B_ABC)*ts;
 
-                                        mult(subcomm, cfg,
+                                        mult(type, subcomm, cfg,
                                              len_AB, len_AC, len_BC, len_ABC,
                                              factor, conj_A, data_A, stride_A_AB, stride_A_AC, stride_A_ABC,
                                                      conj_B, data_B, stride_B_AB, stride_B_BC, stride_B_ABC,
-                                               T(1),  false, data_C, stride_C_AC, stride_C_BC, stride_C_ABC);
+                                                one,  false, data_C, stride_C_AC, stride_C_BC, stride_C_ABC);
                                     });
                                 }
                             });
@@ -1201,28 +1288,27 @@ void mult_block(const communicator& comm, const config& cfg,
     });
 }
 
-template <typename T>
-void mult(const communicator& comm, const config& cfg,
-          T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A,
+void mult(type_t type, const communicator& comm, const config& cfg,
+          const scalar& alpha, bool conj_A, const indexed_dpd_varray_view<char>& A,
           const dim_vector& idx_A_AB,
           const dim_vector& idx_A_AC,
           const dim_vector& idx_A_ABC,
-                   bool conj_B, const indexed_dpd_varray_view<const T>& B,
+                               bool conj_B, const indexed_dpd_varray_view<char>& B,
           const dim_vector& idx_B_AB,
           const dim_vector& idx_B_BC,
           const dim_vector& idx_B_ABC,
-          T  beta, bool conj_C, const indexed_dpd_varray_view<      T>& C,
+          const scalar&  beta, bool conj_C, const indexed_dpd_varray_view<char>& C,
           const dim_vector& idx_C_AC,
           const dim_vector& idx_C_BC,
           const dim_vector& idx_C_ABC)
 {
-    if (beta == T(0))
+    if (beta.is_zero())
     {
-        set(comm, cfg, T(0), C, range(C.dimension()));
+        set(type, comm, cfg, beta, C, range(C.dimension()));
     }
-    else if (beta != T(1) || (is_complex<T>::value && conj_C))
+    else if (!beta.is_one() || (beta.is_complex() && conj_C))
     {
-        scale(comm, cfg, beta, conj_C, C, range(C.dimension()));
+        scale(type, comm, cfg, beta, conj_C, C, range(C.dimension()));
     }
 
     for (unsigned i = 0;i < idx_A_AB.size();i++)
@@ -1281,21 +1367,44 @@ void mult(const communicator& comm, const config& cfg,
 
     if (dpd_impl == FULL)
     {
-        mult_full(comm, cfg,
-                  alpha, conj_A, A, idx_A_AB, idx_A_AC, idx_A_ABC,
-                         conj_B, B, idx_B_AB, idx_B_BC, idx_B_ABC,
-                                 C, idx_C_AC, idx_C_BC, idx_C_ABC);
+        switch (type)
+        {
+            case TYPE_FLOAT:
+                mult_full(comm, cfg, alpha.get<float>(),
+                          conj_A, reinterpret_cast<const indexed_dpd_varray_view<float>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
+                          conj_B, reinterpret_cast<const indexed_dpd_varray_view<float>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
+                                  reinterpret_cast<const indexed_dpd_varray_view<float>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
+                break;
+            case TYPE_DOUBLE:
+                mult_full(comm, cfg, alpha.get<double>(),
+                          conj_A, reinterpret_cast<const indexed_dpd_varray_view<double>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
+                          conj_B, reinterpret_cast<const indexed_dpd_varray_view<double>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
+                                  reinterpret_cast<const indexed_dpd_varray_view<double>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
+                break;
+            case TYPE_SCOMPLEX:
+                mult_full(comm, cfg, alpha.get<scomplex>(),
+                          conj_A, reinterpret_cast<const indexed_dpd_varray_view<scomplex>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
+                          conj_B, reinterpret_cast<const indexed_dpd_varray_view<scomplex>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
+                                  reinterpret_cast<const indexed_dpd_varray_view<scomplex>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
+                break;
+            case TYPE_DCOMPLEX:
+                mult_full(comm, cfg, alpha.get<dcomplex>(),
+                          conj_A, reinterpret_cast<const indexed_dpd_varray_view<dcomplex>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
+                          conj_B, reinterpret_cast<const indexed_dpd_varray_view<dcomplex>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
+                                  reinterpret_cast<const indexed_dpd_varray_view<dcomplex>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
+                break;
+        }
     }
     else if (!idx_C_ABC.empty())
     {
-        mult_block(comm, cfg,
+        mult_block(type, comm, cfg,
                    alpha, conj_A, A, idx_A_AB, idx_A_AC, idx_A_ABC,
                           conj_B, B, idx_B_AB, idx_B_BC, idx_B_ABC,
                                   C, idx_C_AC, idx_C_BC, idx_C_ABC);
     }
     else
     {
-        mult_block(comm, cfg,
+        mult_block(type, comm, cfg,
                    alpha, conj_A, A, idx_A_AB, idx_A_AC,
                           conj_B, B, idx_B_AB, idx_B_BC,
                                   C, idx_C_AC, idx_C_BC);
@@ -1303,22 +1412,6 @@ void mult(const communicator& comm, const config& cfg,
 
     comm.barrier();
 }
-
-#define FOREACH_TYPE(T) \
-template void mult(const communicator& comm, const config& cfg, \
-                   T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A, \
-                   const dim_vector& idx_A_AB, \
-                   const dim_vector& idx_A_AC, \
-                   const dim_vector& idx_A_ABC, \
-                            bool conj_B, const indexed_dpd_varray_view<const T>& B, \
-                   const dim_vector& idx_B_AB, \
-                   const dim_vector& idx_B_BC, \
-                   const dim_vector& idx_B_ABC, \
-                   T  beta, bool conj_C, const indexed_dpd_varray_view<      T>& C, \
-                   const dim_vector& idx_C_AC, \
-                   const dim_vector& idx_C_BC, \
-                   const dim_vector& idx_C_ABC);
-#include "configs/foreach_type.h"
 
 }
 }

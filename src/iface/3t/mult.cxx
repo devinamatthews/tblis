@@ -18,13 +18,15 @@
 namespace tblis
 {
 
-extern "C"
-{
-
-void tblis_tensor_mult(const tblis_comm* comm, const tblis_config* cfg,
-                       const tblis_tensor* A, const label_type* idx_A_,
-                       const tblis_tensor* B, const label_type* idx_B_,
-                             tblis_tensor* C, const label_type* idx_C_)
+TBLIS_EXPORT
+void tblis_tensor_mult(const tblis_comm* comm,
+                       const tblis_config* cfg,
+                       const tblis_tensor* A,
+                       const label_type* idx_A_,
+                       const tblis_tensor* B,
+                       const label_type* idx_B_,
+                             tblis_tensor* C,
+                       const label_type* idx_C_)
 {
     TBLIS_ASSERT(A->type == B->type);
     TBLIS_ASSERT(A->type == C->type);
@@ -47,6 +49,7 @@ void tblis_tensor_mult(const tblis_comm* comm, const tblis_config* cfg,
     label_vector idx_C;
     diagonal(ndim_C, C->len, C->stride, idx_C_, len_C, stride_C, idx_C);
 
+    /*
     auto ndim_ABC = stl_ext::intersection(idx_A, idx_B, idx_C).size();
 
     if (idx_A.size() == ndim_ABC ||
@@ -68,6 +71,7 @@ void tblis_tensor_mult(const tblis_comm* comm, const tblis_config* cfg,
         idx_B.push_back(idx);
         idx_C.push_back(idx);
     }
+    */
 
     auto idx_ABC = stl_ext::intersection(idx_A, idx_B, idx_C);
     auto len_ABC = stl_ext::select_from(len_A, idx_A, idx_ABC);
@@ -118,59 +122,54 @@ void tblis_tensor_mult(const tblis_comm* comm, const tblis_config* cfg,
     len_vector nolen;
     stride_vector nostride;
 
-    TBLIS_WITH_TYPE_AS(A->type, T,
+    auto alpha = A->scalar*B->scalar;
+    auto beta = C->scalar;
+
+    auto data_A = reinterpret_cast<char*>(A->data);
+    auto data_B = reinterpret_cast<char*>(B->data);
+    auto data_C = reinterpret_cast<char*>(C->data);
+
+    parallelize_if(
+    [&](const communicator& comm)
     {
-        T alpha = A->alpha<T>()*B->alpha<T>();
-        T beta = C->alpha<T>();
-
-        T* data_A = static_cast<T*>(A->data);
-        T* data_B = static_cast<T*>(B->data);
-        T* data_C = static_cast<T*>(C->data);
-
-        parallelize_if(
-        [&](const communicator& comm)
+        if (alpha.is_zero())
         {
-            if (alpha == T(0))
+            if (beta.is_zero())
             {
-                if (beta == T(0))
-                {
-                    internal::set<T>(comm, get_config(cfg),
-                                     len_AC+len_BC+len_ABC, T(0), data_C,
-                                     stride_C_AC+stride_C_BC+stride_C_ABC);
-                }
-                else if (beta != T(1) || (is_complex<T>::value && C->conj))
-                {
-                    internal::scale<T>(comm, get_config(cfg),
-                                       len_AC+len_BC+len_ABC,
-                                       beta, C->conj, data_C,
-                                       stride_C_AC+stride_C_BC+stride_C_ABC);
-                }
+                internal::set(A->type, comm, get_config(cfg),
+                              len_AC+len_BC+len_ABC, beta, data_C,
+                              stride_C_AC+stride_C_BC+stride_C_ABC);
             }
-            else
+            else if (!beta.is_one() || (beta.is_complex() && C->conj))
             {
-                internal::mult<T>(comm, get_config(cfg),
-                                  len_AB, len_AC, len_BC, len_ABC,
-                                  alpha, A->conj, data_A,
-                                  stride_A_AB, stride_A_AC, stride_A_ABC,
-                                         B->conj, data_B,
-                                  stride_B_AB, stride_B_BC, stride_B_ABC,
-                                   beta, C->conj, data_C,
-                                  stride_C_AC, stride_C_BC, stride_C_ABC);
+                internal::scale(A->type, comm, get_config(cfg),
+                                len_AC+len_BC+len_ABC,
+                                beta, C->conj, data_C,
+                                stride_C_AC+stride_C_BC+stride_C_ABC);
             }
-        }, comm);
+        }
+        else
+        {
+            internal::mult(A->type, comm, get_config(cfg),
+                           len_AB, len_AC, len_BC, len_ABC,
+                           alpha, A->conj, data_A,
+                           stride_A_AB, stride_A_AC, stride_A_ABC,
+                                  B->conj, data_B,
+                           stride_B_AB, stride_B_BC, stride_B_ABC,
+                            beta, C->conj, data_C,
+                           stride_C_AC, stride_C_BC, stride_C_ABC);
+        }
+    }, comm);
 
-        C->alpha<T>() = T(1);
-        C->conj = false;
-    })
-}
-
+    C->scalar = 1;
+    C->conj = false;
 }
 
 template <typename T>
 void mult(const communicator& comm,
-          T alpha, dpd_varray_view<const T> A, const label_type* idx_A_,
-                   dpd_varray_view<const T> B, const label_type* idx_B_,
-          T  beta, dpd_varray_view<      T> C, const label_type* idx_C_)
+          T alpha, const dpd_varray_view<const T>& A, const label_vector& idx_A,
+                   const dpd_varray_view<const T>& B, const label_vector& idx_B,
+          T  beta, const dpd_varray_view<      T>& C, const label_vector& idx_C)
 {
     unsigned nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
@@ -179,10 +178,6 @@ void mult(const communicator& comm,
     unsigned ndim_A = A.dimension();
     unsigned ndim_B = B.dimension();
     unsigned ndim_C = C.dimension();
-
-    std::string idx_A(idx_A_, idx_A_+ndim_A);
-    std::string idx_B(idx_B_, idx_B_+ndim_B);
-    std::string idx_C(idx_C_, idx_C_+ndim_C);
 
     for (unsigned i = 1;i < ndim_A;i++)
         for (unsigned j = 0;j < i;j++)
@@ -271,44 +266,40 @@ void mult(const communicator& comm,
     {
         if (beta == T(0))
         {
-            internal::set(comm, get_default_config(),
-                          beta, C, range_C);
+            internal::set(type_tag<T>::value, comm, get_default_config(),
+                          beta, reinterpret_cast<const dpd_varray_view<char>&>(C), range_C);
         }
         else if (beta != T(1))
         {
-            internal::scale(comm, get_default_config(),
-                            beta, false, C, range_C);
+            internal::scale(type_tag<T>::value, comm, get_default_config(),
+                            beta, false, reinterpret_cast<const dpd_varray_view<char>&>(C), range_C);
         }
     }
     else
     {
-        internal::mult(comm, get_default_config(),
-                       alpha, false, A, idx_A_AB, idx_A_AC, idx_A_ABC,
-                              false, B, idx_B_AB, idx_B_BC, idx_B_ABC,
-                        beta, false, C, idx_C_AC, idx_C_BC, idx_C_ABC);
+        internal::mult(type_tag<T>::value, comm, get_default_config(),
+                       alpha, false, reinterpret_cast<const dpd_varray_view<char>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
+                              false, reinterpret_cast<const dpd_varray_view<char>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
+                        beta, false, reinterpret_cast<const dpd_varray_view<char>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
     }
 }
 
 #define FOREACH_TYPE(T) \
 template void mult(const communicator& comm, \
-                   T alpha, dpd_varray_view<const T> A, const label_type* idx_A, \
-                            dpd_varray_view<const T> B, const label_type* idx_B, \
-                   T  beta, dpd_varray_view<      T> C, const label_type* idx_C);
+                   T alpha, const dpd_varray_view<const T>& A, const label_vector& idx_A, \
+                            const dpd_varray_view<const T>& B, const label_vector& idx_B, \
+                   T  beta, const dpd_varray_view<      T>& C, const label_vector& idx_C);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void mult(const communicator& comm,
-          T alpha, indexed_varray_view<const T> A, const label_type* idx_A_,
-                   indexed_varray_view<const T> B, const label_type* idx_B_,
-          T  beta, indexed_varray_view<      T> C, const label_type* idx_C_)
+          T alpha, const indexed_varray_view<const T>& A, const label_vector& idx_A,
+                   const indexed_varray_view<const T>& B, const label_vector& idx_B,
+          T  beta, const indexed_varray_view<      T>& C, const label_vector& idx_C)
 {
     unsigned ndim_A = A.dimension();
     unsigned ndim_B = B.dimension();
     unsigned ndim_C = C.dimension();
-
-    std::string idx_A(idx_A_, idx_A_+ndim_A);
-    std::string idx_B(idx_B_, idx_B_+ndim_B);
-    std::string idx_C(idx_C_, idx_C_+ndim_C);
 
     for (unsigned i = 1;i < ndim_A;i++)
         for (unsigned j = 0;j < i;j++)
@@ -385,36 +376,36 @@ void mult(const communicator& comm,
     {
         if (beta == T(0))
         {
-            internal::set(comm, get_default_config(),
-                          beta, C, range_C);
+            internal::set(type_tag<T>::value, comm, get_default_config(),
+                          beta, reinterpret_cast<const indexed_varray_view<char>&>(C), range_C);
         }
         else if (beta != T(1))
         {
-            internal::scale(comm, get_default_config(),
-                            beta, false, C, range_C);
+            internal::scale(type_tag<T>::value, comm, get_default_config(),
+                            beta, false, reinterpret_cast<const indexed_varray_view<char>&>(C), range_C);
         }
     }
     else
     {
-        internal::mult(comm, get_default_config(),
-                       alpha, false, A, idx_A_AB, idx_A_AC, idx_A_ABC,
-                              false, B, idx_B_AB, idx_B_BC, idx_B_ABC,
-                        beta, false, C, idx_C_AC, idx_C_BC, idx_C_ABC);
+        internal::mult(type_tag<T>::value, comm, get_default_config(),
+                       alpha, false, reinterpret_cast<const indexed_varray_view<char>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
+                              false, reinterpret_cast<const indexed_varray_view<char>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
+                        beta, false, reinterpret_cast<const indexed_varray_view<char>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
     }
 }
 
 #define FOREACH_TYPE(T) \
 template void mult(const communicator& comm, \
-                   T alpha, indexed_varray_view<const T> A, const label_type* idx_A, \
-                            indexed_varray_view<const T> B, const label_type* idx_B, \
-                   T  beta, indexed_varray_view<      T> C, const label_type* idx_C);
+                   T alpha, const indexed_varray_view<const T>& A, const label_vector& idx_A, \
+                            const indexed_varray_view<const T>& B, const label_vector& idx_B, \
+                   T  beta, const indexed_varray_view<      T>& C, const label_vector& idx_C);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void mult(const communicator& comm,
-          T alpha, indexed_dpd_varray_view<const T> A, const label_type* idx_A_,
-                   indexed_dpd_varray_view<const T> B, const label_type* idx_B_,
-          T  beta, indexed_dpd_varray_view<      T> C, const label_type* idx_C_)
+          T alpha, const indexed_dpd_varray_view<const T>& A, const label_vector& idx_A,
+                   const indexed_dpd_varray_view<const T>& B, const label_vector& idx_B,
+          T  beta, const indexed_dpd_varray_view<      T>& C, const label_vector& idx_C)
 {
     unsigned nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
@@ -423,10 +414,6 @@ void mult(const communicator& comm,
     unsigned ndim_A = A.dimension();
     unsigned ndim_B = B.dimension();
     unsigned ndim_C = C.dimension();
-
-    std::string idx_A(idx_A_, idx_A_+ndim_A);
-    std::string idx_B(idx_B_, idx_B_+ndim_B);
-    std::string idx_C(idx_C_, idx_C_+ndim_C);
 
     for (unsigned i = 1;i < ndim_A;i++)
         for (unsigned j = 0;j < i;j++)
@@ -515,29 +502,29 @@ void mult(const communicator& comm,
     {
         if (beta == T(0))
         {
-            internal::set(comm, get_default_config(),
-                          beta, C, range_C);
+            internal::set(type_tag<T>::value, comm, get_default_config(),
+                          beta, reinterpret_cast<const indexed_dpd_varray_view<char>&>(C), range_C);
         }
         else if (beta != T(1))
         {
-            internal::scale(comm, get_default_config(),
-                            beta, false, C, range_C);
+            internal::scale(type_tag<T>::value, comm, get_default_config(),
+                            beta, false, reinterpret_cast<const indexed_dpd_varray_view<char>&>(C), range_C);
         }
     }
     else
     {
-        internal::mult(comm, get_default_config(),
-                       alpha, false, A, idx_A_AB, idx_A_AC, idx_A_ABC,
-                              false, B, idx_B_AB, idx_B_BC, idx_B_ABC,
-                        beta, false, C, idx_C_AC, idx_C_BC, idx_C_ABC);
+        internal::mult(type_tag<T>::value, comm, get_default_config(),
+                       alpha, false, reinterpret_cast<const indexed_dpd_varray_view<char>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
+                              false, reinterpret_cast<const indexed_dpd_varray_view<char>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
+                        beta, false, reinterpret_cast<const indexed_dpd_varray_view<char>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
     }
 }
 
 #define FOREACH_TYPE(T) \
 template void mult(const communicator& comm, \
-                   T alpha, indexed_dpd_varray_view<const T> A, const label_type* idx_A, \
-                            indexed_dpd_varray_view<const T> B, const label_type* idx_B, \
-                   T  beta, indexed_dpd_varray_view<      T> C, const label_type* idx_C);
+                   T alpha, const indexed_dpd_varray_view<const T>& A, const label_vector& idx_A, \
+                            const indexed_dpd_varray_view<const T>& B, const label_vector& idx_B, \
+                   T  beta, const indexed_dpd_varray_view<      T>& C, const label_vector& idx_C);
 #include "configs/foreach_type.h"
 
 }

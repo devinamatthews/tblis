@@ -1,199 +1,428 @@
 #ifndef _TBLIS_DPD_TENSOR_MATRIX_HPP_
 #define _TBLIS_DPD_TENSOR_MATRIX_HPP_
 
-#include "abstract_matrix.hpp"
-
 #include "internal/1t/dpd/util.hpp"
+
+#include "tensor_matrix.hpp"
 
 namespace tblis
 {
 
-template <typename T>
-class dpd_tensor_matrix : public abstract_matrix<T>
+struct dpd_tensor_matrix_impl
 {
-    template <typename> friend class patch_block_scatter_matrix;
+    const dpd_varray_view<char>& tensor_;
+    std::array<dim_vector, 2> dims_ = {};
+    dim_vector extra_dims_ = {};
+    irrep_vector extra_irreps_ = {};
+    len_vector extra_idx_ = {};
+    std::array<unsigned, 2> irrep_ = {};
+    std::array<len_vector, 2> block_size_ = {};
+    std::array<len_vector, 2> block_idx_ = {};
+    std::array<bool, 2> pack_3d_ = {};
 
-    public:
-        typedef const stride_type* scatter_type;
+    dpd_tensor_matrix_impl(const dpd_varray_view<char>& other,
+                           const dim_vector& row_inds,
+                           const dim_vector& col_inds,
+                           unsigned col_irrep,
+                           const dim_vector& extra_inds,
+                           const irrep_vector& extra_irreps,
+                           const len_vector& extra_idx,
+                           bool pack_m_3d, bool pack_n_3d)
+    : tensor_(other), dims_{row_inds, col_inds}, extra_dims_(extra_inds),
+      extra_irreps_(extra_irreps), extra_idx_(extra_idx),
+      irrep_{col_irrep^other.irrep(), col_irrep},
+      pack_3d_{pack_m_3d, pack_n_3d}
+    {
+        for (unsigned irrep : extra_irreps_)
+            irrep_[0] ^= irrep;
 
-        static constexpr bool needs_matrify = true;
+        TBLIS_ASSERT(dims_[0].size() + dims_[1].size() + extra_dims_.size() == other.dimension());
+        TBLIS_ASSERT(extra_dims_.size() == extra_irreps_.size());
+        TBLIS_ASSERT(extra_dims_.size() == extra_idx_.size());
 
+        const unsigned nirrep = other.num_irreps();
+
+        for (auto& i : dims_[0])
+        for (auto& j : dims_[1])
+        {
+            (void)i; (void)j;
+            TBLIS_ASSERT(i != j);
+        }
+
+        for (unsigned dim : {0,1})
+        {
+            for (auto& i : dims_[dim])
+            for (auto& j : extra_dims_)
+            {
+                (void)i; (void)j;
+                TBLIS_ASSERT(i != j);
+            }
+
+            if (dims_[dim].empty())
+            {
+                if (irrep_[dim] == 0)
+                {
+                    block_size_[dim].push_back(1);
+                    block_idx_[dim].push_back(0);
+                }
+            }
+            else
+            {
+                internal::irrep_iterator it(irrep_[dim], nirrep, dims_[dim].size());
+                block_size_[dim].reserve(it.nblock());
+                block_idx_[dim].reserve(it.nblock());
+                for (unsigned idx = 0;it.next();idx++)
+                {
+                    stride_type size = 1;
+                    for (unsigned i = 0;i < dims_[dim].size();i++)
+                        size *= other.length(dims_[dim][i], it.irrep(i));
+
+                    if (size == 0) continue;
+
+                    block_size_[dim].push_back(size);
+                    block_idx_[dim].push_back(idx);
+                }
+            }
+        }
+    }
+};
+
+template <typename T>
+struct is_dpd_tensor_helper : std::false_type {};
+
+template <typename T, typename Allocator>
+struct is_dpd_tensor_helper<dpd_varray<T,Allocator>> : std::true_type {};
+
+template <typename T>
+struct is_dpd_tensor_helper<dpd_varray_view<T>> : std::true_type {};
+
+template <typename T>
+struct is_dpd_tensor : is_dpd_tensor_helper<typename std::decay<T>::type> {};
+
+class dpd_tensor_matrix : public abstract_matrix_adapter<dpd_tensor_matrix,dpd_tensor_matrix_impl>
+{
     protected:
-        using abstract_matrix<T>::cur_len_;
-        using abstract_matrix<T>::tot_len_;
-        using abstract_matrix<T>::off_;
-        dpd_varray_view<T>& tensor_;
-        std::array<dim_vector, 2> dims_ = {};
-        dim_vector extra_dims_ = {};
-        irrep_vector extra_irreps_ = {};
-        len_vector extra_idx_ = {};
-        std::array<unsigned, 2> irrep_ = {};
-        std::array<unsigned, 2> block_ = {};
-        std::array<len_vector, 2> block_size_ = {};
-        std::array<len_vector, 2> block_idx_ = {};
-        std::array<len_type, 2> block_offset_ = {};
-        std::array<stride_type, 2> leading_stride_ = {};
-        std::array<bool, 2> pack_3d_ = {};
+        static abstract_matrix do_pack(abstract_matrix& A_,
+                                       const communicator& comm, const config& cfg,
+                                       int mat, MemoryPool& pool)
+        {
+            auto& A = static_cast<dpd_tensor_matrix&>(A_);
+            const type_t type = A.type();
+            const bool trans = mat == matrix_constants::MAT_B;
+            const len_type MR = (!trans ? cfg.gemm_mr.def(type)
+                                        : cfg.gemm_nr.def(type));
+            const len_type ME = (!trans ? cfg.gemm_mr.extent(type)
+                                        : cfg.gemm_nr.extent(type));
+            const len_type KR = cfg.gemm_kr.def(type);
+            const len_type KE = cfg.gemm_kr.extent(type);
+
+            std::array<unsigned,2> first_patch = {};
+            std::array<len_type,2> off_patch = {};
+            const stride_type ts = type_size[type];
+            const len_type m = A.length(trans);
+            const len_type m_p = A.get_patches( trans, first_patch[ trans], off_patch[ trans], MR, ME);
+            const len_type k_p = A.get_patches(!trans, first_patch[!trans], off_patch[!trans], KE, KE);
+            const stride_type ps_ap = k_p*ME;
+            const stride_type nelem = m_p*k_p + std::max(m_p,k_p)*TBLIS_MAX_UNROLL +
+                                      2*size_as_type<stride_type>(m_p+k_p, type);
+
+            packed_matrix P(type, !trans ? m : k_p, !trans ? k_p : m,
+                            A.get_buffer(comm, nelem, pool), ps_ap);
+
+            stride_type* rscat = convert_and_align<stride_type>(P.data() + m_p*k_p*ts);
+            stride_type* cscat = rscat + m_p;
+            stride_type* rbs = cscat + k_p;
+            stride_type* cbs = rbs + m_p;
+
+            char* p_ap0 = P.data();
+
+            A.for_each_patch(trans, first_patch[trans], off_patch[trans],
+            [&](unsigned m_patch, len_type m_patch_size, len_type m_off_patch)
+            {
+                char* p_ap1 = p_ap0;
+
+                A.for_each_patch(!trans, first_patch[!trans], off_patch[!trans],
+                [&](unsigned k_patch, len_type k_patch_size, len_type k_off_patch)
+                {
+                    char* p_a0 = !trans ?
+                        A.fill_block_scatter(comm, MR, KR,
+                                             m_patch, m_off_patch, m_patch_size,
+                                             k_patch, k_off_patch, k_patch_size,
+                                             rscat, cscat, rbs, cbs) :
+                        A.fill_block_scatter(comm, KR, MR,
+                                             k_patch, k_off_patch, k_patch_size,
+                                             m_patch, m_off_patch, m_patch_size,
+                                             cscat, rscat, cbs, rbs);
+
+                    TBLIS_ASSERT(p_ap1 >= P.data());
+                    TBLIS_ASSERT(p_ap1+k_patch_size*ME*ts <= P.data()+m_p*k_p*ts);
+
+                    tensor_matrix::pack(comm, cfg, A.scale(), A.conj(),
+                                        trans, m_patch_size, k_patch_size,
+                                        p_a0, rscat, cscat, rbs, cbs,
+                                        p_ap1, ps_ap);
+
+                    comm.barrier();
+
+                    p_ap1 += round_up(k_patch_size,KE)*ME*ts;
+                });
+
+                p_ap0 += ceil_div(m_patch_size,MR)*ps_ap*ts;
+            });
+
+            return P;
+        }
+
+        static void do_gemm(abstract_matrix& C_, const communicator& comm, const config& cfg,
+                            MemoryPool& pool, const abstract_matrix& A_, const abstract_matrix& B_)
+        {
+            auto& A = static_cast<const packed_matrix&>(A_);
+            auto& B = static_cast<const packed_matrix&>(B_);
+            auto& C = static_cast<  dpd_tensor_matrix&>(C_);
+
+            const type_t type = C.type();
+            const len_type MR = cfg.gemm_mr.def(type);
+            const len_type NR = cfg.gemm_nr.def(type);
+            const bool row_major = cfg.gemm_row_major.value(type);
+
+            std::array<unsigned,2> first_patch;
+            std::array<len_type,2> off_patch;
+            C.get_patches(0, first_patch[0], off_patch[0]);
+            C.get_patches(1, first_patch[1], off_patch[1]);
+
+            const stride_type ts = type_size[type];
+            const len_type m = C.length(0);
+            const len_type n = C.length(1);
+            const len_type k = A.length(1);
+            const stride_type ps_a = A.panel_stride();
+            const stride_type ps_b = B.panel_stride();
+            const stride_type nelem = 2*size_as_type<stride_type>(m+n, type);
+
+            stride_type* rscat = convert_and_align<stride_type>(C.get_buffer(comm, nelem, pool));
+            stride_type* cscat = rscat + m;
+            stride_type* rbs = cscat + n;
+            stride_type* cbs = rbs + m;
+
+            constexpr static dcomplex zero{};
+            char p_ab[8192] __attribute__((aligned(64)));
+
+            char* p_b0 = B.data();
+
+            C.for_each_patch(1, first_patch[1], off_patch[1],
+            [&](unsigned n_patch, len_type n_patch_size, len_type n_off_patch)
+            {
+                char* p_a0 = A.data();
+
+                C.for_each_patch(0, first_patch[0], off_patch[0],
+                [&](unsigned m_patch, len_type m_patch_size, len_type m_off_patch)
+                {
+                    auto p_c0 =
+                        C.fill_block_scatter(comm, MR, NR,
+                                             m_patch, m_off_patch, m_patch_size,
+                                             n_patch, n_off_patch, n_patch_size,
+                                             rscat, cscat, rbs, cbs);
+
+                    tensor_matrix::gemm(comm, cfg, C.scale(), C.conj(),
+                                        m_patch_size, n_patch_size, k,
+                                        p_a0, ps_a, p_b0, ps_b,
+                                        p_c0, rscat, cscat, rbs,  cbs);
+
+                    p_a0 += ceil_div(m_patch_size,MR)*ps_a*ts;
+                });
+
+                p_b0 += ceil_div(n_patch_size,NR)*ps_b*ts;
+            });
+        }
 
     public:
-        dpd_tensor_matrix();
-
-        template <typename U, typename V, typename W, typename X, typename Y>
-        dpd_tensor_matrix(dpd_varray_view<T>& other,
-                          const U& row_inds,
-                          const V& col_inds,
+        dpd_tensor_matrix(const tblis_scalar& alpha, bool conj,
+                          const dpd_varray_view<char>& other,
+                          const dim_vector& row_inds,
+                          const dim_vector& col_inds,
                           unsigned col_irrep,
-                          const W& extra_inds,
-                          const X& extra_irreps,
-                          const Y& extra_idx,
+                          const dim_vector& extra_inds,
+                          const irrep_vector& extra_irreps,
+                          const len_vector& extra_idx,
                           bool pack_row_3d = false,
                           bool pack_col_3d = false)
-        : tensor_(other), pack_3d_{pack_row_3d, pack_col_3d}
+        : abstract_matrix_adapter(alpha, conj, false, 0, 0,
+                                  other, row_inds, col_inds, col_irrep,
+                                  extra_inds, extra_irreps, extra_idx,
+                                  pack_row_3d, pack_col_3d)
         {
-            TBLIS_ASSERT(row_inds.size()+col_inds.size()+extra_inds.size() ==
-                         other.dimension());
+            std::array<len_vector,1> len;
+            std::array<stride_vector,1> stride;
+            internal::dense_total_lengths_and_strides(len, stride, other, dims(1));
 
-            const unsigned nirrep = other.num_irreps();
+            len_type m = stl_ext::sum(block_size(0));
+            len_type n = stl_ext::sum(block_size(1));
+            bool row_major = !stride[0].empty() &&
+                             stride[0][dims(1)[0]] == 1 &&
+                             n > 1;
 
-            dims_[0].assign(row_inds.begin(), row_inds.end());
-            dims_[1].assign(col_inds.begin(), col_inds.end());
-            irrep_ = {col_irrep^other.irrep(), col_irrep};
-            extra_dims_.assign(extra_inds.begin(), extra_inds.end());
-            extra_irreps_.assign(extra_irreps.begin(), extra_irreps.end());
-            extra_idx_.assign(extra_idx.begin(), extra_idx.end());
+            reset(row_major, m, n);
 
-            for (unsigned irrep : extra_irreps)
-                irrep_[0] ^= irrep;
+            pack_ = &do_pack;
+            gemm_ = &do_gemm;
+        }
 
-            TBLIS_ASSERT(dims_[0].size() + dims_[1].size() + extra_dims_.size() == other.dimension());
-            TBLIS_ASSERT(extra_dims_.size() == extra_irreps_.size());
-            TBLIS_ASSERT(extra_dims_.size() == extra_idx_.size());
+        template <typename Func>
+        void for_each_patch(unsigned dim, unsigned patch, len_type off, Func&& func)
+        {
+            len_type left = length(dim);
+            while (left > 0)
+            {
+                len_type size = std::min(block_size(dim)[patch]-off, left);
+
+                func(patch, size, off);
+
+                off = 0;
+                left -= size;
+                patch++;
+            }
+        }
+
+        len_type get_patches(unsigned dim, unsigned& first, len_type& offset,
+                             len_type MR=1, len_type ME=1)
+        {
+            auto& patch_size = block_size(dim);
+
+            len_type off = this->offset(dim);
+            len_type len = length(dim);
+            len_type idx = 0;
+            while (off >= patch_size[idx]) off -= patch_size[idx++];
+
+            first = idx;
+            offset = off;
+
+            len_type len_round = 0;
+            for_each_patch(dim, first, offset,
+            [&](auto, auto size, auto)
+            {
+                len_round += ceil_div(size,MR)*ME;
+            });
+
+            return len_round;
+        }
+
+        char* fill_block_scatter(const communicator& comm,
+                                 len_type MR, len_type NR,
+                                 len_type m_patch, len_type m_off_patch, len_type m_patch_size,
+                                 len_type n_patch, len_type n_off_patch, len_type n_patch_size,
+                                 stride_type* rscat, stride_type* cscat,
+                                 stride_type* rbs, stride_type* cbs)
+        {
+            const type_t type = this->type();
+            const stride_type ts = type_size[type];
+
+            const unsigned nirrep = tensor().num_irreps();
+            const unsigned irrep_mask = nirrep - 1;
+            const unsigned irrep_bits = __builtin_popcount(irrep_mask);
+
+            irrep_vector irreps(tensor().dimension());
+
+            for (unsigned i = 0;i < extra_dims().size();i++)
+                irreps[extra_dims()[i]] = extra_irreps()[i];
 
             for (unsigned dim : {0,1})
             {
-                for (auto& i : dims_[dim])
-                    for (auto& j : extra_dims_)
-                        TBLIS_ASSERT(i != j);
+                auto& dims = this->dims(dim);
 
-                if (dims_[dim].empty())
+                if (dims.empty()) continue;
+
+                unsigned idx = block_idx(dim)[dim == 0 ? m_patch : n_patch];
+                TBLIS_ASSERT(idx >= 0 && idx < (1 << irrep_bits*std::max((int)dims.size()-1,0)));
+                irreps[dims[0]] = irrep(dim);
+                for (unsigned i = 1;i < dims.size();i++)
                 {
-                    tot_len_[dim] = irrep_[dim] == 0 ? 1 : 0;
-                    block_size_[dim].push_back(tot_len_[dim]);
-                    block_idx_[dim].push_back(0);
-                }
-                else
-                {
-                    tot_len_[dim] = 0;
-                    internal::irrep_iterator it(irrep_[dim], nirrep, dims_[dim].size());
-                    for (unsigned idx = 0;it.next();idx++)
-                    {
-                        stride_type size = 1;
-                        for (unsigned i = 0;i < dims_[dim].size();i++)
-                            size *= other.length(dims_[dim][i], it.irrep(i));
-
-                        if (size == 0) continue;
-
-                        block_size_[dim].push_back(size);
-                        block_idx_[dim].push_back(idx);
-                        tot_len_[dim] += size;
-                    }
+                    irreps[dims[0]] ^=
+                        irreps[dims[i]] = idx & irrep_mask;
+                    idx >>= irrep_bits;
                 }
             }
 
-            cur_len_ = tot_len_;
+            auto& A = tensor();
+            varray_view<char> A2 = A(irreps);
 
-            std::array<len_vector,1> len;
-            std::array<stride_vector,1> stride;
-            internal::dense_total_lengths_and_strides(len, stride, other, row_inds);
+            auto len_m = stl_ext::select_from(A2.lengths(), dims(0));
+            auto len_n = stl_ext::select_from(A2.lengths(), dims(1));
+            auto stride_m = stl_ext::select_from(A2.strides(), dims(0));
+            auto stride_n = stl_ext::select_from(A2.strides(), dims(1));
 
-            leading_stride_ = {row_inds.empty() ? 1 : stride[0][row_inds[0]],
-                               col_inds.empty() ? 1 : stride[0][col_inds[0]]};
+            auto p_a = A.data() + (A2.data()-A.data())*ts;
+
+            for (unsigned i = 0;i < extra_dims().size();i++)
+                p_a += A2.stride(extra_dims()[i])*extra_idx()[i]*ts;
+
+            comm.barrier();
+
+            if (comm.master())
+            {
+                tensor_matrix::fill_block_scatter(type, len_m, stride_m, MR,
+                                                  m_off_patch, m_patch_size,
+                                                  rscat, rbs,
+                                                  pack_3d(0));
+
+                tensor_matrix::fill_block_scatter(type, len_n, stride_n, NR,
+                                                  n_off_patch, n_patch_size,
+                                                  cscat, cbs,
+                                                  pack_3d(1));
+            }
+
+            comm.barrier();
+
+            return p_a;
         }
 
-        template <typename U, typename V, typename W, typename X, typename Y>
-        dpd_tensor_matrix(dpd_varray_view<const T>& other,
-                          const U& row_inds,
-                          const V& col_inds,
-                          unsigned col_irrep,
-                          const W& extra_inds,
-                          const X& extra_irreps,
-                          const Y& extra_idx,
-                          bool pack_row_3d = false,
-                          bool pack_col_3d = false)
-        : dpd_tensor_matrix(reinterpret_cast<dpd_varray_view<T>&>(other),
-                            row_inds, col_inds, col_irrep,
-                            extra_inds, extra_irreps, extra_idx,
-                            pack_row_3d, pack_col_3d) {}
-
-        template <typename U, typename V>
-        dpd_tensor_matrix(dpd_varray_view<T>& other,
-                          const U& row_inds,
-                          const V& col_inds,
-                          unsigned col_irrep,
-                          bool pack_row_3d = false,
-                          bool pack_col_3d = false)
-        : dpd_tensor_matrix(other, row_inds, col_inds, col_irrep,
-                            dim_vector{}, irrep_vector{}, len_vector{},
-                            pack_row_3d, pack_col_3d) {}
-
-        template <typename U, typename V>
-        dpd_tensor_matrix(dpd_varray_view<const T>& other,
-                          const U& row_inds,
-                          const V& col_inds,
-                          unsigned col_irrep,
-                          bool pack_row_3d = false,
-                          bool pack_col_3d = false)
-        : dpd_tensor_matrix(reinterpret_cast<dpd_varray_view<T>&>(other),
-                            row_inds, col_inds, col_irrep,
-                            pack_row_3d, pack_col_3d) {}
-
-        dpd_tensor_matrix& operator=(const dpd_tensor_matrix& other) = delete;
-
-        void transpose()
-        {
-            using std::swap;
-            abstract_matrix<T>::transpose();
-            swap(dims_[0], dims_[1]);
-            swap(irrep_[0], irrep_[1]);
-            swap(block_[0], block_[1]);
-            swap(block_size_[0], block_size_[1]);
-            swap(block_idx_[0], block_idx_[1]);
-            swap(block_offset_[0], block_offset_[1]);
-            swap(leading_stride_[0], leading_stride_[1]);
-            swap(pack_3d_[0], pack_3d_[1]);
-        }
-
-        stride_type stride(unsigned dim) const
+        const len_vector& block_idx(unsigned dim) const
         {
             TBLIS_ASSERT(dim < 2);
-            return leading_stride_[dim];
+            return impl().block_idx_[dim^transposed()];
         }
 
-        void shift(unsigned dim, len_type n)
-        {
-            abstract_matrix<T>::shift(dim, n);
-
-            n += block_offset_[dim];
-            block_offset_[dim] = 0;
-
-            while (n < 0)
-                n += block_size_[dim][--block_[dim]];
-
-            while (n > 0 && n >= block_size_[dim][block_[dim]])
-                n -= block_size_[dim][block_[dim]++];
-
-            TBLIS_ASSERT(n >= 0);
-            block_offset_[dim] = n;
-        }
-
-        unsigned num_patches(unsigned dim) const
+        const len_vector& block_size(unsigned dim) const
         {
             TBLIS_ASSERT(dim < 2);
-            return block_size_[dim].size();
+            return impl().block_size_[dim^transposed()];
         }
 
-        using abstract_matrix<T>::length;
-        using abstract_matrix<T>::lengths;
+        const dim_vector& dims(unsigned dim) const
+        {
+            TBLIS_ASSERT(dim < 2);
+            return impl().dims_[dim^transposed()];
+        }
+
+        const dim_vector& extra_dims() const
+        {
+            return impl().extra_dims_;
+        }
+
+        const irrep_vector& extra_irreps() const
+        {
+            return impl().extra_irreps_;
+        }
+
+        const len_vector& extra_idx() const
+        {
+            return impl().extra_idx_;
+        }
+
+        const dpd_varray_view<char>& tensor() const
+        {
+            return impl().tensor_;
+        }
+
+        bool pack_3d(unsigned dim) const
+        {
+            TBLIS_ASSERT(dim < 2);
+            return impl().pack_3d_[dim^transposed()];
+        }
+
+        unsigned irrep(unsigned dim) const
+        {
+            TBLIS_ASSERT(dim < 2);
+            return impl().irrep_[dim^transposed()];
+        }
 };
 
 }

@@ -77,27 +77,29 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
             reset(other, layout);
         }
 
-        explicit marray(const detail::array_1d<len_type>& len,
+        explicit marray(detail::array_1d<len_type> len,
                         const Type& val=Type(), layout layout = DEFAULT)
         {
             reset(len, val, layout);
         }
 
-        marray(const detail::array_1d<len_type>& len, layout layout)
+        marray(detail::array_1d<len_type> len, layout layout)
         {
             reset(len, Type(), layout);
         }
 
-        marray(const detail::array_1d<len_type>& len, uninitialized_t,
+        marray(detail::array_1d<len_type> len, uninitialized_t,
                layout layout = DEFAULT)
         {
             reset(len, uninitialized, layout);
         }
 
+        /*
         marray(initializer_type data, layout layout = DEFAULT)
         {
             reset(data, layout);
         }
+        */
 
         template <typename Expression,
             typename=detail::enable_if_t<is_expression<Expression>::value>>
@@ -309,6 +311,7 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
         template <unsigned N=NDim, typename=detail::enable_if_t<N==1>>
         void push_back(unsigned dim, const Type& x)
         {
+            (void)dim;
             MARRAY_ASSERT(dim == 0);
             push_back(x);
         }
@@ -328,6 +331,7 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
 
             for (unsigned i = 0, j = 0;i < NDim;i++)
             {
+                (void)j;
                 MARRAY_ASSERT(i == dim || len_[i] == x.length(j++));
             }
 

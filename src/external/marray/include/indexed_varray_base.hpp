@@ -154,10 +154,9 @@ class indexed_varray_base
         template <typename View, typename Func, unsigned... I>
         void for_each_index(Func&& f, detail::integer_sequence<unsigned, I...>) const
         {
-            constexpr unsigned NDim = sizeof...(I);
             typedef typename View::pointer Ptr;
 
-            MARRAY_ASSERT(NDim == indexed_dimension());
+            MARRAY_ASSERT(sizeof...(I) == indexed_dimension());
 
             for (len_type i = 0;i < num_indices();i++)
             {
@@ -210,11 +209,10 @@ class indexed_varray_base
                               detail::integer_sequence<unsigned, J...>) const
         {
             constexpr unsigned DenseNDim = sizeof...(I);
-            constexpr unsigned IdxNDim = sizeof...(J);
             typedef Tp* Ptr;
 
             MARRAY_ASSERT(DenseNDim == dense_dimension());
-            MARRAY_ASSERT(IdxNDim == indexed_dimension());
+            MARRAY_ASSERT(sizeof...(J) == indexed_dimension());
 
             miterator<DenseNDim,1> it(dense_len_, dense_stride_);
 

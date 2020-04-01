@@ -4,49 +4,64 @@
 #include "../../util/thread.h"
 #include "../../util/basic_types.h"
 
-#ifdef __cplusplus
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
 
+#ifdef __cplusplus
 namespace tblis
 {
-
-extern "C"
-{
-
 #endif
 
-void tblis_tensor_set(const tblis_comm* comm, const tblis_config* cfg,
-                      const tblis_scalar* alpha, tblis_tensor* A, const label_type* idx_A);
+TBLIS_EXPORT
+void tblis_tensor_set(const tblis_comm* comm,
+                      const tblis_config* cfg,
+                      const tblis_scalar* alpha,
+                            tblis_tensor* A,
+                      const label_type* idx_A);
 
-#ifdef __cplusplus
-}
-#endif
+#if defined(__cplusplus)
 
-#if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
-
-template <typename T>
-void set(T alpha, varray_view<T> A, const label_type* idx_A)
+inline
+void set(const communicator& comm,
+         const scalar& alpha_,
+               tensor&& A,
+         const label_vector& idx_A)
 {
-    tblis_scalar alpha_s(alpha);
-    tblis_tensor A_s(A);
-
-    tblis_tensor_set(nullptr, nullptr, &alpha_s, &A_s, idx_A);
+    auto alpha = alpha_.convert(A.type);
+    tblis_tensor_set(comm, nullptr, &alpha, &A, idx_A.data());
 }
 
-template <typename T>
-void set(const communicator& comm, T alpha, varray_view<T> A, const label_type* idx_A)
+inline
+void set(const communicator& comm,
+         const scalar& alpha,
+               tensor&& A)
 {
-    tblis_scalar alpha_s(alpha);
-    tblis_tensor A_s(A);
-
-    tblis_tensor_set(comm, nullptr, &alpha_s, &A_s, idx_A);
+    set(comm, alpha, std::move(A), idx(A));
 }
+
+inline
+void set(const scalar& alpha,
+               tensor&& A,
+         const label_vector& idx_A)
+{
+    set(*(communicator*)nullptr, alpha, std::move(A), idx_A);
+}
+
+inline
+void set(const scalar& alpha,
+               tensor&& A)
+{
+    set(alpha, std::move(A), idx(A));
+}
+
+#if !defined(TBLIS_DONT_USE_CXX11)
 
 template <typename T>
 void set(const communicator& comm,
-         T alpha, dpd_varray_view<T> A, const label_type* idx_A);
+         T alpha, dpd_varray_view<T> A, const label_vector& idx_A);
 
 template <typename T>
-void set(T alpha, dpd_varray_view<T> A, const label_type* idx_A)
+void set(T alpha, dpd_varray_view<T> A, const label_vector& idx_A)
 {
     parallelize
     (
@@ -60,10 +75,10 @@ void set(T alpha, dpd_varray_view<T> A, const label_type* idx_A)
 
 template <typename T>
 void set(const communicator& comm,
-         T alpha, indexed_varray_view<T> A, const label_type* idx_A);
+         T alpha, indexed_varray_view<T> A, const label_vector& idx_A);
 
 template <typename T>
-void set(T alpha, indexed_varray_view<T> A, const label_type* idx_A)
+void set(T alpha, indexed_varray_view<T> A, const label_vector& idx_A)
 {
     parallelize
     (
@@ -77,10 +92,10 @@ void set(T alpha, indexed_varray_view<T> A, const label_type* idx_A)
 
 template <typename T>
 void set(const communicator& comm,
-         T alpha, indexed_dpd_varray_view<T> A, const label_type* idx_A);
+         T alpha, indexed_dpd_varray_view<T> A, const label_vector& idx_A);
 
 template <typename T>
-void set(T alpha, indexed_dpd_varray_view<T> A, const label_type* idx_A)
+void set(T alpha, indexed_dpd_varray_view<T> A, const label_vector& idx_A)
 {
     parallelize
     (
@@ -94,8 +109,10 @@ void set(T alpha, indexed_dpd_varray_view<T> A, const label_type* idx_A)
 
 #endif
 
-#ifdef __cplusplus
 }
+
 #endif
+
+#pragma GCC diagnostic pop
 
 #endif

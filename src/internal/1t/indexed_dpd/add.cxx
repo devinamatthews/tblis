@@ -13,10 +13,10 @@ namespace internal
 
 template <typename T>
 void add_full(const communicator& comm, const config& cfg,
-              T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A,
+              T alpha, bool conj_A, const indexed_dpd_varray_view<T>& A,
               const dim_vector& idx_A_A,
               const dim_vector& idx_A_AB,
-                                    const indexed_dpd_varray_view<      T>& B,
+                                    const indexed_dpd_varray_view<T>& B,
               const dim_vector& idx_B_B,
               const dim_vector& idx_B_AB)
 {
@@ -36,24 +36,25 @@ void add_full(const communicator& comm, const config& cfg,
         auto stride_A_AB = stl_ext::select_from(A2.strides(), idx_A_AB);
         auto stride_B_AB = stl_ext::select_from(B2.strides(), idx_B_AB);
 
-        add(comm, cfg, len_A, len_B, len_AB,
-            alpha, conj_A, A2.data(), stride_A_A, stride_A_AB,
-             T(0),  false, B2.data(), stride_B_B, stride_B_AB);
+        add(type_tag<T>::value, comm, cfg, len_A, len_B, len_AB,
+            alpha, conj_A, reinterpret_cast<char*>(A2.data()), stride_A_A, stride_A_AB,
+             T(0),  false, reinterpret_cast<char*>(B2.data()), stride_B_B, stride_B_AB);
 
         full_to_block(comm, cfg, B2, B);
     },
     A2, B2);
 }
 
-template <typename T>
-void trace_block(const communicator& comm, const config& cfg,
-                 T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A,
+void trace_block(type_t type, const communicator& comm, const config& cfg,
+                 const scalar& alpha, bool conj_A, const indexed_dpd_varray_view<char>& A,
                  const dim_vector& idx_A_A,
                  const dim_vector& idx_A_AB,
-                                       const indexed_dpd_varray_view<      T>& B,
+                                                   const indexed_dpd_varray_view<char>& B,
                  const dim_vector& idx_B_AB)
 {
-    unsigned nirrep = A.num_irreps();
+    const len_type ts = type_size[type];
+
+    const unsigned nirrep = A.num_irreps();
 
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
     dpd_index_group<1> group_A(A, idx_A_A);
@@ -72,8 +73,8 @@ void trace_block(const communicator& comm, const config& cfg,
     if (group_A.dense_ndim == 0 && irrep_A != 0) return;
     if (group_AB.dense_ndim == 0 && irrep_AB != 0) return;
 
-    group_indices<T, 2> indices_A(A, group_AB, 0, group_A, 0);
-    group_indices<T, 1> indices_B(B, group_AB, 1);
+    group_indices<2> indices_A(type, A, group_AB, 0, group_A, 0);
+    group_indices<1> indices_B(type, B, group_AB, 1);
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
 
@@ -84,15 +85,17 @@ void trace_block(const communicator& comm, const config& cfg,
     stride_type idx_A = 0;
     stride_type idx_B = 0;
 
+    scalar one(1.0, type);
+
     comm.do_tasks_deferred(nidx_B*group_AB.dense_nblock,
                            group_AB.dense_size*group_A.dense_size*inout_ratio,
     [&](communicator::deferred_task_set& tasks)
     {
         for_each_match<true, false>(idx_A, nidx_A, indices_A, 0,
-                                   idx_B, nidx_B, indices_B, 0,
+                                    idx_B, nidx_B, indices_B, 0,
         [&](stride_type next_A)
         {
-            if (indices_B[idx_B].factor == T(0)) return;
+            if (indices_B[idx_B].factor.is_zero()) return;
 
             for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
             {
@@ -108,7 +111,7 @@ void trace_block(const communicator& comm, const config& cfg,
 
                     if (is_block_empty(dpd_B, local_irreps_B)) return;
 
-                    auto local_B = dpd_B(local_irreps_B);
+                    varray_view<char> local_B = dpd_B(local_irreps_B);
 
                     for (stride_type block_A = 0;block_A < group_A.dense_nblock;block_A++)
                     {
@@ -117,7 +120,7 @@ void trace_block(const communicator& comm, const config& cfg,
 
                         if (is_block_empty(dpd_A, local_irreps_A)) continue;
 
-                        auto local_A = dpd_A(local_irreps_A);
+                        varray_view<const char> local_A = dpd_A(local_irreps_A);
 
                         len_vector len_AB;
                         stride_vector stride_A_AB, stride_B_AB;
@@ -134,24 +137,25 @@ void trace_block(const communicator& comm, const config& cfg,
                         get_local_geometry(indices_A[idx_A].idx[1], group_A, len_A,
                                            local_A, stride_A_A, 0);
 
-                        auto data_B = local_B.data() + indices_B[idx_B].offset + off_B_AB;
+                        auto data_B = dpd_B.data() + (local_B.data() - dpd_B.data() +
+                            indices_B[idx_B].offset + off_B_AB)*ts;
 
                         for (auto local_idx_A = idx_A;local_idx_A < next_A;local_idx_A++)
                         {
                             auto factor = alpha*indices_A[local_idx_A].factor*
                                                 indices_B[idx_B].factor;
-                            if (factor == T(0)) continue;
+                            if (factor.is_zero()) continue;
 
                             stride_type off_A_A;
                             get_local_offset(indices_A[idx_A].idx[1], group_A,
                                              local_A, off_A_A, 0);
 
-                            auto data_A = local_A.data() +
-                                indices_A[local_idx_A].offset + off_A_A + off_A_AB;
+                            auto data_A = dpd_A.data() + (local_A.data() - dpd_A.data() +
+                                indices_A[local_idx_A].offset + off_A_A + off_A_AB)*ts;
 
-                            add(subcomm, cfg, len_A, {}, len_AB,
+                            add(type, subcomm, cfg, len_A, {}, len_AB,
                                  factor, conj_A, data_A, stride_A_A, stride_A_AB,
-                                   T(1),  false, data_B, {}, stride_B_AB);
+                                    one,  false, data_B,         {}, stride_B_AB);
                         }
                     }
                 });
@@ -160,15 +164,16 @@ void trace_block(const communicator& comm, const config& cfg,
     });
 }
 
-template <typename T>
-void replicate_block(const communicator& comm, const config& cfg,
-                     T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A,
+void replicate_block(type_t type, const communicator& comm, const config& cfg,
+                     const scalar& alpha, bool conj_A, const indexed_dpd_varray_view<char>& A,
                      const dim_vector& idx_A_AB,
-                                           const indexed_dpd_varray_view<      T>& B,
+                                                       const indexed_dpd_varray_view<char>& B,
                      const dim_vector& idx_B_B,
                      const dim_vector& idx_B_AB)
 {
-    unsigned nirrep = A.num_irreps();
+    const len_type ts = type_size[type];
+
+    const unsigned nirrep = A.num_irreps();
 
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
     dpd_index_group<1> group_B(B, idx_B_B);
@@ -187,8 +192,8 @@ void replicate_block(const communicator& comm, const config& cfg,
     if (group_B.dense_ndim == 0 && irrep_B != 0) return;
     if (group_AB.dense_ndim == 0 && irrep_AB != 0) return;
 
-    group_indices<T, 1> indices_A(A, group_AB, 0);
-    group_indices<T, 2> indices_B(B, group_AB, 1, group_B, 0);
+    group_indices<1> indices_A(type, A, group_AB, 0);
+    group_indices<2> indices_B(type, B, group_AB, 1, group_B, 0);
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
 
@@ -199,19 +204,23 @@ void replicate_block(const communicator& comm, const config& cfg,
     stride_type idx_A = 0;
     stride_type idx_B = 0;
 
+    scalar one(1.0, type);
+
     comm.do_tasks_deferred(nidx_B*group_AB.dense_nblock*group_B.dense_nblock,
                            group_AB.dense_size*group_B.dense_size*inout_ratio,
     [&](communicator::deferred_task_set& tasks)
     {
         for_each_match<false, true>(idx_A, nidx_A, indices_A, 0,
-                                   idx_B, nidx_B, indices_B, 0,
+                                    idx_B, nidx_B, indices_B, 0,
         [&](stride_type next_B)
         {
+            if (indices_A[idx_A].factor.is_zero()) return;
+
             for (auto local_idx_B = idx_B;local_idx_B < next_B;local_idx_B++)
             {
                 auto factor = alpha*indices_A[idx_A].factor*
                                     indices_B[local_idx_B].factor;
-                if (factor == T(0)) continue;
+                if (factor.is_zero()) continue;
 
                 for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
                 {
@@ -234,8 +243,8 @@ void replicate_block(const communicator& comm, const config& cfg,
                             if (is_block_empty(dpd_A, local_irreps_A)) return;
                             if (is_block_empty(dpd_B, local_irreps_B)) return;
 
-                            auto local_A = dpd_A(local_irreps_A);
-                            auto local_B = dpd_B(local_irreps_B);
+                            varray_view<const char> local_A = dpd_A(local_irreps_A);
+                            varray_view<      char> local_B = dpd_B(local_irreps_B);
 
                             len_vector len_AB;
                             stride_vector stride_A_AB, stride_B_AB;
@@ -255,12 +264,14 @@ void replicate_block(const communicator& comm, const config& cfg,
                             get_local_offset(indices_B[local_idx_B].idx[1], group_B,
                                              local_B, off_B_B, 0);
 
-                            auto data_A = local_A.data() + indices_A[idx_A].offset + off_A_AB;
-                            auto data_B = local_B.data() + indices_B[local_idx_B].offset + off_B_B + off_B_AB;
+                            auto data_A = dpd_A.data() + (local_A.data() - dpd_A.data() +
+                                indices_A[idx_A].offset + off_A_AB)*ts;
+                            auto data_B = dpd_B.data() + (local_B.data() - dpd_B.data() +
+                                indices_B[local_idx_B].offset + off_B_B + off_B_AB)*ts;
 
-                            add(subcomm, cfg, {}, len_B, len_AB,
-                                factor, conj_A, data_A, {}, stride_A_AB,
-                                  T(1),  false, data_B, stride_B_B, stride_B_AB);
+                            add(type, subcomm, cfg, {}, len_B, len_AB,
+                                factor, conj_A, data_A,         {}, stride_A_AB,
+                                   one,  false, data_B, stride_B_B, stride_B_AB);
                         });
                     }
                 }
@@ -269,14 +280,15 @@ void replicate_block(const communicator& comm, const config& cfg,
     });
 }
 
-template <typename T>
-void transpose_block(const communicator& comm, const config& cfg,
-                     T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A,
+void transpose_block(type_t type, const communicator& comm, const config& cfg,
+                     const scalar& alpha, bool conj_A, const indexed_dpd_varray_view<char>& A,
                      const dim_vector& idx_A_AB,
-                                           const indexed_dpd_varray_view<      T>& B,
+                                                       const indexed_dpd_varray_view<char>& B,
                      const dim_vector& idx_B_AB)
 {
-    unsigned nirrep = A.num_irreps();
+    const len_type ts = type_size[type];
+
+    const unsigned nirrep = A.num_irreps();
 
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
 
@@ -289,8 +301,8 @@ void transpose_block(const communicator& comm, const config& cfg,
 
     if (group_AB.dense_ndim == 0 && irrep_AB != 0) return;
 
-    group_indices<T, 1> indices_A(A, group_AB, 0);
-    group_indices<T, 1> indices_B(B, group_AB, 1);
+    group_indices<1> indices_A(type, A, group_AB, 0);
+    group_indices<1> indices_B(type, B, group_AB, 1);
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
 
@@ -301,16 +313,18 @@ void transpose_block(const communicator& comm, const config& cfg,
     stride_type idx_A = 0;
     stride_type idx_B = 0;
 
+    scalar one(1.0, type);
+
     comm.do_tasks_deferred(nidx_B*group_AB.dense_nblock,
                            group_AB.dense_size*inout_ratio,
     [&](communicator::deferred_task_set& tasks)
     {
         for_each_match<false, false>(idx_A, nidx_A, indices_A, 0,
-                                    idx_B, nidx_B, indices_B, 0,
+                                     idx_B, nidx_B, indices_B, 0,
         [&]
         {
             auto factor = alpha*indices_A[idx_A].factor*indices_B[idx_B].factor;
-            if (factor == T(0)) return;
+            if (factor.is_zero()) return;
 
             for (stride_type block_AB = 0;block_AB < group_AB.dense_nblock;block_AB++)
             {
@@ -326,8 +340,8 @@ void transpose_block(const communicator& comm, const config& cfg,
 
                     if (is_block_empty(dpd_A, local_irreps_A)) return;
 
-                    auto local_A = dpd_A(local_irreps_A);
-                    auto local_B = dpd_B(local_irreps_B);
+                    varray_view<const char> local_A = dpd_A(local_irreps_A);
+                    varray_view<      char> local_B = dpd_B(local_irreps_B);
 
                     len_vector len_AB;
                     stride_vector stride_A_AB, stride_B_AB;
@@ -339,34 +353,35 @@ void transpose_block(const communicator& comm, const config& cfg,
                                      local_A, off_A_AB, 0,
                                      local_B, off_B_AB, 1);
 
-                    auto data_A = local_A.data() + indices_A[idx_A].offset + off_A_AB;
-                    auto data_B = local_B.data() + indices_B[idx_B].offset + off_B_AB;
+                    auto data_A = dpd_A.data() + (local_A.data() - dpd_A.data() +
+                        indices_A[idx_A].offset + off_A_AB)*ts;
+                    auto data_B = dpd_B.data() + (local_B.data() - dpd_B.data() +
+                        indices_B[idx_B].offset + off_B_AB)*ts;
 
-                    add(subcomm, cfg, {}, {}, len_AB,
+                    add(type, subcomm, cfg, {}, {}, len_AB,
                         factor, conj_A, data_A, {}, stride_A_AB,
-                          T(1),  false, data_B, {}, stride_B_AB);
+                           one,  false, data_B, {}, stride_B_AB);
                 });
             }
         });
     });
 }
 
-template <typename T>
-void add(const communicator& comm, const config& cfg,
-         T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A,
+void add(type_t type, const communicator& comm, const config& cfg,
+         const scalar& alpha, bool conj_A, const indexed_dpd_varray_view<char>& A,
          const dim_vector& idx_A_A,
          const dim_vector& idx_A_AB,
-         T  beta, bool conj_B, const indexed_dpd_varray_view<      T>& B,
+         const scalar&  beta, bool conj_B, const indexed_dpd_varray_view<char>& B,
          const dim_vector& idx_B_B,
          const dim_vector& idx_B_AB)
 {
-    if (beta == T(0))
+    if (beta.is_zero())
     {
-        set(comm, cfg, T(0), B, range(B.dimension()));
+        set(type, comm, cfg, beta, B, range(B.dimension()));
     }
-    else if (beta != T(1) || (is_complex<T>::value && conj_B))
+    else if (!beta.is_one() || (beta.is_complex() && conj_B))
     {
-        scale(comm, cfg, beta, conj_B, B, range(B.dimension()));
+        scale(type, comm, cfg, beta, conj_B, B, range(B.dimension()));
     }
 
     for (unsigned i = 0;i < idx_A_AB.size();i++)
@@ -381,41 +396,55 @@ void add(const communicator& comm, const config& cfg,
 
     if (dpd_impl == FULL)
     {
-        add_full(comm, cfg,
-                 alpha, conj_A, A, idx_A_A, idx_A_AB,
-                                B, idx_B_B, idx_B_AB);
+        switch (type)
+        {
+            case TYPE_FLOAT:
+                add_full(comm, cfg,
+                         alpha.data.s, conj_A,
+                         reinterpret_cast<const indexed_dpd_varray_view<float>&>(A), idx_A_A, idx_A_AB,
+                         reinterpret_cast<const indexed_dpd_varray_view<float>&>(B), idx_B_B, idx_B_AB);
+                break;
+            case TYPE_DOUBLE:
+                add_full(comm, cfg,
+                         alpha.data.d, conj_A,
+                         reinterpret_cast<const indexed_dpd_varray_view<double>&>(A), idx_A_A, idx_A_AB,
+                         reinterpret_cast<const indexed_dpd_varray_view<double>&>(B), idx_B_B, idx_B_AB);
+                break;
+            case TYPE_SCOMPLEX:
+                add_full(comm, cfg,
+                         alpha.data.c, conj_A,
+                         reinterpret_cast<const indexed_dpd_varray_view<scomplex>&>(A), idx_A_A, idx_A_AB,
+                         reinterpret_cast<const indexed_dpd_varray_view<scomplex>&>(B), idx_B_B, idx_B_AB);
+                break;
+            case TYPE_DCOMPLEX:
+                add_full(comm, cfg,
+                         alpha.data.z, conj_A,
+                         reinterpret_cast<const indexed_dpd_varray_view<dcomplex>&>(A), idx_A_A, idx_A_AB,
+                         reinterpret_cast<const indexed_dpd_varray_view<dcomplex>&>(B), idx_B_B, idx_B_AB);
+                break;
+        }
     }
     else if (!idx_A_A.empty())
     {
-        trace_block(comm, cfg,
+        trace_block(type, comm, cfg,
                     alpha, conj_A, A, idx_A_A, idx_A_AB,
                                    B, idx_B_AB);
     }
     else if (!idx_B_B.empty())
     {
-        replicate_block(comm, cfg,
+        replicate_block(type, comm, cfg,
                         alpha, conj_A, A, idx_A_AB,
                                        B, idx_B_B, idx_B_AB);
     }
     else
     {
-        transpose_block(comm, cfg,
+        transpose_block(type, comm, cfg,
                         alpha, conj_A, A, idx_A_AB,
                                        B, idx_B_AB);
     }
 
     comm.barrier();
 }
-
-#define FOREACH_TYPE(T) \
-template void add(const communicator& comm, const config& cfg, \
-                  T alpha, bool conj_A, const indexed_dpd_varray_view<const T>& A, \
-                  const dim_vector& idx_A, \
-                  const dim_vector& idx_A_AB, \
-                  T  beta, bool conj_B, const indexed_dpd_varray_view<      T>& B, \
-                  const dim_vector& idx_B, \
-                  const dim_vector& idx_B_AB);
-#include "configs/foreach_type.h"
 
 }
 }

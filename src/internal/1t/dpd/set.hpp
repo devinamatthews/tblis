@@ -10,9 +10,8 @@ namespace tblis
 namespace internal
 {
 
-template <typename T>
-void set(const communicator& comm, const config& cfg,
-         T alpha, const dpd_varray_view<T>& A, const dim_vector&);
+void set(type_t type, const communicator& comm, const config& cfg,
+         const scalar& alpha, const dpd_varray_view<char>& A, const dim_vector& idx_A);
 
 }
 }

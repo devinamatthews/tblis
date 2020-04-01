@@ -2,97 +2,181 @@
 #define _TBLIS_NORMAL_MATRIX_HPP_
 
 #include "abstract_matrix.hpp"
+#include "packed_matrix.hpp"
 
 namespace tblis
 {
 
-template <typename T>
-class normal_matrix : public abstract_matrix<T>
+struct normal_matrix_impl
 {
-    template <typename> friend class patch_block_scatter_matrix;
+    char* data_ = nullptr;
+    std::array<stride_type,2> stride_ = {};
 
-    public:
-        typedef T value_type;
+    template <typename T>
+    normal_matrix_impl(T* ptr, stride_type rs, stride_type cs)
+    : data_(ptr), stride_{rs, cs} {}
+};
 
+class normal_matrix : public abstract_matrix_adapter<normal_matrix,normal_matrix_impl>
+{
     protected:
-        using abstract_matrix<T>::tot_len_;
-        using abstract_matrix<T>::cur_len_;
-        using abstract_matrix<T>::off_;
-        T* data_ = nullptr;
-        std::array<stride_type,2> stride_ = {};
+        static abstract_matrix do_pack(abstract_matrix& A_,
+                                       const communicator& comm, const config& cfg,
+                                       int mat, MemoryPool& pool)
+        {
+            auto& A = static_cast<normal_matrix&>(A_);
+
+            const type_t type = A.type();
+            const bool trans = mat == matrix_constants::MAT_B;
+            const len_type MR = (!trans ? cfg.gemm_mr.def(type)
+                                        : cfg.gemm_nr.def(type));
+            const len_type ME = (!trans ? cfg.gemm_mr.extent(type)
+                                        : cfg.gemm_nr.extent(type));
+            const len_type KE = cfg.gemm_kr.extent(type);
+
+            const stride_type ts = type_size[type];
+            const len_type m = A.length( trans);
+            const len_type k = A.length(!trans);
+            const stride_type rs_a = A.stride( trans);
+            const stride_type cs_a = A.stride(!trans);
+
+            const len_type m_p = ceil_div(m, MR)*ME;
+            const len_type k_p = round_up(k, KE);
+            const stride_type nelem = m_p*k_p + std::max(m_p,k_p)*TBLIS_MAX_UNROLL;
+
+            packed_matrix P(type, !trans ? m : k_p, !trans ? k_p : m,
+                            A.get_buffer(comm, nelem, pool), k_p*ME);
+
+            pack(comm, cfg, A.scale(), A.conj(), trans, m, k,
+                 A.data(), rs_a, cs_a, P.data(), P.panel_stride());
+
+            return P;
+        }
+
+        static void do_gemm(abstract_matrix& C_, const communicator& comm, const config& cfg,
+                            MemoryPool&, const abstract_matrix& A_, const abstract_matrix& B_)
+        {
+            auto& A = static_cast<const packed_matrix&>(A_);
+            auto& B = static_cast<const packed_matrix&>(B_);
+            auto& C = static_cast<normal_matrix&>(C_);
+
+            const len_type m = C.length(0);
+            const len_type n = C.length(1);
+            const len_type k = A.length(1);
+            const stride_type rs_c = C.stride(0);
+            const stride_type cs_c = C.stride(1);
+
+            gemm(comm, cfg, C.scale(), C.conj(), m, n, k,
+                 A.data(), A.panel_stride(), B.data(), B.panel_stride(),
+                 C.data(), rs_c, cs_c);
+        }
 
     public:
-        normal_matrix() {}
-
-        normal_matrix(len_type m, len_type n, T* ptr, stride_type rs, stride_type cs)
-        : abstract_matrix<T>(m, n), data_(ptr), stride_{rs, cs} {}
-
-        T* data() const
+        normal_matrix(const scalar& alpha, bool conj,
+                      len_type m, len_type n, char* ptr,
+                      stride_type rs, stride_type cs)
+        : abstract_matrix_adapter(alpha, conj, cs == 1 && n > 1,
+                                  m, n, ptr, rs, cs)
         {
-            return data_ + off_[0]*stride_[0] + off_[1]*stride_[1];
+            pack_ = &do_pack;
+            gemm_ = &do_gemm;
         }
 
-        T* data(T* ptr)
+        static void pack(const communicator& comm, const config& cfg,
+                         const scalar& alpha, bool conj,
+                         bool trans, len_type m, len_type k,
+                         char* p_a, stride_type rs, stride_type cs,
+                         char* p_ap, stride_type ps_ap)
         {
-            std::swap(data_, ptr);
-            return ptr;
+            const type_t type = alpha.type;
+            const len_type MR = (!trans ? cfg.gemm_mr.def(type)
+                                        : cfg.gemm_nr.def(type));
+            const len_type ME = (!trans ? cfg.gemm_mr.extent(type)
+                                        : cfg.gemm_nr.extent(type));
+            const len_type KE = cfg.gemm_kr.extent(type);
+            const stride_type ts = type_size[type];
+
+            comm.distribute_over_threads({m, MR}, {k, KE},
+            [&](len_type m_first, len_type m_last, len_type k_first, len_type k_last)
+            {
+                const char*  p_a1 = p_a + m_first*rs*ts  + k_first*cs*ts;
+                      char* p_ap1 = p_ap + (m_first/MR)*ps_ap*ts + k_first*ME*ts;
+
+                for (len_type m_off = m_first;m_off < m_last;m_off += MR)
+                {
+                    len_type m_loc = std::min(MR, m-m_off);
+                    len_type k_loc = k_last-k_first;
+
+                    if (!trans)
+                        cfg.pack_nn_mr_ukr.call(type, m_loc, k_loc,
+                                                &alpha, conj, p_a1, rs, cs,
+                                                nullptr, 0, nullptr, 0, p_ap1);
+                    else
+                        cfg.pack_nn_nr_ukr.call(type, m_loc, k_loc,
+                                                &alpha, conj, p_a1, rs, cs,
+                                                nullptr, 0, nullptr, 0, p_ap1);
+
+                    p_a1 += rs*MR*ts;
+                    p_ap1 += ps_ap*ts;
+                }
+            });
         }
+
+        using abstract_matrix::pack;
+
+        static void gemm(const communicator& comm, const config& cfg,
+                         const scalar& beta, bool conj,
+                         len_type m, len_type n, len_type k,
+                         char* p_a, stride_type ps_a,
+                         char* p_b, stride_type ps_b,
+                         char* p_c, stride_type rs, stride_type cs)
+        {
+            const type_t type = beta.type;
+            const len_type MR = cfg.gemm_mr.def(type);
+            const len_type ME = cfg.gemm_mr.extent(type);
+            const len_type NR = cfg.gemm_nr.def(type);
+            const len_type NE = cfg.gemm_nr.extent(type);
+            const len_type KE = cfg.gemm_kr.extent(type);
+            const bool row_major = cfg.gemm_row_major.value(type);
+            const stride_type ts = type_size[type];
+            const len_type m_first = 0;
+            const len_type m_last = ceil_div(m, MR);
+            const stride_type rs_ab = row_major ? NR : 1;
+            const stride_type cs_ab = row_major ? 1 : MR;
+            const len_type k_p = round_up(k, KE);
+
+            comm.distribute_over_threads(ceil_div(n, NR),
+            [&](len_type n_first, len_type n_last)
+            {
+                for (len_type n_off = n_first;n_off < n_last;n_off++)
+                for (len_type m_off = m_first;m_off < m_last;m_off++)
+                {
+                    len_type m_loc = std::min(MR, m-m_off*MR);
+                    len_type n_loc = std::min(NR, n-n_off*NR);
+
+                    char* p_a1 = p_a + m_off*ps_a*ts;
+                    char* p_b1 = p_b + n_off*ps_b*ts;
+                    char* p_c1 = p_c + m_off*MR*rs*ts
+                                     + n_off*NR*cs*ts;
+
+                    auxinfo_t aux{p_a1, p_b1, p_c1};
+                    cfg.gemm_ukr.call(type, m_loc, n_loc, k, p_a1, p_b1,
+                                      &beta, p_c1, rs, cs, &aux);
+                }
+            });
+        }
+
+        using abstract_matrix::gemm;
 
         stride_type stride(unsigned dim) const
         {
             TBLIS_ASSERT(dim < 2);
-            return stride_[dim];
+            return impl().stride_[dim^transposed()];
         }
 
-        const std::array<stride_type, 2>& strides() const
+        char* data() const
         {
-            return stride_;
-        }
-
-        void transpose()
-        {
-            using std::swap;
-            abstract_matrix<T>::transpose();
-            swap(stride_[0], stride_[1]);
-        }
-
-        void pack(const communicator& comm, const config& cfg, bool trans, normal_matrix<T>& Ap) const
-        {
-            const len_type MR = (!trans ? cfg.gemm_mr.def<T>()
-                                        : cfg.gemm_nr.def<T>());
-            const len_type ME = (!trans ? cfg.gemm_mr.extent<T>()
-                                        : cfg.gemm_nr.extent<T>());
-            const len_type KR = cfg.gemm_kr.def<T>();
-
-            const len_type m_a = cur_len_[ trans];
-            const len_type k_a = cur_len_[!trans];
-            const stride_type rs_a = stride_[ trans];
-            const stride_type cs_a = stride_[!trans];
-
-            comm.distribute_over_threads({m_a, MR}, {k_a, KR},
-            [&](len_type m_first, len_type m_last, len_type k_first, len_type k_last)
-            {
-                const T*  p_a = this->data() +  m_first       *rs_a + k_first* cs_a;
-                      T* p_ap =    Ap.data() + (m_first/MR)*ME* k_a + k_first*   ME;
-
-                for (len_type off_m = m_first;off_m < m_last;off_m += MR)
-                {
-                    len_type m = std::min(MR, m_last-off_m);
-                    len_type k = k_last-k_first;
-
-                    TBLIS_ASSERT(p_a + (m-1)*rs_a + (k-1)*cs_a <=
-                                 data_ + (tot_len_[0]-1)*stride_[0] + (tot_len_[1]-1)*stride_[1]);
-                    TBLIS_ASSERT(p_ap + k*ME <= Ap.data() + Ap.length(0)*Ap.length(1));
-
-                    if (!trans)
-                        cfg.pack_nn_mr_ukr.call<T>(m, k, p_a, rs_a, cs_a, p_ap);
-                    else
-                        cfg.pack_nn_nr_ukr.call<T>(m, k, p_a, rs_a, cs_a, p_ap);
-
-                    p_a += m*rs_a;
-                    p_ap += ME*k_a;
-                }
-            });
+            return impl().data_ + (stride(0)*offset(0) + stride(1)*offset(1))*type_size[type()];
         }
 };
 

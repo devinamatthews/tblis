@@ -84,6 +84,8 @@ const config& get_config(const std::string& name)
 
     tblis_abort_with_message(nullptr,
         "tblis: No configuration named %s!", name.c_str());
+
+    return *configs[0];
 }
 
 }

@@ -4,77 +4,203 @@
 #include "../../util/thread.h"
 #include "../../util/basic_types.h"
 
-#ifdef __cplusplus
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
 
+#ifdef __cplusplus
 namespace tblis
 {
-
-extern "C"
-{
-
 #endif
 
-void tblis_tensor_dot(const tblis_comm* comm, const tblis_config* cfg,
-                      const tblis_tensor* A, const label_type* idx_A,
-                      const tblis_tensor* B, const label_type* idx_B,
+TBLIS_EXPORT
+void tblis_tensor_dot(const tblis_comm* comm,
+                      const tblis_config* cfg,
+                      const tblis_tensor* A,
+                      const label_type* idx_A,
+                      const tblis_tensor* B,
+                      const label_type* idx_B,
                       tblis_scalar* result);
 
-#ifdef __cplusplus
-}
-#endif
+#if defined(__cplusplus)
 
-#if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
-
-template <typename T>
-void dot(varray_view<const T> A, const label_type* idx_A,
-         varray_view<const T> B, const label_type* idx_B, T& result)
+inline
+void dot(const communicator& comm,
+         const tensor& A,
+         const label_vector& idx_A,
+         const tensor& B,
+         const label_vector& idx_B,
+         tblis_scalar& result)
 {
-    tblis_tensor A_s(A);
-    tblis_tensor B_s(B);
-    tblis_scalar result_s(result);
-    tblis_tensor_dot(nullptr, nullptr, &A_s, idx_A, &B_s, idx_B, &result_s);
-    result = result_s.get<T>();
+    tblis_tensor_dot(comm, nullptr, &A, idx_A.data(), &B, idx_B.data(), &result);
 }
 
 template <typename T>
 void dot(const communicator& comm,
-         varray_view<const T> A, const label_type* idx_A,
-         varray_view<const T> B, const label_type* idx_B, T& result)
+         const tensor& A,
+         const label_vector& idx_A,
+         const tensor& B,
+         const label_vector& idx_B,
+         T& result)
 {
-    tblis_tensor A_s(A);
-    tblis_tensor B_s(B);
-    tblis_scalar result_s(result);
-    tblis_tensor_dot(comm, nullptr, &A_s, idx_A, &B_s, idx_B, &result_s);
-    result = result_s.get<T>();
+    tblis_scalar result_(0.0, A.type);
+    dot(comm, A, idx_A, B, idx_B, result_);
+    result = result_.get<T>();
 }
 
-template <typename T>
-T dot(varray_view<const T> A, const label_type* idx_A,
-      varray_view<const T> B, const label_type* idx_B)
+inline
+tblis_scalar dot(const communicator& comm,
+                 const tensor& A,
+                 const label_vector& idx_A,
+                 const tensor& B,
+                 const label_vector& idx_B)
 {
-    T result;
-    dot(A, idx_A, B, idx_B, result);
+    tblis_scalar result(0.0, A.type);
+    dot(comm, A, idx_A, B, idx_B, result);
     return result;
 }
 
 template <typename T>
 T dot(const communicator& comm,
-      varray_view<const T> A, const label_type* idx_A,
-      varray_view<const T> B, const label_type* idx_B)
+      const tensor& A,
+      const label_vector& idx_A,
+      const tensor& B,
+      const label_vector& idx_B)
 {
     T result;
     dot(comm, A, idx_A, B, idx_B, result);
     return result;
 }
 
-template <typename T>
+inline
 void dot(const communicator& comm,
-         dpd_varray_view<const T> A, const label_type* idx_A,
-         dpd_varray_view<const T> B, const label_type* idx_B, T& result);
+         const tensor& A,
+         const tensor& B,
+         tblis_scalar& result)
+{
+    dot(comm, A, idx(A), B, idx(B), result);
+}
 
 template <typename T>
-void dot(dpd_varray_view<const T> A, const label_type* idx_A,
-         dpd_varray_view<const T> B, const label_type* idx_B, T& result)
+void dot(const communicator& comm,
+         const tensor& A,
+         const tensor& B,
+         T& result)
+{
+    tblis_scalar result_(0.0, A.type);
+    dot(comm, A, B, result_);
+    result = result_.get<T>();
+}
+
+inline
+tblis_scalar dot(const communicator& comm,
+                 const tensor& A,
+                 const tensor& B)
+{
+    tblis_scalar result(0.0, A.type);
+    dot(comm, A, B, result);
+    return result;
+}
+
+template <typename T>
+T dot(const communicator& comm,
+      const tensor& A,
+      const tensor& B)
+{
+    T result;
+    dot(comm, A, B, result);
+    return result;
+}
+
+inline
+void dot(const tensor& A,
+         const label_vector& idx_A,
+         const tensor& B,
+         const label_vector& idx_B,
+         tblis_scalar& result)
+{
+    dot(*(communicator*)nullptr, A, idx_A, B, idx_B, result);
+}
+
+template <typename T>
+void dot(const tensor& A,
+         const label_vector& idx_A,
+         const tensor& B,
+         const label_vector& idx_B,
+         T& result)
+{
+    tblis_scalar result_(0.0, A.type);
+    dot(A, idx_A, B, idx_B, result_);
+    result = result_.get<T>();
+}
+
+inline
+tblis_scalar dot(const tensor& A,
+                 const label_vector& idx_A,
+                 const tensor& B,
+                 const label_vector& idx_B)
+{
+    tblis_scalar result(0.0, A.type);
+    dot(A, idx_A, B, idx_B, result);
+    return result;
+}
+
+template <typename T>
+T dot(const tensor& A,
+      const label_vector& idx_A,
+      const tensor& B,
+      const label_vector& idx_B)
+{
+    T result;
+    dot(A, idx_A, B, idx_B, result);
+    return result;
+}
+
+inline
+void dot(const tensor& A,
+         const tensor& B,
+         tblis_scalar& result)
+{
+    dot(A, idx(A), B, idx(B), result);
+}
+
+template <typename T>
+void dot(const tensor& A,
+         const tensor& B,
+         T& result)
+{
+    tblis_scalar result_(0.0, A.type);
+    dot(A, B, result_);
+    result = result_.get<T>();
+}
+
+inline
+tblis_scalar dot(const tensor& A,
+                 const tensor& B)
+{
+    tblis_scalar result(0.0, A.type);
+    dot(A, B, result);
+    return result;
+}
+
+template <typename T>
+T dot(const tensor& A,
+      const tensor& B)
+{
+    T result;
+    dot(A, B, result);
+    return result;
+}
+
+#if !defined(TBLIS_DONT_USE_CXX11)
+
+template <typename T>
+void dot(const communicator& comm,
+         dpd_varray_view<const T> A, const label_vector& idx_A,
+         dpd_varray_view<const T> B, const label_vector& idx_B, T& result);
+
+template <typename T>
+void dot(dpd_varray_view<const T> A, const label_vector& idx_A,
+         dpd_varray_view<const T> B, const label_vector& idx_B, T& result)
 {
     parallelize
     (
@@ -87,8 +213,8 @@ void dot(dpd_varray_view<const T> A, const label_type* idx_A,
 }
 
 template <typename T>
-T dot(dpd_varray_view<const T> A, const label_type* idx_A,
-      dpd_varray_view<const T> B, const label_type* idx_B)
+T dot(dpd_varray_view<const T> A, const label_vector& idx_A,
+      dpd_varray_view<const T> B, const label_vector& idx_B)
 {
     T result;
     dot(A, idx_A, B, idx_B, result);
@@ -97,8 +223,8 @@ T dot(dpd_varray_view<const T> A, const label_type* idx_A,
 
 template <typename T>
 T dot(const communicator& comm,
-      dpd_varray_view<const T> A, const label_type* idx_A,
-      dpd_varray_view<const T> B, const label_type* idx_B)
+      dpd_varray_view<const T> A, const label_vector& idx_A,
+      dpd_varray_view<const T> B, const label_vector& idx_B)
 {
     T result;
     dot(comm, A, idx_A, B, idx_B, result);
@@ -107,12 +233,12 @@ T dot(const communicator& comm,
 
 template <typename T>
 void dot(const communicator& comm,
-         indexed_varray_view<const T> A, const label_type* idx_A,
-         indexed_varray_view<const T> B, const label_type* idx_B, T& result);
+         indexed_varray_view<const T> A, const label_vector& idx_A,
+         indexed_varray_view<const T> B, const label_vector& idx_B, T& result);
 
 template <typename T>
-void dot(indexed_varray_view<const T> A, const label_type* idx_A,
-         indexed_varray_view<const T> B, const label_type* idx_B, T& result)
+void dot(indexed_varray_view<const T> A, const label_vector& idx_A,
+         indexed_varray_view<const T> B, const label_vector& idx_B, T& result)
 {
     parallelize
     (
@@ -125,8 +251,8 @@ void dot(indexed_varray_view<const T> A, const label_type* idx_A,
 }
 
 template <typename T>
-T dot(indexed_varray_view<const T> A, const label_type* idx_A,
-      indexed_varray_view<const T> B, const label_type* idx_B)
+T dot(indexed_varray_view<const T> A, const label_vector& idx_A,
+      indexed_varray_view<const T> B, const label_vector& idx_B)
 {
     T result;
     dot(A, idx_A, B, idx_B, result);
@@ -135,8 +261,8 @@ T dot(indexed_varray_view<const T> A, const label_type* idx_A,
 
 template <typename T>
 T dot(const communicator& comm,
-      indexed_varray_view<const T> A, const label_type* idx_A,
-      indexed_varray_view<const T> B, const label_type* idx_B)
+      indexed_varray_view<const T> A, const label_vector& idx_A,
+      indexed_varray_view<const T> B, const label_vector& idx_B)
 {
     T result;
     dot(comm, A, idx_A, B, idx_B, result);
@@ -145,12 +271,12 @@ T dot(const communicator& comm,
 
 template <typename T>
 void dot(const communicator& comm,
-         indexed_dpd_varray_view<const T> A, const label_type* idx_A,
-         indexed_dpd_varray_view<const T> B, const label_type* idx_B, T& result);
+         indexed_dpd_varray_view<const T> A, const label_vector& idx_A,
+         indexed_dpd_varray_view<const T> B, const label_vector& idx_B, T& result);
 
 template <typename T>
-void dot(indexed_dpd_varray_view<const T> A, const label_type* idx_A,
-         indexed_dpd_varray_view<const T> B, const label_type* idx_B, T& result)
+void dot(indexed_dpd_varray_view<const T> A, const label_vector& idx_A,
+         indexed_dpd_varray_view<const T> B, const label_vector& idx_B, T& result)
 {
     parallelize
     (
@@ -163,8 +289,8 @@ void dot(indexed_dpd_varray_view<const T> A, const label_type* idx_A,
 }
 
 template <typename T>
-T dot(indexed_dpd_varray_view<const T> A, const label_type* idx_A,
-      indexed_dpd_varray_view<const T> B, const label_type* idx_B)
+T dot(indexed_dpd_varray_view<const T> A, const label_vector& idx_A,
+      indexed_dpd_varray_view<const T> B, const label_vector& idx_B)
 {
     T result;
     dot(A, idx_A, B, idx_B, result);
@@ -173,8 +299,8 @@ T dot(indexed_dpd_varray_view<const T> A, const label_type* idx_A,
 
 template <typename T>
 T dot(const communicator& comm,
-      indexed_dpd_varray_view<const T> A, const label_type* idx_A,
-      indexed_dpd_varray_view<const T> B, const label_type* idx_B)
+      indexed_dpd_varray_view<const T> A, const label_vector& idx_A,
+      indexed_dpd_varray_view<const T> B, const label_vector& idx_B)
 {
     T result;
     dot(comm, A, idx_A, B, idx_B, result);
@@ -183,8 +309,10 @@ T dot(const communicator& comm,
 
 #endif
 
-#ifdef __cplusplus
 }
+
 #endif
+
+#pragma GCC diagnostic pop
 
 #endif

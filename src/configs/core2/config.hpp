@@ -3,13 +3,8 @@
 
 #include "configs/config_builder.hpp"
 
-extern "C"
-{
-
-EXTERN_GEMM_UKR(          float, bli_sgemm_asm_8x4);
-EXTERN_GEMM_UKR(         double, bli_dgemm_asm_4x4);
-
-}
+EXTERN_BLIS_GEMM_UKR(bli_sgemm_asm_8x4);
+EXTERN_BLIS_GEMM_UKR(bli_dgemm_asm_4x4);
 
 namespace tblis
 {
@@ -25,10 +20,10 @@ TBLIS_CONFIG_GEMM_MC( 768,  384, _, _)
 TBLIS_CONFIG_GEMM_NC(4096, 4096, _, _)
 TBLIS_CONFIG_GEMM_KC( 384,  384, _, _)
 
-TBLIS_CONFIG_GEMM_UKR(bli_sgemm_asm_8x4,
-                      bli_dgemm_asm_4x4,
-                                      _,
-                                      _)
+TBLIS_CONFIG_GEMM_WRAP_UKR(bli_sgemm_asm_8x4,
+                           bli_dgemm_asm_4x4,
+                                           _,
+                                           _)
 
 TBLIS_CONFIG_CHECK(core2_check)
 

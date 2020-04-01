@@ -14,15 +14,15 @@ namespace internal
 
 template <typename T>
 void mult_full(const communicator& comm, const config& cfg,
-               T alpha, bool conj_A, const indexed_varray_view<const T>& A,
+               T alpha, bool conj_A, const indexed_varray_view<T>& A,
                const dim_vector& idx_A_AB,
                const dim_vector& idx_A_AC,
                const dim_vector& idx_A_ABC,
-                        bool conj_B, const indexed_varray_view<const T>& B,
+                        bool conj_B, const indexed_varray_view<T>& B,
                const dim_vector& idx_B_AB,
                const dim_vector& idx_B_BC,
                const dim_vector& idx_B_ABC,
-                                     const indexed_varray_view<      T>& C,
+                                     const indexed_varray_view<T>& C,
                const dim_vector& idx_C_AC,
                const dim_vector& idx_C_BC,
                const dim_vector& idx_C_ABC)
@@ -50,38 +50,42 @@ void mult_full(const communicator& comm, const config& cfg,
         auto stride_B_ABC = stl_ext::select_from(B2.strides(), idx_B_ABC);
         auto stride_C_ABC = stl_ext::select_from(C2.strides(), idx_C_ABC);
 
-        mult(comm, cfg, len_AB, len_AC, len_BC, len_ABC,
-             alpha, conj_A, A2.data(), stride_A_AB, stride_A_AC, stride_A_ABC,
-                    conj_B, B2.data(), stride_B_AB, stride_B_BC, stride_B_ABC,
-              T(0),  false, C2.data(), stride_C_AC, stride_C_BC, stride_C_ABC);
+        mult(type_tag<T>::value, comm, cfg, len_AB, len_AC, len_BC, len_ABC,
+             alpha, conj_A, reinterpret_cast<char*>(A2.data()), stride_A_AB, stride_A_AC, stride_A_ABC,
+                    conj_B, reinterpret_cast<char*>(B2.data()), stride_B_AB, stride_B_BC, stride_B_ABC,
+              T(0),  false, reinterpret_cast<char*>(C2.data()), stride_C_AC, stride_C_BC, stride_C_ABC);
 
         full_to_block(comm, cfg, C2, C);
     },
     A2, B2, C2);
 }
 
-template <typename T>
-void contract_block(const communicator& comm, const config& cfg,
-                    T alpha, bool conj_A, const indexed_varray_view<const T>& A,
+void contract_block(type_t type, const communicator& comm, const config& cfg,
+                    const scalar& alpha,
+                    bool conj_A, const indexed_varray_view<char>& A,
                     dim_vector idx_A_AB,
                     dim_vector idx_A_AC,
-                             bool conj_B, const indexed_varray_view<const T>& B,
+                    bool conj_B, const indexed_varray_view<char>& B,
                     dim_vector idx_B_AB,
                     dim_vector idx_B_BC,
-                                          const indexed_varray_view<      T>& C,
+                                 const indexed_varray_view<char>& C,
                     dim_vector idx_C_AC,
                     dim_vector idx_C_BC)
 {
+    const len_type ts = type_size[type];
+
     index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
     index_group<2> group_AC(A, idx_A_AC, C, idx_C_AC);
     index_group<2> group_BC(B, idx_B_BC, C, idx_C_BC);
 
-    group_indices<T, 2> indices_A(A, group_AC, 0, group_AB, 0);
-    group_indices<T, 2> indices_B(B, group_BC, 0, group_AB, 1);
-    group_indices<T, 2> indices_C(C, group_AC, 1, group_BC, 1);
+    group_indices<2> indices_A(type, A, group_AC, 0, group_AB, 0);
+    group_indices<2> indices_B(type, B, group_BC, 0, group_AB, 1);
+    group_indices<2> indices_C(type, C, group_AC, 1, group_BC, 1);
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
     auto nidx_C = indices_C.size();
+
+    scalar one(1.0, type);
 
     stride_type idx = 0;
     stride_type idx_A = 0;
@@ -102,7 +106,7 @@ void contract_block(const communicator& comm, const config& cfg,
                                        idx_C, next_C, indices_C, 1,
             [&](stride_type next_B)
             {
-                if (indices_C[idx_C].factor == T(0)) return;
+                if (indices_C[idx_C].factor.is_zero()) return;
 
                 tasks.visit(idx++,
                 [&,idx_A,idx_B,idx_C,next_A,next_B]
@@ -119,7 +123,7 @@ void contract_block(const communicator& comm, const config& cfg,
                     get_local_offset(indices_B[local_idx_B].idx[0], group_BC,
                                      off_B_BC, 0, off_C_BC, 1);
 
-                    auto data_C = C.data(0) + indices_C[idx_C].offset + off_C_AC + off_C_BC;
+                    auto data_C = C.data(0) + (indices_C[idx_C].offset + off_C_AC + off_C_BC)*ts;
 
                     for_each_match<false, false>(local_idx_A, next_A, indices_A, 1,
                                                 local_idx_B, next_B, indices_B, 1,
@@ -128,16 +132,16 @@ void contract_block(const communicator& comm, const config& cfg,
                         auto factor = alpha*indices_A[local_idx_A].factor*
                                             indices_B[local_idx_B].factor*
                                             indices_C[idx_C].factor;
-                        if (factor == T(0)) return;
+                        if (factor.is_zero()) return;
 
                         stride_type off_A_AB, off_B_AB;
                         get_local_offset(indices_A[local_idx_A].idx[1], group_AB,
                                          off_A_AB, 0, off_B_AB, 1);
 
-                        auto data_A = A.data(0) + indices_A[local_idx_A].offset + off_A_AB + off_A_AC;
-                        auto data_B = B.data(0) + indices_B[local_idx_B].offset + off_B_AB + off_B_BC;
+                        auto data_A = A.data(0) + (indices_A[local_idx_A].offset + off_A_AB + off_A_AC)*ts;
+                        auto data_B = B.data(0) + (indices_B[local_idx_B].offset + off_B_AB + off_B_BC)*ts;
 
-                        mult(subcomm, cfg,
+                        mult(type, subcomm, cfg,
                              group_AB.dense_len,
                              group_AC.dense_len,
                              group_BC.dense_len, {},
@@ -145,7 +149,7 @@ void contract_block(const communicator& comm, const config& cfg,
                                                      group_AC.dense_stride[0], {},
                                      conj_B, data_B, group_AB.dense_stride[1],
                                                      group_BC.dense_stride[0], {},
-                               T(1),  false, data_C, group_AC.dense_stride[1],
+                                one,  false, data_C, group_AC.dense_stride[1],
                                                      group_BC.dense_stride[1], {});
                     });
                 });
@@ -154,32 +158,36 @@ void contract_block(const communicator& comm, const config& cfg,
     });
 }
 
-template <typename T>
-void mult_block(const communicator& comm, const config& cfg,
-                T alpha, bool conj_A, const indexed_varray_view<const T>& A,
+void mult_block(type_t type, const communicator& comm, const config& cfg,
+                const scalar& alpha,
+                bool conj_A, const indexed_varray_view<char>& A,
                 dim_vector idx_A_AB,
                 dim_vector idx_A_AC,
                 dim_vector idx_A_ABC,
-                         bool conj_B, const indexed_varray_view<const T>& B,
+                bool conj_B, const indexed_varray_view<char>& B,
                 dim_vector idx_B_AB,
                 dim_vector idx_B_BC,
                 dim_vector idx_B_ABC,
-                                      const indexed_varray_view<      T>& C,
+                             const indexed_varray_view<char>& C,
                 dim_vector idx_C_AC,
                 dim_vector idx_C_BC,
                 dim_vector idx_C_ABC)
 {
+    const len_type ts = type_size[type];
+
     index_group<3> group_ABC(A, idx_A_ABC, B, idx_B_ABC, C, idx_C_ABC);
     index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
     index_group<2> group_AC(A, idx_A_AC, C, idx_C_AC);
     index_group<2> group_BC(B, idx_B_BC, C, idx_C_BC);
 
-    group_indices<T, 3> indices_A(A, group_ABC, 0, group_AC, 0, group_AB, 0);
-    group_indices<T, 3> indices_B(B, group_ABC, 1, group_BC, 0, group_AB, 1);
-    group_indices<T, 3> indices_C(C, group_ABC, 2, group_AC, 1, group_BC, 1);
+    group_indices<3> indices_A(type, A, group_ABC, 0, group_AC, 0, group_AB, 0);
+    group_indices<3> indices_B(type, B, group_ABC, 1, group_BC, 0, group_AB, 1);
+    group_indices<3> indices_C(type, C, group_ABC, 2, group_AC, 1, group_BC, 1);
     auto nidx_A = indices_A.size();
     auto nidx_B = indices_B.size();
     auto nidx_C = indices_C.size();
+
+    scalar one(1.0, type);
 
     stride_type idx = 0;
     stride_type idx_A = 0;
@@ -207,7 +215,7 @@ void mult_block(const communicator& comm, const config& cfg,
                                            idx_C,  next_C_AC, indices_C, 2,
                 [&](stride_type next_B_AB)
                 {
-                    if (indices_C[idx_C].factor == T(0)) return;
+                    if (indices_C[idx_C].factor.is_zero()) return;
 
                     tasks.visit(idx++,
                     [&,idx_A,idx_B,idx_C,next_A_AB,next_B_AB]
@@ -228,7 +236,7 @@ void mult_block(const communicator& comm, const config& cfg,
                         get_local_offset(indices_B[local_idx_B].idx[1], group_BC,
                                          off_B_BC, 0, off_C_BC, 1);
 
-                        auto data_C = C.data(0) + indices_C[idx_C].offset + off_C_AC + off_C_BC + off_C_ABC;
+                        auto data_C = C.data(0) + (indices_C[idx_C].offset + off_C_AC + off_C_BC + off_C_ABC)*ts;
 
                         for_each_match<false, false>(local_idx_A, next_A_AB, indices_A, 2,
                                                     local_idx_B, next_B_AB, indices_B, 2,
@@ -237,16 +245,16 @@ void mult_block(const communicator& comm, const config& cfg,
                             auto factor = alpha*indices_A[local_idx_A].factor*
                                                 indices_B[local_idx_B].factor*
                                                 indices_C[idx_C].factor;
-                            if (factor == T(0)) return;
+                            if (factor.is_zero()) return;
 
                             stride_type off_A_AB, off_B_AB;
                             get_local_offset(indices_A[local_idx_A].idx[2], group_AB,
                                              off_A_AB, 0, off_B_AB, 1);
 
-                            auto data_A = A.data(0) + indices_A[local_idx_A].offset + off_A_AB + off_A_AC + off_A_ABC;
-                            auto data_B = B.data(0) + indices_B[local_idx_B].offset + off_B_AB + off_B_BC + off_B_ABC;
+                            auto data_A = A.data(0) + (indices_A[local_idx_A].offset + off_A_AB + off_A_AC + off_A_ABC)*ts;
+                            auto data_B = B.data(0) + (indices_B[local_idx_B].offset + off_B_AB + off_B_BC + off_B_ABC)*ts;
 
-                            mult(subcomm, cfg,
+                            mult(type, subcomm, cfg,
                                  group_AB.dense_len,
                                  group_AC.dense_len,
                                  group_BC.dense_len,
@@ -257,7 +265,7 @@ void mult_block(const communicator& comm, const config& cfg,
                                          conj_B, data_B, group_AB.dense_stride[1],
                                                          group_BC.dense_stride[0],
                                                          group_ABC.dense_stride[1],
-                                   T(1),  false, data_C, group_AC.dense_stride[1],
+                                    one,  false, data_C, group_AC.dense_stride[1],
                                                          group_BC.dense_stride[1],
                                                          group_ABC.dense_stride[2]);
                         });
@@ -268,47 +276,69 @@ void mult_block(const communicator& comm, const config& cfg,
     });
 }
 
-template <typename T>
-void mult(const communicator& comm, const config& cfg,
-          T alpha, bool conj_A, const indexed_varray_view<const T>& A,
+void mult(type_t type, const communicator& comm, const config& cfg,
+          const scalar& alpha, bool conj_A, const indexed_varray_view<char>& A,
           const dim_vector& idx_A_AB,
           const dim_vector& idx_A_AC,
           const dim_vector& idx_A_ABC,
-                   bool conj_B, const indexed_varray_view<const T>& B,
+                               bool conj_B, const indexed_varray_view<char>& B,
           const dim_vector& idx_B_AB,
           const dim_vector& idx_B_BC,
           const dim_vector& idx_B_ABC,
-          T  beta, bool conj_C, const indexed_varray_view<      T>& C,
+          const scalar&  beta, bool conj_C, const indexed_varray_view<char>& C,
           const dim_vector& idx_C_AC,
           const dim_vector& idx_C_BC,
           const dim_vector& idx_C_ABC)
 {
-    if (beta == T(0))
+    if (beta.is_zero())
     {
-        set(comm, cfg, T(0), C, range(C.dimension()));
+        set(type, comm, cfg, beta, C, range(C.dimension()));
     }
-    else if (beta != T(1) || (is_complex<T>::value && conj_C))
+    else if (!beta.is_one() || (beta.is_complex() && conj_C))
     {
-        scale(comm, cfg, beta, conj_C, C, range(C.dimension()));
+        scale(type, comm, cfg, beta, conj_C, C, range(C.dimension()));
     }
 
     if (dpd_impl == FULL)
     {
-        mult_full(comm, cfg,
-                  alpha, conj_A, A, idx_A_AB, idx_A_AC, idx_A_ABC,
-                         conj_B, B, idx_B_AB, idx_B_BC, idx_B_ABC,
-                                 C, idx_C_AC, idx_C_BC, idx_C_ABC);
+        switch (type)
+        {
+            case TYPE_FLOAT:
+                mult_full(comm, cfg, alpha.get<float>(),
+                          conj_A, reinterpret_cast<const indexed_varray_view<float>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
+                          conj_B, reinterpret_cast<const indexed_varray_view<float>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
+                                  reinterpret_cast<const indexed_varray_view<float>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
+                break;
+            case TYPE_DOUBLE:
+                mult_full(comm, cfg, alpha.get<double>(),
+                          conj_A, reinterpret_cast<const indexed_varray_view<double>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
+                          conj_B, reinterpret_cast<const indexed_varray_view<double>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
+                                  reinterpret_cast<const indexed_varray_view<double>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
+                break;
+            case TYPE_SCOMPLEX:
+                mult_full(comm, cfg, alpha.get<scomplex>(),
+                          conj_A, reinterpret_cast<const indexed_varray_view<scomplex>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
+                          conj_B, reinterpret_cast<const indexed_varray_view<scomplex>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
+                                  reinterpret_cast<const indexed_varray_view<scomplex>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
+                break;
+            case TYPE_DCOMPLEX:
+                mult_full(comm, cfg, alpha.get<dcomplex>(),
+                          conj_A, reinterpret_cast<const indexed_varray_view<dcomplex>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
+                          conj_B, reinterpret_cast<const indexed_varray_view<dcomplex>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
+                                  reinterpret_cast<const indexed_varray_view<dcomplex>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
+                break;
+        }
     }
     else if (idx_C_ABC.empty())
     {
-        contract_block(comm, cfg,
+        contract_block(type, comm, cfg,
                        alpha, conj_A, A, idx_A_AB, idx_A_AC,
                               conj_B, B, idx_B_AB, idx_B_BC,
                                       C, idx_C_AC, idx_C_BC);
     }
     else
     {
-        mult_block(comm, cfg,
+        mult_block(type, comm, cfg,
                    alpha, conj_A, A, idx_A_AB, idx_A_AC, idx_A_ABC,
                           conj_B, B, idx_B_AB, idx_B_BC, idx_B_ABC,
                                   C, idx_C_AC, idx_C_BC, idx_C_ABC);
@@ -316,22 +346,6 @@ void mult(const communicator& comm, const config& cfg,
 
     comm.barrier();
 }
-
-#define FOREACH_TYPE(T) \
-template void mult(const communicator& comm, const config& cfg, \
-                   T alpha, bool conj_A, const indexed_varray_view<const T>& A, \
-                   const dim_vector& idx_A_AB, \
-                   const dim_vector& idx_A_AC, \
-                   const dim_vector& idx_A_ABC, \
-                            bool conj_B, const indexed_varray_view<const T>& B, \
-                   const dim_vector& idx_B_AB, \
-                   const dim_vector& idx_B_BC, \
-                   const dim_vector& idx_B_ABC, \
-                   T  beta, bool conj_C, const indexed_varray_view<      T>& C, \
-                   const dim_vector& idx_C_AC, \
-                   const dim_vector& idx_C_BC, \
-                   const dim_vector& idx_C_ABC);
-#include "configs/foreach_type.h"
 
 }
 }

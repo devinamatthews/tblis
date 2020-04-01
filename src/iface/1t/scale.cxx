@@ -14,11 +14,11 @@
 namespace tblis
 {
 
-extern "C"
-{
-
-void tblis_tensor_scale(const tblis_comm* comm, const tblis_config* cfg,
-                        tblis_tensor* A, const label_type* idx_A_)
+TBLIS_EXPORT
+void tblis_tensor_scale(const tblis_comm* comm,
+                        const tblis_config* cfg,
+                              tblis_tensor* A,
+                        const label_type* idx_A_)
 {
     unsigned ndim_A = A->ndim;
     len_vector len_A;
@@ -35,37 +35,33 @@ void tblis_tensor_scale(const tblis_comm* comm, const tblis_config* cfg,
 
     fold(len_A, idx_A, stride_A);
 
-    TBLIS_WITH_TYPE_AS(A->type, T,
+    parallelize_if(
+    [&](const communicator& comm)
     {
-        parallelize_if(
-        [&](const communicator& comm)
+        if (A->scalar.is_zero())
         {
-            if (A->alpha<T>() == T(0))
-            {
-                internal::set<T>(comm, get_config(cfg), len_A,
-                                 T(0), static_cast<T*>(A->data), stride_A);
-            }
-            else if (A->alpha<T>() != T(1) || (is_complex<T>::value && A->conj))
-            {
-                internal::scale<T>(comm, get_config(cfg), len_A,
-                                   A->alpha<T>(), A->conj,
-                                   static_cast<T*>(A->data), stride_A);
-            }
-        }, comm);
+            internal::set(A->type, comm, get_config(cfg), len_A,
+                          A->scalar, reinterpret_cast<char*>(A->data), stride_A);
+        }
+        else if (!A->scalar.is_one() || (A->scalar.is_complex() && A->conj))
+        {
+            internal::scale(A->type, comm, get_config(cfg), len_A,
+                            A->scalar, A->conj,
+                            reinterpret_cast<char*>(A->data), stride_A);
+        }
+    }, comm);
 
-        A->alpha<T>() = T(1);
-        A->conj = false;
-    })
-}
-
+    A->scalar = 1;
+    A->conj = false;
 }
 
 template <typename T>
 void scale(const communicator& comm,
-           T alpha, dpd_varray_view<T> A, const label_type* idx_A)
+           T alpha, dpd_varray_view<T> A, const label_vector& idx_A)
 {
-    unsigned nirrep = A.num_irreps();
     unsigned ndim_A = A.dimension();
+
+    (void)idx_A;
 
     for (unsigned i = 1;i < ndim_A;i++)
         for (unsigned j = 0;j < i;j++)
@@ -75,24 +71,28 @@ void scale(const communicator& comm,
 
     if (alpha == T(0))
     {
-        internal::set<T>(comm, get_default_config(), alpha, A, idx_A_A);
+        internal::set(type_tag<T>::value, comm, get_default_config(), alpha,
+                      reinterpret_cast<dpd_varray_view<char>&>(A), idx_A_A);
     }
-    else
+    else if (alpha != T(1))
     {
-        internal::scale<T>(comm, get_default_config(), alpha, false, A, idx_A_A);
+        internal::scale(type_tag<T>::value, comm, get_default_config(), alpha, false,
+                        reinterpret_cast<dpd_varray_view<char>&>(A), idx_A_A);
     }
 }
 
 #define FOREACH_TYPE(T) \
 template void scale(const communicator& comm, \
-                    T alpha, dpd_varray_view<T> A, const label_type* idx_A);
+                    T alpha, dpd_varray_view<T> A, const label_vector& idx_A);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void scale(const communicator& comm,
-           T alpha, indexed_varray_view<T> A, const label_type* idx_A)
+           T alpha, indexed_varray_view<T> A, const label_vector& idx_A)
 {
     unsigned ndim_A = A.dimension();
+
+    (void)idx_A;
 
     for (unsigned i = 1;i < ndim_A;i++)
         for (unsigned j = 0;j < i;j++)
@@ -102,25 +102,28 @@ void scale(const communicator& comm,
 
     if (alpha == T(0))
     {
-        internal::set<T>(comm, get_default_config(), alpha, A, idx_A_A);
+        internal::set(type_tag<T>::value, comm, get_default_config(), alpha,
+                      reinterpret_cast<indexed_varray_view<char>&>(A), idx_A_A);
     }
-    else
+    else if (alpha != T(1))
     {
-        internal::scale<T>(comm, get_default_config(), alpha, false, A, idx_A_A);
+        internal::scale(type_tag<T>::value, comm, get_default_config(), alpha, false,
+                        reinterpret_cast<indexed_varray_view<char>&>(A), idx_A_A);
     }
 }
 
 #define FOREACH_TYPE(T) \
 template void scale(const communicator& comm, \
-                    T alpha, indexed_varray_view<T> A, const label_type* idx_A);
+                    T alpha, indexed_varray_view<T> A, const label_vector& idx_A);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void scale(const communicator& comm,
-           T alpha, indexed_dpd_varray_view<T> A, const label_type* idx_A)
+           T alpha, indexed_dpd_varray_view<T> A, const label_vector& idx_A)
 {
-    unsigned nirrep = A.num_irreps();
     unsigned ndim_A = A.dimension();
+
+    (void)idx_A;
 
     for (unsigned i = 1;i < ndim_A;i++)
         for (unsigned j = 0;j < i;j++)
@@ -130,17 +133,19 @@ void scale(const communicator& comm,
 
     if (alpha == T(0))
     {
-        internal::set<T>(comm, get_default_config(), alpha, A, idx_A_A);
+        internal::set(type_tag<T>::value, comm, get_default_config(), alpha,
+                      reinterpret_cast<indexed_dpd_varray_view<char>&>(A), idx_A_A);
     }
-    else
+    else if (alpha != T(1))
     {
-        internal::scale<T>(comm, get_default_config(), alpha, false, A, idx_A_A);
+        internal::scale(type_tag<T>::value, comm, get_default_config(), alpha, false,
+                        reinterpret_cast<indexed_dpd_varray_view<char>&>(A), idx_A_A);
     }
 }
 
 #define FOREACH_TYPE(T) \
 template void scale(const communicator& comm, \
-                    T alpha, indexed_dpd_varray_view<T> A, const label_type* idx_A);
+                    T alpha, indexed_dpd_varray_view<T> A, const label_vector& idx_A);
 #include "configs/foreach_type.h"
 
 }

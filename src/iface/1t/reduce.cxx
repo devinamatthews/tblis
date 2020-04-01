@@ -10,12 +10,14 @@
 namespace tblis
 {
 
-extern "C"
-{
-
-void tblis_tensor_reduce(const tblis_comm* comm, const tblis_config* cfg,
-                         reduce_t op, const tblis_tensor* A, const label_type* idx_A_,
-                         tblis_scalar* result, len_type* idx)
+TBLIS_EXPORT
+void tblis_tensor_reduce(const tblis_comm* comm,
+                         const tblis_config* cfg,
+                         reduce_t op,
+                         const tblis_tensor* A,
+                         const label_type* idx_A_,
+                         tblis_scalar* result,
+                         len_type* idx)
 {
     TBLIS_ASSERT(A->type == result->type);
 
@@ -34,47 +36,36 @@ void tblis_tensor_reduce(const tblis_comm* comm, const tblis_config* cfg,
 
     fold(len_A, idx_A, stride_A);
 
-    TBLIS_WITH_TYPE_AS(A->type, T,
+    if (A->scalar.is_negative())
     {
-        if (A->alpha<T>() < T(0))
-        {
-            if (op == REDUCE_MIN) op = REDUCE_MAX;
-            else if (op == REDUCE_MAX) op = REDUCE_MIN;
-        }
+        if (op == REDUCE_MIN) op = REDUCE_MAX;
+        else if (op == REDUCE_MAX) op = REDUCE_MIN;
+    }
 
-        parallelize_if(
-        [&](const communicator& comm)
-        {
-            internal::reduce<T>(comm, get_config(cfg), op, len_A,
-                                static_cast<const T*>(A->data), stride_A,
-                                result->get<T>(), *idx);
-        }, comm);
+    parallelize_if(
+    [&](const communicator& comm)
+    {
+        internal::reduce(A->type, comm, get_config(cfg), op, len_A,
+                         reinterpret_cast<char*>(A->data), stride_A,
+                         result->raw(), *idx);
+    }, comm);
 
-        if (A->conj)
-        {
-            result->get<T>() = conj(result->get<T>());
-        }
+    if (A->conj) result->conj();
 
-        if (op == REDUCE_SUM)
-        {
-            result->get<T>() *= A->alpha<T>();
-        }
-        else if (op == REDUCE_SUM_ABS || op == REDUCE_NORM_2)
-        {
-            result->get<T>() *= std::abs(A->alpha<T>());
-        }
-    })
-}
-
+    if (op == REDUCE_SUM_ABS || op == REDUCE_MAX_ABS || op == REDUCE_MIN_ABS || op == REDUCE_NORM_2)
+        *result *= abs(A->scalar);
+    else
+        *result *= A->scalar;
 }
 
 template <typename T>
 void reduce(const communicator& comm, reduce_t op,
-            dpd_varray_view<const T> A, const label_type* idx_A,
+            dpd_varray_view<const T> A, const label_vector& idx_A,
             T& result, len_type& idx)
 {
-    unsigned nirrep = A.num_irreps();
     unsigned ndim_A = A.dimension();
+
+    (void)idx_A;
 
     for (unsigned i = 1;i < ndim_A;i++)
         for (unsigned j = 0;j < i;j++)
@@ -82,22 +73,25 @@ void reduce(const communicator& comm, reduce_t op,
 
     dim_vector idx_A_A = range(ndim_A);
 
-    internal::reduce<T>(comm, get_default_config(), op,
-                        A, idx_A_A, result, idx);
+    internal::reduce(type_tag<T>::value, comm, get_default_config(), op,
+                     reinterpret_cast<dpd_varray_view<char>&>(A), idx_A_A,
+                     reinterpret_cast<char*>(&result), idx);
 }
 
 #define FOREACH_TYPE(T) \
 template void reduce(const communicator& comm, reduce_t op, \
-                     dpd_varray_view<const T> A, const label_type* idx_A, \
+                     dpd_varray_view<const T> A, const label_vector& idx_A, \
                      T& result, len_type& idx);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void reduce(const communicator& comm, reduce_t op,
-            indexed_varray_view<const T> A, const label_type* idx_A,
+            indexed_varray_view<const T> A, const label_vector& idx_A,
             T& result, len_type& idx)
 {
     unsigned ndim_A = A.dimension();
+
+    (void)idx_A;
 
     for (unsigned i = 1;i < ndim_A;i++)
         for (unsigned j = 0;j < i;j++)
@@ -105,23 +99,25 @@ void reduce(const communicator& comm, reduce_t op,
 
     dim_vector idx_A_A = range(ndim_A);
 
-    internal::reduce<T>(comm, get_default_config(), op,
-                        A, idx_A_A, result, idx);
+    internal::reduce(type_tag<T>::value, comm, get_default_config(), op,
+                     reinterpret_cast<indexed_varray_view<char>&>(A), idx_A_A,
+                     reinterpret_cast<char*>(&result), idx);
 }
 
 #define FOREACH_TYPE(T) \
 template void reduce(const communicator& comm, reduce_t op, \
-                     indexed_varray_view<const T> A, const label_type* idx_A, \
+                     indexed_varray_view<const T> A, const label_vector& idx_A, \
                      T& result, len_type& idx);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void reduce(const communicator& comm, reduce_t op,
-            indexed_dpd_varray_view<const T> A, const label_type* idx_A,
+            indexed_dpd_varray_view<const T> A, const label_vector& idx_A,
             T& result, len_type& idx)
 {
-    unsigned nirrep = A.num_irreps();
     unsigned ndim_A = A.dimension();
+
+    (void)idx_A;
 
     for (unsigned i = 1;i < ndim_A;i++)
         for (unsigned j = 0;j < i;j++)
@@ -129,13 +125,14 @@ void reduce(const communicator& comm, reduce_t op,
 
     dim_vector idx_A_A = range(ndim_A);
 
-    internal::reduce<T>(comm, get_default_config(), op,
-                        A, idx_A_A, result, idx);
+    internal::reduce(type_tag<T>::value, comm, get_default_config(), op,
+                     reinterpret_cast<indexed_dpd_varray_view<char>&>(A), idx_A_A,
+                     reinterpret_cast<char*>(&result), idx);
 }
 
 #define FOREACH_TYPE(T) \
 template void reduce(const communicator& comm, reduce_t op, \
-                     indexed_dpd_varray_view<const T> A, const label_type* idx_A, \
+                     indexed_dpd_varray_view<const T> A, const label_vector& idx_A, \
                      T& result, len_type& idx);
 #include "configs/foreach_type.h"
 

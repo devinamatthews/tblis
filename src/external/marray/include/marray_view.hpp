@@ -72,7 +72,7 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
         {
             reset(len, ptr, layout);
         }
-    
+
         marray_view(const detail::array_1d<len_type>& len, pointer ptr,
                     const detail::array_1d<stride_type>& stride)
         {
@@ -138,10 +138,10 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
         void shift(const detail::array_1d<len_type>& n_)
         {
             MARRAY_ASSERT(n_.size() == NDim);
-            
+
             std::array<len_type, NDim> n;
             n_.slurp(n);
-            
+
             for (unsigned dim = 0;dim < NDim;dim++)
                 shift(dim, n[dim]);
         }
@@ -208,13 +208,12 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
         void permute(const detail::array_1d<unsigned>& perm_)
         {
             MARRAY_ASSERT(perm_.size() == NDim);
-            
+
             std::array<len_type, NDim> len = len_;
             std::array<stride_type, NDim> stride = stride_;
             std::array<unsigned, NDim> perm;
             perm_.slurp(perm);
 
-            auto it = perm.begin();
             for (unsigned i = 0;i < NDim;i++)
             {
                 MARRAY_ASSERT(perm[i] < NDim);

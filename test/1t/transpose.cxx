@@ -37,11 +37,11 @@ REPLICATED_TEMPLATED_TEST_CASE(transpose, R, T, all_types)
     T scale(10.0*random_unit<T>());
 
     C.reset(A);
-    add<T>(T(1), A, idx_A.data(), T(0), B, idx_B.data());
-    add<T>(scale, B, idx_B.data(), scale, C, idx_A.data());
+    add(A, idx_A, B, idx_B);
+    add(scale, B, idx_B, scale, C, idx_A);
 
-    add<T>(-2*scale, A, idx_A.data(), T(1), C, idx_A.data());
-    T error = reduce<T>(REDUCE_NORM_2, C, idx_A.data()).first;
+    add(-2*scale, A, idx_A, 1, C, idx_A);
+    T error = reduce<T>(REDUCE_NORM_2, C, idx_A);
     check("INVERSE", error, 2*scale*neps);
 
     B.reset(A);
@@ -57,14 +57,14 @@ REPLICATED_TEMPLATED_TEST_CASE(transpose, R, T, all_types)
             len_C[i] = B.length(j);
         }
         C.reset(len_C);
-        add<T>(T(1), B, idx_B.data(), T(0), C, idx_C.data());
+        add(B, idx_B, C, idx_C);
         B.reset(C);
         idx_B = idx_C;
     }
     while (idx_C != idx_A);
 
-    add<T>(T(-1), A, idx_A.data(), T(1), C, idx_A.data());
-    error = reduce<T>(REDUCE_NORM_2, C, idx_A.data()).first;
+    add(-1, A, idx_A, 1, C, idx_A);
+    error = reduce<T>(REDUCE_NORM_2, C, idx_A);
     check("CYCLE", error, neps);
 }
 
@@ -84,14 +84,14 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_transpose, R, T, all_types)
 
     dpd_impl = dpd_impl_t::FULL;
     C.reset(B);
-    add<T>(scale, A, idx_A.data(), scale, C, idx_B.data());
+    add<T>(scale, A, idx_A, scale, C, idx_B);
 
     dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(B);
-    add<T>(scale, A, idx_A.data(), scale, D, idx_B.data());
+    add<T>(scale, A, idx_A, scale, D, idx_B);
 
-    add<T>(T(-1), C, idx_B.data(), T(1), D, idx_B.data());
-    T error = reduce<T>(REDUCE_NORM_2, D, idx_B.data()).first;
+    add<T>(T(-1), C, idx_B, T(1), D, idx_B);
+    T error = reduce<T>(REDUCE_NORM_2, D, idx_B);
 
     check("BLOCKED", error, scale*neps);
 }
@@ -112,14 +112,14 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_transpose, R, T, all_types)
 
     dpd_impl = dpd_impl_t::FULL;
     C.reset(B);
-    add<T>(scale, A, idx_A.data(), scale, C, idx_B.data());
+    add<T>(scale, A, idx_A, scale, C, idx_B);
 
     dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(B);
-    add<T>(scale, A, idx_A.data(), scale, D, idx_B.data());
+    add<T>(scale, A, idx_A, scale, D, idx_B);
 
-    add<T>(T(-1), C, idx_B.data(), T(1), D, idx_B.data());
-    T error = reduce<T>(REDUCE_NORM_2, D, idx_B.data()).first;
+    add<T>(T(-1), C, idx_B, T(1), D, idx_B);
+    T error = reduce<T>(REDUCE_NORM_2, D, idx_B);
 
     check("BLOCKED", error, scale*neps);
 }
@@ -140,14 +140,14 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_transpose, R, T, all_types)
 
     dpd_impl = dpd_impl_t::FULL;
     C.reset(B);
-    add<T>(scale, A, idx_A.data(), scale, C, idx_B.data());
+    add<T>(scale, A, idx_A, scale, C, idx_B);
 
     dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(B);
-    add<T>(scale, A, idx_A.data(), scale, D, idx_B.data());
+    add<T>(scale, A, idx_A, scale, D, idx_B);
 
-    add<T>(T(-1), C, idx_B.data(), T(1), D, idx_B.data());
-    T error = reduce<T>(REDUCE_NORM_2, D, idx_B.data()).first;
+    add<T>(T(-1), C, idx_B, T(1), D, idx_B);
+    T error = reduce<T>(REDUCE_NORM_2, D, idx_B);
 
     check("BLOCKED", error, scale*neps);
 }

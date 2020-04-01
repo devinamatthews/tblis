@@ -38,8 +38,11 @@ class MemoryPool
                     if (_ptr) _pool->release(_ptr, _size);
                 }
 
-                Block& operator=(Block other)
+                Block& operator=(const Block&) = delete;
+
+                Block& operator=(Block&& other)
                 {
+                    using std::swap;
                     swap(*this, other);
                     return *this;
                 }
@@ -79,11 +82,11 @@ class MemoryPool
 
         MemoryPool& operator=(const MemoryPool&) = delete;
 
-        template <typename T>
-        Block allocate(size_t num, size_t alignment=1)
+        template <typename T=char>
+        Block allocate(size_t num, size_t alignment=sizeof(void*))
         {
             return Block(this, num*sizeof(T),
-                         std::max(alignment, std::alignment_of<T>::value));
+                         std::max({sizeof(void*), alignment, std::alignment_of<T>::value}));
         }
 
         void flush()

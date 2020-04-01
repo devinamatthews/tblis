@@ -6,6 +6,8 @@
 
 #include "configs/configs.hpp"
 
+#include "matrix/abstract_matrix.hpp"
+
 namespace tblis
 {
 
@@ -15,20 +17,16 @@ struct partition
     Child child;
     communicator* subcomm = nullptr;
 
-    template <typename T, typename MatrixA, typename MatrixB, typename MatrixC>
-    void operator()(const communicator& comm, const config& cfg,
-                    T alpha, MatrixA& A, MatrixB& B, T beta, MatrixC& C)
+    void operator()(const communicator&, const config& cfg,
+                    abstract_matrix& A, abstract_matrix& B, abstract_matrix& C)
     {
         using namespace matrix_constants;
 
         const blocksize& M = cfg.*BS;
-        const len_type M_def  = M.def<T>();
-        const len_type M_max  = M.max<T>(); // Equal to M_def for register block sizes
-        const len_type M_iota = M.iota<T>(); // Equal to the corresponding register block size
-        const len_type M_ext  = M.extent<T>(); // Equal to M_def for cache block sizes
+        const len_type M_def  = M.def(A.type());
+        const len_type M_max  = M.max(A.type()); // Equal to M_def for register block sizes
+        const len_type M_iota = M.iota(A.type()); // Equal to the corresponding register block size
         const len_type M_over = M_max-M_def;
-
-        TBLIS_ASSERT(M_ext == M_def);
 
         const len_type m_u = (Dim == DIM_M ? A.length(0) :
                               Dim == DIM_N ? B.length(1) :
@@ -38,52 +36,49 @@ struct partition
                                    /*DIM_K*/ B.length(0));
 
         subcomm->distribute_over_gangs({std::min(m_u, m_v), M_iota},
-        [&,A,B,C,beta](len_type m_first, len_type m_last)
+        [&](len_type m_first, len_type m_last)
         {
             auto child = this->child;
             auto local_A = A;
             auto local_B = B;
             auto local_C = C;
-            auto local_beta = beta;
 
-            auto length = [&](len_type m_u, len_type m_v)
+            auto length = [&](len_type m)
             {
-                (Dim == DIM_M ? local_A.length(0, m_u) :
-                 Dim == DIM_N ? local_B.length(1, m_u) :
-                      /*DIM_K*/ local_A.length(1, m_u));
-                (Dim == DIM_M ? local_C.length(0, m_v) :
-                 Dim == DIM_N ? local_C.length(1, m_v) :
-                      /*DIM_K*/ local_B.length(0, m_v));
+                (Dim == DIM_M ? local_A.length(0, m) :
+                 Dim == DIM_N ? local_B.length(1, m) :
+                      /*DIM_K*/ local_A.length(1, m));
+                (Dim == DIM_M ? local_C.length(0, m) :
+                 Dim == DIM_N ? local_C.length(1, m) :
+                      /*DIM_K*/ local_B.length(0, m));
             };
 
-            auto shift = [&](len_type m_u, len_type m_v)
+            auto shift = [&](len_type m, len_type n=0)
             {
-                (Dim == DIM_M ? local_A.shift(0, m_u) :
-                 Dim == DIM_N ? local_B.shift(1, m_u) :
-                      /*DIM_K*/ local_A.shift(1, m_u));
-                (Dim == DIM_M ? local_C.shift(0, m_v) :
-                 Dim == DIM_N ? local_C.shift(1, m_v) :
-                      /*DIM_K*/ local_B.shift(0, m_v));
+                (Dim == DIM_M ? local_A.shift_and_resize(0, m, n) :
+                 Dim == DIM_N ? local_B.shift_and_resize(1, m, n) :
+                      /*DIM_K*/ local_A.shift_and_resize(1, m, n));
+                (Dim == DIM_M ? local_C.shift_and_resize(0, m, n) :
+                 Dim == DIM_N ? local_C.shift_and_resize(1, m, n) :
+                      /*DIM_K*/ local_B.shift_and_resize(0, m, n));
             };
 
             len_type m_off = m_first;
             len_type m_len = m_last-m_first;
 
-            length(m_len, m_len);
-            shift(m_off, m_off);
+            shift(m_off, m_len);
 
             len_type M_cur = (m_len%M_def <= M_over ? M_max : M_def);
 
             while (m_off < m_last)
             {
                 len_type m_loc = std::min(m_last-m_off, M_cur);
-                length(m_loc, m_loc);
+                length(m_loc);
 
-                child(*subcomm, cfg, alpha, local_A, local_B, local_beta, local_C);
-                if (Dim == DIM_K) local_beta = 1.0;
+                child(*subcomm, cfg, local_A, local_B, local_C);
+                if (Dim == DIM_K) local_C.set_scaled();
 
-                length(0, 0);
-                shift(m_loc, m_loc);
+                shift(m_loc);
                 m_off += m_loc;
                 M_cur = M_def;
             }

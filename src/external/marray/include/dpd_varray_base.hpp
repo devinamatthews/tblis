@@ -28,12 +28,12 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
         typedef ctype* cptr;
 
     protected:
-        matrix<stride_type> size_;
-        matrix<len_type> len_;
-        matrix<len_type> off_;
-        matrix<stride_type> stride_;
+        dpd_stride_vector2 size_;
+        dpd_len_vector len_;
+        dpd_len_vector off_;
+        dpd_stride_vector stride_;
         dim_vector leaf_;
-        dim_vector parent_;
+        dim_vector2 parent_;
         dim_vector perm_;
         dim_vector depth_;
         pointer data_ = nullptr;
@@ -49,10 +49,10 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
 
         void reset()
         {
-            size_.reset();
-            len_.reset();
-            off_.reset();
-            stride_.reset();
+            size_.clear();
+            len_.clear();
+            off_.clear();
+            stride_.clear();
             leaf_.clear();
             parent_.clear();
             perm_.clear();
@@ -76,10 +76,10 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
                 typename dpd_varray_base<U, D, O>::pointer,pointer>>
         void reset(dpd_varray_base<U, D, O>& other)
         {
-            size_.reset(other.size_);
-            len_.reset(other.len_);
-            off_.reset(other.off_);
-            stride_.reset(other.stride_);
+            size_ = other.size_;
+            len_ = other.len_;
+            off_ = other.off_;
+            stride_ = other.stride_;
             leaf_ = other.leaf_;
             parent_ = other.parent_;
             perm_ = other.perm_;
@@ -114,10 +114,10 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
             irrep_ = irrep;
             nirrep_ = nirrep;
             layout_ = layout;
-            size_.reset({2*ndim-1, nirrep}, ROW_MAJOR);
-            len.slurp(len_, ROW_MAJOR);
-            off_.reset({ndim, nirrep}, ROW_MAJOR);
-            stride_.reset({ndim, nirrep}, 1, ROW_MAJOR);
+            size_.resize(2*ndim-1);
+            len.slurp(len_);
+            off_.resize(ndim);
+            stride_.resize(ndim, {1,1,1,1,1,1,1,1});
             leaf_.resize(ndim);
             parent_.resize(2*ndim-1);
             perm_.resize(ndim);
@@ -525,9 +525,11 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
         detail::enable_if_t<detail::are_dpd_indices_or_slices<Slices...>::value &&
                             (detail::sliced_dimension<Slices...>::value > 0),
                             dpd_marray_view<Type, detail::sliced_dimension<Slices...>::value>>
-        operator()(const Slices&... slices)
+        operator()(const Slices&...)
         {
             constexpr unsigned NDim = detail::sliced_dimension<Slices...>::value;
+
+            (void)NDim;
 
             abort();
             //TODO
@@ -646,7 +648,7 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
         row_view<const len_type> lengths(unsigned dim) const
         {
             MARRAY_ASSERT(dim < dimension());
-            return len_[perm_[dim]];
+            return row_view<const len_type>{{nirrep_}, &len_[perm_[dim]][0]};
         }
 
         matrix<len_type> lengths() const

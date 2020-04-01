@@ -9,12 +9,11 @@ namespace tblis
 {
 namespace internal
 {
-    
-template <typename T>
-void set(const communicator& comm, const config& cfg,
+
+void set(type_t type, const communicator& comm, const config& cfg,
          const len_vector& len_A,
-         T alpha, T* A, const stride_vector& stride_A);
-             
+         const scalar& alpha, char* A, const stride_vector& stride_A);
+
 }
 }
 

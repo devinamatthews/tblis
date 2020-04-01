@@ -10,10 +10,9 @@ namespace tblis
 namespace internal
 {
 
-template <typename T>
-void shift(const communicator& comm, const config& cfg,
-           T alpha, T beta, bool conj_A, const indexed_varray_view<T>& A,
-           const dim_vector&);
+void shift(type_t type, const communicator& comm, const config& cfg,
+           const scalar& alpha, const scalar& beta, bool conj_A,
+           const indexed_varray_view<char>& A, const dim_vector&);
 
 }
 }

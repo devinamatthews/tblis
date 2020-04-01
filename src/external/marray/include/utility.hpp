@@ -58,7 +58,11 @@ typedef MARRAY_STRIDE_TYPE stride_type;
 
 typedef short_vector<len_type,MARRAY_OPT_NDIM> len_vector;
 typedef short_vector<stride_type,MARRAY_OPT_NDIM> stride_vector;
+typedef short_vector<std::array<len_type,8>,MARRAY_OPT_NDIM> dpd_len_vector;
+typedef short_vector<std::array<stride_type,8>,MARRAY_OPT_NDIM> dpd_stride_vector;
+typedef short_vector<std::array<stride_type,8>,2*MARRAY_OPT_NDIM> dpd_stride_vector2;
 typedef short_vector<unsigned,MARRAY_OPT_NDIM> dim_vector;
+typedef short_vector<unsigned,2*MARRAY_OPT_NDIM> dim_vector2;
 typedef short_vector<len_type,MARRAY_OPT_NDIM> index_vector;
 typedef short_vector<unsigned,MARRAY_OPT_NDIM> irrep_vector;
 template <typename T>
@@ -360,7 +364,7 @@ namespace detail
     struct are_containers_of : are_containers_of_helper<T, Cs...> {};
 
     template <typename Iterator>
-    void inc_offsets_helper(unsigned i, Iterator) {}
+    void inc_offsets_helper(unsigned, Iterator) {}
 
     template <typename Iterator, typename Offset, typename... Offsets>
     void inc_offsets_helper(unsigned i, Iterator it, Offset& off0,
@@ -377,7 +381,7 @@ namespace detail
     }
 
     template <typename Pos, typename Iterator>
-    void dec_offsets_helper(unsigned i, const Pos&, Iterator) {}
+    void dec_offsets_helper(unsigned, const Pos&, Iterator) {}
 
     template <typename Pos, typename Iterator, typename Offset, typename... Offsets>
     void dec_offsets_helper(unsigned i, const Pos& pos, Iterator it,

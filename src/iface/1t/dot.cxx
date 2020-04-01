@@ -10,12 +10,13 @@
 namespace tblis
 {
 
-extern "C"
-{
-
-void tblis_tensor_dot(const tblis_comm* comm, const tblis_config* cfg,
-                      const tblis_tensor* A, const label_type* idx_A_,
-                      const tblis_tensor* B, const label_type* idx_B_,
+TBLIS_EXPORT
+void tblis_tensor_dot(const tblis_comm* comm,
+                      const tblis_config* cfg,
+                      const tblis_tensor* A,
+                      const label_type* idx_A_,
+                      const tblis_tensor* B,
+                      const label_type* idx_B_,
                       tblis_scalar* result)
 {
     TBLIS_ASSERT(A->type == B->type);
@@ -58,36 +59,28 @@ void tblis_tensor_dot(const tblis_comm* comm, const tblis_config* cfg,
 
     fold(len_AB, idx_AB, stride_A_AB, stride_B_AB);
 
-    TBLIS_WITH_TYPE_AS(A->type, T,
+    parallelize_if(
+    [&](const communicator& comm)
     {
-        parallelize_if(
-        [&](const communicator& comm)
-        {
-            internal::dot<T>(comm, get_config(cfg), len_AB,
-                             A->conj, static_cast<T*>(A->data), stride_A_AB,
-                             B->conj, static_cast<T*>(B->data), stride_B_AB,
-                             result->get<T>());
-        }, comm);
+        internal::dot(A->type, comm, get_config(cfg), len_AB,
+                      A->conj, reinterpret_cast<char*>(A->data), stride_A_AB,
+                      B->conj, reinterpret_cast<char*>(B->data), stride_B_AB,
+                      result->raw());
+    }, comm);
 
-        result->get<T>() *= A->alpha<T>()*B->alpha<T>();
-    })
-}
-
+    *result *= A->scalar*B->scalar;
 }
 
 template <typename T>
 void dot(const communicator& comm,
-         dpd_varray_view<const T> A, const label_type* idx_A_,
-         dpd_varray_view<const T> B, const label_type* idx_B_, T& result)
+         dpd_varray_view<const T> A, const label_vector& idx_A,
+         dpd_varray_view<const T> B, const label_vector& idx_B, T& result)
 {
     unsigned nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
 
     unsigned ndim_A = A.dimension();
     unsigned ndim_B = B.dimension();
-
-    std::string idx_A(idx_A_, idx_A_+ndim_A);
-    std::string idx_B(idx_B_, idx_B_+ndim_B);
 
     for (unsigned i = 1;i < ndim_A;i++)
         for (unsigned j = 0;j < i;j++)
@@ -119,27 +112,25 @@ void dot(const communicator& comm,
         }
     }
 
-    internal::dot<T>(comm, get_default_config(),
-                     false, A, idx_A_AB,
-                     false, B, idx_B_AB, result);
+    internal::dot(type_tag<T>::value, comm, get_default_config(),
+                  false, reinterpret_cast<const dpd_varray_view<char>&>(A), idx_A_AB,
+                  false, reinterpret_cast<const dpd_varray_view<char>&>(B), idx_B_AB,
+                  reinterpret_cast<char*>(&result));
 }
 
 #define FOREACH_TYPE(T) \
 template void dot(const communicator& comm, \
-                  dpd_varray_view<const T> A, const label_type* idx_A, \
-                  dpd_varray_view<const T> B, const label_type* idx_B, T& result);
+                  dpd_varray_view<const T> A, const label_vector& idx_A, \
+                  dpd_varray_view<const T> B, const label_vector& idx_B, T& result);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void dot(const communicator& comm,
-         indexed_varray_view<const T> A, const label_type* idx_A_,
-         indexed_varray_view<const T> B, const label_type* idx_B_, T& result)
+         indexed_varray_view<const T> A, const label_vector& idx_A,
+         indexed_varray_view<const T> B, const label_vector& idx_B, T& result)
 {
     unsigned ndim_A = A.dimension();
     unsigned ndim_B = B.dimension();
-
-    std::string idx_A(idx_A_, idx_A_+ndim_A);
-    std::string idx_B(idx_B_, idx_B_+ndim_B);
 
     for (unsigned i = 1;i < ndim_A;i++)
         for (unsigned j = 0;j < i;j++)
@@ -168,30 +159,28 @@ void dot(const communicator& comm,
                      B.length(idx_B_AB[i]));
     }
 
-    internal::dot<T>(comm, get_default_config(),
-                     false, A, idx_A_AB,
-                     false, B, idx_B_AB, result);
+    internal::dot(type_tag<T>::value, comm, get_default_config(),
+                  false, reinterpret_cast<const indexed_varray_view<char>&>(A), idx_A_AB,
+                  false, reinterpret_cast<const indexed_varray_view<char>&>(B), idx_B_AB,
+                  reinterpret_cast<char*>(&result));
 }
 
 #define FOREACH_TYPE(T) \
 template void dot(const communicator& comm, \
-                  indexed_varray_view<const T> A, const label_type* idx_A, \
-                  indexed_varray_view<const T> B, const label_type* idx_B, T& result);
+                  indexed_varray_view<const T> A, const label_vector& idx_A, \
+                  indexed_varray_view<const T> B, const label_vector& idx_B, T& result);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void dot(const communicator& comm,
-         indexed_dpd_varray_view<const T> A, const label_type* idx_A_,
-         indexed_dpd_varray_view<const T> B, const label_type* idx_B_, T& result)
+         indexed_dpd_varray_view<const T> A, const label_vector& idx_A,
+         indexed_dpd_varray_view<const T> B, const label_vector& idx_B, T& result)
 {
     unsigned nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
 
     unsigned ndim_A = A.dimension();
     unsigned ndim_B = B.dimension();
-
-    std::string idx_A(idx_A_, idx_A_+ndim_A);
-    std::string idx_B(idx_B_, idx_B_+ndim_B);
 
     for (unsigned i = 1;i < ndim_A;i++)
         for (unsigned j = 0;j < i;j++)
@@ -223,15 +212,16 @@ void dot(const communicator& comm,
         }
     }
 
-    internal::dot<T>(comm, get_default_config(),
-                     false, A, idx_A_AB,
-                     false, B, idx_B_AB, result);
+    internal::dot(type_tag<T>::value, comm, get_default_config(),
+                  false, reinterpret_cast<const indexed_dpd_varray_view<char>&>(A), idx_A_AB,
+                  false, reinterpret_cast<const indexed_dpd_varray_view<char>&>(B), idx_B_AB,
+                  reinterpret_cast<char*>(&result));
 }
 
 #define FOREACH_TYPE(T) \
 template void dot(const communicator& comm, \
-                  indexed_dpd_varray_view<const T> A, const label_type* idx_A, \
-                  indexed_dpd_varray_view<const T> B, const label_type* idx_B, T& result);
+                  indexed_dpd_varray_view<const T> A, const label_vector& idx_A, \
+                  indexed_dpd_varray_view<const T> B, const label_vector& idx_B, T& result);
 #include "configs/foreach_type.h"
 
 }

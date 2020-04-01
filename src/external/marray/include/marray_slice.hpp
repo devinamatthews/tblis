@@ -25,7 +25,7 @@ template <typename It1, typename It2, typename... Dims>
 void get_slice_dims_helper(It1 len, It2 stride,
                            const bcast_dim& dim, const Dims&... dims)
 {
-    *len = dim.len;
+    *len = 1;
     *stride = 0;
     get_slice_dims_helper(++len, ++stride, dims...);
 }
@@ -97,12 +97,12 @@ class marray_slice
         marray_slice(Array&& array, const range_t<I>& slice)
         : len_(array.lengths()), stride_(array.strides()),
           data_(array.data() + slice.front()*stride_[CurDim]),
-          dims_(slice_dim{slice.size(), slice.step()*stride_[CurDim]}) {}
+          dims_(slice_dim{(len_type)slice.size(), (len_type)slice.step()*stride_[CurDim]}) {}
 
         template <typename Array, typename=decltype(std::declval<Array>().lengths())>
-        marray_slice(Array&& array, bcast_t, len_type len)
+        marray_slice(Array&& array, bcast_t)
         : len_(array.lengths()), stride_(array.strides()),
-          data_(array.data()), dims_(bcast_dim{len}) {}
+          data_(array.data()), dims_(bcast_dim{}) {}
 
         marray_slice(const marray_slice<Type, NDim, NIndexed-1, Dims...>& parent, len_type i)
         : len_(parent.len_), stride_(parent.stride_),
@@ -114,14 +114,14 @@ class marray_slice
         : len_(parent.len_), stride_(parent.stride_),
           data_(parent.data_ + slice.front()*parent.stride_[CurDim]),
           dims_(std::tuple_cat(parent.dims_,
-                std::make_tuple(slice_dim{slice.size(), slice.step()*stride_[CurDim]}))) {}
+                std::make_tuple(slice_dim{(len_type)slice.size(), (len_type)slice.step()*stride_[CurDim]}))) {}
 
         template <typename... OldDims>
         marray_slice(const marray_slice<Type, NDim, NIndexed, OldDims...>& parent,
-                     bcast_t, len_type len)
+                     bcast_t)
         : len_(parent.len_), stride_(parent.stride_),
           data_(parent.data_),
-          dims_(std::tuple_cat(parent.dims_, std::make_tuple(bcast_dim{len}))) {}
+          dims_(std::tuple_cat(parent.dims_, std::make_tuple(bcast_dim{}))) {}
 
         const marray_slice& operator=(const marray_slice& other) const
         {
@@ -208,7 +208,7 @@ class marray_slice
         marray_slice<Type, NDim, NIndexed, Dims..., bcast_dim>
         operator[](bcast_t) const
         {
-            return {*this, slice::bcast, len_[NIndexed]};
+            return {*this, slice::bcast};
         }
 
         template <typename Arg, typename=

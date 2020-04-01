@@ -5338,6 +5338,44 @@ _ACEOF
 
 
 #
+# Check for openmp simd flag
+#
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OpenMP SIMD pragma" >&5
+$as_echo_n "checking for OpenMP SIMD pragma... " >&6; }
+omp_simd_flag="not supported"
+for flag in -fopenmp-simd -qopenmd-simd; do
+    CXXFLAGS_save="$CXXFLAGS"
+    CXXFLAGS="$CXXFLAGS $flag"
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+        double x[1000];
+        #pragma omp simd
+        for (int i = 0;i < 1000;i++)
+            x[i] = 0;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  omp_simd_flag="$flag"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    CXXFLAGS="$CXXFLAGS_save"
+done
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $omp_simd_flag" >&5
+$as_echo "$omp_simd_flag" >&6; }
+if test "x$omp_simd_flag" != "xnot supported"; then
+    CXXFLAGS="$CXXFLAGS $omp_simd_flag"
+fi
+
+#
 # Check for memkind
 #
 

@@ -11,9 +11,9 @@ namespace tblis
 namespace internal
 {
 
-template <typename T, typename U>
+template <typename T>
 void block_to_full(const communicator& comm, const config& cfg,
-                   const indexed_varray_view<T>& A, varray<U>& A2)
+                   const indexed_varray_view<T>& A, varray<T>& A2)
 {
     unsigned ndim_A = A.dimension();
     unsigned dense_ndim_A = A.dense_dimension();
@@ -37,15 +37,15 @@ void block_to_full(const communicator& comm, const config& cfg,
         for (unsigned i = dense_ndim_A;i < ndim_A;i++)
             data_A2 += idx_A[i-dense_ndim_A]*A2.stride(i);
 
-        add<U>(comm, cfg, {}, {}, dense_len_A,
-               factor_A, false,  data_A, {},  dense_stride_A,
-                      0, false, data_A2, {}, dense_stride_A2);
+        add(type_tag<T>::value, comm, cfg, {}, {}, dense_len_A,
+            factor_A, false, reinterpret_cast<char*>( data_A), {},  dense_stride_A,
+                T(0), false, reinterpret_cast<char*>(data_A2), {}, dense_stride_A2);
     }
 }
 
-template <typename T, typename U>
+template <typename T>
 void full_to_block(const communicator& comm, const config& cfg,
-                   const varray<U>& A2, const indexed_varray_view<T>& A)
+                   varray<T>& A2, const indexed_varray_view<T>& A)
 {
     unsigned ndim_A = A.dimension();
     unsigned dense_ndim_A = A.dense_dimension();
@@ -66,9 +66,9 @@ void full_to_block(const communicator& comm, const config& cfg,
         for (unsigned i = dense_ndim_A;i < ndim_A;i++)
             data_A2 += idx_A[i-dense_ndim_A]*A2.stride(i);
 
-        add<U>(comm, cfg, {}, {}, dense_len_A,
-               factor_A, false, data_A2, {}, dense_stride_A2,
-                      1, false,  data_A, {},  dense_stride_A);
+        add(type_tag<T>::value, comm, cfg, {}, {}, dense_len_A,
+            factor_A, false, reinterpret_cast<char*>(data_A2), {}, dense_stride_A2,
+                T(1), false, reinterpret_cast<char*>( data_A), {},  dense_stride_A);
     }
 }
 
@@ -262,8 +262,8 @@ void set_batch_indices(std::array<len_vector,N>& idx,
 }
 
 template <size_t N>
-void set_mixed_indices_helper(std::array<len_vector,N>& idx,
-                              std::array<stride_vector,N>& stride,
+void set_mixed_indices_helper(std::array<len_vector,N>&,
+                              std::array<stride_vector,N>&,
                               const viterator<0>&, const dim_vector&) {}
 
 template <unsigned I, size_t N, typename Group, typename... Args>
@@ -291,21 +291,23 @@ void set_mixed_indices(std::array<len_vector,N>& idx,
     set_mixed_indices_helper<0>(idx, stride, iter, off, args...);
 }
 
-template <typename T, unsigned N>
+template <unsigned N>
 struct index_set
 {
-    std::array<stride_type,N> key;
-    std::array<len_vector,N> idx;
-    stride_type offset;
-    T factor;
+    std::array<stride_type,N> key = {};
+    std::array<len_vector,N> idx = {};
+    stride_type offset = 0;
+    scalar factor{0.0};
 };
 
-template <typename T, unsigned N>
-struct group_indices : std::vector<index_set<T, N>>
+template <unsigned N>
+struct group_indices : std::vector<index_set<N>>
 {
     template <typename Array, typename... Args>
-    group_indices(const Array& A, const Args&... args)
+    group_indices(type_t type, const Array& A, const Args&... args)
     {
+        const len_type ts = type_size[type];
+
         len_vector mixed_len;
         dim_vector mixed_off;
         get_mixed_lengths(mixed_len, mixed_off, args...);
@@ -315,13 +317,20 @@ struct group_indices : std::vector<index_set<T, N>>
         viterator<0> iter(mixed_len);
         for (len_type i = 0;i < A.num_indices();i++)
         {
-            index_set<T, N> idx;
+            index_set<N> idx;
             std::array<stride_vector,N> idx_stride;
 
             set_batch_indices(idx.idx, idx_stride, A, i, args...);
 
-            idx.offset = A.data(i) - A.data(0);
-            idx.factor = A.factor(i);
+            idx.offset = (A.data(i) - A.data(0))/ts;
+
+            switch (type)
+            {
+                case TYPE_FLOAT:    idx.factor.reset(reinterpret_cast<const    float*>(&A.factor(0))[i]); break;
+                case TYPE_DOUBLE:   idx.factor.reset(reinterpret_cast<const   double*>(&A.factor(0))[i]); break;
+                case TYPE_SCOMPLEX: idx.factor.reset(reinterpret_cast<const scomplex*>(&A.factor(0))[i]); break;
+                case TYPE_DCOMPLEX: idx.factor.reset(reinterpret_cast<const dcomplex*>(&A.factor(0))[i]); break;
+            }
 
             while (iter.next())
             {
@@ -341,7 +350,7 @@ struct group_indices : std::vector<index_set<T, N>>
         }
 
         stl_ext::sort(*this,
-                      [](const index_set<T, N>& a, const index_set<T, N>& b)
+                      [](const index_set<N>& a, const index_set<N>& b)
                       {
                           return a.key < b.key;
                       });
@@ -349,7 +358,7 @@ struct group_indices : std::vector<index_set<T, N>>
 };
 
 template <unsigned I, unsigned N>
-void get_local_offset_helper(const len_vector& idx, const index_group<N>& group) {}
+void get_local_offset_helper(const len_vector&, const index_group<N>&) {}
 
 template <unsigned I, unsigned N, typename... Args>
 void get_local_offset_helper(const len_vector& idx, const index_group<N>& group,
@@ -384,49 +393,49 @@ template <bool AIsRange, bool BIsRange, bool CIsRange> struct call_match_body;
 template <> struct call_match_body<false, false, false>
 {
     template <typename Body>
-    call_match_body(Body&& body, stride_type next_A, stride_type next_B, stride_type next_C)
+    call_match_body(Body&& body, stride_type, stride_type, stride_type)
     { body(); }
 };
 
 template <> struct call_match_body<true, false, false>
 {
     template <typename Body>
-    call_match_body(Body&& body, stride_type next_A, stride_type next_B, stride_type next_C)
+    call_match_body(Body&& body, stride_type next_A, stride_type, stride_type)
     { body(next_A); }
 };
 
 template <> struct call_match_body<false, true, false>
 {
     template <typename Body>
-    call_match_body(Body&& body, stride_type next_A, stride_type next_B, stride_type next_C)
+    call_match_body(Body&& body, stride_type, stride_type next_B, stride_type)
     { body(next_B); }
 };
 
 template <> struct call_match_body<true, true, false>
 {
     template <typename Body>
-    call_match_body(Body&& body, stride_type next_A, stride_type next_B, stride_type next_C)
+    call_match_body(Body&& body, stride_type next_A, stride_type next_B, stride_type)
     { body(next_A, next_B); }
 };
 
 template <> struct call_match_body<false, false, true>
 {
     template <typename Body>
-    call_match_body(Body&& body, stride_type next_A, stride_type next_B, stride_type next_C)
+    call_match_body(Body&& body, stride_type, stride_type, stride_type next_C)
     { body(next_C); }
 };
 
 template <> struct call_match_body<true, false, true>
 {
     template <typename Body>
-    call_match_body(Body&& body, stride_type next_A, stride_type next_B, stride_type next_C)
+    call_match_body(Body&& body, stride_type next_A, stride_type, stride_type next_C)
     { body(next_A, next_C); }
 };
 
 template <> struct call_match_body<false, true, true>
 {
     template <typename Body>
-    call_match_body(Body&& body, stride_type next_A, stride_type next_B, stride_type next_C)
+    call_match_body(Body&& body, stride_type, stride_type next_B, stride_type next_C)
     { body(next_B, next_C); }
 };
 
@@ -437,12 +446,12 @@ template <> struct call_match_body<true, true, true>
     { body(next_A, next_B, next_C); }
 };
 
-template <bool AIsRange, bool BIsRange, typename T, unsigned NA, unsigned NB,
+template <bool AIsRange, bool BIsRange, unsigned NA, unsigned NB,
           typename Body>
 void for_each_match(stride_type& idx_A, stride_type nidx_A,
-                   const group_indices<T,NA>& indices_A, unsigned iA,
+                   const group_indices<NA>& indices_A, unsigned iA,
                    stride_type& idx_B, stride_type nidx_B,
-                   const group_indices<T,NB>& indices_B, unsigned iB,
+                   const group_indices<NB>& indices_B, unsigned iB,
                    Body&& body)
 {
     while (idx_A < nidx_A && idx_B < nidx_B)
@@ -482,14 +491,14 @@ void for_each_match(stride_type& idx_A, stride_type nidx_A,
     }
 }
 
-template <bool AIsRange, bool BIsRange, bool CIsRange, typename T,
+template <bool AIsRange, bool BIsRange, bool CIsRange,
           unsigned NA, unsigned NB, unsigned NC, typename Body>
 void for_each_match(stride_type& idx_A, stride_type nidx_A,
-                   const group_indices<T,NA>& indices_A, unsigned iA,
+                   const group_indices<NA>& indices_A, unsigned iA,
                    stride_type& idx_B, stride_type nidx_B,
-                   const group_indices<T,NB>& indices_B, unsigned iB,
+                   const group_indices<NB>& indices_B, unsigned iB,
                    stride_type& idx_C, stride_type nidx_C,
-                   const group_indices<T,NC>& indices_C, unsigned iC,
+                   const group_indices<NC>& indices_C, unsigned iC,
                    Body&& body)
 {
     while (idx_A < nidx_A && idx_B < nidx_B && idx_C < nidx_C)

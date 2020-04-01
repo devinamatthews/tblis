@@ -72,7 +72,7 @@ call(Func&& f, Arg&& arg, Args&&... args)
 template <typename Func, typename Arg, typename... Args>
 detail::enable_if_t<std::is_same<decltype(std::declval<Func&&>()(
                         std::declval<Arg&&>())),void>::value>
-call(Func&& f, Arg&& arg, Args&&... args)
+call(Func&& f, Arg&& arg, Args&&...)
 {
     f(std::forward<Arg>(arg));
 }
@@ -307,6 +307,8 @@ class array_1d
             virtual ~adaptor_base() {}
 
             virtual void slurp(T*) const = 0;
+
+            virtual adaptor_base& move(adaptor_base& other) = 0;
         };
 
         template <typename U>
@@ -315,58 +317,77 @@ class array_1d
             U data;
 
             adaptor(U data)
-            : data(data), adaptor_base(detail::length(data)) {}
+            : adaptor_base(detail::length(data)), data(std::move(data)) {}
 
             virtual void slurp(T* x) const override
             {
                 std::copy_n(data.begin(), this->len, x);
             }
+
+            virtual adaptor_base& move(adaptor_base& other) override
+            {
+            	return *(new (static_cast<adaptor*>(&other)) adaptor(std::move(*this)));
+            }
         };
 
-        std::unique_ptr<adaptor_base> adaptor_;
+        constexpr static size_t _s1 = sizeof(adaptor<T*&>);
+        constexpr static size_t _s2 = sizeof(adaptor<short_vector<T,MARRAY_OPT_NDIM>>);
+        constexpr static size_t max_adaptor_size = _s1 > _s2 ? _s1 : _s2;
+
+        std::aligned_storage_t<max_adaptor_size> raw_adaptor_;
+        adaptor_base& adaptor_;
+
+        template <typename U>
+        adaptor_base& adapt(U&& data)
+        {
+            return *(new (&raw_adaptor_) adaptor<U>(data));
+        }
 
     public:
         array_1d()
-        : adaptor_(new adaptor<std::initializer_list<T>>({})) {}
+        : adaptor_(adapt(std::array<T,0>{})) {}
 
-        array_1d(std::initializer_list<T> data)
-        : adaptor_(new adaptor<std::initializer_list<T>>(data)) {}
+        array_1d(const array_1d& other)
+        : adaptor_(other.adaptor_.move(reinterpret_cast<adaptor_base&>(raw_adaptor_))) {}
 
-        template <typename U, typename=detail::enable_if_assignable_t<T&,U>>
-        array_1d(std::initializer_list<U> data)
-        : adaptor_(new adaptor<std::initializer_list<U>>(data)) {}
+        template <typename... Args, typename =
+            detail::enable_if_t<detail::are_convertible<T,Args...>::value>>
+        array_1d(Args&&... args)
+        : adaptor_(adapt(short_vector<T,MARRAY_OPT_NDIM>{(T)args...})) {}
 
         template <typename U, typename=detail::enable_if_1d_container_of_t<U,T>>
         array_1d(const U& data)
-        : adaptor_(new adaptor<const U&>(data)) {}
+        : adaptor_(adapt(data)) {}
+
+        ~array_1d() { adaptor_.~adaptor_base(); }
 
         template <size_t N>
         void slurp(std::array<T, N>& x) const
         {
-            MARRAY_ASSERT(N >= size());
-            adaptor_->slurp(x.data());
+            MARRAY_ASSERT((len_type)N >= size());
+            adaptor_.slurp(x.data());
         }
 
         void slurp(std::vector<T>& x) const
         {
             x.resize(size());
-            adaptor_->slurp(x.data());
+            adaptor_.slurp(x.data());
         }
 
         template <size_t N>
         void slurp(short_vector<T, N>& x) const
         {
             x.resize(size());
-            adaptor_->slurp(x.data());
+            adaptor_.slurp(x.data());
         }
 
         void slurp(row<T>& x) const
         {
             x.reset({size()});
-            adaptor_->slurp(x.data());
+            adaptor_.slurp(x.data());
         }
 
-        len_type size() const { return adaptor_->len; }
+        len_type size() const { return adaptor_.len; }
 };
 
 template <typename T>
@@ -386,121 +407,157 @@ class array_2d
             virtual void slurp(std::vector<std::vector<T>>&) const = 0;
         };
 
-        template <typename U, typename=void> struct adaptor;
+        template <typename U>
+        struct adaptor : adaptor_base
+        {
+            static constexpr bool IsMatrix = is_matrix<typename std::decay<U>::type>::value;
 
-        std::unique_ptr<adaptor_base> adaptor_;
+            U data;
+
+            adaptor(U data)
+            : adaptor_base(detail::length(data, 0), detail::length(data, 1)),
+              data(data) {}
+
+            template <bool IsMatrix_ = IsMatrix>
+            typename std::enable_if<!IsMatrix_>::type
+            do_slurp(T* x, len_type rs, len_type cs) const
+            {
+                int i = 0;
+                for (auto it = this->data.begin(), end = this->data.end();it != end;++it)
+                {
+                    int j = 0;
+                    for (auto it2 = it->begin(), end2 = it->end();it2 != end2;++it2)
+                    {
+                        x[i*rs + j*cs] = *it2;
+                        j++;
+                    }
+                    i++;
+                }
+            }
+
+            template <bool IsMatrix_ = IsMatrix>
+            typename std::enable_if<!IsMatrix_>::type
+            do_slurp(std::vector<std::vector<T>>& x) const
+            {
+                x.clear();
+                for (auto it = this->data.begin(), end = this->data.end();it != end;++it)
+                {
+                    x.emplace_back(it->begin(), it->end());
+                }
+            }
+
+            template <bool IsMatrix_ = IsMatrix>
+            typename std::enable_if<IsMatrix_>::type
+            do_slurp(T* x, len_type rs, len_type cs) const
+            {
+                for (len_type i = 0;i < this->len[0];i++)
+                {
+                    for (len_type j = 0;j < this->len[1];j++)
+                    {
+                        x[i*rs + j*cs] = this->data[i][j];
+                    }
+                }
+            }
+
+            template <bool IsMatrix_ = IsMatrix>
+            typename std::enable_if<IsMatrix_>::type
+            do_slurp(std::vector<std::vector<T>>& x) const
+            {
+                x.resize(this->len[0]);
+                for (len_type i = 0;i < this->len[0];i++)
+                {
+                    x[i].resize(this->len[1]);
+                    for (len_type j = 0;j < this->len[1];j++)
+                    {
+                        x[i][j] = this->data[i][j];
+                    }
+                }
+            }
+
+            virtual void slurp(T* x, len_type rs, len_type cs) const override
+            {
+                do_slurp(x, rs, cs);
+            }
+
+            virtual void slurp(std::vector<std::vector<T>>& x) const override
+            {
+                do_slurp(x);
+            }
+        };
+
+        constexpr static size_t _s1 = sizeof(adaptor<std::initializer_list<std::initializer_list<int>>>);
+        constexpr static size_t _s2 = sizeof(adaptor<const matrix<int>&>);
+        constexpr static size_t max_adaptor_size = _s1 > _s2 ? _s1 : _s2;
+
+        std::aligned_storage_t<max_adaptor_size> raw_adaptor_;
+        adaptor_base& adaptor_;
+
+        template <typename U>
+        adaptor_base& adapt(U data)
+        {
+            return *(new (&raw_adaptor_) adaptor<U>(data));
+        }
+
+        adaptor_base& adapt(const array_2d& other)
+        {
+            memcpy(&raw_adaptor_, &other.raw_adaptor_, sizeof(raw_adaptor_));
+
+            return *reinterpret_cast<adaptor_base*>(
+                reinterpret_cast<char*>(this) +
+                (reinterpret_cast<const char*>(&other.adaptor_) -
+                 reinterpret_cast<const char*>(&other)));
+        }
 
     public:
-        array_2d()
-        : adaptor_(new adaptor<std::initializer_list<std::initializer_list<T>>>({{}})) {}
+        array_2d(const array_2d& other)
+        : adaptor_(adapt(other)) {}
 
         array_2d(std::initializer_list<std::initializer_list<T>> data)
-        : adaptor_(new adaptor<std::initializer_list<std::initializer_list<T>>>(data)) {}
+        : adaptor_(adapt<std::initializer_list<std::initializer_list<T>>>(data)) {}
 
         template <typename U, typename=detail::enable_if_assignable_t<T&,U>>
         array_2d(std::initializer_list<std::initializer_list<U>> data)
-        : adaptor_(new adaptor<std::initializer_list<std::initializer_list<U>>>(data)) {}
+        : adaptor_(adapt<std::initializer_list<std::initializer_list<U>>>(data)) {}
 
         template <typename U, typename=detail::enable_if_1d_container_of_t<U,T>>
         array_2d(std::initializer_list<U> data)
-        : adaptor_(new adaptor<std::initializer_list<U>>(data)) {}
+        : adaptor_(adapt<std::initializer_list<U>>(data)) {}
 
         template <typename U, typename=detail::enable_if_2d_container_of_t<U,T>>
         array_2d(const U& data)
-        : adaptor_(new adaptor<const U&>(data)) {}
+        : adaptor_(adapt<const U&>(data)) {}
 
-        void slurp(std::vector<std::vector<T>>& x) const { adaptor_->slurp(x); }
+        ~array_2d() { adaptor_.~adaptor_base(); }
+
+        void slurp(std::vector<std::vector<T>>& x) const { adaptor_.slurp(x); }
 
         template <size_t M, size_t N>
         void slurp(std::array<std::array<T, N>, M>& x) const
         {
-            MARRAY_ASSERT(M >= length(0));
-            MARRAY_ASSERT(N >= length(1));
-            adaptor_->slurp(&x[0][0], N, 1);
+            MARRAY_ASSERT((len_type)M >= length(0));
+            MARRAY_ASSERT((len_type)N >= length(1));
+            adaptor_.slurp(&x[0][0], N, 1);
+        }
+
+        template <size_t M, size_t N>
+        void slurp(short_vector<std::array<T, N>, M>& x) const
+        {
+            x.resize(length(0));
+            MARRAY_ASSERT((len_type)N >= length(1));
+            adaptor_.slurp(&x[0][0], N, 1);
         }
 
         void slurp(matrix<T>& x, layout layout = DEFAULT) const
         {
             x.reset({length(0), length(1)}, layout);
-            adaptor_->slurp(x.data(), x.stride(0), x.stride(1));
+            adaptor_.slurp(x.data(), x.stride(0), x.stride(1));
         }
 
         len_type length(unsigned dim) const
         {
             MARRAY_ASSERT(dim < 2);
-            return adaptor_->len[dim];
+            return adaptor_.len[dim];
         }
-};
-
-template <typename T>
-template <typename U>
-struct array_2d<T>::adaptor<U, enable_if_t<!is_matrix<typename std::decay<U>::type>::value>> : array_2d<T>::adaptor_base
-{
-    U data;
-
-    adaptor(U data)
-    : data(data), array_2d<T>::adaptor_base(detail::length(data, 0),
-                                            detail::length(data, 1)) {}
-
-    virtual void slurp(T* x, len_type rs, len_type cs) const override
-    {
-        int i = 0;
-        for (auto it = data.begin(), end = data.end();it != end;++it)
-        {
-            int j = 0;
-            for (auto it2 = it->begin(), end2 = it->end();it2 != end2;++it2)
-            {
-                x[i*rs + j*cs] = *it2;
-                j++;
-            }
-            i++;
-        }
-    }
-
-    virtual void slurp(std::vector<std::vector<T>>& x) const override
-    {
-        x.clear();
-        for (auto it = data.begin(), end = data.end();it != end;++it)
-        {
-            x.emplace_back(it->begin(), it->end());
-        }
-    }
-};
-
-template <typename T>
-template <typename U>
-struct array_2d<T>::adaptor<U, enable_if_t<is_matrix<typename std::decay<U>::type>::value>> : array_2d<T>::adaptor_base
-{
-    U data;
-    using array_2d<T>::adaptor_base::len;
-
-    adaptor(U data)
-    : data(data), array_2d<T>::adaptor_base(detail::length(data, 0),
-                                            detail::length(data, 1)) {}
-
-    virtual void slurp(T* x, len_type rs, len_type cs) const override
-    {
-        for (len_type i = 0;i < len[0];i++)
-        {
-            for (len_type j = 0;j < len[1];j++)
-            {
-                x[i*rs + j*cs] = data[i][j];
-            }
-        }
-    }
-
-    virtual void slurp(std::vector<std::vector<T>>& x) const override
-    {
-        x.resize(len[0]);
-        for (len_type i = 0;i < len[0];i++)
-        {
-            x[i].resize(len[1]);
-            for (len_type j = 0;j < len[1];j++)
-            {
-                x[i][j] = data[i][j];
-            }
-        }
-    }
 };
 
 }
@@ -678,7 +735,7 @@ class marray_base
         strides(const detail::array_1d<len_type>& len_, layout layout = DEFAULT)
         {
             //TODO: add alignment option
-            
+
             MARRAY_ASSERT(len_.size() == NDim);
 
             std::array<len_type, NDim> len;
@@ -704,7 +761,7 @@ class marray_base
         static stride_type size(const detail::array_1d<len_type>& len_)
         {
             //TODO: add alignment option
-            
+
             len_vector len;
             len_.slurp(len);
 
@@ -1264,6 +1321,7 @@ class marray_base
         detail::enable_if_t<N==1, reference>
         front(unsigned dim)
         {
+            (void)dim;
             MARRAY_ASSERT(dim == 0);
             return front();
         }
@@ -1362,6 +1420,7 @@ class marray_base
         detail::enable_if_t<N==1, reference>
         back(unsigned dim)
         {
+            (void)dim;
             MARRAY_ASSERT(dim == 0);
             return back();
         }
@@ -1491,7 +1550,7 @@ class marray_base
         marray_slice<ctype, NDim, 0, bcast_dim>
         operator[](bcast_t) const
         {
-            return {*this, slice::bcast, len_[0]};
+            return {*this, slice::bcast};
         }
 
         marray_slice<Type, NDim, 0, bcast_dim>

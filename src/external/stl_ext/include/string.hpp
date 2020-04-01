@@ -55,15 +55,15 @@ inline string& translate(string& s, const string& from, const string& to)
     unsigned char trans[256];
     if (s.size() < 256)
     {
-        for (int i = 0;i < s.size();i++) trans[(unsigned char)s[i]] = s[i];
+        for (unsigned i = 0;i < s.size();i++) trans[(unsigned char)s[i]] = s[i];
     }
     else
     {
-        for (int i = 0;i < 256;i++) trans[i] = i;
+        for (unsigned i = 0;i < 256;i++) trans[i] = i;
     }
 
-    for (int i = 0;i < n;i++) trans[(unsigned char)from[i]] = to[i];
-    for (int i = 0;i < s.size();i++) s[i] = trans[(unsigned char)s[i]];
+    for (unsigned i = 0;i < n;i++) trans[(unsigned char)from[i]] = to[i];
+    for (unsigned i = 0;i < s.size();i++) s[i] = trans[(unsigned char)s[i]];
 
     return s;
 }

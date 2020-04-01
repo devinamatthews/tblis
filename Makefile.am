@@ -1,21 +1,6 @@
 lib_LTLIBRARIES = lib/libtblis.la
 lib_libtblis_la_SOURCES = \
     \
-    src/iface/1v/add.cxx \
-    src/iface/1v/dot.cxx \
-    src/iface/1v/mult.cxx \
-    src/iface/1v/reduce.cxx \
-    src/iface/1v/scale.cxx \
-    src/iface/1v/set.cxx \
-    src/iface/1v/shift.cxx \
-    \
-    src/iface/1m/add.cxx \
-    src/iface/1m/dot.cxx \
-    src/iface/1m/reduce.cxx \
-    src/iface/1m/scale.cxx \
-    src/iface/1m/set.cxx \
-    src/iface/1m/shift.cxx \
-    \
     src/iface/1t/add.cxx \
     src/iface/1t/dot.cxx \
     src/iface/1t/reduce.cxx \
@@ -23,26 +8,11 @@ lib_libtblis_la_SOURCES = \
     src/iface/1t/set.cxx \
     src/iface/1t/shift.cxx \
     \
-    src/iface/2m/mult.cxx \
-    \
-    src/iface/3m/mult.cxx \
-    \
     src/iface/3t/mult.cxx \
     \
-    src/internal/1v/add.cxx \
-    src/internal/1v/dot.cxx \
-    src/internal/1v/mult.cxx \
-    src/internal/1v/reduce.cxx \
-    src/internal/1v/scale.cxx \
-    src/internal/1v/set.cxx \
-    src/internal/1v/shift.cxx \
-    \
-    src/internal/1m/add.cxx \
-    src/internal/1m/dot.cxx \
-    src/internal/1m/reduce.cxx \
-    src/internal/1m/scale.cxx \
-    src/internal/1m/set.cxx \
-    src/internal/1m/shift.cxx \
+    src/internal/0/add.cxx \
+    src/internal/0/mult.cxx \
+    src/internal/0/reduce.cxx \
     \
     src/internal/1t/dense/add.cxx \
     src/internal/1t/dense/dot.cxx \
@@ -72,10 +42,6 @@ lib_libtblis_la_SOURCES = \
     src/internal/1t/indexed_dpd/set.cxx \
     src/internal/1t/indexed_dpd/shift.cxx \
     \
-    src/internal/2m/mult.cxx \
-    \
-    src/internal/3m/mult.cxx \
-    \
     src/internal/3t/dense/mult.cxx \
     \
     src/internal/3t/dpd/mult.cxx \
@@ -88,6 +54,7 @@ lib_libtblis_la_SOURCES = \
     \
     src/util/basic_types.cxx \
     src/util/configs.cxx \
+    src/util/gemm_thread.cxx \
     src/util/cpuid.cxx \
     src/util/env.cxx \
     src/util/random.cxx \
@@ -111,26 +78,6 @@ memoryinclude_HEADERS = \
     src/memory/memory_pool.hpp \
     src/memory/stack_allocator.hpp
 
-iface1vincludedir = $(pkgincludedir)/iface/1v
-iface1vinclude_HEADERS = \
-    \
-    src/iface/1v/add.h \
-    src/iface/1v/dot.h \
-    src/iface/1v/reduce.h \
-    src/iface/1v/scale.h \
-    src/iface/1v/set.h \
-    src/iface/1v/shift.h
-
-iface1mincludedir = $(pkgincludedir)/iface/1m
-iface1minclude_HEADERS = \
-    \
-    src/iface/1m/add.h \
-    src/iface/1m/dot.h \
-    src/iface/1m/reduce.h \
-    src/iface/1m/scale.h \
-    src/iface/1m/set.h \
-    src/iface/1m/shift.h
-
 iface1tincludedir = $(pkgincludedir)/iface/1t
 iface1tinclude_HEADERS = \
     \
@@ -140,11 +87,6 @@ iface1tinclude_HEADERS = \
     src/iface/1t/scale.h \
     src/iface/1t/set.h \
     src/iface/1t/shift.h
-
-iface3mincludedir = $(pkgincludedir)/iface/3m
-iface3minclude_HEADERS = \
-    \
-    src/iface/3m/mult.h
 
 iface3tincludedir = $(pkgincludedir)/iface/3t
 iface3tinclude_HEADERS = \

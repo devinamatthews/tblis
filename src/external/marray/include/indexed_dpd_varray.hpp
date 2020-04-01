@@ -346,11 +346,11 @@ class indexed_dpd_varray : public indexed_dpd_varray_base<Type, indexed_dpd_varr
             idx.slurp(idx_, ROW_MAJOR);
             layout_ = layout;
             idx_irrep.slurp(idx_irrep_);
-            idx_len_.reset({idx_ndim, nirrep}, ROW_MAJOR);
-            size_.reset({2*dense_ndim-1, nirrep}, ROW_MAJOR);
-            len.slurp(len_, ROW_MAJOR);
-            off_.reset({dense_ndim, nirrep}, ROW_MAJOR);
-            stride_.reset({dense_ndim, nirrep}, 1, ROW_MAJOR);
+            idx_len_.resize(idx_ndim);
+            size_.resize(2*dense_ndim-1);
+            len.slurp(len_);
+            off_.resize(dense_ndim);
+            stride_.resize(dense_ndim, {1,1,1,1,1,1,1,1});
             leaf_.resize(dense_ndim);
             parent_.resize(2*dense_ndim-1);
             perm_.resize(dense_ndim);

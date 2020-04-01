@@ -283,6 +283,7 @@ class varray : public varray_base<Type, varray<Type, Allocator>, true>
 
             for (unsigned i = 0, j = 0;i < dimension();i++)
             {
+                (void)j;
                 MARRAY_ASSERT(i == dim || len_[i] == x.length(j++));
             }
 

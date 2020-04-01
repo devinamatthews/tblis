@@ -11,17 +11,16 @@ namespace tblis
 namespace internal
 {
 
-template <typename T, typename U>
+template <typename T>
 void block_to_full(const communicator& comm, const config& cfg,
-                   const indexed_dpd_varray_view<T>& A, varray<U>& A2)
+                   const indexed_dpd_varray_view<T>& A, varray<T>& A2)
 {
     unsigned nirrep = A.num_irreps();
     unsigned ndim_A = A.dimension();
     unsigned dense_ndim_A = A.dense_dimension();
-    unsigned idx_ndim_A = A.indexed_dimension();
 
     len_vector len_A(ndim_A);
-    matrix<len_type> off_A({ndim_A, nirrep});
+    matrix<len_type> off_A{{ndim_A, nirrep}};
     for (unsigned i = 0;i < ndim_A;i++)
     {
         for (unsigned irrep = 0;irrep < nirrep;irrep++)
@@ -56,23 +55,22 @@ void block_to_full(const communicator& comm, const config& cfg,
                 data_A2 += (idx_A[i-dense_ndim_A] +
                     off_A[i][A.indexed_irrep(i-dense_ndim_A)])*A2.stride(i);
 
-            add<U>(comm, cfg, {}, {}, dense_len_A,
-                   factor_A, false,  data_A, {},  dense_stride_A,
-                          0, false, data_A2, {}, dense_stride_A2);
+            add(type_tag<T>::value, comm, cfg, {}, {}, dense_len_A,
+                factor_A, false, reinterpret_cast<char*>( data_A), {},  dense_stride_A,
+                    T(0), false, reinterpret_cast<char*>(data_A2), {}, dense_stride_A2);
         }
     });
 }
 
-template <typename T, typename U>
+template <typename T>
 void full_to_block(const communicator& comm, const config& cfg,
-                   const varray<U>& A2, const indexed_dpd_varray_view<T>& A)
+                   varray<T>& A2, const indexed_dpd_varray_view<T>& A)
 {
     unsigned nirrep = A.num_irreps();
     unsigned ndim_A = A.dimension();
     unsigned dense_ndim_A = A.dense_dimension();
-    unsigned idx_ndim_A = A.indexed_dimension();
 
-    matrix<len_type> off_A({ndim_A, nirrep});
+    matrix<len_type> off_A{{ndim_A, nirrep}};
     for (unsigned i = 0;i < ndim_A;i++)
     {
         len_type off = 0;
@@ -105,9 +103,9 @@ void full_to_block(const communicator& comm, const config& cfg,
                 data_A2 += (idx_A[i-dense_ndim_A] +
                     off_A[i][A.indexed_irrep(i-dense_ndim_A)])*A2.stride(i);
 
-            add<U>(comm, cfg, {}, {}, dense_len_A,
-                   factor_A, false, data_A2, {}, dense_stride_A2,
-                          1, false,  data_A, {},  dense_stride_A);
+            add(type_tag<T>::value, comm, cfg, {}, {}, dense_len_A,
+                factor_A, false, reinterpret_cast<char*>(data_A2), {}, dense_stride_A2,
+                    T(1), false, reinterpret_cast<char*>( data_A), {},  dense_stride_A);
         }
     });
 }
@@ -119,7 +117,7 @@ void assign_dense_idx_helper(unsigned, dpd_index_group<N>&) {}
 
 template <unsigned I, unsigned N, typename T, typename... Args>
 void assign_dense_idx_helper(unsigned i, dpd_index_group<N>& group,
-                             const indexed_dpd_varray_view<T>& A,
+                             const indexed_dpd_varray_view<T>&,
                              const dim_vector& idx_A, const Args&... args)
 {
     group.dense_idx[I].push_back(idx_A[i]);
@@ -308,16 +306,16 @@ void assign_irreps(const dpd_index_group<N>& group, Args&... args)
 }
 
 template <unsigned I, unsigned N>
-void get_local_geometry_helper(const len_vector& idx,
-                               const dpd_index_group<N>& group,
-                               len_vector& len) {}
+void get_local_geometry_helper(const len_vector&,
+                               const dpd_index_group<N>&,
+                               len_vector&) {}
 
 template <unsigned I, unsigned N, typename T, typename... Args>
 void get_local_geometry_helper(const len_vector& idx,
                                const dpd_index_group<N>& group,
                                len_vector& len,  const varray_view<T>& local_A,
                                stride_vector& stride,
-                               unsigned i, Args&&... args)
+                               unsigned, Args&&... args)
 {
     if (I == 0)
         len = stl_ext::select_from(local_A.lengths(), group.dense_idx[I]);
@@ -335,8 +333,8 @@ void get_local_geometry(const len_vector& idx, const dpd_index_group<N>& group,
 }
 
 template <unsigned I, unsigned N>
-void get_local_offset_helper(const len_vector& idx,
-                             const dpd_index_group<N>& group) {}
+void get_local_offset_helper(const len_vector&,
+                             const dpd_index_group<N>&) {}
 
 template <unsigned I, unsigned N, typename T, typename... Args>
 void get_local_offset_helper(const len_vector& idx,

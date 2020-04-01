@@ -78,15 +78,15 @@ REPLICATED_TEMPLATED_TEST_CASE(reduce, R, T, all_types)
 
     for (auto op : ops)
     {
-        reduce<T>(op.first, A, idx_A.data(), ref_val, ref_idx);
+        reduce(op.first, A, idx_A, ref_val, ref_idx);
 
-        reduce_ref<T>(op.first, NA, data, blas_val, blas_idx);
+        reduce_ref(op.first, NA, data, blas_val, blas_idx);
 
         check(op.second, ref_idx, blas_idx, ref_val, blas_val, NA);
     }
 
     A = T(1);
-    reduce<T>(REDUCE_SUM, A, idx_A.data(), ref_val, ref_idx);
+    reduce(REDUCE_SUM, A, idx_A, ref_val, ref_idx);
     check("COUNT", ref_val, NA, NA);
 }
 
@@ -107,10 +107,10 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_reduce, R, T, all_types)
     for (auto op : ops)
     {
         dpd_impl = dpd_impl_t::FULL;
-        reduce<T>(op.first, A, idx_A.data(), ref_val, ref_idx);
+        reduce<T>(op.first, A, idx_A, ref_val, ref_idx);
 
         dpd_impl = dpd_impl_t::BLOCKED;
-        reduce<T>(op.first, A, idx_A.data(), calc_val, calc_idx);
+        reduce<T>(op.first, A, idx_A, calc_val, calc_idx);
 
         check(op.second, ref_idx, calc_idx, ref_val, calc_val, NA);
     }
@@ -133,10 +133,10 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_reduce, R, T, all_types)
     for (auto op : ops)
     {
         dpd_impl = dpd_impl_t::FULL;
-        reduce<T>(op.first, A, idx_A.data(), ref_val, ref_idx);
+        reduce<T>(op.first, A, idx_A, ref_val, ref_idx);
 
         dpd_impl = dpd_impl_t::BLOCKED;
-        reduce<T>(op.first, A, idx_A.data(), calc_val, calc_idx);
+        reduce<T>(op.first, A, idx_A, calc_val, calc_idx);
 
         check(op.second, ref_idx, calc_idx, ref_val, calc_val, NA);
     }
@@ -159,10 +159,10 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_reduce, R, T, all_types)
     for (auto op : ops)
     {
         dpd_impl = dpd_impl_t::FULL;
-        reduce<T>(op.first, A, idx_A.data(), ref_val, ref_idx);
+        reduce<T>(op.first, A, idx_A, ref_val, ref_idx);
 
         dpd_impl = dpd_impl_t::BLOCKED;
-        reduce<T>(op.first, A, idx_A.data(), calc_val, calc_idx);
+        reduce<T>(op.first, A, idx_A, calc_val, calc_idx);
 
         check(op.second, ref_idx, calc_idx, ref_val, calc_val, NA);
     }

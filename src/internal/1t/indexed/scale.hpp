@@ -10,9 +10,8 @@ namespace tblis
 namespace internal
 {
 
-template <typename T>
-void scale(const communicator& comm, const config& cfg,
-           T alpha, bool conj_A, const indexed_varray_view<T>& A,
+void scale(type_t type, const communicator& comm, const config& cfg,
+           const scalar& alpha, bool conj_A, const indexed_varray_view<char>& A,
            const dim_vector&);
 
 }

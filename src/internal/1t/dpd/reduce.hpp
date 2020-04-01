@@ -10,10 +10,9 @@ namespace tblis
 namespace internal
 {
 
-template <typename T>
-void reduce(const communicator& comm, const config& cfg, reduce_t op,
-            const dpd_varray_view<const T>& A, const dim_vector&,
-            T& result, len_type& idx);
+void reduce(type_t type, const communicator& comm, const config& cfg, reduce_t op,
+            const dpd_varray_view<char>& A, const dim_vector& idx_A,
+            char* result, len_type& idx);
 
 }
 }

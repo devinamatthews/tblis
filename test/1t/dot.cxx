@@ -30,19 +30,19 @@ REPLICATED_TEMPLATED_TEST_CASE(dot, R, T, all_types)
 
     auto neps = prod(A.lengths());
 
-    add<T>(T(1.0), A, idx_A.data(), T(0.0), B, idx_B.data());
+    add(A, idx_A, B, idx_B);
     B.for_each_element([](T& e) { e = tblis::conj(e); });
-    T ref_val = reduce<T>(REDUCE_NORM_2, A, idx_A.data()).first;
-    T calc_val = dot<T>(A, idx_A.data(), B, idx_B.data());
+    T ref_val = reduce<T>(REDUCE_NORM_2, A, idx_A);
+    T calc_val = dot<T>(A, idx_A, B, idx_B);
     check("NRM2", ref_val*ref_val, calc_val, neps);
 
     B = T(1);
-    ref_val = reduce<T>(REDUCE_SUM, A, idx_A.data()).first;
-    calc_val = dot<T>(A, idx_A.data(), B, idx_B.data());
+    ref_val = reduce<T>(REDUCE_SUM, A, idx_A);
+    calc_val = dot<T>(A, idx_A, B, idx_B);
     check("UNIT", ref_val, calc_val, neps);
 
     B = T(0);
-    calc_val = dot<T>(A, idx_A.data(), B, idx_B.data());
+    calc_val = dot<T>(A, idx_A, B, idx_B);
     check("ZERO", calc_val, neps);
 }
 
@@ -59,10 +59,10 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_dot, R, T, all_types)
     auto neps = dpd_varray<T>::size(A.irrep(), A.lengths());
 
     dpd_impl = dpd_impl_t::FULL;
-    T ref_val = dot<T>(A, idx_A.data(), B, idx_B.data());
+    T ref_val = dot<T>(A, idx_A, B, idx_B);
 
     dpd_impl = dpd_impl_t::BLOCKED;
-    T calc_val = dot<T>(A, idx_A.data(), B, idx_B.data());
+    T calc_val = dot<T>(A, idx_A, B, idx_B);
 
     check("BLOCKED", calc_val, ref_val, neps);
 }
@@ -80,10 +80,10 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dot, R, T, all_types)
     auto neps = prod(A.lengths());
 
     dpd_impl = dpd_impl_t::FULL;
-    T ref_val = dot<T>(A, idx_A.data(), B, idx_B.data());
+    T ref_val = dot<T>(A, idx_A, B, idx_B);
 
     dpd_impl = dpd_impl_t::BLOCKED;
-    T calc_val = dot<T>(A, idx_A.data(), B, idx_B.data());
+    T calc_val = dot<T>(A, idx_A, B, idx_B);
 
     check("BLOCKED", calc_val, ref_val, neps);
 }
@@ -101,10 +101,10 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_dot, R, T, all_types)
     auto neps = dpd_varray<T>::size(A.irrep(), A.lengths());
 
     dpd_impl = dpd_impl_t::FULL;
-    T ref_val = dot<T>(A, idx_A.data(), B, idx_B.data());
+    T ref_val = dot<T>(A, idx_A, B, idx_B);
 
     dpd_impl = dpd_impl_t::BLOCKED;
-    T calc_val = dot<T>(A, idx_A.data(), B, idx_B.data());
+    T calc_val = dot<T>(A, idx_A, B, idx_B);
 
     check("BLOCKED", calc_val, ref_val, neps);
 }

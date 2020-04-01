@@ -1,9 +1,10 @@
 #include "basic_types.h"
 
-#ifdef __cplusplus
-namespace tblis {
-extern "C" {
-#endif
+namespace tblis
+{
+
+extern "C"
+{
 
 void tblis_init_scalar_s(tblis_scalar* s, float value)
 {
@@ -27,158 +28,6 @@ void tblis_init_scalar_z(tblis_scalar* s, dcomplex value)
 {
     s->type = TYPE_DCOMPLEX;
     s->data.z = value;
-}
-
-void tblis_init_vector_scaled_s(tblis_vector* v, float scalar,
-                                len_type n, float* data,stride_type inc)
-{
-    v->type = TYPE_SINGLE;
-    v->conj = 0;
-    v->scalar.data.s = scalar;
-    v->data = data;
-    v->n = n;
-    v->inc = inc;
-}
-
-void tblis_init_vector_scaled_d(tblis_vector* v, double scalar,
-                                len_type n, double* data,stride_type inc)
-{
-    v->type = TYPE_DOUBLE;
-    v->conj = 0;
-    v->scalar.data.d = scalar;
-    v->data = data;
-    v->n = n;
-    v->inc = inc;
-}
-
-void tblis_init_vector_scaled_c(tblis_vector* v, scomplex scalar,
-                                len_type n, scomplex* data,stride_type inc)
-{
-    v->type = TYPE_SCOMPLEX;
-    v->conj = 0;
-    v->scalar.data.c = scalar;
-    v->data = data;
-    v->n = n;
-    v->inc = inc;
-}
-
-void tblis_init_vector_scaled_z(tblis_vector* v, dcomplex scalar,
-                                len_type n, dcomplex* data,stride_type inc)
-{
-    v->type = TYPE_DCOMPLEX;
-    v->conj = 0;
-    v->scalar.data.z = scalar;
-    v->data = data;
-    v->n = n;
-    v->inc = inc;
-}
-
-void tblis_init_vector_s(tblis_vector* v,
-                         len_type n, float* data,stride_type inc)
-{
-    tblis_init_vector_scaled_s(v, 1.0f, n, data, inc);
-}
-
-void tblis_init_vector_d(tblis_vector* v,
-                         len_type n, double* data,stride_type inc)
-{
-    tblis_init_vector_scaled_d(v, 1.0, n, data, inc);
-}
-
-void tblis_init_vector_c(tblis_vector* v,
-                         len_type n, scomplex* data,stride_type inc)
-{
-    tblis_init_vector_scaled_c(v, {1.0f, 0.0f}, n, data, inc);
-}
-
-void tblis_init_vector_z(tblis_vector* v,
-                         len_type n, dcomplex* data,stride_type inc)
-{
-    tblis_init_vector_scaled_z(v, {1.0, 0.0}, n, data, inc);
-}
-
-void tblis_init_matrix_scaled_s(tblis_matrix* mat, float scalar,
-                                len_type m, len_type n, float* data,
-                                stride_type rs, stride_type cs)
-{
-    mat->type = TYPE_SINGLE;
-    mat->conj = 0;
-    mat->scalar.data.s = scalar;
-    mat->data = data;
-    mat->m = m;
-    mat->n = n;
-    mat->rs = rs;
-    mat->cs = cs;
-}
-
-void tblis_init_matrix_scaled_d(tblis_matrix* mat, double scalar,
-                                len_type m, len_type n, double* data,
-                                stride_type rs, stride_type cs)
-{
-    mat->type = TYPE_DOUBLE;
-    mat->conj = 0;
-    mat->scalar.data.d = scalar;
-    mat->data = data;
-    mat->m = m;
-    mat->n = n;
-    mat->rs = rs;
-    mat->cs = cs;
-}
-
-void tblis_init_matrix_scaled_c(tblis_matrix* mat, scomplex scalar,
-                                len_type m, len_type n, scomplex* data,
-                                stride_type rs, stride_type cs)
-{
-    mat->type = TYPE_SCOMPLEX;
-    mat->conj = 0;
-    mat->scalar.data.c = scalar;
-    mat->data = data;
-    mat->m = m;
-    mat->n = n;
-    mat->rs = rs;
-    mat->cs = cs;
-}
-
-void tblis_init_matrix_scaled_z(tblis_matrix* mat, dcomplex scalar,
-                                len_type m, len_type n, dcomplex* data,
-                                stride_type rs, stride_type cs)
-{
-    mat->type = TYPE_DCOMPLEX;
-    mat->conj = 0;
-    mat->scalar.data.z = scalar;
-    mat->data = data;
-    mat->m = m;
-    mat->n = n;
-    mat->rs = rs;
-    mat->cs = cs;
-}
-
-void tblis_init_matrix_s(tblis_matrix* mat,
-                         len_type m, len_type n, float* data,
-                         stride_type rs, stride_type cs)
-{
-    tblis_init_matrix_scaled_s(mat, 1.0f, m, n, data, rs, cs);
-}
-
-void tblis_init_matrix_d(tblis_matrix* mat,
-                         len_type m, len_type n, double* data,
-                         stride_type rs, stride_type cs)
-{
-    tblis_init_matrix_scaled_d(mat, 1.0, m, n, data, rs, cs);
-}
-
-void tblis_init_matrix_c(tblis_matrix* mat,
-                         len_type m, len_type n, scomplex* data,
-                         stride_type rs, stride_type cs)
-{
-    tblis_init_matrix_scaled_c(mat, {1.0f, 0.0f}, m, n, data, rs, cs);
-}
-
-void tblis_init_matrix_z(tblis_matrix* mat,
-                         len_type m, len_type n, dcomplex* data,
-                         stride_type rs, stride_type cs)
-{
-    tblis_init_matrix_scaled_z(mat, {1.0, 0.0}, m, n, data, rs, cs);
 }
 
 void tblis_init_tensor_scaled_s(tblis_tensor* t, float scalar,
@@ -261,7 +110,39 @@ void tblis_init_tensor_z(tblis_tensor* t,
     tblis_init_tensor_scaled_z(t, {1.0, 0.0}, ndim, len, data, stride);
 }
 
-#ifdef __cplusplus
 }
+
+const label_vector& idx(const std::string& from, label_vector&& to)
+{
+    constexpr size_t N = sizeof(label_type);
+
+    union
+    {
+        label_type label;
+        char chars[N];
+    };
+
+    label = 0;
+    size_t i = 0;
+    for (char c : from)
+    {
+        if (c == ',')
+        {
+            TBLIS_ASSERT(i == 0, "Malformed index string: %s", from.c_str());
+            to.push_back(label);
+            label = 0;
+            i = 0;
+            continue;
+        }
+
+        TBLIS_ASSERT(i >= N, "Label name too long: %s", from.c_str());
+        chars[i++] = c;
+    }
+
+    TBLIS_ASSERT(i == 0, "Malformed index string: %s", from.c_str());
+    to.push_back(label);
+
+    return to;
 }
-#endif
+
+}

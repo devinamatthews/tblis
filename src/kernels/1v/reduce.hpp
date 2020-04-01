@@ -5,18 +5,23 @@
 #include "util/basic_types.h"
 #include "util/macros.h"
 
+#pragma clang diagnostic ignored "-Wpass-failed"
+
 namespace tblis
 {
 
-template <typename T>
 using reduce_ukr_t =
     void (*)(reduce_t op, len_type n,
-             const T* A, stride_type inc_A, T& value, len_type& idx);
+             const void* A, stride_type inc_A, void* value, len_type& idx);
 
 template <typename Config, typename T>
 void reduce_ukr_def(reduce_t op, len_type n,
-                    const T* A, stride_type inc_A, T& value, len_type& idx)
+                    const void* A_, stride_type inc_A, void* value_, len_type& idx)
 {
+    const T* TBLIS_RESTRICT A = static_cast<const T*>(A_);
+
+    T& TBLIS_RESTRICT value = *static_cast<T*>(value_);
+
     if (op == REDUCE_SUM)
     {
         if (inc_A == 1)

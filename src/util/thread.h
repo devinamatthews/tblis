@@ -46,59 +46,78 @@ extern std::atomic<long> flops;
 extern len_type inout_ratio;
 extern int outer_threading;
 
-template <typename T, typename=void>
 struct atomic_accumulator
 {
-    std::atomic<T> value;
+    std::atomic<float> s;
+    std::atomic<double> d;
+    std::atomic<float> cr, ci;
+    std::atomic<double> zr, zi;
 
-    constexpr atomic_accumulator(T value = T()) noexcept
-    : value(value) {}
-
-    atomic_accumulator& operator=(const atomic_accumulator&) = delete;
-
-    atomic_accumulator& operator=(T val)
-    {
-        value = val;
-        return *this;
-    }
-
-    atomic_accumulator& operator+=(T val)
+    template <typename T>
+    static void accumulate(std::atomic<T>& value, T val)
     {
         T old = value.load();
         while (!value.compare_exchange_weak(old, old+val)) continue;
+    }
+
+    atomic_accumulator() noexcept
+    : s(0.0f), d(0.0), cr(0.0f), ci(0.0f), zr(0.0), zi(0.0) {}
+
+    atomic_accumulator(const tblis_scalar& val) noexcept
+    {
+        *this = val;
+    }
+
+    atomic_accumulator& operator=(const atomic_accumulator&) = delete;
+
+    atomic_accumulator& operator=(const tblis_scalar& val)
+    {
+        switch (val.type)
+        {
+            case TYPE_FLOAT:    s  = val.data.s; break;
+            case TYPE_DOUBLE:   d  = val.data.d; break;
+            case TYPE_SCOMPLEX: cr = val.data.c.real();
+                                ci = val.data.c.imag(); break;
+            case TYPE_DCOMPLEX: zr = val.data.z.real();
+                                zi = val.data.z.imag(); break;
+        }
+
         return *this;
     }
 
-    operator T() const { return value.load(); }
-};
-
-template <typename T>
-struct atomic_accumulator<T, typename std::enable_if<is_complex<T>::value>::type>
-{
-        std::atomic<real_type_t<T>> real, imag;
-
-        constexpr atomic_accumulator(T value = T()) noexcept
-        : real(value.real()), imag(value.imag()) {}
-
-        atomic_accumulator& operator=(const atomic_accumulator&) = delete;
-
-        atomic_accumulator& operator=(T val)
+    atomic_accumulator& operator+=(const tblis_scalar& val)
+    {
+        switch (val.type)
         {
-            real = val.real();
-            imag = val.imag();
-            return *this;
-        }
+            case TYPE_FLOAT:    accumulate(s, val.data.s); break;
+            case TYPE_DOUBLE:   accumulate(d, val.data.d); break;
+            case TYPE_SCOMPLEX: accumulate(cr, val.data.c.real());
+                                accumulate(ci, val.data.c.imag()); break;
+            case TYPE_DCOMPLEX: accumulate(zr, val.data.z.real());
+                                accumulate(zi, val.data.z.imag()); break;
 
-        atomic_accumulator& operator+=(T val)
+        }
+        return *this;
+    }
+
+    void store(type_t type, char* result) const
+    {
+        switch (type)
         {
-            auto old = real.load();
-            while (!real.compare_exchange_weak(old, old+val.real())) continue;
-            old = imag.load();
-            while (!imag.compare_exchange_weak(old, old+val.imag())) continue;
-            return *this;
+            case TYPE_FLOAT:
+                *reinterpret_cast<float*>(result) = s.load();
+                break;
+            case TYPE_DOUBLE:
+                *reinterpret_cast<double*>(result) = d.load();
+                break;
+            case TYPE_SCOMPLEX:
+                *reinterpret_cast<scomplex*>(result) = {cr.load(), ci.load()};
+                break;
+            case TYPE_DCOMPLEX:
+                *reinterpret_cast<dcomplex*>(result) = {zr.load(), zi.load()};
+                break;
         }
-
-        operator T() const { return {real.load(), imag.load()}; }
+    }
 };
 
 template <typename T>
@@ -112,10 +131,89 @@ struct atomic_reducer_helper
 };
 
 template <typename T>
-using atomic_reducer = std::atomic<atomic_reducer_helper<T>>;
+void reduce_init(reduce_t op, T& value, len_type& idx)
+{
+    typedef std::numeric_limits<real_type_t<T>> limits;
+
+    switch (op)
+    {
+        case REDUCE_SUM:
+        case REDUCE_SUM_ABS:
+        case REDUCE_MAX_ABS:
+        case REDUCE_NORM_2:
+            value = T();
+            break;
+        case REDUCE_MAX:
+            value = limits::lowest();
+            break;
+        case REDUCE_MIN:
+        case REDUCE_MIN_ABS:
+            value = limits::max();
+            break;
+    }
+
+    idx = -1;
+}
+
+inline void reduce_init(reduce_t op, tblis_scalar& value, len_type& idx)
+{
+    switch (value.type)
+    {
+        case TYPE_FLOAT:    reduce_init(op, value.data.s, idx); break;
+        case TYPE_DOUBLE:   reduce_init(op, value.data.d, idx); break;
+        case TYPE_SCOMPLEX: reduce_init(op, value.data.c, idx); break;
+        case TYPE_DCOMPLEX: reduce_init(op, value.data.z, idx); break;
+    }
+}
 
 template <typename T>
-void atomic_reduce(reduce_t op, atomic_reducer<T>& x, T y_val, len_type y_idx)
+atomic_reducer_helper<T> reduce_init(reduce_t op)
+{
+    T tmp1;
+    len_type tmp2;
+    reduce_init(op, tmp1, tmp2);
+    return {tmp1, tmp2};
+}
+
+struct atomic_reducer
+{
+    std::atomic<atomic_reducer_helper<float>> s;
+    std::atomic<atomic_reducer_helper<double>> d;
+    std::atomic<atomic_reducer_helper<scomplex>> c;
+    std::atomic<atomic_reducer_helper<dcomplex>> z;
+
+    atomic_reducer(reduce_t op)
+    : s(reduce_init<float>(op)),
+      d(reduce_init<double>(op)),
+      c(reduce_init<scomplex>(op)),
+      z(reduce_init<dcomplex>(op)) {}
+
+    void store(type_t type, char* val, len_type& idx)
+    {
+        switch (type)
+        {
+            case TYPE_FLOAT:
+                *reinterpret_cast<float*>(val) = s.load().first;
+                idx = s.load().second;
+                break;
+            case TYPE_DOUBLE:
+                *reinterpret_cast<double*>(val) = d.load().first;
+                idx = d.load().second;
+                break;
+            case TYPE_SCOMPLEX:
+                *reinterpret_cast<scomplex*>(val) = c.load().first;
+                idx = c.load().second;
+                break;
+            case TYPE_DCOMPLEX:
+                *reinterpret_cast<dcomplex*>(val) = z.load().first;
+                idx = z.load().second;
+                break;
+        }
+    }
+};
+
+template <typename T>
+void atomic_reduce(reduce_t op, std::atomic<atomic_reducer_helper<T>>& x, T y_val, len_type y_idx)
 {
     auto old = x.load();
     auto update = old;
@@ -156,38 +254,16 @@ void atomic_reduce(reduce_t op, atomic_reducer<T>& x, T y_val, len_type y_idx)
     while (!x.compare_exchange_weak(old, update));
 }
 
-template <typename T>
-void reduce_init(reduce_t op, T& value, len_type& idx)
+inline void atomic_reduce(reduce_t op, atomic_reducer& x,
+                          const tblis_scalar& y_val, len_type y_idx)
 {
-    typedef std::numeric_limits<real_type_t<T>> limits;
-
-    switch (op)
+    switch (y_val.type)
     {
-        case REDUCE_SUM:
-        case REDUCE_SUM_ABS:
-        case REDUCE_MAX_ABS:
-        case REDUCE_NORM_2:
-            value = T();
-            break;
-        case REDUCE_MAX:
-            value = limits::lowest();
-            break;
-        case REDUCE_MIN:
-        case REDUCE_MIN_ABS:
-            value = limits::max();
-            break;
+        case TYPE_FLOAT:    atomic_reduce(op, x.s, y_val.data.s, y_idx); break;
+        case TYPE_DOUBLE:   atomic_reduce(op, x.d, y_val.data.d, y_idx); break;
+        case TYPE_SCOMPLEX: atomic_reduce(op, x.c, y_val.data.c, y_idx); break;
+        case TYPE_DCOMPLEX: atomic_reduce(op, x.z, y_val.data.z, y_idx); break;
     }
-
-    idx = -1;
-}
-
-template <typename T>
-atomic_reducer_helper<T> reduce_init(reduce_t op)
-{
-    T tmp1;
-    len_type tmp2;
-    reduce_init(op, tmp1, tmp2);
-    return {tmp1, tmp2};
 }
 
 template <typename T>
@@ -312,7 +388,7 @@ void reduce(const communicator& comm, T& value)
 }
 
 template <typename T>
-void reduce(const communicator& comm, reduce_t op, atomic_reducer<T>& pair)
+void reduce(const communicator& comm, reduce_t op, std::atomic<atomic_reducer_helper<T>>& pair)
 {
     T tmp1;
     len_type tmp2;
@@ -322,12 +398,52 @@ void reduce(const communicator& comm, reduce_t op, atomic_reducer<T>& pair)
     pair = {tmp1,tmp2};
 }
 
-template <typename T>
-void reduce(const communicator& comm, atomic_accumulator<T>& value)
+inline void reduce(type_t type, const communicator& comm, reduce_t op, atomic_reducer& pair)
 {
-    T tmp = value;
-    reduce(comm, tmp);
-    value = tmp;
+    switch (type)
+    {
+        case TYPE_FLOAT:    reduce(comm, op, pair.s); break;
+        case TYPE_DOUBLE:   reduce(comm, op, pair.d); break;
+        case TYPE_SCOMPLEX: reduce(comm, op, pair.c); break;
+        case TYPE_DCOMPLEX: reduce(comm, op, pair.z); break;
+    }
+}
+
+inline void reduce(type_t type, const communicator& comm, atomic_accumulator& value)
+{
+    switch (type)
+    {
+        case TYPE_FLOAT:
+            {
+                float tmp = value.s.load();
+                reduce(comm, tmp);
+                value.s = tmp;
+            }
+            break;
+        case TYPE_DOUBLE:
+            {
+                double tmp = value.d.load();
+                reduce(comm, tmp);
+                value.d = tmp;
+            }
+            break;
+        case TYPE_SCOMPLEX:
+            {
+                scomplex tmp(value.cr.load(), value.ci.load());
+                reduce(comm, tmp);
+                value.cr = tmp.real();
+                value.ci = tmp.imag();
+            }
+            break;
+        case TYPE_DCOMPLEX:
+            {
+                dcomplex tmp(value.zr.load(), value.zi.load());
+                reduce(comm, tmp);
+                value.zr = tmp.real();
+                value.zi = tmp.imag();
+            }
+            break;
+    }
 }
 
 template <typename Func, typename... Args>

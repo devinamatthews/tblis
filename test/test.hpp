@@ -66,8 +66,8 @@ INFO_OR_PRINT("idx_" #t "          = " << idx_##t.substr(0,t.dense_dimension()) 
 
 #define PRINT_TENSOR(t) \
 cout << "\n" #t ":\n"; \
-t.for_each_element( \
-[](const typename decltype(t)::value_type & e, const index_vector& pos) \
+vary(t).for_each_element( \
+[](auto&& e, auto&& pos) \
 { \
     if (std::abs(e) > 1e-13) cout << pos << " " << e << endl; \
 });
@@ -189,7 +189,7 @@ template <typename T>
 len_vector group_size(const matrix<len_type>& len, const T& idx, const T& choose)
 {
     unsigned nirrep = len.length(1);
-    matrix<len_type> sublen({(unsigned)choose.size(), nirrep});
+    matrix<len_type> sublen{{(unsigned)choose.size(), nirrep}};
 
     for (unsigned i = 0;i < choose.size();i++)
     {

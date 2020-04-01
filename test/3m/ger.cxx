@@ -39,10 +39,10 @@ REPLICATED_TEMPLATED_TEST_CASE(ger, R, T, all_types)
     gemm_ref<T>(scale, A, B, scale, D);
 
     E.reset(C);
-    mult<T>(scale, A, B, scale, E);
+    mult(scale, A, B, scale, E);
 
-    add<T>(T(-1), D, T(1), E);
-    T error = reduce<T>(REDUCE_NORM_2, E).first;
+    add(-1, D, 1, E);
+    T error = reduce<T>(REDUCE_NORM_2, E);
 
     check("REF", error, scale*m*n*k);
 }

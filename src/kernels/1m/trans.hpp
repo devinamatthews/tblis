@@ -5,22 +5,29 @@
 #include "util/basic_types.h"
 #include "util/macros.h"
 
+#pragma clang diagnostic ignored "-Wpass-failed"
+
 namespace tblis
 {
 
-template <typename T>
 using trans_ukr_t =
     void (*)(len_type m, len_type n,
-             T alpha, bool conj_A, const T* A, stride_type rs_A, stride_type cs_A,
-             T  beta, bool conj_B,       T* B, stride_type rs_B, stride_type cs_B);
+             const void* alpha, bool conj_A, const void* A, stride_type rs_A, stride_type cs_A,
+             const void*  beta, bool conj_B,       void* B, stride_type rs_B, stride_type cs_B);
 
 template <typename Config, typename T>
 void trans_ukr_def(len_type m, len_type n,
-                   T alpha, bool conj_A, const T* TBLIS_RESTRICT A, stride_type rs_A, stride_type cs_A,
-                   T  beta, bool conj_B,       T* TBLIS_RESTRICT B, stride_type rs_B, stride_type cs_B)
+                   const void* alpha_, bool conj_A, const void* A_, stride_type rs_A, stride_type cs_A,
+                   const void*  beta_, bool conj_B,       void* B_, stride_type rs_B, stride_type cs_B)
 {
     constexpr len_type MR = Config::template trans_mr<T>::def;
     constexpr len_type NR = Config::template trans_nr<T>::def;
+
+    T alpha = *static_cast<const T*>(alpha_);
+    T beta  = *static_cast<const T*>(beta_ );
+
+    const T* TBLIS_RESTRICT A = static_cast<const T*>(A_);
+          T* TBLIS_RESTRICT B = static_cast<      T*>(B_);
 
     if (m == MR && n == NR)
     {

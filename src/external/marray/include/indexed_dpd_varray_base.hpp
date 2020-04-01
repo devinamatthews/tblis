@@ -37,13 +37,13 @@ class indexed_dpd_varray_base : detail::dpd_base<indexed_dpd_varray_base<Type, D
         typedef ctype* cptr;
 
     protected:
-        dpd_stride_vector size_;
+        dpd_stride_vector2 size_;
         dpd_len_vector len_;
         dpd_len_vector off_;
         dpd_stride_vector stride_;
         irrep_vector idx_irrep_;
         dim_vector leaf_;
-        dim_vector parent_;
+        dim_vector2 parent_;
         dim_vector perm_;
         dim_vector depth_;
         std::vector<pointer> data_;

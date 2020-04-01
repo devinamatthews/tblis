@@ -30,6 +30,11 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
         struct : Allocator { stride_type size = 0; } storage_;
         layout layout_ = DEFAULT;
 
+        struct initializer
+        {
+            typename base::initializer_type init;
+        };
+
     public:
         using typename base::value_type;
         using typename base::pointer;
@@ -94,12 +99,10 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
             reset(len, uninitialized, layout);
         }
 
-        /*
-        marray(initializer_type data, layout layout = DEFAULT)
+        marray(initializer data, layout layout = DEFAULT)
         {
             reset(data, layout);
         }
-        */
 
         template <typename Expression,
             typename=detail::enable_if_t<is_expression<Expression>::value>>
@@ -131,6 +134,11 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
         marray& operator=(const marray& other)
         {
             return base::operator=(other);
+        }
+
+        marray& operator=(initializer other)
+        {
+            return base::operator=(other.init);
         }
 
         using base::operator=;
@@ -180,6 +188,11 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
          * Reset
          *
          **********************************************************************/
+
+        static initializer init(initializer_type data)
+        {
+            return initializer{data};
+        }
 
         void reset()
         {
@@ -255,16 +268,16 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
                         base::strides(len, layout));
         }
 
-        void reset(initializer_type data, layout layout = DEFAULT)
+        void reset(initializer data, layout layout = DEFAULT)
         {
             reset();
 
             layout_ = layout;
-            base::set_lengths(0, len_, data);
+            base::set_lengths(0, len_, data.init);
             storage_.size = size(len_);
             data_ = alloc_traits::allocate(storage_, storage_.size);
             stride_ = base::strides(len_, layout);
-            base::set_data(0, data_, data);
+            base::set_data(0, data_, data.init);
         }
 
         /***********************************************************************

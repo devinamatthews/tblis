@@ -50,5 +50,5 @@ script:
   - if [ $RUN_TEST -eq 1 ]; then travis_wait 30 bin/test; fi
   - 'if [ $TEST_INSTALL -eq 1 ]; then
         make install;
-        $CXX -std=c++11 -o test_install -I./install/include test/test_install.cxx -L./install/lib -ltblis;
+        $CXX -std=c++14 -o test_install -I./install/include test/test_install.cxx -L./install/lib -ltblis;
     fi'

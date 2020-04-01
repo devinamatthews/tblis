@@ -35,7 +35,7 @@ install:
   - 'if [ "$TRAVIS_OS_NAME" = "linux" ]; then
         export PATH=/usr/lib/binutils-2.26/bin:${PATH};
         export CC="gcc-6" CXX="g++-6";
-    else;
+    else
         export CC="clang" CXX="clang++";
     fi'
 

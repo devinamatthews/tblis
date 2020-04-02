@@ -174,9 +174,7 @@ class abstract_matrix
             if (!pack_)
                 tblis_abort_with_message("", "This matrix cannot be packed.");
 
-            comm.barrier();
             auto P = pack_(*this, comm, cfg, mat, pool);
-            comm.barrier();
 
             return P;
         }

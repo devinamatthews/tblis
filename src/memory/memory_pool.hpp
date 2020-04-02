@@ -114,15 +114,15 @@ class MemoryPool
 
             if (!_free_list.empty())
             {
-                auto entry = _free_list.front();
-                _free_list.pop_front();
+                auto entry = _free_list.back();
+                _free_list.pop_back();
 
                 /*
                  * If the region is big enough and properly aligned, use it.
                  * Otherwise, free it and allocate a new one.
                  */
                 if (entry.second >= size &&
-                    reinterpret_cast<uintptr_t>(entry.first) % alignment == 0)
+                    (reinterpret_cast<uintptr_t>(entry.first) & (alignment-1)) == 0)
                 {
                     TBLIS_ASSERT(entry.first);
                     ptr = entry.first;
@@ -160,10 +160,10 @@ class MemoryPool
             std::lock_guard<tci::mutex> guard(_lock);
 
             TBLIS_ASSERT(ptr);
-            _free_list.emplace_front(ptr, size);
+            _free_list.emplace_back(ptr, size);
         }
 
-        std::list<std::pair<void*,size_t>> _free_list;
+        std::vector<std::pair<void*,size_t>> _free_list;
         tci::mutex _lock;
         size_t _align;
 };

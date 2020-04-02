@@ -123,8 +123,11 @@ class dpd_tensor_matrix : public abstract_matrix_adapter<dpd_tensor_matrix,dpd_t
             const len_type m_p = A.get_patches( trans, first_patch[ trans], off_patch[ trans], MR, ME);
             const len_type k_p = A.get_patches(!trans, first_patch[!trans], off_patch[!trans], KE, KE);
             const stride_type ps_ap = k_p*ME;
-            const stride_type nelem = m_p*k_p + std::max(m_p,k_p)*TBLIS_MAX_UNROLL +
-                                      2*size_as_type<stride_type>(m_p+k_p, type);
+            const len_type MC = std::max(!trans ? cfg.gemm_mc.max(type)
+                                                : cfg.gemm_nc.max(type), m_p);
+            const len_type KC = std::max(cfg.gemm_kc.max(type), k_p);
+            const stride_type nelem = MC*KC + std::max(MC,KC)*TBLIS_MAX_UNROLL +
+                                      2*size_as_type<stride_type>(MC+KC, type);
 
             packed_matrix P(type, !trans ? m : k_p, !trans ? k_p : m,
                             A.get_buffer(comm, nelem, pool), ps_ap);
@@ -196,7 +199,9 @@ class dpd_tensor_matrix : public abstract_matrix_adapter<dpd_tensor_matrix,dpd_t
             const len_type k = A.length(1);
             const stride_type ps_a = A.panel_stride();
             const stride_type ps_b = B.panel_stride();
-            const stride_type nelem = 2*size_as_type<stride_type>(m+n, type);
+            const len_type MC = std::max(cfg.gemm_mc.max(type), m);
+            const len_type NC = std::max(cfg.gemm_nc.max(type), n);
+            const stride_type nelem = 2*size_as_type<stride_type>(MC+NC, type);
 
             stride_type* rscat = convert_and_align<stride_type>(C.get_buffer(comm, nelem, pool));
             stride_type* cscat = rscat + m;

@@ -65,8 +65,11 @@ class tensor_matrix : public abstract_matrix_adapter<tensor_matrix,tensor_matrix
 
             const len_type m_p = ceil_div(m, MR)*ME;
             const len_type k_p = round_up(k, KE);
-            const stride_type nelem = m_p*k_p + std::max(m_p,k_p)*TBLIS_MAX_UNROLL +
-                                      2*size_as_type<stride_type>(m_p+k_p, type);
+            const len_type MC = std::max(!trans ? cfg.gemm_mc.max(type)
+                                                : cfg.gemm_nc.max(type), m_p);
+            const len_type KC = std::max(cfg.gemm_kc.max(type), k_p);
+            const stride_type nelem = MC*KC + std::max(MC,KC)*TBLIS_MAX_UNROLL +
+                                      2*size_as_type<stride_type>(MC+KC, type);
 
             packed_matrix P(type, !trans ? m : k_p, !trans ? k_p : m,
                             A.get_buffer(comm, nelem, pool), k_p*ME);
@@ -97,7 +100,9 @@ class tensor_matrix : public abstract_matrix_adapter<tensor_matrix,tensor_matrix
             const len_type m = C.length(0);
             const len_type n = C.length(1);
             const len_type k = A.length(1);
-            const stride_type nelem = 2*size_as_type<stride_type>(m+n, type);
+            const len_type MC = std::max(cfg.gemm_mc.max(type), m);
+            const len_type NC = std::max(cfg.gemm_nc.max(type), n);
+            const stride_type nelem = 2*size_as_type<stride_type>(MC+NC, type);
 
             stride_type* rscat = convert_and_align<stride_type>(C.get_buffer(comm, nelem, pool));
             stride_type* cscat = rscat + m;
@@ -292,9 +297,10 @@ class tensor_matrix : public abstract_matrix_adapter<tensor_matrix,tensor_matrix
             {
                 viterator<> it(len, stride);
 
-                len_type p0 = off%m0;
+                len_type off0, p0;
+                divide(off, m0, off0, p0);
                 stride_type pos = 0;
-                it.position(off/m0, pos);
+                it.position(off0, pos);
 
                 for (len_type idx = 0;idx < size && it.next(pos);)
                 {

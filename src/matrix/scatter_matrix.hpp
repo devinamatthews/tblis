@@ -47,7 +47,10 @@ class scatter_matrix : public abstract_matrix_adapter<scatter_matrix,scatter_mat
 
             const len_type m_p = ceil_div(m, MR)*ME;
             const len_type k_p = round_up(k, KR);
-            const stride_type nelem = m_p*k_p + std::max(m_p,k_p)*TBLIS_MAX_UNROLL;
+            const len_type MC = std::max(!trans ? cfg.gemm_mc.max(type)
+                                                : cfg.gemm_nc.max(type), m_p);
+            const len_type KC = std::max(cfg.gemm_kc.max(type), k_p);
+            const stride_type nelem = MC*KC + std::max(MC,KC)*TBLIS_MAX_UNROLL;
 
             packed_matrix P(type, !trans ? m : k, !trans ? k : m,
                             A.get_buffer(comm, nelem, pool), k_p*ME);

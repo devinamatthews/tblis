@@ -106,10 +106,7 @@ class viterator
             if (empty_) return;
 
             for (size_t i = 0;i < ndim_;i++)
-            {
-                pos_[i] = pos%len_[i];
-                pos = pos/len_[i];
-            }
+                divide(pos, len_[i], pos, pos_[i]);
             MARRAY_ASSERT(pos == 0);
 
             position(pos_, off...);

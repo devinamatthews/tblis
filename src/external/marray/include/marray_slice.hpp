@@ -284,7 +284,7 @@ class marray_slice
             std::copy_n(len_.begin()+NextDim, DimsLeft, len.begin()+NSliced);
             std::copy_n(stride_.begin()+NextDim, DimsLeft, stride.begin()+NSliced);
 
-            return {len, data_, stride};
+            return marray_view<Type, NewNDim>{len, data_, stride};
         }
 
         template <unsigned NewNDim_=NewNDim, typename=detail::enable_if_t<NewNDim_==2>>

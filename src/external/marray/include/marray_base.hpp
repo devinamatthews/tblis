@@ -43,6 +43,24 @@ template <typename Type, typename Allocator=std::allocator<Type>> using matrix =
 namespace detail
 {
 
+struct len_type_wrapper
+{
+    len_type value;
+
+    len_type_wrapper(  signed     short value) : value(value) {}
+    len_type_wrapper(unsigned     short value) : value(value) {}
+    len_type_wrapper(  signed       int value) : value(value) {}
+    len_type_wrapper(unsigned       int value) : value(value) {}
+    len_type_wrapper(  signed      long value) : value(value) {}
+    len_type_wrapper(unsigned      long value) : value(value) {}
+    len_type_wrapper(  signed long long value) : value(value) {}
+    len_type_wrapper(unsigned long long value) : value(value) {}
+
+    operator len_type() const { return value; }
+};
+
+typedef std::initializer_list<len_type_wrapper> len_type_init;
+
 template <typename Type, unsigned NDim>
 struct initializer_type;
 
@@ -1557,6 +1575,25 @@ class marray_base
         operator[](bcast_t)
         {
             return {*this, slice::bcast, len_[0]};
+        }
+
+        cref operator()(detail::array_1d<len_type> idx_) const
+        {
+            return const_cast<marray_base&>(*this)(idx_);
+        }
+
+        reference operator()(detail::array_1d<len_type> idx_)
+        {
+            MARRAY_ASSERT(idx_.size() == dimension());
+
+            std::array<len_type,NDim> idx;
+            idx_.slurp(idx);
+
+            auto ptr = data();
+            for (unsigned i = 0;i < dimension();i++)
+                ptr += idx[i]*stride(i);
+
+            return *ptr;
         }
 
         template <typename Arg, typename=

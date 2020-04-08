@@ -65,27 +65,12 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
             reset(other);
         }
 
-        varray_view(std::initializer_list<len_type> len, pointer ptr, layout layout = DEFAULT)
+        varray_view(detail::array_1d<len_type> len, pointer ptr, layout layout = DEFAULT)
         {
             reset(len, ptr, layout);
         }
 
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        varray_view(const U& len, pointer ptr, layout layout = DEFAULT)
-        {
-            reset(len, ptr, layout);
-        }
-
-        varray_view(std::initializer_list<len_type> len, pointer ptr,
-                    std::initializer_list<stride_type> stride)
-        {
-            reset(len, ptr, stride);
-        }
-
-        template <typename U, typename V, typename=
-                  detail::enable_if_t<detail::is_container_of<U,len_type>::value &&
-                                      detail::is_container_of<V,stride_type>::value>>
-        varray_view(const U& len, pointer ptr, const V& stride)
+        varray_view(detail::array_1d<len_type> len, pointer ptr, detail::array_1d<stride_type> stride)
         {
             reset(len, ptr, stride);
         }
@@ -131,14 +116,10 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
          *
          **********************************************************************/
 
-        void shift(std::initializer_list<len_type> n)
+        void shift(detail::array_1d<len_type> n_)
         {
-            shift<std::initializer_list<len_type>>(n);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        void shift(const U& n)
-        {
+            len_vector n;
+            n_.slurp(n);
             MARRAY_ASSERT(n.size() == dimension());
             for (unsigned i = 0;i < dimension();i++) shift(i, n[i]);
         }
@@ -165,14 +146,11 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
          *
          **********************************************************************/
 
-        void permute(std::initializer_list<unsigned> perm)
+        void permute(detail::array_1d<unsigned> perm_)
         {
-            permute<std::initializer_list<unsigned>>(perm);
-        }
+            dim_vector perm;
+            perm_.slurp(perm);
 
-        template <typename U, typename=detail::enable_if_container_of_t<U,unsigned>>
-        void permute(const U& perm)
-        {
             MARRAY_ASSERT(perm.size() == dimension());
 
             len_vector len(len_);
@@ -197,15 +175,10 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
          *
          **********************************************************************/
 
-        void lower(std::initializer_list<unsigned> split)
+        void lower(detail::array_1d<unsigned> split_)
         {
-            lower<std::initializer_list<unsigned>>(split);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,unsigned>>
-        void lower(const U& split_)
-        {
-            dim_vector split(split_.begin(), split_.end());
+            dim_vector split;
+            split_.slurp(split);
 
             MARRAY_ASSERT(split.size() < dimension());
 

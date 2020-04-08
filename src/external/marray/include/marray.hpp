@@ -82,19 +82,25 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
             reset(other, layout);
         }
 
+        template <typename Type_=Type>
+        explicit marray(detail::len_type_init len)
+        {
+            reset(len, Type(), DEFAULT);
+        }
+
         explicit marray(detail::array_1d<len_type> len,
                         const Type& val=Type(), layout layout = DEFAULT)
         {
             reset(len, val, layout);
         }
 
-        marray(detail::array_1d<len_type> len, layout layout)
+        explicit marray(detail::array_1d<len_type> len, layout layout)
         {
             reset(len, Type(), layout);
         }
 
-        marray(detail::array_1d<len_type> len, uninitialized_t,
-               layout layout = DEFAULT)
+        explicit marray(detail::array_1d<len_type> len, uninitialized_t,
+                        layout layout = DEFAULT)
         {
             reset(len, uninitialized, layout);
         }
@@ -243,6 +249,12 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
         void reset(const marray_slice<U, OldNDim, NIndexed, Dims...>& other, layout layout = DEFAULT)
         {
             reset(other.view(), layout);
+        }
+
+        template <typename Type_=Type>
+        void reset(detail::len_type_init len)
+        {
+            reset(len, Type(), DEFAULT);
         }
 
         void reset(const detail::array_1d<len_type>& len,

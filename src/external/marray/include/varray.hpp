@@ -65,35 +65,23 @@ class varray : public varray_base<Type, varray<Type, Allocator>, true>
             reset(other, layout);
         }
 
-        explicit varray(std::initializer_list<len_type> len, const Type& val=Type(), layout layout = DEFAULT)
+        template <typename Type_=Type>
+        explicit varray(detail::len_type_init len)
+        {
+            reset(len, Type(), DEFAULT);
+        }
+
+        explicit varray(detail::array_1d<len_type> len, const Type& val=Type(), layout layout = DEFAULT)
         {
             reset(len, val, layout);
         }
 
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        explicit varray(const U& len, const Type& val=Type(), layout layout = DEFAULT)
-        {
-            reset(len, val, layout);
-        }
-
-        varray(std::initializer_list<len_type> len, layout layout)
+        explicit varray(detail::array_1d<len_type> len, layout layout)
         {
             reset(len, Type(), layout);
         }
 
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        varray(const U& len, layout layout)
-        {
-            reset(len, Type(), layout);
-        }
-
-        varray(std::initializer_list<len_type> len, uninitialized_t, layout layout = DEFAULT)
-        {
-            reset(len, uninitialized, layout);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        varray(const U& len, uninitialized_t, layout layout = DEFAULT)
+        explicit varray(detail::array_1d<len_type> len, uninitialized_t, layout layout = DEFAULT)
         {
             reset(len, uninitialized, layout);
         }
@@ -187,36 +175,24 @@ class varray : public varray_base<Type, varray<Type, Allocator>, true>
             base::template operator=<>(other);
         }
 
-        void reset(std::initializer_list<len_type> len, const Type& val=Type(), layout layout = DEFAULT)
+        template <typename Type_=Type>
+        void reset(detail::len_type_init len)
         {
-            reset<std::initializer_list<len_type>>(len, val, layout);
+            reset(len, Type(), DEFAULT);
         }
 
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        void reset(const U& len, const Type& val=Type(), layout layout = DEFAULT)
+        void reset(detail::array_1d<len_type> len, const Type& val=Type(), layout layout = DEFAULT)
         {
             reset(len, uninitialized, layout);
             std::uninitialized_fill_n(data_, storage_.size, val);
         }
 
-        void reset(std::initializer_list<len_type> len, layout layout)
+        void reset(detail::array_1d<len_type> len, layout layout)
         {
             reset(len, Type(), layout);
         }
 
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        void reset(const U& len, layout layout)
-        {
-            reset(len, Type(), layout);
-        }
-
-        void reset(std::initializer_list<len_type> len, uninitialized_t, layout layout = DEFAULT)
-        {
-            reset<std::initializer_list<len_type>>(len, uninitialized, layout);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        void reset(const U& len, uninitialized_t, layout layout = DEFAULT)
+        void reset(detail::array_1d<len_type> len, uninitialized_t, layout layout = DEFAULT)
         {
             MARRAY_ASSERT(len.size() > 0);
 
@@ -233,13 +209,7 @@ class varray : public varray_base<Type, varray<Type, Allocator>, true>
          *
          **********************************************************************/
 
-        void resize(std::initializer_list<len_type> len, const Type& val=Type())
-        {
-            resize<std::initializer_list<len_type>>(len, val);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        void resize(const U& len, const Type& val=Type())
+        void resize(detail::array_1d<len_type> len, const Type& val=Type())
         {
             MARRAY_ASSERT(len.size() == dimension());
 

@@ -82,6 +82,37 @@ using ptr_vector = short_vector<T*,MARRAY_OPT_NDIM>;
 #define MARRAY_DEFAULT_DPD_LAYOUT PREFIX
 #endif
 
+template <typename T, typename U>
+T ipow(T a, U b)
+{
+    T ab = 1;
+    while (b --> 0) ab *= a;
+    return ab;
+}
+
+#define likely(x) __builtin_expect((x),1)
+#define unlikely(x) __builtin_expect((x),0)
+
+/*
+ * Return q = x/y and r = x%y assuming x >= 0 && y >= 0
+ */
+inline void divide(len_type x_, len_type y_, len_type& q, len_type& r)
+{
+    uint64_t x = x_;
+    uint64_t y = y_;
+
+    if (likely(x < (1ll << 32) && y < (1ll << 32)))
+    {
+        q = uint32_t(x)/uint32_t(y);
+        r = uint32_t(x)%uint32_t(y);
+    }
+    else
+    {
+        q = x/y;
+        r = x%y;
+    }
+}
+
 /*
  * The special value uninitialized is used to construct an array which
  * does not default- or value-initialize its elements (useful for avoiding

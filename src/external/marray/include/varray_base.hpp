@@ -86,34 +86,18 @@ class varray_base
             stride_.assign(other.strides().begin(), other.strides().end());
         }
 
-        void reset(std::initializer_list<len_type> len, pointer ptr, layout layout = DEFAULT)
-        {
-            reset<std::initializer_list<len_type>>(len, ptr, layout);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        void reset(const U& len, pointer ptr, layout layout = DEFAULT)
+        void reset(detail::array_1d<len_type> len, pointer ptr, layout layout = DEFAULT)
         {
             reset(len, ptr, strides(len, layout));
         }
 
-        void reset(std::initializer_list<len_type> len, pointer ptr,
-                   std::initializer_list<stride_type> stride)
-        {
-            reset<std::initializer_list<len_type>,
-                  std::initializer_list<stride_type>>(len, ptr, stride);
-        }
-
-        template <typename U, typename V, typename=detail::enable_if_t<
-            detail::is_container_of<U,len_type>::value &&
-            detail::is_container_of<V,stride_type>::value>>
-        void reset(const U& len, pointer ptr, const V& stride)
+        void reset(detail::array_1d<len_type> len, pointer ptr, detail::array_1d<stride_type> stride)
         {
             MARRAY_ASSERT(len.size() > 0);
             MARRAY_ASSERT(len.size() == stride.size());
             data_ = ptr;
-            len_.assign(len.begin(), len.end());
-            stride_.assign(stride.begin(), stride.end());
+            len.slurp(len_);
+            stride.slurp(stride_);
         }
 
         /***********************************************************************
@@ -271,16 +255,11 @@ class varray_base
          *
          **********************************************************************/
 
-        static stride_vector
-        strides(std::initializer_list<len_type> len, layout layout = DEFAULT)
+        static stride_vector strides(detail::array_1d<len_type> len_, layout layout = DEFAULT)
         {
-            return strides<std::initializer_list<len_type>>(len, layout);
-        }
+            len_vector len;
+            len_.slurp(len);
 
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        static stride_vector
-        strides(const U& len, layout layout = DEFAULT)
-        {
             MARRAY_ASSERT(len.size() > 0);
 
             auto ndim = len.size();
@@ -314,34 +293,25 @@ class varray_base
             return stride;
         }
 
-        stride_type size(std::initializer_list<len_type> len)
+        static stride_type size(detail::array_1d<len_type> len_)
         {
-            return size<std::initializer_list<len_type>>(len);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        static stride_type size(const U& len)
-        {
+            len_vector len;
+            len_.slurp(len);
             MARRAY_ASSERT(len.size() > 0);
             stride_type s = 1;
             for (auto& l : len) s *= l;
             return s;
         }
 
-        static std::pair<bool,stride_type> is_contiguous(std::initializer_list<len_type> len,
-                                                         std::initializer_list<stride_type> stride)
+        static std::pair<bool,stride_type> is_contiguous(detail::array_1d<len_type> len_,
+                                                         detail::array_1d<stride_type> stride_)
         {
-            return is_contiguous<std::initializer_list<len_type>,
-                                 std::initializer_list<stride_type>,
-                                 void>(len, stride);
-        }
+            len_vector len;
+            len_.slurp(len);
 
-        template <typename U, typename V,
-            typename=detail::enable_if_t<
-                detail::is_container_of<U,len_type>::value &&
-                detail::is_container_of<V,stride_type>::value>>
-        static std::pair<bool,stride_type> is_contiguous(const U& len, const V& stride)
-        {
+            stride_vector stride;
+            stride_.slurp(stride);
+
             MARRAY_ASSERT(len.size() > 0);
             MARRAY_ASSERT(len.size() == stride.size());
 
@@ -518,24 +488,12 @@ class varray_base
          *
          **********************************************************************/
 
-        varray_view<ctype> shifted(std::initializer_list<len_type> n) const
+        varray_view<ctype> shifted(detail::array_1d<len_type> n) const
         {
             return const_cast<varray_base&>(*this).shifted(n);
         }
 
-        varray_view<Type> shifted(std::initializer_list<len_type> n)
-        {
-            return shifted<std::initializer_list<len_type>>(n);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        varray_view<ctype> shifted(const U& n) const
-        {
-            return const_cast<varray_base&>(*this).shifted(n);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,len_type>>
-        varray_view<Type> shifted(const U& n)
+        varray_view<Type> shifted(detail::array_1d<len_type> n)
         {
             MARRAY_ASSERT(n.size() == dimension());
             varray_view<Type> r(*this);
@@ -582,24 +540,12 @@ class varray_base
          *
          **********************************************************************/
 
-        varray_view<ctype> permuted(std::initializer_list<unsigned> perm) const
+        varray_view<ctype> permuted(detail::array_1d<unsigned> perm) const
         {
             return const_cast<varray_base&>(*this).permuted(perm);
         }
 
-        varray_view<Type> permuted(std::initializer_list<unsigned> perm)
-        {
-            return permuted<std::initializer_list<unsigned>>(perm);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,unsigned>>
-        varray_view<ctype> permuted(const U& perm) const
-        {
-            return const_cast<varray_base&>(*this).permuted(perm);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,unsigned>>
-        varray_view<Type> permuted(const U& perm)
+        varray_view<Type> permuted(detail::array_1d<unsigned> perm)
         {
             varray_view<Type> r(*this);
             r.permute(perm);
@@ -612,24 +558,12 @@ class varray_base
          *
          **********************************************************************/
 
-        varray_view<ctype> lowered(std::initializer_list<unsigned> split) const
+        varray_view<ctype> lowered(detail::array_1d<unsigned> split) const
         {
             return const_cast<varray_base&>(*this).lowered(split);
         }
 
-        varray_view<Type> lowered(std::initializer_list<unsigned> split)
-        {
-            return lowered<std::initializer_list<unsigned>>(split);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,unsigned>>
-        varray_view<ctype> lowered(const U& split) const
-        {
-            return const_cast<varray_base&>(*this).lowered(split);
-        }
-
-        template <typename U, typename=detail::enable_if_container_of_t<U,unsigned>>
-        varray_view<Type> lowered(const U& split)
+        varray_view<Type> lowered(detail::array_1d<unsigned> split)
         {
             varray_view<Type> r(*this);
             r.lower(split);
@@ -765,6 +699,25 @@ class varray_base
          * Indexing
          *
          **********************************************************************/
+
+        cref operator()(detail::array_1d<len_type> idx_) const
+        {
+            return const_cast<varray_base&>(*this)(idx_);
+        }
+
+        reference operator()(detail::array_1d<len_type> idx_)
+        {
+            MARRAY_ASSERT(idx_.size() == dimension());
+
+            len_vector idx;
+            idx_.slurp(idx);
+
+            auto ptr = data();
+            for (unsigned i = 0;i < dimension();i++)
+                ptr += idx[i]*stride(i);
+
+            return *ptr;
+        }
 
         template <typename... Args>
         detail::enable_if_t<detail::are_indices_or_slices<Args...>::value &&

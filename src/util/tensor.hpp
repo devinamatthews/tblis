@@ -470,7 +470,7 @@ matrix_view<const T> matricize(const varray_view<const T>& A, unsigned split)
         cs = (split == ndim ? 1 : A.stride( ndim-1));
     }
 
-    return {{m, n}, A.data(), {rs, cs}};
+    return matrix_view<const T>{{m, n}, A.data(), {rs, cs}};
 }
 
 template <typename T>

@@ -21,12 +21,16 @@ struct pack
         if (Mat == matrix_constants::MAT_A)
         {
             auto P = A.pack(comm, cfg, Mat, Pool);
+            comm.barrier();
             child(comm, cfg, P, B, C);
+            comm.barrier();
         }
         else
         {
             auto P = B.pack(comm, cfg, Mat, Pool);
+            comm.barrier();
             child(comm, cfg, A, P, C);
+            comm.barrier();
         }
     }
 };

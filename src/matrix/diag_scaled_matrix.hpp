@@ -48,7 +48,10 @@ class diag_scaled_matrix : public abstract_matrix_adapter<diag_scaled_matrix,dia
             const len_type k_p = round_up(k, KR);
             const stride_type rs_ap = k_p*ME*ts;
             const stride_type cs_ap = KR*ME*ts;
-            const stride_type nelem = m_p*k_p + std::max(m_p,k_p)*TBLIS_MAX_UNROLL;
+            const len_type MC = std::max(!trans ? cfg.gemm_mc.max(type)
+                                                : cfg.gemm_nc.max(type), m_p);
+            const len_type KC = std::max(cfg.gemm_kc.max(type), k_p);
+            const stride_type nelem = MC*KC + std::max(MC,KC)*TBLIS_MAX_UNROLL;
 
             packed_matrix P(type, !trans ? m : k, !trans ? k : m,
                             A.get_buffer(comm, nelem, pool), k_p*ME);
@@ -104,12 +107,12 @@ class diag_scaled_matrix : public abstract_matrix_adapter<diag_scaled_matrix,dia
             const len_type m_first = 0;
             const len_type m_last = ceil_div(m, MR);
 
-            constexpr static dcomplex zero{};
-            char p_ab[8192] __attribute__((aligned(64)));
-
             comm.distribute_over_threads(ceil_div(n, NR),
             [&](len_type n_first, len_type n_last)
             {
+                constexpr static dcomplex zero{};
+                char p_ab[8192] __attribute__((aligned(64)));
+
                 for (len_type n_off = n_first;n_off < n_last;n_off++)
                 for (len_type m_off = m_first;m_off < m_last;m_off++)
                 {

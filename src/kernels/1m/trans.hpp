@@ -5,8 +5,6 @@
 #include "util/basic_types.h"
 #include "util/macros.h"
 
-#pragma clang diagnostic ignored "-Wpass-failed"
-
 namespace tblis
 {
 

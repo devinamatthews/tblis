@@ -88,6 +88,9 @@ void bli_sgemm_haswell_asm_6x16
        cntx_t*    restrict cntx
      )
 {
+    (void)alpha;
+    (void)cntx;
+
     //void*   a_next = bli_auxinfo_next_a( data );
     //void*   b_next = bli_auxinfo_next_b( data );
 
@@ -97,6 +100,8 @@ void bli_sgemm_haswell_asm_6x16
     uint64_t k_left = k0 % 4;
     uint64_t rs_c   = rs_c0;
     uint64_t cs_c   = cs_c0;
+
+    float* c_pre = data->c_prefetch;
 
     begin_asm()
 
@@ -112,7 +117,7 @@ void bli_sgemm_haswell_asm_6x16
     vmovaps(mem(rbx, -4*32), ymm0)
     vmovaps(mem(rbx, -3*32), ymm1)
 
-    mov(var(c), rcx) // load address of c
+    mov(var(c_pre), rcx) // load address of c
     mov(var(rs_c), rdi) // load rs_c
     lea(mem(, rdi, 4), rdi) // rs_c *= sizeof(float)
 
@@ -303,35 +308,13 @@ void bli_sgemm_haswell_asm_6x16
 
 
 
-    mov(var(alpha), rax) // load address of alpha
     mov(var(beta), rbx) // load address of beta
-    vbroadcastss(mem(rax), ymm0) // load alpha and duplicate
-    vbroadcastss(mem(rbx), ymm3) // load beta and duplicate
-
-    vmulps(ymm0, ymm4, ymm4) // scale by alpha
-    vmulps(ymm0, ymm5, ymm5)
-    vmulps(ymm0, ymm6, ymm6)
-    vmulps(ymm0, ymm7, ymm7)
-    vmulps(ymm0, ymm8, ymm8)
-    vmulps(ymm0, ymm9, ymm9)
-    vmulps(ymm0, ymm10, ymm10)
-    vmulps(ymm0, ymm11, ymm11)
-    vmulps(ymm0, ymm12, ymm12)
-    vmulps(ymm0, ymm13, ymm13)
-    vmulps(ymm0, ymm14, ymm14)
-    vmulps(ymm0, ymm15, ymm15)
-
-
-
-
-
-
     mov(var(cs_c), rsi) // load cs_c
+    mov(var(c), rcx) // load address of c
+    vbroadcastss(mem(rbx), ymm3) // load beta and duplicate
     lea(mem(, rsi, 4), rsi) // rsi = cs_c * sizeof(float)
-
     lea(mem(rcx, rsi, 8), rdx) // load address of c +  8*cs_c;
     lea(mem(rcx, rdi, 4), r14) // load address of c +  4*rs_c;
-
     lea(mem(rsi, rsi, 2), r13) // r13 = 3*cs_c;
     lea(mem(rsi, rsi, 4), r15) // r15 = 5*cs_c;
     lea(mem(r13, rsi, 4), r10) // r10 = 7*cs_c;
@@ -877,9 +860,9 @@ void bli_sgemm_haswell_asm_6x16
       [k_left] "m" (k_left), // 1
       [a]      "m" (a),      // 2
       [b]      "m" (b),      // 3
-      [alpha]  "m" (alpha),  // 4
       [beta]   "m" (beta),   // 5
       [c]      "m" (c),      // 6
+      [c_pre]  "m" (c_pre),      // 6
       [rs_c]   "m" (rs_c),   // 7
       [cs_c]   "m" (cs_c)/*,   // 8
       [b_next] "m" (b_next), // 9
@@ -934,6 +917,9 @@ void bli_dgemm_haswell_asm_6x8
        cntx_t*    restrict cntx
      )
 {
+    (void)alpha;
+    (void)cntx;
+
     //void*   a_next = bli_auxinfo_next_a( data );
     //void*   b_next = bli_auxinfo_next_b( data );
 
@@ -943,6 +929,8 @@ void bli_dgemm_haswell_asm_6x8
     uint64_t k_left = k0 % 4;
     uint64_t rs_c   = rs_c0;
     uint64_t cs_c   = cs_c0;
+
+    double* c_pre = data->c_prefetch;
 
     begin_asm()
 
@@ -958,7 +946,7 @@ void bli_dgemm_haswell_asm_6x8
     vmovapd(mem(rbx, -4*32), ymm0)
     vmovapd(mem(rbx, -3*32), ymm1)
 
-    mov(var(c), rcx) // load address of c
+    mov(var(c_pre), rcx) // load address of c
     mov(var(rs_c), rdi) // load rs_c
     lea(mem(, rdi, 8), rdi) // rs_c *= sizeof(double)
 
@@ -1147,37 +1135,13 @@ void bli_dgemm_haswell_asm_6x8
     label(.DPOSTACCUM)
 
 
-
-
-    mov(var(alpha), rax) // load address of alpha
     mov(var(beta), rbx) // load address of beta
-    vbroadcastsd(mem(rax), ymm0) // load alpha and duplicate
-    vbroadcastsd(mem(rbx), ymm3) // load beta and duplicate
-
-    vmulpd(ymm0, ymm4, ymm4) // scale by alpha
-    vmulpd(ymm0, ymm5, ymm5)
-    vmulpd(ymm0, ymm6, ymm6)
-    vmulpd(ymm0, ymm7, ymm7)
-    vmulpd(ymm0, ymm8, ymm8)
-    vmulpd(ymm0, ymm9, ymm9)
-    vmulpd(ymm0, ymm10, ymm10)
-    vmulpd(ymm0, ymm11, ymm11)
-    vmulpd(ymm0, ymm12, ymm12)
-    vmulpd(ymm0, ymm13, ymm13)
-    vmulpd(ymm0, ymm14, ymm14)
-    vmulpd(ymm0, ymm15, ymm15)
-
-
-
-
-
-
     mov(var(cs_c), rsi) // load cs_c
+    mov(var(c), rcx) // load address of c
+    vbroadcastsd(mem(rbx), ymm3) // load beta and duplicate
     lea(mem(, rsi, 8), rsi) // rsi = cs_c * sizeof(double)
-
     lea(mem(rcx, rsi, 4), rdx) // load address of c +  4*cs_c;
     lea(mem(rcx, rdi, 4), r14) // load address of c +  4*rs_c;
-
     lea(mem(rsi, rsi, 2), r13) // r13 = 3*cs_c;
     //lea(mem(rsi, rsi, 4), r15) // r15 = 5*cs_c;
     //lea(mem(r13, rsi, 4), r10) // r10 = 7*cs_c;
@@ -1616,9 +1580,9 @@ void bli_dgemm_haswell_asm_6x8
       [k_left] "m" (k_left), // 1
       [a]      "m" (a),      // 2
       [b]      "m" (b),      // 3
-      [alpha]  "m" (alpha),  // 4
       [beta]   "m" (beta),   // 5
       [c]      "m" (c),      // 6
+      [c_pre]  "m" (c_pre),      // 6
       [rs_c]   "m" (rs_c),   // 7
       [cs_c]   "m" (cs_c)/*,   // 8
       [b_next] "m" (b_next), // 9
@@ -1680,6 +1644,9 @@ void bli_cgemm_haswell_asm_3x8
        cntx_t*    restrict cntx
      )
 {
+    (void)alpha;
+    (void)cntx;
+
     //void*   a_next = bli_auxinfo_next_a( data );
     //void*   b_next = bli_auxinfo_next_b( data );
 
@@ -1689,6 +1656,8 @@ void bli_cgemm_haswell_asm_3x8
     uint64_t k_left = k0 % 4;
     uint64_t rs_c   = rs_c0;
     uint64_t cs_c   = cs_c0;
+
+    scomplex* c_pre = data->c_prefetch;
 
     begin_asm()
 
@@ -1704,7 +1673,7 @@ void bli_cgemm_haswell_asm_3x8
     vmovaps(mem(rbx, -4*32), ymm0)
     vmovaps(mem(rbx, -3*32), ymm1)
 
-    mov(var(c), rcx) // load address of c
+    mov(var(c_pre), rcx) // load address of c
     mov(var(rs_c), rdi) // load rs_c
     lea(mem(, rdi, 8), rdi) // rs_c *= sizeof(scomplex)
 
@@ -1914,58 +1883,16 @@ void bli_cgemm_haswell_asm_3x8
 
 
 
-    mov(var(alpha), rax) // load address of alpha
-    vbroadcastss(mem(rax), ymm0) // load alpha_r and duplicate
-    vbroadcastss(mem(rax, 4), ymm1) // load alpha_i and duplicate
-
-
-    vpermilps(imm(0xb1), ymm4, ymm3)
-    vmulps(ymm0, ymm4, ymm4)
-    vmulps(ymm1, ymm3, ymm3)
-    vaddsubps(ymm3, ymm4, ymm4)
-
-    vpermilps(imm(0xb1), ymm5, ymm3)
-    vmulps(ymm0, ymm5, ymm5)
-    vmulps(ymm1, ymm3, ymm3)
-    vaddsubps(ymm3, ymm5, ymm5)
-
-
-    vpermilps(imm(0xb1), ymm8, ymm3)
-    vmulps(ymm0, ymm8, ymm8)
-    vmulps(ymm1, ymm3, ymm3)
-    vaddsubps(ymm3, ymm8, ymm8)
-
-    vpermilps(imm(0xb1), ymm9, ymm3)
-    vmulps(ymm0, ymm9, ymm9)
-    vmulps(ymm1, ymm3, ymm3)
-    vaddsubps(ymm3, ymm9, ymm9)
-
-
-    vpermilps(imm(0xb1), ymm12, ymm3)
-    vmulps(ymm0, ymm12, ymm12)
-    vmulps(ymm1, ymm3, ymm3)
-    vaddsubps(ymm3, ymm12, ymm12)
-
-    vpermilps(imm(0xb1), ymm13, ymm3)
-    vmulps(ymm0, ymm13, ymm13)
-    vmulps(ymm1, ymm3, ymm3)
-    vaddsubps(ymm3, ymm13, ymm13)
-
-
-
-
-
     mov(var(beta), rbx) // load address of beta
+    mov(var(cs_c), rsi) // load cs_c
+    mov(var(c), rcx) // load address of c
     vbroadcastss(mem(rbx), ymm1) // load beta_r and duplicate
     vbroadcastss(mem(rbx, 4), ymm2) // load beta_i and duplicate
-
-
-
-
-    mov(var(cs_c), rsi) // load cs_c
     lea(mem(, rsi, 8), rsi) // rsi = cs_c * sizeof(scomplex)
     lea(mem(, rsi, 4), rdx) // rdx = 4*cs_c;
     lea(mem(rsi, rsi, 2), r13) // r13 = 3*cs_c;
+    lea(mem(rcx, rdi, 1), r11) // r11 = c + 1*rs_c;
+    lea(mem(rcx, rdi, 2), r12) // r12 = c + 2*rs_c;
 
 
 
@@ -2148,9 +2075,9 @@ void bli_cgemm_haswell_asm_3x8
       [k_left] "m" (k_left), // 1
       [a]      "m" (a),      // 2
       [b]      "m" (b),      // 3
-      [alpha]  "m" (alpha),  // 4
       [beta]   "m" (beta),   // 5
       [c]      "m" (c),      // 6
+      [c_pre]  "m" (c_pre),      // 6
       [rs_c]   "m" (rs_c),   // 7
       [cs_c]   "m" (cs_c)/*,   // 8
       [b_next] "m" (b_next), // 9
@@ -2208,6 +2135,9 @@ void bli_zgemm_haswell_asm_3x4
        cntx_t*    restrict cntx
      )
 {
+    (void)alpha;
+    (void)cntx;
+
     //void*   a_next = bli_auxinfo_next_a( data );
     //void*   b_next = bli_auxinfo_next_b( data );
 
@@ -2217,6 +2147,8 @@ void bli_zgemm_haswell_asm_3x4
     uint64_t k_left = k0 % 4;
     uint64_t rs_c   = rs_c0;
     uint64_t cs_c   = cs_c0;
+
+    dcomplex* c_pre = data->c_prefetch;
 
     begin_asm()
 
@@ -2232,7 +2164,7 @@ void bli_zgemm_haswell_asm_3x4
     vmovapd(mem(rbx, -4*32), ymm0)
     vmovapd(mem(rbx, -3*32), ymm1)
 
-    mov(var(c), rcx) // load address of c
+    mov(var(c_pre), rcx) // load address of c
     mov(var(rs_c), rdi) // load rs_c
     lea(mem(, rdi, 8), rdi) // rs_c *= sizeof(dcomplex)
     lea(mem(, rdi, 2), rdi)
@@ -2441,59 +2373,16 @@ void bli_zgemm_haswell_asm_3x4
 
 
 
-
-    mov(var(alpha), rax) // load address of alpha
-    vbroadcastsd(mem(rax), ymm0) // load alpha_r and duplicate
-    vbroadcastsd(mem(rax, 8), ymm1) // load alpha_i and duplicate
-
-
-    vpermilpd(imm(0x5), ymm4, ymm3)
-    vmulpd(ymm0, ymm4, ymm4)
-    vmulpd(ymm1, ymm3, ymm3)
-    vaddsubpd(ymm3, ymm4, ymm4)
-
-    vpermilpd(imm(0x5), ymm5, ymm3)
-    vmulpd(ymm0, ymm5, ymm5)
-    vmulpd(ymm1, ymm3, ymm3)
-    vaddsubpd(ymm3, ymm5, ymm5)
-
-
-    vpermilpd(imm(0x5), ymm8, ymm3)
-    vmulpd(ymm0, ymm8, ymm8)
-    vmulpd(ymm1, ymm3, ymm3)
-    vaddsubpd(ymm3, ymm8, ymm8)
-
-    vpermilpd(imm(0x5), ymm9, ymm3)
-    vmulpd(ymm0, ymm9, ymm9)
-    vmulpd(ymm1, ymm3, ymm3)
-    vaddsubpd(ymm3, ymm9, ymm9)
-
-
-    vpermilpd(imm(0x5), ymm12, ymm3)
-    vmulpd(ymm0, ymm12, ymm12)
-    vmulpd(ymm1, ymm3, ymm3)
-    vaddsubpd(ymm3, ymm12, ymm12)
-
-    vpermilpd(imm(0x5), ymm13, ymm3)
-    vmulpd(ymm0, ymm13, ymm13)
-    vmulpd(ymm1, ymm3, ymm3)
-    vaddsubpd(ymm3, ymm13, ymm13)
-
-
-
-
-
     mov(var(beta), rbx) // load address of beta
+    mov(var(cs_c), rsi) // load cs_c
+    mov(var(c), rcx) // load address of c
     vbroadcastsd(mem(rbx), ymm1) // load beta_r and duplicate
     vbroadcastsd(mem(rbx, 8), ymm2) // load beta_i and duplicate
-
-
-
-
-    mov(var(cs_c), rsi) // load cs_c
     lea(mem(, rsi, 8), rsi) // rsi = cs_c * sizeof(dcomplex)
     lea(mem(, rsi, 2), rsi)
     lea(mem(, rsi, 2), rdx) // rdx = 2*cs_c;
+    lea(mem(rcx, rdi, 1), r11) // r11 = c + 1*rs_c;
+    lea(mem(rcx, rdi, 2), r12) // r12 = c + 2*rs_c;
 
 
 
@@ -2676,9 +2565,9 @@ void bli_zgemm_haswell_asm_3x4
       [k_left] "m" (k_left), // 1
       [a]      "m" (a),      // 2
       [b]      "m" (b),      // 3
-      [alpha]  "m" (alpha),  // 4
       [beta]   "m" (beta),   // 5
       [c]      "m" (c),      // 6
+      [c_pre]  "m" (c_pre),      // 6
       [rs_c]   "m" (rs_c),   // 7
       [cs_c]   "m" (cs_c)/*,   // 8
       [b_next] "m" (b_next), // 9

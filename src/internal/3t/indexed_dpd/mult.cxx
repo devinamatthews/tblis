@@ -18,6 +18,8 @@
 
 #include "external/stl_ext/include/iostream.hpp"
 
+#include <memory>
+
 namespace MArray
 {
 
@@ -59,6 +61,18 @@ make_complex_if(real_type_t<T> r, real_type_t<T> i)
     return {r, i};
 }
 */
+
+enum { OPT_NFUSE = 256 };
+
+typedef short_vector<stride_type,OPT_NFUSE> stride_vector_fuse;
+typedef short_vector<std::tuple<double,double,stride_type,stride_type>,OPT_NFUSE> tuple_vector_fuse;
+
+static thread_local std::aligned_storage_t<sizeof(stride_vector_fuse)> scat_A_AB_;
+static thread_local std::aligned_storage_t<sizeof(stride_vector_fuse)> scat_B_AB_;
+static thread_local std::aligned_storage_t<sizeof(stride_vector_fuse)> scat_B_BC_;
+static thread_local std::aligned_storage_t<sizeof(stride_vector_fuse)> scat_C_BC_;
+static thread_local std::aligned_storage_t<sizeof(tuple_vector_fuse)> scat_AB_;
+static thread_local std::aligned_storage_t<sizeof(tuple_vector_fuse)> scat_BC_;
 
 double relative_perf(double m, double n, double k)
 {
@@ -197,9 +211,9 @@ void mult_block_fuse_AB(type_t type, const communicator& comm, const config& cfg
                          irrep_AB,irrep_AC,irrep_BC,block_AC,block_BC]
                         (const communicator& subcomm)
                         {
-                            std::vector<stride_type> scat_A_AB;
-                            std::vector<stride_type> scat_B_AB;
-                            std::vector<std::tuple<double,double,stride_type,stride_type>> scat_AB;
+                            auto& scat_A_AB = *(new (&scat_A_AB_) stride_vector_fuse);
+                            auto& scat_B_AB = *(new (&scat_B_AB_) stride_vector_fuse);
+                            auto& scat_AB = *(new (&scat_AB_) tuple_vector_fuse);
 
                             auto local_irreps_A = irreps_A;
                             auto local_irreps_B = irreps_B;
@@ -322,9 +336,9 @@ void mult_block_fuse_AB(type_t type, const communicator& comm, const config& cfg
                                                               std::get<1>(scat_AB[i])), type);
 
                                         scatter_tensor_matrix at(alpha, conj_A, len_AC, len_AB, data_A, stride_A_AC, stride_A_AB,
-                                                                    {}, {{scat_A_AB.size()}, scat_A_AB.data()});
+                                                                    {}, row_view<stride_type>{{scat_A_AB.size()}, scat_A_AB.data()});
                                         scatter_tensor_matrix bt(  one, conj_B, len_AB, len_BC, data_B, stride_B_AB, stride_B_BC,
-                                                                    {{scat_B_AB.size()}, scat_B_AB.data()}, {});
+                                                                    row_view<stride_type>{{scat_B_AB.size()}, scat_B_AB.data()}, {});
                                                 tensor_matrix ct(  one,  false, len_AC, len_BC, data_C, stride_C_AC, stride_C_BC);
 
                                         GotoGEMM{}(subcomm, cfg, at, bt, ct);
@@ -334,6 +348,10 @@ void mult_block_fuse_AB(type_t type, const communicator& comm, const config& cfg
                                     }
                                 }
                             }
+
+                            scat_A_AB.~short_vector();
+                            scat_B_AB.~short_vector();
+                            scat_AB.~short_vector();
                         });
                     }
                 }
@@ -416,9 +434,9 @@ void mult_block_fuse_BC(type_t type, const communicator& comm, const config& cfg
                      irrep_AB,irrep_AC,irrep_BC,block_AC,block_BC]
                     (const communicator& subcomm)
                     {
-                        std::vector<stride_type> scat_B_BC;
-                        std::vector<stride_type> scat_C_BC;
-                        std::vector<std::tuple<double,double,stride_type,stride_type>> scat_BC;
+                        auto& scat_B_BC = *(new (&scat_B_BC_) stride_vector_fuse);
+                        auto& scat_C_BC = *(new (&scat_C_BC_) stride_vector_fuse);
+                        auto& scat_BC = *(new (&scat_BC_) tuple_vector_fuse);
 
                         auto local_irreps_A = irreps_A;
                         auto local_irreps_B = irreps_B;
@@ -551,9 +569,9 @@ void mult_block_fuse_BC(type_t type, const communicator& comm, const config& cfg
 
                                                 tensor_matrix at(alpha, conj_A, len_AC, len_AB, data_A, stride_A_AC, stride_A_AB);
                                         scatter_tensor_matrix bt(  one, conj_B, len_AB, len_BC, data_B, stride_B_AB, stride_B_BC,
-                                                                 {}, {{scat_B_BC.size()}, scat_B_BC.data()});
+                                                                 {}, row_view<stride_type>{{scat_B_BC.size()}, scat_B_BC.data()});
                                         scatter_tensor_matrix ct(  one, conj_B, len_AC, len_BC, data_C, stride_C_AC, stride_C_BC,
-                                                                 {}, {{scat_C_BC.size()}, scat_C_BC.data()});
+                                                                 {}, row_view<stride_type>{{scat_C_BC.size()}, scat_C_BC.data()});
 
                                         GotoGEMM{}(subcomm, cfg, at, bt, ct);
 
@@ -563,6 +581,10 @@ void mult_block_fuse_BC(type_t type, const communicator& comm, const config& cfg
                                 }
                             });
                         }
+
+                        scat_B_BC.~short_vector();
+                        scat_C_BC.~short_vector();
+                        scat_BC.~short_vector();
                     });
                 }
             }
@@ -649,12 +671,12 @@ void mult_block_fuse_AB_BC(type_t type, const communicator& comm, const config& 
                      irrep_AB,irrep_AC,irrep_BC,block_AC,block_BC]
                     (const communicator& subcomm)
                     {
-                        std::vector<std::tuple<double,double,stride_type,stride_type>> scat_AB;
-                        std::vector<std::tuple<double,double,stride_type,stride_type>> scat_BC;
-                        stride_vector scat_A_AB;
-                        stride_vector scat_C_BC;
-                        stride_vector scat_B_AB;
-                        stride_vector scat_B_BC;
+                        auto& scat_A_AB = *(new (&scat_A_AB_) stride_vector_fuse);
+                        auto& scat_B_AB = *(new (&scat_B_AB_) stride_vector_fuse);
+                        auto& scat_B_BC = *(new (&scat_B_BC_) stride_vector_fuse);
+                        auto& scat_C_BC = *(new (&scat_C_BC_) stride_vector_fuse);
+                        auto& scat_AB = *(new (&scat_AB_) tuple_vector_fuse);
+                        auto& scat_BC = *(new (&scat_BC_) tuple_vector_fuse);
 
                         auto local_irreps_A = irreps_A;
                         auto local_irreps_B = irreps_B;
@@ -817,23 +839,24 @@ void mult_block_fuse_AB_BC(type_t type, const communicator& comm, const config& 
                                             if (len_AB.empty() && len_BC.empty())
                                             {
                                                 scatter_tensor_matrix at(alpha, conj_A, len_AC, len_AB, data_A, stride_A_AC, stride_A_AB, {},
-                                                                         {{scat_A_AB.size()}, scat_A_AB.data()});
-                                                       scatter_matrix bt(  one, conj_B, data_B, {{scat_B_AB.size()}, scat_B_AB.data()},
-                                                                         {{scat_B_BC.size()}, scat_B_BC.data()});
+                                                                         row_view<stride_type>{{scat_A_AB.size()}, scat_A_AB.data()});
+                                                       scatter_matrix bt(  one, conj_B, data_B,
+                                                                         row_view<stride_type>{{scat_B_AB.size()}, scat_B_AB.data()},
+                                                                         row_view<stride_type>{{scat_B_BC.size()}, scat_B_BC.data()});
                                                 scatter_tensor_matrix ct(  one,  false, len_AC, len_BC, data_C, stride_C_AC, stride_C_BC, {},
-                                                                         {{scat_C_BC.size()}, scat_C_BC.data()});
+                                                                         row_view<stride_type>{{scat_C_BC.size()}, scat_C_BC.data()});
 
                                                 GotoGEMM{}(subcomm, cfg, at, bt, ct);
                                             }
                                             else
                                             {
                                                 scatter_tensor_matrix at(alpha, conj_A, len_AC, len_AB, data_A, stride_A_AC, stride_A_AB, {},
-                                                                         {{scat_A_AB.size()}, scat_A_AB.data()});
+                                                                         row_view<stride_type>{{scat_A_AB.size()}, scat_A_AB.data()});
                                                 scatter_tensor_matrix bt(  one, conj_B, len_AB, len_BC, data_B, stride_B_AB, stride_B_BC,
-                                                                         {{scat_B_AB.size()}, scat_B_AB.data()},
-                                                                         {{scat_B_BC.size()}, scat_B_BC.data()});
+                                                                         row_view<stride_type>{{scat_B_AB.size()}, scat_B_AB.data()},
+                                                                         row_view<stride_type>{{scat_B_BC.size()}, scat_B_BC.data()});
                                                 scatter_tensor_matrix ct(  one,  false, len_AC, len_BC, data_C, stride_C_AC, stride_C_BC, {},
-                                                                         {{scat_C_BC.size()}, scat_C_BC.data()});
+                                                                         row_view<stride_type>{{scat_C_BC.size()}, scat_C_BC.data()});
 
                                                 GotoGEMM{}(subcomm, cfg, at, bt, ct);
                                             }
@@ -848,6 +871,13 @@ void mult_block_fuse_AB_BC(type_t type, const communicator& comm, const config& 
                                 }
                             }
                         }
+
+                        scat_A_AB.~short_vector();
+                        scat_B_AB.~short_vector();
+                        scat_B_BC.~short_vector();
+                        scat_C_BC.~short_vector();
+                        scat_AB.~short_vector();
+                        scat_BC.~short_vector();
                     });
                 }
             }

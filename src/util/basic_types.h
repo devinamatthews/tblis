@@ -729,14 +729,6 @@ inline const label_vector& idx(const tblis_tensor& A, label_vector&& idx_A = lab
 
 const label_vector& idx(const std::string& from, label_vector&& to = label_vector());
 
-template <typename T, typename U>
-T ipow(T a, U b)
-{
-    T ab = 1;
-    while (b --> 0) ab *= a;
-    return ab;
-}
-
 #endif
 
 }

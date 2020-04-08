@@ -175,8 +175,8 @@ noinst_LTLIBRARIES += lib/libpiledriver.la
 lib_libtblis_la_LIBADD += lib/libpiledriver.la
 lib_libpiledriver_la_SOURCES = src/configs/piledriver/bli_gemm_asm_d8x3.c \
                                src/configs/piledriver/config.cxx
-lib_libpiledriver_la_CFLAGS = -O3 -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse
-lib_libpiledriver_la_CXXFLAGS = -O3 -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse
+lib_libpiledriver_la_CFLAGS = -O3 -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse -mno-tbm
+lib_libpiledriver_la_CXXFLAGS = -O3 -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse -mno-tbm
 endif
 
 if ENABLE_EXCAVATOR
@@ -188,8 +188,8 @@ lib_libexcavator_la_SOURCES = src/configs/excavator/bli_gemm_asm_d8x3.c \
 else
 lib_libexcavator_la_SOURCES = src/configs/excavator/config.cxx
 endif
-lib_libexcavator_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
-lib_libexcavator_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
+lib_libexcavator_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse -mno-tbm
+lib_libexcavator_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse -mno-tbm
 endif
 
 if ENABLE_ZEN

@@ -35,15 +35,16 @@ AC_DEFINE_UNQUOTED([TOPDIR], [$topdir], [The top source directory.])
 
 AC_MSG_CHECKING([for OpenMP SIMD pragma])
 omp_simd_flag="not supported"
-for flag in -fopenmp-simd -qopenmd-simd; do
+for flag in -fopenmp-simd -qopenmp-simd; do
     CXXFLAGS_save="$CXXFLAGS"
-    CXXFLAGS="$CXXFLAGS $flag"
-    AC_TRY_COMPILE([], [
-        double x[1000];
+    CXXFLAGS="$CXXFLAGS $flag -Werror"
+    AC_TRY_COMPILE([#include <cstdio>], [
+        auto f = [](int* x){
         #pragma omp simd
-        for (int i = 0;i < 1000;i++)
-            x[i] = 0;
-        ], [omp_simd_flag="$flag"])
+        for (int i = 0;i < 256;i++)
+            x[i] = i;
+        }; printf("%p", &f);
+        ], [omp_simd_flag="$flag"], [])
     CXXFLAGS="$CXXFLAGS_save"
 done
 AC_MSG_RESULT([$omp_simd_flag])
@@ -189,6 +190,7 @@ if echo $enable_config | grep -q auto; then
 #    AC_CHECK_DEFINE([__PPC__], [enable_config=power7])
 #    AC_CHECK_DEFINE([__bgq__], [enable_config=bgq])
 #    AC_CHECK_DEFINE([__mips], [enable_config=loongson3a])
+    AC_CHECK_DEFINE([__INTEL_COMPILER], [enable_config=intel])
 fi
                              
 if ( echo $enable_config | grep -qv reference ) && test x$using_default_configs = xyes; then

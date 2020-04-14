@@ -177,7 +177,7 @@ class marray_iterator
 
         marray_iterator operator-(difference_type n) const
         {
-            return iterator(*array_, i_-n);
+            return marray_iterator(*array_, i_-n);
         }
 
         difference_type operator-(const marray_iterator& other) const

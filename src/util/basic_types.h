@@ -64,9 +64,10 @@ tblis_abort_with_message(const char* cond, const char* fmt, ...)
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 #include <string>
+#include <type_traits>
+#include <memory>
 
 #include "../memory/aligned_allocator.hpp"
-
 #include "../external/stl_ext/include/complex.hpp"
 
 #if defined(TBLIS_DEBUG) && !defined(MARRAY_ENABLE_ASSERTS)
@@ -579,8 +580,8 @@ typedef struct tblis_tensor
     tblis_scalar scalar;
     void* data;
     unsigned ndim;
-    len_type* len;
-    stride_type* stride;
+    const len_type* len;
+    const stride_type* stride;
 
 #if defined(__cplusplus)
 
@@ -592,22 +593,22 @@ typedef struct tblis_tensor
     tblis_tensor(const T* A, unsigned ndim,
                  const len_type* len, const stride_type* stride)
     : type(type_tag<T>::value), conj(false), scalar(T(1)),
-      data(const_cast<T*>(A)), ndim(ndim), len(const_cast<len_type*>(len)),
-      stride(const_cast<stride_type*>(stride)) {}
+      data(const_cast<T*>(A)), ndim(ndim), len(len),
+      stride(stride) {}
 
     template <typename T>
     tblis_tensor(T alpha, const T* A, unsigned ndim,
                  const len_type* len, const stride_type* stride)
     : type(type_tag<T>::value), conj(false), scalar(alpha),
-      data(const_cast<T*>(A)), ndim(ndim), len(const_cast<len_type*>(len)),
-      stride(const_cast<stride_type*>(stride)) {}
+      data(const_cast<T*>(A)), ndim(ndim), len(len),
+      stride(stride) {}
 
     template <typename T>
     tblis_tensor(T alpha, bool conj, const T* A, unsigned ndim,
                  const len_type* len, const stride_type* stride)
     : type(type_tag<T>::value), conj(conj), scalar(alpha),
-      data(const_cast<T*>(A)), ndim(ndim), len(const_cast<len_type*>(len)),
-      stride(const_cast<stride_type*>(stride)) {}
+      data(const_cast<T*>(A)), ndim(ndim), len(len),
+      stride(stride) {}
 
 #endif
 

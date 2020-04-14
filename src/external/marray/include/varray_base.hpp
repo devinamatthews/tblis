@@ -10,9 +10,9 @@ namespace MArray
 template <typename Type, typename Derived, bool Owner>
 class varray_base
 {
-    template <typename, unsigned, typename, bool> friend class marray_base;
-    template <typename, unsigned> friend class marray_view;
-    template <typename, unsigned, typename> friend class marray;
+    template <typename, int, typename, bool> friend class marray_base;
+    template <typename, int> friend class marray_view;
+    template <typename, int, typename> friend class marray;
     template <typename, typename, bool> friend class varray_base;
     template <typename> friend class varray_view;
     template <typename, typename> friend class varray;
@@ -66,7 +66,7 @@ class varray_base
             stride_ = other.stride_;
         }
 
-        template <typename U, unsigned N, typename D, bool O,
+        template <typename U, int N, typename D, bool O,
             typename=detail::enable_if_convertible_t<
                 typename marray_base<U, N, D, O>::cptr,pointer>>
         void reset(const marray_base<U, N, D, O>& other)
@@ -76,7 +76,7 @@ class varray_base
             stride_.assign(other.strides().begin(), other.strides().end());
         }
 
-        template <typename U, unsigned N, typename D, bool O,
+        template <typename U, int N, typename D, bool O,
             typename=detail::enable_if_convertible_t<
                 typename marray_base<U, N, D, O>::pointer,pointer>>
         void reset(marray_base<U, N, D, O>& other)
@@ -114,19 +114,19 @@ class varray_base
             while (it.next(ptr)) detail::call(std::forward<Func>(f), *ptr, it.position());
         }
 
-        template <typename Ptr, typename Func, unsigned... I>
-        void for_each_element(Func&& f, detail::integer_sequence<unsigned, I...>) const
+        template <typename Ptr, typename Func, int... I>
+        void for_each_element(Func&& f, detail::integer_sequence<int, I...>) const
         {
             miterator<sizeof...(I), 1> it(len_, stride_);
             Ptr ptr = const_cast<Ptr>(data_);
             while (it.next(ptr)) detail::call(std::forward<Func>(f), *ptr, it.position()[I]...);
         }
 
-        template <unsigned Dim>
+        template <int Dim>
         void get_slice(pointer&, len_vector&,
                        stride_vector&) const {}
 
-        template <unsigned Dim, typename... Args>
+        template <int Dim, typename... Args>
         void get_slice(pointer& ptr, len_vector& len,
                        stride_vector& stride,
                        len_type arg, Args&&... args) const
@@ -136,7 +136,7 @@ class varray_base
             get_slice<Dim+1>(ptr, len, stride, std::forward<Args>(args)...);
         }
 
-        template <unsigned Dim, typename I, typename... Args>
+        template <int Dim, typename I, typename... Args>
         void get_slice(pointer& ptr, len_vector& len,
                        stride_vector& stride,
                        const range_t<I>& arg, Args&&... args) const
@@ -150,7 +150,7 @@ class varray_base
             get_slice<Dim+1>(ptr, len, stride, std::forward<Args>(args)...);
         }
 
-        template <unsigned Dim, typename... Args>
+        template <int Dim, typename... Args>
         void get_slice(pointer& ptr, len_vector& len,
                        stride_vector& stride,
                        all_t, Args&&... args) const
@@ -160,10 +160,10 @@ class varray_base
             get_slice<Dim+1>(ptr, len, stride, std::forward<Args>(args)...);
         }
 
-        template <unsigned Dim>
+        template <int Dim>
         void get_reference(pointer&) const {}
 
-        template <unsigned Dim, typename... Args>
+        template <int Dim, typename... Args>
         void get_reference(pointer& ptr, len_type arg, Args&&... args) const
         {
             MARRAY_ASSERT(arg >= 0 && arg < len_[Dim]);
@@ -194,7 +194,7 @@ class varray_base
             }
         }
 
-        template <typename U, unsigned N, typename D, bool O>
+        template <typename U, int N, typename D, bool O>
         void copy(const marray_base<U, N, D, O>& other) const
         {
             MARRAY_ASSERT(dimension() == N);
@@ -262,7 +262,7 @@ class varray_base
 
             MARRAY_ASSERT(len.size() > 0);
 
-            auto ndim = len.size();
+            int ndim = len.size();
             stride_vector stride(ndim);
 
             if (layout == ROW_MAJOR)
@@ -274,16 +274,14 @@ class varray_base
                 auto it = len.begin(); ++it;
                 std::copy_n(it, ndim-1, stride.begin());
                 stride[ndim-1] = 1;
-                for (unsigned i = ndim;i --> 1;)
-                {
-                    stride[i-1] *= stride[i];
-                }
+                for (auto i : reversed_range(ndim-1))
+                    stride[i] *= stride[i+1];
             }
             else
             {
                 stride[0] = 1;
                 auto it = len.begin();
-                for (unsigned i = 1;i < ndim;i++)
+                for (auto i : range(1,ndim))
                 {
                     stride[i] = stride[i-1]*(*it);
                     ++it;
@@ -312,7 +310,8 @@ class varray_base
             stride_vector stride;
             stride_.slurp(stride);
 
-            MARRAY_ASSERT(len.size() > 0);
+            int ndim = len.size();
+            MARRAY_ASSERT(ndim > 0);
             MARRAY_ASSERT(len.size() == stride.size());
 
             if (len.size() == 1) return std::make_pair(true, *len.begin());
@@ -333,14 +332,14 @@ class varray_base
 
             if (stride0 < stride1)
             {
-                for (unsigned i = 1;i < len.size();i++)
+                for (auto i : range(1,ndim))
                 {
                     size *= len1;
 
                     if (stride1 != stride0*len0)
                         return std::make_pair(false, stride_type());
 
-                    if (i < len.size()-1)
+                    if (i < ndim-1)
                     {
                         len0 = len1;
                         stride0 = stride1;
@@ -351,14 +350,14 @@ class varray_base
             }
             else
             {
-                for (unsigned i = 1;i < len.size();i++)
+                for (auto i : range(1,ndim))
                 {
                     size *= len1;
 
                     if (stride0 != stride1*len1)
                         return std::make_pair(false, stride_type());
 
-                    if (i < len.size()-1)
+                    if (i < ndim-1)
                     {
                         len0 = len1;
                         stride0 = stride1;
@@ -398,7 +397,7 @@ class varray_base
             return static_cast<const Derived&>(*this);
         }
 
-        template <typename U, unsigned N, typename D, bool O,
+        template <typename U, int N, typename D, bool O,
             typename=detail::enable_if_t<std::is_assignable<reference,U>::value>>
         Derived& operator=(const marray_base<U, N, D, O>& other)
         {
@@ -406,7 +405,7 @@ class varray_base
             return static_cast<Derived&>(*this);
         }
 
-        template <typename U, unsigned N, typename D, bool O, bool O_=Owner,
+        template <typename U, int N, typename D, bool O, bool O_=Owner,
             typename=detail::enable_if_t<!O_ && std::is_assignable<reference,U>::value>>
         const Derived& operator=(const marray_base<U, N, D, O>& other) const
         {
@@ -463,13 +462,13 @@ class varray_base
             return x.view();
         }
 
-        template <unsigned NDim>
+        template <int NDim>
         marray_view<ctype, NDim> fix() const
         {
             return const_cast<varray_base&>(*this).fix<NDim>();
         }
 
-        template <unsigned NDim>
+        template <int NDim>
         marray_view<Type, NDim> fix()
         {
             MARRAY_ASSERT(NDim == dimension());
@@ -501,35 +500,35 @@ class varray_base
             return r;
         }
 
-        varray_view<ctype> shifted(unsigned dim, len_type n) const
+        varray_view<ctype> shifted(int dim, len_type n) const
         {
             return const_cast<varray_base&>(*this).shifted(dim, n);
         }
 
-        varray_view<Type> shifted(unsigned dim, len_type n)
+        varray_view<Type> shifted(int dim, len_type n)
         {
-            MARRAY_ASSERT(dim < dimension());
+            MARRAY_ASSERT(dim >= 0 && dim < dimension());
             varray_view<Type> r(*this);
             r.shift(dim, n);
             return r;
         }
 
-        varray_view<ctype> shifted_down(unsigned dim) const
+        varray_view<ctype> shifted_down(int dim) const
         {
             return const_cast<varray_base&>(*this).shifted_down(dim);
         }
 
-        varray_view<Type> shifted_down(unsigned dim)
+        varray_view<Type> shifted_down(int dim)
         {
             return shifted(dim, len_[dim]);
         }
 
-        varray_view<ctype> shifted_up(unsigned dim) const
+        varray_view<ctype> shifted_up(int dim) const
         {
             return const_cast<varray_base&>(*this).shifted_up(dim);
         }
 
-        varray_view<Type> shifted_up(unsigned dim)
+        varray_view<Type> shifted_up(int dim)
         {
             return shifted(dim, -len_[dim]);
         }
@@ -540,12 +539,12 @@ class varray_base
          *
          **********************************************************************/
 
-        varray_view<ctype> permuted(detail::array_1d<unsigned> perm) const
+        varray_view<ctype> permuted(detail::array_1d<int> perm) const
         {
             return const_cast<varray_base&>(*this).permuted(perm);
         }
 
-        varray_view<Type> permuted(detail::array_1d<unsigned> perm)
+        varray_view<Type> permuted(detail::array_1d<int> perm)
         {
             varray_view<Type> r(*this);
             r.permute(perm);
@@ -558,12 +557,12 @@ class varray_base
          *
          **********************************************************************/
 
-        varray_view<ctype> lowered(detail::array_1d<unsigned> split) const
+        varray_view<ctype> lowered(detail::array_1d<int> split) const
         {
             return const_cast<varray_base&>(*this).lowered(split);
         }
 
-        varray_view<Type> lowered(detail::array_1d<unsigned> split)
+        varray_view<Type> lowered(detail::array_1d<int> split)
         {
             varray_view<Type> r(*this);
             r.lower(split);
@@ -588,12 +587,12 @@ class varray_base
             return r;
         }
 
-        varray_view<ctype> reversed(unsigned dim) const
+        varray_view<ctype> reversed(int dim) const
         {
             return const_cast<varray_base&>(*this).reversed(dim);
         }
 
-        varray_view<Type> reversed(unsigned dim)
+        varray_view<Type> reversed(int dim)
         {
             varray_view<Type> r(*this);
             r.reverse(dim);
@@ -623,20 +622,20 @@ class varray_base
             return data_[0];
         }
 
-        varray_view<const Type> cfront(unsigned dim) const
+        varray_view<const Type> cfront(int dim) const
         {
             return const_cast<varray_base&>(*this).front(dim);
         }
 
-        varray_view<ctype> front(unsigned dim) const
+        varray_view<ctype> front(int dim) const
         {
             return const_cast<varray_base&>(*this).front(dim);
         }
 
-        varray_view<Type> front(unsigned dim)
+        varray_view<Type> front(int dim)
         {
             MARRAY_ASSERT(dimension() > 1);
-            MARRAY_ASSERT(dim < dimension());
+            MARRAY_ASSERT(dim >= 0 && dim < dimension());
             MARRAY_ASSERT(len_[dim] > 0);
 
             len_vector len(dimension()-1);
@@ -667,20 +666,20 @@ class varray_base
             return data_[(len_[0]-1)*stride_[0]];
         }
 
-        varray_view<const Type> cback(unsigned dim) const
+        varray_view<const Type> cback(int dim) const
         {
             return const_cast<varray_base&>(*this).back(dim);
         }
 
-        varray_view<ctype> back(unsigned dim) const
+        varray_view<ctype> back(int dim) const
         {
             return const_cast<varray_base&>(*this).back(dim);
         }
 
-        varray_view<Type> back(unsigned dim)
+        varray_view<Type> back(int dim)
         {
             MARRAY_ASSERT(dimension() > 1);
-            MARRAY_ASSERT(dim < dimension());
+            MARRAY_ASSERT(dim >= 0 && dim < dimension());
             MARRAY_ASSERT(len_[dim] > 0);
 
             len_vector len(dimension()-1);
@@ -713,7 +712,7 @@ class varray_base
             idx_.slurp(idx);
 
             auto ptr = data();
-            for (unsigned i = 0;i < dimension();i++)
+            for (auto i : range(dimension()))
                 ptr += idx[i]*stride(i);
 
             return *ptr;
@@ -782,16 +781,16 @@ class varray_base
             for_each_element<pointer>(std::forward<Func>(f));
         }
 
-        template <unsigned NDim, typename Func>
+        template <int NDim, typename Func>
         void for_each_element(Func&& f) const
         {
-            for_each_element<cptr>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
+            for_each_element<cptr>(std::forward<Func>(f), detail::static_range<int, NDim>{});
         }
 
-        template <unsigned NDim, typename Func>
+        template <int NDim, typename Func>
         void for_each_element(Func&& f)
         {
-            for_each_element<pointer>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
+            for_each_element<pointer>(std::forward<Func>(f), detail::static_range<int, NDim>{});
         }
 
         /***********************************************************************
@@ -815,9 +814,9 @@ class varray_base
             return data_;
         }
 
-        len_type length(unsigned dim) const
+        len_type length(int dim) const
         {
-            MARRAY_ASSERT(dim < dimension());
+            MARRAY_ASSERT(dim >= 0 && dim < dimension());
             return len_[dim];
         }
 
@@ -826,9 +825,9 @@ class varray_base
             return len_;
         }
 
-        stride_type stride(unsigned dim) const
+        stride_type stride(int dim) const
         {
-            MARRAY_ASSERT(dim < dimension());
+            MARRAY_ASSERT(dim >= 0 && dim < dimension());
             return stride_[dim];
         }
 
@@ -837,18 +836,18 @@ class varray_base
             return stride_;
         }
 
-        unsigned dimension() const
+        int dimension() const
         {
-            return static_cast<unsigned>(len_.size());
+            return len_.size();
         }
 
         friend std::ostream& operator<<(std::ostream& os, const varray_base& x)
         {
-            unsigned ndim = x.dimension();
+            auto ndim = x.dimension();
 
-            for (unsigned i = 0;i < ndim-1;i++)
+            for (auto i : range(ndim-1))
             {
-                for (unsigned j = 0;j < i;j++) os << ' ';
+                for (auto j : range(i)) os << ' ';
                 os << "{\n";
             }
 
@@ -857,14 +856,14 @@ class varray_base
 
             for (bool done = false;!done;)
             {
-                for (unsigned i = 0;i < ndim-1;i++) os << ' ';
+                for (auto i : range(ndim-1)) os << ' ';
                 os << '{';
-                len_type n = x.len_[ndim-1];
-                for (len_type i = 0;i < n-1;i++)
+                auto n = x.len_[ndim-1];
+                for (auto i : range(n-1))
                     os << data[i*x.stride_[ndim-1]] << ", ";
                 os << data[(n-1)*x.stride_[ndim-1]] << "}";
 
-                for (unsigned i = ndim-1;i --> 0;)
+                for (auto i : reversed_range(ndim-1))
                 {
                     idx[i]++;
                     data += x.stride_[i];
@@ -874,16 +873,16 @@ class varray_base
                         data -= idx[i]*x.stride_[i];
                         idx[i] = 0;
                         os << "\n";
-                        for (unsigned j = 0;j < i;j++) os << ' ';
+                        for (auto j : range(i)) os << ' ';
                         os << '}';
                         if (i == 0) done = true;
                     }
                     else
                     {
                         os << ",\n";
-                        for (unsigned j = i+1;j < ndim-1;j++)
+                        for (auto j : range(i+1,ndim-1))
                         {
-                            for (unsigned k = 0;k < j;k++) os << ' ';
+                            for (auto k : range(j)) os << ' ';
                             os << "{\n";
                         }
                         break;
@@ -895,19 +894,19 @@ class varray_base
         }
 };
 
-template <unsigned NDim, typename Type, typename Derived>
+template <int NDim, typename Type, typename Derived>
 marray_view<Type, NDim> fix(const varray_base<Type, Derived, false>& x)
 {
     return x.template fix<NDim>();
 }
 
-template <unsigned NDim, typename Type, typename Derived>
+template <int NDim, typename Type, typename Derived>
 marray_view<const Type, NDim> fix(const varray_base<Type, Derived, true>& x)
 {
     return x.template fix<NDim>();
 }
 
-template <unsigned NDim, typename Type, typename Derived>
+template <int NDim, typename Type, typename Derived>
 marray_view<Type, NDim> fix(varray_base<Type, Derived, true>& x)
 {
     return x.template fix<NDim>();
@@ -915,7 +914,7 @@ marray_view<Type, NDim> fix(varray_base<Type, Derived, true>& x)
 
 //TODO: maybe these should go in marray_base?
 
-template <typename U, unsigned N, typename D>
+template <typename U, int N, typename D>
 varray_view<U> vary(const marray_base<U, N, D, false>& other)
 {
     len_vector len{other.lengths().begin(), other.lengths().end()};
@@ -923,7 +922,7 @@ varray_view<U> vary(const marray_base<U, N, D, false>& other)
     return {len, other.data(), stride};
 }
 
-template <typename U, unsigned N, typename D>
+template <typename U, int N, typename D>
 varray_view<const U> vary(const marray_base<U, N, D, true>& other)
 {
     len_vector len{other.lengths().begin(), other.lengths().end()};
@@ -931,7 +930,7 @@ varray_view<const U> vary(const marray_base<U, N, D, true>& other)
     return {len, other.data(), stride};
 }
 
-template <typename U, unsigned N, typename D>
+template <typename U, int N, typename D>
 varray_view<U> vary(marray_base<U, N, D, true>& other)
 {
     len_vector len{other.lengths().begin(), other.lengths().end()};
@@ -939,7 +938,7 @@ varray_view<U> vary(marray_base<U, N, D, true>& other)
     return {len, other.data(), stride};
 }
 
-template <typename U, unsigned N, unsigned I, typename... Ds>
+template <typename U, int N, int I, typename... Ds>
 varray_view<U> vary(const marray_slice<U, N, I, Ds...>& other)
 {
     return vary(other.view());

@@ -22,10 +22,12 @@ struct slice_dim
 
 }
 
-#include "marray.hpp"
-
 namespace MArray
 {
+
+template <typename Expr, typename=void> struct is_expression;
+template <typename Expr, typename=void> struct expression_type;
+template <typename Expr, typename=void> struct expr_dimension;
 
 template <typename T>
 struct is_scalar : std::is_arithmetic<T> {};
@@ -43,7 +45,7 @@ struct array_expr
     T* data;
     std::tuple<Dims...> dims;
 
-    template <size_t I>
+    template <int I>
     using dim_type = typename std::tuple_element<I, std::tuple<Dims...>>::type;
 
     array_expr(T* data, const Dims&... dims)
@@ -54,14 +56,14 @@ struct array_expr
         return *data;
     }
 
-    template <unsigned NDim, unsigned Dim>
+    template <int NDim, int Dim>
     detail::enable_if_t<(Dim < NDim-sizeof...(Dims)),result_type>
     eval_at(len_type) const
     {
         return *data;
     }
 
-    template <unsigned NDim, unsigned Dim>
+    template <int NDim, int Dim>
     detail::enable_if_t<(Dim >= NDim-sizeof...(Dims)),result_type>
     eval_at(len_type i) const
     {
@@ -78,33 +80,33 @@ struct array_expr
         return *data;
     }
 
-    template <unsigned NDim, unsigned Dim, unsigned Width, bool Aligned>
+    template <int NDim, int Dim, int Width, bool Aligned>
     detail::enable_if_t<(Dim < NDim-sizeof...(Dims)),vector_type>
     eval_vec(len_type) const
     {
         return vec_traits::load1(data);
     }
 
-    template <unsigned NDim, unsigned Dim, unsigned Width, bool Aligned>
+    template <int NDim, int Dim, int Width, bool Aligned>
     detail::enable_if_t<(Dim >= NDim-sizeof...(Dims)),vector_type>
     eval_vec(len_type i) const
     {
         return eval_vec<Width,Aligned>(i, std::get<Dim-(NDim-sizeof...(Dims))>(dims));
     }
 
-    template <unsigned Width, bool Aligned>
+    template <int Width, bool Aligned>
     vector_type eval_vec(len_type i, const slice_dim&) const
     {
         return vec_traits::template load<Width,Aligned>(data+i);
     }
 
-    template <unsigned Width, bool Aligned>
+    template <int Width, bool Aligned>
     vector_type eval_vec(len_type, const bcast_dim&) const
     {
         return vec_traits::load1(data);
     }
 
-    template <unsigned NDim, unsigned Dim, unsigned Width, bool Aligned>
+    template <int NDim, int Dim, int Width, bool Aligned>
     void store_vec(len_type i, vector_type v) const
     {
         vec_traits::template store<Width,Aligned>(v, data+i);
@@ -146,7 +148,7 @@ eval(Expr&& expr)
     return expr;
 }
 
-template <unsigned NDim, unsigned Dim, typename Expr>
+template <int NDim, int Dim, typename Expr>
 detail::enable_if_t<is_expression<detail::decay_t<Expr>>::value,
                     typename expr_result_type<detail::decay_t<Expr>>::type>
 eval_at(Expr&& expr, len_type i)
@@ -154,14 +156,14 @@ eval_at(Expr&& expr, len_type i)
     return expr.template eval_at<NDim, Dim>(i);
 }
 
-template <unsigned NDim, unsigned Dim, typename Expr>
+template <int NDim, int Dim, typename Expr>
 detail::enable_if_t<is_scalar<detail::decay_t<Expr>>::value,Expr>
 eval_at(Expr&& expr, len_type)
 {
     return expr;
 }
 
-template <unsigned NDim, unsigned Dim, unsigned Width, bool Aligned, typename Expr>
+template <int NDim, int Dim, int Width, bool Aligned, typename Expr>
 detail::enable_if_t<is_expression<detail::decay_t<Expr>>::value,
                     typename detail::decay_t<Expr>::vector_type>
 eval_vec(Expr&& expr, len_type i)
@@ -169,7 +171,7 @@ eval_vec(Expr&& expr, len_type i)
     return expr.template eval_vec<NDim, Dim, Width, Aligned>(i);
 }
 
-template <unsigned NDim, unsigned Dim, unsigned Width, bool Aligned, typename Expr>
+template <int NDim, int Dim, int Width, bool Aligned, typename Expr>
 detail::enable_if_t<is_scalar<detail::decay_t<Expr>>::value,
                     typename vector_traits<detail::decay_t<Expr>>::vector_type>
 eval_vec(Expr&& expr, len_type)
@@ -448,14 +450,14 @@ struct binary_expr
         return op(MArray::eval(first), MArray::eval(second));
     }
 
-    template <unsigned NDim, unsigned Dim>
+    template <int NDim, int Dim>
     result_type eval_at(len_type i) const
     {
         return op(MArray::eval_at<NDim, Dim>(first, i),
                   MArray::eval_at<NDim, Dim>(second, i));
     }
 
-    template <unsigned NDim, unsigned Dim, unsigned Width, bool Aligned>
+    template <int NDim, int Dim, int Width, bool Aligned>
     vector_type eval_vec(len_type i) const
     {
         return op.template vec<result_type>(
@@ -501,13 +503,13 @@ struct unary_expr
         return op(MArray::eval(expr));
     }
 
-    template <unsigned NDim, unsigned Dim>
+    template <int NDim, int Dim>
     result_type eval_at(len_type i) const
     {
         return op(MArray::eval_at<NDim, Dim>(expr, i));
     }
 
-    template <unsigned NDim, unsigned Dim, unsigned Width, bool Aligned>
+    template <int NDim, int Dim, int Width, bool Aligned>
     vector_type eval_vec(len_type i) const
     {
         return op.template vec<result_type>(
@@ -569,7 +571,7 @@ struct array_expr_type_helper2<array_expr<T, Dims...>, Dim>
     typedef array_expr<T, Dims..., Dim> type;
 };
 
-template <typename T, unsigned NDim>
+template <typename T, int NDim>
 struct array_expr_helper;
 
 template <typename T>
@@ -578,7 +580,7 @@ struct array_expr_helper<T, 0>
     typedef array_expr<T> type;
 };
 
-template <typename T, unsigned NDim>
+template <typename T, int NDim>
 struct array_expr_helper
 {
     typedef typename array_expr_type_helper2<
@@ -597,10 +599,10 @@ struct slice_array_expr_helper<array_expr<T, Dims2...>, Dims1...>
 template <typename Array, typename=void>
 struct is_marray
 {
-    template <typename T, unsigned NDim, typename Derived, bool Owner>
+    template <typename T, int NDim, typename Derived, bool Owner>
     static std::true_type check(const marray_base<T, NDim, Derived, Owner>*);
 
-    template <typename T, unsigned NDim, unsigned NIndexed, typename... Dims>
+    template <typename T, int NDim, int NIndexed, typename... Dims>
     static std::true_type check(const marray_slice<T, NDim, NIndexed, Dims...>*);
 
     static std::false_type check(...);
@@ -611,16 +613,16 @@ struct is_marray
 template <typename Expr>
 struct expression_type<Expr, detail::enable_if_t<is_marray<Expr>::value>>
 {
-    template <typename T, unsigned NDim, unsigned NIndexed, typename... Dims>
+    template <typename T, int NDim, int NIndexed, typename... Dims>
     static typename slice_array_expr_helper<typename array_expr_helper<T, NDim-NIndexed>::type, Dims...>::type check(const marray_slice<T, NDim, NIndexed, Dims...>*);
 
-    template <typename T, unsigned NDim, typename Derived>
+    template <typename T, int NDim, typename Derived>
     static typename array_expr_helper<T, NDim>::type check(const marray_base<T, NDim, Derived, false>*);
 
-    template <typename T, unsigned NDim, typename Derived>
+    template <typename T, int NDim, typename Derived>
     static typename array_expr_helper<const T, NDim>::type check(const marray_base<T, NDim, Derived, true>*);
 
-    template <typename T, unsigned NDim, typename Derived>
+    template <typename T, int NDim, typename Derived>
     static typename array_expr_helper<T, NDim>::type check(marray_base<T, NDim, Derived, true>*);
 
     static void check(...);
@@ -635,54 +637,54 @@ struct expression_type<Expr, detail::enable_if_t<is_expression<detail::decay_t<E
     typedef detail::decay_t<Expr> type;
 };
 
-template <typename T, unsigned NDim, unsigned NIndexed, typename... Dims,
-          size_t... I, size_t... J>
+template <typename T, int NDim, int NIndexed, typename... Dims,
+          int... I, int... J>
 typename expression_type<marray_slice<T, NDim, NIndexed, Dims...>>::type
 make_expression_helper(const marray_slice<T, NDim, NIndexed, Dims...>& x,
-                       detail::integer_sequence<size_t, I...>,
-                       detail::integer_sequence<size_t, J...>)
+                       detail::integer_sequence<int, I...>,
+                       detail::integer_sequence<int, J...>)
 {
     return {x.data(), x.template dim<I>()...,
             slice_dim(x.template base_length<NIndexed+J>(),
                       x.template base_stride<NIndexed+J>())...};
 }
 
-template <typename T, unsigned NDim, typename Derived, bool Owner, size_t... I>
+template <typename T, int NDim, typename Derived, bool Owner, int... I>
 typename expression_type<const marray_base<T, NDim, Derived, Owner>>::type
 make_expression_helper(const marray_base<T, NDim, Derived, Owner>& x,
-                       detail::integer_sequence<size_t, I...>)
+                       detail::integer_sequence<int, I...>)
 {
     return {x.data(), slice_dim(x.template length<I>(), x.template stride<I>())...};
 }
 
-template <typename T, unsigned NDim, typename Derived, bool Owner, size_t... I>
+template <typename T, int NDim, typename Derived, bool Owner, int... I>
 typename expression_type<marray_base<T, NDim, Derived, Owner>>::type
 make_expression_helper(marray_base<T, NDim, Derived, Owner>& x,
-                       detail::integer_sequence<size_t, I...>)
+                       detail::integer_sequence<int, I...>)
 {
     return {x.data(), slice_dim(x.template length<I>(), x.template stride<I>())...};
 }
 
-template <typename T, unsigned NDim, unsigned NIndexed, typename... Dims>
+template <typename T, int NDim, int NIndexed, typename... Dims>
 typename expression_type<marray_slice<T, NDim, NIndexed, Dims...>>::type
 make_expression(const marray_slice<T, NDim, NIndexed, Dims...>& x)
 {
-    return make_expression_helper(x, detail::static_range<size_t, sizeof...(Dims)>(),
-                                  detail::static_range<size_t, NDim-NIndexed>());
+    return make_expression_helper(x, detail::static_range<int, sizeof...(Dims)>(),
+                                  detail::static_range<int, NDim-NIndexed>());
 }
 
-template <typename T, unsigned NDim, typename Derived, bool Owner>
+template <typename T, int NDim, typename Derived, bool Owner>
 typename expression_type<const marray_base<T, NDim, Derived, Owner>>::type
 make_expression(const marray_base<T, NDim, Derived, Owner>& x)
 {
-    return make_expression_helper(x, detail::static_range<size_t, NDim>());
+    return make_expression_helper(x, detail::static_range<int, NDim>());
 }
 
-template <typename T, unsigned NDim, typename Derived, bool Owner>
+template <typename T, int NDim, typename Derived, bool Owner>
 typename expression_type<marray_base<T, NDim, Derived, Owner>>::type
 make_expression(marray_base<T, NDim, Derived, Owner>& x)
 {
-    return make_expression_helper(x, detail::static_range<size_t, NDim>());
+    return make_expression_helper(x, detail::static_range<int, NDim>());
 }
 
 template <typename Expr>
@@ -897,11 +899,11 @@ sqrt(const Expr& expr)
 
 template <typename T, typename... Dims>
 struct expr_dimension<array_expr<T, Dims...>>
-    : std::integral_constant<unsigned, sizeof...(Dims)> {};
+    : std::integral_constant<int, sizeof...(Dims)> {};
 
 template <typename Expr>
 struct expr_dimension<Expr, detail::enable_if_t<is_scalar<Expr>::value>>
-    : std::integral_constant<unsigned, 0> {};
+    : std::integral_constant<int, 0> {};
 
 template <typename Expr>
 struct expr_dimension<Expr, detail::enable_if_t<is_binary_expression<Expr>::value>>
@@ -930,10 +932,10 @@ get_array_length(const Dim& dim)
     return dim.len;
 }
 
-template <typename T, typename... Dims, size_t... I>
+template <typename T, typename... Dims, int... I>
 std::array<len_type, sizeof...(I)>
 get_array_lengths_helper(const array_expr<T, Dims...>& array,
-                         detail::integer_sequence<size_t, I...>)
+                         detail::integer_sequence<int, I...>)
 {
     return {get_array_length(std::get<I>(array.dims))...};
 }
@@ -942,107 +944,66 @@ template <typename T, typename... Dims>
 std::array<len_type, sizeof...(Dims)>
 get_array_lengths(const array_expr<T, Dims...>& array)
 {
-    return get_array_lengths_helper(array, detail::static_range<size_t, sizeof...(Dims)>());
+    return get_array_lengths_helper(array, detail::static_range<int, sizeof...(Dims)>());
 }
 
-inline bool check_expr_length(const bcast_dim&, len_type)
+inline len_type get_expr_length(const bcast_dim&)
 {
-    return true;
+    return -1;
 }
 
-inline bool check_expr_length(const slice_dim& dim, len_type len)
+inline len_type get_expr_length(const slice_dim& dim)
 {
-    return len == dim.len;
+    return dim.len;
 }
 
-template <typename T, typename... Dims, size_t NDim, size_t... I>
-bool check_expr_lengths_helper(const array_expr<T, Dims...>& array,
-                               const std::array<len_type, NDim>& len,
-                               detail::integer_sequence<size_t, I...>)
+template <int NDim, typename T, typename... Dims, int... I, int... J>
+std::array<len_type, NDim>
+get_expr_lengths_helper(const array_expr<T, Dims...>& array,
+                        detail::integer_sequence<int, I...>,
+                        detail::integer_sequence<int, J...>)
 {
-    std::array<bool, sizeof...(Dims)> values =
-        {check_expr_length(std::get<I>(array.dims),
-                           len[NDim-sizeof...(Dims)+I])...};
-
-    bool ret = true;
-    for (bool value : values) ret = ret && value;
-    return ret;
+    return std::array<len_type, NDim>
+        {(I-I-1)..., get_expr_length(std::get<J>(array.dims))...};
 }
 
-template <typename T, typename... Dims, size_t NDim>
-bool check_expr_lengths(const array_expr<T, Dims...>& array,
-                        const std::array<len_type, NDim>& len)
+template <int NDim, typename T, typename... Dims>
+std::array<len_type, NDim>
+get_expr_lengths(const array_expr<T, Dims...>& array)
 {
-    return check_expr_lengths_helper(array, len, detail::static_range<size_t, sizeof...(Dims)>());
+    return get_expr_lengths_helper<NDim>(array,
+        detail::static_range<int, NDim-sizeof...(Dims)>(),
+        detail::static_range<int, sizeof...(Dims)>());
 }
 
-template <typename Expr, size_t NDim>
-detail::enable_if_t<is_scalar<Expr>::value,bool>
-check_expr_lengths(const Expr&, const std::array<len_type, NDim>&)
+template <int NDim, typename Expr>
+detail::enable_if_t<is_scalar<Expr>::value,std::array<len_type, NDim>>
+get_expr_lengths(const Expr&)
 {
-    return true;
+    return get_expr_lengths_helper<NDim>(array_expr<Expr>{nullptr},
+        detail::static_range<int, NDim>(),
+        detail::static_range<int, 0>());
 }
 
-template <typename Expr, size_t NDim>
-detail::enable_if_t<is_binary_expression<Expr>::value,bool>
-check_expr_lengths(const Expr& expr, const std::array<len_type, NDim>& len)
+template <int NDim, typename Expr>
+detail::enable_if_t<is_binary_expression<Expr>::value,std::array<len_type, NDim>>
+get_expr_lengths(const Expr& expr)
 {
-    return check_expr_lengths(expr.first, len) &&
-           check_expr_lengths(expr.second, len);
+    auto len1 = get_expr_lengths<NDim>(expr.first);
+    auto len2 = get_expr_lengths<NDim>(expr.second);
+    for (auto i : range(NDim))
+    {
+        MARRAY_ASSERT(len1[i] == len2[i] || len1[i] == -1 || len2[i] == -1);
+        len1[i] = std::max(len1[i],len2[i]);
+    }
+    return len1;
 }
 
-template <typename Expr, size_t NDim>
-detail::enable_if_t<is_unary_expression<Expr>::value,bool>
-check_expr_lengths(const Expr& expr, const std::array<len_type, NDim>& len)
+template <int NDim, typename Expr>
+detail::enable_if_t<is_unary_expression<Expr>::value,std::array<len_type, NDim>>
+get_expr_lengths(const Expr& expr)
 {
-    return check_expr_lengths(expr.expr, len);
-}
-
-inline bool get_expr_length(const bcast_dim&, len_type&)
-{
-    return true;
-}
-
-inline bool get_expr_length(const slice_dim& dim, len_type& len)
-{
-    len = dim.len;
-    return true;
-}
-
-template <typename T, typename... Dims, size_t NDim, size_t... I>
-void get_expr_lengths_helper(const array_expr<T, Dims...>& array,
-                             std::array<len_type, NDim>& len,
-                             detail::integer_sequence<size_t, I...>)
-{
-    std::array<bool, sizeof...(Dims)> values =
-        {get_expr_length(std::get<I>(array.dims),
-                         len[NDim-sizeof...(Dims)+I])...};
-}
-
-template <typename T, typename... Dims, size_t NDim>
-void get_expr_lengths(const array_expr<T, Dims...>& array,
-                      std::array<len_type, NDim>& len)
-{
-    get_expr_lengths_helper(array, len, detail::static_range<size_t, sizeof...(Dims)>());
-}
-
-template <typename Expr, size_t NDim>
-detail::enable_if_t<is_scalar<Expr>::value>
-get_expr_lengths(const Expr&, std::array<len_type, NDim>&) {}
-
-template <typename Expr, size_t NDim>
-detail::enable_if_t<is_binary_expression<Expr>::value>
-get_expr_lengths(const Expr& expr, std::array<len_type, NDim>& len)
-{
-    get_expr_lengths(expr.first, len);
-    get_expr_lengths(expr.second, len);
-}
-
-template <typename Expr, size_t NDim>
-detail::enable_if_t<is_unary_expression<Expr>::value>
-get_expr_lengths(const Expr& expr, std::array<len_type, NDim>& len)
-{
-    get_expr_lengths(expr.expr, len);
+    return get_expr_lengths<NDim>(expr.expr);
 }
 
 /*
@@ -1065,7 +1026,7 @@ inline bool is_contiguous(const slice_dim& dim)
  * smaller, the initial implicit broadcast dimensions are trivially
  * vectorizable.
  */
-template <unsigned NDim, unsigned Dim, typename T, typename... Dims>
+template <int NDim, int Dim, typename T, typename... Dims>
 detail::enable_if_t<(Dim < NDim-sizeof...(Dims)), bool>
 is_array_contiguous(const array_expr<T, Dims...>&)
 {
@@ -1076,27 +1037,27 @@ is_array_contiguous(const array_expr<T, Dims...>&)
  * For the remaining sizeof...(Dims) dimensions, subtract NDim-sizeof...(Dims)
  * to get the proper dimension number in the subexpression.
  */
-template <unsigned NDim, unsigned Dim, typename T, typename... Dims>
+template <int NDim, int Dim, typename T, typename... Dims>
 detail::enable_if_t<(Dim >= NDim-sizeof...(Dims)), bool>
 is_array_contiguous(const array_expr<T, Dims...>& expr)
 {
     return is_contiguous(std::get<Dim-(NDim-sizeof...(Dims))>(expr.dims));
 }
 
-template <unsigned NDim, unsigned Dim, typename T, typename... Dims>
+template <int NDim, int Dim, typename T, typename... Dims>
 bool is_contiguous(const array_expr<T, Dims...>& expr)
 {
     return is_array_contiguous<NDim, Dim, T, Dims...>(expr);
 }
 
-template <unsigned NDim, unsigned Dim, typename Expr>
+template <int NDim, int Dim, typename Expr>
 detail::enable_if_t<is_scalar<Expr>::value, bool>
 is_contiguous(const Expr&)
 {
     return true;
 }
 
-template <unsigned NDim, unsigned Dim, typename Expr>
+template <int NDim, int Dim, typename Expr>
 detail::enable_if_t<is_binary_expression<Expr>::value, bool>
 is_contiguous(const Expr& expr)
 {
@@ -1104,7 +1065,7 @@ is_contiguous(const Expr& expr)
            is_contiguous<NDim, Dim>(expr.second);
 }
 
-template <unsigned NDim, unsigned Dim, typename Expr>
+template <int NDim, int Dim, typename Expr>
 detail::enable_if_t<is_unary_expression<Expr>::value, bool>
 is_contiguous(const Expr& expr)
 {
@@ -1117,30 +1078,30 @@ struct vector_width;
 template <typename T, typename... Dims>
 struct vector_width<array_expr<T, Dims...>>
 {
-    constexpr static unsigned value = vector_traits<typename std::remove_cv<T>::type>::vector_width;
+    constexpr static int value = vector_traits<typename std::remove_cv<T>::type>::vector_width;
 };
 
 template <typename Expr>
 struct vector_width<Expr,detail::enable_if_t<is_scalar<Expr>::value>>
 {
-    constexpr static unsigned value = vector_traits<Expr>::vector_width;
+    constexpr static int value = vector_traits<Expr>::vector_width;
 };
 
 template <typename Expr>
 struct vector_width<Expr,detail::enable_if_t<is_unary_expression<Expr>::value>>
 {
-    constexpr static unsigned w1_ = vector_width<detail::decay_t<typename Expr::expr_type>>::value;
-    constexpr static unsigned w2_ = vector_width<detail::decay_t<typename Expr::result_type>>::value;
-    constexpr static unsigned value = (w1_ < w2_ ? w1_ : w2_);
+    constexpr static int w1_ = vector_width<detail::decay_t<typename Expr::expr_type>>::value;
+    constexpr static int w2_ = vector_width<detail::decay_t<typename Expr::result_type>>::value;
+    constexpr static int value = (w1_ < w2_ ? w1_ : w2_);
 };
 
 template <typename Expr>
 struct vector_width<Expr,detail::enable_if_t<is_binary_expression<Expr>::value>>
 {
-    constexpr static unsigned w1_ = vector_width<detail::decay_t<typename Expr::first_type>>::value;
-    constexpr static unsigned w2_ = vector_width<detail::decay_t<typename Expr::second_type>>::value;
-    constexpr static unsigned w3_ = vector_width<detail::decay_t<typename Expr::result_type>>::value;
-    constexpr static unsigned value = (w3_ < (w1_ < w2_ ? w1_ : w2_) ? w3_ : (w1_ < w2_ ? w1_ : w2_));
+    constexpr static int w1_ = vector_width<detail::decay_t<typename Expr::first_type>>::value;
+    constexpr static int w2_ = vector_width<detail::decay_t<typename Expr::second_type>>::value;
+    constexpr static int w3_ = vector_width<detail::decay_t<typename Expr::result_type>>::value;
+    constexpr static int value = (w3_ < (w1_ < w2_ ? w1_ : w2_) ? w3_ : (w1_ < w2_ ? w1_ : w2_));
 };
 
 /*
@@ -1173,11 +1134,11 @@ void decrement(array_expr<T, Dims...>& expr, const slice_dim& dim)
  * smaller, ignore increments and decrements for the first NDim-sizeof...(Dims)
  * dimensions.
  */
-template <unsigned NDim, unsigned Dim, typename T, typename... Dims>
+template <int NDim, int Dim, typename T, typename... Dims>
 detail::enable_if_t<(Dim < NDim-sizeof...(Dims))>
 increment_array(array_expr<T, Dims...>&) {}
 
-template <unsigned NDim, unsigned Dim, typename T, typename... Dims>
+template <int NDim, int Dim, typename T, typename... Dims>
 detail::enable_if_t<(Dim < NDim-sizeof...(Dims))>
 decrement_array(array_expr<T, Dims...>&) {}
 
@@ -1185,27 +1146,27 @@ decrement_array(array_expr<T, Dims...>&) {}
  * For the remaining sizeof...(Dims) dimensions, subtract NDim-sizeof...(Dims)
  * to get the proper dimension number in the subexpression.
  */
-template <unsigned NDim, unsigned Dim, typename T, typename... Dims>
+template <int NDim, int Dim, typename T, typename... Dims>
 detail::enable_if_t<(Dim >= NDim-sizeof...(Dims))>
 increment_array(array_expr<T, Dims...>& expr)
 {
     increment(expr, std::get<Dim-(NDim-sizeof...(Dims))>(expr.dims));
 }
 
-template <unsigned NDim, unsigned Dim, typename T, typename... Dims>
+template <int NDim, int Dim, typename T, typename... Dims>
 detail::enable_if_t<(Dim >= NDim-sizeof...(Dims))>
 decrement_array(array_expr<T, Dims...>& expr)
 {
     decrement(expr, std::get<Dim-(NDim-sizeof...(Dims))>(expr.dims));
 }
 
-template <unsigned NDim, unsigned Dim, typename T, typename... Dims>
+template <int NDim, int Dim, typename T, typename... Dims>
 void increment(array_expr<T, Dims...>& expr)
 {
     increment_array<NDim, Dim, T, Dims...>(expr);
 }
 
-template <unsigned NDim, unsigned Dim, typename T, typename... Dims>
+template <int NDim, int Dim, typename T, typename... Dims>
 void decrement(array_expr<T, Dims...>& expr)
 {
     decrement_array<NDim, Dim, T, Dims...>(expr);
@@ -1216,18 +1177,18 @@ void decrement(array_expr<T, Dims...>& expr)
  * only happens when assigning directly to a scalar as any other scalars are
  * absorbed into expression nodes).
  */
-template <unsigned NDim, unsigned Dim, typename Expr>
+template <int NDim, int Dim, typename Expr>
 detail::enable_if_t<is_scalar<Expr>::value>
 increment(const Expr&) {}
 
-template <unsigned NDim, unsigned Dim, typename Expr>
+template <int NDim, int Dim, typename Expr>
 detail::enable_if_t<is_scalar<Expr>::value>
 decrement(const Expr&) {}
 
 /*
  * For binary and unary subexpressions, increment/decrement their children.
  */
-template <unsigned NDim, unsigned Dim, typename Expr>
+template <int NDim, int Dim, typename Expr>
 detail::enable_if_t<is_binary_expression<Expr>::value>
 increment(Expr& expr)
 {
@@ -1235,7 +1196,7 @@ increment(Expr& expr)
     increment<NDim, Dim>(expr.second);
 }
 
-template <unsigned NDim, unsigned Dim, typename Expr>
+template <int NDim, int Dim, typename Expr>
 detail::enable_if_t<is_binary_expression<Expr>::value>
 decrement(Expr& expr)
 {
@@ -1243,14 +1204,14 @@ decrement(Expr& expr)
     decrement<NDim, Dim>(expr.second);
 }
 
-template <unsigned NDim, unsigned Dim, typename Expr>
+template <int NDim, int Dim, typename Expr>
 detail::enable_if_t<is_unary_expression<Expr>::value>
 increment(Expr& expr)
 {
     increment<NDim, Dim>(expr.expr);
 }
 
-template <unsigned NDim, unsigned Dim, typename Expr>
+template <int NDim, int Dim, typename Expr>
 detail::enable_if_t<is_unary_expression<Expr>::value>
 decrement(Expr& expr)
 {
@@ -1285,10 +1246,10 @@ struct assign_expr_value<std::complex<T>, std::complex<U>>
     }
 };
 
-template <unsigned NDim, unsigned Dim=1>
+template <int NDim, int Dim=1>
 struct assign_expr_loop;
 
-template <unsigned NDim>
+template <int NDim>
 struct assign_expr_loop<NDim, NDim>
 {
     template <typename LHS, typename RHS>
@@ -1310,7 +1271,7 @@ struct assign_expr_loop<NDim, NDim>
     }
 };
 
-template <unsigned NDim, unsigned Dim>
+template <int NDim, int Dim>
 struct assign_expr_loop
 {
     template <typename LHS, typename RHS>
@@ -1331,7 +1292,7 @@ struct assign_expr_loop
     }
 };
 
-template <unsigned NDim, unsigned Dim, unsigned Width, bool Aligned>
+template <int NDim, int Dim, int Width, bool Aligned>
 struct assign_expr_inner_loop_vec
 {
     template <typename LHS, typename RHS>
@@ -1377,7 +1338,7 @@ struct assign_expr_inner_loop_vec
     }
 };
 
-template <unsigned NDim, unsigned Dim, bool Aligned>
+template <int NDim, int Dim, bool Aligned>
 struct assign_expr_inner_loop_vec<NDim, Dim, 1, Aligned>
 {
     template <typename LHS, typename RHS>
@@ -1393,24 +1354,24 @@ struct assign_expr_inner_loop_vec<NDim, Dim, 1, Aligned>
     }
 };
 
-template <unsigned NDim, unsigned Dim=1>
+template <int NDim, int Dim=1>
 struct assign_expr_loop_vec_row_major;
 
-template <unsigned NDim>
+template <int NDim>
 struct assign_expr_loop_vec_row_major<NDim, NDim>
 {
     template <typename LHS, typename RHS>
     void operator()(LHS& lhs, RHS& rhs, const std::array<len_type, NDim>& len) const
     {
-        constexpr unsigned Width = (vector_width<LHS>::value < vector_width<RHS>::value ?
-                                    vector_width<LHS>::value : vector_width<RHS>::value);
+        constexpr int Width = (vector_width<LHS>::value < vector_width<RHS>::value ?
+                               vector_width<LHS>::value : vector_width<RHS>::value);
         constexpr bool Aligned = false;
 
         assign_expr_inner_loop_vec<NDim, NDim-1, Width, Aligned>()(lhs, rhs, len);
     }
 };
 
-template <unsigned NDim, unsigned Dim>
+template <int NDim, int Dim>
 struct assign_expr_loop_vec_row_major
 {
     template <typename LHS, typename RHS>
@@ -1431,24 +1392,24 @@ struct assign_expr_loop_vec_row_major
     }
 };
 
-template <unsigned NDim, unsigned Dim=NDim-1>
+template <int NDim, int Dim=NDim-1>
 struct assign_expr_loop_vec_col_major;
 
-template <unsigned NDim>
+template <int NDim>
 struct assign_expr_loop_vec_col_major<NDim, 0>
 {
     template <typename LHS, typename RHS>
     void operator()(LHS& lhs, RHS& rhs, const std::array<len_type, NDim>& len) const
     {
-        constexpr unsigned Width = (vector_width<LHS>::value < vector_width<RHS>::value ?
-                                    vector_width<LHS>::value : vector_width<RHS>::value);
+        constexpr int Width = (vector_width<LHS>::value < vector_width<RHS>::value ?
+                               vector_width<LHS>::value : vector_width<RHS>::value);
         constexpr bool Aligned = false;
 
         assign_expr_inner_loop_vec<NDim, 0, Width, Aligned>()(lhs, rhs, len);
     }
 };
 
-template <unsigned NDim, unsigned Dim>
+template <int NDim, int Dim>
 struct assign_expr_loop_vec_col_major
 {
     template <typename LHS, typename RHS>
@@ -1482,13 +1443,15 @@ assign_expr(Array&& array_, Expr&& expr_)
                   expr_dimension<expr_type>::value,
                   "Dimensionality of the expression must not exceed that of the target");
 
-    constexpr unsigned NDim = expr_dimension<array_type>::value;
+    constexpr int NDim = expr_dimension<array_type>::value;
 
     auto array = make_expression(std::forward<Array>(array_));
     auto expr = make_expression(std::forward<Expr>(expr_));
 
     auto len = get_array_lengths(array);
-    MARRAY_ASSERT(check_expr_lengths(expr, len));
+    auto check = get_expr_lengths<NDim>(expr);
+    for (auto i : range(NDim))
+        MARRAY_ASSERT(len[i] == check[i] || check[i] == -1);
 
     if (is_contiguous<NDim, NDim-1>(array) &&
         is_contiguous<NDim, NDim-1>(expr))

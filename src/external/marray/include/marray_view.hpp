@@ -6,7 +6,7 @@
 namespace MArray
 {
 
-template <typename Type, unsigned NDim>
+template <typename Type, int NDim>
 class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, false>
 {
     protected:
@@ -60,7 +60,7 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
             reset(other);
         }
 
-        template <typename U, unsigned OldNDim, unsigned NIndexed, typename... Dims,
+        template <typename U, int OldNDim, int NIndexed, typename... Dims,
             typename=detail::enable_if_convertible_t<U*,pointer>>
         marray_view(const marray_slice<U, OldNDim, NIndexed, Dims...>& other)
         {
@@ -142,59 +142,59 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
             std::array<len_type, NDim> n;
             n_.slurp(n);
 
-            for (unsigned dim = 0;dim < NDim;dim++)
+            for (auto dim : range(NDim))
                 shift(dim, n[dim]);
         }
 
-        template <typename=void, unsigned N=NDim, typename=detail::enable_if_t<N==1>>
+        template <typename=void, int N=NDim, typename=detail::enable_if_t<N==1>>
         void shift(len_type n)
         {
             shift(0, n);
         }
 
-        template <unsigned Dim>
+        template <int Dim>
         void shift(len_type n)
         {
-            static_assert(Dim < NDim, "Dim out of range");
+            static_assert(Dim >= 0 && Dim < NDim, "Dim out of range");
             shift(Dim, n);
         }
 
-        void shift(unsigned dim, len_type n)
+        void shift(int dim, len_type n)
         {
-            MARRAY_ASSERT(dim < NDim);
+            MARRAY_ASSERT(dim >= 0 && dim < NDim);
             data_ += n*stride_[dim];
         }
 
-        template <typename=void, unsigned N=NDim, typename=detail::enable_if_t<N==1>>
+        template <typename=void, int N=NDim, typename=detail::enable_if_t<N==1>>
         void shift_down()
         {
             shift_down(0);
         }
 
-        template <unsigned Dim>
+        template <int Dim>
         void shift_down()
         {
             shift_down(Dim);
         }
 
-        void shift_down(unsigned dim)
+        void shift_down(int dim)
         {
             shift(dim, len_[dim]);
         }
 
-        template <unsigned Dim>
+        template <int Dim>
         void shift_up()
         {
             shift_up(Dim);
         }
 
-        template <typename=void, unsigned N=NDim, typename=detail::enable_if_t<N==1>>
+        template <typename=void, int N=NDim, typename=detail::enable_if_t<N==1>>
         void shift_up()
         {
             shift_up(0);
         }
 
-        void shift_up(unsigned dim)
+        void shift_up(int dim)
         {
             shift(dim, -len_[dim]);
         }
@@ -205,19 +205,19 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
          *
          **********************************************************************/
 
-        void permute(const detail::array_1d<unsigned>& perm_)
+        void permute(const detail::array_1d<int>& perm_)
         {
             MARRAY_ASSERT(perm_.size() == NDim);
 
             std::array<len_type, NDim> len = len_;
             std::array<stride_type, NDim> stride = stride_;
-            std::array<unsigned, NDim> perm;
+            std::array<int, NDim> perm;
             perm_.slurp(perm);
 
-            for (unsigned i = 0;i < NDim;i++)
+            for (auto i : range(NDim))
             {
                 MARRAY_ASSERT(perm[i] < NDim);
-                for (unsigned j = i+1;j < NDim;j++)
+                for (auto j : range(i+1,NDim))
                     MARRAY_ASSERT(perm[i] != perm[j]);
 
                 len_[i] = len[perm[i]];
@@ -225,7 +225,7 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
             }
         }
 
-        template <unsigned N=NDim, typename=detail::enable_if_t<N==2>>
+        template <int N=NDim, typename=detail::enable_if_t<N==2>>
         void transpose()
         {
             permute({1, 0});
@@ -239,18 +239,18 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
 
         void reverse()
         {
-            for (unsigned i = 0;i < NDim;i++) reverse(i);
+            for (auto i : range(NDim)) reverse(i);
         }
 
-        template <unsigned Dim>
+        template <int Dim>
         void reverse()
         {
             reverse(Dim);
         }
 
-        void reverse(unsigned dim)
+        void reverse(int dim)
         {
-            MARRAY_ASSERT(dim < NDim);
+            MARRAY_ASSERT(dim >= 0 && dim < NDim);
             data_ += (len_[dim]-1)*stride_[dim];
             stride_[dim] = -stride_[dim];
         }
@@ -267,30 +267,30 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
             return ptr;
         }
 
-        template <unsigned Dim>
+        template <int Dim>
         len_type length(len_type len)
         {
-            static_assert(Dim < NDim, "Dim out of range");
+            static_assert(Dim >= 0 && Dim < NDim, "Dim out of range");
             return length(Dim, len);
         }
 
-        len_type length(unsigned dim, len_type len)
+        len_type length(int dim, len_type len)
         {
-            MARRAY_ASSERT(dim < NDim);
+            MARRAY_ASSERT(dim >= 0 && dim < NDim);
             std::swap(len, len_[dim]);
             return len;
         }
 
-        template <unsigned Dim>
+        template <int Dim>
         stride_type stride(stride_type s)
         {
-            static_assert(Dim < NDim, "Dim out of range");
+            static_assert(Dim >= 0 && Dim < NDim, "Dim out of range");
             return stride(Dim, s);
         }
 
-        stride_type stride(unsigned dim, stride_type s)
+        stride_type stride(int dim, stride_type s)
         {
-            MARRAY_ASSERT(dim < NDim);
+            MARRAY_ASSERT(dim >= 0 && dim < NDim);
             std::swap(s, stride_[dim]);
             return s;
         }

@@ -6,7 +6,7 @@
 namespace MArray
 {
 
-template <typename Type, unsigned NDim, typename Allocator>
+template <typename Type, int NDim, typename Allocator>
 class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, Allocator>, true>
 {
     protected:
@@ -68,49 +68,49 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
 
         template <typename U, typename D, bool O>
         dpd_marray(const dpd_marray_base<U, NDim, D, O>& other,
-                   const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                   const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             reset(other, depth, layout);
         }
 
-        dpd_marray(unsigned irrep, unsigned nirrep,
+        dpd_marray(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len,
                    const Type& val = Type(), dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, val, layout);
         }
 
-        dpd_marray(unsigned irrep, unsigned nirrep,
+        dpd_marray(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len, const Type& val,
-                   const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                   const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, val, depth, layout);
         }
 
-        dpd_marray(unsigned irrep, unsigned nirrep,
+        dpd_marray(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len,
                    dpd_layout layout)
         {
             reset(irrep, nirrep, len, Type(), layout);
         }
 
-        dpd_marray(unsigned irrep, unsigned nirrep,
+        dpd_marray(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len,
-                   const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                   const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, Type(), depth, layout);
         }
 
-        dpd_marray(unsigned irrep, unsigned nirrep,
+        dpd_marray(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len, uninitialized_t,
                    dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, uninitialized, layout);
         }
 
-        dpd_marray(unsigned irrep, unsigned nirrep,
+        dpd_marray(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len, uninitialized_t,
-                   const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                   const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, uninitialized, depth, layout);
         }
@@ -206,7 +206,7 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
 
         template <typename U, typename D, bool O>
         void reset(const dpd_marray_base<U, NDim, D, O>& other,
-                   const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                   const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             auto len = other.lengths();
 
@@ -222,7 +222,7 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
             base::template operator=<>(other);
         }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len,
                    const Type& val = Type(), dpd_layout layout = DEFAULT)
         {
@@ -230,28 +230,28 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
             std::uninitialized_fill_n(data_, storage_.size, val);
         }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len, const Type& val,
-                   const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                   const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, uninitialized, depth, layout);
             std::uninitialized_fill_n(data_, storage_.size, val);
         }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len, dpd_layout layout)
         {
             reset(irrep, nirrep, len, Type(), layout);
         }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len,
-                   const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                   const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, Type(), depth, layout);
         }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len, uninitialized_t,
                    dpd_layout layout = DEFAULT)
         {
@@ -263,9 +263,9 @@ class dpd_marray : public dpd_marray_base<Type, NDim, dpd_marray<Type, NDim, All
                         layout);
         }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len, uninitialized_t,
-                   const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                   const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             reset();
 

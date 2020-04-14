@@ -26,8 +26,7 @@ void set(type_t type, const communicator& comm, const config& cfg,
 
     stride_type stride0 = stride_A[0];
     len_vector stride1;
-    for (unsigned i = 1;i < stride_A.size();i++)
-        stride1.push_back(stride_A[i]*ts);
+    for (auto i : range(1,len_A.size())) stride1.push_back(stride_A[i]*ts);
 
     comm.distribute_over_threads(n0, n1,
     [&](len_type n0_min, len_type n0_max, len_type n1_min, len_type n1_max)

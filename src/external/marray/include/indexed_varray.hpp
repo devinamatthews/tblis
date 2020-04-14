@@ -199,12 +199,12 @@ class indexed_varray : public indexed_varray_base<Type, indexed_varray<Type, All
                    const detail::array_2d<len_type>& idx,
                    uninitialized_t, layout layout = DEFAULT)
         {
-            unsigned total_dim = len.size();
-            unsigned idx_dim = idx.length(1);
-            unsigned dense_dim = total_dim - idx_dim;
+            int total_dim = len.size();
+            int idx_dim = idx.length(1);
+            int dense_dim = total_dim - idx_dim;
             MARRAY_ASSERT(total_dim > idx_dim);
 
-            unsigned num_idx = idx_dim == 0 ? 1 : idx.length(0);
+            int num_idx = idx_dim == 0 ? 1 : idx.length(0);
             MARRAY_ASSERT(num_idx > 0);
 
             idx.slurp(idx_, ROW_MAJOR);

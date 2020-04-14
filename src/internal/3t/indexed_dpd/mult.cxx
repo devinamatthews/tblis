@@ -37,12 +37,12 @@ namespace internal
 {
 
 /*
-template <typename T, unsigned N>
+template <typename T, int N>
 std::ostream& operator<<(std::ostream& os, const index_set<N>& v)
 {
     os << "\n{\n";
     os << "\toffset, factor: " << v.offset << " " << v.factor << '\n';
-    for (unsigned i = 0;i < N;i++)
+    for (int i = 0;i < N;i++)
         os << "\tkey, idx: " << v.key[i] << " " << v.idx[i] << '\n';
     return os << '}';
 }
@@ -143,7 +143,7 @@ void mult_block_fuse_AB(type_t type, const communicator& comm, const config& cfg
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
+    const auto nirrep = A.num_irreps();
 
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
     dpd_index_group<2> group_AC(A, idx_A_AC, C, idx_C_AC);
@@ -189,11 +189,11 @@ void mult_block_fuse_AB(type_t type, const communicator& comm, const config& cfg
             {
                 if (indices_C[idx_C].factor.is_zero()) return;
 
-                for (unsigned irrep_AB0 = 0;irrep_AB0 < nirrep;irrep_AB0++)
+                for (auto irrep_AB0 : range(nirrep))
                 {
-                    unsigned irrep_AB = irrep_AB0;
-                    unsigned irrep_AC = B.irrep()^C.irrep()^irrep_AB0;
-                    unsigned irrep_BC = A.irrep()^C.irrep()^irrep_AB0;
+                    auto irrep_AB = irrep_AB0;
+                    auto irrep_AC = B.irrep()^C.irrep()^irrep_AB0;
+                    auto irrep_BC = A.irrep()^C.irrep()^irrep_AB0;
 
                     for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
                     for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
@@ -323,7 +323,7 @@ void mult_block_fuse_AB(type_t type, const communicator& comm, const config& cfg
                                 auto data_C = C.data(0) + (local_C.data() - C.data(0) +
                                     indices_C[idx_C].offset + off_C_AC + off_C_BC)*ts;
 
-                                for (unsigned i = 0;i < scat_AB.size();i++)
+                                for (auto i : range(scat_AB.size()))
                                 {
                                     scat_A_AB.push_back(std::get<2>(scat_AB[i]));
                                     scat_B_AB.push_back(std::get<3>(scat_AB[i]));
@@ -374,7 +374,7 @@ void mult_block_fuse_BC(type_t type, const communicator& comm, const config& cfg
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
+    const auto nirrep = A.num_irreps();
 
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
     dpd_index_group<2> group_AC(A, idx_A_AC, C, idx_C_AC);
@@ -412,11 +412,11 @@ void mult_block_fuse_BC(type_t type, const communicator& comm, const config& cfg
                                    idx_C, nidx_C, indices_C, 0,
         [&](stride_type next_A, stride_type next_C)
         {
-            for (unsigned irrep_AB0 = 0;irrep_AB0 < nirrep;irrep_AB0++)
+            for (auto irrep_AB0 : range(nirrep))
             {
-                unsigned irrep_AB = irrep_AB0;
-                unsigned irrep_AC = B.irrep()^C.irrep()^irrep_AB0;
-                unsigned irrep_BC = A.irrep()^C.irrep()^irrep_AB0;
+                auto irrep_AB = irrep_AB0;
+                auto irrep_AC = B.irrep()^C.irrep()^irrep_AB0;
+                auto irrep_BC = A.irrep()^C.irrep()^irrep_AB0;
 
                 for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
                 for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
@@ -555,7 +555,7 @@ void mult_block_fuse_BC(type_t type, const communicator& comm, const config& cfg
                                 auto data_B = B.data(0) + (local_B.data() - B.data(0) + off_B_AB)*ts;
                                 auto data_C = C.data(0) + (local_C.data() - C.data(0) + off_C_AC)*ts;
 
-                                for (unsigned i = 0;i < scat_BC.size();i++)
+                                for (auto i : range(scat_BC.size()))
                                 {
                                     scat_B_BC.push_back(std::get<2>(scat_BC[i]));
                                     scat_C_BC.push_back(std::get<3>(scat_BC[i]));
@@ -606,7 +606,7 @@ void mult_block_fuse_AB_BC(type_t type, const communicator& comm, const config& 
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
+    const auto nirrep = A.num_irreps();
 
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
     dpd_index_group<2> group_AC(A, idx_A_AC, C, idx_C_AC);
@@ -649,11 +649,11 @@ void mult_block_fuse_AB_BC(type_t type, const communicator& comm, const config& 
                                    idx_C, nidx_C, indices_C, 0,
         [&](stride_type next_A, stride_type next_C)
         {
-            for (unsigned irrep_AB0 = 0;irrep_AB0 < nirrep;irrep_AB0++)
+            for (auto irrep_AB0 : range(nirrep))
             {
-                unsigned irrep_AB = irrep_AB0;
-                unsigned irrep_AC = A.irrep()^irrep_AB0;
-                unsigned irrep_BC = B.irrep()^irrep_AB0;
+                auto irrep_AB = irrep_AB0;
+                auto irrep_AC = A.irrep()^irrep_AB0;
+                auto irrep_BC = B.irrep()^irrep_AB0;
 
                 for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
                 for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
@@ -811,7 +811,7 @@ void mult_block_fuse_AB_BC(type_t type, const communicator& comm, const config& 
                             auto data_B = B.data(0) + (local_B.data() - B.data(0))*ts;
                             auto data_C = C.data(0) + (local_C.data() - C.data(0) + off_C_AC)*ts;
 
-                            for (unsigned i = 0;i < scat_AB.size();i++)
+                            for (auto i : range(scat_AB.size()))
                             {
                                 scat_A_AB.push_back(std::get<2>(scat_AB[i]));
                                 scat_B_AB.push_back(std::get<3>(scat_AB[i]));
@@ -823,7 +823,7 @@ void mult_block_fuse_AB_BC(type_t type, const communicator& comm, const config& 
                                     scalar alpha_(dcomplex(std::get<0>(scat_AB[i]),
                                                            std::get<1>(scat_AB[i])), type);
 
-                                    for (unsigned j = 0;j < scat_BC.size();j++)
+                                    for (auto j : range(scat_BC.size()))
                                     {
                                         scat_B_BC.push_back(std::get<2>(scat_BC[j]));
                                         scat_C_BC.push_back(std::get<3>(scat_BC[j]));
@@ -898,7 +898,7 @@ void mult_block(type_t type, const communicator& comm, const config& cfg,
                 dim_vector idx_C_BC)
 {
     const len_type ts = type_size[type];
-    const unsigned nirrep = A.num_irreps();
+    const auto nirrep = A.num_irreps();
 
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
     dpd_index_group<2> group_AC(C, idx_C_AC, A, idx_A_AC);
@@ -1025,11 +1025,11 @@ void mult_block(type_t type, const communicator& comm, const config& cfg,
     auto mixed_irrep_C = stl_ext::appended(stl_ext::select_from(group_AC.batch_irrep, group_AC.mixed_pos[0]),
                                            stl_ext::select_from(group_BC.batch_irrep, group_BC.mixed_pos[0]));
 
-    for (unsigned irrep_AB0 = 0;irrep_AB0 < nirrep;irrep_AB0++)
+    for (auto irrep_AB0 : range(nirrep))
     {
-        unsigned irrep_AB = irrep_AB0;
-        unsigned irrep_AC = A.irrep()^irrep_AB0;
-        unsigned irrep_BC = B.irrep()^irrep_AB0;
+        auto irrep_AB = irrep_AB0;
+        auto irrep_AC = A.irrep()^irrep_AB0;
+        auto irrep_BC = B.irrep()^irrep_AB0;
 
         for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
         for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
@@ -1125,7 +1125,7 @@ void mult_block(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
+    const auto nirrep = A.num_irreps();
 
     dpd_index_group<3> group_ABC(A, idx_A_ABC, B, idx_B_ABC, C, idx_C_ABC);
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
@@ -1158,7 +1158,7 @@ void mult_block(type_t type, const communicator& comm, const config& cfg,
     stride_type idx_B0 = 0;
     stride_type idx_C = 0;
 
-    unsigned irrep_ABC = A.irrep()^B.irrep()^C.irrep();
+    auto irrep_ABC = A.irrep()^B.irrep()^C.irrep();
     for (auto irrep : group_ABC.batch_irrep) irrep_ABC ^= irrep;
 
     if (group_ABC.dense_ndim == 0 && irrep_ABC != 0) return;
@@ -1184,11 +1184,11 @@ void mult_block(type_t type, const communicator& comm, const config& cfg,
                 {
                     if (indices_C[idx_C].factor.is_zero()) return;
 
-                    for (unsigned irrep_AB0 = 0;irrep_AB0 < nirrep;irrep_AB0++)
+                    for (auto irrep_AB0 : range(nirrep))
                     {
-                        unsigned irrep_AB = irrep_AB0;
-                        unsigned irrep_AC = B.irrep()^C.irrep()^irrep_AB0;
-                        unsigned irrep_BC = A.irrep()^C.irrep()^irrep_AB0;
+                        auto irrep_AB = irrep_AB0;
+                        auto irrep_AC = B.irrep()^C.irrep()^irrep_AB0;
+                        auto irrep_BC = A.irrep()^C.irrep()^irrep_AB0;
 
                         for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
                         for (auto irrep : group_AC.batch_irrep) irrep_AC ^= irrep;
@@ -1341,7 +1341,7 @@ void mult(type_t type, const communicator& comm, const config& cfg,
         scale(type, comm, cfg, beta, conj_C, C, range(C.dimension()));
     }
 
-    for (unsigned i = 0;i < idx_A_AB.size();i++)
+    for (auto i : range(idx_A_AB.size()))
     {
         if (idx_A_AB[i] >= A.dense_dimension() &&
             idx_B_AB[i] >= B.dense_dimension())
@@ -1351,7 +1351,7 @@ void mult(type_t type, const communicator& comm, const config& cfg,
         }
     }
 
-    for (unsigned i = 0;i < idx_A_AC.size();i++)
+    for (auto i : range(idx_A_AC.size()))
     {
         if (idx_A_AC[i] >= A.dense_dimension() &&
             idx_C_AC[i] >= C.dense_dimension())
@@ -1361,7 +1361,7 @@ void mult(type_t type, const communicator& comm, const config& cfg,
         }
     }
 
-    for (unsigned i = 0;i < idx_B_BC.size();i++)
+    for (auto i : range(idx_B_BC.size()))
     {
         if (idx_B_BC[i] >= B.dense_dimension() &&
             idx_C_BC[i] >= C.dense_dimension())
@@ -1371,7 +1371,7 @@ void mult(type_t type, const communicator& comm, const config& cfg,
         }
     }
 
-    for (unsigned i = 0;i < idx_A_ABC.size();i++)
+    for (auto i : range(idx_A_ABC.size()))
     {
         if (idx_A_ABC[i] >= A.dense_dimension() &&
             idx_B_ABC[i] >= B.dense_dimension())

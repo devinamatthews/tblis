@@ -54,7 +54,7 @@ void trace_block(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
+    const auto nirrep = A.num_irreps();
 
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
     dpd_index_group<1> group_A(A, idx_A_A);
@@ -64,10 +64,10 @@ void trace_block(type_t type, const communicator& comm, const config& cfg,
     assign_irreps(group_AB, irreps_A, irreps_B);
     assign_irreps(group_A, irreps_A);
 
-    unsigned irrep_AB = B.irrep();
+    auto irrep_AB = B.irrep();
     for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
 
-    unsigned irrep_A = A.irrep()^B.irrep();
+    auto irrep_A = A.irrep()^B.irrep();
     for (auto irrep : group_A.batch_irrep) irrep_A ^= irrep;
 
     if (group_A.dense_ndim == 0 && irrep_A != 0) return;
@@ -173,7 +173,7 @@ void replicate_block(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
+    const auto nirrep = A.num_irreps();
 
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
     dpd_index_group<1> group_B(B, idx_B_B);
@@ -183,10 +183,10 @@ void replicate_block(type_t type, const communicator& comm, const config& cfg,
     assign_irreps(group_AB, irreps_A, irreps_B);
     assign_irreps(group_B, irreps_B);
 
-    unsigned irrep_AB = A.irrep();
+    auto irrep_AB = A.irrep();
     for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
 
-    unsigned irrep_B = A.irrep()^B.irrep();
+    auto irrep_B = A.irrep()^B.irrep();
     for (auto irrep : group_B.batch_irrep) irrep_B ^= irrep;
 
     if (group_B.dense_ndim == 0 && irrep_B != 0) return;
@@ -288,7 +288,7 @@ void transpose_block(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
+    const auto nirrep = A.num_irreps();
 
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
 
@@ -296,7 +296,7 @@ void transpose_block(type_t type, const communicator& comm, const config& cfg,
     irrep_vector irreps_B(B.dense_dimension());
     assign_irreps(group_AB, irreps_A, irreps_B);
 
-    unsigned irrep_AB = A.irrep();
+    auto irrep_AB = A.irrep();
     for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
 
     if (group_AB.dense_ndim == 0 && irrep_AB != 0) return;
@@ -384,7 +384,7 @@ void add(type_t type, const communicator& comm, const config& cfg,
         scale(type, comm, cfg, beta, conj_B, B, range(B.dimension()));
     }
 
-    for (unsigned i = 0;i < idx_A_AB.size();i++)
+    for (auto i : range(idx_A_AB.size()))
     {
         if (idx_A_AB[i] >= A.dense_dimension() &&
             idx_B_AB[i] >= B.dense_dimension())

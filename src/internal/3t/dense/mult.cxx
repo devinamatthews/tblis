@@ -279,22 +279,23 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     auto reorder_BC = detail::sort_by_stride(stride_C_BC, stride_B_BC);
     auto reorder_AB = detail::sort_by_stride(stride_A_AB, stride_B_AB);
 
-    unsigned unit_A_AC = unit_dim(stride_A_AC, reorder_AC);
-    unsigned unit_C_AC = unit_dim(stride_C_AC, reorder_AC);
-    unsigned unit_B_BC = unit_dim(stride_B_BC, reorder_BC);
-    unsigned unit_C_BC = unit_dim(stride_C_BC, reorder_BC);
-    unsigned unit_A_AB = unit_dim(stride_A_AB, reorder_AB);
-    unsigned unit_B_AB = unit_dim(stride_B_AB, reorder_AB);
+    auto unit_A_AC = unit_dim(stride_A_AC, reorder_AC);
+    auto unit_C_AC = unit_dim(stride_C_AC, reorder_AC);
+    auto unit_B_BC = unit_dim(stride_B_BC, reorder_BC);
+    auto unit_C_BC = unit_dim(stride_C_BC, reorder_BC);
+    auto unit_A_AB = unit_dim(stride_A_AB, reorder_AB);
+    auto unit_B_AB = unit_dim(stride_B_AB, reorder_AB);
 
-    TBLIS_ASSERT(unit_C_AC == 0 || unit_C_AC == len_AC.size());
-    TBLIS_ASSERT(unit_C_BC == 0 || unit_C_BC == len_BC.size());
+    TBLIS_ASSERT(unit_C_AC == 0 || unit_C_AC == (int)len_AC.size());
+    TBLIS_ASSERT(unit_C_BC == 0 || unit_C_BC == (int)len_BC.size());
     TBLIS_ASSERT(unit_A_AB == 0 || unit_B_AB == 0 ||
-                 (unit_A_AB == len_AB.size() && unit_B_AB == len_AB.size()));
+                 (unit_A_AB == (int)len_AB.size() &&
+                  unit_B_AB == (int)len_AB.size()));
 
-    bool pack_M_3d = unit_A_AC > 0 && unit_A_AC < len_AC.size();
-    bool pack_N_3d = unit_B_BC > 0 && unit_B_BC < len_BC.size();
-    bool pack_K_3d = (unit_A_AB > 0 && unit_A_AB < len_AB.size()) ||
-                     (unit_B_AB > 0 && unit_B_AB < len_AB.size());
+    bool pack_M_3d = unit_A_AC > 0 && unit_A_AC < (int)len_AC.size();
+    bool pack_N_3d = unit_B_BC > 0 && unit_B_BC < (int)len_BC.size();
+    bool pack_K_3d = (unit_A_AB > 0 && unit_A_AB < (int)len_AB.size()) ||
+                     (unit_B_AB > 0 && unit_B_AB < (int)len_AB.size());
 
     if (pack_M_3d)
         std::rotate(reorder_AC.begin()+1, reorder_AC.begin()+unit_A_AC, reorder_AC.end());
@@ -630,22 +631,23 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     auto reorder_AB = detail::sort_by_stride(stride_A_AB, stride_B_AB);
     auto reorder_ABC = detail::sort_by_stride(stride_C_ABC, stride_A_ABC, stride_B_ABC);
 
-    unsigned unit_A_AC = unit_dim(stride_A_AC, reorder_AC);
-    unsigned unit_C_AC = unit_dim(stride_C_AC, reorder_AC);
-    unsigned unit_B_BC = unit_dim(stride_B_BC, reorder_BC);
-    unsigned unit_C_BC = unit_dim(stride_C_BC, reorder_BC);
-    unsigned unit_A_AB = unit_dim(stride_A_AB, reorder_AB);
-    unsigned unit_B_AB = unit_dim(stride_B_AB, reorder_AB);
+    auto unit_A_AC = unit_dim(stride_A_AC, reorder_AC);
+    auto unit_C_AC = unit_dim(stride_C_AC, reorder_AC);
+    auto unit_B_BC = unit_dim(stride_B_BC, reorder_BC);
+    auto unit_C_BC = unit_dim(stride_C_BC, reorder_BC);
+    auto unit_A_AB = unit_dim(stride_A_AB, reorder_AB);
+    auto unit_B_AB = unit_dim(stride_B_AB, reorder_AB);
 
-    TBLIS_ASSERT(unit_C_AC == 0 || unit_C_AC == len_AC.size());
-    TBLIS_ASSERT(unit_C_BC == 0 || unit_C_BC == len_BC.size());
+    TBLIS_ASSERT(unit_C_AC == 0 || unit_C_AC == (int)len_AC.size());
+    TBLIS_ASSERT(unit_C_BC == 0 || unit_C_BC == (int)len_BC.size());
     TBLIS_ASSERT(unit_A_AB == 0 || unit_B_AB == 0 ||
-                 (unit_A_AB == len_AB.size() && unit_B_AB == len_AB.size()));
+                 (unit_A_AB == (int)len_AB.size() &&
+                  unit_B_AB == (int)len_AB.size()));
 
-    bool pack_M_3d = unit_A_AC > 0 && unit_A_AC < len_AC.size();
-    bool pack_N_3d = unit_B_BC > 0 && unit_B_BC < len_BC.size();
-    bool pack_K_3d = (unit_A_AB > 0 && unit_A_AB < len_AB.size()) ||
-                     (unit_B_AB > 0 && unit_B_AB < len_AB.size());
+    bool pack_M_3d = unit_A_AC > 0 && unit_A_AC < (int)len_AC.size();
+    bool pack_N_3d = unit_B_BC > 0 && unit_B_BC < (int)len_BC.size();
+    bool pack_K_3d = (unit_A_AB > 0 && unit_A_AB < (int)len_AB.size()) ||
+                     (unit_B_AB > 0 && unit_B_AB < (int)len_AB.size());
 
     if (pack_M_3d)
         std::rotate(reorder_AC.begin()+1, reorder_AC.begin()+unit_A_AC, reorder_AC.end());
@@ -900,9 +902,9 @@ void mult_vec(type_t type, const communicator& comm, const config& cfg,
     stride_type stride_B0 = (empty ? 1 : stride_B_ABC[0]);
     stride_type stride_C0 = (empty ? 1 : stride_C_ABC[0]);
     len_vector stride_A1, stride_B1, stride_C1;
-    for (unsigned i = 1;i < stride_A_ABC.size();i++) stride_A1.push_back(stride_A_ABC[i]*ts);
-    for (unsigned i = 1;i < stride_B_ABC.size();i++) stride_B1.push_back(stride_B_ABC[i]*ts);
-    for (unsigned i = 1;i < stride_C_ABC.size();i++) stride_C1.push_back(stride_C_ABC[i]*ts);
+    for (auto i : range(1,stride_A_ABC.size())) stride_A1.push_back(stride_A_ABC[i]*ts);
+    for (auto i : range(1,stride_B_ABC.size())) stride_B1.push_back(stride_B_ABC[i]*ts);
+    for (auto i : range(1,stride_C_ABC.size())) stride_C1.push_back(stride_C_ABC[i]*ts);
 
     comm.distribute_over_threads(n0, n1,
     [&](len_type n0_min, len_type n0_max, len_type n1_min, len_type n1_max)

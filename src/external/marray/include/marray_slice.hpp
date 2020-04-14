@@ -23,7 +23,7 @@ void get_slice_dims_helper(It1 len, It2 stride,
 
 template <typename It1, typename It2, typename... Dims>
 void get_slice_dims_helper(It1 len, It2 stride,
-                           const bcast_dim& dim, const Dims&... dims)
+                           const bcast_dim&, const Dims&... dims)
 {
     *len = 1;
     *stride = 0;
@@ -57,10 +57,10 @@ void get_slice_dims(It1 len, It2 stride,
  * NDim-NIndexed+1+NSliced) or further indexed, but may not be used to modify
  * data.
  */
-template <typename Type, unsigned NDim, unsigned NIndexed, typename... Dims>
+template <typename Type, int NDim, int NIndexed, typename... Dims>
 class marray_slice
 {
-    template <typename, unsigned, unsigned, typename...> friend class marray_slice;
+    template <typename, int, int, typename...> friend class marray_slice;
 
     public:
         typedef typename marray_view<Type, NDim>::value_type value_type;
@@ -79,11 +79,11 @@ class marray_slice
         pointer data_;
         std::tuple<Dims...> dims_;
 
-        static constexpr unsigned DimsLeft = NDim - NIndexed;
-        static constexpr unsigned CurDim = NIndexed-1;
-        static constexpr unsigned NextDim = NIndexed;
-        static constexpr unsigned NSliced = sizeof...(Dims);
-        static constexpr unsigned NewNDim = NSliced + DimsLeft;
+        static constexpr int DimsLeft = NDim - NIndexed;
+        static constexpr int CurDim = NIndexed-1;
+        static constexpr int NextDim = NIndexed;
+        static constexpr int NSliced = sizeof...(Dims);
+        static constexpr int NewNDim = NSliced + DimsLeft;
 
     public:
         marray_slice(const marray_slice& other) = default;
@@ -238,35 +238,35 @@ class marray_slice
             return data_;
         }
 
-        template <unsigned Dim>
+        template <int Dim>
         auto dim() const -> decltype((std::get<Dim>(dims_)))
         {
             return std::get<Dim>(dims_);
         }
 
-        len_type base_length(unsigned dim) const
+        len_type base_length(int dim) const
         {
-            MARRAY_ASSERT(dim < NDim);
+            MARRAY_ASSERT(dim >= 0 && dim < NDim);
             return len_[dim];
         }
 
-        template <unsigned Dim>
+        template <int Dim>
         len_type base_length() const
         {
-            static_assert(Dim < NDim, "Dim out of range");
+            static_assert(Dim >= 0 && Dim < NDim, "Dim out of range");
             return len_[Dim];
         }
 
-        stride_type base_stride(unsigned dim) const
+        stride_type base_stride(int dim) const
         {
-            MARRAY_ASSERT(dim < NDim);
+            MARRAY_ASSERT(dim >= 0 && dim < NDim);
             return stride_[dim];
         }
 
-        template <unsigned Dim>
+        template <int Dim>
         stride_type base_stride() const
         {
-            static_assert(Dim < NDim, "Dim out of range");
+            static_assert(Dim >= 0 && Dim < NDim, "Dim out of range");
             return stride_[Dim];
         }
 
@@ -287,7 +287,7 @@ class marray_slice
             return marray_view<Type, NewNDim>{len, data_, stride};
         }
 
-        template <unsigned NewNDim_=NewNDim, typename=detail::enable_if_t<NewNDim_==2>>
+        template <int NewNDim_=NewNDim, typename=detail::enable_if_t<NewNDim_==2>>
         marray_view<Type, NewNDim> T() const
         {
             return view().T();

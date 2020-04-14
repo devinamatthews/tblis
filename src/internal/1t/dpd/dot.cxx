@@ -44,11 +44,11 @@ void dot_block(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
-    const unsigned irrep = A.irrep();
-    const unsigned ndim = A.dimension();
+    const auto nirrep = A.num_irreps();
+    const auto irrep = A.irrep();
+    const auto ndim = A.dimension();
 
-    stride_type nblock_AB = ipow(nirrep, (int)idx_A_AB.size()-1);
+    stride_type nblock_AB = ipow(nirrep, ndim-1);
 
     std::array<len_vector,1> dense_len;
     std::array<stride_vector,1> dense_stride;

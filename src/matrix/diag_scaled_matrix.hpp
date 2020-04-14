@@ -155,9 +155,9 @@ class diag_scaled_matrix : public abstract_matrix_adapter<diag_scaled_matrix,dia
         : diag_scaled_matrix({1.0, type}, conj, m, n, ptr, rs, cs,
                              cdiag, cds, rdiag, rds) {}
 
-        stride_type stride(unsigned dim) const
+        stride_type stride(int dim) const
         {
-            TBLIS_ASSERT(dim < 2);
+            TBLIS_ASSERT(dim >= 0 && dim < 2);
             return impl().stride_[dim^transposed_];
         }
 
@@ -166,15 +166,15 @@ class diag_scaled_matrix : public abstract_matrix_adapter<diag_scaled_matrix,dia
             return impl().data_ + (stride(0)*offset(0) + stride(1)*offset(1))*type_size[type()];
         }
 
-        stride_type diag_stride(unsigned dim) const
+        stride_type diag_stride(int dim) const
         {
-            TBLIS_ASSERT(dim < 2);
+            TBLIS_ASSERT(dim >= 0 && dim < 2);
             return impl().diag_stride_[dim^transposed_];
         }
 
-        char* diag(unsigned dim) const
+        char* diag(int dim) const
         {
-            TBLIS_ASSERT(dim < 2);
+            TBLIS_ASSERT(dim >= 0 && dim < 2);
             auto diag = impl().diag_[dim^transposed_];
             return diag ? diag + diag_stride(dim)*offset(dim)*type_size[type()] : nullptr;
         }

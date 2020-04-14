@@ -31,19 +31,19 @@ void tblis_tensor_mult(const tblis_comm* comm,
     TBLIS_ASSERT(A->type == B->type);
     TBLIS_ASSERT(A->type == C->type);
 
-    unsigned ndim_A = A->ndim;
+    auto ndim_A = A->ndim;
     len_vector len_A;
     stride_vector stride_A;
     label_vector idx_A;
     diagonal(ndim_A, A->len, A->stride, idx_A_, len_A, stride_A, idx_A);
 
-    unsigned ndim_B = B->ndim;
+    auto ndim_B = B->ndim;
     len_vector len_B;
     stride_vector stride_B;
     label_vector idx_B;
     diagonal(ndim_B, B->len, B->stride, idx_B_, len_B, stride_B, idx_B);
 
-    unsigned ndim_C = C->ndim;
+    auto ndim_C = C->ndim;
     len_vector len_C;
     stride_vector stride_C;
     label_vector idx_C;
@@ -171,25 +171,25 @@ void mult(const communicator& comm,
                    const dpd_varray_view<const T>& B, const label_vector& idx_B,
           T  beta, const dpd_varray_view<      T>& C, const label_vector& idx_C)
 {
-    unsigned nirrep = A.num_irreps();
+    auto nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
     TBLIS_ASSERT(C.num_irreps() == nirrep);
 
-    unsigned ndim_A = A.dimension();
-    unsigned ndim_B = B.dimension();
-    unsigned ndim_C = C.dimension();
+    auto ndim_A = A.dimension();
+    auto ndim_B = B.dimension();
+    auto ndim_C = C.dimension();
 
-    for (unsigned i = 1;i < ndim_A;i++)
-        for (unsigned j = 0;j < i;j++)
-            TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+    for (auto i : range(1,ndim_A))
+    for (auto j : range(i))
+        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
 
-    for (unsigned i = 1;i < ndim_B;i++)
-        for (unsigned j = 0;j < i;j++)
-            TBLIS_ASSERT(idx_B[i] != idx_B[j]);
+    for (auto i : range(1,ndim_B))
+    for (auto j : range(i))
+        TBLIS_ASSERT(idx_B[i] != idx_B[j]);
 
-    for (unsigned i = 1;i < ndim_C;i++)
-        for (unsigned j = 0;j < i;j++)
-            TBLIS_ASSERT(idx_C[i] != idx_C[j]);
+    for (auto i : range(1,ndim_C))
+    for (auto j : range(i))
+        TBLIS_ASSERT(idx_C[i] != idx_C[j]);
 
     auto idx_ABC = stl_ext::intersection(idx_A, idx_B, idx_C);
     auto idx_AB = stl_ext::exclusion(stl_ext::intersection(idx_A, idx_B), idx_ABC);
@@ -224,42 +224,34 @@ void mult(const communicator& comm,
     auto idx_B_BC = stl_ext::select_from(range_B, idx_B, idx_BC);
     auto idx_C_BC = stl_ext::select_from(range_C, idx_C, idx_BC);
 
-    for (unsigned i = 0;i < idx_ABC.size();i++)
+    for (auto i : range(idx_ABC.size()))
+    for (auto irrep : range(nirrep))
     {
-        for (unsigned irrep = 0;irrep < nirrep;irrep++)
-        {
-            TBLIS_ASSERT(A.length(idx_A_ABC[i], irrep) ==
-                         B.length(idx_B_ABC[i], irrep));
-            TBLIS_ASSERT(A.length(idx_A_ABC[i], irrep) ==
-                         C.length(idx_C_ABC[i], irrep));
-        }
+        TBLIS_ASSERT(A.length(idx_A_ABC[i], irrep) ==
+                     B.length(idx_B_ABC[i], irrep));
+        TBLIS_ASSERT(A.length(idx_A_ABC[i], irrep) ==
+                     C.length(idx_C_ABC[i], irrep));
     }
 
-    for (unsigned i = 0;i < idx_AB.size();i++)
+    for (auto i : range(idx_AB.size()))
+    for (auto irrep : range(nirrep))
     {
-        for (unsigned irrep = 0;irrep < nirrep;irrep++)
-        {
-            TBLIS_ASSERT(A.length(idx_A_AB[i], irrep) ==
-                         B.length(idx_B_AB[i], irrep));
-        }
+        TBLIS_ASSERT(A.length(idx_A_AB[i], irrep) ==
+                     B.length(idx_B_AB[i], irrep));
     }
 
-    for (unsigned i = 0;i < idx_AC.size();i++)
+    for (auto i : range(idx_AC.size()))
+    for (auto irrep : range(nirrep))
     {
-        for (unsigned irrep = 0;irrep < nirrep;irrep++)
-        {
-            TBLIS_ASSERT(A.length(idx_A_AC[i], irrep) ==
-                         C.length(idx_C_AC[i], irrep));
-        }
+        TBLIS_ASSERT(A.length(idx_A_AC[i], irrep) ==
+                     C.length(idx_C_AC[i], irrep));
     }
 
-    for (unsigned i = 0;i < idx_BC.size();i++)
+    for (auto i : range(idx_BC.size()))
+    for (auto irrep : range(nirrep))
     {
-        for (unsigned irrep = 0;irrep < nirrep;irrep++)
-        {
-            TBLIS_ASSERT(B.length(idx_B_BC[i], irrep) ==
-                         C.length(idx_C_BC[i], irrep));
-        }
+        TBLIS_ASSERT(B.length(idx_B_BC[i], irrep) ==
+                     C.length(idx_C_BC[i], irrep));
     }
 
     if (alpha == T(0) || (idx_ABC.empty() && ((A.irrep()^B.irrep()) != C.irrep())))
@@ -297,21 +289,21 @@ void mult(const communicator& comm,
                    const indexed_varray_view<const T>& B, const label_vector& idx_B,
           T  beta, const indexed_varray_view<      T>& C, const label_vector& idx_C)
 {
-    unsigned ndim_A = A.dimension();
-    unsigned ndim_B = B.dimension();
-    unsigned ndim_C = C.dimension();
+    auto ndim_A = A.dimension();
+    auto ndim_B = B.dimension();
+    auto ndim_C = C.dimension();
 
-    for (unsigned i = 1;i < ndim_A;i++)
-        for (unsigned j = 0;j < i;j++)
-            TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+    for (auto i : range(1,ndim_A))
+    for (auto j : range(i))
+        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
 
-    for (unsigned i = 1;i < ndim_B;i++)
-        for (unsigned j = 0;j < i;j++)
-            TBLIS_ASSERT(idx_B[i] != idx_B[j]);
+    for (auto i : range(1,ndim_B))
+    for (auto j : range(i))
+        TBLIS_ASSERT(idx_B[i] != idx_B[j]);
 
-    for (unsigned i = 1;i < ndim_C;i++)
-        for (unsigned j = 0;j < i;j++)
-            TBLIS_ASSERT(idx_C[i] != idx_C[j]);
+    for (auto i : range(1,ndim_C))
+    for (auto j : range(i))
+        TBLIS_ASSERT(idx_C[i] != idx_C[j]);
 
     auto idx_ABC = stl_ext::intersection(idx_A, idx_B, idx_C);
     auto idx_AB = stl_ext::exclusion(stl_ext::intersection(idx_A, idx_B), idx_ABC);
@@ -346,7 +338,7 @@ void mult(const communicator& comm,
     auto idx_B_BC = stl_ext::select_from(range_B, idx_B, idx_BC);
     auto idx_C_BC = stl_ext::select_from(range_C, idx_C, idx_BC);
 
-    for (unsigned i = 0;i < idx_ABC.size();i++)
+    for (auto i : range(idx_ABC.size()))
     {
         TBLIS_ASSERT(A.length(idx_A_ABC[i]) ==
                      B.length(idx_B_ABC[i]));
@@ -354,19 +346,19 @@ void mult(const communicator& comm,
                      C.length(idx_C_ABC[i]));
     }
 
-    for (unsigned i = 0;i < idx_AB.size();i++)
+    for (auto i : range(idx_AB.size()))
     {
         TBLIS_ASSERT(A.length(idx_A_AB[i]) ==
                      B.length(idx_B_AB[i]));
     }
 
-    for (unsigned i = 0;i < idx_AC.size();i++)
+    for (auto i : range(idx_AC.size()))
     {
         TBLIS_ASSERT(A.length(idx_A_AC[i]) ==
                      C.length(idx_C_AC[i]));
     }
 
-    for (unsigned i = 0;i < idx_BC.size();i++)
+    for (auto i : range(idx_BC.size()))
     {
         TBLIS_ASSERT(B.length(idx_B_BC[i]) ==
                      C.length(idx_C_BC[i]));
@@ -407,25 +399,25 @@ void mult(const communicator& comm,
                    const indexed_dpd_varray_view<const T>& B, const label_vector& idx_B,
           T  beta, const indexed_dpd_varray_view<      T>& C, const label_vector& idx_C)
 {
-    unsigned nirrep = A.num_irreps();
+    auto nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
     TBLIS_ASSERT(C.num_irreps() == nirrep);
 
-    unsigned ndim_A = A.dimension();
-    unsigned ndim_B = B.dimension();
-    unsigned ndim_C = C.dimension();
+    auto ndim_A = A.dimension();
+    auto ndim_B = B.dimension();
+    auto ndim_C = C.dimension();
 
-    for (unsigned i = 1;i < ndim_A;i++)
-        for (unsigned j = 0;j < i;j++)
-            TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+    for (auto i : range(1,ndim_A))
+    for (auto j : range(i))
+        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
 
-    for (unsigned i = 1;i < ndim_B;i++)
-        for (unsigned j = 0;j < i;j++)
-            TBLIS_ASSERT(idx_B[i] != idx_B[j]);
+    for (auto i : range(1,ndim_B))
+    for (auto j : range(i))
+        TBLIS_ASSERT(idx_B[i] != idx_B[j]);
 
-    for (unsigned i = 1;i < ndim_C;i++)
-        for (unsigned j = 0;j < i;j++)
-            TBLIS_ASSERT(idx_C[i] != idx_C[j]);
+    for (auto i : range(1,ndim_C))
+    for (auto j : range(i))
+        TBLIS_ASSERT(idx_C[i] != idx_C[j]);
 
     auto idx_ABC = stl_ext::intersection(idx_A, idx_B, idx_C);
     auto idx_AB = stl_ext::exclusion(stl_ext::intersection(idx_A, idx_B), idx_ABC);
@@ -460,42 +452,34 @@ void mult(const communicator& comm,
     auto idx_B_BC = stl_ext::select_from(range_B, idx_B, idx_BC);
     auto idx_C_BC = stl_ext::select_from(range_C, idx_C, idx_BC);
 
-    for (unsigned i = 0;i < idx_ABC.size();i++)
+    for (auto i : range(idx_ABC.size()))
+    for (auto irrep : range(nirrep))
     {
-        for (unsigned irrep = 0;irrep < nirrep;irrep++)
-        {
-            TBLIS_ASSERT(A.length(idx_A_ABC[i], irrep) ==
-                         B.length(idx_B_ABC[i], irrep));
-            TBLIS_ASSERT(A.length(idx_A_ABC[i], irrep) ==
-                         C.length(idx_C_ABC[i], irrep));
-        }
+        TBLIS_ASSERT(A.length(idx_A_ABC[i], irrep) ==
+                     B.length(idx_B_ABC[i], irrep));
+        TBLIS_ASSERT(A.length(idx_A_ABC[i], irrep) ==
+                     C.length(idx_C_ABC[i], irrep));
     }
 
-    for (unsigned i = 0;i < idx_AB.size();i++)
+    for (auto i : range(idx_AB.size()))
+    for (auto irrep : range(nirrep))
     {
-        for (unsigned irrep = 0;irrep < nirrep;irrep++)
-        {
-            TBLIS_ASSERT(A.length(idx_A_AB[i], irrep) ==
-                         B.length(idx_B_AB[i], irrep));
-        }
+        TBLIS_ASSERT(A.length(idx_A_AB[i], irrep) ==
+                     B.length(idx_B_AB[i], irrep));
     }
 
-    for (unsigned i = 0;i < idx_AC.size();i++)
+    for (auto i : range(idx_AC.size()))
+    for (auto irrep : range(nirrep))
     {
-        for (unsigned irrep = 0;irrep < nirrep;irrep++)
-        {
-            TBLIS_ASSERT(A.length(idx_A_AC[i], irrep) ==
-                         C.length(idx_C_AC[i], irrep));
-        }
+        TBLIS_ASSERT(A.length(idx_A_AC[i], irrep) ==
+                     C.length(idx_C_AC[i], irrep));
     }
 
-    for (unsigned i = 0;i < idx_BC.size();i++)
+    for (auto i : range(idx_BC.size()))
+    for (auto irrep : range(nirrep))
     {
-        for (unsigned irrep = 0;irrep < nirrep;irrep++)
-        {
-            TBLIS_ASSERT(B.length(idx_B_BC[i], irrep) ==
-                         C.length(idx_C_BC[i], irrep));
-        }
+        TBLIS_ASSERT(B.length(idx_B_BC[i], irrep) ==
+                     C.length(idx_C_BC[i], irrep));
     }
 
     if (alpha == T(0) || (idx_ABC.empty() && ((A.irrep()^B.irrep()) != C.irrep())))

@@ -33,7 +33,7 @@ struct min_size_helper<1, Args...>
 template <typename... Args>
 struct min_size_helper<0, Args...>
 {
-    size_t operator()(const std::tuple<Args...>& v)
+    size_t operator()(const std::tuple<Args...>&)
     {
         return 0;
     }
@@ -69,8 +69,8 @@ struct cbegin_helper<1, Args...>
 template <typename... Args>
 struct cbegin_helper<0, Args...>
 {
-    void operator()(std::tuple<typename decay_t<Args>::const_iterator...>& i,
-                    const std::tuple<Args...>& v) {}
+    void operator()(std::tuple<typename decay_t<Args>::const_iterator...>&,
+                    const std::tuple<Args...>&) {}
 };
 
 template <typename... Args>
@@ -103,7 +103,7 @@ struct increment_helper<1, Args...>
 template <typename... Args>
 struct increment_helper<0, Args...>
 {
-    void operator()(std::tuple<Args...>& i) {}
+    void operator()(std::tuple<Args...>&) {}
 };
 
 template <typename... Args>
@@ -136,8 +136,8 @@ struct not_end_helper<1, Args...>
 template <typename... Args>
 struct not_end_helper<0, Args...>
 {
-    bool operator()(const std::tuple<typename decay_t<Args>::const_iterator...>& i,
-                    const std::tuple<Args...>& v)
+    bool operator()(const std::tuple<typename decay_t<Args>::const_iterator...>&,
+                    const std::tuple<Args...>&)
     {
         return false;
     }
@@ -172,7 +172,7 @@ struct reserve_helper<1, Args...>
 template <typename... Args>
 struct reserve_helper<0, Args...>
 {
-    void operator()(std::tuple<Args...>& t, size_t n) {}
+    void operator()(std::tuple<Args...>&, size_t) {}
 };
 
 template <typename... Args>
@@ -214,9 +214,9 @@ struct emplace_back_helper<1, Args...>
 template <typename... Args>
 struct emplace_back_helper<0, Args...>
 {
-    void operator()(std::tuple<Args...>& t, const std::tuple<typename Args::value_type...>& v) {}
+    void operator()(std::tuple<Args...>&, const std::tuple<typename Args::value_type...>&) {}
 
-    void operator()(std::tuple<Args...>& t, std::tuple<typename Args::value_type...>&& v) {}
+    void operator()(std::tuple<Args...>&, std::tuple<typename Args::value_type...>&&) {}
 };
 
 template <typename... Args>
@@ -265,19 +265,19 @@ template <typename... Args>
 struct call_helper
 {
     template <typename Func, size_t... S>
-    call_helper(Func func, std::tuple<Args...>& args, integer_sequence<size_t, S...> seq)
+    call_helper(Func func, std::tuple<Args...>& args, integer_sequence<size_t, S...>)
     {
         func(std::get<S>(args)...);
     }
 
     template <typename Func, size_t... S>
-    call_helper(Func func, const std::tuple<Args...>& args, integer_sequence<size_t, S...> seq)
+    call_helper(Func func, const std::tuple<Args...>& args, integer_sequence<size_t, S...>)
     {
         func(std::get<S>(args)...);
     }
 
     template <typename Func, size_t... S>
-    call_helper(Func func, std::tuple<Args...>&& args, integer_sequence<size_t, S...> seq)
+    call_helper(Func func, std::tuple<Args...>&& args, integer_sequence<size_t, S...>)
     {
         func(std::get<S>(std::move(args))...);
     }

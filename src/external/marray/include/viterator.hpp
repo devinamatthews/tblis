@@ -6,7 +6,7 @@
 namespace MArray
 {
 
-template <unsigned N=1>
+template <int N=1>
 class viterator
 {
     public:
@@ -23,9 +23,9 @@ class viterator
         viterator(const Len& len, const Strides&... strides)
         : ndim_(len.size()), pos_(len.size()), len_(len.size()), first_(true), empty_(false)
         {
-            for (unsigned i = 0;i < ndim_;i++) if (len[i] == 0) empty_ = true;
+            for (auto l : len) if (l == 0) empty_ = true;
             std::copy_n(len.begin(), ndim_, len_.begin());
-            for (unsigned i = 0;i < N;i++) strides_[i].resize(len.size());
+            for (auto i : range(N)) strides_[i].resize(len.size());
             detail::set_strides(strides_, strides...);
         }
 
@@ -57,7 +57,7 @@ class viterator
                 return false;
             }
 
-            for (unsigned i = 0;i < ndim_;i++)
+            for (auto i : range(ndim_))
             {
                 if (pos_[i] == len_[i]-1)
                 {
@@ -85,7 +85,7 @@ class viterator
         {
             if (empty_ || ndim_ == 0) return;
 
-            for (unsigned i = 0;i < ndim_;i++)
+            for (auto i : range(ndim_))
             {
                 if (pos_[i] == 0)
                 {
@@ -105,7 +105,7 @@ class viterator
         {
             if (empty_) return;
 
-            for (size_t i = 0;i < ndim_;i++)
+            for (auto i : range(ndim_))
                 divide(pos, len_[i], pos, pos_[i]);
             MARRAY_ASSERT(pos == 0);
 
@@ -123,43 +123,45 @@ class viterator
 
             pos_.assign(pos.begin(), pos.end());
 
-            for (size_t i = 0;i < ndim_;i++)
-            {
+            for (auto i : range(ndim_))
                 MARRAY_ASSERT(pos_[i] >= 0 && pos_[i] < len_[i]);
-            }
 
             detail::move_offsets(pos_, strides_, off...);
 
             first_ = true;
         }
 
-        unsigned dimension() const
+        auto dimension() const
         {
             return ndim_;
         }
 
-        const len_vector& position() const
+        auto& position() const
         {
             return pos_;
         }
 
-        len_type length(unsigned dim) const
+        auto length(int dim) const
         {
+            MARRAY_ASSERT(dim >= 0 && dim < ndim_);
             return len_[dim];
         }
 
-        const len_vector& lengths() const
+        auto& lengths() const
         {
             return len_;
         }
 
-        stride_type stride(unsigned i, unsigned dim) const
+        auto stride(int i, int dim) const
         {
+            MARRAY_ASSERT(i >= 0 && i < N);
+            MARRAY_ASSERT(dim >= 0 && dim < ndim_);
             return strides_[i][dim];
         }
 
-        const stride_vector& strides(unsigned i) const
+        auto& strides(int i) const
         {
+            MARRAY_ASSERT(i >= 0 && i < N);
             return strides_[i];
         }
 

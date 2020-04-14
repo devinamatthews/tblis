@@ -9,7 +9,7 @@ template <typename T>
 void random_trace(stride_type N, T&& A, label_vector& idx_A,
                                  T&& B, label_vector& idx_B)
 {
-    unsigned ndim_A, ndim_B;
+    int ndim_A, ndim_B;
 
     do
     {

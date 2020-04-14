@@ -90,16 +90,16 @@ void mult(const communicator& comm,
 
     TBLIS_ASSERT((A.ndim+B.ndim+C.ndim)%2 == 0);
 
-    unsigned nAB = (A.ndim+B.ndim-C.ndim)/2;
-    unsigned nAC = (A.ndim+C.ndim-B.ndim)/2;
-    unsigned nBC = (B.ndim+C.ndim-A.ndim)/2;
+    auto nAB = (A.ndim+B.ndim-C.ndim)/2;
+    auto nAC = (A.ndim+C.ndim-B.ndim)/2;
+    auto nBC = (B.ndim+C.ndim-A.ndim)/2;
 
-    for (unsigned i = 0;i < nAC;i++) idx_A.push_back(i);
-    for (unsigned i = 0;i < nAC;i++) idx_C.push_back(i);
-    for (unsigned i = 0;i < nAB;i++) idx_A.push_back(nAC+i);
-    for (unsigned i = 0;i < nAB;i++) idx_B.push_back(nAC+i);
-    for (unsigned i = 0;i < nBC;i++) idx_B.push_back(nAC+nAB+i);
-    for (unsigned i = 0;i < nBC;i++) idx_C.push_back(nAC+nAB+i);
+    for (auto i : range(nAC)) idx_A.push_back(i);
+    for (auto i : range(nAC)) idx_C.push_back(i);
+    for (auto i : range(nAB)) idx_A.push_back(nAC+i);
+    for (auto i : range(nAB)) idx_B.push_back(nAC+i);
+    for (auto i : range(nBC)) idx_B.push_back(nAC+nAB+i);
+    for (auto i : range(nBC)) idx_C.push_back(nAC+nAB+i);
 
     mult(comm, alpha, A, idx_A, B, idx_B, beta, C, idx_C);
 }

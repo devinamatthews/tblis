@@ -21,7 +21,7 @@ void tblis_tensor_reduce(const tblis_comm* comm,
 {
     TBLIS_ASSERT(A->type == result->type);
 
-    unsigned ndim_A = A->ndim;
+    auto ndim_A = A->ndim;
     len_vector len_A;
     stride_vector stride_A;
     label_vector idx_A;
@@ -63,13 +63,13 @@ void reduce(const communicator& comm, reduce_t op,
             dpd_varray_view<const T> A, const label_vector& idx_A,
             T& result, len_type& idx)
 {
-    unsigned ndim_A = A.dimension();
-
     (void)idx_A;
 
-    for (unsigned i = 1;i < ndim_A;i++)
-        for (unsigned j = 0;j < i;j++)
-            TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+    auto ndim_A = A.dimension();
+
+    for (auto i : range(1,ndim_A))
+    for (auto j : range(i))
+        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
 
     dim_vector idx_A_A = range(ndim_A);
 
@@ -89,13 +89,13 @@ void reduce(const communicator& comm, reduce_t op,
             indexed_varray_view<const T> A, const label_vector& idx_A,
             T& result, len_type& idx)
 {
-    unsigned ndim_A = A.dimension();
-
     (void)idx_A;
 
-    for (unsigned i = 1;i < ndim_A;i++)
-        for (unsigned j = 0;j < i;j++)
-            TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+    auto ndim_A = A.dimension();
+
+    for (auto i : range(1,ndim_A))
+    for (auto j : range(i))
+        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
 
     dim_vector idx_A_A = range(ndim_A);
 
@@ -115,13 +115,13 @@ void reduce(const communicator& comm, reduce_t op,
             indexed_dpd_varray_view<const T> A, const label_vector& idx_A,
             T& result, len_type& idx)
 {
-    unsigned ndim_A = A.dimension();
-
     (void)idx_A;
 
-    for (unsigned i = 1;i < ndim_A;i++)
-        for (unsigned j = 0;j < i;j++)
-            TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+    auto ndim_A = A.dimension();
+
+    for (auto i : range(1,ndim_A))
+    for (auto j : range(i))
+        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
 
     dim_vector idx_A_A = range(ndim_A);
 

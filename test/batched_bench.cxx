@@ -56,8 +56,8 @@ double run_kernel(len_type R, Kernel&& kernel, Args&&...args)
 template <typename T>
 void init(indexed_varray<T>& A, const string& dense, const string& batch)
 {
-    unsigned n = dense.size();
-    unsigned m = batch.size();
+    auto n = dense.size();
+    auto m = batch.size();
 
     len_vector len;
     for (auto c : dense+batch)
@@ -65,7 +65,8 @@ void init(indexed_varray<T>& A, const string& dense, const string& batch)
                       tolower(c) >= 'i' && tolower(c) <= 'p' ? o : len.back());
 
     len_type size = 1;
-    for (unsigned i = 0;i < m;)
+    auto i = 0;
+    while (i < m)
     {
         int j = i+1;
         while (j < m && batch[j] == '=') j++;
@@ -84,7 +85,7 @@ void init(indexed_varray<T>& A, const string& dense, const string& batch)
     }
 
     len_vector cur_idx(m);
-    for (unsigned i = 0;i < m;i++)
+    for (auto i : range(m))
     {
         if (i == 0 || batch[i] != '=')
         {
@@ -107,10 +108,10 @@ void init(indexed_varray<T>& A, const string& dense, const string& batch)
         len_type off = 0;
         for (bool done = false;!done;)
         {
-            for (unsigned i = 0;i < m;i++) idx[off][i] = cur_idx[i];
+            for (auto i : range(m)) idx[off][i] = cur_idx[i];
             off++;
 
-            for (unsigned i = m;i --> 0;)
+            for (auto i : reversed_range(m))
             {
                 bool over = (i == m-1 || batch[i+1] != '=')
 
@@ -161,7 +162,7 @@ void init(indexed_varray<T>& A, const string& dense, const string& batch)
     {
         len.resize(n);
 
-        for (len_type i = 0;i < size;i++)
+        for (auto i : range(size))
         {
             double* data = A.data(i);
             viterator<> it(len, A.dense_strides());

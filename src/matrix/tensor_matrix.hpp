@@ -376,10 +376,7 @@ class tensor_matrix : public abstract_matrix_adapter<tensor_matrix,tensor_matrix
             const len_type ME = (!trans ? cfg.gemm_mr.extent(type)
                                         : cfg.gemm_nr.extent(type));
             const len_type KR = cfg.gemm_kr.def(type);
-            const len_type KE = cfg.gemm_kr.extent(type);
             const stride_type ts = type_size[type];
-            const len_type m_p = ceil_div(m, MR)*ME;
-            const len_type k_p = round_up(k, KE);
 
             comm.distribute_over_threads({m, MR}, {k, KR},
             [&](len_type m_first, len_type m_last, len_type k_first, len_type k_last)
@@ -435,17 +432,13 @@ class tensor_matrix : public abstract_matrix_adapter<tensor_matrix,tensor_matrix
         {
             const type_t type = beta.type;
             const len_type MR = cfg.gemm_mr.def(type);
-            const len_type ME = cfg.gemm_mr.extent(type);
             const len_type NR = cfg.gemm_nr.def(type);
-            const len_type NE = cfg.gemm_nr.extent(type);
-            const len_type KE = cfg.gemm_kr.extent(type);
             const bool row_major = cfg.gemm_row_major.value(type);
             const stride_type ts = type_size[type];
             const len_type m_first = 0;
             const len_type m_last = ceil_div(m, MR);
             const stride_type rs_ab = row_major ? NR : 1;
             const stride_type cs_ab = row_major ? 1 : MR;
-            const len_type k_p = round_up(k, KE);
 
             comm.distribute_over_threads(ceil_div(n, NR),
             [&](len_type n_first, len_type n_last)
@@ -494,21 +487,21 @@ class tensor_matrix : public abstract_matrix_adapter<tensor_matrix,tensor_matrix
             return impl().data_;
         }
 
-        const len_vector& lengths(unsigned dim) const
+        const len_vector& lengths(int dim) const
         {
-            TBLIS_ASSERT(dim < 2);
+            TBLIS_ASSERT(dim >= 0 && dim < 2);
             return impl().lens_[dim^transposed()];
         }
 
-        const stride_vector& strides(unsigned dim) const
+        const stride_vector& strides(int dim) const
         {
-            TBLIS_ASSERT(dim < 2);
+            TBLIS_ASSERT(dim >= 0 && dim < 2);
             return impl().strides_[dim^transposed()];
         }
 
-        bool pack_3d(unsigned dim) const
+        bool pack_3d(int dim) const
         {
-            TBLIS_ASSERT(dim < 2);
+            TBLIS_ASSERT(dim >= 0 && dim < 2);
             return impl().pack_3d_[dim^transposed()];
         }
 };

@@ -24,8 +24,8 @@ void dot(type_t type, const communicator& comm, const config& cfg,
     stride_type stride_A0 = (empty ? 1 : stride_A_AB[0]);
     stride_type stride_B0 = (empty ? 1 : stride_B_AB[0]);
     len_vector stride_A1, stride_B1;
-    for (unsigned i = 1;i < stride_A_AB.size();i++) stride_A1.push_back(stride_A_AB[i]*ts);
-    for (unsigned i = 1;i < stride_B_AB.size();i++) stride_B1.push_back(stride_B_AB[i]*ts);
+    for (auto i : range(1,len_AB.size())) stride_A1.push_back(stride_A_AB[i]*ts);
+    for (auto i : range(1,len_AB.size())) stride_B1.push_back(stride_B_AB[i]*ts);
 
     atomic_accumulator local_result;
 

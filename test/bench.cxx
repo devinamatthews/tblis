@@ -335,9 +335,9 @@ struct random_contraction
                 tk *= len;
             }
 
-            dim_vector reorder_A = range<unsigned>(len_A.size());
-            dim_vector reorder_B = range<unsigned>(len_B.size());
-            dim_vector reorder_C = range<unsigned>(len_C.size());
+            dim_vector reorder_A = range(len_A.size());
+            dim_vector reorder_B = range(len_B.size());
+            dim_vector reorder_C = range(len_C.size());
 
             random_shuffle(reorder_A.begin(), reorder_A.end());
             random_shuffle(reorder_B.begin(), reorder_B.end());

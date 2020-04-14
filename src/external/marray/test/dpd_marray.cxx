@@ -4,22 +4,22 @@
 using namespace std;
 using namespace MArray;
 
-template <typename T, unsigned... Sizes>
+template <typename T, int... Sizes>
 struct arrays_helper;
 
-template <typename T, unsigned Size1, unsigned Size2>
+template <typename T, int Size1, int Size2>
 struct arrays_helper<T, Size1, Size2>
 {
     typedef array<array<T,Size2>,Size1> type;
 };
 
-template <typename T, unsigned Size1, unsigned Size2, unsigned Size3>
+template <typename T, int Size1, int Size2, int Size3>
 struct arrays_helper<T, Size1, Size2, Size3>
 {
     typedef array<array<array<T,Size3>,Size2>,Size1> type;
 };
 
-template <typename T, unsigned... Sizes>
+template <typename T, int... Sizes>
 using arrays = typename arrays_helper<T, Sizes...>::type;
 
 static array<dpd_layout,6> layouts =
@@ -32,10 +32,10 @@ static array<dpd_layout,6> layouts =
     BALANCED_COLUMN_MAJOR,
 }};
 
-static arrays<unsigned,6,4> perms =
+static arrays<int,6,4> perms =
     {{{3,2,1,0}, {0,1,2,3}, {3,2,1,0}, {0,1,2,3}, {3,2,1,0}, {0,1,2,3}}};
 
-static arrays<unsigned,8,4> irreps =
+static arrays<int,8,4> irreps =
     {{{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {1,1,1,0},
       {0,0,0,1}, {1,1,0,1}, {1,0,1,1}, {0,1,1,1}}};
 static arrays<len_type,8,4> lengths =
@@ -74,7 +74,7 @@ static arrays<stride_type,6,8> offsets =
     EXPECT_EQ(nullptr, v.data()); \
     EXPECT_EQ(0u, v.irrep()); \
     EXPECT_EQ(0u, v.num_irreps()); \
-    EXPECT_EQ((array<unsigned,4>{}), v.permutation()); \
+    EXPECT_EQ((array<int,4>{}), v.permutation()); \
     EXPECT_EQ((arrays<len_type,4,8>{}), v.lengths());
 
 #define CHECK_DPD_MARRAY(v,j) \
@@ -98,7 +98,7 @@ static arrays<stride_type,6,8> offsets =
         EXPECT_EQ(strides[j][1], vs.strides()); \
     } \
     \
-    for (unsigned i = 2;i < 8;i++) \
+    for (int i = 2;i < 8;i++) \
     { \
         SCOPED_TRACE(i); \
         auto vs = v(irreps[i]); \
@@ -118,7 +118,7 @@ TEST(dpd_marray, constructor)
     dpd_marray<double,4> v1;
     CHECK_DPD_MARRAY_RESET(v1)
 
-    for (unsigned j = 0;j < 6;j++)
+    for (int j = 0;j < 6;j++)
     {
         dpd_marray<double,4> v2(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, layouts[j]);
         CHECK_DPD_MARRAY(v2, j)
@@ -155,7 +155,7 @@ TEST(dpd_marray, reset)
 
     CHECK_DPD_MARRAY_RESET(v1)
 
-    for (unsigned j = 0;j < 6;j++)
+    for (int j = 0;j < 6;j++)
     {
         v1.reset(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, uninitialized, layouts[j]);
         CHECK_DPD_MARRAY(v1, j)
@@ -191,12 +191,12 @@ TEST(dpd_marray, reset)
 
 TEST(dpd_marray, permute)
 {
-    unsigned perm_irreps[8] = {1, 0, 2, 3, 4, 5, 7, 6};
+    int perm_irreps[8] = {1, 0, 2, 3, 4, 5, 7, 6};
 
-    arrays<unsigned,6,4> perms2 =
+    arrays<int,6,4> perms2 =
         {{{2,3,1,0}, {1,0,2,3}, {2,3,1,0}, {1,0,2,3}, {2,3,1,0}, {1,0,2,3}}};
 
-    for (unsigned j = 0;j < 6;j++)
+    for (int j = 0;j < 6;j++)
     {
         SCOPED_TRACE(j);
 
@@ -209,12 +209,12 @@ TEST(dpd_marray, permute)
         EXPECT_EQ(perms2[j], v2.permutation());
         EXPECT_EQ((arrays<len_type,4,8>{{{2, 2}, {3, 1}, {1, 2}, {3, 4}}}), v2.lengths());
 
-        for (unsigned i = 0;i < 8;i++)
+        for (int i = 0;i < 8;i++)
         {
             SCOPED_TRACE(i);
             std::array<len_type,4> len;
             std::array<stride_type,4> stride;
-            for (unsigned k = 0;k < 4;k++)
+            for (int k = 0;k < 4;k++)
             {
                 len[k] = lengths[i][perms2[1][k]];
                 stride[k] = strides[j][i][perms2[1][k]];
@@ -232,12 +232,12 @@ TEST(dpd_marray, permute)
         EXPECT_EQ(perms2[j], v3.permutation());
         EXPECT_EQ((arrays<len_type,4,8>{{{2, 2}, {3, 1}, {1, 2}, {3, 4}}}), v3.lengths());
 
-        for (unsigned i = 0;i < 8;i++)
+        for (int i = 0;i < 8;i++)
         {
             SCOPED_TRACE(i);
             std::array<len_type,4> len;
             std::array<stride_type,4> stride;
-            for (unsigned k = 0;k < 4;k++)
+            for (int k = 0;k < 4;k++)
             {
                 len[k] = lengths[i][perms2[1][k]];
                 stride[k] = strides[j][i][perms2[1][k]];
@@ -252,10 +252,10 @@ TEST(dpd_marray, permute)
 
 TEST(dpd_marray, transpose)
 {
-    arrays<unsigned,6,2> perms2 =
+    arrays<int,6,2> perms2 =
         {{{0,1}, {1,0}, {0,1}, {1,0}, {0,1}, {1,0}}};
 
-    for (unsigned j = 0;j < 6;j++)
+    for (int j = 0;j < 6;j++)
     {
         SCOPED_TRACE(j);
 
@@ -339,7 +339,7 @@ TEST(dpd_marray, block_iteration)
 
         visited = {};
         v1.for_each_block(
-        [&](marray_view<double,3>&& v3, unsigned i, unsigned j, unsigned k)
+        [&](marray_view<double,3>&& v3, int i, int j, int k)
         {
             EXPECT_LT(i, 2u);
             EXPECT_LT(j, 2u);
@@ -352,9 +352,9 @@ TEST(dpd_marray, block_iteration)
             visited[i][j]++;
         });
 
-        for (len_type i = 0;i < 2;i++)
+        for (int i = 0;i < 2;i++)
         {
-            for (len_type j = 0;j < 2;j++)
+            for (int j = 0;j < 2;j++)
             {
                 EXPECT_EQ(visited[i][j], 1);
             }
@@ -375,7 +375,7 @@ TEST(dpd_marray, element_iteration)
 
         visited = {};
         v1.for_each_element(
-        [&](double& v, unsigned i, unsigned j, unsigned k, len_type a, len_type b, len_type c)
+        [&](double& v, int i, int j, int k, len_type a, len_type b, len_type c)
         {
             EXPECT_LT(i, 2u);
             EXPECT_LT(j, 2u);
@@ -392,7 +392,7 @@ TEST(dpd_marray, element_iteration)
             visited[&v - v1.data()]++;
         });
 
-        for (unsigned i = 0;i < 31;i++)
+        for (int i = 0;i < 31;i++)
         {
             EXPECT_EQ(visited[i], 1);
         }
@@ -412,13 +412,13 @@ TEST(dpd_marray, swap)
     EXPECT_EQ(data2, v1.data());
     EXPECT_EQ(0u, v1.irrep());
     EXPECT_EQ(2u, v1.num_irreps());
-    EXPECT_EQ((std::array<unsigned,3>{0, 1, 2}), v1.permutation());
+    EXPECT_EQ((std::array<int,3>{0, 1, 2}), v1.permutation());
     EXPECT_EQ((arrays<len_type,3,8>{{{1, 1}, {6, 3}, {2, 4}}}), v1.lengths());
 
     EXPECT_EQ(data1, v2.data());
     EXPECT_EQ(1u, v2.irrep());
     EXPECT_EQ(2u, v2.num_irreps());
-    EXPECT_EQ((std::array<unsigned,3>{2, 1, 0}), v2.permutation());
+    EXPECT_EQ((std::array<int,3>{2, 1, 0}), v2.permutation());
     EXPECT_EQ((arrays<len_type,3,8>{{{2, 3}, {2, 1}, {5, 3}}}), v2.lengths());
 
     swap(v2, v1);
@@ -426,12 +426,12 @@ TEST(dpd_marray, swap)
     EXPECT_EQ(data1, v1.data());
     EXPECT_EQ(1u, v1.irrep());
     EXPECT_EQ(2u, v1.num_irreps());
-    EXPECT_EQ((std::array<unsigned,3>{2, 1, 0}), v1.permutation());
+    EXPECT_EQ((std::array<int,3>{2, 1, 0}), v1.permutation());
     EXPECT_EQ((arrays<len_type,3,8>{{{2, 3}, {2, 1}, {5, 3}}}), v1.lengths());
 
     EXPECT_EQ(data2, v2.data());
     EXPECT_EQ(0u, v2.irrep());
     EXPECT_EQ(2u, v2.num_irreps());
-    EXPECT_EQ((std::array<unsigned,3>{0, 1, 2}), v2.permutation());
+    EXPECT_EQ((std::array<int,3>{0, 1, 2}), v2.permutation());
     EXPECT_EQ((arrays<len_type,3,8>{{{1, 1}, {6, 3}, {2, 4}}}), v2.lengths());
 }

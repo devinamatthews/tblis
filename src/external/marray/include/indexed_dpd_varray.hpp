@@ -84,61 +84,61 @@ class indexed_dpd_varray : public indexed_dpd_varray_base<Type, indexed_dpd_varr
         template <typename U, bool O, typename D,
             typename=detail::enable_if_assignable_t<reference,U>>
         indexed_dpd_varray(const indexed_dpd_varray_base<U, D, O>& other,
-                           const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                           const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             reset(other, depth, layout);
         }
 
-        indexed_dpd_varray(unsigned irrep, unsigned nirrep,
+        indexed_dpd_varray(int irrep, int nirrep,
                            const detail::array_2d<len_type>& len,
-                           const detail::array_1d<unsigned>& idx_irrep,
+                           const detail::array_1d<int>& idx_irrep,
                            const detail::array_2d<len_type>& idx,
                            const Type& value = Type(), dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, idx_irrep, idx, value, layout);
         }
 
-        indexed_dpd_varray(unsigned irrep, unsigned nirrep,
+        indexed_dpd_varray(int irrep, int nirrep,
                            const detail::array_2d<len_type>& len,
-                           const detail::array_1d<unsigned>& idx_irrep,
+                           const detail::array_1d<int>& idx_irrep,
                            const detail::array_2d<len_type>& idx, const Type& value,
-                           const detail::array_1d<unsigned>& depth, dpd_layout layout = DEFAULT)
+                           const detail::array_1d<int>& depth, dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, idx_irrep, idx, value, depth, layout);
         }
 
-        indexed_dpd_varray(unsigned irrep, unsigned nirrep,
+        indexed_dpd_varray(int irrep, int nirrep,
                            const detail::array_2d<len_type>& len,
-                           const detail::array_1d<unsigned>& idx_irrep,
+                           const detail::array_1d<int>& idx_irrep,
                            const detail::array_2d<len_type>& idx,
                            dpd_layout layout)
         {
             reset(irrep, nirrep, len, idx_irrep, idx, Type(), layout);
         }
 
-        indexed_dpd_varray(unsigned irrep, unsigned nirrep,
+        indexed_dpd_varray(int irrep, int nirrep,
                            const detail::array_2d<len_type>& len,
-                           const detail::array_1d<unsigned>& idx_irrep,
+                           const detail::array_1d<int>& idx_irrep,
                            const detail::array_2d<len_type>& idx,
-                           const detail::array_1d<unsigned>& depth, dpd_layout layout = DEFAULT)
+                           const detail::array_1d<int>& depth, dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, idx_irrep, idx, Type(), depth, layout);
         }
 
-        indexed_dpd_varray(unsigned irrep, unsigned nirrep,
+        indexed_dpd_varray(int irrep, int nirrep,
                            const detail::array_2d<len_type>& len,
-                           const detail::array_1d<unsigned>& idx_irrep,
+                           const detail::array_1d<int>& idx_irrep,
                            const detail::array_2d<len_type>& idx,
                            uninitialized_t, dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, idx_irrep, idx, uninitialized, layout);
         }
 
-        indexed_dpd_varray(unsigned irrep, unsigned nirrep,
+        indexed_dpd_varray(int irrep, int nirrep,
                            const detail::array_2d<len_type>& len,
-                           const detail::array_1d<unsigned>& idx_irrep,
+                           const detail::array_1d<int>& idx_irrep,
                            const detail::array_2d<len_type>& idx, uninitialized_t,
-                           const detail::array_1d<unsigned>& depth, dpd_layout layout = DEFAULT)
+                           const detail::array_1d<int>& depth, dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, idx_irrep, idx, uninitialized, depth, layout);
         }
@@ -250,7 +250,7 @@ class indexed_dpd_varray : public indexed_dpd_varray_base<Type, indexed_dpd_varr
         template <typename U, bool O, typename D,
             typename=detail::enable_if_assignable_t<reference,U>>
         void reset(const indexed_dpd_varray_base<U, D, O>& other,
-                   const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                   const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             if (std::is_scalar<Type>::value)
             {
@@ -266,9 +266,9 @@ class indexed_dpd_varray : public indexed_dpd_varray_base<Type, indexed_dpd_varr
             base::template operator=<>(other);
         }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len,
-                   const detail::array_1d<unsigned>& idx_irrep,
+                   const detail::array_1d<int>& idx_irrep,
                    const detail::array_2d<len_type>& idx,
                    const Type& value = Type(), dpd_layout layout = DEFAULT)
        {
@@ -277,66 +277,66 @@ class indexed_dpd_varray : public indexed_dpd_varray_base<Type, indexed_dpd_varr
                std::uninitialized_fill_n(data_[0], storage_.size, value);
        }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len,
-                   const detail::array_1d<unsigned>& idx_irrep,
+                   const detail::array_1d<int>& idx_irrep,
                    const detail::array_2d<len_type>& idx, const Type& value,
-                   const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                   const detail::array_1d<int>& depth, layout layout = DEFAULT)
        {
            reset(irrep, nirrep, len, idx_irrep, idx, uninitialized, depth, layout);
            if (storage_.size > 0)
                std::uninitialized_fill_n(data_[0], storage_.size, value);
        }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len,
-                   const detail::array_1d<unsigned>& idx_irrep,
+                   const detail::array_1d<int>& idx_irrep,
                    const detail::array_2d<len_type>& idx,
                    dpd_layout layout)
        {
            reset(irrep, nirrep, len, idx_irrep, idx, Type(), layout);
        }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len,
-                   const detail::array_1d<unsigned>& idx_irrep,
+                   const detail::array_1d<int>& idx_irrep,
                    const detail::array_2d<len_type>& idx,
-                   const detail::array_1d<unsigned>& depth, layout layout)
+                   const detail::array_1d<int>& depth, layout layout)
        {
            reset(irrep, nirrep, len, idx_irrep, idx, Type(), depth, layout);
        }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len,
-                   const detail::array_1d<unsigned>& idx_irrep,
+                   const detail::array_1d<int>& idx_irrep,
                    const detail::array_2d<len_type>& idx,
                    uninitialized_t, dpd_layout layout = DEFAULT)
         {
-            unsigned total_ndim = len.length(0);
-            unsigned idx_ndim = idx_irrep.size();
-            unsigned dense_ndim = total_ndim - idx_ndim;
+            int total_ndim = len.length(0);
+            int idx_ndim = idx_irrep.size();
+            int dense_ndim = total_ndim - idx_ndim;
 
             reset(irrep, nirrep, len, idx_irrep, idx, uninitialized,
                   this->default_depth(layout, dense_ndim), layout.base());
         }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len,
-                   const detail::array_1d<unsigned>& idx_irrep,
+                   const detail::array_1d<int>& idx_irrep,
                    const detail::array_2d<len_type>& idx, uninitialized_t,
-                   const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                   const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             MARRAY_ASSERT(nirrep == 1 || nirrep == 2 ||
                           nirrep == 4 || nirrep == 8);
 
-            unsigned total_ndim = len.length(0);
-            unsigned idx_ndim = idx_irrep.size();
-            unsigned dense_ndim = total_ndim - idx_ndim;
+            int total_ndim = len.length(0);
+            int idx_ndim = idx_irrep.size();
+            int dense_ndim = total_ndim - idx_ndim;
             MARRAY_ASSERT(total_ndim > idx_ndim);
             MARRAY_ASSERT(idx.length(1) == idx_ndim);
             MARRAY_ASSERT(len.length(1) == nirrep);
 
-            unsigned num_idx = idx.length(0);
+            auto num_idx = idx.length(0);
             MARRAY_ASSERT(num_idx > 0);
             MARRAY_ASSERT(idx_ndim > 0 || num_idx == 1);
 
@@ -360,7 +360,7 @@ class indexed_dpd_varray : public indexed_dpd_varray_base<Type, indexed_dpd_varr
             this->set_tree();
             this->set_size();
 
-            for (unsigned i = 0;i < idx_ndim;i++)
+            for (auto i : range(idx_ndim))
             {
                 MARRAY_ASSERT(idx_irrep_[i] < nirrep);
                 dense_irrep_ ^= idx_irrep_[i];

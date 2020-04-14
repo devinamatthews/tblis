@@ -10,7 +10,7 @@ void random_outer_prod(stride_type N, T&& A, label_vector& idx_A,
                                       T&& B, label_vector& idx_B,
                                       T&& C, label_vector& idx_C)
 {
-    unsigned ndim_A, ndim_B, ndim_C;
+    int ndim_A, ndim_B, ndim_C;
 
     do
     {

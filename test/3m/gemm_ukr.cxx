@@ -26,7 +26,7 @@ char D_buf[64*64*16*2] __attribute__((aligned(64)));
 
 TEMPLATED_TEST_CASE(gemm_ukr, T, all_types)
 {
-    for (unsigned i = 0;i < num_configs;i++)
+    for (auto i : range(num_configs))
     {
         auto& cfg = *configs[i];
 
@@ -52,21 +52,33 @@ TEMPLATED_TEST_CASE(gemm_ukr, T, all_types)
         INFO_OR_PRINT("row major? " << (cfg.gemm_row_major.value<T>() ? "yes" : "no"));
         INFO_OR_PRINT("flipped? " << (cfg.gemm_flip_ukr.value<T>() ? "yes" : "no"));
 
-        for (auto mn : (len_type[10][2]){{0, 0}, {1, 1}, {MR, 0}, {0, NR},
-                                         {MR, 1}, {1, NR}, {MR, NR-1},
-                                         {MR-1, NR}, {MR-1, NR-1}, {MR, NR}})
-        {
-            auto m = mn[0];
-            auto n = mn[1];
+        std::array<std::pair<len_type,len_type>,10> mns
+        {{
+             {0, 0}, {1, 1}, {MR, 0}, {0, NR},
+             {MR, 1}, {1, NR}, {MR, NR-1},
+             {MR-1, NR}, {MR-1, NR-1}, {MR, NR}
+        }};
 
-            for (auto k : (len_type[8]){0, 1, KC-1, KC, KC+1, KX-1, KX, KX+1})
+        std::array<std::pair<stride_type,stride_type>,4> strides
+        {{
+             {NR, 1}, {1, MR}, {NR*2, 2}, {2, MR*2}
+        }};
+
+        std::array<len_type,8> ks = {0, 1, KC-1, KC, KC+1, KX-1, KX, KX+1};
+
+        for (auto mn : mns)
+        {
+            auto m = mn.first;
+            auto n = mn.second;
+
+            for (auto k : ks)
             {
                 INFO("m, n, k = " << m << ", " << n << ", " << k);
 
-                for (auto strides : (stride_type[4][2]){{NR, 1}, {1, MR}, {NR*2, 2}, {2, MR*2}})
+                for (auto stride : strides)
                 {
-                    auto rs_c = strides[0];
-                    auto cs_c = strides[1];
+                    auto rs_c = stride.first;
+                    auto cs_c = stride.second;
 
                     INFO("rs_c, cs_c = " << rs_c << ", " << cs_c);
 

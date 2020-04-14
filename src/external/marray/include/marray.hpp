@@ -2,20 +2,17 @@
 #define _MARRAY_MARRAY_HPP_
 
 #include "marray_view.hpp"
+#include "expression.hpp"
 
 namespace MArray
 {
 
-template <typename Expr, typename=void> struct is_expression;
-template <typename Expr, typename=void> struct expression_type;
-template <typename Expr, typename=void> struct expr_dimension;
-
-template <typename Type, unsigned NDim, typename Allocator>
+template <typename Type, int NDim, typename Allocator>
 class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, true>
 {
-    template <typename, unsigned, typename, bool> friend class marray_base;
-    template <typename, unsigned> friend class marray_view;
-    template <typename, unsigned, typename> friend class marray;
+    template <typename, int, typename, bool> friend class marray_base;
+    template <typename, int> friend class marray_view;
+    template <typename, int, typename> friend class marray;
     template <typename, typename, bool> friend class varray_base;
     template <typename> friend class varray_view;
     template <typename, typename> friend class varray;
@@ -75,7 +72,7 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
             reset(other, layout);
         }
 
-        template <typename U, unsigned OldNDim, unsigned NIndexed, typename... Dims,
+        template <typename U, int OldNDim, int NIndexed, typename... Dims,
             typename=detail::enable_if_assignable_t<reference,U>>
         marray(const marray_slice<U, OldNDim, NIndexed, Dims...>& other, layout layout = DEFAULT)
         {
@@ -119,10 +116,7 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
             static_assert(NDim == expr_dimension<expr_type>::value,
                           "Dimensionality of the expression must equal that of the target");
 
-            std::array<len_type,NDim> len;
-            get_expr_lengths(other, len);
-            reset(len, uninitialized);
-
+            reset(get_expr_lengths<NDim>(other), uninitialized);
             assign_expr(*this, other);
         }
 
@@ -244,7 +238,7 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
             base::template operator=<>(other);
         }
 
-        template <typename U, unsigned OldNDim, unsigned NIndexed, typename... Dims,
+        template <typename U, int OldNDim, int NIndexed, typename... Dims,
             typename=detail::enable_if_assignable_t<reference, U>>
         void reset(const marray_slice<U, OldNDim, NIndexed, Dims...>& other, layout layout = DEFAULT)
         {
@@ -309,7 +303,7 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
              * It is OK to change the geometry of 'a' even if it is not
              * a view since it is about to go out of scope.
              */
-            for (unsigned i = 0;i < NDim;i++)
+            for (auto i : range(NDim))
             {
                 len_type l = std::min(a.length(i), b.length(i));
                 a.len_[i] = l;
@@ -325,7 +319,7 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
          *
          **********************************************************************/
 
-        template <unsigned Dim=0, unsigned N=NDim, typename=detail::enable_if_t<N==1>>
+        template <int Dim=0, int N=NDim, typename=detail::enable_if_t<N==1>>
         void push_back(const Type& x)
         {
             static_assert(Dim == 0, "Dim out of range");
@@ -333,28 +327,28 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
             back() = x;
         }
 
-        template <unsigned N=NDim, typename=detail::enable_if_t<N==1>>
-        void push_back(unsigned dim, const Type& x)
+        template <int N=NDim, typename=detail::enable_if_t<N==1>>
+        void push_back(int dim, const Type& x)
         {
             (void)dim;
             MARRAY_ASSERT(dim == 0);
             push_back(x);
         }
 
-        template <unsigned Dim, typename U, typename D, bool O, unsigned N=NDim,
+        template <int Dim, typename U, typename D, bool O, int N=NDim,
             typename=detail::enable_if_assignable_t<reference, U>>
         void push_back(const marray_base<U, NDim-1, D, O>& x)
         {
             push_back(Dim, x);
         }
 
-        template <typename U, typename D, bool O, unsigned N=NDim,
+        template <typename U, typename D, bool O, int N=NDim,
             typename=detail::enable_if_assignable_t<reference, U>>
-        void push_back(unsigned dim, const marray_base<U, NDim-1, D, O>& x)
+        void push_back(int dim, const marray_base<U, NDim-1, D, O>& x)
         {
-            MARRAY_ASSERT(dim < NDim);
+            MARRAY_ASSERT(dim >= 0 && dim < NDim);
 
-            for (unsigned i = 0, j = 0;i < NDim;i++)
+            for (int i = 0, j = 0;i < NDim;i++)
             {
                 (void)j;
                 MARRAY_ASSERT(i == dim || len_[i] == x.length(j++));
@@ -366,22 +360,22 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
             this->template back<NDim>(dim) = x;
         }
 
-        template <typename=void, unsigned N=NDim>
+        template <typename=void, int N=NDim>
         typename std::enable_if<N==1>::type
         pop_back()
         {
             resize({len_[0]-1});
         }
 
-        template <unsigned Dim, unsigned N=NDim>
+        template <int Dim, int N=NDim>
         void pop_back()
         {
             pop_back(Dim);
         }
 
-        void pop_back(unsigned dim)
+        void pop_back(int dim)
         {
-            MARRAY_ASSERT(dim < NDim);
+            MARRAY_ASSERT(dim >= 0 && dim < NDim);
             MARRAY_ASSERT(len_[dim] > 0);
 
             std::array<len_type, NDim> len = len_;

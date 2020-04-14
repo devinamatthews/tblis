@@ -69,7 +69,7 @@ static stride_type offsets[6][8] =
     { \
         auto vs = v(1,0,0,0); \
         EXPECT_EQ(v.data() + offsets[j][0], vs.data()); \
-        for (unsigned k = 0;k < 4;k++) \
+        for (int k = 0;k < 4;k++) \
         { \
             EXPECT_EQ(lengths[0][k], vs.length(k)); \
             EXPECT_EQ(strides[j][0][k], vs.stride(k)); \
@@ -83,7 +83,7 @@ static stride_type offsets[6][8] =
         EXPECT_EQ(strides[j][1], vs.strides()); \
     } \
     \
-    for (unsigned i = 2;i < 8;i++) \
+    for (int i = 2;i < 8;i++) \
     { \
         SCOPED_TRACE(i); \
         auto vs = v(irreps[i]); \
@@ -106,7 +106,7 @@ TEST(dpd_varray, constructor)
     dpd_varray<double> v2(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, layouts[0]);
     CHECK_DPD_MARRAY(v2, 0)
 
-    for (unsigned j = 1;j < 6;j++)
+    for (int j = 1;j < 6;j++)
     {
         dpd_varray<double> v3(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, layouts[j]);
         CHECK_DPD_MARRAY(v3, j)
@@ -140,7 +140,7 @@ TEST(dpd_varray, reset)
 
     CHECK_DPD_MARRAY_RESET(v1)
 
-    for (unsigned j = 0;j < 6;j++)
+    for (int j = 0;j < 6;j++)
     {
         v1.reset(1, 2, {{3, 1}, {2, 2}, {1, 2}, {3, 4}}, uninitialized, layouts[j]);
         CHECK_DPD_MARRAY(v1, j)
@@ -172,12 +172,12 @@ TEST(dpd_varray, reset)
 
 TEST(dpd_varray, permute)
 {
-    unsigned perm_irreps[8] = {1, 0, 2, 3, 4, 5, 7, 6};
+    int perm_irreps[8] = {1, 0, 2, 3, 4, 5, 7, 6};
 
     dim_vector perms2[6] =
         {{2,3,1,0}, {1,0,2,3}, {2,3,1,0}, {1,0,2,3}, {2,3,1,0}, {1,0,2,3}};
 
-    for (unsigned j = 0;j < 6;j++)
+    for (int j = 0;j < 6;j++)
     {
         SCOPED_TRACE(j);
 
@@ -190,12 +190,12 @@ TEST(dpd_varray, permute)
         EXPECT_EQ(perms2[j], v2.permutation());
         EXPECT_EQ((matrix<len_type>{{2, 2}, {3, 1}, {1, 2}, {3, 4}}), v2.lengths());
 
-        for (unsigned i = 0;i < 8;i++)
+        for (int i = 0;i < 8;i++)
         {
             SCOPED_TRACE(i);
             len_vector len(4);
             stride_vector stride(4);
-            for (unsigned k = 0;k < 4;k++)
+            for (int k = 0;k < 4;k++)
             {
                 len[k] = lengths[i][perms2[1][k]];
                 stride[k] = strides[j][i][perms2[1][k]];
@@ -223,9 +223,9 @@ TEST(dpd_varray, block_iteration)
         [&](varray_view<double>&& v3, const irrep_vector& irreps)
         {
             EXPECT_EQ(irreps.size(), 3u);
-            unsigned i = irreps[0];
-            unsigned j = irreps[1];
-            unsigned k = irreps[2];
+            int i = irreps[0];
+            int j = irreps[1];
+            int k = irreps[2];
             EXPECT_LT(i, 2u);
             EXPECT_LT(j, 2u);
             EXPECT_LT(k, 2u);
@@ -247,7 +247,7 @@ TEST(dpd_varray, block_iteration)
 
         visited = {};
         v1.for_each_block<3>(
-        [&](marray_view<double,3>&& v3, unsigned i, unsigned j, unsigned k)
+        [&](marray_view<double,3>&& v3, int i, int j, int k)
         {
             EXPECT_LT(i, 2u);
             EXPECT_LT(j, 2u);
@@ -287,9 +287,9 @@ TEST(dpd_varray, element_iteration)
         {
             EXPECT_EQ(irreps.size(), 3u);
             EXPECT_EQ(pos.size(), 3u);
-            unsigned i = irreps[0];
-            unsigned j = irreps[1];
-            unsigned k = irreps[2];
+            int i = irreps[0];
+            int j = irreps[1];
+            int k = irreps[2];
             len_type a = pos[0];
             len_type b = pos[1];
             len_type c = pos[2];
@@ -308,14 +308,14 @@ TEST(dpd_varray, element_iteration)
             visited[&v - v1.data()]++;
         });
 
-        for (unsigned i = 0;i < 31;i++)
+        for (int i = 0;i < 31;i++)
         {
             EXPECT_EQ(visited[i], 1);
         }
 
         visited = {};
         v1.for_each_element<3>(
-        [&](double& v, unsigned i, unsigned j, unsigned k, len_type a, len_type b, len_type c)
+        [&](double& v, int i, int j, int k, len_type a, len_type b, len_type c)
         {
             EXPECT_LT(i, 2u);
             EXPECT_LT(j, 2u);
@@ -332,7 +332,7 @@ TEST(dpd_varray, element_iteration)
             visited[&v - v1.data()]++;
         });
 
-        for (unsigned i = 0;i < 31;i++)
+        for (int i = 0;i < 31;i++)
         {
             EXPECT_EQ(visited[i], 1);
         }

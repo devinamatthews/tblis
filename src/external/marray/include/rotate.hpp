@@ -20,7 +20,7 @@ void rotate(Array& array, const U& shift)
     MARRAY_ASSERT(shift.size() == array.dimension());
 
     auto it = shift.begin();
-    for (unsigned i = 0;i < array.dimension();i++)
+    for (auto i : range(array.dimension()))
     {
         rotate(array, i, *it);
         ++it;
@@ -28,9 +28,9 @@ void rotate(Array& array, const U& shift)
 }
 
 template <typename Array>
-void rotate(Array& array, unsigned dim, len_type shift)
+void rotate(Array& array, int dim, len_type shift)
 {
-    MARRAY_ASSERT(dim < array.dimension());
+    MARRAY_ASSERT(dim >= 0 && dim < array.dimension());
 
     len_type n = array.length(dim);
     stride_type s = array.stride(dim);

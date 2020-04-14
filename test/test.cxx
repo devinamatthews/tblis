@@ -219,12 +219,12 @@ template void random_matrix(stride_type N, matrix<T>& t);
  * are initialized to zero, while referencable elements are randomly
  * initialized from the interior of the unit circle.
  */
-void random_lengths(stride_type N, unsigned d, const vector<len_type>& len_min, len_vector& len)
+void random_lengths(stride_type N, int d, const vector<len_type>& len_min, len_vector& len)
 {
     vector<len_type> len_max = random_product_constrained_sequence<len_type>(d, N, len_min);
 
     len.resize(d);
-    for (unsigned i = 0;i < d;i++)
+    for (auto i : range(d))
     {
         len[i] = (len_min[i] > 0 ? len_min[i] : random_number<len_type>(1, len_max[i]));
     }
@@ -242,7 +242,7 @@ matrix<len_type> random_indices(const len_vector& len, double sparsity)
     {
         if (random_number<double>() < sparsity)
         {
-            for (unsigned j = 0;j < len.size();j++)
+            for (auto j : range(len.size()))
                 idx[i][j] = it.position()[j];
             i++;
         }
@@ -252,7 +252,7 @@ matrix<len_type> random_indices(const len_vector& len, double sparsity)
 }
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, varray<T>& A)
+void random_tensor(stride_type N, int d, const vector<len_type>& len_min, varray<T>& A)
 {
     len_vector len_A;
     random_lengths(N/sizeof(T), d, len_min, len_A);
@@ -261,13 +261,13 @@ void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, v
 }
 
 #define FOREACH_TYPE(T) \
-template void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, varray<T>& A);
+template void random_tensor(stride_type N, int d, const vector<len_type>& len_min, varray<T>& A);
 #include "configs/foreach_type.h"
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, unsigned nirrep, const vector<len_type>& len_min, dpd_varray<T>& A)
+void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, dpd_varray<T>& A)
 {
-    unsigned irrep_A;
+    int irrep_A;
     vector<vector<len_type>> len_A(d);
 
     do
@@ -277,7 +277,7 @@ void random_tensor(stride_type N, unsigned d, unsigned nirrep, const vector<len_
         len_vector len_A_;
         random_lengths(nirrep*N/sizeof(T), d, len_min, len_A_);
 
-        for (unsigned i = 0;i < d;i++)
+        for (auto i : range(d))
             len_A[i] = random_sum_constrained_sequence<len_type>(nirrep, len_A_[i]);
     }
     while (dpd_varray<T>::size(irrep_A, len_A) == 0);
@@ -287,16 +287,16 @@ void random_tensor(stride_type N, unsigned d, unsigned nirrep, const vector<len_
 }
 
 #define FOREACH_TYPE(T) \
-template void random_tensor(stride_type N, unsigned d, unsigned nirrep, const vector<len_type>& len_min, dpd_varray<T>& A);
+template void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, dpd_varray<T>& A);
 #include "configs/foreach_type.h"
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, indexed_varray<T>& A)
+void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_varray<T>& A)
 {
     len_vector len_A;
     random_lengths(N/sizeof(T), d, len_min, len_A);
 
-    unsigned dense_d = random_number(1u, d);
+    auto dense_d = random_number(1, d);
     auto idxs_A = random_indices(len_vector(len_A.begin()+dense_d, len_A.end()), 0.5);
 
     A.reset(len_A, idxs_A);
@@ -306,13 +306,13 @@ void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, i
 }
 
 #define FOREACH_TYPE(T) \
-template void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, indexed_varray<T>& A);
+template void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_varray<T>& A);
 #include "configs/foreach_type.h"
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, unsigned nirrep, const vector<len_type>& len_min, indexed_dpd_varray<T>& A)
+void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, indexed_dpd_varray<T>& A)
 {
-    unsigned irrep_A;
+    int irrep_A;
     vector<vector<len_type>> len_A(d);
     len_vector idx_len_A;
     irrep_vector idx_irrep_A;
@@ -324,17 +324,17 @@ void random_tensor(stride_type N, unsigned d, unsigned nirrep, const vector<len_
         len_vector len_A_;
         random_lengths(nirrep*N/sizeof(T), d, len_min, len_A_);
 
-        for (unsigned i = 0;i < d;i++)
+        for (auto i : range(d))
             len_A[i] = random_sum_constrained_sequence<len_type>(nirrep, len_A_[i]);
     }
     while (dpd_varray<T>::size(irrep_A, len_A) == 0);
 
     do
     {
-        unsigned dense_d = random_number(1u, d);
+        auto dense_d = random_number(1, d);
         idx_len_A.resize(d-dense_d);
         idx_irrep_A.resize(d-dense_d);
-        for (unsigned i = dense_d;i < d;i++)
+        for (auto i : range(dense_d,d))
         {
             idx_irrep_A[i-dense_d] = random_number(nirrep-1);
             idx_len_A[i-dense_d] = len_A[i][idx_irrep_A[i-dense_d]];
@@ -351,27 +351,27 @@ void random_tensor(stride_type N, unsigned d, unsigned nirrep, const vector<len_
 }
 
 #define FOREACH_TYPE(T) \
-template void random_tensor(stride_type N, unsigned d, unsigned nirrep, const vector<len_type>& len_min, indexed_dpd_varray<T>& A);
+template void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, indexed_dpd_varray<T>& A);
 #include "configs/foreach_type.h"
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, dpd_varray<T>& A)
+void random_tensor(stride_type N, int d, const vector<len_type>& len_min, dpd_varray<T>& A)
 {
     random_tensor(N, d, 1 << random_number(2), len_min, A);
 }
 
 #define FOREACH_TYPE(T) \
-template void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, dpd_varray<T>& A);
+template void random_tensor(stride_type N, int d, const vector<len_type>& len_min, dpd_varray<T>& A);
 #include "configs/foreach_type.h"
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, indexed_dpd_varray<T>& A)
+void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_dpd_varray<T>& A)
 {
     random_tensor(N, d, 1 << random_number(2), len_min, A);
 }
 
 #define FOREACH_TYPE(T) \
-template void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, indexed_dpd_varray<T>& A);
+template void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_dpd_varray<T>& A);
 #include "configs/foreach_type.h"
 
 /*
@@ -381,7 +381,7 @@ template void random_tensor(stride_type N, unsigned d, const vector<len_type>& l
  * are initialized to zero, while referencable elements are randomly
  * initialized from the interior of the unit circle.
  */
-void random_lengths(stride_type N, unsigned d, len_vector& len)
+void random_lengths(stride_type N, int d, len_vector& len)
 {
     random_lengths(N, d, vector<len_type>(d), len);
 }
@@ -395,45 +395,45 @@ void random_lengths(stride_type N, len_vector& len)
 }
 
 void random_lengths(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only,
-                    unsigned ndim_AB,
+                    int ndim_A_only, int ndim_B_only,
+                    int ndim_AB,
                     len_vector& len_A, label_vector& idx_A,
                     len_vector& len_B, label_vector& idx_B)
 {
-    unsigned ndim_A = ndim_A_only+ndim_AB;
-    unsigned ndim_B = ndim_B_only+ndim_AB;
+    auto ndim_A = ndim_A_only+ndim_AB;
+    auto ndim_B = ndim_B_only+ndim_AB;
 
-    vector<pair<index_type,unsigned>> types_A(ndim_A);
+    vector<pair<index_type,int>> types_A(ndim_A);
     {
-        unsigned i = 0;
-        for (unsigned j = 0;j < ndim_A_only;j++) types_A[i++] = {TYPE_A, j};
-        for (unsigned j = 0;j < ndim_AB    ;j++) types_A[i++] = {TYPE_AB, j};
+        auto i = 0;
+        for (auto j : range(ndim_A_only)) types_A[i++] = {TYPE_A, j};
+        for (auto j : range(ndim_AB    )) types_A[i++] = {TYPE_AB, j};
     }
     random_shuffle(types_A.begin(), types_A.end());
 
-    vector<pair<index_type,unsigned>> types_B(ndim_B);
+    vector<pair<index_type,int>> types_B(ndim_B);
     {
-        unsigned i = 0;
-        for (unsigned j = 0;j < ndim_B_only;j++) types_B[i++] = {TYPE_B, j};
-        for (unsigned j = 0;j < ndim_AB    ;j++) types_B[i++] = {TYPE_AB, j};
+        auto i = 0;
+        for (auto j : range(ndim_B_only)) types_B[i++] = {TYPE_B, j};
+        for (auto j : range(ndim_AB    )) types_B[i++] = {TYPE_AB, j};
     }
     random_shuffle(types_B.begin(), types_B.end());
 
     label_vector idx = range<label_type>('a', static_cast<char>('a'+ndim_A+ndim_B-ndim_AB));
     random_shuffle(idx.begin(), idx.end());
 
-    unsigned c = 0;
+    auto c = 0;
     label_vector idx_A_only(ndim_A_only, 0);
-    for (unsigned i = 0;i < ndim_A_only;i++) idx_A_only[i] = idx[c++];
+    for (auto i : range(ndim_A_only)) idx_A_only[i] = idx[c++];
 
     label_vector idx_B_only(ndim_B_only, 0);
-    for (unsigned i = 0;i < ndim_B_only;i++) idx_B_only[i] = idx[c++];
+    for (auto i : range(ndim_B_only)) idx_B_only[i] = idx[c++];
 
     label_vector idx_AB(ndim_AB, 0);
-    for (unsigned i = 0;i < ndim_AB;i++) idx_AB[i] = idx[c++];
+    for (auto i : range(ndim_AB)) idx_AB[i] = idx[c++];
 
     idx_A.resize(ndim_A);
-    for (unsigned i = 0;i < ndim_A;i++)
+    for (auto i : range(ndim_A))
     {
         switch (types_A[i].first)
         {
@@ -444,7 +444,7 @@ void random_lengths(stride_type N,
     }
 
     idx_B.resize(ndim_B);
-    for (unsigned i = 0;i < ndim_B;i++)
+    for (auto i : range(ndim_B))
     {
         switch (types_B[i].first)
         {
@@ -465,9 +465,9 @@ void random_lengths(stride_type N,
     random_lengths(N, ndim_A, len_A);
 
     vector<len_type> min_B(ndim_B);
-    for (unsigned i = 0;i < ndim_B;i++)
+    for (auto i : range(ndim_B))
     {
-        for (unsigned j = 0;j < ndim_A;j++)
+        for (auto j : range(ndim_A))
         {
             if (idx_B[i] == idx_A[j]) min_B[i] = len_A[j];
         }
@@ -485,8 +485,8 @@ void random_lengths(stride_type N,
 
 template <typename T>
 void random_tensors(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only,
-                    unsigned ndim_AB,
+                    int ndim_A_only, int ndim_B_only,
+                    int ndim_AB,
                     varray<T>& A, label_vector& idx_A,
                     varray<T>& B, label_vector& idx_B)
 {
@@ -505,20 +505,20 @@ void random_tensors(stride_type N,
 #define FOREACH_TYPE(T) \
 template \
 void random_tensors(stride_type N, \
-                    unsigned ndim_A_only, unsigned ndim_B_only, \
-                    unsigned ndim_AB, \
+                    int ndim_A_only, int ndim_B_only, \
+                    int ndim_AB, \
                     varray<T>& A, label_vector& idx_A, \
                     varray<T>& B, label_vector& idx_B);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void random_tensors(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_AB,
+                    int ndim_A_only, int ndim_B_only, int ndim_AB,
                     dpd_varray<T>& A, label_vector& idx_A,
                     dpd_varray<T>& B, label_vector& idx_B)
 {
-    unsigned nirrep;
-    unsigned irrep_A, irrep_B;
+    int nirrep;
+    int irrep_A, irrep_B;
     vector<vector<len_type>> len_A, len_B;
 
     do
@@ -534,13 +534,13 @@ void random_tensors(stride_type N,
         len_A.resize(len_A_.size());
         len_B.resize(len_B_.size());
 
-        for (unsigned i = 0;i < len_A_.size();i++)
+        for (auto i : range(len_A_.size()))
             len_A[i] = random_sum_constrained_sequence<len_type>(nirrep, len_A_[i]);
 
-        for (unsigned i = 0;i < len_B_.size();i++)
+        for (auto i : range(len_B_.size()))
         {
             bool found = false;
-            for (unsigned j = 0;j < len_A_.size();j++)
+            for (auto j : range(len_A_.size()))
             {
                 if (idx_B[i] == idx_A[j])
                 {
@@ -565,16 +565,16 @@ void random_tensors(stride_type N,
 #define FOREACH_TYPE(T) \
 template \
 void random_tensors(stride_type N, \
-                    unsigned ndim_A_only, unsigned ndim_B_only, \
-                    unsigned ndim_AB, \
+                    int ndim_A_only, int ndim_B_only, \
+                    int ndim_AB, \
                     dpd_varray<T>& A, label_vector& idx_A, \
                     dpd_varray<T>& B, label_vector& idx_B);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void random_tensors(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only,
-                    unsigned ndim_AB,
+                    int ndim_A_only, int ndim_B_only,
+                    int ndim_AB,
                     indexed_varray<T>& A, label_vector& idx_A,
                     indexed_varray<T>& B, label_vector& idx_B)
 {
@@ -583,8 +583,8 @@ void random_tensors(stride_type N,
     random_lengths(N/sizeof(T), ndim_A_only, ndim_B_only, ndim_AB,
                    len_A, idx_A, len_B, idx_B);
 
-    unsigned dense_ndim_A = random_number(1u, ndim_AB+ndim_A_only);
-    unsigned dense_ndim_B = random_number(1u, ndim_AB+ndim_B_only);
+    auto dense_ndim_A = random_number(1, ndim_AB+ndim_A_only);
+    auto dense_ndim_B = random_number(1, ndim_AB+ndim_B_only);
 
     auto idxs_A = random_indices(len_vector(len_A.begin()+dense_ndim_A, len_A.end()), 0.5);
     auto idxs_B = random_indices(len_vector(len_B.begin()+dense_ndim_B, len_B.end()), 0.5);
@@ -603,20 +603,20 @@ void random_tensors(stride_type N,
 #define FOREACH_TYPE(T) \
 template \
 void random_tensors(stride_type N, \
-                    unsigned ndim_A_only, unsigned ndim_B_only, \
-                    unsigned ndim_AB, \
+                    int ndim_A_only, int ndim_B_only, \
+                    int ndim_AB, \
                     indexed_varray<T>& A, label_vector& idx_A, \
                     indexed_varray<T>& B, label_vector& idx_B);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void random_tensors(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_AB,
+                    int ndim_A_only, int ndim_B_only, int ndim_AB,
                     indexed_dpd_varray<T>& A, label_vector& idx_A,
                     indexed_dpd_varray<T>& B, label_vector& idx_B)
 {
-    unsigned nirrep;
-    unsigned irrep_A, irrep_B;
+    int nirrep;
+    int irrep_A, irrep_B;
     vector<vector<len_type>> len_A, len_B;
     len_vector idx_len_A, idx_len_B;
     irrep_vector idx_irrep_A, idx_irrep_B;
@@ -634,13 +634,13 @@ void random_tensors(stride_type N,
         len_A.resize(len_A_.size());
         len_B.resize(len_B_.size());
 
-        for (unsigned i = 0;i < len_A_.size();i++)
+        for (auto i : range(len_A_.size()))
             len_A[i] = random_sum_constrained_sequence<len_type>(nirrep, len_A_[i]);
 
-        for (unsigned i = 0;i < len_B_.size();i++)
+        for (auto i : range(len_B_.size()))
         {
             bool found = false;
-            for (unsigned j = 0;j < len_A_.size();j++)
+            for (auto j : range(len_A_.size()))
             {
                 if (idx_B[i] == idx_A[j])
                 {
@@ -658,24 +658,24 @@ void random_tensors(stride_type N,
 
     do
     {
-        unsigned ndim_A = ndim_AB+ndim_A_only;
-        unsigned dense_ndim_A = random_number(1u, ndim_A);
+        auto ndim_A = ndim_AB+ndim_A_only;
+        auto dense_ndim_A = random_number(1, ndim_A);
         idx_len_A.resize(ndim_A-dense_ndim_A);
         idx_irrep_A.resize(ndim_A-dense_ndim_A);
-        for (unsigned i = dense_ndim_A;i < ndim_A;i++)
+        for (auto i : range(dense_ndim_A,ndim_A))
         {
             idx_irrep_A[i-dense_ndim_A] = random_number(nirrep-1);
             idx_len_A[i-dense_ndim_A] = len_A[i][idx_irrep_A[i-dense_ndim_A]];
         }
 
-        unsigned ndim_B = ndim_AB+ndim_B_only;
-        unsigned dense_ndim_B = random_number(1u, ndim_B);
+        auto ndim_B = ndim_AB+ndim_B_only;
+        auto dense_ndim_B = random_number(1, ndim_B);
         idx_len_B.resize(ndim_B-dense_ndim_B);
         idx_irrep_B.resize(ndim_B-dense_ndim_B);
-        for (unsigned i = dense_ndim_B;i < ndim_B;i++)
+        for (auto i : range(dense_ndim_B,ndim_B))
         {
             bool found = false;
-            for (unsigned j = dense_ndim_A;j < ndim_A;j++)
+            for (auto j : range(dense_ndim_A,ndim_A))
             {
                 if (idx_B[i] == idx_A[j])
                 {
@@ -707,51 +707,51 @@ void random_tensors(stride_type N,
 #define FOREACH_TYPE(T) \
 template \
 void random_tensors(stride_type N, \
-                    unsigned ndim_A_only, unsigned ndim_B_only, \
-                    unsigned ndim_AB, \
+                    int ndim_A_only, int ndim_B_only, \
+                    int ndim_AB, \
                     indexed_dpd_varray<T>& A, label_vector& idx_A, \
                     indexed_dpd_varray<T>& B, label_vector& idx_B);
 #include "configs/foreach_type.h"
 
 void random_lengths(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_C_only,
-                    unsigned ndim_AB, unsigned ndim_AC, unsigned ndim_BC,
-                    unsigned ndim_ABC,
+                    int ndim_A_only, int ndim_B_only, int ndim_C_only,
+                    int ndim_AB, int ndim_AC, int ndim_BC,
+                    int ndim_ABC,
                     len_vector& len_A, label_vector& idx_A,
                     len_vector& len_B, label_vector& idx_B,
                     len_vector& len_C, label_vector& idx_C)
 {
-    unsigned ndim_A = ndim_A_only+ndim_AB+ndim_AC+ndim_ABC;
-    unsigned ndim_B = ndim_B_only+ndim_AB+ndim_BC+ndim_ABC;
-    unsigned ndim_C = ndim_C_only+ndim_AC+ndim_BC+ndim_ABC;
+    auto ndim_A = ndim_A_only+ndim_AB+ndim_AC+ndim_ABC;
+    auto ndim_B = ndim_B_only+ndim_AB+ndim_BC+ndim_ABC;
+    auto ndim_C = ndim_C_only+ndim_AC+ndim_BC+ndim_ABC;
 
-    vector<pair<index_type,unsigned>> types_A(ndim_A);
+    vector<pair<index_type,int>> types_A(ndim_A);
     {
-        unsigned i = 0;
-        for (unsigned j = 0;j < ndim_A_only;j++) types_A[i++] = {TYPE_A, j};
-        for (unsigned j = 0;j < ndim_AB    ;j++) types_A[i++] = {TYPE_AB, j};
-        for (unsigned j = 0;j < ndim_AC    ;j++) types_A[i++] = {TYPE_AC, j};
-        for (unsigned j = 0;j < ndim_ABC   ;j++) types_A[i++] = {TYPE_ABC, j};
+        auto i = 0;
+        for (auto j : range(ndim_A_only)) types_A[i++] = {TYPE_A, j};
+        for (auto j : range(ndim_AB    )) types_A[i++] = {TYPE_AB, j};
+        for (auto j : range(ndim_AC    )) types_A[i++] = {TYPE_AC, j};
+        for (auto j : range(ndim_ABC   )) types_A[i++] = {TYPE_ABC, j};
     }
     random_shuffle(types_A.begin(), types_A.end());
 
-    vector<pair<index_type,unsigned>> types_B(ndim_B);
+    vector<pair<index_type,int>> types_B(ndim_B);
     {
-        unsigned i = 0;
-        for (unsigned j = 0;j < ndim_B_only;j++) types_B[i++] = {TYPE_B, j};
-        for (unsigned j = 0;j < ndim_AB    ;j++) types_B[i++] = {TYPE_AB, j};
-        for (unsigned j = 0;j < ndim_BC    ;j++) types_B[i++] = {TYPE_BC, j};
-        for (unsigned j = 0;j < ndim_ABC   ;j++) types_B[i++] = {TYPE_ABC, j};
+        auto i = 0;
+        for (auto j : range(ndim_B_only)) types_B[i++] = {TYPE_B, j};
+        for (auto j : range(ndim_AB    )) types_B[i++] = {TYPE_AB, j};
+        for (auto j : range(ndim_BC    )) types_B[i++] = {TYPE_BC, j};
+        for (auto j : range(ndim_ABC   )) types_B[i++] = {TYPE_ABC, j};
     }
     random_shuffle(types_B.begin(), types_B.end());
 
-    vector<pair<index_type,unsigned>> types_C(ndim_C);
+    vector<pair<index_type,int>> types_C(ndim_C);
     {
-        unsigned i = 0;
-        for (unsigned j = 0;j < ndim_C_only;j++) types_C[i++] = {TYPE_C, j};
-        for (unsigned j = 0;j < ndim_AC    ;j++) types_C[i++] = {TYPE_AC, j};
-        for (unsigned j = 0;j < ndim_BC    ;j++) types_C[i++] = {TYPE_BC, j};
-        for (unsigned j = 0;j < ndim_ABC   ;j++) types_C[i++] = {TYPE_ABC, j};
+        auto i = 0;
+        for (auto j : range(ndim_C_only)) types_C[i++] = {TYPE_C, j};
+        for (auto j : range(ndim_AC    )) types_C[i++] = {TYPE_AC, j};
+        for (auto j : range(ndim_BC    )) types_C[i++] = {TYPE_BC, j};
+        for (auto j : range(ndim_ABC   )) types_C[i++] = {TYPE_ABC, j};
     }
     random_shuffle(types_C.begin(), types_C.end());
 
@@ -760,30 +760,30 @@ void random_lengths(stride_type N,
                       ndim_AB+ndim_AC+ndim_BC+ndim_ABC));
     random_shuffle(idx.begin(), idx.end());
 
-    unsigned c = 0;
+    auto c = 0;
     label_vector idx_A_only(ndim_A_only, 0);
-    for (unsigned i = 0;i < ndim_A_only;i++) idx_A_only[i] = idx[c++];
+    for (auto i : range(ndim_A_only)) idx_A_only[i] = idx[c++];
 
     label_vector idx_B_only(ndim_B_only, 0);
-    for (unsigned i = 0;i < ndim_B_only;i++) idx_B_only[i] = idx[c++];
+    for (auto i : range(ndim_B_only)) idx_B_only[i] = idx[c++];
 
     label_vector idx_C_only(ndim_C_only, 0);
-    for (unsigned i = 0;i < ndim_C_only;i++) idx_C_only[i] = idx[c++];
+    for (auto i : range(ndim_C_only)) idx_C_only[i] = idx[c++];
 
     label_vector idx_AB(ndim_AB, 0);
-    for (unsigned i = 0;i < ndim_AB;i++) idx_AB[i] = idx[c++];
+    for (auto i : range(ndim_AB)) idx_AB[i] = idx[c++];
 
     label_vector idx_AC(ndim_AC, 0);
-    for (unsigned i = 0;i < ndim_AC;i++) idx_AC[i] = idx[c++];
+    for (auto i : range(ndim_AC)) idx_AC[i] = idx[c++];
 
     label_vector idx_BC(ndim_BC, 0);
-    for (unsigned i = 0;i < ndim_BC;i++) idx_BC[i] = idx[c++];
+    for (auto i : range(ndim_BC)) idx_BC[i] = idx[c++];
 
     label_vector idx_ABC(ndim_ABC, 0);
-    for (unsigned i = 0;i < ndim_ABC;i++) idx_ABC[i] = idx[c++];
+    for (auto i : range(ndim_ABC)) idx_ABC[i] = idx[c++];
 
     idx_A.resize(ndim_A);
-    for (unsigned i = 0;i < ndim_A;i++)
+    for (auto i : range(ndim_A))
     {
         switch (types_A[i].first)
         {
@@ -796,7 +796,7 @@ void random_lengths(stride_type N,
     }
 
     idx_B.resize(ndim_B);
-    for (unsigned i = 0;i < ndim_B;i++)
+    for (auto i : range(ndim_B))
     {
         switch (types_B[i].first)
         {
@@ -809,7 +809,7 @@ void random_lengths(stride_type N,
     }
 
     idx_C.resize(ndim_C);
-    for (unsigned i = 0;i < ndim_C;i++)
+    for (auto i : range(ndim_C))
     {
         switch (types_C[i].first)
         {
@@ -889,9 +889,9 @@ void random_lengths(stride_type N,
         random_lengths(N, ndim_A, len_A);
 
         vector<len_type> min_B(ndim_B);
-        for (unsigned i = 0;i < ndim_B;i++)
+        for (auto i : range(ndim_B))
         {
-            for (unsigned j = 0;j < ndim_A;j++)
+            for (auto j : range(ndim_A))
             {
                 if (idx_B[i] == idx_A[j])
                 {
@@ -905,10 +905,10 @@ void random_lengths(stride_type N,
 
         stride_type siz = 1;
         vector<len_type> min_C(ndim_C);
-        for (unsigned i = 0;i < ndim_C;i++)
+        for (auto i : range(ndim_C))
         {
             bool found = false;
-            for (unsigned j = 0;j < ndim_A;j++)
+            for (auto j : range(ndim_A))
             {
                 if (idx_C[i] == idx_A[j])
                 {
@@ -919,7 +919,7 @@ void random_lengths(stride_type N,
                 }
             }
             if (found) continue;
-            for (unsigned j = 0;j < ndim_B;j++)
+            for (auto j : range(ndim_B))
             {
                 if (idx_C[i] == idx_B[j])
                 {
@@ -975,9 +975,9 @@ void random_lengths(stride_type N,
 
 template <typename T>
 void random_tensors(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_C_only,
-                    unsigned ndim_AB, unsigned ndim_AC, unsigned ndim_BC,
-                    unsigned ndim_ABC,
+                    int ndim_A_only, int ndim_B_only, int ndim_C_only,
+                    int ndim_AB, int ndim_AC, int ndim_BC,
+                    int ndim_ABC,
                     varray<T>& A, label_vector& idx_A,
                     varray<T>& B, label_vector& idx_B,
                     varray<T>& C, label_vector& idx_C)
@@ -1000,9 +1000,9 @@ void random_tensors(stride_type N,
 #define FOREACH_TYPE(T) \
 template \
 void random_tensors(stride_type N, \
-                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_C_only, \
-                    unsigned ndim_AB, unsigned ndim_AC, unsigned ndim_BC, \
-                    unsigned ndim_ABC, \
+                    int ndim_A_only, int ndim_B_only, int ndim_C_only, \
+                    int ndim_AB, int ndim_AC, int ndim_BC, \
+                    int ndim_ABC, \
                     varray<T>& A, label_vector& idx_A, \
                     varray<T>& B, label_vector& idx_B, \
                     varray<T>& C, label_vector& idx_C);
@@ -1010,14 +1010,14 @@ void random_tensors(stride_type N, \
 
 template <typename T>
 void random_tensors(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_C_only,
-                    unsigned ndim_AB, unsigned ndim_AC, unsigned ndim_BC,
-                    unsigned ndim_ABC,
+                    int ndim_A_only, int ndim_B_only, int ndim_C_only,
+                    int ndim_AB, int ndim_AC, int ndim_BC,
+                    int ndim_ABC,
                     dpd_varray<T>& A, label_vector& idx_A,
                     dpd_varray<T>& B, label_vector& idx_B,
                     dpd_varray<T>& C, label_vector& idx_C)
 {
-    unsigned nirrep, irrep_A, irrep_B, irrep_C;
+    int nirrep, irrep_A, irrep_B, irrep_C;
     vector<vector<len_type>> len_A, len_B, len_C;
 
     do
@@ -1039,13 +1039,13 @@ void random_tensors(stride_type N,
         len_B.resize(len_B_.size());
         len_C.resize(len_C_.size());
 
-        for (unsigned i = 0;i < len_A_.size();i++)
+        for (auto i : range(len_A_.size()))
             len_A[i] = random_sum_constrained_sequence<len_type>(nirrep, len_A_[i]);
 
-        for (unsigned i = 0;i < len_B_.size();i++)
+        for (auto i : range(len_B_.size()))
         {
             bool found = false;
-            for (unsigned j = 0;j < len_A_.size();j++)
+            for (auto j : range(len_A_.size()))
             {
                 if (idx_B[i] == idx_A[j])
                 {
@@ -1058,10 +1058,10 @@ void random_tensors(stride_type N,
                 len_B[i] = random_sum_constrained_sequence<len_type>(nirrep, len_B_[i]);
         }
 
-        for (unsigned i = 0;i < len_C_.size();i++)
+        for (auto i : range(len_C_.size()))
         {
             bool found = false;
-            for (unsigned j = 0;j < len_A_.size();j++)
+            for (auto j : range(len_A_.size()))
             {
                 if (idx_C[i] == idx_A[j])
                 {
@@ -1070,7 +1070,7 @@ void random_tensors(stride_type N,
                 }
             }
 
-            for (unsigned j = 0;j < len_B_.size();j++)
+            for (auto j : range(len_B_.size()))
             {
                 if (idx_C[i] == idx_B[j])
                 {
@@ -1099,9 +1099,9 @@ void random_tensors(stride_type N,
 #define FOREACH_TYPE(T) \
 template \
 void random_tensors(stride_type N, \
-                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_C_only, \
-                    unsigned ndim_AB, unsigned ndim_AC, unsigned ndim_BC, \
-                    unsigned ndim_ABC, \
+                    int ndim_A_only, int ndim_B_only, int ndim_C_only, \
+                    int ndim_AB, int ndim_AC, int ndim_BC, \
+                    int ndim_ABC, \
                     dpd_varray<T>& A, label_vector& idx_A, \
                     dpd_varray<T>& B, label_vector& idx_B, \
                     dpd_varray<T>& C, label_vector& idx_C);
@@ -1109,9 +1109,9 @@ void random_tensors(stride_type N, \
 
 template <typename T>
 void random_tensors(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_C_only,
-                    unsigned ndim_AB, unsigned ndim_AC, unsigned ndim_BC,
-                    unsigned ndim_ABC,
+                    int ndim_A_only, int ndim_B_only, int ndim_C_only,
+                    int ndim_AB, int ndim_AC, int ndim_BC,
+                    int ndim_ABC,
                     indexed_varray<T>& A, label_vector& idx_A,
                     indexed_varray<T>& B, label_vector& idx_B,
                     indexed_varray<T>& C, label_vector& idx_C)
@@ -1122,9 +1122,9 @@ void random_tensors(stride_type N,
                    ndim_AB, ndim_AC, ndim_BC, ndim_ABC,
                    len_A, idx_A, len_B, idx_B, len_C, idx_C);
 
-    unsigned dense_ndim_A = random_number(1u, ndim_ABC+ndim_AB+ndim_AC+ndim_A_only);
-    unsigned dense_ndim_B = random_number(1u, ndim_ABC+ndim_AB+ndim_BC+ndim_B_only);
-    unsigned dense_ndim_C = random_number(1u, ndim_ABC+ndim_AC+ndim_BC+ndim_C_only);
+    auto dense_ndim_A = random_number(1, ndim_ABC+ndim_AB+ndim_AC+ndim_A_only);
+    auto dense_ndim_B = random_number(1, ndim_ABC+ndim_AB+ndim_BC+ndim_B_only);
+    auto dense_ndim_C = random_number(1, ndim_ABC+ndim_AC+ndim_BC+ndim_C_only);
 
     auto idxs_A = random_indices(len_vector(len_A.begin()+dense_ndim_A, len_A.end()), 0.5);
     auto idxs_B = random_indices(len_vector(len_B.begin()+dense_ndim_B, len_B.end()), 0.5);
@@ -1148,9 +1148,9 @@ void random_tensors(stride_type N,
 #define FOREACH_TYPE(T) \
 template \
 void random_tensors(stride_type N, \
-                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_C_only, \
-                    unsigned ndim_AB, unsigned ndim_AC, unsigned ndim_BC, \
-                    unsigned ndim_ABC, \
+                    int ndim_A_only, int ndim_B_only, int ndim_C_only, \
+                    int ndim_AB, int ndim_AC, int ndim_BC, \
+                    int ndim_ABC, \
                     indexed_varray<T>& A, label_vector& idx_A, \
                     indexed_varray<T>& B, label_vector& idx_B, \
                     indexed_varray<T>& C, label_vector& idx_C);
@@ -1158,14 +1158,14 @@ void random_tensors(stride_type N, \
 
 template <typename T>
 void random_tensors(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_C_only,
-                    unsigned ndim_AB, unsigned ndim_AC, unsigned ndim_BC,
-                    unsigned ndim_ABC,
+                    int ndim_A_only, int ndim_B_only, int ndim_C_only,
+                    int ndim_AB, int ndim_AC, int ndim_BC,
+                    int ndim_ABC,
                     indexed_dpd_varray<T>& A, label_vector& idx_A,
                     indexed_dpd_varray<T>& B, label_vector& idx_B,
                     indexed_dpd_varray<T>& C, label_vector& idx_C)
 {
-    unsigned nirrep, irrep_A, irrep_B, irrep_C;
+    int nirrep, irrep_A, irrep_B, irrep_C;
     vector<vector<len_type>> len_A, len_B, len_C;
     len_vector idx_len_A, idx_len_B, idx_len_C;
     irrep_vector idx_irrep_A, idx_irrep_B, idx_irrep_C;
@@ -1189,13 +1189,13 @@ void random_tensors(stride_type N,
         len_B.resize(len_B_.size());
         len_C.resize(len_C_.size());
 
-        for (unsigned i = 0;i < len_A_.size();i++)
+        for (auto i : range(len_A_.size()))
             len_A[i] = random_sum_constrained_sequence<len_type>(nirrep, len_A_[i]);
 
-        for (unsigned i = 0;i < len_B_.size();i++)
+        for (auto i : range(len_B_.size()))
         {
             bool found = false;
-            for (unsigned j = 0;j < len_A_.size();j++)
+            for (auto j : range(len_A_.size()))
             {
                 if (idx_B[i] == idx_A[j])
                 {
@@ -1208,10 +1208,10 @@ void random_tensors(stride_type N,
                 len_B[i] = random_sum_constrained_sequence<len_type>(nirrep, len_B_[i]);
         }
 
-        for (unsigned i = 0;i < len_C_.size();i++)
+        for (auto i : range(len_C_.size()))
         {
             bool found = false;
-            for (unsigned j = 0;j < len_A_.size();j++)
+            for (auto j : range(len_A_.size()))
             {
                 if (idx_C[i] == idx_A[j])
                 {
@@ -1220,7 +1220,7 @@ void random_tensors(stride_type N,
                 }
             }
 
-            for (unsigned j = 0;j < len_B_.size();j++)
+            for (auto j : range(len_B_.size()))
             {
                 if (idx_C[i] == idx_B[j])
                 {
@@ -1239,24 +1239,24 @@ void random_tensors(stride_type N,
 
     do
     {
-        unsigned ndim_A = ndim_ABC+ndim_AB+ndim_AC+ndim_A_only;
-        unsigned dense_ndim_A = random_number(1u, ndim_A);
+        auto ndim_A = ndim_ABC+ndim_AB+ndim_AC+ndim_A_only;
+        auto dense_ndim_A = random_number(1, ndim_A);
         idx_len_A.resize(ndim_A-dense_ndim_A);
         idx_irrep_A.resize(ndim_A-dense_ndim_A);
-        for (unsigned i = dense_ndim_A;i < ndim_A;i++)
+        for (auto i : range(dense_ndim_A,ndim_A))
         {
             idx_irrep_A[i-dense_ndim_A] = random_number(nirrep-1);
             idx_len_A[i-dense_ndim_A] = len_A[i][idx_irrep_A[i-dense_ndim_A]];
         }
 
-        unsigned ndim_B = ndim_ABC+ndim_AB+ndim_BC+ndim_B_only;
-        unsigned dense_ndim_B = random_number(1u, ndim_B);
+        auto ndim_B = ndim_ABC+ndim_AB+ndim_BC+ndim_B_only;
+        auto dense_ndim_B = random_number(1, ndim_B);
         idx_len_B.resize(ndim_B-dense_ndim_B);
         idx_irrep_B.resize(ndim_B-dense_ndim_B);
-        for (unsigned i = dense_ndim_B;i < ndim_B;i++)
+        for (auto i : range(dense_ndim_B,ndim_B))
         {
             bool found = false;
-            for (unsigned j = dense_ndim_A;j < ndim_A;j++)
+            for (auto j : range(dense_ndim_A,ndim_A))
             {
                 if (idx_B[i] == idx_A[j])
                 {
@@ -1270,14 +1270,14 @@ void random_tensors(stride_type N,
             idx_len_B[i-dense_ndim_B] = len_B[i][idx_irrep_B[i-dense_ndim_B]];
         }
 
-        unsigned ndim_C = ndim_ABC+ndim_AC+ndim_BC+ndim_C_only;
-        unsigned dense_ndim_C = random_number(1u, ndim_C);
+        auto ndim_C = ndim_ABC+ndim_AC+ndim_BC+ndim_C_only;
+        auto dense_ndim_C = random_number(1, ndim_C);
         idx_len_C.resize(ndim_C-dense_ndim_C);
         idx_irrep_C.resize(ndim_C-dense_ndim_C);
-        for (unsigned i = dense_ndim_C;i < ndim_C;i++)
+        for (auto i : range(dense_ndim_C,ndim_C))
         {
             bool found = false;
-            for (unsigned j = dense_ndim_A;j < ndim_A;j++)
+            for (auto j : range(dense_ndim_A,ndim_A))
             {
                 if (idx_C[i] == idx_A[j])
                 {
@@ -1285,7 +1285,7 @@ void random_tensors(stride_type N,
                     found = true;
                 }
             }
-            for (unsigned j = dense_ndim_B;j < ndim_B;j++)
+            for (auto j : range(dense_ndim_B,ndim_B))
             {
                 if (idx_C[i] == idx_B[j])
                 {
@@ -1323,9 +1323,9 @@ void random_tensors(stride_type N,
 #define FOREACH_TYPE(T) \
 template \
 void random_tensors(stride_type N, \
-                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_C_only, \
-                    unsigned ndim_AB, unsigned ndim_AC, unsigned ndim_BC, \
-                    unsigned ndim_ABC, \
+                    int ndim_A_only, int ndim_B_only, int ndim_C_only, \
+                    int ndim_AB, int ndim_AC, int ndim_BC, \
+                    int ndim_ABC, \
                     indexed_dpd_varray<T>& A, label_vector& idx_A, \
                     indexed_dpd_varray<T>& B, label_vector& idx_B, \
                     indexed_dpd_varray<T>& C, label_vector& idx_C);

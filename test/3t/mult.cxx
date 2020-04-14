@@ -103,13 +103,13 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_mult, R, T, all_types)
     auto size_AC = group_size(A.lengths(), idx_A, idx_AC);
     auto size_BC = group_size(B.lengths(), idx_B, idx_BC);
 
-    unsigned nirrep = A.num_irreps();
+    auto nirrep = A.num_irreps();
     stride_type neps = 0;
-    for (unsigned irrep_AB = 0;irrep_AB < nirrep;irrep_AB++)
+    for (auto irrep_AB : range(nirrep))
     {
-        unsigned irrep_ABC = A.irrep()^B.irrep()^C.irrep();
-        unsigned irrep_AC = A.irrep()^irrep_AB^irrep_ABC;
-        unsigned irrep_BC = B.irrep()^irrep_AB^irrep_ABC;
+        auto irrep_ABC = A.irrep()^B.irrep()^C.irrep();
+        auto irrep_AC = A.irrep()^irrep_AB^irrep_ABC;
+        auto irrep_BC = B.irrep()^irrep_AB^irrep_ABC;
 
         neps += size_ABC[irrep_ABC]*
                 size_AB[irrep_AB]*
@@ -189,13 +189,13 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_mult, R, T, all_types)
     auto size_AC = group_size(A.lengths(), idx_A, idx_AC);
     auto size_BC = group_size(B.lengths(), idx_B, idx_BC);
 
-    unsigned nirrep = A.num_irreps();
+    auto nirrep = A.num_irreps();
     stride_type neps = 0;
-    for (unsigned irrep_AB = 0;irrep_AB < nirrep;irrep_AB++)
+    for (auto irrep_AB : range(nirrep))
     {
-        unsigned irrep_ABC = A.irrep()^B.irrep()^C.irrep();
-        unsigned irrep_AC = A.irrep()^irrep_AB^irrep_ABC;
-        unsigned irrep_BC = B.irrep()^irrep_AB^irrep_ABC;
+        auto irrep_ABC = A.irrep()^B.irrep()^C.irrep();
+        auto irrep_AC = A.irrep()^irrep_AB^irrep_ABC;
+        auto irrep_BC = B.irrep()^irrep_AB^irrep_ABC;
 
         neps += size_ABC[irrep_ABC]*
                 size_AB[irrep_AB]*

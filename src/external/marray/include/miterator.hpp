@@ -6,7 +6,7 @@
 namespace MArray
 {
 
-template <unsigned NDim, unsigned N=1>
+template <int NDim, int N=1>
 class miterator
 {
     public:
@@ -22,7 +22,7 @@ class miterator
         : pos_{}, first_(true), empty_(false)
         {
             MARRAY_ASSERT(len.size() == NDim);
-            for (unsigned i = 0;i < NDim;i++) if (len[i] == 0) empty_ = true;
+            for (auto l : len) if (l == 0) empty_ = true;
             std::copy_n(len.begin(), NDim, len_.begin());
             detail::set_strides(strides_, strides...);
         }
@@ -55,7 +55,7 @@ class miterator
                 return false;
             }
 
-            for (unsigned i = 0;i < NDim;i++)
+            for (auto i : range(NDim))
             {
                 if (pos_[i] == len_[i]-1)
                 {
@@ -85,7 +85,7 @@ class miterator
         {
             if (empty_) return;
 
-            for (size_t i = 0;i < NDim;i++)
+            for (auto i : range(NDim))
             {
                 pos_[i] = pos%len_[i];
                 pos = pos/len_[i];
@@ -106,48 +106,51 @@ class miterator
 
             std::copy_n(pos.begin(), NDim, pos_.begin());
 
-            for (size_t i = 0;i < NDim;i++)
-            {
+            for (auto i : range(NDim))
                 MARRAY_ASSERT(pos_[i] >= 0 && pos_[i] < len_[i]);
-            }
 
             detail::move_offsets(pos_, strides_, off...);
 
             first_ = true;
         }
 
-        unsigned dimension() const
+        auto dimension() const
         {
             return NDim;
         }
 
-        len_type position(unsigned dim) const
+        auto position(int dim) const
         {
+            MARRAY_ASSERT(dim >= 0 && dim < NDim);
             return pos_[dim];
         }
 
-        const std::array<len_type,NDim>& position() const
+        auto& position() const
         {
             return pos_;
         }
 
-        len_type length(unsigned dim) const
+        auto length(int dim) const
         {
+            MARRAY_ASSERT(dim >= 0 && dim < NDim);
             return len_[dim];
         }
 
-        const std::array<len_type,NDim>& lengths() const
+        auto& lengths() const
         {
             return len_;
         }
 
-        stride_type stride(unsigned i, unsigned dim) const
+        auto stride(int i, int dim) const
         {
+            MARRAY_ASSERT(i >= 0 && i < N);
+            MARRAY_ASSERT(dim >= 0 && dim < NDim);
             return strides_[i][dim];
         }
 
-        const std::array<stride_type,NDim>& strides(unsigned i) const
+        auto& strides(int i) const
         {
+            MARRAY_ASSERT(i >= 0 && i < N);
             return strides_[i];
         }
 

@@ -9,7 +9,7 @@ template <typename T>
 void random_transpose(stride_type N, T&& A, label_vector& idx_A,
                                      T&& B, label_vector& idx_B)
 {
-    unsigned ndim_A = random_number(1,8);
+    auto ndim_A = random_number(1,8);
 
     random_tensors(N,
                    0, 0,
@@ -25,7 +25,7 @@ REPLICATED_TEMPLATED_TEST_CASE(transpose, R, T, all_types)
 
     random_transpose(1000, A, idx_A, B, idx_B);
 
-    unsigned ndim = A.dimension();
+    auto ndim = A.dimension();
     auto perm = relative_permutation(idx_A, idx_B);
 
     TENSOR_INFO(A);
@@ -50,9 +50,11 @@ REPLICATED_TEMPLATED_TEST_CASE(transpose, R, T, all_types)
     len_vector len_C(ndim);
     do
     {
-        for (unsigned i = 0;i < ndim;i++)
+        for (auto i : range(ndim))
         {
-            unsigned j; for (j = 0;j < ndim && idx_A[j] != static_cast<label_type>(perm[i]+'a');j++) continue;
+            auto j = 0;
+            while (j < ndim && idx_A[j] != static_cast<label_type>(perm[i]+'a'))
+                j++;
             idx_C[i] = idx_B[j];
             len_C[i] = B.length(j);
         }

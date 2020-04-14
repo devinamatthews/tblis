@@ -13,12 +13,11 @@ void scale(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
-    const unsigned irrep = A.irrep();
-    const unsigned ndim = A.dimension();
+    const auto nirrep = A.num_irreps();
+    const auto irrep = A.irrep();
+    const auto ndim = A.dimension();
 
-    stride_type nblock = 1;
-    for (unsigned i = 0;i < ndim-1;i++) nblock *= nirrep;
+    stride_type nblock = ipow(nirrep, ndim-1);
 
     irrep_vector irreps(ndim);
 

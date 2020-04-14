@@ -44,7 +44,7 @@ void dot_block(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
+    const auto nirrep = A.num_irreps();
 
     dpd_index_group<2> group_AB(A, idx_A_AB, B, idx_B_AB);
 
@@ -52,7 +52,7 @@ void dot_block(type_t type, const communicator& comm, const config& cfg,
     irrep_vector irreps_B(B.dense_dimension());
     assign_irreps(group_AB, irreps_A, irreps_B);
 
-    unsigned irrep_AB = A.irrep();
+    auto irrep_AB = A.irrep();
     for (auto irrep : group_AB.batch_irrep) irrep_AB ^= irrep;
 
     if (group_AB.dense_ndim == 0 && irrep_AB != 0)
@@ -149,7 +149,7 @@ void dot(type_t type, const communicator& comm, const config& cfg,
         return;
     }
 
-    for (unsigned i = 0;i < idx_A_AB.size();i++)
+    for (auto i : range(idx_A_AB.size()))
     {
         if (idx_A_AB[i] >= A.dense_dimension() &&
             idx_B_AB[i] >= B.dense_dimension())

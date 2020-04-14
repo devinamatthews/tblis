@@ -26,32 +26,40 @@
 #define TBLIS_CONCAT(x,y) TBLIS_CONCAT_(x,y)
 #define TBLIS_FIRST_ARG(arg,...) arg
 
-inline void __attribute__((format(printf, 2, 3),noreturn))
-tblis_abort_with_message(const char* cond, const char* fmt, ...)
+#ifdef __cplusplus
+
+#include <type_traits>
+
+inline void tblis_check_assert(const char* cond_str, bool cond)
 {
-    if (strlen(fmt) == 1)
+    if (__builtin_expect(!cond,0))
     {
-        fprintf(stderr, "%s\n", cond);
+        fprintf(stderr, "%s\n", cond_str);
+        abort();
     }
-    else
+}
+
+template <typename... Args>
+inline void tblis_check_assert(const char*, bool cond, const char* fmt, Args&&... args)
+{
+    if (__builtin_expect(!cond,0))
     {
-        va_list args;
-        va_start(args, fmt);
-        vfprintf(stderr, fmt, args);
-        va_end(args);
+        fprintf(stderr, fmt, std::forward<Args>(args)...);
         fprintf(stderr, "\n");
+        abort();
     }
-    abort();
 }
 
 #ifdef TBLIS_DEBUG
 
-#define TBLIS_ASSERT(x,...) ((x) ? (void)(x) : \
-    tblis_abort_with_message(TBLIS_STRINGIZE(x), "" __VA_ARGS__))
+#define TBLIS_ASSERT(...) \
+    tblis_check_assert(TBLIS_STRINGIZE(TBLIS_FIRST_ARG(__VA_ARGS__,0)), __VA_ARGS__)
 
 #else
 
 #define TBLIS_ASSERT(...) ((void)0)
+
+#endif
 
 #endif
 
@@ -578,7 +586,7 @@ typedef struct tblis_tensor
     int conj;
     tblis_scalar scalar;
     void* data;
-    unsigned ndim;
+    int ndim;
     len_type* len;
     stride_type* stride;
 
@@ -589,21 +597,21 @@ typedef struct tblis_tensor
       ndim(0), len(0), stride(0) {}
 
     template <typename T>
-    tblis_tensor(const T* A, unsigned ndim,
+    tblis_tensor(const T* A, int ndim,
                  const len_type* len, const stride_type* stride)
     : type(type_tag<T>::value), conj(false), scalar(T(1)),
       data(const_cast<T*>(A)), ndim(ndim), len(const_cast<len_type*>(len)),
       stride(const_cast<stride_type*>(stride)) {}
 
     template <typename T>
-    tblis_tensor(T alpha, const T* A, unsigned ndim,
+    tblis_tensor(T alpha, const T* A, int ndim,
                  const len_type* len, const stride_type* stride)
     : type(type_tag<T>::value), conj(false), scalar(alpha),
       data(const_cast<T*>(A)), ndim(ndim), len(const_cast<len_type*>(len)),
       stride(const_cast<stride_type*>(stride)) {}
 
     template <typename T>
-    tblis_tensor(T alpha, bool conj, const T* A, unsigned ndim,
+    tblis_tensor(T alpha, bool conj, const T* A, int ndim,
                  const len_type* len, const stride_type* stride)
     : type(type_tag<T>::value), conj(conj), scalar(alpha),
       data(const_cast<T*>(A)), ndim(ndim), len(const_cast<len_type*>(len)),
@@ -614,35 +622,35 @@ typedef struct tblis_tensor
 } tblis_tensor;
 
 TBLIS_EXPORT void tblis_init_tensor_scaled_s(tblis_tensor* t, float scalar,
-                                             unsigned ndim, len_type* len, float* data,
+                                             int ndim, len_type* len, float* data,
                                              stride_type* stride);
 
 TBLIS_EXPORT void tblis_init_tensor_scaled_d(tblis_tensor* t, double scalar,
-                                             unsigned ndim, len_type* len, double* data,
+                                             int ndim, len_type* len, double* data,
                                              stride_type* stride);
 
 TBLIS_EXPORT void tblis_init_tensor_scaled_c(tblis_tensor* t, scomplex scalar,
-                                             unsigned ndim, len_type* len, scomplex* data,
+                                             int ndim, len_type* len, scomplex* data,
                                              stride_type* stride);
 
 TBLIS_EXPORT void tblis_init_tensor_scaled_z(tblis_tensor* t, dcomplex scalar,
-                                             unsigned ndim, len_type* len, dcomplex* data,
+                                             int ndim, len_type* len, dcomplex* data,
                                              stride_type* stride);
 
 TBLIS_EXPORT void tblis_init_tensor_s(tblis_tensor* t,
-                                      unsigned ndim, len_type* len, float* data,
+                                      int ndim, len_type* len, float* data,
                                       stride_type* stride);
 
 TBLIS_EXPORT void tblis_init_tensor_d(tblis_tensor* t,
-                                      unsigned ndim, len_type* len, double* data,
+                                      int ndim, len_type* len, double* data,
                                       stride_type* stride);
 
 TBLIS_EXPORT void tblis_init_tensor_c(tblis_tensor* t,
-                                      unsigned ndim, len_type* len, scomplex* data,
+                                      int ndim, len_type* len, scomplex* data,
                                       stride_type* stride);
 
 TBLIS_EXPORT void tblis_init_tensor_z(tblis_tensor* t,
-                                      unsigned ndim, len_type* len, dcomplex* data,
+                                      int ndim, len_type* len, dcomplex* data,
                                       stride_type* stride);
 
 #ifdef __cplusplus
@@ -660,7 +668,7 @@ struct tensor : tblis_tensor
     len_vector len_buf;
     stride_vector stride_buf;
 
-    template <typename T, unsigned N, typename D, bool O>
+    template <typename T, int N, typename D, bool O>
     tensor(const marray_base<T,N,D,O>& t)
     : tblis_tensor(t.data(), t.dimension(),
                    t.lengths().data(), t.strides().data()) {}
@@ -670,7 +678,7 @@ struct tensor : tblis_tensor
     : tblis_tensor(t.data(), t.dimension(),
                    t.lengths().data(), t.strides().data()) {}
 
-    template <typename T, unsigned N, unsigned I, typename... D>
+    template <typename T, int N, int I, typename... D>
     tensor(const marray_slice<T,N,I,D...>& t)
     : tensor(t.view()) {}
 
@@ -721,13 +729,12 @@ struct tensor : tblis_tensor
 
 };
 
-inline const label_vector& idx(const tblis_tensor& A, label_vector&& idx_A = label_vector())
+inline label_vector idx(const tblis_tensor& A, label_vector&& = label_vector())
 {
-    for (unsigned i = 0;i < A.ndim;i++) idx_A.push_back(i);
-    return idx_A;
+    return range(A.ndim);
 }
 
-const label_vector& idx(const std::string& from, label_vector&& to = label_vector());
+label_vector idx(const std::string& from, label_vector&& to = label_vector());
 
 #endif
 

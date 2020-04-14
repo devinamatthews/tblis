@@ -31,7 +31,7 @@ void tblis_init_scalar_z(tblis_scalar* s, dcomplex value)
 }
 
 void tblis_init_tensor_scaled_s(tblis_tensor* t, float scalar,
-                                unsigned ndim, len_type* len, float* data,
+                                int ndim, len_type* len, float* data,
                                 stride_type* stride)
 {
     t->type = TYPE_SINGLE;
@@ -44,7 +44,7 @@ void tblis_init_tensor_scaled_s(tblis_tensor* t, float scalar,
 }
 
 void tblis_init_tensor_scaled_d(tblis_tensor* t, double scalar,
-                                unsigned ndim, len_type* len, double* data,
+                                int ndim, len_type* len, double* data,
                                 stride_type* stride)
 {
     t->type = TYPE_DOUBLE;
@@ -57,7 +57,7 @@ void tblis_init_tensor_scaled_d(tblis_tensor* t, double scalar,
 }
 
 void tblis_init_tensor_scaled_c(tblis_tensor* t, scomplex scalar,
-                                unsigned ndim, len_type* len, scomplex* data,
+                                int ndim, len_type* len, scomplex* data,
                                 stride_type* stride)
 {
     t->type = TYPE_SCOMPLEX;
@@ -70,7 +70,7 @@ void tblis_init_tensor_scaled_c(tblis_tensor* t, scomplex scalar,
 }
 
 void tblis_init_tensor_scaled_z(tblis_tensor* t, dcomplex scalar,
-                                unsigned ndim, len_type* len, dcomplex* data,
+                                int ndim, len_type* len, dcomplex* data,
                                 stride_type* stride)
 {
     t->type = TYPE_DCOMPLEX;
@@ -83,28 +83,28 @@ void tblis_init_tensor_scaled_z(tblis_tensor* t, dcomplex scalar,
 }
 
 void tblis_init_tensor_s(tblis_tensor* t,
-                         unsigned ndim, len_type* len, float* data,
+                         int ndim, len_type* len, float* data,
                          stride_type* stride)
 {
     tblis_init_tensor_scaled_s(t, 1.0f, ndim, len, data, stride);
 }
 
 void tblis_init_tensor_d(tblis_tensor* t,
-                         unsigned ndim, len_type* len, double* data,
+                         int ndim, len_type* len, double* data,
                          stride_type* stride)
 {
     tblis_init_tensor_scaled_d(t, 1.0, ndim, len, data, stride);
 }
 
 void tblis_init_tensor_c(tblis_tensor* t,
-                         unsigned ndim, len_type* len, scomplex* data,
+                         int ndim, len_type* len, scomplex* data,
                          stride_type* stride)
 {
     tblis_init_tensor_scaled_c(t, {1.0f, 0.0f}, ndim, len, data, stride);
 }
 
 void tblis_init_tensor_z(tblis_tensor* t,
-                         unsigned ndim, len_type* len, dcomplex* data,
+                         int ndim, len_type* len, dcomplex* data,
                          stride_type* stride)
 {
     tblis_init_tensor_scaled_z(t, {1.0, 0.0}, ndim, len, data, stride);
@@ -112,9 +112,9 @@ void tblis_init_tensor_z(tblis_tensor* t,
 
 }
 
-const label_vector& idx(const std::string& from, label_vector&& to)
+label_vector idx(const std::string& from, label_vector&& to)
 {
-    constexpr size_t N = sizeof(label_type);
+    constexpr auto N = sizeof(label_type);
 
     union
     {
@@ -142,7 +142,7 @@ const label_vector& idx(const std::string& from, label_vector&& to)
     TBLIS_ASSERT(i == 0, "Malformed index string: %s", from.c_str());
     to.push_back(label);
 
-    return to;
+    return std::move(to);
 }
 
 }

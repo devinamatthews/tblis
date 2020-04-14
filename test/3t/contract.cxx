@@ -96,12 +96,12 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_contract, R, T, all_types)
     auto size_AC = group_size(A.lengths(), idx_A, idx_AC);
     auto size_BC = group_size(B.lengths(), idx_B, idx_BC);
 
-    unsigned nirrep = A.num_irreps();
+    auto nirrep = A.num_irreps();
     stride_type neps = 0;
-    for (unsigned irrep_AB = 0;irrep_AB < nirrep;irrep_AB++)
+    for (auto irrep_AB : range(nirrep))
     {
-        unsigned irrep_AC = A.irrep()^irrep_AB;
-        unsigned irrep_BC = B.irrep()^irrep_AB;
+        auto irrep_AC = A.irrep()^irrep_AB;
+        auto irrep_BC = B.irrep()^irrep_AB;
 
         neps += size_AB[irrep_AB]*
                 size_AC[irrep_AC]*
@@ -182,12 +182,12 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_contract, R, T, all_types)
     auto size_AC = group_size(A.lengths(), idx_A, idx_AC);
     auto size_BC = group_size(B.lengths(), idx_B, idx_BC);
 
-    unsigned nirrep = A.num_irreps();
+    auto nirrep = A.num_irreps();
     stride_type neps = 0;
-    for (unsigned irrep_AB = 0;irrep_AB < nirrep;irrep_AB++)
+    for (auto irrep_AB : range(nirrep))
     {
-        unsigned irrep_AC = A.irrep()^irrep_AB;
-        unsigned irrep_BC = B.irrep()^irrep_AB;
+        auto irrep_AC = A.irrep()^irrep_AB;
+        auto irrep_BC = B.irrep()^irrep_AB;
 
         neps += size_AB[irrep_AB]*
                 size_AC[irrep_AC]*

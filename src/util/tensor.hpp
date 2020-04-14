@@ -38,7 +38,7 @@ inline label_type free_idx(label_vector idx)
 
     if (idx[0] > 0) return 0;
 
-    for (unsigned i = 1;i < idx.size();i++)
+    for (auto i : range(1,idx.size()))
     {
         if (idx[i] > idx[i-1]+1) return idx[i-1]+1;
     }
@@ -66,7 +66,7 @@ dim_vector relative_permutation(const T& a, const T& b)
 
     for (auto& e : b)
     {
-        for (unsigned i = 0;i < a.size();i++)
+        for (auto i : range(a.size()))
         {
             if (a[i] == e) perm.push_back(i);
         }
@@ -81,7 +81,7 @@ struct sort_by_idx_helper
 
     sort_by_idx_helper(const label_type* idx_) : idx(idx_) {}
 
-    bool operator()(unsigned i, unsigned j) const
+    bool operator()(int i, int j) const
     {
         return idx[i] < idx[j];
     }
@@ -92,7 +92,7 @@ inline sort_by_idx_helper sort_by_idx(const label_type* idx)
     return sort_by_idx_helper(idx);
 }
 
-template <unsigned N>
+template <int N>
 struct sort_by_stride_helper
 {
     std::array<const stride_vector*, N> strides;
@@ -103,12 +103,12 @@ struct sort_by_stride_helper
         std::copy_n(ilist.begin(), N, strides.begin());
     }
 
-    bool operator()(unsigned i, unsigned j) const
+    bool operator()(int i, int j) const
     {
         auto min_i = (*strides[0])[i];
         auto min_j = (*strides[0])[j];
 
-        for (size_t k = 1;k < N;k++)
+        for (auto k : range(1,N))
         {
             min_i = std::min(min_i, (*strides[k])[i]);
             min_j = std::min(min_j, (*strides[k])[j]);
@@ -117,7 +117,7 @@ struct sort_by_stride_helper
         if (min_i < min_j) return true;
         if (min_i > min_j) return false;
 
-        for (size_t k = 0;k < N;k++)
+        for (auto k : range(N))
         {
             auto s_i = (*strides[k])[i];
             auto s_j = (*strides[k])[j];
@@ -129,12 +129,12 @@ struct sort_by_stride_helper
     }
 };
 
-inline size_t check_sizes() { return 0; }
+inline int check_sizes() { return 0; }
 
 template <typename T, typename... Ts>
-size_t check_sizes(const T& arg, const Ts&... args)
+int check_sizes(const T& arg, const Ts&... args)
 {
-    size_t sz = arg.size();
+    int sz = arg.size();
     TBLIS_ASSERT(sizeof...(Ts) == 0 || sz == check_sizes(args...));
     return sz;
 }
@@ -142,18 +142,18 @@ size_t check_sizes(const T& arg, const Ts&... args)
 template <typename... Strides>
 dim_vector sort_by_stride(const Strides&... strides)
 {
-    dim_vector idx = range(static_cast<unsigned>(check_sizes(strides...)));
+    dim_vector idx = range(check_sizes(strides...));
     std::sort(idx.begin(), idx.end(), sort_by_stride_helper<sizeof...(Strides)>{&strides...});
     return idx;
 }
 
 template <typename T>
 bool are_congruent_along(const varray_view<const T>& A,
-                         const varray_view<const T>& B, unsigned dim)
+                         const varray_view<const T>& B, int dim)
 {
     if (A.dimension() < B.dimension()) swap(A, B);
 
-    unsigned ndim = A.dimension();
+    auto ndim = A.dimension();
     auto sA = A.strides().begin();
     auto sB = B.strides().begin();
     auto lA = A.lengths().begin();
@@ -217,146 +217,41 @@ bool are_compatible(const varray_view<const T>& A,
                        B.lengths(), B.strides());
 }
 
-template <size_t I, size_t N, typename... Strides>
-struct swap_strides_helper
-{
-    swap_strides_helper(std::tuple<Strides&...>& strides,
-                        std::tuple<Strides...>& oldstrides)
-    {
-        std::get<I>(strides).swap(std::get<I>(oldstrides));
-        swap_strides_helper<I+1, N, Strides...>(strides, oldstrides);
-    }
-};
-
-template <size_t N, typename... Strides>
-struct swap_strides_helper<N, N, Strides...>
-{
-    swap_strides_helper(std::tuple<Strides&...>&,
-                        std::tuple<Strides...>&) {}
-};
-
-template <typename... Strides>
-void swap_strides(std::tuple<Strides&...>& strides,
-                  std::tuple<Strides...>& oldstrides)
-{
-    swap_strides_helper<0, sizeof...(Strides), Strides...>(strides, oldstrides);
-}
-
-template <size_t I, size_t N, typename... Strides>
-struct are_contiguous_helper
-{
-    bool operator()(std::tuple<Strides...>& strides,
-                    const len_vector& lengths,
-                    unsigned i, unsigned im1)
-    {
-        return std::get<I>(strides)[i] == std::get<I>(strides)[im1]*lengths[im1] &&
-            are_contiguous_helper<I+1, N, Strides...>()(strides, lengths, i, im1);
-    }
-};
-
-template <size_t N, typename... Strides>
-struct are_contiguous_helper<N, N, Strides...>
-{
-    bool operator()(std::tuple<Strides...>&,
-                    const len_vector&,
-                    unsigned, unsigned)
-    {
-        return true;
-    }
-};
-
-template <typename... Strides>
-bool are_contiguous(std::tuple<Strides...>& strides,
-                    const len_vector& lengths,
-                    unsigned i, unsigned im1)
-{
-    return are_contiguous_helper<0, sizeof...(Strides), Strides...>()(strides, lengths, i, im1);
-}
-
-template <size_t I, size_t N, typename... Strides>
-struct push_back_strides_helper
-{
-    push_back_strides_helper(std::tuple<Strides&...>& strides,
-                             std::tuple<Strides...>& oldstrides, unsigned i)
-    {
-        std::get<I>(strides).push_back(std::get<I>(oldstrides)[i]);
-        push_back_strides_helper<I+1, N, Strides...>(strides, oldstrides, i);
-    }
-};
-
-template <size_t N, typename... Strides>
-struct push_back_strides_helper<N, N, Strides...>
-{
-    push_back_strides_helper(std::tuple<Strides&...>&,
-                             std::tuple<Strides...>&, unsigned) {}
-};
-
-template <typename... Strides>
-void push_back_strides(std::tuple<Strides&...>& strides,
-                       std::tuple<Strides...>& oldstrides, unsigned i)
-{
-    push_back_strides_helper<0, sizeof...(Strides), Strides...>(strides, oldstrides, i);
-}
-
-template <size_t I, size_t N, typename... Strides>
-struct are_compatible_helper
-{
-    bool operator()(const len_vector& len_A,
-                    const std::tuple<Strides...>& stride_A,
-                    const len_vector& len_B,
-                    const std::tuple<Strides&...>& stride_B)
-    {
-        return are_compatible(len_A, std::get<I>(stride_A),
-                              len_B, std::get<I>(stride_B)) &&
-            are_compatible_helper<I+1, N, Strides...>()(len_A, stride_A,
-                                                        len_B, stride_B);
-    }
-};
-
-template <size_t N, typename... Strides>
-struct are_compatible_helper<N, N, Strides...>
-{
-    bool operator()(const len_vector&,
-                    const std::tuple<Strides...>&,
-                    const len_vector&,
-                    const std::tuple<Strides&...>&)
-    {
-        return true;
-    }
-};
-
-template <typename... Strides>
-bool are_compatible(const len_vector& len_A,
-                    const std::tuple<Strides...>& stride_A,
-                    const len_vector& len_B,
-                    const std::tuple<Strides&...>& stride_B)
-{
-    return are_compatible_helper<0, sizeof...(Strides), Strides...>()(
-        len_A, stride_A, len_B, stride_B);
-}
-
 }
 
 template <typename... Strides>
-void fold(len_vector& lengths, label_vector& idx,
-          Strides&... _strides)
+void fold(len_vector& lengths, label_vector& idx, stride_vector& stride0, Strides&... _strides)
 {
-    std::tuple<Strides&...> strides(_strides...);
+    if (lengths.empty()) return;
+
+    constexpr auto N = sizeof...(Strides)+1;
+    std::array<stride_vector*,N> strides{&stride0, &_strides...};
 
     auto ndim = lengths.size();
-    auto inds = detail::sort_by_stride(std::get<0>(strides));
+    auto inds = detail::sort_by_stride(stride0);
 
     label_vector oldidx;
     len_vector oldlengths;
-    std::tuple<Strides...> oldstrides;
+    std::array<stride_vector,N> oldstrides;
 
     oldidx.swap(idx);
     oldlengths.swap(lengths);
-    detail::swap_strides(strides, oldstrides);
+    for (auto i : range(N))
+        oldstrides[i].swap(*strides[i]);
 
-    for (unsigned i = 0;i < ndim;i++)
+    idx.push_back(oldidx[inds[0]]);
+    lengths.push_back(oldlengths[inds[0]]);
+    for (auto i : range(N))
+        strides[i]->push_back(oldstrides[i][inds[0]]);
+
+    for (auto i : range(1,ndim))
     {
-        if (i != 0 && detail::are_contiguous(oldstrides, oldlengths, inds[i], inds[i-1]))
+        bool contig = true;
+        for (auto j : range(N))
+            if (oldstrides[j][inds[i]] != oldstrides[j][inds[i-1]]*oldlengths[inds[i-1]])
+                contig = false;
+
+        if (contig)
         {
             lengths.back() *= oldlengths[inds[i]];
         }
@@ -364,15 +259,17 @@ void fold(len_vector& lengths, label_vector& idx,
         {
             idx.push_back(oldidx[inds[i]]);
             lengths.push_back(oldlengths[inds[i]]);
-            detail::push_back_strides(strides, oldstrides, inds[i]);
+            for (auto j : range(N))
+                strides[j]->push_back(oldstrides[j][inds[i]]);
         }
     }
 
-    TBLIS_ASSERT(detail::are_compatible(oldlengths, oldstrides,
-                                        lengths, strides));
+    for (auto i : range(N))
+        TBLIS_ASSERT(detail::are_compatible(oldlengths, oldstrides[i],
+                                            lengths, *strides[i]));
 }
 
-inline void diagonal(unsigned& ndim,
+inline void diagonal(int& ndim,
                      const len_type* len_in,
                      const stride_type* stride_in,
                      const label_type* idx_in,
@@ -387,10 +284,10 @@ inline void diagonal(unsigned& ndim,
     dim_vector inds = range(ndim);
     stl_ext::sort(inds, detail::sort_by_idx(idx_in));
 
-    unsigned ndim_in = ndim;
+    auto ndim_in = ndim;
 
     ndim = 0;
-    for (unsigned i = 0;i < ndim_in;i++)
+    for (auto i : range(ndim_in))
     {
         if (i == 0 || idx_in[inds[i]] != idx_in[inds[i-1]])
         {
@@ -412,33 +309,33 @@ inline void diagonal(unsigned& ndim,
 }
 
 template <typename T>
-matrix_view<const T> matricize(const varray_view<const T>& A, unsigned split)
+matrix_view<T> matricize(const varray_view<T>& A, int split)
 {
-    unsigned ndim = A.dimension();
+    auto ndim = A.dimension();
     TBLIS_ASSERT(split <= ndim);
     if (ndim > 0 && A.stride(0) < A.stride(ndim-1))
     {
-        for (unsigned i = 1;i < split;i++)
+        for (auto i : range(1,split))
             TBLIS_ASSERT(A.stride(i) == A.stride(i-1)*A.length(i-1));
-        for (unsigned i = split+1;i < ndim;i++)
+        for (auto i : range(split+1,ndim))
             TBLIS_ASSERT(A.stride(i) == A.stride(i-1)*A.length(i-1));
     }
     else
     {
-        for (unsigned i = 0;i+1 < split;i++)
-            TBLIS_ASSERT(A.stride(i) == A.stride(i+1)*A.length(i+1));
-        for (unsigned i = split;i+1 < ndim;i++)
-            TBLIS_ASSERT(A.stride(i) == A.stride(i+1)*A.length(i+1));
+        for (auto i : range(1,split))
+            TBLIS_ASSERT(A.stride(i-1) == A.stride(i)*A.length(i));
+        for (auto i : range(split+1,ndim))
+            TBLIS_ASSERT(A.stride(i-1) == A.stride(i)*A.length(i));
     }
 
     len_type m = 1;
-    for (unsigned i = 0;i < split;i++)
+    for (auto i : range(split))
     {
         m *= A.length(i);
     }
 
     len_type n = 1;
-    for (unsigned i = split;i < ndim;i++)
+    for (auto i : range(split,ndim))
     {
         n *= A.length(i);
     }
@@ -470,31 +367,24 @@ matrix_view<const T> matricize(const varray_view<const T>& A, unsigned split)
         cs = (split == ndim ? 1 : A.stride( ndim-1));
     }
 
-    return matrix_view<const T>{{m, n}, A.data(), {rs, cs}};
+    return matrix_view<T>{{m, n}, A.data(), {rs, cs}};
 }
 
 template <typename T>
-matrix_view<T> matricize(const varray_view<T>& A, unsigned split)
-{
-    auto AM = matricize<T>(reinterpret_cast<const varray_view<const T>&>(A), split);
-    return reinterpret_cast<matrix_view<T>&>(AM);
-}
-
-template <typename T>
-matrix_view<T> matricize(varray<T>& A, unsigned split)
+matrix_view<T> matricize(varray<T>& A, int split)
 {
     return matricize(A.view(), split);
 }
 
 template <typename T>
-matrix_view<const T> matricize(const varray<T>& A, unsigned split)
+matrix_view<const T> matricize(const varray<T>& A, int split)
 {
     return matricize(A.view(), split);
 }
 
-inline unsigned unit_dim(const stride_vector& stride, const dim_vector& reorder)
+inline int unit_dim(const stride_vector& stride, const dim_vector& reorder)
 {
-    for (unsigned i = 0;i < reorder.size();i++)
+    for (auto i : range(reorder.size()))
         if (stride[reorder[i]] == 1)
             return i;
 

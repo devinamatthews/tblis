@@ -43,7 +43,7 @@ struct scatter_tensor_matrix_impl
 class scatter_tensor_matrix : public abstract_matrix_adapter<scatter_tensor_matrix,scatter_tensor_matrix_impl>
 {
     protected:
-        typedef MArray::detail::array_1d<unsigned> idx_array;
+        typedef MArray::detail::array_1d<int> idx_array;
         typedef MArray::detail::array_1d<len_type> len_array;
         typedef MArray::detail::array_1d<stride_type> stride_array;
 
@@ -160,10 +160,9 @@ class scatter_tensor_matrix : public abstract_matrix_adapter<scatter_tensor_matr
         {
             if (comm.master())
             {
-                for (unsigned dim : {0,1})
+                for (auto dim : {0,1})
                 {
                     len_type inner_len = inner_length(dim);
-                    len_type outer_len = outer_length(dim);
                     len_type idx, off = offset(dim);
                     divide(off, inner_len, idx, off);
                     len_type len = length(dim);
@@ -209,39 +208,39 @@ class scatter_tensor_matrix : public abstract_matrix_adapter<scatter_tensor_matr
             return impl().data_;
         }
 
-        const len_vector& lengths(unsigned dim) const
+        const len_vector& lengths(int dim) const
         {
-            TBLIS_ASSERT(dim < 2);
+            TBLIS_ASSERT(dim >= 0 && dim < 2);
             return impl().lens_[dim^transposed()];
         }
 
-        const stride_vector& strides(unsigned dim) const
+        const stride_vector& strides(int dim) const
         {
-            TBLIS_ASSERT(dim < 2);
+            TBLIS_ASSERT(dim >= 0 && dim < 2);
             return impl().strides_[dim^transposed()];
         }
 
-        len_type inner_length(unsigned dim) const
+        len_type inner_length(int dim) const
         {
-            TBLIS_ASSERT(dim < 2);
+            TBLIS_ASSERT(dim >= 0 && dim < 2);
             return impl().inner_len_[dim^transposed()];
         }
 
-        len_type outer_length(unsigned dim) const
+        len_type outer_length(int dim) const
         {
-            TBLIS_ASSERT(dim < 2);
+            TBLIS_ASSERT(dim >= 0 && dim < 2);
             return impl().outer_len_[dim^transposed()];
         }
 
-        const stride_type* scatter(unsigned dim) const
+        const stride_type* scatter(int dim) const
         {
-            TBLIS_ASSERT(dim < 2);
+            TBLIS_ASSERT(dim >= 0 && dim < 2);
             return impl().scatter_[dim^transposed()];
         }
 
-        bool pack_3d(unsigned dim) const
+        bool pack_3d(int dim) const
         {
-            TBLIS_ASSERT(dim < 2);
+            TBLIS_ASSERT(dim >= 0 && dim < 2);
             return impl().pack_3d_[dim^transposed()];
         }
 };

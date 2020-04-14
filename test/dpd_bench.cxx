@@ -222,28 +222,28 @@ int main(int argc, char** argv)
 
         vs[0] = splits[0];
         vs[g-1] = v-splits[g-2];
-        for (unsigned i = 1;i < g-1;i++) vs[i] = splits[i]-splits[i-1];
+        for (auto i : range(1,g-1)) vs[i] = splits[i]-splits[i-1];
 
         for (len_type& split : splits) split = random_number<len_type>(o);
         sort(splits);
 
         os[0] = splits[0];
         os[g-1] = o-splits[g-2];
-        for (unsigned i = 1;i < g-1;i++) os[i] = splits[i]-splits[i-1];
+        for (auto i : range(1,g-1)) os[i] = splits[i]-splits[i-1];
     }
 
-    for (unsigned i = 0;i < g;i++)
+    for (auto i : range(g))
     {
         vs[i] = (v+g-1-i)/g;
         os[i] = (o+g-1-i)/g;
     }
 
     cout << "v: " << v << " -> " << vs[0];
-    for (unsigned i = 1;i < g;i++) cout << ", " << vs[i];
+    for (auto i : range(1,g)) cout << ", " << vs[i];
     cout << endl;
 
     cout << "o: " << o << " -> " << os[0];
-    for (unsigned i = 1;i < g;i++) cout << ", " << os[i];
+    for (auto i : range(1,g)) cout << ", " << os[i];
     cout << endl;
 
     constexpr bool test0 = false;

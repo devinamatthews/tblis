@@ -10,7 +10,7 @@ namespace MArray
 template <>
 struct vector_traits<float>
 {
-    constexpr static unsigned vector_width = 16;
+    constexpr static int vector_width = 16;
     constexpr static size_t alignment = 64;
     typedef __m512 vector_type;
 
@@ -132,49 +132,49 @@ struct vector_traits<float>
                                  (T)v[ 6], (T)v[ 7]);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 16 && !Aligned, __m512>
     load(const float* ptr)
     {
         return _mm512_loadu_ps(ptr);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 16 && Aligned, __m512>
     load(const float* ptr)
     {
         return _mm512_load_ps(ptr);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && !Aligned, __m512>
     load(const float* ptr)
     {
         return _mm512_castpd_ps(_mm512_broadcast_f64x4(_mm256_loadu_pd((double*)ptr)));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && Aligned, __m512>
     load(const float* ptr)
     {
         return _mm512_castpd_ps(_mm512_broadcast_f64x4(_mm256_load_pd((double*)ptr)));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && !Aligned, __m512>
     load(const float* ptr)
     {
         return _mm512_broadcast_f32x4(_mm_loadu_ps(ptr));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && Aligned, __m512>
     load(const float* ptr)
     {
         return _mm512_broadcast_f32x4(_mm_load_ps(ptr));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2, __m512>
     load(const float* ptr)
     {
@@ -191,49 +191,49 @@ struct vector_traits<float>
         return _mm512_set1_ps(val);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 16 && !Aligned>
     store(__m512 v, float* ptr)
     {
         _mm512_storeu_ps(ptr, v);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 16 && Aligned>
     store(__m512 v, float* ptr)
     {
         _mm512_store_ps(ptr, v);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && !Aligned>
     store(__m512 v, float* ptr)
     {
         _mm256_storeu_ps(ptr, _mm512_castps512_ps256(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && Aligned>
     store(__m512 v, float* ptr)
     {
         _mm256_store_ps(ptr, _mm512_castps512_ps256(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && !Aligned>
     store(__m512 v, float* ptr)
     {
         _mm_storeu_ps(ptr, _mm512_castps512_ps128(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && Aligned>
     store(__m512 v, float* ptr)
     {
         _mm_store_ps(ptr, _mm512_castps512_ps128(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2>
     store(__m512 v, float* ptr)
     {
@@ -315,7 +315,7 @@ struct vector_traits<float>
 template <>
 struct vector_traits<double>
 {
-    constexpr static unsigned vector_width = 8;
+    constexpr static int vector_width = 8;
     constexpr static size_t alignment = 64;
     typedef __m512d vector_type;
 
@@ -430,42 +430,42 @@ struct vector_traits<double>
                                  (T)v[6], (T)v[7]);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && !Aligned, __m512d>
     load(const double* ptr)
     {
         return _mm512_loadu_pd(ptr);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && Aligned, __m512d>
     load(const double* ptr)
     {
         return _mm512_load_pd(ptr);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && !Aligned, __m512d>
     load(const double* ptr)
     {
         return _mm512_broadcast_f64x4(_mm256_loadu_pd(ptr));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && Aligned, __m512d>
     load(const double* ptr)
     {
         return _mm512_broadcast_f64x4(_mm256_load_pd(ptr));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2 && !Aligned, __m512d>
     load(const double* ptr)
     {
         return _mm512_broadcast_f64x2(_mm_loadu_pd(ptr));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2 && Aligned, __m512d>
     load(const double* ptr)
     {
@@ -482,42 +482,42 @@ struct vector_traits<double>
         return _mm512_set1_pd(val);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && !Aligned>
     store(__m512d v, double* ptr)
     {
         _mm512_storeu_pd(ptr, v);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && Aligned>
     store(__m512d v, double* ptr)
     {
         _mm512_store_pd(ptr, v);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && !Aligned>
     store(__m512d v, double* ptr)
     {
         _mm256_storeu_pd(ptr, _mm512_castpd512_pd256(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && Aligned>
     store(__m512d v, double* ptr)
     {
         _mm256_store_pd(ptr, _mm512_castpd512_pd256(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2 && !Aligned>
     store(__m512d v, double* ptr)
     {
         _mm_storeu_pd(ptr, _mm512_castpd512_pd128(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2 && Aligned>
     store(__m512d v, double* ptr)
     {
@@ -583,7 +583,7 @@ struct vector_traits<double>
 template <>
 struct vector_traits<std::complex<float>>
 {
-    constexpr static unsigned vector_width = 8;
+    constexpr static int vector_width = 8;
     constexpr static size_t alignment = 64;
     typedef __m512 vector_type;
 
@@ -691,42 +691,42 @@ struct vector_traits<std::complex<float>>
                                  (T)v[12], (T)v[14]);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && !Aligned, __m512>
     load(const std::complex<float>* ptr)
     {
         return _mm512_loadu_ps((float*)ptr);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && Aligned, __m512>
     load(const std::complex<float>* ptr)
     {
         return _mm512_load_ps((float*)ptr);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && !Aligned, __m512>
     load(const std::complex<float>* ptr)
     {
         return _mm512_castpd_ps(_mm512_broadcast_f64x4(_mm256_loadu_pd((double*)ptr)));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && Aligned, __m512>
     load(const std::complex<float>* ptr)
     {
         return _mm512_castpd_ps(_mm512_broadcast_f64x4(_mm256_load_pd((double*)ptr)));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2 && !Aligned, __m512>
     load(const std::complex<float>* ptr)
     {
         return _mm512_castpd_ps(_mm512_broadcast_f64x2(_mm_loadu_pd((double*)ptr)));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2 && Aligned, __m512>
     load(const std::complex<float>* ptr)
     {
@@ -735,50 +735,52 @@ struct vector_traits<std::complex<float>>
 
     static __m512 load1(const std::complex<float>* ptr)
     {
-        return _mm512_castpd_ps(_mm512_set1_pd(*(double*)ptr));
+        return set1(*ptr);
     }
 
     static __m512 set1(std::complex<float> val)
     {
-        return _mm512_castpd_ps(_mm512_set1_pd(*(double*)&val));
+        double dval;
+        memcpy(&dval, &val, 8);
+        return _mm512_castpd_ps(_mm512_set1_pd(dval));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && !Aligned>
     store(__m512 v, std::complex<float>* ptr)
     {
         _mm512_storeu_ps((float*)ptr, v);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && Aligned>
     store(__m512 v, std::complex<float>* ptr)
     {
         _mm512_store_ps((float*)ptr, v);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && !Aligned>
     store(__m512 v, std::complex<float>* ptr)
     {
         _mm256_storeu_ps((float*)ptr, _mm512_castps512_ps256(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && Aligned>
     store(__m512 v, std::complex<float>* ptr)
     {
         _mm256_store_ps((float*)ptr, _mm512_castps512_ps256(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2 && !Aligned>
     store(__m512 v, std::complex<float>* ptr)
     {
         _mm_storeu_ps((float*)ptr, _mm512_castps512_ps128(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2 && Aligned>
     store(__m512 v, std::complex<float>* ptr)
     {
@@ -921,7 +923,7 @@ struct vector_traits<std::complex<float>>
 template <>
 struct vector_traits<std::complex<double>>
 {
-    constexpr static unsigned vector_width = 4;
+    constexpr static int vector_width = 4;
     constexpr static size_t alignment = 64;
     typedef __m512d vector_type;
 
@@ -1036,28 +1038,28 @@ struct vector_traits<std::complex<double>>
                                  (T)v[4], (T)v[6]);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && !Aligned, __m512d>
     load(const std::complex<double>* ptr)
     {
         return _mm512_loadu_pd((double*)ptr);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && Aligned, __m512d>
     load(const std::complex<double>* ptr)
     {
         return _mm512_load_pd((double*)ptr);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2 && !Aligned, __m512d>
     load(const std::complex<double>* ptr)
     {
         return _mm512_broadcast_f64x4(_mm256_loadu_pd((double*)ptr));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2 && Aligned, __m512d>
     load(const std::complex<double>* ptr)
     {
@@ -1075,28 +1077,28 @@ struct vector_traits<std::complex<double>>
                               val.real(), val.imag(), val.real(), val.imag());
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && !Aligned>
     store(__m512d v, std::complex<double>* ptr)
     {
         _mm512_storeu_pd((double*)ptr, v);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && Aligned>
     store(__m512d v, std::complex<double>* ptr)
     {
         _mm512_store_pd((double*)ptr, v);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2 && !Aligned>
     store(__m512d v, std::complex<double>* ptr)
     {
         _mm256_storeu_pd((double*)ptr, _mm512_castpd512_pd256(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2 && Aligned>
     store(__m512d v, std::complex<double>* ptr)
     {
@@ -1200,7 +1202,7 @@ template <typename U>
 struct vector_traits<U, detail::enable_if_t<std::is_same<U,int8_t>::value ||
                                             std::is_same<U,uint8_t>::value>>
 {
-    constexpr static unsigned vector_width = 64;
+    constexpr static int vector_width = 64;
     constexpr static size_t alignment = 64;
     typedef __m512i vector_type;
 
@@ -1282,63 +1284,63 @@ struct vector_traits<U, detail::enable_if_t<std::is_same<U,int8_t>::value ||
                                         : _mm512_cvtepu8_epi64(_mm512_castsi512_si128(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 64 && !Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_loadu_si512((__m512i*)ptr);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 64 && Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_load_si512((__m512i*)ptr);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 32 && !Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_broadcast_i64x4(_mm256_loadu_si256((__m256i*)ptr));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 32 && Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_broadcast_i64x4(_mm256_load_si256((__m256i*)ptr));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 16 && !Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_castps_si512(_mm512_broadcast_f32x4(_mm_loadu_ps((float*)ptr)));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 16 && Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_castps_si512(_mm512_broadcast_f32x4(_mm_load_ps((float*)ptr)));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8, __m512i>
     load(const U* ptr)
     {
         return _mm512_set1_epi64(*(int64_t*)ptr);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4, __m512i>
     load(const U* ptr)
     {
         return _mm512_set1_epi32(*(int32_t*)ptr);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2, __m512i>
     load(const U* ptr)
     {
@@ -1355,63 +1357,63 @@ struct vector_traits<U, detail::enable_if_t<std::is_same<U,int8_t>::value ||
         return _mm512_set1_epi8(val);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 64 && !Aligned>
     store(__m512i v, U* ptr)
     {
         _mm512_storeu_si512((__m512i*)ptr, v);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 64 && Aligned>
     store(__m512i v, U* ptr)
     {
         _mm512_store_si512((__m512i*)ptr, v);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 32 && !Aligned>
     store(__m512i v, U* ptr)
     {
         _mm256_storeu_si256((__m256i*)ptr, _mm512_castsi512_si256(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 32 && Aligned>
     store(__m512i v, U* ptr)
     {
         _mm256_store_si256((__m256i*)ptr, _mm512_castsi512_si256(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 16 && !Aligned>
     store(__m512i v, U* ptr)
     {
         _mm_storeu_si128((__m128i*)ptr, _mm512_castsi512_si128(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 16 && Aligned>
     store(__m512i v, U* ptr)
     {
         _mm_store_si128((__m128i*)ptr, _mm512_castsi512_si128(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8>
     store(__m512i v, U* ptr)
     {
         *(int64_t*)ptr = _mm_extract_epi64(_mm512_castsi512_si128(v), 0);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4>
     store(__m512i v, U* ptr)
     {
         *(int32_t*)ptr = _mm_extract_epi32(_mm512_castsi512_si128(v), 0);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2>
     store(__m512i v, U* ptr)
     {
@@ -1757,7 +1759,7 @@ template <typename U>
 struct vector_traits<U, detail::enable_if_t<std::is_same<U,int16_t>::value ||
                                             std::is_same<U,uint16_t>::value>>
 {
-    constexpr static unsigned vector_width = 32;
+    constexpr static int vector_width = 32;
     constexpr static size_t alignment = 64;
     typedef __m512i vector_type;
 
@@ -1840,56 +1842,56 @@ struct vector_traits<U, detail::enable_if_t<std::is_same<U,int16_t>::value ||
                                         : _mm512_cvtepu16_epi64(_mm512_castsi512_si128(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 32 && !Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_loadu_si512((__m512i*)ptr);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 32 && Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_load_si512((__m512i*)ptr);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 16 && !Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_broadcast_i64x4(_mm256_loadu_si256((__m256i*)ptr));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 16 && Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_broadcast_i64x4(_mm256_load_si256((__m256i*)ptr));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && !Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_broadcast_i32x4(_mm_loadu_si128((__m128i*)ptr));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_broadcast_i32x4(_mm_load_si128((__m128i*)ptr));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4, __m512i>
     load(const U* ptr)
     {
         return _mm512_set1_epi64(*(int64_t*)ptr);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2, __m512i>
     load(const U* ptr)
     {
@@ -1906,56 +1908,56 @@ struct vector_traits<U, detail::enable_if_t<std::is_same<U,int16_t>::value ||
         return _mm512_set1_epi16(val);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 32 && !Aligned>
     store(__m512i v, U* ptr)
     {
         _mm512_storeu_si512((__m512i*)ptr, v);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 32 && Aligned>
     store(__m512i v, U* ptr)
     {
         _mm512_store_si512((__m512i*)ptr, v);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 16 && !Aligned>
     store(__m512i v, U* ptr)
     {
         _mm256_storeu_si256((__m256i*)ptr, _mm512_castsi512_si256(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 16 && Aligned>
     store(__m512i v, U* ptr)
     {
         _mm256_store_si256((__m256i*)ptr, _mm512_castsi512_si256(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && !Aligned>
     store(__m512i v, U* ptr)
     {
         _mm_storeu_si128((__m128i*)ptr, _mm512_castsi512_si128(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && Aligned>
     store(__m512i v, U* ptr)
     {
         _mm_store_si128((__m128i*)ptr, _mm512_castsi512_si128(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4>
     store(__m512i v, U* ptr)
     {
         *(int64_t*)ptr = _mm_extract_epi64(_mm512_castsi512_si128(v), 0);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2>
     store(__m512i v, U* ptr)
     {
@@ -2170,7 +2172,7 @@ template <typename U>
 struct vector_traits<U, detail::enable_if_t<std::is_same<U,int32_t>::value ||
                                             std::is_same<U,uint32_t>::value>>
 {
-    constexpr static unsigned vector_width = 16;
+    constexpr static int vector_width = 16;
     constexpr static size_t alignment = 64;
     typedef __m512i vector_type;
 
@@ -2257,49 +2259,49 @@ struct vector_traits<U, detail::enable_if_t<std::is_same<U,int32_t>::value ||
                                         : _mm512_cvtepu32_epi64(_mm512_castsi512_si256(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 16 && !Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_loadu_si512((__m512i*)ptr);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 16 && Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_load_si512((__m512i*)ptr);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && !Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_broadcast_i64x4(_mm256_loadu_si256((__m256i*)ptr));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_broadcast_i64x4(_mm256_load_si256((__m256i*)ptr));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && !Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_broadcast_i32x4(_mm_loadu_si128((__m128i*)ptr));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_broadcast_i32x4(_mm_load_si128((__m128i*)ptr));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2, __m512i>
     load(const U* ptr)
     {
@@ -2316,49 +2318,49 @@ struct vector_traits<U, detail::enable_if_t<std::is_same<U,int32_t>::value ||
         return _mm512_set1_epi32(val);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 16 && !Aligned>
     store(__m512i v, U* ptr)
     {
         _mm512_storeu_si512((__m512i*)ptr, v);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 16 && Aligned>
     store(__m512i v, U* ptr)
     {
         _mm512_store_si512((__m512i*)ptr, v);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && !Aligned>
     store(__m512i v, U* ptr)
     {
         _mm256_storeu_si256((__m256i*)ptr, _mm512_castsi512_si256(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && Aligned>
     store(__m512i v, U* ptr)
     {
         _mm256_store_si256((__m256i*)ptr, _mm512_castsi512_si256(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && !Aligned>
     store(__m512i v, U* ptr)
     {
         _mm_storeu_si128((__m128i*)ptr, _mm512_castsi512_si128(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && Aligned>
     store(__m512i v, U* ptr)
     {
         _mm_store_si128((__m128i*)ptr, _mm512_castsi512_si128(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2>
     store(__m512i v, U* ptr)
     {
@@ -2487,7 +2489,7 @@ template <typename U>
 struct vector_traits<U, detail::enable_if_t<std::is_same<U,int64_t>::value ||
                                             std::is_same<U,uint64_t>::value>>
 {
-    constexpr static unsigned vector_width = 8;
+    constexpr static int vector_width = 8;
     constexpr static size_t alignment = 64;
     typedef __m512i vector_type;
 
@@ -2625,42 +2627,42 @@ struct vector_traits<U, detail::enable_if_t<std::is_same<U,int64_t>::value ||
         return v;
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && !Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_loadu_si512((__m512i*)ptr);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_load_si512((__m512i*)ptr);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && !Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_broadcast_i64x4(_mm256_loadu_si256((__m256i*)ptr));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_broadcast_i64x4(_mm256_load_si256((__m256i*)ptr));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2 && !Aligned, __m512i>
     load(const U* ptr)
     {
         return _mm512_broadcast_i32x4(_mm_loadu_si128((__m128i*)ptr));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2 && Aligned, __m512i>
     load(const U* ptr)
     {
@@ -2677,42 +2679,42 @@ struct vector_traits<U, detail::enable_if_t<std::is_same<U,int64_t>::value ||
         return _mm512_set1_epi64(val);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && !Aligned>
     store(__m512i v, U* ptr)
     {
         _mm512_storeu_si512((__m512i*)ptr, v);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 8 && Aligned>
     store(__m512i v, U* ptr)
     {
         _mm512_store_si512((__m512i*)ptr, v);
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && !Aligned>
     store(__m512i v, U* ptr)
     {
         _mm256_storeu_si256((__m256i*)ptr, _mm512_castsi512_si256(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 4 && Aligned>
     store(__m512i v, U* ptr)
     {
         _mm256_store_si256((__m256i*)ptr, _mm512_castsi512_si256(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2 && !Aligned>
     store(__m512i v, U* ptr)
     {
         _mm_storeu_si128((__m128i*)ptr, _mm512_castsi512_si128(v));
     }
 
-    template <unsigned Width, bool Aligned> static
+    template <int Width, bool Aligned> static
     detail::enable_if_t<Width == 2 && Aligned>
     store(__m512i v, U* ptr)
     {

@@ -6,7 +6,7 @@
 namespace MArray
 {
 
-template <typename Type, unsigned NDim>
+template <typename Type, int NDim>
 class dpd_marray_view : public dpd_marray_base<Type, NDim, dpd_marray_view<Type, NDim>, false>
 {
     protected:
@@ -69,16 +69,16 @@ class dpd_marray_view : public dpd_marray_base<Type, NDim, dpd_marray_view<Type,
             reset(other);
         }
 
-        dpd_marray_view(unsigned irrep, unsigned nirrep,
+        dpd_marray_view(int irrep, int nirrep,
                         const detail::array_2d<len_type>& len, pointer ptr,
                         dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, ptr, layout);
         }
 
-        dpd_marray_view(unsigned irrep, unsigned nirrep,
+        dpd_marray_view(int irrep, int nirrep,
                         const detail::array_2d<len_type>& len, pointer ptr,
-                        const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                        const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, ptr, depth, layout);
         }
@@ -118,19 +118,19 @@ class dpd_marray_view : public dpd_marray_base<Type, NDim, dpd_marray_view<Type,
          *
          **********************************************************************/
 
-        void permute(const detail::array_1d<unsigned>& perm_)
+        void permute(const detail::array_1d<int>& perm_)
         {
-            std::array<unsigned, NDim> perm;
-            std::array<unsigned, NDim> new_perm;
+            std::array<int, NDim> perm;
+            std::array<int, NDim> new_perm;
             perm_.slurp(perm);
 
-            for (unsigned i = 0;i < NDim;i++)
+            for (auto i : range(NDim))
                 new_perm[i] = this->perm_[perm[i]];
 
             this->perm_ = new_perm;
         }
 
-        template <unsigned N=NDim, typename=detail::enable_if_t<N==2>>
+        template <int N=NDim, typename=detail::enable_if_t<N==2>>
         void transpose()
         {
             permute({1, 0});

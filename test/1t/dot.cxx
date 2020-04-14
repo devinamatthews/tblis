@@ -9,7 +9,7 @@ template <typename T>
 void random_dot(stride_type N, T&& A, label_vector& idx_A,
                                T&& B, label_vector& idx_B)
 {
-    unsigned ndim_A = random_number(1,8);
+    auto ndim_A = random_number(1,8);
 
     random_tensors(N,
                    0, 0,

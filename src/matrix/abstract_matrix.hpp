@@ -31,7 +31,7 @@ class abstract_matrix
         {
             pack_buffer() {}
 
-            pack_buffer(const pack_buffer&) {}
+            pack_buffer(const pack_buffer&) : MemoryPool::Block() {}
 
             pack_buffer(pack_buffer&&) = default;
 
@@ -115,40 +115,40 @@ class abstract_matrix
             return scale_.type;
         }
 
-        len_type length(unsigned dim) const
+        len_type length(int dim) const
         {
-            TBLIS_ASSERT(dim < 2);
+            TBLIS_ASSERT(dim >= 0 && dim < 2);
             return cur_len_[dim^transposed_];
         }
 
-        len_type length(unsigned dim, len_type len)
+        len_type length(int dim, len_type len)
         {
             len_type old_len = length(dim);
             shift_and_resize(dim, 0, len);
             return old_len;
         }
 
-        len_type offset(unsigned dim) const
+        len_type offset(int dim) const
         {
-            TBLIS_ASSERT(dim < 2);
+            TBLIS_ASSERT(dim >= 0 && dim < 2);
             return off_[dim^transposed_];
         }
 
-        len_type offset(unsigned dim, len_type off)
+        len_type offset(int dim, len_type off)
         {
             len_type old_off = offset(dim);
             shift_and_resize(dim, off-old_off, length(dim));
             return old_off;
         }
 
-        void shift(unsigned dim, len_type n)
+        void shift(int dim, len_type n)
         {
             shift_and_resize(dim, n, length(dim));
         }
 
-        void shift_and_resize(unsigned dim, len_type n, len_type len)
+        void shift_and_resize(int dim, len_type n, len_type len)
         {
-            TBLIS_ASSERT(dim < 2);
+            TBLIS_ASSERT(dim >= 0 && dim < 2);
             off_[dim^transposed_] += n;
             cur_len_[dim^transposed_] = len;
             TBLIS_ASSERT(offset(dim) >= 0);
@@ -162,30 +162,22 @@ class abstract_matrix
 
         abstract_matrix* clone() const
         {
-            if (!clone_)
-                tblis_abort_with_message("", "This matrix cannot be cloned.");
-
+            TBLIS_ASSERT(clone_, "This matrix cannot be cloned.");
             return clone_(*this);
         }
 
         abstract_matrix pack(const communicator& comm, const config& cfg,
                              int mat, MemoryPool& pool)
         {
-            if (!pack_)
-                tblis_abort_with_message("", "This matrix cannot be packed.");
-
-            auto P = pack_(*this, comm, cfg, mat, pool);
-
-            return P;
+            TBLIS_ASSERT(pack_, "This matrix cannot be packed.");
+            return pack_(*this, comm, cfg, mat, pool);
         }
 
         void gemm(const communicator& comm, const config& cfg,
                   MemoryPool& pool, const abstract_matrix& A,
                   const abstract_matrix& B)
         {
-            if (!gemm_)
-                tblis_abort_with_message("", "This matrix cannot be multiplied into.");
-
+            TBLIS_ASSERT(gemm_, "This matrix cannot be multiplied into.");
             gemm_(*this, comm, cfg, pool, A, B);
         }
 

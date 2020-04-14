@@ -61,10 +61,10 @@ typedef short_vector<stride_type,MARRAY_OPT_NDIM> stride_vector;
 typedef short_vector<std::array<len_type,8>,MARRAY_OPT_NDIM> dpd_len_vector;
 typedef short_vector<std::array<stride_type,8>,MARRAY_OPT_NDIM> dpd_stride_vector;
 typedef short_vector<std::array<stride_type,8>,2*MARRAY_OPT_NDIM> dpd_stride_vector2;
-typedef short_vector<unsigned,MARRAY_OPT_NDIM> dim_vector;
-typedef short_vector<unsigned,2*MARRAY_OPT_NDIM> dim_vector2;
+typedef short_vector<int,MARRAY_OPT_NDIM> dim_vector;
+typedef short_vector<int,2*MARRAY_OPT_NDIM> dim_vector2;
 typedef short_vector<len_type,MARRAY_OPT_NDIM> index_vector;
-typedef short_vector<unsigned,MARRAY_OPT_NDIM> irrep_vector;
+typedef short_vector<int,MARRAY_OPT_NDIM> irrep_vector;
 template <typename T>
 using ptr_vector = short_vector<T*,MARRAY_OPT_NDIM>;
 
@@ -210,17 +210,17 @@ template <typename I> class range_t;
 namespace detail
 {
     template <size_t N>
-    std::array<unsigned, N> inverse_permutation(const std::array<unsigned, N>& p)
+    std::array<int, N> inverse_permutation(const std::array<int, N>& p)
     {
-        std::array<unsigned, N> ip;
-        for (unsigned i = 0;i < N;i++) ip[p[i]] = i;
+        std::array<int, N> ip;
+        for (int i = 0;i < N;i++) ip[p[i]] = i;
         return ip;
     }
 
     inline dim_vector inverse_permutation(const dim_vector& p)
     {
         dim_vector ip(p.size());
-        for (unsigned i = 0;i < p.size();i++) ip[p[i]] = i;
+        for (size_t i = 0;i < p.size();i++) ip[p[i]] = i;
         return ip;
     }
 
@@ -395,10 +395,10 @@ namespace detail
     struct are_containers_of : are_containers_of_helper<T, Cs...> {};
 
     template <typename Iterator>
-    void inc_offsets_helper(unsigned, Iterator) {}
+    void inc_offsets_helper(int, Iterator) {}
 
     template <typename Iterator, typename Offset, typename... Offsets>
-    void inc_offsets_helper(unsigned i, Iterator it, Offset& off0,
+    void inc_offsets_helper(int i, Iterator it, Offset& off0,
                             Offsets&... off)
     {
         off0 += (*it)[i];
@@ -406,16 +406,16 @@ namespace detail
     }
 
     template <typename Strides, typename... Offsets>
-    void inc_offsets(unsigned i, const Strides& strides, Offsets&... off)
+    void inc_offsets(int i, const Strides& strides, Offsets&... off)
     {
         inc_offsets_helper(i, strides.begin(), off...);
     }
 
     template <typename Pos, typename Iterator>
-    void dec_offsets_helper(unsigned, const Pos&, Iterator) {}
+    void dec_offsets_helper(int, const Pos&, Iterator) {}
 
     template <typename Pos, typename Iterator, typename Offset, typename... Offsets>
-    void dec_offsets_helper(unsigned i, const Pos& pos, Iterator it,
+    void dec_offsets_helper(int i, const Pos& pos, Iterator it,
                              Offset& off0, Offsets&... off)
     {
         off0 -= pos[i]*(*it)[i];
@@ -423,7 +423,7 @@ namespace detail
     }
 
     template <typename Pos, typename Strides, typename... Offsets>
-    void dec_offsets(unsigned i, const Pos& pos, const Strides& strides,
+    void dec_offsets(int i, const Pos& pos, const Strides& strides,
                      Offsets&... off)
     {
         dec_offsets_helper(i, pos, strides.begin(), off...);
@@ -436,7 +436,7 @@ namespace detail
     void move_offsets_helper(const Pos& pos, Iterator it,
                              Offset& off0, Offsets&... off)
     {
-        for (unsigned i = 0;i < pos.size();i++) off0 += pos[i]*(*it)[i];
+        for (size_t i = 0;i < pos.size();i++) off0 += pos[i]*(*it)[i];
         move_offsets_helper(pos, ++it, off...);
     }
 

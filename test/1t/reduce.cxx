@@ -71,8 +71,8 @@ REPLICATED_TEMPLATED_TEST_CASE(reduce, R, T, all_types)
 
     auto NA = prod(A.lengths());
 
-    T ref_val, blas_val;
-    stride_type ref_idx, blas_idx;
+    T ref_val{}, blas_val{};
+    stride_type ref_idx{}, blas_idx{};
 
     T* data = A.data();
 

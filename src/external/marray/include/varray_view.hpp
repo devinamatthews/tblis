@@ -121,21 +121,21 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
             len_vector n;
             n_.slurp(n);
             MARRAY_ASSERT(n.size() == dimension());
-            for (unsigned i = 0;i < dimension();i++) shift(i, n[i]);
+            for (auto i : range(dimension())) shift(i, n[i]);
         }
 
-        void shift(unsigned dim, len_type n)
+        void shift(int dim, len_type n)
         {
-            MARRAY_ASSERT(dim < dimension());
+            MARRAY_ASSERT(dim >= 0 && dim < dimension());
             data_ += n*stride_[dim];
         }
 
-        void shift_down(unsigned dim)
+        void shift_down(int dim)
         {
             shift(dim, len_[dim]);
         }
 
-        void shift_up(unsigned dim)
+        void shift_up(int dim)
         {
             shift(dim, -len_[dim]);
         }
@@ -146,7 +146,7 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
          *
          **********************************************************************/
 
-        void permute(detail::array_1d<unsigned> perm_)
+        void permute(detail::array_1d<int> perm_)
         {
             dim_vector perm;
             perm_.slurp(perm);
@@ -156,16 +156,14 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
             len_vector len(len_);
             stride_vector stride(stride_);
 
-            auto it = perm.begin();
-            for (unsigned i = 0;i < dimension();i++)
+            for (auto i : range(dimension()))
             {
-                MARRAY_ASSERT((unsigned)*it < dimension());
-                for (auto it2 = perm.begin();it2 != it;++it2)
-                    MARRAY_ASSERT(*it != *it2);
+                MARRAY_ASSERT(perm[i] < dimension());
+                for (auto j : range(i+1,dimension()))
+                    MARRAY_ASSERT(perm[i] != perm[j]);
 
-                len_[i] = len[*it];
-                stride_[i] = stride[*it];
-                ++it;
+                len_[i] = len[perm[i]];
+                stride_[i] = stride[perm[i]];
             }
         }
 
@@ -175,15 +173,15 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
          *
          **********************************************************************/
 
-        void lower(detail::array_1d<unsigned> split_)
+        void lower(detail::array_1d<int> split_)
         {
             dim_vector split;
             split_.slurp(split);
 
             MARRAY_ASSERT(split.size() < dimension());
 
-            unsigned newdim = split.size()+1;
-            for (unsigned i = 0;i < newdim-1;i++)
+            int newdim = split.size()+1;
+            for (auto i : range(newdim-1))
             {
                 MARRAY_ASSERT(split[i] <= dimension());
                 if (i != 0) MARRAY_ASSERT(split[i-1] <= split[i]);
@@ -192,17 +190,17 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
             len_vector len = len_;
             stride_vector stride = stride_;
 
-            for (unsigned i = 0;i < newdim;i++)
+            for (auto i : range(newdim))
             {
-                unsigned begin = (i == 0 ? 0 : split[i-1]);
-                unsigned end = (i == newdim-1 ? dimension()-1 : split[i]-1);
+                auto begin = (i == 0 ? 0 : split[i-1]);
+                auto end = (i == newdim-1 ? dimension()-1 : split[i]-1);
                 if (begin > end) continue;
 
                 if (stride[begin] < stride[end])
                 {
                     len_[i] = len[end];
                     stride_[i] = stride[begin];
-                    for (auto j = begin;j < end;j++)
+                    for (auto j : range(begin,end))
                     {
                         MARRAY_ASSERT(stride[j+1] == stride[j]*len[j]);
                         len_[i] *= len[j];
@@ -212,7 +210,7 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
                 {
                     len_[i] = len[end];
                     stride_[i] = stride[end];
-                    for (auto j = begin;j < end;j++)
+                    for (auto j : range(begin,end))
                     {
                         MARRAY_ASSERT(stride[j] == stride[j+1]*len[j+1]);
                         len_[i] *= len[j];
@@ -232,12 +230,12 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
 
         void reverse()
         {
-            for (unsigned i = 0;i < dimension();i++) reverse(i);
+            for (auto i : range(dimension())) reverse(i);
         }
 
-        void reversed(unsigned dim)
+        void reverse(int dim)
         {
-            MARRAY_ASSERT(dim < dimension());
+            MARRAY_ASSERT(dim >= 0 && dim < dimension());
             data_ += (len_[dim]-1)*stride_[dim];
             stride_[dim] = -stride_[dim];
         }
@@ -254,16 +252,16 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
             return ptr;
         }
 
-        len_type length(unsigned dim, len_type len)
+        len_type length(int dim, len_type len)
         {
-            MARRAY_ASSERT(dim < dimension());
+            MARRAY_ASSERT(dim >= 0 && dim < dimension());
             std::swap(len, len_[dim]);
             return len;
         }
 
-        stride_type stride(unsigned dim, stride_type stride)
+        stride_type stride(int dim, stride_type stride)
         {
-            MARRAY_ASSERT(dim < dimension());
+            MARRAY_ASSERT(dim >= 0 && dim < dimension());
             std::swap(stride, stride_[dim]);
             return stride;
         }

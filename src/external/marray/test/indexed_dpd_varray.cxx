@@ -77,13 +77,13 @@ static stride_type offsets[6][8] =
     EXPECT_EQ(2u, v.num_irreps()); \
     EXPECT_EQ(perms[j], v.permutation()); \
     \
-    for (unsigned m = 0;m < 3u;m++) \
+    for (int m = 0;m < 3u;m++) \
     { \
         SCOPED_TRACE(m); \
         { \
             auto vs = v[m](1,0,0,0); \
             EXPECT_EQ(v.data(m) + offsets[j][0], vs.data()); \
-            for (unsigned k = 0;k < 4;k++) \
+            for (int k = 0;k < 4;k++) \
             { \
                 SCOPED_TRACE(k); \
                 EXPECT_EQ(lengths[0][k], vs.length(k)); \
@@ -98,7 +98,7 @@ static stride_type offsets[6][8] =
             EXPECT_EQ(strides[j][1], vs.strides()); \
         } \
         \
-        for (unsigned i = 2;i < 8;i++) \
+        for (int i = 2;i < 8;i++) \
         { \
             SCOPED_TRACE(i); \
             auto vs = v[m](irreps[i]); \
@@ -291,7 +291,7 @@ TEST(indexed_dpd_varray, index_iteration)
         EXPECT_TRUE(found);
         EXPECT_EQ(1u, v.irrep());
         EXPECT_EQ(2u, v.num_irreps());
-        EXPECT_EQ((*reinterpret_cast<std::array<unsigned,4>*>(perms[0].data())), v.permutation());
+        EXPECT_EQ((*reinterpret_cast<std::array<int,4>*>(perms[0].data())), v.permutation());
         EXPECT_EQ((std::array<std::array<len_type,8>,4>{{{3, 1}, {2, 2}, {1, 2}, {3, 4}}}), v.lengths());
     });
 
@@ -317,7 +317,7 @@ TEST(indexed_dpd_varray, index_iteration)
         EXPECT_TRUE(found);
         EXPECT_EQ(1u, v.irrep());
         EXPECT_EQ(2u, v.num_irreps());
-        EXPECT_EQ((*reinterpret_cast<std::array<unsigned,4>*>(perms[0].data())), v.permutation());
+        EXPECT_EQ((*reinterpret_cast<std::array<int,4>*>(perms[0].data())), v.permutation());
         EXPECT_EQ((std::array<std::array<len_type,8>,4>{{{3, 1}, {2, 2}, {1, 2}, {3, 4}}}), v.lengths());
     });
 
@@ -342,11 +342,11 @@ TEST(indexed_dpd_varray, element_iteration)
     {
         EXPECT_EQ(irreps.size(), 5u);
         EXPECT_EQ(idx.size(), 5u);
-        unsigned a = irreps[0];
-        unsigned b = irreps[1];
-        unsigned c = irreps[2];
-        unsigned d = irreps[3];
-        unsigned e = irreps[4];
+        int a = irreps[0];
+        int b = irreps[1];
+        int c = irreps[2];
+        int d = irreps[3];
+        int e = irreps[4];
         EXPECT_LT(a, 2u);
         EXPECT_LT(b, 2u);
         EXPECT_LT(c, 2u);
@@ -392,11 +392,11 @@ TEST(indexed_dpd_varray, element_iteration)
     {
         EXPECT_EQ(irreps.size(), 5u);
         EXPECT_EQ(idx.size(), 5u);
-        unsigned a = irreps[0];
-        unsigned b = irreps[1];
-        unsigned c = irreps[2];
-        unsigned d = irreps[3];
-        unsigned e = irreps[4];
+        int a = irreps[0];
+        int b = irreps[1];
+        int c = irreps[2];
+        int d = irreps[3];
+        int e = irreps[4];
         EXPECT_LT(a, 2u);
         EXPECT_LT(b, 2u);
         EXPECT_LT(c, 2u);
@@ -438,7 +438,7 @@ TEST(indexed_dpd_varray, element_iteration)
 
     visited = {};
     v1.for_each_element<3,2>(
-    [&](double& v, unsigned a, unsigned b, unsigned c, unsigned d, unsigned e,
+    [&](double& v, int a, int b, int c, int d, int e,
         len_type i, len_type j, len_type k, len_type l, len_type m)
     {
         EXPECT_LT(a, 2u);
@@ -477,7 +477,7 @@ TEST(indexed_dpd_varray, element_iteration)
 
     visited = {};
     v2.for_each_element<3,2>(
-    [&](const double& v, unsigned a, unsigned b, unsigned c, unsigned d, unsigned e,
+    [&](const double& v, int a, int b, int c, int d, int e,
         len_type i, len_type j, len_type k, len_type l, len_type m)
     {
         EXPECT_LT(a, 2u);
@@ -531,7 +531,7 @@ TEST(indexed_dpd_varray, swap)
     EXPECT_EQ((matrix<len_type>{{3, 1}, {2, 2}, {1, 2}, {3, 4}, {2, 2}, {4, 5}}), v1.lengths());
     EXPECT_EQ((matrix<len_type>{{3, 1}, {2, 2}, {1, 2}, {3, 4}}), v1.dense_lengths());
     EXPECT_EQ((len_vector{2, 5}), v1.indexed_lengths());
-    EXPECT_EQ(3u, v1.num_indices());
+    EXPECT_EQ(3, v1.num_indices());
     EXPECT_EQ((irrep_vector{1, 1}), v1.indexed_irreps());
     EXPECT_EQ((matrix<len_type>{{0, 0}, {1, 3}, {0, 3}}), v1.indices());
     EXPECT_EQ(1u, v1.irrep());
@@ -543,7 +543,7 @@ TEST(indexed_dpd_varray, swap)
     EXPECT_EQ((matrix<len_type>{{2, 3}, {1, 2}, {3, 1}, {2, 2}, {4, 5}}), v2.lengths());
     EXPECT_EQ((matrix<len_type>{{2, 3}, {1, 2}, {3, 1}}), v2.dense_lengths());
     EXPECT_EQ((len_vector{2, 4}), v2.indexed_lengths());
-    EXPECT_EQ(3u, v2.num_indices());
+    EXPECT_EQ(3, v2.num_indices());
     EXPECT_EQ((irrep_vector{1, 0}), v2.indexed_irreps());
     EXPECT_EQ((matrix<len_type>{{0, 0}, {1, 0}, {1, 2}}), v2.indices());
     EXPECT_EQ(0u, v2.irrep());
@@ -557,7 +557,7 @@ TEST(indexed_dpd_varray, swap)
     EXPECT_EQ((matrix<len_type>{{3, 1}, {2, 2}, {1, 2}, {3, 4}, {2, 2}, {4, 5}}), v2.lengths());
     EXPECT_EQ((matrix<len_type>{{3, 1}, {2, 2}, {1, 2}, {3, 4}}), v2.dense_lengths());
     EXPECT_EQ((len_vector{2, 5}), v2.indexed_lengths());
-    EXPECT_EQ(3u, v2.num_indices());
+    EXPECT_EQ(3, v2.num_indices());
     EXPECT_EQ((irrep_vector{1, 1}), v2.indexed_irreps());
     EXPECT_EQ((matrix<len_type>{{0, 0}, {1, 3}, {0, 3}}), v2.indices());
     EXPECT_EQ(1u, v2.irrep());
@@ -569,7 +569,7 @@ TEST(indexed_dpd_varray, swap)
     EXPECT_EQ((matrix<len_type>{{2, 3}, {1, 2}, {3, 1}, {2, 2}, {4, 5}}), v1.lengths());
     EXPECT_EQ((matrix<len_type>{{2, 3}, {1, 2}, {3, 1}}), v1.dense_lengths());
     EXPECT_EQ((len_vector{2, 4}), v1.indexed_lengths());
-    EXPECT_EQ(3u, v1.num_indices());
+    EXPECT_EQ(3, v1.num_indices());
     EXPECT_EQ((irrep_vector{1, 0}), v1.indexed_irreps());
     EXPECT_EQ((matrix<len_type>{{0, 0}, {1, 0}, {1, 2}}), v1.indices());
     EXPECT_EQ(0u, v1.irrep());
@@ -583,7 +583,7 @@ TEST(indexed_dpd_varray, swap)
     EXPECT_EQ((matrix<len_type>{{3, 1}, {2, 2}, {1, 2}, {3, 4}, {2, 2}, {4, 5}}), v1.lengths());
     EXPECT_EQ((matrix<len_type>{{3, 1}, {2, 2}, {1, 2}, {3, 4}}), v1.dense_lengths());
     EXPECT_EQ((len_vector{2, 5}), v1.indexed_lengths());
-    EXPECT_EQ(3u, v1.num_indices());
+    EXPECT_EQ(3, v1.num_indices());
     EXPECT_EQ((irrep_vector{1, 1}), v1.indexed_irreps());
     EXPECT_EQ((matrix<len_type>{{0, 0}, {1, 3}, {0, 3}}), v1.indices());
     EXPECT_EQ(1u, v1.irrep());
@@ -595,7 +595,7 @@ TEST(indexed_dpd_varray, swap)
     EXPECT_EQ((matrix<len_type>{{2, 3}, {1, 2}, {3, 1}, {2, 2}, {4, 5}}), v2.lengths());
     EXPECT_EQ((matrix<len_type>{{2, 3}, {1, 2}, {3, 1}}), v2.dense_lengths());
     EXPECT_EQ((len_vector{2, 4}), v2.indexed_lengths());
-    EXPECT_EQ(3u, v2.num_indices());
+    EXPECT_EQ(3, v2.num_indices());
     EXPECT_EQ((irrep_vector{1, 0}), v2.indexed_irreps());
     EXPECT_EQ((matrix<len_type>{{0, 0}, {1, 0}, {1, 2}}), v2.indices());
     EXPECT_EQ(0u, v2.irrep());

@@ -1,19 +1,21 @@
 #ifndef _MARRAY_DPD_MARRAY_BASE_HPP_
 #define _MARRAY_DPD_MARRAY_BASE_HPP_
 
-#include "marray_view.hpp"
+#include <climits>
+
+#include "marray.hpp"
 #include "dpd_range.hpp"
 
 namespace MArray
 {
 
-template <typename Type, unsigned NDim, typename Derived, bool Owner>
+template <typename Type, int NDim, typename Derived, bool Owner>
 class dpd_marray_base;
 
-template <typename Type, unsigned NDim>
+template <typename Type, int NDim>
 class dpd_marray_view;
 
-template <typename Type, unsigned NDim, typename Allocator=std::allocator<Type>>
+template <typename Type, int NDim, typename Allocator=std::allocator<Type>>
 class dpd_marray;
 
 template <typename Type, typename Derived, bool Owner>
@@ -25,42 +27,120 @@ class dpd_varray_view;
 template <typename Type, typename Allocator=std::allocator<Type>>
 class dpd_varray;
 
+class irrep_iterator
+{
+    protected:
+        const unsigned irrep_;
+        const int ndim_;
+        const unsigned irrep_bits_;
+        const unsigned irrep_mask_;
+        const unsigned nblock_;
+        unsigned block_;
+
+    public:
+        irrep_iterator(int irrep, int nirrep, int ndim)
+        : irrep_(irrep), ndim_(ndim), irrep_bits_(__builtin_popcount(nirrep-1)),
+          irrep_mask_(nirrep-1), nblock_(1u << (irrep_bits_*(ndim-1)))
+        {
+            MARRAY_ASSERT(ndim > 0);
+            MARRAY_ASSERT(nirrep == 1 || nirrep == 2 ||
+                          nirrep == 4 || nirrep == 8);
+            MARRAY_ASSERT(irrep >= 0 && irrep < nirrep);
+            reset();
+        }
+
+        bool next()
+        {
+            bool done = ++block_ == nblock_;
+            if (done) reset();
+            return !done;
+        }
+
+        int nblock() const { return nblock_; }
+
+        void block(int block)
+        {
+            MARRAY_ASSERT(block >= 0 && block < (int)nblock_);
+            block_ = block;
+        }
+
+        int block() const
+        {
+            return block_;
+        }
+
+        void reset()
+        {
+            block_ = UINT_MAX;
+        }
+
+        int irrep(int dim)
+        {
+            MARRAY_ASSERT(dim >= 0 && dim < ndim_);
+
+            if (dim == 0)
+            {
+                auto irr0 = irrep_;
+                for (auto i : range(ndim_-1))
+                    irr0 ^= (block_ >> irrep_bits_*i) & irrep_mask_;
+                return irr0;
+            }
+
+            return (block_ >> irrep_bits_*(dim-1)) & irrep_mask_;
+        }
+};
+
 namespace detail
 {
 
 template <typename Derived>
 struct dpd_base
 {
-    static dim_vector default_depth(dpd_layout layout, len_type ndim)
+    static dim_vector default_depth(dpd_layout layout, int ndim)
     {
-        dim_vector depth(ndim);
+        dim_vector depth;
+
+        auto log2_floor = [&](int x)
+        {
+            return sizeof(x)*CHAR_BIT - __builtin_clz(x) - 1;
+        };
+
+        auto is_power_of_two = [&](int x)
+        {
+            return (x & (x-1)) == 0;
+        };
+
+        auto log2_ceil = [&](int x)
+        {
+            return log2_floor(x) + (is_power_of_two(x) ? 0 : 1);
+        };
 
         if (layout == BALANCED_ROW_MAJOR ||
             layout == BALANCED_COLUMN_MAJOR)
         {
-            unsigned dl = sizeof(unsigned)*8 - __builtin_clz(ndim) - 1;
-            unsigned du = dl + (ndim&(ndim-1) ? 1 : 0);
-            unsigned o = ndim - (1<<dl);
-            unsigned k = 2*((o+1)/2);
-            unsigned l = 2*(o/2);
-            unsigned h = (ndim+1)/2;
+            int dl = log2_floor(ndim);
+            int du = log2_ceil(ndim);
+            int o = ndim - (1<<dl);
+            int k = 2*((o+1)/2);
+            int l = 2*(o/2);
+            int h = (ndim+1)/2;
 
-            for (unsigned i = 0;i < k;i++) depth[i] = du;
-            for (unsigned i = k;i < h;i++) depth[i] = dl;
-            for (unsigned i = h;i < h+l;i++) depth[i] = du;
-            for (unsigned i = h+l;i < ndim;i++) depth[i] = dl;
+            depth.insert(depth.end(), k, du);
+            depth.insert(depth.end(), h-k, dl);
+            depth.insert(depth.end(), l, du);
+            depth.insert(depth.end(), ndim-h-l, dl);
         }
         else if (layout == PREFIX_ROW_MAJOR ||
                  layout == PREFIX_COLUMN_MAJOR)
         {
-            depth[0] = ndim-1;
-            for (unsigned i = 1;i < ndim;i++) depth[i] = ndim-i;
+            depth.push_back(ndim-1);
+            for (auto i : range(1,ndim)) depth.push_back(ndim-i);
         }
         else //if (layout == BLOCKED_ROW_MAJOR ||
              //    layout == BLOCKED_COLUMN_MAJOR)
         {
-            for (unsigned i = 0;i < ndim-1;i++) depth[i] = i+1;
-            depth[ndim-1] = ndim-1;
+            for (auto i : range(1,ndim)) depth.push_back(i);
+            depth.push_back(ndim-1);
         }
 
         return depth;
@@ -70,19 +150,20 @@ struct dpd_base
     {
         auto& leaf = derived().leaf_;
         auto& parent = derived().parent_;
-        unsigned ndim = leaf.size();
+        int ndim = leaf.size();
         dim_vector depth(derived().depth_.begin(), derived().depth_.end());
         dim_vector node(ndim);
         len_vector leaf_idx = range(ndim);
 
-        MARRAY_ASSERT(depth.size() == ndim);
-        for (unsigned i = 0;i < depth.size();i++)
-            MARRAY_ASSERT(depth[i] < ndim);
+        MARRAY_ASSERT((int)depth.size() == ndim);
+        for (auto i : depth)
+            MARRAY_ASSERT(i < ndim);
 
-        unsigned pos = 0;
-        for (unsigned d = ndim;d --> 0;)
+        auto pos = 0;
+        for (auto d : reversed_range(ndim))
         {
-            for (unsigned i = 0;i < depth.size();i++)
+            auto i = 0;
+            while (i < (int)depth.size())
             {
                 /*
                  * If we encounter a pair of nodes with depth greater than the
@@ -91,7 +172,7 @@ struct dpd_base
                  */
                 if (depth[i] == d+1)
                 {
-                    MARRAY_ASSERT(i < depth.size()-1 && depth[i+1] == d+1);
+                    MARRAY_ASSERT(i+1 < (int)depth.size() && depth[i+1] == d+1);
                     parent[node[i]] = parent[node[i+1]] = pos;
                     depth.erase(depth.begin()+i+1);
                     depth[i]--;
@@ -109,6 +190,8 @@ struct dpd_base
                     node[i] = pos++;
                     if (leaf_idx[i] != -1) leaf[leaf_idx[i]] = node[i];
                 }
+
+                i++;
             }
         }
 
@@ -126,12 +209,12 @@ struct dpd_base
         const auto& parent = derived().parent_;
         auto nirrep = derived().nirrep_;
         auto layout = derived().layout_;
-        unsigned ndim = perm.size();
+        int ndim = perm.size();
 
         if (layout == COLUMN_MAJOR)
         {
             // Column major
-            for (unsigned i = 0;i < ndim;i++)
+            for (auto i : range(ndim))
             {
                 std::copy_n(&len[i][0], nirrep, &size[leaf[i]][0]);
                 perm[i] = i;
@@ -141,28 +224,26 @@ struct dpd_base
         {
             // Row major: reverse the dimensions and treat as
             // permuted column major
-            for (unsigned i = 0;i < ndim;i++)
+            for (auto i : range(ndim))
             {
                 std::copy_n(&len[i][0], nirrep, &size[leaf[ndim-1-i]][0]);
                 perm[i] = ndim-1-i;
             }
 
-            for (unsigned i = 0;i < ndim/2;i++)
-                for (unsigned j = 0;j < nirrep;j++)
-                    std::swap(len[i][j], len[ndim-1-i][j]);
+            for (auto i : range(ndim/2))
+            for (auto j : range(nirrep))
+                std::swap(len[i][j], len[ndim-1-i][j]);
         }
 
-        for (unsigned i = 0;i < ndim-1;i++)
+        for (auto i : range(ndim-1))
         {
-            unsigned next = parent[2*i];
+            auto next = parent[2*i];
 
-            for (unsigned irr1 = 0;irr1 < nirrep;irr1++)
+            for (auto irr1 : range(nirrep))
             {
                 size[next][irr1] = 0;
-                for (unsigned irr2 = 0;irr2 < nirrep;irr2++)
-                {
+                for (auto irr2 : range(nirrep))
                     size[next][irr1] += size[2*i][irr1^irr2]*size[2*i+1][irr2];
-                }
             }
         }
     }
@@ -177,36 +258,32 @@ struct dpd_base
         auto& leap = derived().stride_;
         auto& leaf = derived().leaf_;
         auto& parent = derived().parent_;
-        unsigned ndim = perm.size();
+        int ndim = perm.size();
 
-        short_vector<unsigned, 2*MARRAY_OPT_NDIM-1> dpd_irrep(2*ndim-1);
+        short_vector<int, 2*MARRAY_OPT_NDIM-1> dpd_irrep(2*ndim-1);
         short_vector<stride_type, 2*MARRAY_OPT_NDIM-1> dpd_stride(2*ndim-1);
         dpd_stride[2*ndim-2] = 1;
 
         auto it = irreps.begin();
-        for (unsigned i = 0;i < ndim;i++)
+        for (auto i : range(ndim))
         {
             dpd_irrep[leaf[perm[i]]] = *it;
             ++it;
         }
 
-        for (unsigned i = 0;i < ndim-1;i++)
-        {
+        for (auto i : range(ndim-1))
             dpd_irrep[parent[2*i]] = dpd_irrep[2*i]^dpd_irrep[2*i+1];
-        }
 
-        for (unsigned i = ndim-1;i --> 0;)
+        for (auto i : reversed_range(ndim-1))
         {
-            unsigned irrep = dpd_irrep[parent[2*i]];
+            auto irrep = dpd_irrep[parent[2*i]];
 
             dpd_stride[2*i] = dpd_stride[parent[2*i]];
             dpd_stride[2*i+1] = dpd_stride[2*i]*size[2*i][dpd_irrep[2*i]];
 
             stride_type offset = 0;
-            for (unsigned irr1 = 0;irr1 < dpd_irrep[2*i+1];irr1++)
-            {
+            for (auto irr1 : range(dpd_irrep[2*i+1]))
                 offset += size[2*i][irr1^irrep]*size[2*i+1][irr1];
-            }
 
             data += offset*dpd_stride[2*i];
         }
@@ -214,7 +291,7 @@ struct dpd_base
         it = irreps.begin();
         auto l = len.begin();
         auto s = stride.begin();
-        for (unsigned i = 0;i < ndim;i++)
+        for (auto i : range(ndim))
         {
             auto stride = dpd_stride[leaf[perm[i]]]*leap[perm[i]][dpd_irrep[leaf[perm[i]]]];
             *s = stride;
@@ -233,15 +310,15 @@ struct dpd_base
 
 }
 
-template <typename Type, unsigned NDim, typename Derived, bool Owner>
+template <typename Type, int NDim, typename Derived, bool Owner>
 class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, Derived, Owner>>
 {
     static_assert(NDim > 0, "NDim must be positive");
 
     template <typename> friend struct detail::dpd_base;
-    template <typename, unsigned, typename, bool> friend class dpd_marray_base;
-    template <typename, unsigned> friend class dpd_marray_view;
-    template <typename, unsigned, typename> friend class dpd_marray;
+    template <typename, int, typename, bool> friend class dpd_marray_base;
+    template <typename, int> friend class dpd_marray_view;
+    template <typename, int, typename> friend class dpd_marray;
 
     public:
         typedef Type value_type;
@@ -259,13 +336,13 @@ class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, D
         std::array<std::array<len_type,8>, NDim> len_ = {};
         std::array<std::array<len_type,8>, NDim> off_ = {};
         std::array<std::array<stride_type,8>, NDim> stride_ = {};
-        std::array<unsigned, NDim> leaf_ = {};
-        std::array<unsigned, 2*NDim-1> parent_ = {};
-        std::array<unsigned, NDim> perm_ = {};
-        std::array<unsigned, NDim> depth_ = {};
+        std::array<int, NDim> leaf_ = {};
+        std::array<int, 2*NDim-1> parent_ = {};
+        std::array<int, NDim> perm_ = {};
+        std::array<int, NDim> depth_ = {};
         pointer data_ = nullptr;
-        unsigned irrep_ = 0;
-        unsigned nirrep_ = 0;
+        int irrep_ = 0;
+        int nirrep_ = 0;
         layout layout_ = DEFAULT;
 
         /***********************************************************************
@@ -317,7 +394,7 @@ class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, D
             layout_ = other.layout_;
         }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len, pointer ptr,
                    dpd_layout layout = DEFAULT)
         {
@@ -325,9 +402,9 @@ class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, D
                   this->default_depth(layout, NDim), layout.base());
         }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len, pointer ptr,
-                   const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                   const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             MARRAY_ASSERT(nirrep == 1 || nirrep == 2 ||
                           nirrep == 4 || nirrep == 8);
@@ -354,33 +431,27 @@ class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, D
          *
          **********************************************************************/
 
-        template <typename View, typename Func, unsigned... I>
-        void for_each_block(Func&& f, detail::integer_sequence<unsigned, I...>) const
+        template <typename View, typename Func, int... I>
+        void for_each_block(Func&& f, detail::integer_sequence<int, I...>) const
         {
             typedef typename View::pointer Ptr;
 
-            std::array<unsigned, NDim-1> nirrep;
-            nirrep.fill(nirrep_);
-
             const_pointer cptr;
-            std::array<unsigned, NDim> irreps;
+            std::array<int, NDim> irreps;
             std::array<len_type, NDim> len;
             std::array<stride_type, NDim> stride;
 
-            miterator<NDim-1, 0> it(nirrep);
+            irrep_iterator it(irrep_, nirrep_, NDim);
             while (it.next())
             {
                 irreps[0] = irrep_;
-                for (unsigned i = 1;i < NDim;i++)
-                {
-                    irreps[0] ^= irreps[i] = it.position()[i-1];
-                }
+                for (auto i : range(1,NDim))
+                    irreps[0] ^= irreps[i] = it.irrep(i);
 
-                bool empty = false;
-                for (unsigned i = 0;i < NDim;i++)
-                {
-                    if (length(i, irreps[i]) == 0) empty = true;
-                }
+                auto empty = false;
+                for (auto i : range(NDim))
+                    if (length(i, irreps[i]) == 0)
+                        empty = true;
                 if (empty) continue;
 
                 cptr = data();
@@ -392,33 +463,27 @@ class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, D
             }
         }
 
-        template <typename Tp, typename Func, unsigned... I>
-        void for_each_element(Func&& f, detail::integer_sequence<unsigned, I...>) const
+        template <typename Tp, typename Func, int... I>
+        void for_each_element(Func&& f, detail::integer_sequence<int, I...>) const
         {
             typedef Tp* Ptr;
 
-            std::array<unsigned, NDim-1> nirrep;
-            nirrep.fill(nirrep_);
-
             const_pointer cptr;
-            std::array<unsigned, NDim> irreps;
+            std::array<int, NDim> irreps;
             std::array<len_type, NDim> len;
             std::array<stride_type, NDim> stride;
 
-            miterator<NDim-1, 0> it1(nirrep);
-            while (it1.next())
+            irrep_iterator it(irrep_, nirrep_, NDim);
+            while (it.next())
             {
                 irreps[0] = irrep_;
-                for (unsigned i = 1;i < NDim;i++)
-                {
-                    irreps[0] ^= irreps[i] = it1.position()[i-1];
-                }
+                for (auto i : range(1,NDim))
+                    irreps[0] ^= irreps[i] = it.irrep(i);
 
                 bool empty = false;
-                for (unsigned i = 0;i < NDim;i++)
-                {
-                    if (length(i, irreps[i]) == 0) empty = true;
-                }
+                for (auto i : range(NDim))
+                    if (length(i, irreps[i]) == 0)
+                        empty = true;
                 if (empty) continue;
 
                 cptr = data();
@@ -456,7 +521,7 @@ class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, D
          *
          **********************************************************************/
 
-        static stride_type size(unsigned irrep, const detail::array_2d<len_type>& len_)
+        static stride_type size(int irrep, const detail::array_2d<len_type>& len_)
         {
             if (len_.length(0) == 0) return 1;
 
@@ -465,28 +530,24 @@ class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, D
             matrix<len_type> len;
             len_.slurp(len);
 
-            unsigned nirrep = len.length(1);
-            unsigned ndim = len.length(0);
+            auto nirrep = len.length(1);
+            auto ndim = len.length(0);
 
             MARRAY_ASSERT(nirrep == 1 || nirrep == 2 ||
                           nirrep == 4 || nirrep == 8);
 
             std::array<stride_type, 8> size;
 
-            for (unsigned irr = 0;irr < nirrep;irr++)
+            for (auto irr : range(nirrep))
                 size[irr] = len[0][irr];
 
-            for (unsigned i = 1;i < ndim;i++)
+            for (auto i : range(1,ndim))
             {
                 std::array<stride_type, 8> new_size = {};
 
-                for (unsigned irr1 = 0;irr1 < nirrep;irr1++)
-                {
-                    for (unsigned irr2 = 0;irr2 < nirrep;irr2++)
-                    {
-                        new_size[irr1] += size[irr1^irr2]*len[i][irr2];
-                    }
-                }
+                for (auto irr1 : range(nirrep))
+                for (auto irr2 : range(nirrep))
+                    new_size[irr1] += size[irr1^irr2]*len[i][irr2];
 
                 size = new_size;
             }
@@ -512,25 +573,16 @@ class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, D
             MARRAY_ASSERT(nirrep_ == other.nirrep_);
             MARRAY_ASSERT(irrep_ == other.irrep_);
 
-            for (unsigned i = 0;i < NDim;i++)
-            {
+            for (auto i : range(NDim))
                 MARRAY_ASSERT(lengths(i) == other.lengths(i));
-            }
 
-            unsigned mask = nirrep_-1;
-            unsigned shift = (nirrep_>1) + (nirrep_>2) + (nirrep_>4);
-
-            unsigned nblocks = 1u << (shift*(NDim-1));
-            std::array<unsigned, NDim> irreps;
-            for (unsigned block = 0;block < nblocks;block++)
+            irrep_iterator it(irrep_, nirrep_, NDim);
+            std::array<int, NDim> irreps;
+            while (it.next())
             {
-                unsigned b = block;
                 irreps[0] = irrep_;
-                for (unsigned i = 1;i < NDim;i++)
-                {
-                    irreps[0] ^= irreps[i] = b & mask;
-                    b >>= shift;
-                }
+                for (auto i : range(1,NDim))
+                    irreps[0] ^= irreps[i] = it.irrep(i);
 
                 (*this)(irreps) = other(irreps);
             }
@@ -540,20 +592,13 @@ class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, D
 
         Derived& operator=(const Type& value)
         {
-            unsigned mask = nirrep_-1;
-            unsigned shift = (nirrep_>1) + (nirrep_>2) + (nirrep_>4);
-
-            unsigned nblocks = 1u << (shift*(NDim-1));
-            std::array<unsigned, NDim> irreps;
-            for (unsigned block = 0;block < nblocks;block++)
+            irrep_iterator it(irrep_, nirrep_, NDim);
+            std::array<int, NDim> irreps;
+            while (it.next())
             {
-                unsigned b = block;
                 irreps[0] = irrep_;
-                for (unsigned i = 1;i < NDim;i++)
-                {
-                    irreps[0] ^= irreps[i] = b & mask;
-                    b >>= shift;
-                }
+                for (auto i : range(1,NDim))
+                    irreps[0] ^= irreps[i] = it.irrep(i);
 
                 (*this)(irreps) = value;
             }
@@ -603,37 +648,37 @@ class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, D
          *
          **********************************************************************/
 
-        dpd_marray_view<ctype,NDim> permuted(const detail::array_1d<unsigned>& perm) const
+        dpd_marray_view<ctype,NDim> permuted(const detail::array_1d<int>& perm) const
         {
             return const_cast<dpd_marray_base&>(*this).permuted(perm);
         }
 
-        dpd_marray_view<Type,NDim> permuted(const detail::array_1d<unsigned>& perm)
+        dpd_marray_view<Type,NDim> permuted(const detail::array_1d<int>& perm)
         {
             dpd_marray_view<Type,NDim> r(*this);
             r.permute(perm);
             return r;
         }
 
-        template <unsigned N=NDim, typename=detail::enable_if_t<N==2>>
+        template <int N=NDim, typename=detail::enable_if_t<N==2>>
         dpd_marray_view<ctype, NDim> transposed() const
         {
             return const_cast<dpd_marray_base&>(*this).transposed();
         }
 
-        template <unsigned N=NDim, typename=detail::enable_if_t<N==2>>
+        template <int N=NDim, typename=detail::enable_if_t<N==2>>
         dpd_marray_view<Type, NDim> transposed()
         {
             return permuted({1, 0});
         }
 
-        template <unsigned N=NDim, typename=detail::enable_if_t<N==2>>
+        template <int N=NDim, typename=detail::enable_if_t<N==2>>
         dpd_marray_view<ctype, NDim> T() const
         {
             return const_cast<dpd_marray_base&>(*this).T();
         }
 
-        template <unsigned N=NDim, typename=detail::enable_if_t<N==2>>
+        template <int N=NDim, typename=detail::enable_if_t<N==2>>
         dpd_marray_view<Type, NDim> T()
         {
             return transposed();
@@ -646,7 +691,7 @@ class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, D
          **********************************************************************/
 
         template <typename... Irreps>
-        detail::enable_if_t<detail::are_assignable<unsigned&, Irreps...>::value &&
+        detail::enable_if_t<detail::are_assignable<int&, Irreps...>::value &&
                             sizeof...(Irreps) == NDim, marray_view<ctype, NDim>>
         operator()(const Irreps&... irreps) const
         {
@@ -654,29 +699,29 @@ class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, D
         }
 
         template <typename... Irreps>
-        detail::enable_if_t<detail::are_assignable<unsigned&, Irreps...>::value &&
+        detail::enable_if_t<detail::are_assignable<int&, Irreps...>::value &&
                             sizeof...(Irreps) == NDim, marray_view<Type, NDim>>
         operator()(const Irreps&... irreps)
         {
-            return const_cast<dpd_marray_base&>(*this)({(unsigned)irreps...});
+            return const_cast<dpd_marray_base&>(*this)({(int)irreps...});
         }
 
-        marray_view<ctype, NDim> operator()(const detail::array_1d<unsigned>& irreps) const
+        marray_view<ctype, NDim> operator()(const detail::array_1d<int>& irreps) const
         {
             return const_cast<dpd_marray_base&>(*this)(irreps);
         }
 
-        marray_view<Type, NDim> operator()(const detail::array_1d<unsigned>& irreps_)
+        marray_view<Type, NDim> operator()(const detail::array_1d<int>& irreps_)
         {
             MARRAY_ASSERT(irreps_.size() == NDim);
 
-            std::array<unsigned, NDim> irreps;
+            std::array<int, NDim> irreps;
             std::array<len_type, NDim> len;
             std::array<stride_type, NDim> stride;
 
             irreps_.slurp(irreps);
 
-            unsigned irrep = 0;
+            int irrep = 0;
             for (auto& i: irreps) irrep ^= i;
             MARRAY_ASSERT(irrep == irrep_);
 
@@ -709,7 +754,7 @@ class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, D
                             dpd_marray_view<Type, detail::sliced_dimension<Slices...>::value>>
         operator()(const Slices&...)
         {
-            constexpr unsigned NDim2 = detail::sliced_dimension<Slices...>::value;
+            constexpr int NDim2 = detail::sliced_dimension<Slices...>::value;
 
             (void)NDim2;
 
@@ -747,13 +792,11 @@ class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, D
 
             dpd_marray_view<Type, NDim> v = view();
 
-            for (unsigned i = 0;i < NDim;i++)
+            for (auto i : range(NDim))
+            for (auto j : range(nirrep_))
             {
-                for (unsigned j = 0;j < nirrep_;j++)
-                {
-                    v.off_[i][j] = slices[i].from(j);
-                    v.len_[i][j] = slices[i].size(j);
-                }
+                v.off_[i][j] = slices[i].from(j);
+                v.len_[i][j] = slices[i].size(j);
             }
 
             return v;
@@ -768,25 +811,25 @@ class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, D
         template <typename Func>
         void for_each_block(Func&& f) const
         {
-            for_each_block<marray_view<ctype, NDim>>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
+            for_each_block<marray_view<ctype, NDim>>(std::forward<Func>(f), detail::static_range<int, NDim>{});
         }
 
         template <typename Func>
         void for_each_block(Func&& f)
         {
-            for_each_block<marray_view<Type, NDim>>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
+            for_each_block<marray_view<Type, NDim>>(std::forward<Func>(f), detail::static_range<int, NDim>{});
         }
 
         template <typename Func>
         void for_each_element(Func&& f) const
         {
-            for_each_element<ctype>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
+            for_each_element<ctype>(std::forward<Func>(f), detail::static_range<int, NDim>{});
         }
 
         template <typename Func>
         void for_each_element(Func&& f)
         {
-            for_each_element<Type>(std::forward<Func>(f), detail::static_range<unsigned, NDim>{});
+            for_each_element<Type>(std::forward<Func>(f), detail::static_range<int, NDim>{});
         }
 
         /***********************************************************************
@@ -810,55 +853,55 @@ class dpd_marray_base : protected detail::dpd_base<dpd_marray_base<Type, NDim, D
             return data_;
         }
 
-        template <unsigned Dim>
-        len_type length(unsigned irrep) const
+        template <int Dim>
+        len_type length(int irrep) const
         {
-            static_assert(Dim < NDim, "Dim out of range");
+            static_assert(Dim >= 0 && Dim < NDim, "Dim out of range");
             return length(Dim, irrep);
         }
 
-        len_type length(unsigned dim, unsigned irrep) const
+        len_type length(int dim, int irrep) const
         {
-            MARRAY_ASSERT(irrep < nirrep_);
+            MARRAY_ASSERT(irrep >= 0 && irrep < nirrep_);
             return lengths(dim)[irrep];
         }
 
-        template <unsigned Dim>
+        template <int Dim>
         const std::array<len_type,8>& lengths() const
         {
-            static_assert(Dim < NDim, "Dim out of range");
+            static_assert(Dim <= 0 && Dim < NDim, "Dim out of range");
             return lengths(Dim);
         }
 
-        const std::array<len_type,8>& lengths(unsigned dim) const
+        const std::array<len_type,8>& lengths(int dim) const
         {
-            MARRAY_ASSERT(dim < NDim);
+            MARRAY_ASSERT(dim >= 0 && dim < NDim);
             return len_[perm_[dim]];
         }
 
         std::array<std::array<len_type,8>, NDim> lengths() const
         {
             std::array<std::array<len_type,8>, NDim> len = {};
-            for (unsigned i = 0;i < NDim;i++) len[i] = lengths(i);
+            for (auto i : range(NDim)) len[i] = lengths(i);
             return len;
         }
 
-        unsigned irrep() const
+        auto irrep() const
         {
             return irrep_;
         }
 
-        unsigned num_irreps() const
+        auto num_irreps() const
         {
             return nirrep_;
         }
 
-        const std::array<unsigned, NDim>& permutation() const
+        auto& permutation() const
         {
             return perm_;
         }
 
-        static constexpr unsigned dimension()
+        static constexpr auto dimension()
         {
             return NDim;
         }

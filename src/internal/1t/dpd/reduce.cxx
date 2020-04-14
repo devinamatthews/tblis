@@ -14,16 +14,15 @@ void reduce(type_t type, const communicator& comm, const config& cfg, reduce_t o
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
-    const unsigned irrep = A.irrep();
-    const unsigned ndim = A.dimension();
+    const auto nirrep = A.num_irreps();
+    const auto irrep = A.irrep();
+    const auto ndim = A.dimension();
 
     scalar local_result(0, type);
     len_type local_idx;
     reduce_init(op, local_result, local_idx);
 
-    stride_type nblock = 1;
-    for (unsigned i = 0;i < ndim-1;i++) nblock *= nirrep;
+    stride_type nblock = ipow(nirrep, ndim-1);
 
     irrep_vector irreps(ndim);
 

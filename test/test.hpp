@@ -188,12 +188,12 @@ enum index_type
 template <typename T>
 len_vector group_size(const matrix<len_type>& len, const T& idx, const T& choose)
 {
-    unsigned nirrep = len.length(1);
-    matrix<len_type> sublen{{(unsigned)choose.size(), nirrep}};
+    auto nirrep = len.length(1);
+    matrix<len_type> sublen{choose.size(), nirrep};
 
-    for (unsigned i = 0;i < choose.size();i++)
+    for (auto i : range(choose.size()))
     {
-        for (unsigned j = 0;j < idx.size();j++)
+        for (auto j : range(idx.size()))
         {
             if (choose[i] == idx[j])
             {
@@ -203,7 +203,7 @@ len_vector group_size(const matrix<len_type>& len, const T& idx, const T& choose
     }
 
     len_vector size(nirrep);
-    for (unsigned i = 0;i < nirrep;i++)
+    for (auto i : range(nirrep))
     {
         size[i] = dpd_varray<double>::size(i, sublen);
     }
@@ -288,27 +288,27 @@ void random_matrix(stride_type N, matrix<T>& t);
  * are initialized to zero, while referencable elements are randomly
  * initialized from the interior of the unit circle.
  */
-void random_lengths(stride_type N, unsigned d, const vector<len_type>& len_min, len_vector& len);
+void random_lengths(stride_type N, int d, const vector<len_type>& len_min, len_vector& len);
 
 matrix<len_type> random_indices(const len_vector& len, double sparsity);
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, varray<T>& A);
+void random_tensor(stride_type N, int d, const vector<len_type>& len_min, varray<T>& A);
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, unsigned nirrep, const vector<len_type>& len_min, dpd_varray<T>& A);
+void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, dpd_varray<T>& A);
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, indexed_varray<T>& A);
+void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_varray<T>& A);
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, unsigned nirrep, const vector<len_type>& len_min, indexed_dpd_varray<T>& A);
+void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, indexed_dpd_varray<T>& A);
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, dpd_varray<T>& A);
+void random_tensor(stride_type N, int d, const vector<len_type>& len_min, dpd_varray<T>& A);
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, indexed_dpd_varray<T>& A);
+void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_dpd_varray<T>& A);
 
 /*
  * Creates a tensor of d dimensions, whose total storage size is between N/2
@@ -317,10 +317,10 @@ void random_tensor(stride_type N, unsigned d, const vector<len_type>& len_min, i
  * are initialized to zero, while referencable elements are randomly
  * initialized from the interior of the unit circle.
  */
-void random_lengths(stride_type N, unsigned d, len_vector& len);
+void random_lengths(stride_type N, int d, len_vector& len);
 
 template <typename T>
-void random_tensor(stride_type N, unsigned d, T& A)
+void random_tensor(stride_type N, int d, T& A)
 {
     random_tensor(N, d, vector<len_type>(d), A);
 }
@@ -337,77 +337,77 @@ void random_tensor(stride_type N, T& A)
 }
 
 void random_lengths(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only,
-                    unsigned ndim_AB,
+                    int ndim_A_only, int ndim_B_only,
+                    int ndim_AB,
                     len_vector& len_A, label_vector& idx_A,
                     len_vector& len_B, label_vector& idx_B);
 
 template <typename T>
 void random_tensors(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only,
-                    unsigned ndim_AB,
+                    int ndim_A_only, int ndim_B_only,
+                    int ndim_AB,
                     varray<T>& A, label_vector& idx_A,
                     varray<T>& B, label_vector& idx_B);
 
 template <typename T>
 void random_tensors(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_AB,
+                    int ndim_A_only, int ndim_B_only, int ndim_AB,
                     dpd_varray<T>& A, label_vector& idx_A,
                     dpd_varray<T>& B, label_vector& idx_B);
 
 template <typename T>
 void random_tensors(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only,
-                    unsigned ndim_AB,
+                    int ndim_A_only, int ndim_B_only,
+                    int ndim_AB,
                     indexed_varray<T>& A, label_vector& idx_A,
                     indexed_varray<T>& B, label_vector& idx_B);
 
 template <typename T>
 void random_tensors(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_AB,
+                    int ndim_A_only, int ndim_B_only, int ndim_AB,
                     indexed_dpd_varray<T>& A, label_vector& idx_A,
                     indexed_dpd_varray<T>& B, label_vector& idx_B);
 
 void random_lengths(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_C_only,
-                    unsigned ndim_AB, unsigned ndim_AC, unsigned ndim_BC,
-                    unsigned ndim_ABC,
+                    int ndim_A_only, int ndim_B_only, int ndim_C_only,
+                    int ndim_AB, int ndim_AC, int ndim_BC,
+                    int ndim_ABC,
                     len_vector& len_A, label_vector& idx_A,
                     len_vector& len_B, label_vector& idx_B,
                     len_vector& len_C, label_vector& idx_C);
 
 template <typename T>
 void random_tensors(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_C_only,
-                    unsigned ndim_AB, unsigned ndim_AC, unsigned ndim_BC,
-                    unsigned ndim_ABC,
+                    int ndim_A_only, int ndim_B_only, int ndim_C_only,
+                    int ndim_AB, int ndim_AC, int ndim_BC,
+                    int ndim_ABC,
                     varray<T>& A, label_vector& idx_A,
                     varray<T>& B, label_vector& idx_B,
                     varray<T>& C, label_vector& idx_C);
 
 template <typename T>
 void random_tensors(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_C_only,
-                    unsigned ndim_AB, unsigned ndim_AC, unsigned ndim_BC,
-                    unsigned ndim_ABC,
+                    int ndim_A_only, int ndim_B_only, int ndim_C_only,
+                    int ndim_AB, int ndim_AC, int ndim_BC,
+                    int ndim_ABC,
                     dpd_varray<T>& A, label_vector& idx_A,
                     dpd_varray<T>& B, label_vector& idx_B,
                     dpd_varray<T>& C, label_vector& idx_C);
 
 template <typename T>
 void random_tensors(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_C_only,
-                    unsigned ndim_AB, unsigned ndim_AC, unsigned ndim_BC,
-                    unsigned ndim_ABC,
+                    int ndim_A_only, int ndim_B_only, int ndim_C_only,
+                    int ndim_AB, int ndim_AC, int ndim_BC,
+                    int ndim_ABC,
                     indexed_varray<T>& A, label_vector& idx_A,
                     indexed_varray<T>& B, label_vector& idx_B,
                     indexed_varray<T>& C, label_vector& idx_C);
 
 template <typename T>
 void random_tensors(stride_type N,
-                    unsigned ndim_A_only, unsigned ndim_B_only, unsigned ndim_C_only,
-                    unsigned ndim_AB, unsigned ndim_AC, unsigned ndim_BC,
-                    unsigned ndim_ABC,
+                    int ndim_A_only, int ndim_B_only, int ndim_C_only,
+                    int ndim_AB, int ndim_AC, int ndim_BC,
+                    int ndim_ABC,
                     indexed_dpd_varray<T>& A, label_vector& idx_A,
                     indexed_dpd_varray<T>& B, label_vector& idx_B,
                     indexed_dpd_varray<T>& C, label_vector& idx_C);

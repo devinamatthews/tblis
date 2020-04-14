@@ -34,6 +34,7 @@ void add(type_t type, const communicator& comm, const config& cfg,
 {
     scalar alpha_A(0, type);
     alpha_A.from(A);
+    if (conj_A) alpha_A.conj();
     alpha_A *= alpha;
 
     shift(type, comm, cfg, len_B, alpha_A,
@@ -60,7 +61,7 @@ void add(type_t type, const communicator& comm, const config& cfg,
 
     stride_type stride_A0 = (empty ? 1 : stride_A[0]);
     len_vector stride_A1;
-    for (unsigned i = 1;i < stride_A.size();i++) stride_A1.push_back(stride_A[i]*ts);
+    for (auto i : range(1,stride_A.size())) stride_A1.push_back(stride_A[i]*ts);
 
     len_vector stride_A_AB, stride_B_AB;
     for (auto i : stride_A_AB_) stride_A_AB.push_back(i*ts);
@@ -108,7 +109,7 @@ void add(type_t type, const communicator& comm, const config& cfg,
 
     stride_type stride_B0 = (empty ? 1 : stride_B[0]);
     len_vector stride_B1;
-    for (unsigned i = 1;i < stride_B.size();i++) stride_B1.push_back(stride_B[i]*ts);
+    for (auto i : range(1,stride_B.size())) stride_B1.push_back(stride_B[i]*ts);
 
     len_vector stride_A_AB, stride_B_AB;
     for (auto i : stride_A_AB_) stride_A_AB.push_back(i*ts);
@@ -130,6 +131,7 @@ void add(type_t type, const communicator& comm, const config& cfg,
 
             scalar alpha_A(0, type);
             alpha_A.from(A1);
+            if (conj_A) alpha_A.conj();
             alpha_A *= alpha;
 
             while (iter_B.next(B1))
@@ -150,10 +152,10 @@ void add(type_t type, const communicator& comm, const config& cfg,
     const len_type MR = cfg.trans_mr.def(type);
     const len_type NR = cfg.trans_nr.def(type);
 
-    unsigned unit_A_AB = 0;
-    unsigned unit_B_AB = 0;
+    auto unit_A_AB = 0;
+    auto unit_B_AB = 0;
 
-    for (unsigned i = 1;i < len_AB.size();i++)
+    for (auto i : range(1,len_AB.size()))
     {
         if (len_AB[i] == 1) continue;
         if (stride_A_AB[i] == 1 && unit_A_AB == 0) unit_A_AB = i;
@@ -163,7 +165,7 @@ void add(type_t type, const communicator& comm, const config& cfg,
     len_type m0 = len_AB[unit_A_AB];
     len_type n0 = len_AB[unit_B_AB];
     len_vector len1;
-    for (unsigned i = 0;i < len_AB.size();i++)
+    for (int i : range(len_AB.size()))
         if (i != unit_A_AB && i != unit_B_AB)
             len1.push_back(len_AB[i]);
     len_type mn1 = stl_ext::prod(len1);
@@ -171,14 +173,14 @@ void add(type_t type, const communicator& comm, const config& cfg,
     stride_type stride_A_m = stride_A_AB[unit_A_AB];
     stride_type stride_A_n = stride_A_AB[unit_B_AB];
     stride_vector stride_A1;
-    for (unsigned i = 0;i < stride_A_AB.size();i++)
+    for (int i : range(len_AB.size()))
         if (i != unit_A_AB && i != unit_B_AB)
             stride_A1.push_back(stride_A_AB[i]*ts);
 
     stride_type stride_B_m = stride_B_AB[unit_A_AB];
     stride_type stride_B_n = stride_B_AB[unit_B_AB];
     stride_vector stride_B1;
-    for (unsigned i = 0;i < stride_B_AB.size();i++)
+    for (int i : range(len_AB.size()))
         if (i != unit_A_AB && i != unit_B_AB)
             stride_B1.push_back(stride_B_AB[i]*ts);
 

@@ -170,10 +170,10 @@ struct config
     microkernel<update_nn_ukr_t> update_nn_ukr;
     microkernel<update_ss_ukr_t> update_ss_ukr;
 
-    parameter<unsigned> m_thread_ratio;
-    parameter<unsigned> n_thread_ratio;
-    parameter<unsigned> mr_max_thread;
-    parameter<unsigned> nr_max_thread;
+    parameter<int> m_thread_ratio;
+    parameter<int> n_thread_ratio;
+    parameter<int> mr_max_thread;
+    parameter<int> nr_max_thread;
 
     check_fn_t check;
     const char* name;

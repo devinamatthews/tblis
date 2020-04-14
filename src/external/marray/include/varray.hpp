@@ -9,9 +9,9 @@ namespace MArray
 template <typename Type, typename Allocator>
 class varray : public varray_base<Type, varray<Type, Allocator>, true>
 {
-    template <typename, unsigned, typename, bool> friend class marray_base;
-    template <typename, unsigned> friend class marray_view;
-    template <typename, unsigned, typename> friend class marray;
+    template <typename, int, typename, bool> friend class marray_base;
+    template <typename, int> friend class marray_view;
+    template <typename, int, typename> friend class marray;
     template <typename, typename, bool> friend class varray_base;
     template <typename> friend class varray_view;
     template <typename, typename> friend class varray;
@@ -221,7 +221,7 @@ class varray : public varray_base<Type, varray<Type, Allocator>, true>
              * It is OK to change the geometry of 'a' even if it is not
              * a view since it is about to go out of scope.
              */
-            for (unsigned i = 0;i < dimension();i++)
+            for (auto i : range(dimension()))
             {
                 len_type len = std::min(a.length(i), b.length(i));
                 a.len_[i] = len;
@@ -246,12 +246,12 @@ class varray : public varray_base<Type, varray<Type, Allocator>, true>
 
         template <typename U, typename D, bool O,
             typename=detail::enable_if_assignable_t<reference,U>>
-        void push_back(unsigned dim, const varray_base<U, D, O>& x)
+        void push_back(int dim, const varray_base<U, D, O>& x)
         {
             MARRAY_ASSERT(x.dimension()+1 == dimension());
-            MARRAY_ASSERT(dim < dimension());
+            MARRAY_ASSERT(dim >= 0 && dim < dimension());
 
-            for (unsigned i = 0, j = 0;i < dimension();i++)
+            for (int i = 0, j = 0;i < dimension();i++)
             {
                 (void)j;
                 MARRAY_ASSERT(i == dim || len_[i] == x.length(j++));
@@ -270,9 +270,9 @@ class varray : public varray_base<Type, varray<Type, Allocator>, true>
             resize({len_[0]-1});
         }
 
-        void pop_back(unsigned dim)
+        void pop_back(int dim)
         {
-            MARRAY_ASSERT(dim < dimension());
+            MARRAY_ASSERT(dim >= 0 && dim < dimension());
             MARRAY_ASSERT(len_[dim] > 0);
 
             len_vector len = len_;

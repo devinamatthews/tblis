@@ -52,16 +52,16 @@ void trace_block(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
-    const unsigned irrep_AB = B.irrep();
-    const unsigned irrep_A = A.irrep()^irrep_AB;
-    const unsigned ndim_A = A.dimension();
-    const unsigned ndim_B = B.dimension();
-    const unsigned ndim_A_only = idx_A.size();
-    const unsigned ndim_AB = idx_A_AB.size();
+    const auto nirrep = A.num_irreps();
+    const auto irrep_AB = B.irrep();
+    const auto irrep_A = A.irrep()^irrep_AB;
+    const auto ndim_A = A.dimension();
+    const auto ndim_B = B.dimension();
+    const int ndim_A_only = idx_A.size();
+    const int ndim_AB = idx_A_AB.size();
 
-    stride_type nblock_A = ipow(nirrep, std::max(1u,ndim_A_only)-1);
-    stride_type nblock_AB = ipow(nirrep, std::max(1u,ndim_AB)-1);
+    stride_type nblock_A = ipow(nirrep, ndim_A_only-1);
+    stride_type nblock_AB = ipow(nirrep, ndim_AB-1);
 
     irrep_vector irreps_A(ndim_A);
     irrep_vector irreps_B(ndim_B);
@@ -124,21 +124,16 @@ void replicate_block(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
-    const unsigned irrep_AB = A.irrep();
-    const unsigned irrep_B = B.irrep()^irrep_AB;
-    const unsigned ndim_A = A.dimension();
-    const unsigned ndim_B = B.dimension();
-    const unsigned ndim_B_only = idx_B.size();
-    const unsigned ndim_AB = idx_A_AB.size();
+    const auto nirrep = A.num_irreps();
+    const auto irrep_AB = A.irrep();
+    const auto irrep_B = B.irrep()^irrep_AB;
+    const auto ndim_A = A.dimension();
+    const auto ndim_B = B.dimension();
+    const int ndim_B_only = idx_B.size();
+    const int ndim_AB = idx_A_AB.size();
 
-    stride_type nblock_B = 1;
-    for (unsigned i = 0;i < ndim_B_only-1;i++)
-        nblock_B *= nirrep;
-
-    stride_type nblock_AB = 1;
-    for (unsigned i = 0;i < ndim_AB-1;i++)
-        nblock_AB *= nirrep;
+    stride_type nblock_B = ipow(nirrep, ndim_B_only-1);
+    stride_type nblock_AB = ipow(nirrep, ndim_AB-1);
 
     irrep_vector irreps_A(ndim_A);
     irrep_vector irreps_B(ndim_B);
@@ -176,11 +171,11 @@ void replicate_block(type_t type, const communicator& comm, const config& cfg,
 
     if (beta.is_one() && !(beta.is_complex() && conj_B)) return;
 
-    for (unsigned irrep_AB = 0;irrep_AB < nirrep;irrep_AB++)
+    for (auto irrep_AB : range(nirrep))
     {
         if (irrep_AB == A.irrep()) continue;
 
-        const unsigned irrep_B = B.irrep()^irrep_AB;
+        const auto irrep_B = B.irrep()^irrep_AB;
 
         for (stride_type block_AB = 0;block_AB < nblock_AB;block_AB++)
         {
@@ -219,15 +214,13 @@ void transpose_block(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
-    const unsigned irrep_AB = A.irrep();
-    const unsigned ndim_A = A.dimension();
-    const unsigned ndim_B = B.dimension();
-    const unsigned ndim_AB = idx_A_AB.size();
+    const auto nirrep = A.num_irreps();
+    const auto irrep_AB = A.irrep();
+    const auto ndim_A = A.dimension();
+    const auto ndim_B = B.dimension();
+    const int ndim_AB = idx_A_AB.size();
 
-    stride_type nblock_AB = 1;
-    for (unsigned i = 0;i < ndim_AB-1;i++)
-        nblock_AB *= nirrep;
+    stride_type nblock_AB = ipow(nirrep, ndim_AB-1);
 
     irrep_vector irreps_A(ndim_A);
     irrep_vector irreps_B(ndim_B);

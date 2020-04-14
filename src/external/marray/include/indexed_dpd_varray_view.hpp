@@ -109,28 +109,28 @@ class indexed_dpd_varray_view : public indexed_dpd_varray_base<Type, indexed_dpd
         {
             reset(other);
         }
-    
-        indexed_dpd_varray_view(unsigned irrep, unsigned nirrep,
+
+        indexed_dpd_varray_view(int irrep, int nirrep,
                                 const detail::array_2d<len_type>& len,
                                 const detail::array_1d<pointer>& ptr,
-                                const detail::array_1d<unsigned>& idx_irrep,
+                                const detail::array_1d<int>& idx_irrep,
                                 const detail::array_2d<len_type>& idx,
                                 dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, ptr, idx_irrep, idx, layout);
         }
 
-        indexed_dpd_varray_view(unsigned irrep, unsigned nirrep,
+        indexed_dpd_varray_view(int irrep, int nirrep,
                                 const detail::array_2d<len_type>& len,
                                 const detail::array_1d<pointer>& ptr,
-                                const detail::array_1d<unsigned>& idx_irrep,
+                                const detail::array_1d<int>& idx_irrep,
                                 const detail::array_2d<len_type>& idx,
-                                const detail::array_1d<unsigned>& depth,
+                                const detail::array_1d<int>& depth,
                                 layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, ptr, idx_irrep, idx, depth, layout);
         }
-    
+
         /***********************************************************************
          *
          * Base operations

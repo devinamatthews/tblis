@@ -9,14 +9,14 @@ namespace MArray
 class index
 {
     protected:
-        unsigned irrep_;
+        int irrep_;
         len_type idx_;
 
     public:
-        index(unsigned irrep, len_type idx)
+        index(int irrep, len_type idx)
         : irrep_(irrep), idx_(idx) {}
 
-        unsigned irrep() const { return irrep_; }
+        int irrep() const { return irrep_; }
 
         len_type idx() const { return idx_; }
 };
@@ -26,33 +26,40 @@ class dpd_range_t
     protected:
         std::array<len_type, 8> from_ = {};
         std::array<len_type, 8> to_ = {};
+        int nirrep_;
 
     public:
         dpd_range_t(const detail::array_1d<len_type>& from,
                     const detail::array_1d<len_type>& to)
+        : nirrep_(from.size())
         {
+            MARRAY_ASSERT(from.size() == to.size());
+            MARRAY_ASSERT(nirrep_ == 1 || nirrep_ == 2 ||
+                          nirrep_ == 4 || nirrep_ == 8);
             from.slurp(from_);
             to.slurp(to_);
         }
 
-        len_type size(unsigned i) const
+        len_type size(int i) const
         {
-            MARRAY_ASSERT(i < 8);
+            MARRAY_ASSERT(i >= 0 && i < 8);
             return to_[i] - from_[i];
         }
 
-        len_type from(unsigned i) const
+        len_type from(int i) const
         {
-            MARRAY_ASSERT(i < 8);
+            MARRAY_ASSERT(i >= 0 && i < 8);
             return from_[i];
         }
 
-        len_type to(unsigned i) const
+        len_type to(int i) const
         {
-            MARRAY_ASSERT(i < 8);
+            MARRAY_ASSERT(i >= 0 && i < 8);
             return to_[i];
         }
 };
+
+/*
 
 inline dpd_range_t range(const detail::array_1d<len_type>& to)
 {
@@ -64,6 +71,8 @@ inline dpd_range_t range(const detail::array_1d<len_type>& from,
 {
     return {from, to};
 }
+
+*/
 
 namespace detail
 {
@@ -98,15 +107,15 @@ struct sliced_dimension;
 template <>
 struct sliced_dimension<>
 {
-    static constexpr unsigned value = 0;
+    static constexpr int value = 0;
 };
 
 template <typename Arg, typename... Args>
 struct sliced_dimension<Arg, Args...>
 {
-    static constexpr unsigned value = !(std::is_convertible<Arg, int>::value ||
-                                      std::is_convertible<Arg, index>::value) +
-                                      sliced_dimension<Args...>::value;
+    static constexpr int value = !(std::is_convertible<Arg, int>::value ||
+                                   std::is_convertible<Arg, index>::value) +
+                                  sliced_dimension<Args...>::value;
 };
 
 }

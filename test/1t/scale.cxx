@@ -39,8 +39,6 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_scale, R, T, all_types)
 
     auto NA = dpd_varray<T>::size(A.irrep(), A.lengths());
 
-    T ref_val = reduce<T>(REDUCE_SUM, A, idx_A);
-
     T scale(10.0*random_unit<T>());
 
     dpd_impl = dpd_impl_t::FULL;
@@ -70,8 +68,6 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_scale, R, T, all_types)
 
     auto NA = prod(A.lengths());
 
-    T ref_val = reduce<T>(REDUCE_SUM, A, idx_A);
-
     T scale(10.0*random_unit<T>());
 
     dpd_impl = dpd_impl_t::FULL;
@@ -98,8 +94,6 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_scale, R, T, all_types)
     INDEXED_DPD_TENSOR_INFO(A);
 
     auto NA = dpd_varray<T>::size(A.irrep(), A.lengths());
-
-    T ref_val = reduce<T>(REDUCE_SUM, A, idx_A);
 
     T scale(10.0*random_unit<T>());
 

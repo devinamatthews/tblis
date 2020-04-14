@@ -68,16 +68,16 @@ class dpd_varray_view : public dpd_varray_base<Type, dpd_varray_view<Type>, fals
             reset(other);
         }
 
-        dpd_varray_view(unsigned irrep, unsigned nirrep,
+        dpd_varray_view(int irrep, int nirrep,
                         const detail::array_2d<len_type>& len, pointer ptr,
                         dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, ptr, layout);
         }
 
-        dpd_varray_view(unsigned irrep, unsigned nirrep,
+        dpd_varray_view(int irrep, int nirrep,
                         const detail::array_2d<len_type>& len, pointer ptr,
-                        const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                        const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, ptr, depth, layout);
         }
@@ -115,9 +115,9 @@ class dpd_varray_view : public dpd_varray_base<Type, dpd_varray_view<Type>, fals
          *
          **********************************************************************/
 
-        void permute(const detail::array_1d<unsigned>& perm_)
+        void permute(const detail::array_1d<int>& perm_)
         {
-            unsigned ndim = dimension();
+            auto ndim = dimension();
 
             MARRAY_ASSERT(perm_.size() == ndim);
 
@@ -125,10 +125,10 @@ class dpd_varray_view : public dpd_varray_base<Type, dpd_varray_view<Type>, fals
             dim_vector perm;
             perm_.slurp(perm);
 
-            for (unsigned i = 0;i < perm.size();i++)
+            for (auto i : range(ndim))
                 new_perm[i] = this->perm_[perm[i]];
 
-            this->perm_.swap(new_perm);
+            this->perm_ = new_perm;
         }
 
         /***********************************************************************

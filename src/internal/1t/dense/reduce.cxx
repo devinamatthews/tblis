@@ -24,7 +24,7 @@ void reduce(type_t type, const communicator& comm, const config& cfg, reduce_t o
 
     stride_type stride0 = (empty ? 1 : stride_A[0]);
     len_vector stride1;
-    for (unsigned i = 1;i < stride_A.size();i++) stride1.push_back(stride_A[i]*ts);
+    for (auto i : range(1,len_A.size())) stride1.push_back(stride_A[i]*ts);
 
     atomic_reducer local_result(op);
 

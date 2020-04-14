@@ -15,8 +15,8 @@ template <typename T>
 void block_to_full(const communicator& comm, const config& cfg,
                    const indexed_varray_view<T>& A, varray<T>& A2)
 {
-    unsigned ndim_A = A.dimension();
-    unsigned dense_ndim_A = A.dense_dimension();
+    auto ndim_A = A.dimension();
+    auto dense_ndim_A = A.dense_dimension();
 
     if (comm.master()) A2.reset(A.lengths());
     comm.barrier();
@@ -27,14 +27,14 @@ void block_to_full(const communicator& comm, const config& cfg,
     auto dense_stride_A2 = A2.strides();
     dense_stride_A2.resize(dense_ndim_A);
 
-    for (len_type i = 0;i < A.num_indices();i++)
+    for (auto i : range(A.num_indices()))
     {
         auto data_A = A.data(i);
         auto factor_A = A.factor(i);
         auto idx_A = A.indices(i);
 
         auto data_A2 = A2.data();
-        for (unsigned i = dense_ndim_A;i < ndim_A;i++)
+        for (auto i : range(dense_ndim_A,ndim_A))
             data_A2 += idx_A[i-dense_ndim_A]*A2.stride(i);
 
         add(type_tag<T>::value, comm, cfg, {}, {}, dense_len_A,
@@ -47,8 +47,8 @@ template <typename T>
 void full_to_block(const communicator& comm, const config& cfg,
                    varray<T>& A2, const indexed_varray_view<T>& A)
 {
-    unsigned ndim_A = A.dimension();
-    unsigned dense_ndim_A = A.dense_dimension();
+    auto ndim_A = A.dimension();
+    auto dense_ndim_A = A.dense_dimension();
 
     auto dense_len_A = A.dense_lengths();
     auto dense_stride_A = A.dense_strides();
@@ -56,14 +56,14 @@ void full_to_block(const communicator& comm, const config& cfg,
     auto dense_stride_A2 = A2.strides();
     dense_stride_A2.resize(dense_ndim_A);
 
-    for (len_type i = 0;i < A.num_indices();i++)
+    for (auto i : range(A.num_indices()))
     {
         auto data_A = A.data(i);
         auto factor_A = A.factor(i);
         auto idx_A = A.indices(i);
 
         auto data_A2 = A2.data();
-        for (unsigned i = dense_ndim_A;i < ndim_A;i++)
+        for (auto i : range(dense_ndim_A,ndim_A))
             data_A2 += idx_A[i-dense_ndim_A]*A2.stride(i);
 
         add(type_tag<T>::value, comm, cfg, {}, {}, dense_len_A,
@@ -72,22 +72,22 @@ void full_to_block(const communicator& comm, const config& cfg,
     }
 }
 
-inline bool is_idx_dense(unsigned) { return true; }
+inline bool is_idx_dense(int) { return true; }
 
 template <typename Array, typename... Args>
-bool is_idx_dense(unsigned i, const Array& A,
+bool is_idx_dense(int i, const Array& A,
                   const dim_vector& idx_A, const Args&... args)
 {
     return idx_A[i] < A.dense_dimension() && is_idx_dense(i, args...);
 }
 
-template <unsigned N> struct index_group;
+template <int N> struct index_group;
 
-template <unsigned I, unsigned N>
-void assign_dense_idx_helper(unsigned, index_group<N>&) {}
+template <int I, int N>
+void assign_dense_idx_helper(int, index_group<N>&) {}
 
-template <unsigned I, unsigned N, typename T, typename... Args>
-void assign_dense_idx_helper(unsigned i, index_group<N>& group,
+template <int I, int N, typename T, typename... Args>
+void assign_dense_idx_helper(int i, index_group<N>& group,
                              const indexed_varray_view<T>& A,
                              const dim_vector& idx_A, const Args&... args)
 {
@@ -96,8 +96,8 @@ void assign_dense_idx_helper(unsigned i, index_group<N>& group,
     assign_dense_idx_helper<I+1>(i, group, args...);
 }
 
-template <unsigned N, typename T, typename... Args>
-void assign_dense_idx(unsigned i, index_group<N>& group,
+template <int N, typename T, typename... Args>
+void assign_dense_idx(int i, index_group<N>& group,
                       const indexed_varray_view<T>& A,
                       const dim_vector& idx_A, const Args&... args)
 {
@@ -105,12 +105,12 @@ void assign_dense_idx(unsigned i, index_group<N>& group,
     assign_dense_idx_helper<0>(i, group, A, idx_A, args...);
 }
 
-template <unsigned N>
-void assign_mixed_or_batch_idx_helper(unsigned, unsigned, unsigned,
+template <int N>
+void assign_mixed_or_batch_idx_helper(int, int, int,
                                       index_group<N>&) {}
 
-template <unsigned N, typename T, typename... Args>
-void assign_mixed_or_batch_idx_helper(unsigned i, unsigned pos, unsigned j,
+template <int N, typename T, typename... Args>
+void assign_mixed_or_batch_idx_helper(int i, int pos, int j,
                                       index_group<N>& group,
                                       const indexed_varray_view<T>& A,
                                       const dim_vector& idx_A, const Args&... args)
@@ -124,7 +124,7 @@ void assign_mixed_or_batch_idx_helper(unsigned i, unsigned pos, unsigned j,
     }
     else
     {
-        unsigned idx = idx_A[i] - A.dense_dimension();
+        auto idx = idx_A[i] - A.dense_dimension();
 
         group.batch_idx[j].push_back(idx);
         group.batch_pos[j].push_back(pos);
@@ -133,8 +133,8 @@ void assign_mixed_or_batch_idx_helper(unsigned i, unsigned pos, unsigned j,
     assign_mixed_or_batch_idx_helper(i, pos, j+1, group, args...);
 }
 
-template <unsigned N, typename T, typename... Args>
-void assign_mixed_or_batch_idx(unsigned i, unsigned pos,
+template <int N, typename T, typename... Args>
+void assign_mixed_or_batch_idx(int i, int pos,
                                index_group<N>& group,
                                const indexed_varray_view<T>& A,
                                const dim_vector& idx_A, const Args&... args)
@@ -143,11 +143,11 @@ void assign_mixed_or_batch_idx(unsigned i, unsigned pos,
                                      A, idx_A, args...);
 }
 
-template <unsigned N>
+template <int N>
 struct index_group
 {
-    unsigned dense_ndim = 0;
-    unsigned batch_ndim = 0;
+    int dense_ndim = 0;
+    int batch_ndim = 0;
 
     len_vector dense_len;
     std::array<stride_vector,N> dense_stride;
@@ -160,15 +160,15 @@ struct index_group
     std::array<dim_vector,N> batch_idx;
     std::array<dim_vector,N> batch_pos;
 
-    template <unsigned... I>
-    void fold(detail::integer_sequence<unsigned, I...>)
+    template <int... I>
+    void fold(detail::integer_sequence<int, I...>)
     {
         label_vector dense_idx; dense_idx.resize(dense_ndim);
         tblis::fold(dense_len, dense_idx, dense_stride[I]...);
     }
 
-    template <unsigned... I>
-    dim_vector sort_by_stride(detail::integer_sequence<unsigned, I...>)
+    template <int... I>
+    dim_vector sort_by_stride(detail::integer_sequence<int, I...>)
     {
         return detail::sort_by_stride(dense_stride[I]...);
     }
@@ -179,7 +179,7 @@ struct index_group
     {
         batch_len.resize(idx_A.size());
 
-        for (unsigned i = 0;i < idx_A.size();i++)
+        for (auto i : range(idx_A.size()))
         {
             if (is_idx_dense(i, A, idx_A, args...))
             {
@@ -198,16 +198,16 @@ struct index_group
         batch_stride.resize(batch_ndim);
 
         if (batch_ndim > 0) batch_stride[0] = 1;
-        for (unsigned i = 1;i < batch_ndim;i++)
+        for (auto i : range(1,batch_ndim))
             batch_stride[i] = batch_stride[i-1]*batch_len[i-1];
 
-        //fold(detail::static_range<unsigned, N>{});
+        //fold(detail::static_range<int, N>{});
 
-        //auto reorder = sort_by_stride(detail::static_range<unsigned, N>{});
+        //auto reorder = sort_by_stride(detail::static_range<int, N>{});
 
         //stl_ext::permute(dense_len, reorder);
 
-        //for (unsigned i = 0;i < N;i++)
+        //for (int i = 0;i < N;i++)
         //    stl_ext::permute(dense_stride[i], reorder);
     }
 };
@@ -216,11 +216,11 @@ inline void get_mixed_lengths(len_vector&, dim_vector&) {}
 
 template <typename Group, typename... Args>
 void get_mixed_lengths(len_vector& len, dim_vector& off,
-                       const Group& group, unsigned i, const Args&... args)
+                       const Group& group, int i, const Args&... args)
 {
     off.push_back(len.size());
 
-    for (unsigned j : group.mixed_pos[i])
+    for (auto j : group.mixed_pos[i])
     {
         len.push_back(group.batch_len[j]);
     }
@@ -228,23 +228,23 @@ void get_mixed_lengths(len_vector& len, dim_vector& off,
     get_mixed_lengths(len, off, args...);
 }
 
-template <unsigned I, size_t N, typename Array>
+template <int I, size_t N, typename Array>
 void set_batch_indices_helper(std::array<len_vector,N>&,
                               std::array<stride_vector,N>&,
-                              const Array&, unsigned) {}
+                              const Array&, int) {}
 
-template <unsigned I, size_t N, typename Array, typename Group,
+template <int I, size_t N, typename Array, typename Group,
           typename... Args>
 void set_batch_indices_helper(std::array<len_vector,N>& idx,
                               std::array<stride_vector,N>& stride,
-                              const Array& A, unsigned i,
-                              const Group& group, unsigned j,
+                              const Array& A, int i,
+                              const Group& group, int j,
                               const Args&... args)
 {
     idx[I].resize(group.batch_ndim);
     stride[I].resize(group.batch_ndim);
 
-    for (unsigned k = 0;k < group.batch_idx[j].size();k++)
+    for (auto k : range(group.batch_idx[j].size()))
     {
         idx[I][group.batch_pos[j][k]] = A.index(i, group.batch_idx[j][k]);
         stride[I][group.batch_pos[j][k]] = group.batch_stride[group.batch_pos[j][k]];
@@ -256,7 +256,7 @@ void set_batch_indices_helper(std::array<len_vector,N>& idx,
 template <size_t N, typename Array, typename... Args>
 void set_batch_indices(std::array<len_vector,N>& idx,
                        std::array<stride_vector,N>& stride,
-                       const Array& A, unsigned i, const Args&... args)
+                       const Array& A, int i, const Args&... args)
 {
     set_batch_indices_helper<0>(idx, stride, A, i, args...);
 }
@@ -266,14 +266,14 @@ void set_mixed_indices_helper(std::array<len_vector,N>&,
                               std::array<stride_vector,N>&,
                               const viterator<0>&, const dim_vector&) {}
 
-template <unsigned I, size_t N, typename Group, typename... Args>
+template <int I, size_t N, typename Group, typename... Args>
 void set_mixed_indices_helper(std::array<len_vector,N>& idx,
                               std::array<stride_vector,N>& stride,
                               const viterator<0>& iter, const dim_vector& off,
-                              const Group& group, unsigned j,
+                              const Group& group, int j,
                               const Args&... args)
 {
-    for (unsigned k = 0;k < group.mixed_pos[j].size();k++)
+    for (int k : range(group.mixed_pos[j].size()))
     {
         idx[I][group.mixed_pos[j][k]] = iter.position()[off[I]+k];
         stride[I][group.mixed_pos[j][k]] = group.batch_stride[group.mixed_pos[j][k]];
@@ -291,7 +291,7 @@ void set_mixed_indices(std::array<len_vector,N>& idx,
     set_mixed_indices_helper<0>(idx, stride, iter, off, args...);
 }
 
-template <unsigned N>
+template <int N>
 struct index_set
 {
     std::array<stride_type,N> key = {};
@@ -300,7 +300,7 @@ struct index_set
     scalar factor{0.0};
 };
 
-template <unsigned N>
+template <int N>
 struct group_indices : std::vector<index_set<N>>
 {
     template <typename Array, typename... Args>
@@ -336,10 +336,10 @@ struct group_indices : std::vector<index_set<N>>
             {
                 set_mixed_indices(idx.idx, idx_stride, iter, mixed_off, args...);
 
-                for (unsigned j = 0;j < N;j++)
+                for (auto j : range(N))
                 {
                     idx.key[j] = 0;
-                    for (unsigned k = 0;k < idx.idx[j].size();k++)
+                    for (auto k : range(idx.idx[j].size()))
                     {
                         idx.key[j] += idx.idx[j][k]*idx_stride[j][k];
                     }
@@ -357,31 +357,32 @@ struct group_indices : std::vector<index_set<N>>
     }
 };
 
-template <unsigned I, unsigned N>
+template <int I, int N>
 void get_local_offset_helper(const len_vector&, const index_group<N>&) {}
 
-template <unsigned I, unsigned N, typename... Args>
+template <int I, int N, typename... Args>
 void get_local_offset_helper(const len_vector& idx, const index_group<N>& group,
-                             stride_type& off, unsigned i, Args&&... args)
+                             stride_type& off, int i, Args&&... args)
 {
     off = 0;
 
-    TBLIS_ASSERT(i < group.mixed_pos.size());
-    TBLIS_ASSERT(i < group.mixed_stride.size());
+    TBLIS_ASSERT(i >= 0);
+    TBLIS_ASSERT(i < (int)group.mixed_pos.size());
+    TBLIS_ASSERT(i < (int)group.mixed_stride.size());
     TBLIS_ASSERT(group.mixed_pos[i].size() ==
                  group.mixed_stride[i].size());
 
-    for (unsigned j = 0;j < group.mixed_pos[i].size();j++)
+    for (auto j : range(group.mixed_pos[i].size()))
     {
         TBLIS_ASSERT(group.mixed_pos[i][j] >= 0);
-        TBLIS_ASSERT(group.mixed_pos[i][j] < idx.size());
+        TBLIS_ASSERT(group.mixed_pos[i][j] < (int)idx.size());
         off += idx[group.mixed_pos[i][j]]*group.mixed_stride[i][j];
     }
 
     get_local_offset_helper<I+1>(idx, group, std::forward<Args>(args)...);
 }
 
-template <unsigned N, typename... Args>
+template <int N, typename... Args>
 void get_local_offset(const len_vector& idx, const index_group<N>& group,
                       Args&&... args)
 {
@@ -446,12 +447,12 @@ template <> struct call_match_body<true, true, true>
     { body(next_A, next_B, next_C); }
 };
 
-template <bool AIsRange, bool BIsRange, unsigned NA, unsigned NB,
+template <bool AIsRange, bool BIsRange, int NA, int NB,
           typename Body>
 void for_each_match(stride_type& idx_A, stride_type nidx_A,
-                   const group_indices<NA>& indices_A, unsigned iA,
+                   const group_indices<NA>& indices_A, int iA,
                    stride_type& idx_B, stride_type nidx_B,
-                   const group_indices<NB>& indices_B, unsigned iB,
+                   const group_indices<NB>& indices_B, int iB,
                    Body&& body)
 {
     while (idx_A < nidx_A && idx_B < nidx_B)
@@ -492,13 +493,13 @@ void for_each_match(stride_type& idx_A, stride_type nidx_A,
 }
 
 template <bool AIsRange, bool BIsRange, bool CIsRange,
-          unsigned NA, unsigned NB, unsigned NC, typename Body>
+          int NA, int NB, int NC, typename Body>
 void for_each_match(stride_type& idx_A, stride_type nidx_A,
-                   const group_indices<NA>& indices_A, unsigned iA,
+                   const group_indices<NA>& indices_A, int iA,
                    stride_type& idx_B, stride_type nidx_B,
-                   const group_indices<NB>& indices_B, unsigned iB,
+                   const group_indices<NB>& indices_B, int iB,
                    stride_type& idx_C, stride_type nidx_C,
-                   const group_indices<NC>& indices_C, unsigned iC,
+                   const group_indices<NC>& indices_C, int iC,
                    Body&& body)
 {
     while (idx_A < nidx_A && idx_B < nidx_B && idx_C < nidx_C)

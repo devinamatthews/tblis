@@ -87,10 +87,10 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
+    const auto nirrep = A.num_irreps();
 
-    const unsigned irrep_AC = C.irrep();
-    const unsigned irrep_AB = A.irrep()^irrep_AC;
+    const auto irrep_AC = C.irrep();
+    const auto irrep_AB = A.irrep()^irrep_AC;
 
     irrep_iterator irrep_it_AC(irrep_AC, nirrep, idx_A_AC.size());
     irrep_iterator irrep_it_AB(irrep_AB, nirrep, idx_A_AB.size());
@@ -101,7 +101,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 
     while (irrep_it_AC.next())
     {
-        for (unsigned i = 0;i < idx_A_AC.size();i++)
+        for (auto i : range(idx_A_AC.size()))
         {
             irreps_A[idx_A_AC[i]] =
             irreps_C[idx_C_AC[i]] = irrep_it_AC.irrep(i);
@@ -119,7 +119,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
         {
             while (irrep_it_AB.next())
             {
-                for (unsigned i = 0;i < idx_A_AB.size();i++)
+                for (auto i : range(idx_A_AB.size()))
                 {
                     irreps_A[idx_A_AB[i]] =
                     irreps_B[idx_B_AB[i]] = irrep_it_AB.irrep(i);
@@ -165,11 +165,11 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
+    const auto nirrep = A.num_irreps();
 
-    for (unsigned irrep_AC = 0;irrep_AC < nirrep;irrep_AC++)
+    for (auto irrep_AC : range(nirrep))
     {
-        const unsigned irrep_BC = C.irrep()^irrep_AC;
+        const auto irrep_BC = C.irrep()^irrep_AC;
 
         irrep_iterator irrep_it_AC(irrep_AC, nirrep, idx_C_AC.size());
         irrep_iterator irrep_it_BC(irrep_BC, nirrep, idx_C_BC.size());
@@ -181,13 +181,13 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
         while (irrep_it_AC.next())
         while (irrep_it_BC.next())
         {
-            for (unsigned i = 0;i < idx_A_AC.size();i++)
+            for (auto i : range(idx_A_AC.size()))
             {
                 irreps_A[idx_A_AC[i]] =
                 irreps_C[idx_C_AC[i]] = irrep_it_AC.irrep(i);
             }
 
-            for (unsigned i = 0;i < idx_B_BC.size();i++)
+            for (auto i : range(idx_B_BC.size()))
             {
                 irreps_B[idx_B_BC[i]] =
                 irreps_C[idx_C_BC[i]] = irrep_it_BC.irrep(i);
@@ -252,7 +252,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
+    const auto nirrep = A.num_irreps();
 
     std::array<len_vector,3> len;
     std::array<stride_vector,3> stride;
@@ -272,22 +272,23 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     stl_ext::permute(idx_C_AC, perm_AC);
     stl_ext::permute(idx_C_BC, perm_BC);
 
-    unsigned unit_A_AC = unit_dim(stride[0], idx_A_AC);
-    unsigned unit_C_AC = unit_dim(stride[2], idx_C_AC);
-    unsigned unit_B_BC = unit_dim(stride[1], idx_B_BC);
-    unsigned unit_C_BC = unit_dim(stride[2], idx_C_BC);
-    unsigned unit_A_AB = unit_dim(stride[0], idx_A_AB);
-    unsigned unit_B_AB = unit_dim(stride[1], idx_B_AB);
+    auto unit_A_AC = unit_dim(stride[0], idx_A_AC);
+    auto unit_C_AC = unit_dim(stride[2], idx_C_AC);
+    auto unit_B_BC = unit_dim(stride[1], idx_B_BC);
+    auto unit_C_BC = unit_dim(stride[2], idx_C_BC);
+    auto unit_A_AB = unit_dim(stride[0], idx_A_AB);
+    auto unit_B_AB = unit_dim(stride[1], idx_B_AB);
 
-    TBLIS_ASSERT(unit_C_AC == 0 || unit_C_AC == perm_AC.size());
-    TBLIS_ASSERT(unit_C_BC == 0 || unit_C_BC == perm_BC.size());
+    TBLIS_ASSERT(unit_C_AC == 0 || unit_C_AC == (int)perm_AC.size());
+    TBLIS_ASSERT(unit_C_BC == 0 || unit_C_BC == (int)perm_BC.size());
     TBLIS_ASSERT(unit_A_AB == 0 || unit_B_AB == 0 ||
-                 (unit_A_AB == perm_AB.size() && unit_B_AB == perm_AB.size()));
+                 (unit_A_AB == (int)perm_AB.size() &&
+                  unit_B_AB == (int)perm_AB.size()));
 
-    bool pack_M_3d = unit_A_AC > 0 && unit_A_AC < perm_AC.size();
-    bool pack_N_3d = unit_B_BC > 0 && unit_B_BC < perm_BC.size();
-    bool pack_K_3d = (unit_A_AB > 0 && unit_A_AB < perm_AB.size()) ||
-                     (unit_B_AB > 0 && unit_B_AB < perm_AB.size());
+    bool pack_M_3d = unit_A_AC > 0 && unit_A_AC < (int)perm_AC.size();
+    bool pack_N_3d = unit_B_BC > 0 && unit_B_BC < (int)perm_BC.size();
+    bool pack_K_3d = (unit_A_AB > 0 && unit_A_AB < (int)perm_AB.size()) ||
+                     (unit_B_AB > 0 && unit_B_AB < (int)perm_AB.size());
 
     if (pack_M_3d)
     {
@@ -310,10 +311,10 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 
     scalar one(1.0, type);
 
-    for (unsigned irrep_AB = 0;irrep_AB < nirrep;irrep_AB++)
+    for (auto irrep_AB : range(nirrep))
     {
-        const unsigned irrep_AC = A.irrep()^irrep_AB;
-        const unsigned irrep_BC = B.irrep()^irrep_AB;
+        const auto irrep_AC = A.irrep()^irrep_AB;
+        const auto irrep_BC = B.irrep()^irrep_AB;
 
         dpd_tensor_matrix at(alpha, conj_A, A, idx_A_AC, idx_A_AB, irrep_AB, {}, {}, {}, pack_M_3d, pack_K_3d);
         dpd_tensor_matrix bt(  one, conj_B, B, idx_B_AB, idx_B_BC, irrep_BC, {}, {}, {}, pack_K_3d, pack_N_3d);
@@ -334,12 +335,12 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 
             while (row_it.next())
             {
-                for (unsigned i = 0;i < idx_C_AC.size();i++)
+                for (auto i : range(idx_C_AC.size()))
                     irreps[idx_C_AC[i]] = row_it.irrep(i);
 
                 while (col_it.next())
                 {
-                    for (unsigned i = 0;i < idx_C_BC.size();i++)
+                    for (auto i : range(idx_C_BC.size()))
                         irreps[idx_C_BC[i]] = col_it.irrep(i);
 
                     varray_view<char> local_C = C(irreps);
@@ -374,11 +375,11 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
+    const auto nirrep = A.num_irreps();
 
-    const unsigned irrep_ABC = A.irrep()^B.irrep()^C.irrep();
-    const unsigned irrep_AB = A.irrep()^C.irrep();
-    const unsigned irrep_AC = A.irrep()^B.irrep();
+    const auto irrep_ABC = A.irrep()^B.irrep()^C.irrep();
+    const auto irrep_AB = A.irrep()^C.irrep();
+    const auto irrep_AC = A.irrep()^B.irrep();
 
     irrep_iterator irrep_it_ABC(irrep_ABC, nirrep, idx_A_ABC.size());
     irrep_iterator irrep_it_AC(irrep_AC, nirrep, idx_A_AC.size());
@@ -391,14 +392,14 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     while (irrep_it_ABC.next())
     while (irrep_it_AC.next())
     {
-        for (unsigned i = 0;i < idx_A_ABC.size();i++)
+        for (auto i : range(idx_A_ABC.size()))
         {
             irreps_A[idx_A_ABC[i]] =
             irreps_B[idx_B_ABC[i]] =
             irreps_C[idx_C_ABC[i]] = irrep_it_ABC.irrep(i);
         }
 
-        for (unsigned i = 0;i < idx_A_AC.size();i++)
+        for (auto i : range(idx_A_AC.size()))
         {
             irreps_A[idx_A_AC[i]] =
             irreps_C[idx_C_AC[i]] = irrep_it_AC.irrep(i);
@@ -416,7 +417,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 
         while (irrep_it_AB.next())
         {
-            for (unsigned i = 0;i < idx_A_AB.size();i++)
+            for (auto i : range(idx_A_AB.size()))
             {
                 irreps_A[idx_A_AB[i]] =
                 irreps_B[idx_B_AB[i]] = irrep_it_AB.irrep(i);
@@ -457,14 +458,14 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
+    const auto nirrep = A.num_irreps();
 
     irrep_vector irreps_ABC(idx_A_ABC.size());
     len_vector len_ABC(idx_A_ABC.size());
 
-    const unsigned irrep_ABC = A.irrep()^B.irrep()^C.irrep();
-    const unsigned irrep_AC = A.irrep()^irrep_ABC;
-    const unsigned irrep_BC = B.irrep()^irrep_ABC;
+    const auto irrep_ABC = A.irrep()^B.irrep()^C.irrep();
+    const auto irrep_AC = A.irrep()^irrep_ABC;
+    const auto irrep_BC = B.irrep()^irrep_ABC;
 
     irrep_iterator irrep_it_ABC(irrep_ABC, nirrep, idx_C_ABC.size());
     irrep_iterator irrep_it_AC(irrep_AC, nirrep, idx_C_AC.size());
@@ -478,20 +479,20 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     while (irrep_it_AC.next())
     while (irrep_it_BC.next())
     {
-        for (unsigned i = 0;i < idx_A_ABC.size();i++)
+        for (auto i : range(idx_A_ABC.size()))
         {
             irreps_A[idx_A_ABC[i]] =
             irreps_B[idx_B_ABC[i]] =
             irreps_C[idx_C_ABC[i]] = irrep_it_ABC.irrep(i);
         }
 
-        for (unsigned i = 0;i < idx_A_AC.size();i++)
+        for (auto i : range(idx_A_AC.size()))
         {
             irreps_A[idx_A_AC[i]] =
             irreps_C[idx_C_AC[i]] = irrep_it_AC.irrep(i);
         }
 
-        for (unsigned i = 0;i < idx_B_BC.size();i++)
+        for (auto i : range(idx_B_BC.size()))
         {
             irreps_B[idx_B_BC[i]] =
             irreps_C[idx_C_BC[i]] = irrep_it_BC.irrep(i);
@@ -535,7 +536,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
+    const auto nirrep = A.num_irreps();
 
     std::array<len_vector,3> len;
     std::array<stride_vector,3> stride;
@@ -561,22 +562,23 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     stl_ext::permute(idx_B_ABC, perm_ABC);
     stl_ext::permute(idx_C_ABC, perm_ABC);
 
-    unsigned unit_A_AC = unit_dim(stride[0], idx_A_AC);
-    unsigned unit_C_AC = unit_dim(stride[2], idx_C_AC);
-    unsigned unit_B_BC = unit_dim(stride[1], idx_B_BC);
-    unsigned unit_C_BC = unit_dim(stride[2], idx_C_BC);
-    unsigned unit_A_AB = unit_dim(stride[0], idx_A_AB);
-    unsigned unit_B_AB = unit_dim(stride[1], idx_B_AB);
+    auto unit_A_AC = unit_dim(stride[0], idx_A_AC);
+    auto unit_C_AC = unit_dim(stride[2], idx_C_AC);
+    auto unit_B_BC = unit_dim(stride[1], idx_B_BC);
+    auto unit_C_BC = unit_dim(stride[2], idx_C_BC);
+    auto unit_A_AB = unit_dim(stride[0], idx_A_AB);
+    auto unit_B_AB = unit_dim(stride[1], idx_B_AB);
 
-    TBLIS_ASSERT(unit_C_AC == 0 || unit_C_AC == perm_AC.size());
-    TBLIS_ASSERT(unit_C_BC == 0 || unit_C_BC == perm_BC.size());
+    TBLIS_ASSERT(unit_C_AC == 0 || unit_C_AC == (int)perm_AC.size());
+    TBLIS_ASSERT(unit_C_BC == 0 || unit_C_BC == (int)perm_BC.size());
     TBLIS_ASSERT(unit_A_AB == 0 || unit_B_AB == 0 ||
-                 (unit_A_AB == perm_AB.size() && unit_B_AB == perm_AB.size()));
+                 (unit_A_AB == (int)perm_AB.size() &&
+                  unit_B_AB == (int)perm_AB.size()));
 
-    bool pack_M_3d = unit_A_AC > 0 && unit_A_AC < perm_AC.size();
-    bool pack_N_3d = unit_B_BC > 0 && unit_B_BC < perm_BC.size();
-    bool pack_K_3d = (unit_A_AB > 0 && unit_A_AB < perm_AB.size()) ||
-                     (unit_B_AB > 0 && unit_B_AB < perm_AB.size());
+    bool pack_M_3d = unit_A_AC > 0 && unit_A_AC < (int)perm_AC.size();
+    bool pack_N_3d = unit_B_BC > 0 && unit_B_BC < (int)perm_BC.size();
+    bool pack_K_3d = (unit_A_AB > 0 && unit_A_AB < (int)perm_AB.size()) ||
+                     (unit_B_AB > 0 && unit_B_AB < (int)perm_AB.size());
 
     if (pack_M_3d)
     {
@@ -602,17 +604,17 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     irrep_vector irreps_ABC(idx_A_ABC.size());
     len_vector len_ABC(idx_A_ABC.size());
 
-    for (unsigned irrep_ABC = 0;irrep_ABC < nirrep;irrep_ABC++)
-    for (unsigned irrep_AB = 0;irrep_AB < nirrep;irrep_AB++)
+    for (auto irrep_ABC : range(nirrep))
+    for (auto irrep_AB : range(nirrep))
     {
-        unsigned irrep_AC = A.irrep()^irrep_ABC^irrep_AB;
-        unsigned irrep_BC = C.irrep()^irrep_ABC^irrep_AC;
+        auto irrep_AC = A.irrep()^irrep_ABC^irrep_AB;
+        auto irrep_BC = C.irrep()^irrep_ABC^irrep_AC;
 
         irrep_iterator irrep_it_ABC(irrep_ABC, nirrep, idx_A_ABC.size());
 
         while (irrep_it_ABC.next())
         {
-            for (unsigned i = 0;i < idx_A_ABC.size();i++)
+            for (auto i : range(idx_A_ABC.size()))
             {
                 irreps_ABC[i] = irrep_it_ABC.irrep(i);
                 len_ABC[i] = A.length(idx_A_ABC[i], irreps_ABC[i]);
@@ -644,12 +646,12 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 
                     while (row_it.next())
                     {
-                        for (unsigned i = 0;i < idx_C_AC.size();i++)
+                        for (auto i : range(idx_C_AC.size()))
                             irreps[idx_C_AC[i]] = row_it.irrep(i);
 
                         while (col_it.next())
                         {
-                            for (unsigned i = 0;i < idx_C_BC.size();i++)
+                            for (auto i : range(idx_C_BC.size()))
                                 irreps[idx_C_BC[i]] = col_it.irrep(i);
 
                             varray_view<char> local_C = C(irreps);
@@ -688,16 +690,16 @@ void mult_block(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
+    const auto nirrep = A.num_irreps();
 
-    const unsigned ndim_A = A.dimension();
-    const unsigned ndim_B = B.dimension();
-    const unsigned ndim_C = C.dimension();
+    const auto ndim_A = A.dimension();
+    const auto ndim_B = B.dimension();
+    const auto ndim_C = C.dimension();
 
-    const unsigned ndim_AC = idx_C_AC.size();
-    const unsigned ndim_BC = idx_C_BC.size();
-    const unsigned ndim_AB = idx_A_AB.size();
-    const unsigned ndim_ABC = idx_A_ABC.size();
+    const int ndim_AC = idx_C_AC.size();
+    const int ndim_BC = idx_C_BC.size();
+    const int ndim_AB = idx_A_AB.size();
+    const int ndim_ABC = idx_A_ABC.size();
 
     std::array<len_vector,3> len;
     std::array<stride_vector,3> stride;
@@ -718,30 +720,23 @@ void mult_block(type_t type, const communicator& comm, const config& cfg,
     stl_ext::permute(idx_C_AC, perm_AC);
     stl_ext::permute(idx_C_BC, perm_BC);
 
-    stride_type nblock_AC = 1;
-    for (unsigned i = 1;i < idx_C_AC.size();i++) nblock_AC *= nirrep;
-
-    stride_type nblock_BC = 1;
-    for (unsigned i = 1;i < idx_C_BC.size();i++) nblock_BC *= nirrep;
-
-    stride_type nblock_AB = 1;
-    for (unsigned i = 1;i < idx_A_AB.size();i++) nblock_AB *= nirrep;
-
-    stride_type nblock_ABC = 1;
-    for (unsigned i = 1;i < idx_A_ABC.size();i++) nblock_ABC *= nirrep;
+    stride_type nblock_AB = ipow(nirrep, ndim_AB-1);
+    stride_type nblock_AC = ipow(nirrep, ndim_AC-1);
+    stride_type nblock_BC = ipow(nirrep, ndim_BC-1);
+    stride_type nblock_ABC = ipow(nirrep, ndim_ABC-1);
 
     irrep_vector irreps_A(ndim_A);
     irrep_vector irreps_B(ndim_B);
     irrep_vector irreps_C(ndim_C);
 
-    for (unsigned irrep_ABC = 0;irrep_ABC < nirrep;irrep_ABC++)
+    for (auto irrep_ABC : range(nirrep))
     {
         if (ndim_ABC == 0 && irrep_ABC != 0) continue;
 
-        for (unsigned irrep_AB = 0;irrep_AB < nirrep;irrep_AB++)
+        for (auto irrep_AB : range(nirrep))
         {
-            unsigned irrep_AC = A.irrep()^irrep_ABC^irrep_AB;
-            unsigned irrep_BC = C.irrep()^irrep_ABC^irrep_AC;
+            auto irrep_AC = A.irrep()^irrep_ABC^irrep_AB;
+            auto irrep_BC = C.irrep()^irrep_ABC^irrep_AC;
 
             if (ndim_AC == 0 && irrep_AC != 0) continue;
             if (ndim_BC == 0 && irrep_BC != 0) continue;
@@ -847,19 +842,19 @@ void mult_vec(type_t type, const communicator& comm, const config& cfg,
 
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
+    const auto nirrep = A.num_irreps();
 
     irrep_vector irreps_A(idx_A_ABC.size());
     irrep_vector irreps_B(idx_A_ABC.size());
     irrep_vector irreps_C(idx_A_ABC.size());
 
-    const unsigned irrep_ABC = C.irrep();
+    const auto irrep_ABC = C.irrep();
 
     irrep_iterator it_ABC(irrep_ABC, nirrep, idx_A_ABC.size());
 
     while (it_ABC.next())
     {
-        for (unsigned i = 0;i < idx_A_ABC.size();i++)
+        for (auto i : range(1,idx_A_ABC.size()))
         {
             irreps_A[idx_A_ABC[i]] =
             irreps_B[idx_B_ABC[i]] =
@@ -910,21 +905,21 @@ void mult_vec(type_t type, const communicator& comm, const config& cfg,
 
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
+    const auto nirrep = A.num_irreps();
 
     irrep_vector irreps_A(idx_A_ABC.size());
     irrep_vector irreps_B(idx_A_ABC.size());
     irrep_vector irreps_C(idx_A_ABC.size());
 
-    unsigned irrep_ABC = C.irrep();
-    unsigned irrep_AB = A.irrep()^irrep_ABC;
+    auto irrep_ABC = C.irrep();
+    auto irrep_AB = A.irrep()^irrep_ABC;
 
     irrep_iterator it_ABC(irrep_ABC, nirrep, idx_A_ABC.size());
     irrep_iterator it_AB(irrep_AB, nirrep, idx_A_ABC.size());
 
     while (it_ABC.next())
     {
-        for (unsigned i = 0;i < idx_A_ABC.size();i++)
+        for (auto i : range(1,idx_A_ABC.size()))
         {
             irreps_A[idx_A_ABC[i]] =
             irreps_B[idx_B_ABC[i]] =
@@ -943,7 +938,7 @@ void mult_vec(type_t type, const communicator& comm, const config& cfg,
 
         while (it_AB.next())
         {
-            for (unsigned i = 0;i < idx_A_AB.size();i++)
+            for (auto i : range(idx_A_AB.size()))
             {
                 irreps_A[idx_A_AB[i]] =
                 irreps_B[idx_B_AB[i]] = it_AB.irrep(i);
@@ -995,14 +990,14 @@ void mult_vec(type_t type, const communicator& comm, const config& cfg,
 
     const len_type ts = type_size[type];
 
-    const unsigned nirrep = A.num_irreps();
+    const auto nirrep = A.num_irreps();
 
     irrep_vector irreps_A(idx_A_ABC.size());
     irrep_vector irreps_B(idx_A_ABC.size());
     irrep_vector irreps_C(idx_A_ABC.size());
 
-    unsigned irrep_ABC = B.irrep();
-    unsigned irrep_AC = A.irrep()^irrep_ABC;
+    auto irrep_ABC = B.irrep();
+    auto irrep_AC = A.irrep()^irrep_ABC;
 
     irrep_iterator it_ABC(irrep_ABC, nirrep, idx_A_ABC.size());
     irrep_iterator it_AC(irrep_AC, nirrep, idx_A_AC.size());
@@ -1010,14 +1005,14 @@ void mult_vec(type_t type, const communicator& comm, const config& cfg,
     while (it_ABC.next())
     while (it_AC.next())
     {
-        for (unsigned i = 0;i < idx_A_ABC.size();i++)
+        for (auto i : range(1,idx_A_ABC.size()))
         {
             irreps_A[idx_A_ABC[i]] =
             irreps_B[idx_B_ABC[i]] =
             irreps_C[idx_C_ABC[i]] = it_ABC.irrep(i);
         }
 
-        for (unsigned i = 0;i < idx_A_AC.size();i++)
+        for (auto i : range(1,idx_A_AC.size()))
         {
             irreps_A[idx_A_AC[i]] =
             irreps_C[idx_C_AC[i]] = it_AC.irrep(i);

@@ -39,7 +39,6 @@ class scatter_matrix : public abstract_matrix_adapter<scatter_matrix,scatter_mat
                                         : cfg.gemm_nr.extent(type));
             const len_type KR = cfg.gemm_kr.def(type);
 
-            const stride_type ts = type_size[type];
             const len_type m = A.length( trans);
             const len_type k = A.length(!trans);
             const stride_type* rscat = A.scatter( trans);
@@ -98,9 +97,9 @@ class scatter_matrix : public abstract_matrix_adapter<scatter_matrix,scatter_mat
             return impl().data_;
         }
 
-        const stride_type* scatter(unsigned dim) const
+        const stride_type* scatter(int dim) const
         {
-            TBLIS_ASSERT(dim < 2);
+            TBLIS_ASSERT(dim >= 0 && dim < 2);
             return impl().scatter_[dim^transposed()];
         }
 };

@@ -36,7 +36,7 @@ extern "C" void name \
   void*      c, inc_t rs_c, inc_t cs_c, \
   auxinfo_t* data, \
   cntx_t*    cntx \
-);
+)
 
 #ifdef __cplusplus
 

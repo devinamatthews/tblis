@@ -68,48 +68,48 @@ class dpd_varray : public dpd_varray_base<Type, dpd_varray<Type, Allocator>, tru
         template <typename U, typename D, bool O,
             typename=detail::enable_if_assignable_t<reference,U>>
         dpd_varray(const dpd_varray_base<U, D, O>& other,
-                   const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                   const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             reset(other, depth, layout);
         }
 
-        dpd_varray(unsigned irrep, unsigned nirrep,
+        dpd_varray(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len,
                    const Type& val = Type(), dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, val, layout);
         }
 
-        dpd_varray(unsigned irrep, unsigned nirrep,
+        dpd_varray(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len, const Type& val,
-                   const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                   const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, val, depth, layout);
         }
 
-        dpd_varray(unsigned irrep, unsigned nirrep,
+        dpd_varray(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len, dpd_layout layout)
         {
             reset(irrep, nirrep, len, Type(), layout);
         }
 
-        dpd_varray(unsigned irrep, unsigned nirrep,
+        dpd_varray(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len,
-                   const detail::array_1d<unsigned>& depth, layout layout)
+                   const detail::array_1d<int>& depth, layout layout)
         {
             reset(irrep, nirrep, len, Type(), depth, layout);
         }
 
-        dpd_varray(unsigned irrep, unsigned nirrep,
+        dpd_varray(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len, uninitialized_t,
                    dpd_layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, uninitialized, layout);
         }
 
-        dpd_varray(unsigned irrep, unsigned nirrep,
+        dpd_varray(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len, uninitialized_t,
-                   const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                   const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, uninitialized, depth, layout);
         }
@@ -204,7 +204,7 @@ class dpd_varray : public dpd_varray_base<Type, dpd_varray<Type, Allocator>, tru
         template <typename U, typename D, bool O,
             typename=detail::enable_if_assignable_t<reference, U>>
         void reset(const dpd_varray_base<U, D, O>& other,
-                   const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                   const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             auto len = other.lengths();
 
@@ -220,7 +220,7 @@ class dpd_varray : public dpd_varray_base<Type, dpd_varray<Type, Allocator>, tru
             *this = other;
         }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len,
                    const Type& val = Type(), dpd_layout layout = DEFAULT)
         {
@@ -228,28 +228,28 @@ class dpd_varray : public dpd_varray_base<Type, dpd_varray<Type, Allocator>, tru
             std::uninitialized_fill_n(data_, storage_.size, val);
         }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len, const Type& val,
-                   const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                   const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             reset(irrep, nirrep, len, uninitialized, depth, layout);
             std::uninitialized_fill_n(data_, storage_.size, val);
         }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len, dpd_layout layout)
         {
             reset(irrep, nirrep, len, Type(), layout);
         }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len,
-                   const detail::array_1d<unsigned>& depth, layout layout)
+                   const detail::array_1d<int>& depth, layout layout)
         {
             reset(irrep, nirrep, len, Type(), depth, layout);
         }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len, uninitialized_t,
                    dpd_layout layout = DEFAULT)
         {
@@ -261,9 +261,9 @@ class dpd_varray : public dpd_varray_base<Type, dpd_varray<Type, Allocator>, tru
                         layout);
         }
 
-        void reset(unsigned irrep, unsigned nirrep,
+        void reset(int irrep, int nirrep,
                    const detail::array_2d<len_type>& len, uninitialized_t,
-                   const detail::array_1d<unsigned>& depth, layout layout = DEFAULT)
+                   const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
             reset();
 

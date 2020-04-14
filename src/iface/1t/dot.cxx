@@ -22,13 +22,13 @@ void tblis_tensor_dot(const tblis_comm* comm,
     TBLIS_ASSERT(A->type == B->type);
     TBLIS_ASSERT(A->type == result->type);
 
-    unsigned ndim_A = A->ndim;
+    auto ndim_A = A->ndim;
     len_vector len_A;
     stride_vector stride_A;
     label_vector idx_A;
     diagonal(ndim_A, A->len, A->stride, idx_A_, len_A, stride_A, idx_A);
 
-    unsigned ndim_B = B->ndim;
+    auto ndim_B = B->ndim;
     len_vector len_B;
     stride_vector stride_B;
     label_vector idx_B;
@@ -76,19 +76,19 @@ void dot(const communicator& comm,
          dpd_varray_view<const T> A, const label_vector& idx_A,
          dpd_varray_view<const T> B, const label_vector& idx_B, T& result)
 {
-    unsigned nirrep = A.num_irreps();
+    auto nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
 
-    unsigned ndim_A = A.dimension();
-    unsigned ndim_B = B.dimension();
+    auto ndim_A = A.dimension();
+    auto ndim_B = B.dimension();
 
-    for (unsigned i = 1;i < ndim_A;i++)
-        for (unsigned j = 0;j < i;j++)
-            TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+    for (auto i : range(1,ndim_A))
+    for (auto j : range(i))
+        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
 
-    for (unsigned i = 1;i < ndim_B;i++)
-        for (unsigned j = 0;j < i;j++)
-            TBLIS_ASSERT(idx_B[i] != idx_B[j]);
+    for (auto i : range(1,ndim_B))
+    for (auto j : range(i))
+        TBLIS_ASSERT(idx_B[i] != idx_B[j]);
 
     auto idx_AB = stl_ext::intersection(idx_A, idx_B);
     auto idx_A_only = stl_ext::exclusion(idx_A, idx_AB);
@@ -103,13 +103,11 @@ void dot(const communicator& comm,
     auto idx_A_AB = stl_ext::select_from(range_A, idx_A, idx_AB);
     auto idx_B_AB = stl_ext::select_from(range_B, idx_B, idx_AB);
 
-    for (unsigned i = 0;i < idx_AB.size();i++)
+    for (auto i : range(idx_AB.size()))
+    for (auto irrep : range(nirrep))
     {
-        for (unsigned irrep = 0;irrep < nirrep;irrep++)
-        {
-            TBLIS_ASSERT(A.length(idx_A_AB[i], irrep) ==
-                         B.length(idx_B_AB[i], irrep));
-        }
+        TBLIS_ASSERT(A.length(idx_A_AB[i], irrep) ==
+                     B.length(idx_B_AB[i], irrep));
     }
 
     internal::dot(type_tag<T>::value, comm, get_default_config(),
@@ -129,16 +127,16 @@ void dot(const communicator& comm,
          indexed_varray_view<const T> A, const label_vector& idx_A,
          indexed_varray_view<const T> B, const label_vector& idx_B, T& result)
 {
-    unsigned ndim_A = A.dimension();
-    unsigned ndim_B = B.dimension();
+    auto ndim_A = A.dimension();
+    auto ndim_B = B.dimension();
 
-    for (unsigned i = 1;i < ndim_A;i++)
-        for (unsigned j = 0;j < i;j++)
-            TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+    for (auto i : range(1,ndim_A))
+    for (auto j : range(i))
+        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
 
-    for (unsigned i = 1;i < ndim_B;i++)
-        for (unsigned j = 0;j < i;j++)
-            TBLIS_ASSERT(idx_B[i] != idx_B[j]);
+    for (auto i : range(1,ndim_B))
+    for (auto j : range(i))
+        TBLIS_ASSERT(idx_B[i] != idx_B[j]);
 
     auto idx_AB = stl_ext::intersection(idx_A, idx_B);
     auto idx_A_only = stl_ext::exclusion(idx_A, idx_AB);
@@ -153,7 +151,7 @@ void dot(const communicator& comm,
     auto idx_A_AB = stl_ext::select_from(range_A, idx_A, idx_AB);
     auto idx_B_AB = stl_ext::select_from(range_B, idx_B, idx_AB);
 
-    for (unsigned i = 0;i < idx_AB.size();i++)
+    for (auto i : range(idx_AB.size()))
     {
         TBLIS_ASSERT(A.length(idx_A_AB[i]) ==
                      B.length(idx_B_AB[i]));
@@ -176,19 +174,19 @@ void dot(const communicator& comm,
          indexed_dpd_varray_view<const T> A, const label_vector& idx_A,
          indexed_dpd_varray_view<const T> B, const label_vector& idx_B, T& result)
 {
-    unsigned nirrep = A.num_irreps();
+    auto nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
 
-    unsigned ndim_A = A.dimension();
-    unsigned ndim_B = B.dimension();
+    auto ndim_A = A.dimension();
+    auto ndim_B = B.dimension();
 
-    for (unsigned i = 1;i < ndim_A;i++)
-        for (unsigned j = 0;j < i;j++)
-            TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+    for (auto i : range(1,ndim_A))
+    for (auto j : range(i))
+        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
 
-    for (unsigned i = 1;i < ndim_B;i++)
-        for (unsigned j = 0;j < i;j++)
-            TBLIS_ASSERT(idx_B[i] != idx_B[j]);
+    for (auto i : range(1,ndim_B))
+    for (auto j : range(i))
+        TBLIS_ASSERT(idx_B[i] != idx_B[j]);
 
     auto idx_AB = stl_ext::intersection(idx_A, idx_B);
     auto idx_A_only = stl_ext::exclusion(idx_A, idx_AB);
@@ -203,13 +201,11 @@ void dot(const communicator& comm,
     auto idx_A_AB = stl_ext::select_from(range_A, idx_A, idx_AB);
     auto idx_B_AB = stl_ext::select_from(range_B, idx_B, idx_AB);
 
-    for (unsigned i = 0;i < idx_AB.size();i++)
+    for (auto i : range(idx_AB.size()))
+    for (auto irrep : range(nirrep))
     {
-        for (unsigned irrep = 0;irrep < nirrep;irrep++)
-        {
-            TBLIS_ASSERT(A.length(idx_A_AB[i], irrep) ==
-                         B.length(idx_B_AB[i], irrep));
-        }
+        TBLIS_ASSERT(A.length(idx_A_AB[i], irrep) ==
+                     B.length(idx_B_AB[i], irrep));
     }
 
     internal::dot(type_tag<T>::value, comm, get_default_config(),

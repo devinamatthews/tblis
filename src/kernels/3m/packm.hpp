@@ -14,7 +14,7 @@ extern void name(tblis::len_type m, tblis::len_type k, \
                                   tblis::stride_type cs_a, \
                  const void* p_d, tblis::stride_type inc_d, \
                  const void* p_e, tblis::stride_type inc_e, \
-                 void* p_ap);
+                 void* p_ap)
 
 using pack_nn_ukr_t =
 void (*)(len_type m, len_type k, const void* alpha, bool conj,
@@ -28,7 +28,7 @@ extern void name(tblis::len_type m, tblis::len_type k, \
                  const void* alpha, bool conj, \
                  const void* p_a, const tblis::stride_type* rscat_a, \
                                   const tblis::stride_type* cscat_a, \
-                 void* p_ap);
+                 void* p_ap)
 
 using pack_ss_ukr_t =
 void (*)(len_type m, len_type k, const void* alpha, bool conj,
@@ -41,7 +41,7 @@ extern void name(tblis::len_type m, tblis::len_type k, \
                  const void* p_a, tblis::stride_type rs_a, \
                                   const tblis::stride_type* cscat_a, \
                                   const tblis::stride_type* cbs_a, \
-                 void* p_ap);
+                 void* p_ap)
 
 using pack_nb_ukr_t =
 void (*)(len_type m, len_type k, const void* alpha, bool conj,
@@ -56,7 +56,7 @@ extern void name(tblis::len_type m, tblis::len_type k, \
                                   const void* rscale_a, \
                                   const tblis::stride_type* cscat_a, \
                                   const void* cscale_a, \
-                 void* p_ap);
+                 void* p_ap)
 
 using pack_ss_scal_ukr_t =
 void (*)(len_type m, len_type k, const void* alpha, bool conj,

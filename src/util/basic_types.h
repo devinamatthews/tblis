@@ -72,9 +72,10 @@ inline void tblis_check_assert(const char*, bool cond, const char* fmt, Args&&..
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 #include <string>
+#include <type_traits>
+#include <memory>
 
 #include "../memory/aligned_allocator.hpp"
-
 #include "../external/stl_ext/include/complex.hpp"
 
 #if defined(TBLIS_DEBUG) && !defined(MARRAY_ENABLE_ASSERTS)

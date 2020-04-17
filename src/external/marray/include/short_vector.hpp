@@ -660,7 +660,7 @@ class short_vector
         }
 
         template <typename T_=T>
-        typename std::enable_if<!std::is_nothrow_move_constructible<T_>::value>::type
+        typename std::enable_if<!std::is_nothrow_move_constructible<T_>::value,iterator>::type
         _uninitialized_move_n_if(iterator first, size_type n, iterator result)
         {
             return _construct(first, first+n, result);

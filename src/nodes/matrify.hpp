@@ -11,6 +11,8 @@
 
 #include "configs/configs.hpp"
 
+#include <type_traits>
+
 namespace tblis
 {
 

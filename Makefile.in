@@ -338,10 +338,9 @@ lib_libskx2_la_LIBADD =
 am__lib_libskx2_la_SOURCES_DIST =  \
 	src/configs/skx2/bli_sgemm_opt_12x32_l2.c \
 	src/configs/skx2/bli_dgemm_opt_12x16_l2.c \
-	src/configs/skx2/vpu_count.cxx src/configs/skx2/config_ker.cxx
+	src/configs/skx2/config_ker.cxx
 @ENABLE_SKX2_TRUE@am_lib_libskx2_la_OBJECTS = src/configs/skx2/lib_libskx2_la-bli_sgemm_opt_12x32_l2.lo \
 @ENABLE_SKX2_TRUE@	src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_12x16_l2.lo \
-@ENABLE_SKX2_TRUE@	src/configs/skx2/lib_libskx2_la-vpu_count.lo \
 @ENABLE_SKX2_TRUE@	src/configs/skx2/lib_libskx2_la-config_ker.lo
 lib_libskx2_la_OBJECTS = $(am_lib_libskx2_la_OBJECTS)
 lib_libskx2_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
@@ -546,7 +545,6 @@ am__depfiles_remade = src/configs/$(DEPDIR)/configs.Plo \
 	src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_dgemm_opt_12x16_l2.Plo \
 	src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_sgemm_opt_12x32_l2.Plo \
 	src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config_ker.Plo \
-	src/configs/skx2/$(DEPDIR)/lib_libskx2_la-vpu_count.Plo \
 	src/configs/skx2/$(DEPDIR)/vpu_count.Plo \
 	src/configs/zen/$(DEPDIR)/config.Plo \
 	src/configs/zen/$(DEPDIR)/lib_libzen_la-config_ker.Plo \
@@ -1149,7 +1147,6 @@ lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la \
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SKX1_TRUE@lib_libskx1_la_CXXFLAGS = -O3 -xCORE-AVX512
 @ENABLE_SKX2_TRUE@lib_libskx2_la_SOURCES = src/configs/skx2/bli_sgemm_opt_12x32_l2.c \
 @ENABLE_SKX2_TRUE@                         src/configs/skx2/bli_dgemm_opt_12x16_l2.c \
-@ENABLE_SKX2_TRUE@                         src/configs/skx2/vpu_count.cxx \
 @ENABLE_SKX2_TRUE@                         src/configs/skx2/config_ker.cxx
 
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SKX2_TRUE@@IS_OSX_FALSE@lib_libskx2_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
@@ -1472,9 +1469,6 @@ src/configs/skx2/lib_libskx2_la-bli_sgemm_opt_12x32_l2.lo:  \
 	src/configs/skx2/$(am__dirstamp) \
 	src/configs/skx2/$(DEPDIR)/$(am__dirstamp)
 src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_12x16_l2.lo:  \
-	src/configs/skx2/$(am__dirstamp) \
-	src/configs/skx2/$(DEPDIR)/$(am__dirstamp)
-src/configs/skx2/lib_libskx2_la-vpu_count.lo:  \
 	src/configs/skx2/$(am__dirstamp) \
 	src/configs/skx2/$(DEPDIR)/$(am__dirstamp)
 src/configs/skx2/lib_libskx2_la-config_ker.lo:  \
@@ -1993,7 +1987,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_dgemm_opt_12x16_l2.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_sgemm_opt_12x32_l2.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config_ker.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/lib_libskx2_la-vpu_count.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/vpu_count.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/zen/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/zen/$(DEPDIR)/lib_libzen_la-config_ker.Plo@am__quote@ # am--include-marker
@@ -2308,13 +2301,6 @@ src/configs/skx1/lib_libskx1_la-config_ker.lo: src/configs/skx1/config_ker.cxx
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/skx1/config_ker.cxx' object='src/configs/skx1/lib_libskx1_la-config_ker.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx1_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/skx1/lib_libskx1_la-config_ker.lo `test -f 'src/configs/skx1/config_ker.cxx' || echo '$(srcdir)/'`src/configs/skx1/config_ker.cxx
-
-src/configs/skx2/lib_libskx2_la-vpu_count.lo: src/configs/skx2/vpu_count.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx2_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/skx2/lib_libskx2_la-vpu_count.lo -MD -MP -MF src/configs/skx2/$(DEPDIR)/lib_libskx2_la-vpu_count.Tpo -c -o src/configs/skx2/lib_libskx2_la-vpu_count.lo `test -f 'src/configs/skx2/vpu_count.cxx' || echo '$(srcdir)/'`src/configs/skx2/vpu_count.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/skx2/$(DEPDIR)/lib_libskx2_la-vpu_count.Tpo src/configs/skx2/$(DEPDIR)/lib_libskx2_la-vpu_count.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/skx2/vpu_count.cxx' object='src/configs/skx2/lib_libskx2_la-vpu_count.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx2_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/skx2/lib_libskx2_la-vpu_count.lo `test -f 'src/configs/skx2/vpu_count.cxx' || echo '$(srcdir)/'`src/configs/skx2/vpu_count.cxx
 
 src/configs/skx2/lib_libskx2_la-config_ker.lo: src/configs/skx2/config_ker.cxx
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx2_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/skx2/lib_libskx2_la-config_ker.lo -MD -MP -MF src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config_ker.Tpo -c -o src/configs/skx2/lib_libskx2_la-config_ker.lo `test -f 'src/configs/skx2/config_ker.cxx' || echo '$(srcdir)/'`src/configs/skx2/config_ker.cxx
@@ -3032,7 +3018,6 @@ distclean: distclean-recursive
 	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_dgemm_opt_12x16_l2.Plo
 	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_sgemm_opt_12x32_l2.Plo
 	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config_ker.Plo
-	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-vpu_count.Plo
 	-rm -f src/configs/skx2/$(DEPDIR)/vpu_count.Plo
 	-rm -f src/configs/zen/$(DEPDIR)/config.Plo
 	-rm -f src/configs/zen/$(DEPDIR)/lib_libzen_la-config_ker.Plo
@@ -3212,7 +3197,6 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_dgemm_opt_12x16_l2.Plo
 	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_sgemm_opt_12x32_l2.Plo
 	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config_ker.Plo
-	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-vpu_count.Plo
 	-rm -f src/configs/skx2/$(DEPDIR)/vpu_count.Plo
 	-rm -f src/configs/zen/$(DEPDIR)/config.Plo
 	-rm -f src/configs/zen/$(DEPDIR)/lib_libzen_la-config_ker.Plo

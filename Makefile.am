@@ -376,7 +376,6 @@ lib_libtblis_la_SOURCES += src/configs/skx2/vpu_count.cxx \
                            src/configs/skx2/config.cxx
 lib_libskx2_la_SOURCES = src/configs/skx2/bli_sgemm_opt_12x32_l2.c \
                          src/configs/skx2/bli_dgemm_opt_12x16_l2.c \
-                         src/configs/skx2/vpu_count.cxx \
                          src/configs/skx2/config_ker.cxx
 #                        src/configs/skx2/bli_dgemm_opt_12x16_l1.c \
 #                         src/configs/skx2/bli_dgemm_opt_8x8_l1.c \

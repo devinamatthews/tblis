@@ -97,33 +97,49 @@ host_triplet = @host@
 #
 @ENABLE_BULLDOZER_TRUE@am__append_3 = lib/libbulldozer.la
 @ENABLE_BULLDOZER_TRUE@am__append_4 = lib/libbulldozer.la
-@ENABLE_PILEDRIVER_TRUE@am__append_5 = lib/libpiledriver.la
+@ENABLE_BULLDOZER_TRUE@am__append_5 = src/configs/bulldozer/config.cxx
 @ENABLE_PILEDRIVER_TRUE@am__append_6 = lib/libpiledriver.la
-@ENABLE_EXCAVATOR_TRUE@am__append_7 = lib/libexcavator.la
-@ENABLE_EXCAVATOR_TRUE@am__append_8 = lib/libexcavator.la
-@ENABLE_ZEN_TRUE@am__append_9 = lib/libzen.la
-@ENABLE_ZEN_TRUE@am__append_10 = lib/libzen.la
+@ENABLE_PILEDRIVER_TRUE@am__append_7 = lib/libpiledriver.la
+@ENABLE_PILEDRIVER_TRUE@am__append_8 = src/configs/piledriver/config.cxx
+@ENABLE_EXCAVATOR_TRUE@am__append_9 = lib/libexcavator.la
+@ENABLE_EXCAVATOR_TRUE@am__append_10 = lib/libexcavator.la
+@ENABLE_EXCAVATOR_TRUE@am__append_11 = src/configs/excavator/config.cxx
+@ENABLE_EXCAVATOR_TRUE@@ENABLE_PILEDRIVER_FALSE@am__append_12 = src/configs/excavator/bli_gemm_asm_d8x3.c
+@ENABLE_ZEN_TRUE@am__append_13 = lib/libzen.la
+@ENABLE_ZEN_TRUE@am__append_14 = lib/libzen.la
+@ENABLE_ZEN_TRUE@am__append_15 = src/configs/zen/config.cxx
+@ENABLE_HASWELL_FALSE@@ENABLE_ZEN_TRUE@am__append_16 = src/configs/haswell/bli_gemm_asm_d6x8.c
 
 #
 # Intel architectures
 #
-@ENABLE_CORE2_TRUE@am__append_11 = lib/libcore2.la
-@ENABLE_CORE2_TRUE@am__append_12 = lib/libcore2.la
-@ENABLE_SANDYBRIDGE_TRUE@am__append_13 = lib/libsandybridge.la
-@ENABLE_SANDYBRIDGE_TRUE@am__append_14 = lib/libsandybridge.la
-@ENABLE_HASWELL_TRUE@am__append_15 = lib/libhaswell.la
-@ENABLE_HASWELL_TRUE@am__append_16 = lib/libhaswell.la
-@ENABLE_KNL_TRUE@am__append_17 = lib/libknl.la
-@ENABLE_KNL_TRUE@am__append_18 = lib/libknl.la
-@ENABLE_SKX1_TRUE@am__append_19 = lib/libskx1.la
-@ENABLE_SKX1_TRUE@am__append_20 = lib/libskx1.la
-@ENABLE_SKX2_TRUE@am__append_21 = lib/libskx2.la
-@ENABLE_SKX2_TRUE@am__append_22 = lib/libskx2.la
+@ENABLE_CORE2_TRUE@am__append_17 = lib/libcore2.la
+@ENABLE_CORE2_TRUE@am__append_18 = lib/libcore2.la
+@ENABLE_CORE2_TRUE@am__append_19 = src/configs/core2/config.cxx
+@ENABLE_SANDYBRIDGE_TRUE@am__append_20 = lib/libsandybridge.la
+@ENABLE_SANDYBRIDGE_TRUE@am__append_21 = lib/libsandybridge.la
+@ENABLE_SANDYBRIDGE_TRUE@am__append_22 = src/configs/sandybridge/config.cxx
+@ENABLE_HASWELL_TRUE@am__append_23 = lib/libhaswell.la
+@ENABLE_HASWELL_TRUE@am__append_24 = lib/libhaswell.la
+@ENABLE_HASWELL_TRUE@am__append_25 = src/configs/haswell/config.cxx
+@ENABLE_KNL_TRUE@am__append_26 = lib/libknl.la
+@ENABLE_KNL_TRUE@am__append_27 = lib/libknl.la
+@ENABLE_KNL_TRUE@am__append_28 = src/configs/knl/config.cxx
+@ENABLE_SKX1_TRUE@am__append_29 = lib/libskx1.la
+@ENABLE_SKX1_TRUE@am__append_30 = lib/libskx1.la
+@ENABLE_SKX1_TRUE@am__append_31 = src/configs/skx1/config.cxx
+@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@am__append_32 = src/configs/skx2/vpu_count.cxx
+@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@am__append_33 = src/configs/haswell/bli_gemm_asm_d6x8.c
+@ENABLE_SKX2_TRUE@am__append_34 = lib/libskx2.la
+@ENABLE_SKX2_TRUE@am__append_35 = lib/libskx2.la
+@ENABLE_SKX2_TRUE@am__append_36 = src/configs/skx2/vpu_count.cxx \
+@ENABLE_SKX2_TRUE@                           src/configs/skx2/config.cxx
+
 noinst_PROGRAMS = bin/test$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
 	$(am__EXEEXT_3)
-@ENABLE_BLAS_TRUE@am__append_23 = bin/bench bin/batched_bench #bin/dpd_bench
-@ENABLE_BLAS_TRUE@@ENABLE_SKX1_TRUE@am__append_24 = bin/skx_bench
-@ENABLE_BLAS_TRUE@@ENABLE_SKX1_FALSE@@ENABLE_SKX2_TRUE@am__append_25 = bin/skx_bench
+@ENABLE_BLAS_TRUE@am__append_37 = bin/bench bin/batched_bench #bin/dpd_bench
+@ENABLE_BLAS_TRUE@@ENABLE_SKX1_TRUE@am__append_38 = bin/skx_bench
+@ENABLE_BLAS_TRUE@@ENABLE_SKX1_FALSE@@ENABLE_SKX2_TRUE@am__append_39 = bin/skx_bench
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/as-gcc-inline-assembly.m4 \
@@ -201,10 +217,10 @@ LTLIBRARIES = $(lib_LTLIBRARIES) $(noinst_LTLIBRARIES)
 lib_libbulldozer_la_LIBADD =
 am__lib_libbulldozer_la_SOURCES_DIST =  \
 	src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c \
-	src/configs/bulldozer/config.cxx
+	src/configs/bulldozer/config_ker.cxx
 am__dirstamp = $(am__leading_dot)dirstamp
 @ENABLE_BULLDOZER_TRUE@am_lib_libbulldozer_la_OBJECTS = src/configs/bulldozer/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.lo \
-@ENABLE_BULLDOZER_TRUE@	src/configs/bulldozer/lib_libbulldozer_la-config.lo
+@ENABLE_BULLDOZER_TRUE@	src/configs/bulldozer/lib_libbulldozer_la-config_ker.lo
 lib_libbulldozer_la_OBJECTS = $(am_lib_libbulldozer_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -218,9 +234,9 @@ lib_libbulldozer_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 lib_libcore2_la_LIBADD =
 am__lib_libcore2_la_SOURCES_DIST =  \
 	src/configs/core2/bli_gemm_asm_d4x4.c \
-	src/configs/core2/config.cxx
+	src/configs/core2/config_ker.cxx
 @ENABLE_CORE2_TRUE@am_lib_libcore2_la_OBJECTS = src/configs/core2/lib_libcore2_la-bli_gemm_asm_d4x4.lo \
-@ENABLE_CORE2_TRUE@	src/configs/core2/lib_libcore2_la-config.lo
+@ENABLE_CORE2_TRUE@	src/configs/core2/lib_libcore2_la-config_ker.lo
 lib_libcore2_la_OBJECTS = $(am_lib_libcore2_la_OBJECTS)
 lib_libcore2_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -229,11 +245,11 @@ lib_libcore2_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 @ENABLE_CORE2_TRUE@am_lib_libcore2_la_rpath =
 lib_libexcavator_la_LIBADD =
 am__lib_libexcavator_la_SOURCES_DIST =  \
-	src/configs/excavator/bli_gemm_asm_d8x3.c \
-	src/configs/excavator/config.cxx
-@ENABLE_EXCAVATOR_TRUE@@ENABLE_PILEDRIVER_FALSE@am_lib_libexcavator_la_OBJECTS = src/configs/excavator/lib_libexcavator_la-bli_gemm_asm_d8x3.lo \
-@ENABLE_EXCAVATOR_TRUE@@ENABLE_PILEDRIVER_FALSE@	src/configs/excavator/lib_libexcavator_la-config.lo
-@ENABLE_EXCAVATOR_TRUE@@ENABLE_PILEDRIVER_TRUE@am_lib_libexcavator_la_OBJECTS = src/configs/excavator/lib_libexcavator_la-config.lo
+	src/configs/excavator/config_ker.cxx \
+	src/configs/excavator/bli_gemm_asm_d8x3.c
+@ENABLE_EXCAVATOR_TRUE@@ENABLE_PILEDRIVER_FALSE@am__objects_1 = src/configs/excavator/lib_libexcavator_la-bli_gemm_asm_d8x3.lo
+@ENABLE_EXCAVATOR_TRUE@am_lib_libexcavator_la_OBJECTS = src/configs/excavator/lib_libexcavator_la-config_ker.lo \
+@ENABLE_EXCAVATOR_TRUE@	$(am__objects_1)
 lib_libexcavator_la_OBJECTS = $(am_lib_libexcavator_la_OBJECTS)
 lib_libexcavator_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -243,9 +259,9 @@ lib_libexcavator_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 lib_libhaswell_la_LIBADD =
 am__lib_libhaswell_la_SOURCES_DIST =  \
 	src/configs/haswell/bli_gemm_asm_d6x8.c \
-	src/configs/haswell/config.cxx
+	src/configs/haswell/config_ker.cxx
 @ENABLE_HASWELL_TRUE@am_lib_libhaswell_la_OBJECTS = src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d6x8.lo \
-@ENABLE_HASWELL_TRUE@	src/configs/haswell/lib_libhaswell_la-config.lo
+@ENABLE_HASWELL_TRUE@	src/configs/haswell/lib_libhaswell_la-config_ker.lo
 lib_libhaswell_la_OBJECTS = $(am_lib_libhaswell_la_OBJECTS)
 lib_libhaswell_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -259,13 +275,13 @@ am__lib_libknl_la_SOURCES_DIST =  \
 	src/configs/knl/bli_dpackm_opt_30x8.c \
 	src/configs/knl/bli_sgemm_opt_24x16.c \
 	src/configs/knl/bli_dgemm_opt_24x8.c \
-	src/configs/knl/config.cxx
+	src/configs/knl/config_ker.cxx
 @ENABLE_KNL_TRUE@am_lib_libknl_la_OBJECTS = src/configs/knl/lib_libknl_la-bli_spackm_opt_24x16.lo \
 @ENABLE_KNL_TRUE@	src/configs/knl/lib_libknl_la-bli_dpackm_opt_24x8.lo \
 @ENABLE_KNL_TRUE@	src/configs/knl/lib_libknl_la-bli_dpackm_opt_30x8.lo \
 @ENABLE_KNL_TRUE@	src/configs/knl/lib_libknl_la-bli_sgemm_opt_24x16.lo \
 @ENABLE_KNL_TRUE@	src/configs/knl/lib_libknl_la-bli_dgemm_opt_24x8.lo \
-@ENABLE_KNL_TRUE@	src/configs/knl/lib_libknl_la-config.lo
+@ENABLE_KNL_TRUE@	src/configs/knl/lib_libknl_la-config_ker.lo
 lib_libknl_la_OBJECTS = $(am_lib_libknl_la_OBJECTS)
 lib_libknl_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -275,9 +291,9 @@ lib_libknl_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 lib_libpiledriver_la_LIBADD =
 am__lib_libpiledriver_la_SOURCES_DIST =  \
 	src/configs/piledriver/bli_gemm_asm_d8x3.c \
-	src/configs/piledriver/config.cxx
+	src/configs/piledriver/config_ker.cxx
 @ENABLE_PILEDRIVER_TRUE@am_lib_libpiledriver_la_OBJECTS = src/configs/piledriver/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo \
-@ENABLE_PILEDRIVER_TRUE@	src/configs/piledriver/lib_libpiledriver_la-config.lo
+@ENABLE_PILEDRIVER_TRUE@	src/configs/piledriver/lib_libpiledriver_la-config_ker.lo
 lib_libpiledriver_la_OBJECTS = $(am_lib_libpiledriver_la_OBJECTS)
 lib_libpiledriver_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -297,9 +313,9 @@ lib_libreference_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 lib_libsandybridge_la_LIBADD =
 am__lib_libsandybridge_la_SOURCES_DIST =  \
 	src/configs/sandybridge/bli_gemm_asm_d8x4.c \
-	src/configs/sandybridge/config.cxx
+	src/configs/sandybridge/config_ker.cxx
 @ENABLE_SANDYBRIDGE_TRUE@am_lib_libsandybridge_la_OBJECTS = src/configs/sandybridge/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo \
-@ENABLE_SANDYBRIDGE_TRUE@	src/configs/sandybridge/lib_libsandybridge_la-config.lo
+@ENABLE_SANDYBRIDGE_TRUE@	src/configs/sandybridge/lib_libsandybridge_la-config_ker.lo
 lib_libsandybridge_la_OBJECTS = $(am_lib_libsandybridge_la_OBJECTS)
 lib_libsandybridge_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -307,17 +323,11 @@ lib_libsandybridge_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(LDFLAGS) -o $@
 @ENABLE_SANDYBRIDGE_TRUE@am_lib_libsandybridge_la_rpath =
 lib_libskx1_la_LIBADD =
-am__lib_libskx1_la_SOURCES_DIST =  \
-	src/configs/haswell/bli_gemm_asm_d6x8.c \
-	src/configs/skx2/vpu_count.cxx src/configs/skx1/config.cxx
-@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@am_lib_libskx1_la_OBJECTS = src/configs/haswell/lib_libskx1_la-bli_gemm_asm_d6x8.lo \
-@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@	src/configs/skx2/lib_libskx1_la-vpu_count.lo \
-@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@	src/configs/skx1/lib_libskx1_la-config.lo
-@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_TRUE@am_lib_libskx1_la_OBJECTS = src/configs/haswell/lib_libskx1_la-bli_gemm_asm_d6x8.lo \
-@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_TRUE@	src/configs/skx1/lib_libskx1_la-config.lo
-@ENABLE_HASWELL_TRUE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@am_lib_libskx1_la_OBJECTS = src/configs/skx2/lib_libskx1_la-vpu_count.lo \
-@ENABLE_HASWELL_TRUE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@	src/configs/skx1/lib_libskx1_la-config.lo
-@ENABLE_HASWELL_TRUE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_TRUE@am_lib_libskx1_la_OBJECTS = src/configs/skx1/lib_libskx1_la-config.lo
+am__lib_libskx1_la_SOURCES_DIST = src/configs/skx1/config_ker.cxx \
+	src/configs/haswell/bli_gemm_asm_d6x8.c
+@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@am__objects_2 = src/configs/haswell/lib_libskx1_la-bli_gemm_asm_d6x8.lo
+@ENABLE_SKX1_TRUE@am_lib_libskx1_la_OBJECTS = src/configs/skx1/lib_libskx1_la-config_ker.lo \
+@ENABLE_SKX1_TRUE@	$(am__objects_2)
 lib_libskx1_la_OBJECTS = $(am_lib_libskx1_la_OBJECTS)
 lib_libskx1_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -328,11 +338,11 @@ lib_libskx2_la_LIBADD =
 am__lib_libskx2_la_SOURCES_DIST =  \
 	src/configs/skx2/bli_sgemm_opt_12x32_l2.c \
 	src/configs/skx2/bli_dgemm_opt_12x16_l2.c \
-	src/configs/skx2/vpu_count.cxx src/configs/skx2/config.cxx
+	src/configs/skx2/vpu_count.cxx src/configs/skx2/config_ker.cxx
 @ENABLE_SKX2_TRUE@am_lib_libskx2_la_OBJECTS = src/configs/skx2/lib_libskx2_la-bli_sgemm_opt_12x32_l2.lo \
 @ENABLE_SKX2_TRUE@	src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_12x16_l2.lo \
 @ENABLE_SKX2_TRUE@	src/configs/skx2/lib_libskx2_la-vpu_count.lo \
-@ENABLE_SKX2_TRUE@	src/configs/skx2/lib_libskx2_la-config.lo
+@ENABLE_SKX2_TRUE@	src/configs/skx2/lib_libskx2_la-config_ker.lo
 lib_libskx2_la_OBJECTS = $(am_lib_libskx2_la_OBJECTS)
 lib_libskx2_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -340,10 +350,75 @@ lib_libskx2_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(LDFLAGS) -o $@
 @ENABLE_SKX2_TRUE@am_lib_libskx2_la_rpath =
 lib_libtblis_la_DEPENDENCIES = src/external/tci/lib/libtci.la \
-	$(am__append_2) $(am__append_4) $(am__append_6) \
-	$(am__append_8) $(am__append_10) $(am__append_12) \
-	$(am__append_14) $(am__append_16) $(am__append_18) \
-	$(am__append_20) $(am__append_22)
+	$(am__append_2) $(am__append_4) $(am__append_7) \
+	$(am__append_10) $(am__append_14) $(am__append_18) \
+	$(am__append_21) $(am__append_24) $(am__append_27) \
+	$(am__append_30) $(am__append_35)
+am__lib_libtblis_la_SOURCES_DIST = src/iface/1v/add.cxx \
+	src/iface/1v/dot.cxx src/iface/1v/mult.cxx \
+	src/iface/1v/reduce.cxx src/iface/1v/scale.cxx \
+	src/iface/1v/set.cxx src/iface/1v/shift.cxx \
+	src/iface/1m/add.cxx src/iface/1m/dot.cxx \
+	src/iface/1m/reduce.cxx src/iface/1m/scale.cxx \
+	src/iface/1m/set.cxx src/iface/1m/shift.cxx \
+	src/iface/1t/add.cxx src/iface/1t/dot.cxx \
+	src/iface/1t/reduce.cxx src/iface/1t/scale.cxx \
+	src/iface/1t/set.cxx src/iface/1t/shift.cxx \
+	src/iface/2m/mult.cxx src/iface/3m/mult.cxx \
+	src/iface/3t/mult.cxx src/internal/1v/add.cxx \
+	src/internal/1v/dot.cxx src/internal/1v/mult.cxx \
+	src/internal/1v/reduce.cxx src/internal/1v/scale.cxx \
+	src/internal/1v/set.cxx src/internal/1v/shift.cxx \
+	src/internal/1m/add.cxx src/internal/1m/dot.cxx \
+	src/internal/1m/reduce.cxx src/internal/1m/scale.cxx \
+	src/internal/1m/set.cxx src/internal/1m/shift.cxx \
+	src/internal/1t/dense/add.cxx src/internal/1t/dense/dot.cxx \
+	src/internal/1t/dense/reduce.cxx \
+	src/internal/1t/dense/scale.cxx src/internal/1t/dense/set.cxx \
+	src/internal/1t/dense/shift.cxx src/internal/1t/dpd/add.cxx \
+	src/internal/1t/dpd/dot.cxx src/internal/1t/dpd/reduce.cxx \
+	src/internal/1t/dpd/scale.cxx src/internal/1t/dpd/set.cxx \
+	src/internal/1t/dpd/shift.cxx src/internal/1t/indexed/add.cxx \
+	src/internal/1t/indexed/dot.cxx \
+	src/internal/1t/indexed/reduce.cxx \
+	src/internal/1t/indexed/scale.cxx \
+	src/internal/1t/indexed/set.cxx \
+	src/internal/1t/indexed/shift.cxx \
+	src/internal/1t/indexed_dpd/add.cxx \
+	src/internal/1t/indexed_dpd/dot.cxx \
+	src/internal/1t/indexed_dpd/reduce.cxx \
+	src/internal/1t/indexed_dpd/scale.cxx \
+	src/internal/1t/indexed_dpd/set.cxx \
+	src/internal/1t/indexed_dpd/shift.cxx src/internal/2m/mult.cxx \
+	src/internal/3m/mult.cxx src/internal/3t/dense/mult.cxx \
+	src/internal/3t/dpd/mult.cxx src/internal/3t/indexed/mult.cxx \
+	src/internal/3t/indexed_dpd/mult.cxx src/configs/configs.cxx \
+	src/util/basic_types.cxx src/util/configs.cxx \
+	src/util/cpuid.cxx src/util/env.cxx src/util/random.cxx \
+	src/util/thread.cxx src/configs/bulldozer/config.cxx \
+	src/configs/piledriver/config.cxx \
+	src/configs/excavator/config.cxx src/configs/zen/config.cxx \
+	src/configs/core2/config.cxx \
+	src/configs/sandybridge/config.cxx \
+	src/configs/haswell/config.cxx src/configs/knl/config.cxx \
+	src/configs/skx1/config.cxx src/configs/skx2/vpu_count.cxx \
+	src/configs/skx2/config.cxx
+@ENABLE_BULLDOZER_TRUE@am__objects_3 =  \
+@ENABLE_BULLDOZER_TRUE@	src/configs/bulldozer/config.lo
+@ENABLE_PILEDRIVER_TRUE@am__objects_4 =  \
+@ENABLE_PILEDRIVER_TRUE@	src/configs/piledriver/config.lo
+@ENABLE_EXCAVATOR_TRUE@am__objects_5 =  \
+@ENABLE_EXCAVATOR_TRUE@	src/configs/excavator/config.lo
+@ENABLE_ZEN_TRUE@am__objects_6 = src/configs/zen/config.lo
+@ENABLE_CORE2_TRUE@am__objects_7 = src/configs/core2/config.lo
+@ENABLE_SANDYBRIDGE_TRUE@am__objects_8 =  \
+@ENABLE_SANDYBRIDGE_TRUE@	src/configs/sandybridge/config.lo
+@ENABLE_HASWELL_TRUE@am__objects_9 = src/configs/haswell/config.lo
+@ENABLE_KNL_TRUE@am__objects_10 = src/configs/knl/config.lo
+@ENABLE_SKX1_TRUE@am__objects_11 = src/configs/skx1/config.lo
+@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@am__objects_12 = src/configs/skx2/vpu_count.lo
+@ENABLE_SKX2_TRUE@am__objects_13 = src/configs/skx2/vpu_count.lo \
+@ENABLE_SKX2_TRUE@	src/configs/skx2/config.lo
 am_lib_libtblis_la_OBJECTS = src/iface/1v/add.lo src/iface/1v/dot.lo \
 	src/iface/1v/mult.lo src/iface/1v/reduce.lo \
 	src/iface/1v/scale.lo src/iface/1v/set.lo \
@@ -382,15 +457,19 @@ am_lib_libtblis_la_OBJECTS = src/iface/1v/add.lo src/iface/1v/dot.lo \
 	src/internal/3t/dpd/mult.lo src/internal/3t/indexed/mult.lo \
 	src/internal/3t/indexed_dpd/mult.lo src/configs/configs.lo \
 	src/util/basic_types.lo src/util/configs.lo src/util/cpuid.lo \
-	src/util/env.lo src/util/random.lo src/util/thread.lo
+	src/util/env.lo src/util/random.lo src/util/thread.lo \
+	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
+	$(am__objects_6) $(am__objects_7) $(am__objects_8) \
+	$(am__objects_9) $(am__objects_10) $(am__objects_11) \
+	$(am__objects_12) $(am__objects_13)
 lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
 lib_libzen_la_LIBADD =
-am__lib_libzen_la_SOURCES_DIST =  \
-	src/configs/haswell/bli_gemm_asm_d6x8.c \
-	src/configs/zen/config.cxx
-@ENABLE_HASWELL_FALSE@@ENABLE_ZEN_TRUE@am_lib_libzen_la_OBJECTS = src/configs/haswell/lib_libzen_la-bli_gemm_asm_d6x8.lo \
-@ENABLE_HASWELL_FALSE@@ENABLE_ZEN_TRUE@	src/configs/zen/lib_libzen_la-config.lo
-@ENABLE_HASWELL_TRUE@@ENABLE_ZEN_TRUE@am_lib_libzen_la_OBJECTS = src/configs/zen/lib_libzen_la-config.lo
+am__lib_libzen_la_SOURCES_DIST = src/configs/zen/config_ker.cxx \
+	src/configs/haswell/bli_gemm_asm_d6x8.c
+@ENABLE_HASWELL_FALSE@@ENABLE_ZEN_TRUE@am__objects_14 = src/configs/haswell/lib_libzen_la-bli_gemm_asm_d6x8.lo
+@ENABLE_ZEN_TRUE@am_lib_libzen_la_OBJECTS =  \
+@ENABLE_ZEN_TRUE@	src/configs/zen/lib_libzen_la-config_ker.lo \
+@ENABLE_ZEN_TRUE@	$(am__objects_14)
 lib_libzen_la_OBJECTS = $(am_lib_libzen_la_OBJECTS)
 lib_libzen_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -433,34 +512,44 @@ DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = src/configs/$(DEPDIR)/configs.Plo \
+	src/configs/bulldozer/$(DEPDIR)/config.Plo \
 	src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.Plo \
-	src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config.Plo \
+	src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config_ker.Plo \
+	src/configs/core2/$(DEPDIR)/config.Plo \
 	src/configs/core2/$(DEPDIR)/lib_libcore2_la-bli_gemm_asm_d4x4.Plo \
-	src/configs/core2/$(DEPDIR)/lib_libcore2_la-config.Plo \
+	src/configs/core2/$(DEPDIR)/lib_libcore2_la-config_ker.Plo \
+	src/configs/excavator/$(DEPDIR)/config.Plo \
 	src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-bli_gemm_asm_d8x3.Plo \
-	src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config.Plo \
+	src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config_ker.Plo \
+	src/configs/haswell/$(DEPDIR)/config.Plo \
 	src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Plo \
-	src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config.Plo \
+	src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config_ker.Plo \
 	src/configs/haswell/$(DEPDIR)/lib_libskx1_la-bli_gemm_asm_d6x8.Plo \
 	src/configs/haswell/$(DEPDIR)/lib_libzen_la-bli_gemm_asm_d6x8.Plo \
+	src/configs/knl/$(DEPDIR)/config.Plo \
 	src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_24x8.Plo \
 	src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dpackm_opt_24x8.Plo \
 	src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dpackm_opt_30x8.Plo \
 	src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_sgemm_opt_24x16.Plo \
 	src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_spackm_opt_24x16.Plo \
-	src/configs/knl/$(DEPDIR)/lib_libknl_la-config.Plo \
+	src/configs/knl/$(DEPDIR)/lib_libknl_la-config_ker.Plo \
+	src/configs/piledriver/$(DEPDIR)/config.Plo \
 	src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Plo \
-	src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config.Plo \
+	src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config_ker.Plo \
 	src/configs/reference/$(DEPDIR)/lib_libreference_la-config.Plo \
+	src/configs/sandybridge/$(DEPDIR)/config.Plo \
 	src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_asm_d8x4.Plo \
-	src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config.Plo \
-	src/configs/skx1/$(DEPDIR)/lib_libskx1_la-config.Plo \
-	src/configs/skx2/$(DEPDIR)/lib_libskx1_la-vpu_count.Plo \
+	src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config_ker.Plo \
+	src/configs/skx1/$(DEPDIR)/config.Plo \
+	src/configs/skx1/$(DEPDIR)/lib_libskx1_la-config_ker.Plo \
+	src/configs/skx2/$(DEPDIR)/config.Plo \
 	src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_dgemm_opt_12x16_l2.Plo \
 	src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_sgemm_opt_12x32_l2.Plo \
-	src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config.Plo \
+	src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config_ker.Plo \
 	src/configs/skx2/$(DEPDIR)/lib_libskx2_la-vpu_count.Plo \
-	src/configs/zen/$(DEPDIR)/lib_libzen_la-config.Plo \
+	src/configs/skx2/$(DEPDIR)/vpu_count.Plo \
+	src/configs/zen/$(DEPDIR)/config.Plo \
+	src/configs/zen/$(DEPDIR)/lib_libzen_la-config_ker.Plo \
 	src/iface/1m/$(DEPDIR)/add.Plo src/iface/1m/$(DEPDIR)/dot.Plo \
 	src/iface/1m/$(DEPDIR)/reduce.Plo \
 	src/iface/1m/$(DEPDIR)/scale.Plo \
@@ -591,7 +680,8 @@ DIST_SOURCES = $(am__lib_libbulldozer_la_SOURCES_DIST) \
 	$(am__lib_libreference_la_SOURCES_DIST) \
 	$(am__lib_libsandybridge_la_SOURCES_DIST) \
 	$(am__lib_libskx1_la_SOURCES_DIST) \
-	$(am__lib_libskx2_la_SOURCES_DIST) $(lib_libtblis_la_SOURCES) \
+	$(am__lib_libskx2_la_SOURCES_DIST) \
+	$(am__lib_libtblis_la_SOURCES_DIST) \
 	$(am__lib_libzen_la_SOURCES_DIST) $(bin_batched_bench_SOURCES) \
 	$(bin_bench_SOURCES) $(bin_skx_bench_SOURCES) \
 	$(bin_test_SOURCES)
@@ -820,100 +910,50 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = lib/libtblis.la
-lib_libtblis_la_SOURCES = \
-    \
-    src/iface/1v/add.cxx \
-    src/iface/1v/dot.cxx \
-    src/iface/1v/mult.cxx \
-    src/iface/1v/reduce.cxx \
-    src/iface/1v/scale.cxx \
-    src/iface/1v/set.cxx \
-    src/iface/1v/shift.cxx \
-    \
-    src/iface/1m/add.cxx \
-    src/iface/1m/dot.cxx \
-    src/iface/1m/reduce.cxx \
-    src/iface/1m/scale.cxx \
-    src/iface/1m/set.cxx \
-    src/iface/1m/shift.cxx \
-    \
-    src/iface/1t/add.cxx \
-    src/iface/1t/dot.cxx \
-    src/iface/1t/reduce.cxx \
-    src/iface/1t/scale.cxx \
-    src/iface/1t/set.cxx \
-    src/iface/1t/shift.cxx \
-    \
-    src/iface/2m/mult.cxx \
-    \
-    src/iface/3m/mult.cxx \
-    \
-    src/iface/3t/mult.cxx \
-    \
-    src/internal/1v/add.cxx \
-    src/internal/1v/dot.cxx \
-    src/internal/1v/mult.cxx \
-    src/internal/1v/reduce.cxx \
-    src/internal/1v/scale.cxx \
-    src/internal/1v/set.cxx \
-    src/internal/1v/shift.cxx \
-    \
-    src/internal/1m/add.cxx \
-    src/internal/1m/dot.cxx \
-    src/internal/1m/reduce.cxx \
-    src/internal/1m/scale.cxx \
-    src/internal/1m/set.cxx \
-    src/internal/1m/shift.cxx \
-    \
-    src/internal/1t/dense/add.cxx \
-    src/internal/1t/dense/dot.cxx \
-    src/internal/1t/dense/reduce.cxx \
-    src/internal/1t/dense/scale.cxx \
-    src/internal/1t/dense/set.cxx \
-    src/internal/1t/dense/shift.cxx \
-    \
-    src/internal/1t/dpd/add.cxx \
-    src/internal/1t/dpd/dot.cxx \
-    src/internal/1t/dpd/reduce.cxx \
-    src/internal/1t/dpd/scale.cxx \
-    src/internal/1t/dpd/set.cxx \
-    src/internal/1t/dpd/shift.cxx \
-    \
-    src/internal/1t/indexed/add.cxx \
-    src/internal/1t/indexed/dot.cxx \
-    src/internal/1t/indexed/reduce.cxx \
-    src/internal/1t/indexed/scale.cxx \
-    src/internal/1t/indexed/set.cxx \
-    src/internal/1t/indexed/shift.cxx \
-    \
-    src/internal/1t/indexed_dpd/add.cxx \
-    src/internal/1t/indexed_dpd/dot.cxx \
-    src/internal/1t/indexed_dpd/reduce.cxx \
-    src/internal/1t/indexed_dpd/scale.cxx \
-    src/internal/1t/indexed_dpd/set.cxx \
-    src/internal/1t/indexed_dpd/shift.cxx \
-    \
-    src/internal/2m/mult.cxx \
-    \
-    src/internal/3m/mult.cxx \
-    \
-    src/internal/3t/dense/mult.cxx \
-    \
-    src/internal/3t/dpd/mult.cxx \
-    \
-    src/internal/3t/indexed/mult.cxx \
-    \
-    src/internal/3t/indexed_dpd/mult.cxx \
-    \
-    src/configs/configs.cxx \
-    \
-    src/util/basic_types.cxx \
-    src/util/configs.cxx \
-    src/util/cpuid.cxx \
-    src/util/env.cxx \
-    src/util/random.cxx \
-    src/util/thread.cxx
-
+lib_libtblis_la_SOURCES = src/iface/1v/add.cxx src/iface/1v/dot.cxx \
+	src/iface/1v/mult.cxx src/iface/1v/reduce.cxx \
+	src/iface/1v/scale.cxx src/iface/1v/set.cxx \
+	src/iface/1v/shift.cxx src/iface/1m/add.cxx \
+	src/iface/1m/dot.cxx src/iface/1m/reduce.cxx \
+	src/iface/1m/scale.cxx src/iface/1m/set.cxx \
+	src/iface/1m/shift.cxx src/iface/1t/add.cxx \
+	src/iface/1t/dot.cxx src/iface/1t/reduce.cxx \
+	src/iface/1t/scale.cxx src/iface/1t/set.cxx \
+	src/iface/1t/shift.cxx src/iface/2m/mult.cxx \
+	src/iface/3m/mult.cxx src/iface/3t/mult.cxx \
+	src/internal/1v/add.cxx src/internal/1v/dot.cxx \
+	src/internal/1v/mult.cxx src/internal/1v/reduce.cxx \
+	src/internal/1v/scale.cxx src/internal/1v/set.cxx \
+	src/internal/1v/shift.cxx src/internal/1m/add.cxx \
+	src/internal/1m/dot.cxx src/internal/1m/reduce.cxx \
+	src/internal/1m/scale.cxx src/internal/1m/set.cxx \
+	src/internal/1m/shift.cxx src/internal/1t/dense/add.cxx \
+	src/internal/1t/dense/dot.cxx src/internal/1t/dense/reduce.cxx \
+	src/internal/1t/dense/scale.cxx src/internal/1t/dense/set.cxx \
+	src/internal/1t/dense/shift.cxx src/internal/1t/dpd/add.cxx \
+	src/internal/1t/dpd/dot.cxx src/internal/1t/dpd/reduce.cxx \
+	src/internal/1t/dpd/scale.cxx src/internal/1t/dpd/set.cxx \
+	src/internal/1t/dpd/shift.cxx src/internal/1t/indexed/add.cxx \
+	src/internal/1t/indexed/dot.cxx \
+	src/internal/1t/indexed/reduce.cxx \
+	src/internal/1t/indexed/scale.cxx \
+	src/internal/1t/indexed/set.cxx \
+	src/internal/1t/indexed/shift.cxx \
+	src/internal/1t/indexed_dpd/add.cxx \
+	src/internal/1t/indexed_dpd/dot.cxx \
+	src/internal/1t/indexed_dpd/reduce.cxx \
+	src/internal/1t/indexed_dpd/scale.cxx \
+	src/internal/1t/indexed_dpd/set.cxx \
+	src/internal/1t/indexed_dpd/shift.cxx src/internal/2m/mult.cxx \
+	src/internal/3m/mult.cxx src/internal/3t/dense/mult.cxx \
+	src/internal/3t/dpd/mult.cxx src/internal/3t/indexed/mult.cxx \
+	src/internal/3t/indexed_dpd/mult.cxx src/configs/configs.cxx \
+	src/util/basic_types.cxx src/util/configs.cxx \
+	src/util/cpuid.cxx src/util/env.cxx src/util/random.cxx \
+	src/util/thread.cxx $(am__append_5) $(am__append_8) \
+	$(am__append_11) $(am__append_15) $(am__append_19) \
+	$(am__append_22) $(am__append_25) $(am__append_28) \
+	$(am__append_31) $(am__append_32) $(am__append_36)
 pkginclude_HEADERS = src/tblis.h src/tblis_config.h
 utilincludedir = $(pkgincludedir)/util
 utilinclude_HEADERS = \
@@ -1024,56 +1064,54 @@ stl_extinclude_HEADERS = \
     src/external/stl_ext/include/vector.hpp \
     src/external/stl_ext/include/zip.hpp
 
-noinst_LTLIBRARIES = $(am__append_1) $(am__append_3) $(am__append_5) \
-	$(am__append_7) $(am__append_9) $(am__append_11) \
-	$(am__append_13) $(am__append_15) $(am__append_17) \
-	$(am__append_19) $(am__append_21)
+noinst_LTLIBRARIES = $(am__append_1) $(am__append_3) $(am__append_6) \
+	$(am__append_9) $(am__append_13) $(am__append_17) \
+	$(am__append_20) $(am__append_23) $(am__append_26) \
+	$(am__append_29) $(am__append_34)
 lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la \
-	$(am__append_2) $(am__append_4) $(am__append_6) \
-	$(am__append_8) $(am__append_10) $(am__append_12) \
-	$(am__append_14) $(am__append_16) $(am__append_18) \
-	$(am__append_20) $(am__append_22)
+	$(am__append_2) $(am__append_4) $(am__append_7) \
+	$(am__append_10) $(am__append_14) $(am__append_18) \
+	$(am__append_21) $(am__append_24) $(am__append_27) \
+	$(am__append_30) $(am__append_35)
 @ENABLE_REFERENCE_TRUE@lib_libreference_la_SOURCES = src/configs/reference/config.cxx
 @ENABLE_REFERENCE_TRUE@lib_libreference_la_CFLAGS = -O3
 @ENABLE_REFERENCE_TRUE@lib_libreference_la_CXXFLAGS = -O3
 @ENABLE_BULLDOZER_TRUE@lib_libbulldozer_la_SOURCES = src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c \
-@ENABLE_BULLDOZER_TRUE@                             src/configs/bulldozer/config.cxx
+@ENABLE_BULLDOZER_TRUE@                             src/configs/bulldozer/config_ker.cxx
 
 @ENABLE_BULLDOZER_TRUE@lib_libbulldozer_la_CFLAGS = -O3 -mavx -mfma4 -march=bdver1 -mfpmath=sse
 @ENABLE_BULLDOZER_TRUE@lib_libbulldozer_la_CXXFLAGS = -O3 -mavx -mfma4 -march=bdver1 -mfpmath=sse
 @ENABLE_PILEDRIVER_TRUE@lib_libpiledriver_la_SOURCES = src/configs/piledriver/bli_gemm_asm_d8x3.c \
-@ENABLE_PILEDRIVER_TRUE@                               src/configs/piledriver/config.cxx
+@ENABLE_PILEDRIVER_TRUE@                               src/configs/piledriver/config_ker.cxx
 
 @ENABLE_PILEDRIVER_TRUE@lib_libpiledriver_la_CFLAGS = -O3 -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse
 @ENABLE_PILEDRIVER_TRUE@lib_libpiledriver_la_CXXFLAGS = -O3 -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse
-@ENABLE_EXCAVATOR_TRUE@@ENABLE_PILEDRIVER_FALSE@lib_libexcavator_la_SOURCES = src/configs/excavator/bli_gemm_asm_d8x3.c \
-@ENABLE_EXCAVATOR_TRUE@@ENABLE_PILEDRIVER_FALSE@                              src/configs/excavator/config.cxx
-
-@ENABLE_EXCAVATOR_TRUE@@ENABLE_PILEDRIVER_TRUE@lib_libexcavator_la_SOURCES = src/configs/excavator/config.cxx
+@ENABLE_EXCAVATOR_TRUE@lib_libexcavator_la_SOURCES =  \
+@ENABLE_EXCAVATOR_TRUE@	src/configs/excavator/config_ker.cxx \
+@ENABLE_EXCAVATOR_TRUE@	$(am__append_12)
 @ENABLE_EXCAVATOR_TRUE@lib_libexcavator_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
 @ENABLE_EXCAVATOR_TRUE@lib_libexcavator_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
-@ENABLE_HASWELL_FALSE@@ENABLE_ZEN_TRUE@lib_libzen_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
-@ENABLE_HASWELL_FALSE@@ENABLE_ZEN_TRUE@                        src/configs/zen/config.cxx
-
-@ENABLE_HASWELL_TRUE@@ENABLE_ZEN_TRUE@lib_libzen_la_SOURCES = src/configs/zen/config.cxx
+@ENABLE_ZEN_TRUE@lib_libzen_la_SOURCES =  \
+@ENABLE_ZEN_TRUE@	src/configs/zen/config_ker.cxx \
+@ENABLE_ZEN_TRUE@	$(am__append_16)
 @ENABLE_ZEN_TRUE@lib_libzen_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=znver1 -mfpmath=sse
 @ENABLE_ZEN_TRUE@lib_libzen_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=znver1 -mfpmath=sse
 @ENABLE_CORE2_TRUE@lib_libcore2_la_SOURCES = src/configs/core2/bli_gemm_asm_d4x4.c \
-@ENABLE_CORE2_TRUE@                          src/configs/core2/config.cxx
+@ENABLE_CORE2_TRUE@                          src/configs/core2/config_ker.cxx
 
 @ENABLE_CORE2_TRUE@@ENABLE_INTEL_COMPILER_FALSE@lib_libcore2_la_CFLAGS = -O3 -msse3 -mssse3 -march=core2 -mfpmath=sse
 @ENABLE_CORE2_TRUE@@ENABLE_INTEL_COMPILER_TRUE@lib_libcore2_la_CFLAGS = -O3 -xSSSE3
 @ENABLE_CORE2_TRUE@@ENABLE_INTEL_COMPILER_FALSE@lib_libcore2_la_CXXFLAGS = -O3 -msse3 -mssse3 -march=core2 -mfpmath=sse
 @ENABLE_CORE2_TRUE@@ENABLE_INTEL_COMPILER_TRUE@lib_libcore2_la_CXXFLAGS = -O3 -xSSSE3
 @ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_SOURCES = src/configs/sandybridge/bli_gemm_asm_d8x4.c \
-@ENABLE_SANDYBRIDGE_TRUE@                                src/configs/sandybridge/config.cxx
+@ENABLE_SANDYBRIDGE_TRUE@                                src/configs/sandybridge/config_ker.cxx
 
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_CFLAGS = -O3 -mavx -march=corei7-avx -mfpmath=sse
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_CFLAGS = -O3 -xAVX
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_CXXFLAGS = -O3 -mavx -march=corei7-avx -mfpmath=sse
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SANDYBRIDGE_TRUE@lib_libsandybridge_la_CXXFLAGS = -O3 -xAVX
 @ENABLE_HASWELL_TRUE@lib_libhaswell_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
-@ENABLE_HASWELL_TRUE@                            src/configs/haswell/config.cxx
+@ENABLE_HASWELL_TRUE@                            src/configs/haswell/config_ker.cxx
 
 @ENABLE_HASWELL_TRUE@@ENABLE_INTEL_COMPILER_FALSE@lib_libhaswell_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=core-avx2 -mfpmath=sse
 #                            src/configs/haswell/bli_gemm_asm_d12x4.c \
@@ -1087,7 +1125,7 @@ lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la \
 @ENABLE_KNL_TRUE@                        src/configs/knl/bli_dpackm_opt_30x8.c \
 @ENABLE_KNL_TRUE@                        src/configs/knl/bli_sgemm_opt_24x16.c \
 @ENABLE_KNL_TRUE@                        src/configs/knl/bli_dgemm_opt_24x8.c \
-@ENABLE_KNL_TRUE@                        src/configs/knl/config.cxx
+@ENABLE_KNL_TRUE@                        src/configs/knl/config_ker.cxx
 
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_FALSE@lib_libknl_la_CFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_TRUE@lib_libknl_la_CFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse -Wa,-march=knl
@@ -1100,17 +1138,9 @@ lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la \
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_FALSE@lib_libknl_la_CXXFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_KNL_TRUE@@IS_OSX_TRUE@lib_libknl_la_CXXFLAGS = -O3 -mavx512f -mavx512pf -march=knl -mfpmath=sse -Wa,-march=knl
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_KNL_TRUE@lib_libknl_la_CXXFLAGS = -O3 -xMIC-AVX512
-@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@lib_libskx1_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
-@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@                         src/configs/skx2/vpu_count.cxx \
-@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@                         src/configs/skx1/config.cxx
-
-@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_TRUE@lib_libskx1_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
-@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_TRUE@                         src/configs/skx1/config.cxx
-
-@ENABLE_HASWELL_TRUE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@lib_libskx1_la_SOURCES = src/configs/skx2/vpu_count.cxx \
-@ENABLE_HASWELL_TRUE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@                         src/configs/skx1/config.cxx
-
-@ENABLE_HASWELL_TRUE@@ENABLE_SKX1_TRUE@@ENABLE_SKX2_TRUE@lib_libskx1_la_SOURCES = src/configs/skx1/config.cxx
+@ENABLE_SKX1_TRUE@lib_libskx1_la_SOURCES =  \
+@ENABLE_SKX1_TRUE@	src/configs/skx1/config_ker.cxx \
+@ENABLE_SKX1_TRUE@	$(am__append_33)
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SKX1_TRUE@@IS_OSX_FALSE@lib_libskx1_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SKX1_TRUE@@IS_OSX_TRUE@lib_libskx1_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SKX1_TRUE@lib_libskx1_la_CFLAGS = -O3 -xCORE-AVX512
@@ -1120,7 +1150,7 @@ lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la \
 @ENABLE_SKX2_TRUE@lib_libskx2_la_SOURCES = src/configs/skx2/bli_sgemm_opt_12x32_l2.c \
 @ENABLE_SKX2_TRUE@                         src/configs/skx2/bli_dgemm_opt_12x16_l2.c \
 @ENABLE_SKX2_TRUE@                         src/configs/skx2/vpu_count.cxx \
-@ENABLE_SKX2_TRUE@                         src/configs/skx2/config.cxx
+@ENABLE_SKX2_TRUE@                         src/configs/skx2/config_ker.cxx
 
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SKX2_TRUE@@IS_OSX_FALSE@lib_libskx2_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SKX2_TRUE@@IS_OSX_TRUE@lib_libskx2_la_CFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
@@ -1294,7 +1324,7 @@ src/configs/bulldozer/$(DEPDIR)/$(am__dirstamp):
 src/configs/bulldozer/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.lo:  \
 	src/configs/bulldozer/$(am__dirstamp) \
 	src/configs/bulldozer/$(DEPDIR)/$(am__dirstamp)
-src/configs/bulldozer/lib_libbulldozer_la-config.lo:  \
+src/configs/bulldozer/lib_libbulldozer_la-config_ker.lo:  \
 	src/configs/bulldozer/$(am__dirstamp) \
 	src/configs/bulldozer/$(DEPDIR)/$(am__dirstamp)
 lib/$(am__dirstamp):
@@ -1312,7 +1342,7 @@ src/configs/core2/$(DEPDIR)/$(am__dirstamp):
 src/configs/core2/lib_libcore2_la-bli_gemm_asm_d4x4.lo:  \
 	src/configs/core2/$(am__dirstamp) \
 	src/configs/core2/$(DEPDIR)/$(am__dirstamp)
-src/configs/core2/lib_libcore2_la-config.lo:  \
+src/configs/core2/lib_libcore2_la-config_ker.lo:  \
 	src/configs/core2/$(am__dirstamp) \
 	src/configs/core2/$(DEPDIR)/$(am__dirstamp)
 
@@ -1324,10 +1354,10 @@ src/configs/excavator/$(am__dirstamp):
 src/configs/excavator/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/configs/excavator/$(DEPDIR)
 	@: > src/configs/excavator/$(DEPDIR)/$(am__dirstamp)
-src/configs/excavator/lib_libexcavator_la-bli_gemm_asm_d8x3.lo:  \
+src/configs/excavator/lib_libexcavator_la-config_ker.lo:  \
 	src/configs/excavator/$(am__dirstamp) \
 	src/configs/excavator/$(DEPDIR)/$(am__dirstamp)
-src/configs/excavator/lib_libexcavator_la-config.lo:  \
+src/configs/excavator/lib_libexcavator_la-bli_gemm_asm_d8x3.lo:  \
 	src/configs/excavator/$(am__dirstamp) \
 	src/configs/excavator/$(DEPDIR)/$(am__dirstamp)
 
@@ -1342,7 +1372,7 @@ src/configs/haswell/$(DEPDIR)/$(am__dirstamp):
 src/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d6x8.lo:  \
 	src/configs/haswell/$(am__dirstamp) \
 	src/configs/haswell/$(DEPDIR)/$(am__dirstamp)
-src/configs/haswell/lib_libhaswell_la-config.lo:  \
+src/configs/haswell/lib_libhaswell_la-config_ker.lo:  \
 	src/configs/haswell/$(am__dirstamp) \
 	src/configs/haswell/$(DEPDIR)/$(am__dirstamp)
 
@@ -1369,7 +1399,7 @@ src/configs/knl/lib_libknl_la-bli_sgemm_opt_24x16.lo:  \
 src/configs/knl/lib_libknl_la-bli_dgemm_opt_24x8.lo:  \
 	src/configs/knl/$(am__dirstamp) \
 	src/configs/knl/$(DEPDIR)/$(am__dirstamp)
-src/configs/knl/lib_libknl_la-config.lo:  \
+src/configs/knl/lib_libknl_la-config_ker.lo:  \
 	src/configs/knl/$(am__dirstamp) \
 	src/configs/knl/$(DEPDIR)/$(am__dirstamp)
 
@@ -1384,7 +1414,7 @@ src/configs/piledriver/$(DEPDIR)/$(am__dirstamp):
 src/configs/piledriver/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo:  \
 	src/configs/piledriver/$(am__dirstamp) \
 	src/configs/piledriver/$(DEPDIR)/$(am__dirstamp)
-src/configs/piledriver/lib_libpiledriver_la-config.lo:  \
+src/configs/piledriver/lib_libpiledriver_la-config_ker.lo:  \
 	src/configs/piledriver/$(am__dirstamp) \
 	src/configs/piledriver/$(DEPDIR)/$(am__dirstamp)
 
@@ -1411,36 +1441,33 @@ src/configs/sandybridge/$(DEPDIR)/$(am__dirstamp):
 src/configs/sandybridge/lib_libsandybridge_la-bli_gemm_asm_d8x4.lo:  \
 	src/configs/sandybridge/$(am__dirstamp) \
 	src/configs/sandybridge/$(DEPDIR)/$(am__dirstamp)
-src/configs/sandybridge/lib_libsandybridge_la-config.lo:  \
+src/configs/sandybridge/lib_libsandybridge_la-config_ker.lo:  \
 	src/configs/sandybridge/$(am__dirstamp) \
 	src/configs/sandybridge/$(DEPDIR)/$(am__dirstamp)
 
 lib/libsandybridge.la: $(lib_libsandybridge_la_OBJECTS) $(lib_libsandybridge_la_DEPENDENCIES) $(EXTRA_lib_libsandybridge_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CXXLD)$(lib_libsandybridge_la_LINK) $(am_lib_libsandybridge_la_rpath) $(lib_libsandybridge_la_OBJECTS) $(lib_libsandybridge_la_LIBADD) $(LIBS)
-src/configs/haswell/lib_libskx1_la-bli_gemm_asm_d6x8.lo:  \
-	src/configs/haswell/$(am__dirstamp) \
-	src/configs/haswell/$(DEPDIR)/$(am__dirstamp)
-src/configs/skx2/$(am__dirstamp):
-	@$(MKDIR_P) src/configs/skx2
-	@: > src/configs/skx2/$(am__dirstamp)
-src/configs/skx2/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/configs/skx2/$(DEPDIR)
-	@: > src/configs/skx2/$(DEPDIR)/$(am__dirstamp)
-src/configs/skx2/lib_libskx1_la-vpu_count.lo:  \
-	src/configs/skx2/$(am__dirstamp) \
-	src/configs/skx2/$(DEPDIR)/$(am__dirstamp)
 src/configs/skx1/$(am__dirstamp):
 	@$(MKDIR_P) src/configs/skx1
 	@: > src/configs/skx1/$(am__dirstamp)
 src/configs/skx1/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/configs/skx1/$(DEPDIR)
 	@: > src/configs/skx1/$(DEPDIR)/$(am__dirstamp)
-src/configs/skx1/lib_libskx1_la-config.lo:  \
+src/configs/skx1/lib_libskx1_la-config_ker.lo:  \
 	src/configs/skx1/$(am__dirstamp) \
 	src/configs/skx1/$(DEPDIR)/$(am__dirstamp)
+src/configs/haswell/lib_libskx1_la-bli_gemm_asm_d6x8.lo:  \
+	src/configs/haswell/$(am__dirstamp) \
+	src/configs/haswell/$(DEPDIR)/$(am__dirstamp)
 
 lib/libskx1.la: $(lib_libskx1_la_OBJECTS) $(lib_libskx1_la_DEPENDENCIES) $(EXTRA_lib_libskx1_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CXXLD)$(lib_libskx1_la_LINK) $(am_lib_libskx1_la_rpath) $(lib_libskx1_la_OBJECTS) $(lib_libskx1_la_LIBADD) $(LIBS)
+src/configs/skx2/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/skx2
+	@: > src/configs/skx2/$(am__dirstamp)
+src/configs/skx2/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/skx2/$(DEPDIR)
+	@: > src/configs/skx2/$(DEPDIR)/$(am__dirstamp)
 src/configs/skx2/lib_libskx2_la-bli_sgemm_opt_12x32_l2.lo:  \
 	src/configs/skx2/$(am__dirstamp) \
 	src/configs/skx2/$(DEPDIR)/$(am__dirstamp)
@@ -1450,7 +1477,7 @@ src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_12x16_l2.lo:  \
 src/configs/skx2/lib_libskx2_la-vpu_count.lo:  \
 	src/configs/skx2/$(am__dirstamp) \
 	src/configs/skx2/$(DEPDIR)/$(am__dirstamp)
-src/configs/skx2/lib_libskx2_la-config.lo:  \
+src/configs/skx2/lib_libskx2_la-config_ker.lo:  \
 	src/configs/skx2/$(am__dirstamp) \
 	src/configs/skx2/$(DEPDIR)/$(am__dirstamp)
 
@@ -1735,21 +1762,47 @@ src/util/random.lo: src/util/$(am__dirstamp) \
 	src/util/$(DEPDIR)/$(am__dirstamp)
 src/util/thread.lo: src/util/$(am__dirstamp) \
 	src/util/$(DEPDIR)/$(am__dirstamp)
-
-lib/libtblis.la: $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_DEPENDENCIES) $(EXTRA_lib_libtblis_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CXXLD)$(CXXLINK) -rpath $(libdir) $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_LIBADD) $(LIBS)
-src/configs/haswell/lib_libzen_la-bli_gemm_asm_d6x8.lo:  \
-	src/configs/haswell/$(am__dirstamp) \
-	src/configs/haswell/$(DEPDIR)/$(am__dirstamp)
+src/configs/bulldozer/config.lo:  \
+	src/configs/bulldozer/$(am__dirstamp) \
+	src/configs/bulldozer/$(DEPDIR)/$(am__dirstamp)
+src/configs/piledriver/config.lo:  \
+	src/configs/piledriver/$(am__dirstamp) \
+	src/configs/piledriver/$(DEPDIR)/$(am__dirstamp)
+src/configs/excavator/config.lo:  \
+	src/configs/excavator/$(am__dirstamp) \
+	src/configs/excavator/$(DEPDIR)/$(am__dirstamp)
 src/configs/zen/$(am__dirstamp):
 	@$(MKDIR_P) src/configs/zen
 	@: > src/configs/zen/$(am__dirstamp)
 src/configs/zen/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/configs/zen/$(DEPDIR)
 	@: > src/configs/zen/$(DEPDIR)/$(am__dirstamp)
-src/configs/zen/lib_libzen_la-config.lo:  \
+src/configs/zen/config.lo: src/configs/zen/$(am__dirstamp) \
+	src/configs/zen/$(DEPDIR)/$(am__dirstamp)
+src/configs/core2/config.lo: src/configs/core2/$(am__dirstamp) \
+	src/configs/core2/$(DEPDIR)/$(am__dirstamp)
+src/configs/sandybridge/config.lo:  \
+	src/configs/sandybridge/$(am__dirstamp) \
+	src/configs/sandybridge/$(DEPDIR)/$(am__dirstamp)
+src/configs/haswell/config.lo: src/configs/haswell/$(am__dirstamp) \
+	src/configs/haswell/$(DEPDIR)/$(am__dirstamp)
+src/configs/knl/config.lo: src/configs/knl/$(am__dirstamp) \
+	src/configs/knl/$(DEPDIR)/$(am__dirstamp)
+src/configs/skx1/config.lo: src/configs/skx1/$(am__dirstamp) \
+	src/configs/skx1/$(DEPDIR)/$(am__dirstamp)
+src/configs/skx2/vpu_count.lo: src/configs/skx2/$(am__dirstamp) \
+	src/configs/skx2/$(DEPDIR)/$(am__dirstamp)
+src/configs/skx2/config.lo: src/configs/skx2/$(am__dirstamp) \
+	src/configs/skx2/$(DEPDIR)/$(am__dirstamp)
+
+lib/libtblis.la: $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_DEPENDENCIES) $(EXTRA_lib_libtblis_la_DEPENDENCIES) lib/$(am__dirstamp)
+	$(AM_V_CXXLD)$(CXXLINK) -rpath $(libdir) $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_LIBADD) $(LIBS)
+src/configs/zen/lib_libzen_la-config_ker.lo:  \
 	src/configs/zen/$(am__dirstamp) \
 	src/configs/zen/$(DEPDIR)/$(am__dirstamp)
+src/configs/haswell/lib_libzen_la-bli_gemm_asm_d6x8.lo:  \
+	src/configs/haswell/$(am__dirstamp) \
+	src/configs/haswell/$(DEPDIR)/$(am__dirstamp)
 
 lib/libzen.la: $(lib_libzen_la_OBJECTS) $(lib_libzen_la_DEPENDENCIES) $(EXTRA_lib_libzen_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CXXLD)$(lib_libzen_la_LINK) $(am_lib_libzen_la_rpath) $(lib_libzen_la_OBJECTS) $(lib_libzen_la_LIBADD) $(LIBS)
@@ -1906,34 +1959,44 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/$(DEPDIR)/configs.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/bulldozer/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config_ker.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/core2/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/core2/$(DEPDIR)/lib_libcore2_la-bli_gemm_asm_d4x4.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/core2/$(DEPDIR)/lib_libcore2_la-config.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/core2/$(DEPDIR)/lib_libcore2_la-config_ker.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/excavator/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-bli_gemm_asm_d8x3.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config_ker.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/haswell/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config_ker.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/haswell/$(DEPDIR)/lib_libskx1_la-bli_gemm_asm_d6x8.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/haswell/$(DEPDIR)/lib_libzen_la-bli_gemm_asm_d6x8.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_24x8.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dpackm_opt_24x8.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dpackm_opt_30x8.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_sgemm_opt_24x16.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_spackm_opt_24x16.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-config.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-config_ker.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/piledriver/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config_ker.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/reference/$(DEPDIR)/lib_libreference_la-config.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/sandybridge/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_asm_d8x4.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx1/$(DEPDIR)/lib_libskx1_la-config.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/lib_libskx1_la-vpu_count.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config_ker.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx1/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx1/$(DEPDIR)/lib_libskx1_la-config_ker.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_dgemm_opt_12x16_l2.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_sgemm_opt_12x32_l2.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config_ker.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/lib_libskx2_la-vpu_count.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/zen/$(DEPDIR)/lib_libzen_la-config.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/skx2/$(DEPDIR)/vpu_count.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/zen/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/zen/$(DEPDIR)/lib_libzen_la-config_ker.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/iface/1m/$(DEPDIR)/add.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/iface/1m/$(DEPDIR)/dot.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/iface/1m/$(DEPDIR)/reduce.Plo@am__quote@ # am--include-marker
@@ -2183,47 +2246,47 @@ src/configs/haswell/lib_libzen_la-bli_gemm_asm_d6x8.lo: src/configs/haswell/bli_
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
 
-src/configs/bulldozer/lib_libbulldozer_la-config.lo: src/configs/bulldozer/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libbulldozer_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/bulldozer/lib_libbulldozer_la-config.lo -MD -MP -MF src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config.Tpo -c -o src/configs/bulldozer/lib_libbulldozer_la-config.lo `test -f 'src/configs/bulldozer/config.cxx' || echo '$(srcdir)/'`src/configs/bulldozer/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config.Tpo src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/bulldozer/config.cxx' object='src/configs/bulldozer/lib_libbulldozer_la-config.lo' libtool=yes @AMDEPBACKSLASH@
+src/configs/bulldozer/lib_libbulldozer_la-config_ker.lo: src/configs/bulldozer/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libbulldozer_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/bulldozer/lib_libbulldozer_la-config_ker.lo -MD -MP -MF src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config_ker.Tpo -c -o src/configs/bulldozer/lib_libbulldozer_la-config_ker.lo `test -f 'src/configs/bulldozer/config_ker.cxx' || echo '$(srcdir)/'`src/configs/bulldozer/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config_ker.Tpo src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config_ker.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/bulldozer/config_ker.cxx' object='src/configs/bulldozer/lib_libbulldozer_la-config_ker.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libbulldozer_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/bulldozer/lib_libbulldozer_la-config.lo `test -f 'src/configs/bulldozer/config.cxx' || echo '$(srcdir)/'`src/configs/bulldozer/config.cxx
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libbulldozer_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/bulldozer/lib_libbulldozer_la-config_ker.lo `test -f 'src/configs/bulldozer/config_ker.cxx' || echo '$(srcdir)/'`src/configs/bulldozer/config_ker.cxx
 
-src/configs/core2/lib_libcore2_la-config.lo: src/configs/core2/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libcore2_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/core2/lib_libcore2_la-config.lo -MD -MP -MF src/configs/core2/$(DEPDIR)/lib_libcore2_la-config.Tpo -c -o src/configs/core2/lib_libcore2_la-config.lo `test -f 'src/configs/core2/config.cxx' || echo '$(srcdir)/'`src/configs/core2/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/core2/$(DEPDIR)/lib_libcore2_la-config.Tpo src/configs/core2/$(DEPDIR)/lib_libcore2_la-config.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/core2/config.cxx' object='src/configs/core2/lib_libcore2_la-config.lo' libtool=yes @AMDEPBACKSLASH@
+src/configs/core2/lib_libcore2_la-config_ker.lo: src/configs/core2/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libcore2_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/core2/lib_libcore2_la-config_ker.lo -MD -MP -MF src/configs/core2/$(DEPDIR)/lib_libcore2_la-config_ker.Tpo -c -o src/configs/core2/lib_libcore2_la-config_ker.lo `test -f 'src/configs/core2/config_ker.cxx' || echo '$(srcdir)/'`src/configs/core2/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/core2/$(DEPDIR)/lib_libcore2_la-config_ker.Tpo src/configs/core2/$(DEPDIR)/lib_libcore2_la-config_ker.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/core2/config_ker.cxx' object='src/configs/core2/lib_libcore2_la-config_ker.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libcore2_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/core2/lib_libcore2_la-config.lo `test -f 'src/configs/core2/config.cxx' || echo '$(srcdir)/'`src/configs/core2/config.cxx
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libcore2_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/core2/lib_libcore2_la-config_ker.lo `test -f 'src/configs/core2/config_ker.cxx' || echo '$(srcdir)/'`src/configs/core2/config_ker.cxx
 
-src/configs/excavator/lib_libexcavator_la-config.lo: src/configs/excavator/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libexcavator_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/excavator/lib_libexcavator_la-config.lo -MD -MP -MF src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config.Tpo -c -o src/configs/excavator/lib_libexcavator_la-config.lo `test -f 'src/configs/excavator/config.cxx' || echo '$(srcdir)/'`src/configs/excavator/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config.Tpo src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/excavator/config.cxx' object='src/configs/excavator/lib_libexcavator_la-config.lo' libtool=yes @AMDEPBACKSLASH@
+src/configs/excavator/lib_libexcavator_la-config_ker.lo: src/configs/excavator/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libexcavator_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/excavator/lib_libexcavator_la-config_ker.lo -MD -MP -MF src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config_ker.Tpo -c -o src/configs/excavator/lib_libexcavator_la-config_ker.lo `test -f 'src/configs/excavator/config_ker.cxx' || echo '$(srcdir)/'`src/configs/excavator/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config_ker.Tpo src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config_ker.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/excavator/config_ker.cxx' object='src/configs/excavator/lib_libexcavator_la-config_ker.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libexcavator_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/excavator/lib_libexcavator_la-config.lo `test -f 'src/configs/excavator/config.cxx' || echo '$(srcdir)/'`src/configs/excavator/config.cxx
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libexcavator_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/excavator/lib_libexcavator_la-config_ker.lo `test -f 'src/configs/excavator/config_ker.cxx' || echo '$(srcdir)/'`src/configs/excavator/config_ker.cxx
 
-src/configs/haswell/lib_libhaswell_la-config.lo: src/configs/haswell/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/haswell/lib_libhaswell_la-config.lo -MD -MP -MF src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config.Tpo -c -o src/configs/haswell/lib_libhaswell_la-config.lo `test -f 'src/configs/haswell/config.cxx' || echo '$(srcdir)/'`src/configs/haswell/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config.Tpo src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/haswell/config.cxx' object='src/configs/haswell/lib_libhaswell_la-config.lo' libtool=yes @AMDEPBACKSLASH@
+src/configs/haswell/lib_libhaswell_la-config_ker.lo: src/configs/haswell/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/haswell/lib_libhaswell_la-config_ker.lo -MD -MP -MF src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config_ker.Tpo -c -o src/configs/haswell/lib_libhaswell_la-config_ker.lo `test -f 'src/configs/haswell/config_ker.cxx' || echo '$(srcdir)/'`src/configs/haswell/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config_ker.Tpo src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config_ker.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/haswell/config_ker.cxx' object='src/configs/haswell/lib_libhaswell_la-config_ker.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/haswell/lib_libhaswell_la-config.lo `test -f 'src/configs/haswell/config.cxx' || echo '$(srcdir)/'`src/configs/haswell/config.cxx
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/haswell/lib_libhaswell_la-config_ker.lo `test -f 'src/configs/haswell/config_ker.cxx' || echo '$(srcdir)/'`src/configs/haswell/config_ker.cxx
 
-src/configs/knl/lib_libknl_la-config.lo: src/configs/knl/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/knl/lib_libknl_la-config.lo -MD -MP -MF src/configs/knl/$(DEPDIR)/lib_libknl_la-config.Tpo -c -o src/configs/knl/lib_libknl_la-config.lo `test -f 'src/configs/knl/config.cxx' || echo '$(srcdir)/'`src/configs/knl/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/knl/$(DEPDIR)/lib_libknl_la-config.Tpo src/configs/knl/$(DEPDIR)/lib_libknl_la-config.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/knl/config.cxx' object='src/configs/knl/lib_libknl_la-config.lo' libtool=yes @AMDEPBACKSLASH@
+src/configs/knl/lib_libknl_la-config_ker.lo: src/configs/knl/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/knl/lib_libknl_la-config_ker.lo -MD -MP -MF src/configs/knl/$(DEPDIR)/lib_libknl_la-config_ker.Tpo -c -o src/configs/knl/lib_libknl_la-config_ker.lo `test -f 'src/configs/knl/config_ker.cxx' || echo '$(srcdir)/'`src/configs/knl/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/knl/$(DEPDIR)/lib_libknl_la-config_ker.Tpo src/configs/knl/$(DEPDIR)/lib_libknl_la-config_ker.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/knl/config_ker.cxx' object='src/configs/knl/lib_libknl_la-config_ker.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/knl/lib_libknl_la-config.lo `test -f 'src/configs/knl/config.cxx' || echo '$(srcdir)/'`src/configs/knl/config.cxx
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/knl/lib_libknl_la-config_ker.lo `test -f 'src/configs/knl/config_ker.cxx' || echo '$(srcdir)/'`src/configs/knl/config_ker.cxx
 
-src/configs/piledriver/lib_libpiledriver_la-config.lo: src/configs/piledriver/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libpiledriver_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/piledriver/lib_libpiledriver_la-config.lo -MD -MP -MF src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config.Tpo -c -o src/configs/piledriver/lib_libpiledriver_la-config.lo `test -f 'src/configs/piledriver/config.cxx' || echo '$(srcdir)/'`src/configs/piledriver/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config.Tpo src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/piledriver/config.cxx' object='src/configs/piledriver/lib_libpiledriver_la-config.lo' libtool=yes @AMDEPBACKSLASH@
+src/configs/piledriver/lib_libpiledriver_la-config_ker.lo: src/configs/piledriver/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libpiledriver_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/piledriver/lib_libpiledriver_la-config_ker.lo -MD -MP -MF src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config_ker.Tpo -c -o src/configs/piledriver/lib_libpiledriver_la-config_ker.lo `test -f 'src/configs/piledriver/config_ker.cxx' || echo '$(srcdir)/'`src/configs/piledriver/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config_ker.Tpo src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config_ker.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/piledriver/config_ker.cxx' object='src/configs/piledriver/lib_libpiledriver_la-config_ker.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libpiledriver_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/piledriver/lib_libpiledriver_la-config.lo `test -f 'src/configs/piledriver/config.cxx' || echo '$(srcdir)/'`src/configs/piledriver/config.cxx
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libpiledriver_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/piledriver/lib_libpiledriver_la-config_ker.lo `test -f 'src/configs/piledriver/config_ker.cxx' || echo '$(srcdir)/'`src/configs/piledriver/config_ker.cxx
 
 src/configs/reference/lib_libreference_la-config.lo: src/configs/reference/config.cxx
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libreference_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/reference/lib_libreference_la-config.lo -MD -MP -MF src/configs/reference/$(DEPDIR)/lib_libreference_la-config.Tpo -c -o src/configs/reference/lib_libreference_la-config.lo `test -f 'src/configs/reference/config.cxx' || echo '$(srcdir)/'`src/configs/reference/config.cxx
@@ -2232,26 +2295,19 @@ src/configs/reference/lib_libreference_la-config.lo: src/configs/reference/confi
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libreference_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/reference/lib_libreference_la-config.lo `test -f 'src/configs/reference/config.cxx' || echo '$(srcdir)/'`src/configs/reference/config.cxx
 
-src/configs/sandybridge/lib_libsandybridge_la-config.lo: src/configs/sandybridge/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libsandybridge_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/sandybridge/lib_libsandybridge_la-config.lo -MD -MP -MF src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config.Tpo -c -o src/configs/sandybridge/lib_libsandybridge_la-config.lo `test -f 'src/configs/sandybridge/config.cxx' || echo '$(srcdir)/'`src/configs/sandybridge/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config.Tpo src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/sandybridge/config.cxx' object='src/configs/sandybridge/lib_libsandybridge_la-config.lo' libtool=yes @AMDEPBACKSLASH@
+src/configs/sandybridge/lib_libsandybridge_la-config_ker.lo: src/configs/sandybridge/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libsandybridge_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/sandybridge/lib_libsandybridge_la-config_ker.lo -MD -MP -MF src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config_ker.Tpo -c -o src/configs/sandybridge/lib_libsandybridge_la-config_ker.lo `test -f 'src/configs/sandybridge/config_ker.cxx' || echo '$(srcdir)/'`src/configs/sandybridge/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config_ker.Tpo src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config_ker.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/sandybridge/config_ker.cxx' object='src/configs/sandybridge/lib_libsandybridge_la-config_ker.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libsandybridge_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/sandybridge/lib_libsandybridge_la-config.lo `test -f 'src/configs/sandybridge/config.cxx' || echo '$(srcdir)/'`src/configs/sandybridge/config.cxx
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libsandybridge_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/sandybridge/lib_libsandybridge_la-config_ker.lo `test -f 'src/configs/sandybridge/config_ker.cxx' || echo '$(srcdir)/'`src/configs/sandybridge/config_ker.cxx
 
-src/configs/skx2/lib_libskx1_la-vpu_count.lo: src/configs/skx2/vpu_count.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx1_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/skx2/lib_libskx1_la-vpu_count.lo -MD -MP -MF src/configs/skx2/$(DEPDIR)/lib_libskx1_la-vpu_count.Tpo -c -o src/configs/skx2/lib_libskx1_la-vpu_count.lo `test -f 'src/configs/skx2/vpu_count.cxx' || echo '$(srcdir)/'`src/configs/skx2/vpu_count.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/skx2/$(DEPDIR)/lib_libskx1_la-vpu_count.Tpo src/configs/skx2/$(DEPDIR)/lib_libskx1_la-vpu_count.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/skx2/vpu_count.cxx' object='src/configs/skx2/lib_libskx1_la-vpu_count.lo' libtool=yes @AMDEPBACKSLASH@
+src/configs/skx1/lib_libskx1_la-config_ker.lo: src/configs/skx1/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx1_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/skx1/lib_libskx1_la-config_ker.lo -MD -MP -MF src/configs/skx1/$(DEPDIR)/lib_libskx1_la-config_ker.Tpo -c -o src/configs/skx1/lib_libskx1_la-config_ker.lo `test -f 'src/configs/skx1/config_ker.cxx' || echo '$(srcdir)/'`src/configs/skx1/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/skx1/$(DEPDIR)/lib_libskx1_la-config_ker.Tpo src/configs/skx1/$(DEPDIR)/lib_libskx1_la-config_ker.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/skx1/config_ker.cxx' object='src/configs/skx1/lib_libskx1_la-config_ker.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx1_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/skx2/lib_libskx1_la-vpu_count.lo `test -f 'src/configs/skx2/vpu_count.cxx' || echo '$(srcdir)/'`src/configs/skx2/vpu_count.cxx
-
-src/configs/skx1/lib_libskx1_la-config.lo: src/configs/skx1/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx1_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/skx1/lib_libskx1_la-config.lo -MD -MP -MF src/configs/skx1/$(DEPDIR)/lib_libskx1_la-config.Tpo -c -o src/configs/skx1/lib_libskx1_la-config.lo `test -f 'src/configs/skx1/config.cxx' || echo '$(srcdir)/'`src/configs/skx1/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/skx1/$(DEPDIR)/lib_libskx1_la-config.Tpo src/configs/skx1/$(DEPDIR)/lib_libskx1_la-config.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/skx1/config.cxx' object='src/configs/skx1/lib_libskx1_la-config.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx1_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/skx1/lib_libskx1_la-config.lo `test -f 'src/configs/skx1/config.cxx' || echo '$(srcdir)/'`src/configs/skx1/config.cxx
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx1_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/skx1/lib_libskx1_la-config_ker.lo `test -f 'src/configs/skx1/config_ker.cxx' || echo '$(srcdir)/'`src/configs/skx1/config_ker.cxx
 
 src/configs/skx2/lib_libskx2_la-vpu_count.lo: src/configs/skx2/vpu_count.cxx
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx2_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/skx2/lib_libskx2_la-vpu_count.lo -MD -MP -MF src/configs/skx2/$(DEPDIR)/lib_libskx2_la-vpu_count.Tpo -c -o src/configs/skx2/lib_libskx2_la-vpu_count.lo `test -f 'src/configs/skx2/vpu_count.cxx' || echo '$(srcdir)/'`src/configs/skx2/vpu_count.cxx
@@ -2260,19 +2316,19 @@ src/configs/skx2/lib_libskx2_la-vpu_count.lo: src/configs/skx2/vpu_count.cxx
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx2_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/skx2/lib_libskx2_la-vpu_count.lo `test -f 'src/configs/skx2/vpu_count.cxx' || echo '$(srcdir)/'`src/configs/skx2/vpu_count.cxx
 
-src/configs/skx2/lib_libskx2_la-config.lo: src/configs/skx2/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx2_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/skx2/lib_libskx2_la-config.lo -MD -MP -MF src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config.Tpo -c -o src/configs/skx2/lib_libskx2_la-config.lo `test -f 'src/configs/skx2/config.cxx' || echo '$(srcdir)/'`src/configs/skx2/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config.Tpo src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/skx2/config.cxx' object='src/configs/skx2/lib_libskx2_la-config.lo' libtool=yes @AMDEPBACKSLASH@
+src/configs/skx2/lib_libskx2_la-config_ker.lo: src/configs/skx2/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx2_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/skx2/lib_libskx2_la-config_ker.lo -MD -MP -MF src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config_ker.Tpo -c -o src/configs/skx2/lib_libskx2_la-config_ker.lo `test -f 'src/configs/skx2/config_ker.cxx' || echo '$(srcdir)/'`src/configs/skx2/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config_ker.Tpo src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config_ker.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/skx2/config_ker.cxx' object='src/configs/skx2/lib_libskx2_la-config_ker.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx2_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/skx2/lib_libskx2_la-config.lo `test -f 'src/configs/skx2/config.cxx' || echo '$(srcdir)/'`src/configs/skx2/config.cxx
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx2_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/skx2/lib_libskx2_la-config_ker.lo `test -f 'src/configs/skx2/config_ker.cxx' || echo '$(srcdir)/'`src/configs/skx2/config_ker.cxx
 
-src/configs/zen/lib_libzen_la-config.lo: src/configs/zen/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libzen_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/zen/lib_libzen_la-config.lo -MD -MP -MF src/configs/zen/$(DEPDIR)/lib_libzen_la-config.Tpo -c -o src/configs/zen/lib_libzen_la-config.lo `test -f 'src/configs/zen/config.cxx' || echo '$(srcdir)/'`src/configs/zen/config.cxx
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/zen/$(DEPDIR)/lib_libzen_la-config.Tpo src/configs/zen/$(DEPDIR)/lib_libzen_la-config.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/zen/config.cxx' object='src/configs/zen/lib_libzen_la-config.lo' libtool=yes @AMDEPBACKSLASH@
+src/configs/zen/lib_libzen_la-config_ker.lo: src/configs/zen/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libzen_la_CXXFLAGS) $(CXXFLAGS) -MT src/configs/zen/lib_libzen_la-config_ker.lo -MD -MP -MF src/configs/zen/$(DEPDIR)/lib_libzen_la-config_ker.Tpo -c -o src/configs/zen/lib_libzen_la-config_ker.lo `test -f 'src/configs/zen/config_ker.cxx' || echo '$(srcdir)/'`src/configs/zen/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/configs/zen/$(DEPDIR)/lib_libzen_la-config_ker.Tpo src/configs/zen/$(DEPDIR)/lib_libzen_la-config_ker.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/configs/zen/config_ker.cxx' object='src/configs/zen/lib_libzen_la-config_ker.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libzen_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/zen/lib_libzen_la-config.lo `test -f 'src/configs/zen/config.cxx' || echo '$(srcdir)/'`src/configs/zen/config.cxx
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libzen_la_CXXFLAGS) $(CXXFLAGS) -c -o src/configs/zen/lib_libzen_la-config_ker.lo `test -f 'src/configs/zen/config_ker.cxx' || echo '$(srcdir)/'`src/configs/zen/config_ker.cxx
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -2942,34 +2998,44 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 		-rm -f src/configs/$(DEPDIR)/configs.Plo
+	-rm -f src/configs/bulldozer/$(DEPDIR)/config.Plo
 	-rm -f src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.Plo
-	-rm -f src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config.Plo
+	-rm -f src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config_ker.Plo
+	-rm -f src/configs/core2/$(DEPDIR)/config.Plo
 	-rm -f src/configs/core2/$(DEPDIR)/lib_libcore2_la-bli_gemm_asm_d4x4.Plo
-	-rm -f src/configs/core2/$(DEPDIR)/lib_libcore2_la-config.Plo
+	-rm -f src/configs/core2/$(DEPDIR)/lib_libcore2_la-config_ker.Plo
+	-rm -f src/configs/excavator/$(DEPDIR)/config.Plo
 	-rm -f src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-bli_gemm_asm_d8x3.Plo
-	-rm -f src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config.Plo
+	-rm -f src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config_ker.Plo
+	-rm -f src/configs/haswell/$(DEPDIR)/config.Plo
 	-rm -f src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Plo
-	-rm -f src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config.Plo
+	-rm -f src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config_ker.Plo
 	-rm -f src/configs/haswell/$(DEPDIR)/lib_libskx1_la-bli_gemm_asm_d6x8.Plo
 	-rm -f src/configs/haswell/$(DEPDIR)/lib_libzen_la-bli_gemm_asm_d6x8.Plo
+	-rm -f src/configs/knl/$(DEPDIR)/config.Plo
 	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_24x8.Plo
 	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dpackm_opt_24x8.Plo
 	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dpackm_opt_30x8.Plo
 	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_sgemm_opt_24x16.Plo
 	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_spackm_opt_24x16.Plo
-	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-config.Plo
+	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-config_ker.Plo
+	-rm -f src/configs/piledriver/$(DEPDIR)/config.Plo
 	-rm -f src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Plo
-	-rm -f src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config.Plo
+	-rm -f src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config_ker.Plo
 	-rm -f src/configs/reference/$(DEPDIR)/lib_libreference_la-config.Plo
+	-rm -f src/configs/sandybridge/$(DEPDIR)/config.Plo
 	-rm -f src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_asm_d8x4.Plo
-	-rm -f src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config.Plo
-	-rm -f src/configs/skx1/$(DEPDIR)/lib_libskx1_la-config.Plo
-	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx1_la-vpu_count.Plo
+	-rm -f src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config_ker.Plo
+	-rm -f src/configs/skx1/$(DEPDIR)/config.Plo
+	-rm -f src/configs/skx1/$(DEPDIR)/lib_libskx1_la-config_ker.Plo
+	-rm -f src/configs/skx2/$(DEPDIR)/config.Plo
 	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_dgemm_opt_12x16_l2.Plo
 	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_sgemm_opt_12x32_l2.Plo
-	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config.Plo
+	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config_ker.Plo
 	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-vpu_count.Plo
-	-rm -f src/configs/zen/$(DEPDIR)/lib_libzen_la-config.Plo
+	-rm -f src/configs/skx2/$(DEPDIR)/vpu_count.Plo
+	-rm -f src/configs/zen/$(DEPDIR)/config.Plo
+	-rm -f src/configs/zen/$(DEPDIR)/lib_libzen_la-config_ker.Plo
 	-rm -f src/iface/1m/$(DEPDIR)/add.Plo
 	-rm -f src/iface/1m/$(DEPDIR)/dot.Plo
 	-rm -f src/iface/1m/$(DEPDIR)/reduce.Plo
@@ -3112,34 +3178,44 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
 		-rm -f src/configs/$(DEPDIR)/configs.Plo
+	-rm -f src/configs/bulldozer/$(DEPDIR)/config.Plo
 	-rm -f src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.Plo
-	-rm -f src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config.Plo
+	-rm -f src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config_ker.Plo
+	-rm -f src/configs/core2/$(DEPDIR)/config.Plo
 	-rm -f src/configs/core2/$(DEPDIR)/lib_libcore2_la-bli_gemm_asm_d4x4.Plo
-	-rm -f src/configs/core2/$(DEPDIR)/lib_libcore2_la-config.Plo
+	-rm -f src/configs/core2/$(DEPDIR)/lib_libcore2_la-config_ker.Plo
+	-rm -f src/configs/excavator/$(DEPDIR)/config.Plo
 	-rm -f src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-bli_gemm_asm_d8x3.Plo
-	-rm -f src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config.Plo
+	-rm -f src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config_ker.Plo
+	-rm -f src/configs/haswell/$(DEPDIR)/config.Plo
 	-rm -f src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Plo
-	-rm -f src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config.Plo
+	-rm -f src/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config_ker.Plo
 	-rm -f src/configs/haswell/$(DEPDIR)/lib_libskx1_la-bli_gemm_asm_d6x8.Plo
 	-rm -f src/configs/haswell/$(DEPDIR)/lib_libzen_la-bli_gemm_asm_d6x8.Plo
+	-rm -f src/configs/knl/$(DEPDIR)/config.Plo
 	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dgemm_opt_24x8.Plo
 	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dpackm_opt_24x8.Plo
 	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_dpackm_opt_30x8.Plo
 	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_sgemm_opt_24x16.Plo
 	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_spackm_opt_24x16.Plo
-	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-config.Plo
+	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-config_ker.Plo
+	-rm -f src/configs/piledriver/$(DEPDIR)/config.Plo
 	-rm -f src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Plo
-	-rm -f src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config.Plo
+	-rm -f src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config_ker.Plo
 	-rm -f src/configs/reference/$(DEPDIR)/lib_libreference_la-config.Plo
+	-rm -f src/configs/sandybridge/$(DEPDIR)/config.Plo
 	-rm -f src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-bli_gemm_asm_d8x4.Plo
-	-rm -f src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config.Plo
-	-rm -f src/configs/skx1/$(DEPDIR)/lib_libskx1_la-config.Plo
-	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx1_la-vpu_count.Plo
+	-rm -f src/configs/sandybridge/$(DEPDIR)/lib_libsandybridge_la-config_ker.Plo
+	-rm -f src/configs/skx1/$(DEPDIR)/config.Plo
+	-rm -f src/configs/skx1/$(DEPDIR)/lib_libskx1_la-config_ker.Plo
+	-rm -f src/configs/skx2/$(DEPDIR)/config.Plo
 	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_dgemm_opt_12x16_l2.Plo
 	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-bli_sgemm_opt_12x32_l2.Plo
-	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config.Plo
+	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-config_ker.Plo
 	-rm -f src/configs/skx2/$(DEPDIR)/lib_libskx2_la-vpu_count.Plo
-	-rm -f src/configs/zen/$(DEPDIR)/lib_libzen_la-config.Plo
+	-rm -f src/configs/skx2/$(DEPDIR)/vpu_count.Plo
+	-rm -f src/configs/zen/$(DEPDIR)/config.Plo
+	-rm -f src/configs/zen/$(DEPDIR)/lib_libzen_la-config_ker.Plo
 	-rm -f src/iface/1m/$(DEPDIR)/add.Plo
 	-rm -f src/iface/1m/$(DEPDIR)/dot.Plo
 	-rm -f src/iface/1m/$(DEPDIR)/reduce.Plo

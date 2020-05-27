@@ -30,6 +30,4 @@ int core2_check()
     return 1;
 }
 
-TBLIS_CONFIG_INSTANTIATE(core2);
-
 }

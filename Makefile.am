@@ -222,8 +222,9 @@ endif
 if ENABLE_BULLDOZER
 noinst_LTLIBRARIES += lib/libbulldozer.la
 lib_libtblis_la_LIBADD += lib/libbulldozer.la
+lib_libtblis_la_SOURCES += src/configs/bulldozer/config.cxx
 lib_libbulldozer_la_SOURCES = src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c \
-                             src/configs/bulldozer/config.cxx
+                             src/configs/bulldozer/config_ker.cxx
 lib_libbulldozer_la_CFLAGS = -O3 -mavx -mfma4 -march=bdver1 -mfpmath=sse
 lib_libbulldozer_la_CXXFLAGS = -O3 -mavx -mfma4 -march=bdver1 -mfpmath=sse
 endif
@@ -231,8 +232,9 @@ endif
 if ENABLE_PILEDRIVER
 noinst_LTLIBRARIES += lib/libpiledriver.la
 lib_libtblis_la_LIBADD += lib/libpiledriver.la
+lib_libtblis_la_SOURCES += src/configs/piledriver/config.cxx
 lib_libpiledriver_la_SOURCES = src/configs/piledriver/bli_gemm_asm_d8x3.c \
-                               src/configs/piledriver/config.cxx
+                               src/configs/piledriver/config_ker.cxx
 lib_libpiledriver_la_CFLAGS = -O3 -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse
 lib_libpiledriver_la_CXXFLAGS = -O3 -mavx -mfma -mfma4 -march=bdver2 -mfpmath=sse
 endif
@@ -240,11 +242,10 @@ endif
 if ENABLE_EXCAVATOR
 noinst_LTLIBRARIES += lib/libexcavator.la
 lib_libtblis_la_LIBADD += lib/libexcavator.la
+lib_libtblis_la_SOURCES += src/configs/excavator/config.cxx
+lib_libexcavator_la_SOURCES = src/configs/excavator/config_ker.cxx
 if !ENABLE_PILEDRIVER
-lib_libexcavator_la_SOURCES = src/configs/excavator/bli_gemm_asm_d8x3.c \
-                              src/configs/excavator/config.cxx
-else
-lib_libexcavator_la_SOURCES = src/configs/excavator/config.cxx
+lib_libexcavator_la_SOURCES += src/configs/excavator/bli_gemm_asm_d8x3.c
 endif
 lib_libexcavator_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
 lib_libexcavator_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=bdver4 -mfpmath=sse
@@ -253,11 +254,10 @@ endif
 if ENABLE_ZEN
 noinst_LTLIBRARIES += lib/libzen.la
 lib_libtblis_la_LIBADD += lib/libzen.la
+lib_libtblis_la_SOURCES += src/configs/zen/config.cxx
+lib_libzen_la_SOURCES = src/configs/zen/config_ker.cxx
 if !ENABLE_HASWELL
-lib_libzen_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
-                        src/configs/zen/config.cxx
-else
-lib_libzen_la_SOURCES = src/configs/zen/config.cxx
+lib_libzen_la_SOURCES += src/configs/haswell/bli_gemm_asm_d6x8.c
 endif
 lib_libzen_la_CFLAGS = -O3 -mavx -mavx2 -mfma -march=znver1 -mfpmath=sse
 lib_libzen_la_CXXFLAGS = -O3 -mavx -mavx2 -mfma -march=znver1 -mfpmath=sse
@@ -270,8 +270,9 @@ endif
 if ENABLE_CORE2
 noinst_LTLIBRARIES += lib/libcore2.la
 lib_libtblis_la_LIBADD += lib/libcore2.la
+lib_libtblis_la_SOURCES += src/configs/core2/config.cxx
 lib_libcore2_la_SOURCES = src/configs/core2/bli_gemm_asm_d4x4.c \
-                          src/configs/core2/config.cxx
+                          src/configs/core2/config_ker.cxx
 if ENABLE_INTEL_COMPILER
 lib_libcore2_la_CFLAGS = -O3 -xSSSE3
 lib_libcore2_la_CXXFLAGS = -O3 -xSSSE3
@@ -284,8 +285,9 @@ endif
 if ENABLE_SANDYBRIDGE
 noinst_LTLIBRARIES += lib/libsandybridge.la
 lib_libtblis_la_LIBADD += lib/libsandybridge.la
+lib_libtblis_la_SOURCES += src/configs/sandybridge/config.cxx
 lib_libsandybridge_la_SOURCES = src/configs/sandybridge/bli_gemm_asm_d8x4.c \
-                                src/configs/sandybridge/config.cxx
+                                src/configs/sandybridge/config_ker.cxx
 if ENABLE_INTEL_COMPILER
 lib_libsandybridge_la_CFLAGS = -O3 -xAVX
 lib_libsandybridge_la_CXXFLAGS = -O3 -xAVX
@@ -298,8 +300,9 @@ endif
 if ENABLE_HASWELL
 noinst_LTLIBRARIES += lib/libhaswell.la
 lib_libtblis_la_LIBADD += lib/libhaswell.la
+lib_libtblis_la_SOURCES += src/configs/haswell/config.cxx
 lib_libhaswell_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
-                            src/configs/haswell/config.cxx
+                            src/configs/haswell/config_ker.cxx
 #                            src/configs/haswell/bli_gemm_asm_d12x4.c \
 #                            src/configs/haswell/bli_gemm_asm_d8x6.c \
 #                            src/configs/haswell/bli_gemm_asm_d4x12.c
@@ -315,12 +318,13 @@ endif
 if ENABLE_KNL
 noinst_LTLIBRARIES += lib/libknl.la
 lib_libtblis_la_LIBADD += lib/libknl.la
+lib_libtblis_la_SOURCES += src/configs/knl/config.cxx
 lib_libknl_la_SOURCES = src/configs/knl/bli_spackm_opt_24x16.c \
                         src/configs/knl/bli_dpackm_opt_24x8.c \
                         src/configs/knl/bli_dpackm_opt_30x8.c \
                         src/configs/knl/bli_sgemm_opt_24x16.c \
                         src/configs/knl/bli_dgemm_opt_24x8.c \
-                        src/configs/knl/config.cxx
+                        src/configs/knl/config_ker.cxx
 #                        src/configs/knl/bli_dgemm_opt_12x16.c \
 #                        src/configs/knl/bli_dgemm_opt_30x8.c \
 #                        src/configs/knl/bli_dgemm_opt_8x24.c \
@@ -343,22 +347,13 @@ endif
 if ENABLE_SKX1
 noinst_LTLIBRARIES += lib/libskx1.la
 lib_libtblis_la_LIBADD += lib/libskx1.la
+lib_libtblis_la_SOURCES += src/configs/skx1/config.cxx
+lib_libskx1_la_SOURCES = src/configs/skx1/config_ker.cxx
 if !ENABLE_SKX2
-if !ENABLE_HASWELL
-lib_libskx1_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
-                         src/configs/skx2/vpu_count.cxx \
-                         src/configs/skx1/config.cxx
-else
-lib_libskx1_la_SOURCES = src/configs/skx2/vpu_count.cxx \
-                         src/configs/skx1/config.cxx
+lib_libtblis_la_SOURCES += src/configs/skx2/vpu_count.cxx
 endif
-else
 if !ENABLE_HASWELL
-lib_libskx1_la_SOURCES = src/configs/haswell/bli_gemm_asm_d6x8.c \
-                         src/configs/skx1/config.cxx
-else
-lib_libskx1_la_SOURCES = src/configs/skx1/config.cxx
-endif
+lib_libskx1_la_SOURCES += src/configs/haswell/bli_gemm_asm_d6x8.c
 endif
 if ENABLE_INTEL_COMPILER
 lib_libskx1_la_CFLAGS = -O3 -xCORE-AVX512
@@ -377,10 +372,12 @@ endif
 if ENABLE_SKX2
 noinst_LTLIBRARIES += lib/libskx2.la
 lib_libtblis_la_LIBADD += lib/libskx2.la
+lib_libtblis_la_SOURCES += src/configs/skx2/vpu_count.cxx \
+                           src/configs/skx2/config.cxx
 lib_libskx2_la_SOURCES = src/configs/skx2/bli_sgemm_opt_12x32_l2.c \
                          src/configs/skx2/bli_dgemm_opt_12x16_l2.c \
                          src/configs/skx2/vpu_count.cxx \
-                         src/configs/skx2/config.cxx
+                         src/configs/skx2/config_ker.cxx
 #                        src/configs/skx2/bli_dgemm_opt_12x16_l1.c \
 #                         src/configs/skx2/bli_dgemm_opt_8x8_l1.c \
 #                         src/configs/skx2/bli_dgemm_opt_8x8_l2.c \

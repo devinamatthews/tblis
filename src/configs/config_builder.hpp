@@ -18,22 +18,22 @@
     TBLIS_GET_VALUE_OR_DEFAULT_CASE(value,default,TBLIS_IS_EMPTY(value))
 
 #define TBLIS_BEGIN_CONFIG(cfg) \
-extern config cfg##_config_instance; \
 struct cfg##_config : config_template<cfg##_config> \
 { \
     typedef cfg##_config this_config; \
  \
     static constexpr const char* name = #cfg; \
  \
-    static const config& instance() \
-    { \
-        return cfg##_config_instance; \
-    } \
+    static const config& instance();
 
 #define TBLIS_END_CONFIG };
 
 #define TBLIS_CONFIG_INSTANTIATE(cfg) \
-config cfg##_config_instance = config(cfg##_config());
+const config& cfg##_config::instance() \
+{ \
+    static config _instance(cfg##_config{}); \
+    return _instance; \
+}
 
 #define TBLIS_CONFIG_REGISTER_BLOCKSIZE(name, S,D,C,Z, SE,DE,CE,ZE, SD,DD,CD,ZD) \
     template <typename T> struct name : register_blocksize<T, \

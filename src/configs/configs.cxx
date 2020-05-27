@@ -14,14 +14,29 @@ enum config_t
     num_configs
 };
 
-const config* const configs[num_configs] =
+using instance_fn_t = const config& (*)(void);
+
+const char* names[num_configs] =
 {
-#define FOREACH_CONFIG(config) &config::instance(),
+#define FOREACH_CONFIG(config) config::name,
+#include "configs/foreach_config.h"
+};
+
+const check_fn_t check[num_configs] =
+{
+#define FOREACH_CONFIG(config) config::check,
+#include "configs/foreach_config.h"
+};
+
+const instance_fn_t instance[num_configs] =
+{
+#define FOREACH_CONFIG(config) &config::instance,
 #include "configs/foreach_config.h"
 };
 
 struct default_config
 {
+    instance_fn_t value_fn = nullptr;
     const config* value = nullptr;
 
     default_config()
@@ -30,24 +45,30 @@ struct default_config
 
         for (int cfg = 0;cfg < num_configs;cfg++)
         {
-            TBLIS_ASSERT(configs[cfg]->check);
-            int cur_prio = configs[cfg]->check();
+            TBLIS_ASSERT(check[cfg]);
+            int cur_prio = check[cfg]();
             if (cur_prio > priority)
             {
                 priority = cur_prio;
-                value = configs[cfg];
+                value_fn = instance[cfg];
             }
 
             if (get_verbose() >= 1)
             {
                 printf("tblis: Configuration %s assigned priority %d.\n",
-                       configs[cfg]->name, cur_prio);
+                       names[cfg], cur_prio);
             }
         }
 
-        if (!value)
+        if (!value_fn)
             tblis_abort_with_message(nullptr,
                 "tblis: No usable configuration enabled, aborting!");
+
+        value = &value_fn();
+
+        if (!value)
+            tblis_abort_with_message(nullptr,
+                "tblis: Could not get config instance, aborting!");
 
         if (get_verbose() >= 1)
         {
@@ -73,12 +94,12 @@ const config& get_config(const std::string& name)
 {
     for (int cfg = 0;cfg < num_configs;cfg++)
     {
-        if (configs[cfg]->name == name)
+        if (names[cfg] == name)
         {
-            if (configs[cfg]->check() == -1)
+            if (check[cfg]() == -1)
                 tblis_abort_with_message(nullptr,
                     "tblis: Configuration %s cannot be used!", name.c_str());
-            return *configs[cfg];
+            return instance[cfg]();
         }
     }
 

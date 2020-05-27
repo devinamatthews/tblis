@@ -3,12 +3,26 @@
 #include "configs/include_configs.hpp"
 #include "nodes/gemm_ukr.hpp"
 
-const config* const configs[] =
+using instance_fn_t = const config& (*)(void);
+
+enum config_t
 {
-#define FOREACH_CONFIG(config) &config::instance(),
+#define FOREACH_CONFIG(config) config##_value,
+#include "configs/foreach_config.h"
+    num_configs
+};
+
+const check_fn_t checks[] =
+{
+#define FOREACH_CONFIG(config) config::check,
 #include "configs/foreach_config.h"
 };
-constexpr auto num_configs = sizeof(configs)/sizeof(configs[0]);
+
+const instance_fn_t instance[] =
+{
+#define FOREACH_CONFIG(config) &config::instance,
+#include "configs/foreach_config.h"
+};
 
 /*
  * Assume:
@@ -27,9 +41,9 @@ TEMPLATED_TEST_CASE(gemm_ukr, T, all_types)
 {
     for (unsigned i = 0;i < num_configs;i++)
     {
-        auto& cfg = *configs[i];
+        if (checks[i]() == -1) continue;
 
-        if (cfg.check() == -1) continue;
+        auto& cfg = instance[i]();
 
         len_type MR = cfg.gemm_mr.def<T>();
         len_type NR = cfg.gemm_nr.def<T>();

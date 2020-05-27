@@ -166,8 +166,9 @@ struct config
 
     check_fn_t check;
     const char* name;
+    int _hack;
 
-    template <typename Traits> config(const Traits&)
+    template <typename Traits> config(const Traits&, int hack)
     : add_ukr(typename Traits::template add_ukr<float>()),
       dot_ukr(typename Traits::template dot_ukr<float>()),
       mult_ukr(typename Traits::template mult_ukr<float>()),
@@ -222,7 +223,7 @@ struct config
       mr_max_thread(typename Traits::template mr_max_thread<float>()),
       nr_max_thread(typename Traits::template nr_max_thread<float>()),
 
-      check(Traits::check), name(Traits::name) {}
+      check(Traits::check), name(Traits::name), _hack(hack) {}
 
       operator const tblis_config*() const
       {

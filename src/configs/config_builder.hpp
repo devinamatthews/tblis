@@ -24,14 +24,14 @@ struct cfg##_config : config_template<cfg##_config> \
  \
     static constexpr const char* name = #cfg; \
  \
-    static const config& instance();
+    static const config& instance(int hack = 0);
 
 #define TBLIS_END_CONFIG };
 
 #define TBLIS_CONFIG_INSTANTIATE(cfg) \
-const config& cfg##_config::instance() \
+const config& cfg##_config::instance(int hack) \
 { \
-    static config _instance(cfg##_config{}); \
+    static config _instance(cfg##_config{}, hack); \
     return _instance; \
 }
 

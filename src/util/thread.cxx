@@ -66,7 +66,7 @@ struct thread_configuration
 
             num_threads = strtol(s.c_str(), NULL, 10);
 
-            #elif TBLIS_HAVE_SYSCTL
+            #elif TBLIS_HAVE_SYSCTLBYNAME
 
             size_t len = sizeof(num_threads);
             sysctlbyname("hw.physicalcpu", &num_threads, &len, NULL, 0);

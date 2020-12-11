@@ -888,6 +888,8 @@ class varray_base
                         break;
                     }
                 }
+
+                if (ndim == 1) break;
             }
 
             return os;

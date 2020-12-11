@@ -122,14 +122,14 @@ void pack_nn_ukr_def(len_type m, len_type k, const void* alpha_, bool conj,
         }
         else if (p_d)
         {
-            if (m == MR && rs_a == 1 && inc_d == 1 && inc_e == 1)
+            if (m == MR && rs_a == 1 && inc_d == 1)
             {
                 for (len_type p = 0;p < k;p++)
                     #pragma omp simd
                     for (len_type mr = 0;mr < MR;mr++)
                         p_ap[mr + p*ME] = alpha * tblis::conj(p_a[mr + p*cs_a]) * p_d[mr];
             }
-            else if (m == MR && cs_a == 1 && inc_d == 1 && inc_e == 1)
+            else if (m == MR && cs_a == 1 && inc_d == 1)
             {
                 len_type p = 0;
                 for (;p < k-KR;p += KR)
@@ -155,14 +155,14 @@ void pack_nn_ukr_def(len_type m, len_type k, const void* alpha_, bool conj,
         }
         else if (p_e)
         {
-            if (m == MR && rs_a == 1 && inc_d == 1 && inc_e == 1)
+            if (m == MR && rs_a == 1 && inc_e == 1)
             {
                 for (len_type p = 0;p < k;p++)
                     #pragma omp simd
                     for (len_type mr = 0;mr < MR;mr++)
                         p_ap[mr + p*ME] = alpha * tblis::conj(p_a[mr + p*cs_a]) * p_e[p];
             }
-            else if (m == MR && cs_a == 1 && inc_d == 1 && inc_e == 1)
+            else if (m == MR && cs_a == 1 && inc_e == 1)
             {
                 len_type p = 0;
                 for (;p < k-KR;p += KR)
@@ -188,14 +188,14 @@ void pack_nn_ukr_def(len_type m, len_type k, const void* alpha_, bool conj,
         }
         else
         {
-            if (m == MR && rs_a == 1 && inc_d == 1 && inc_e == 1)
+            if (m == MR && rs_a == 1)
             {
                 for (len_type p = 0;p < k;p++)
                     #pragma omp simd
                     for (len_type mr = 0;mr < MR;mr++)
                         p_ap[mr + p*ME] = alpha * tblis::conj(p_a[mr + p*cs_a]);
             }
-            else if (m == MR && cs_a == 1 && inc_d == 1 && inc_e == 1)
+            else if (m == MR && cs_a == 1)
             {
                 len_type p = 0;
                 for (;p < k-KR;p += KR)

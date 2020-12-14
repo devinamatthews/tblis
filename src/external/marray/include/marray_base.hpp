@@ -159,7 +159,7 @@ class marray_iterator
 
         marray_iterator operator-(difference_type n) const
         {
-            return iterator(*array_, i_-n);
+            return marray_iterator(*array_, i_-n);
         }
 
         difference_type operator-(const marray_iterator& other) const
@@ -678,7 +678,7 @@ class marray_base
         strides(const detail::array_1d<len_type>& len_, layout layout = DEFAULT)
         {
             //TODO: add alignment option
-            
+
             MARRAY_ASSERT(len_.size() == NDim);
 
             std::array<len_type, NDim> len;
@@ -704,7 +704,7 @@ class marray_base
         static stride_type size(const detail::array_1d<len_type>& len_)
         {
             //TODO: add alignment option
-            
+
             len_vector len;
             len_.slurp(len);
 

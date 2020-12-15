@@ -1,7 +1,7 @@
 language: cpp
-dist: trusty
+dist: bionic
 sudo: required
-osx_image: xcode10.1
+osx_image: xcode12.2
 
 os:
   - linux
@@ -33,7 +33,7 @@ matrix:
 before_install:
   - 'if [ "$TRAVIS_OS_NAME" = "osx" ]; then
         rm /usr/local/include/c++;
-        brew update && brew install gcc@6 tbb llvm@9;
+        brew update && brew install gcc@9 tbb llvm@9;
         rm /usr/local/include/c++;
         brew link --force --overwrite llvm@9;
     fi'
@@ -42,23 +42,23 @@ addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
-    - llvm-toolchain-precise-3.9
+    - llvm-toolchain-6
     packages:
-    - gcc-6
-    - g++-6
-    - clang-3.9
+    - gcc-9
+    - g++-9
+    - clang-6.0
     - libiomp-dev
     - libtbb-dev
-    - binutils-2.26
+    #- binutils-2.26
     
 install:
-  - 'if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-        export PATH=/usr/lib/binutils-2.26/bin:${PATH};
-    fi'
-  - if [ "$CC" = "gcc" ] ; then export CC="gcc-6" CXX="g++-6"; fi
+  #- 'if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+  #      export PATH=/usr/lib/binutils-2.26/bin:${PATH};
+  #  fi'
+  - if [ "$CC" = "gcc" ] ; then export CC="gcc-9" CXX="g++-9"; fi
   - 'if [ "$CC" = "clang" ] ; then
         if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-            export CC="clang-3.9 -fopenmp=libiomp5" CXX="clang++-3.9 -fopenmp=libiomp5";
+            export CC="clang-6.0 -fopenmp=libiomp5" CXX="clang++-6.0 -fopenmp=libiomp5";
         else
             export CC="clang-9" CXX="clang++";
         fi;

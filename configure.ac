@@ -19,9 +19,13 @@ AX_BLAS([blas_found=yes])
 AC_PROG_CXX([icpc g++ clang++])
 AX_CXX_COMPILE_STDCXX_14([noext])
 AC_LANG([C++])
-AC_C_RESTRICT
+#
+# Apple's sys/cdefs.h redefines __restrict to null in C++ mode (!!!!!!)
+# Stick with __restrict__ for now, as it works with everything except MSVC
+#
+#AC_C_RESTRICT
 
-AC_DEFINE([RESTRICT], [_tblis_restrict], [More convenient macro for restrict.])
+AC_DEFINE([RESTRICT], [__restrict__], [More convenient macro for restrict.])
 AM_CONDITIONAL([ENABLE_BLAS], [test x"$blas_found" = xyes])
 
 AC_SEARCH_LIBS([clock_gettime], [rt])

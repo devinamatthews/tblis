@@ -914,6 +914,40 @@ marray_view<Type, NDim> fix(varray_base<Type, Derived, true>& x)
     return x.template fix<NDim>();
 }
 
+template <int NDim, typename Type, typename Derived>
+marray_view<Type, NDim> fix(varray_base<Type, Derived, true>&& x)
+{
+    return x.template fix<NDim>();
+}
+
+template <int NDim1, typename Type, int NDim2, typename Derived>
+marray_view<Type, NDim1> fix(const marray_base<Type, NDim2, Derived, false>& x)
+{
+    static_assert(NDim1 == NDim2, "Dimensions must be equal");
+    return x;
+}
+
+template <int NDim1, typename Type, int NDim2, typename Derived>
+marray_view<const Type, NDim1> fix(const marray_base<Type, NDim2, Derived, true>& x)
+{
+    static_assert(NDim1 == NDim2, "Dimensions must be equal");
+    return x;
+}
+
+template <int NDim1, typename Type, int NDim2, typename Derived>
+marray_view<Type, NDim1> fix(marray_base<Type, NDim2, Derived, true>& x)
+{
+    static_assert(NDim1 == NDim2, "Dimensions must be equal");
+    return x;
+}
+
+template <int NDim1, typename Type, int NDim2, typename Derived>
+marray_view<Type, NDim1> fix(marray_base<Type, NDim2, Derived, true>&& x)
+{
+    static_assert(NDim1 == NDim2, "Dimensions must be equal");
+    return x;
+}
+
 //TODO: maybe these should go in marray_base?
 
 template <typename U, int N, typename D>
@@ -933,11 +967,43 @@ varray_view<const U> vary(const marray_base<U, N, D, true>& other)
 }
 
 template <typename U, int N, typename D>
+varray_view<const U> vary(const marray_base<U, N, D, true>&& other)
+{
+    len_vector len{other.lengths().begin(), other.lengths().end()};
+    stride_vector stride{other.strides().begin(), other.strides().end()};
+    return {len, other.data(), stride};
+}
+
+template <typename U, int N, typename D>
 varray_view<U> vary(marray_base<U, N, D, true>& other)
 {
     len_vector len{other.lengths().begin(), other.lengths().end()};
     stride_vector stride{other.strides().begin(), other.strides().end()};
     return {len, other.data(), stride};
+}
+
+template <typename U, typename D>
+varray_view<U> vary(const varray_base<U, D, false>& other)
+{
+    return other;
+}
+
+template <typename U, typename D>
+varray_view<const U> vary(const varray_base<U, D, true>& other)
+{
+    return other;
+}
+
+template <typename U, typename D>
+varray_view<U> vary(varray_base<U, D, true>& other)
+{
+    return other;
+}
+
+template <typename U, typename D>
+varray_view<U> vary(varray_base<U, D, true>&& other)
+{
+    return other;
 }
 
 template <typename U, int N, int I, typename... Ds>

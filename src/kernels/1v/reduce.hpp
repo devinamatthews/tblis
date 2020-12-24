@@ -14,11 +14,12 @@ using reduce_ukr_t =
 
 template <typename Config, typename T>
 void reduce_ukr_def(reduce_t op, len_type n,
-                    const void* A_, stride_type inc_A, void* value_, len_type& idx)
+                    const void* A_, stride_type inc_A, void* value_, len_type& idx_)
 {
     const T* TBLIS_RESTRICT A = static_cast<const T*>(A_);
 
-    T& TBLIS_RESTRICT value = *static_cast<T*>(value_);
+    T value = *static_cast<T*>(value_);
+    len_type idx = idx_;
 
     if (op == REDUCE_SUM)
     {
@@ -100,6 +101,9 @@ void reduce_ukr_def(reduce_t op, len_type n,
             for (len_type i = 0;i < n;i++) value += norm2(A[i*inc_A]);
         }
     }
+
+    *static_cast<T*>(value_) = value;
+    idx_ = idx;
 }
 
 }

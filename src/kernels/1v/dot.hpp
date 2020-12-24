@@ -21,7 +21,7 @@ void dot_ukr_def(len_type n,
     const T* TBLIS_RESTRICT A = static_cast<const T*>(A_);
     const T* TBLIS_RESTRICT B = static_cast<const T*>(B_);
 
-    T& TBLIS_RESTRICT value = *static_cast<T*>(value_);
+    T value = *static_cast<T*>(value_);
 
     if (conj_A)
     {
@@ -62,6 +62,8 @@ void dot_ukr_def(len_type n,
     {
         value = conj(value);
     }
+
+    *static_cast<T*>(value_) = value;
 }
 
 }

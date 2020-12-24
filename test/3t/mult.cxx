@@ -55,7 +55,7 @@ REPLICATED_TEMPLATED_TEST_CASE(mult, R, T, all_types)
     TENSOR_INFO(C);
 
     auto idx_AB = exclusion(intersection(idx_A, idx_B), idx_C);
-    auto neps = prod(select_from(A.lengths(), idx_A, idx_AB))*prod(C.lengths());
+    auto neps = (prod(select_from(A.lengths(), idx_A, idx_AB))+1)*prod(C.lengths());
 
     impl = REFERENCE;
     D.reset(C);
@@ -116,6 +116,15 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_mult, R, T, all_types)
                 size_AC[irrep_AC]*
                 size_BC[irrep_BC];
     }
+    for (unsigned irrep_AC = 0;irrep_AC < nirrep;irrep_AC++)
+    for (unsigned irrep_BC = 0;irrep_BC < nirrep;irrep_BC++)
+    {
+        unsigned irrep_ABC = irrep_AC^irrep_BC^C.irrep();
+
+        neps += size_ABC[irrep_ABC]*
+                size_AC[irrep_AC]*
+                size_BC[irrep_BC];
+    }
 
     dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
@@ -148,7 +157,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_mult, R, T, all_types)
     INDEXED_TENSOR_INFO(C);
 
     auto idx_AB = exclusion(intersection(idx_A, idx_B), idx_C);
-    auto neps = prod(select_from(A.lengths(), idx_A, idx_AB))*prod(C.lengths());
+    auto neps = (prod(select_from(A.lengths(), idx_A, idx_AB))+1)*prod(C.lengths());
 
     dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
@@ -199,6 +208,15 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_mult, R, T, all_types)
 
         neps += size_ABC[irrep_ABC]*
                 size_AB[irrep_AB]*
+                size_AC[irrep_AC]*
+                size_BC[irrep_BC];
+    }
+    for (unsigned irrep_AC = 0;irrep_AC < nirrep;irrep_AC++)
+    for (unsigned irrep_BC = 0;irrep_BC < nirrep;irrep_BC++)
+    {
+        unsigned irrep_ABC = irrep_AC^irrep_BC^C.irrep();
+
+        neps += size_ABC[irrep_ABC]*
                 size_AC[irrep_AC]*
                 size_BC[irrep_BC];
     }

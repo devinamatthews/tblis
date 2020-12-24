@@ -42,6 +42,4 @@ int bulldozer_check()
     return 1;
 }
 
-TBLIS_CONFIG_INSTANTIATE(bulldozer);
-
 }

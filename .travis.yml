@@ -26,14 +26,17 @@ addons:
     packages:
     - gcc-9
     - g++-9
-    - libtbb-dev
     - clang-6.0
     - libiomp-dev
+    - libtbb-dev
+    #- binutils-2.26
     
 install:
-  - 'if [ "$CC" = "gcc" ]; then
-        export CC="gcc-9" CXX="g++-9";
-    else
+  #- 'if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+  #      export PATH=/usr/lib/binutils-2.26/bin:${PATH};
+  #  fi'
+  - if [ "$CC" = "gcc" ] ; then export CC="gcc-9" CXX="g++-9"; fi
+  - 'if [ "$CC" = "clang" ] ; then
         if [ "$TRAVIS_OS_NAME" = "linux" ]; then
             export CC="clang-6.0 -fopenmp=libiomp5" CXX="clang++-6.0 -fopenmp=libiomp5";
         else

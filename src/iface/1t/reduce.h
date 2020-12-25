@@ -30,15 +30,22 @@ struct reduce_result
     T value;
     len_type idx;
 
-    template <typename T_=T, typename =
-        std::enable_if_t<!std::is_same<T_,scalar>::value>>
-    reduce_result()
+    reduce_result(type_t)
     : value(), idx() {}
 
-    reduce_result(const T& value, len_type idx)
-    : value(value), idx(idx) {}
-
     operator const T&() const { return value; }
+};
+
+template <>
+struct reduce_result<scalar>
+{
+    scalar value;
+    len_type idx;
+
+    reduce_result(type_t type)
+    : value(0.0, type), idx() {}
+
+    operator const scalar&() const { return value; }
 };
 
 inline
@@ -65,24 +72,13 @@ void reduce(const communicator& comm,
     result = result_.get<T>();
 }
 
-inline
-reduce_result<scalar> reduce(const communicator& comm,
-                             reduce_t op,
-                             const tensor& A,
-                             const label_vector& idx_A)
-{
-    reduce_result<scalar> result({0, A.type}, 0);
-    reduce(comm, op, A, idx_A, result.value, result.idx);
-    return result;
-}
-
-template <typename T>
+template <typename T=scalar>
 reduce_result<T> reduce(const communicator& comm,
                         reduce_t op,
                         const tensor& A,
                         const label_vector& idx_A)
 {
-    reduce_result<T> result;
+    reduce_result<T> result(A.type);
     reduce(comm, op, A, idx_A, result.value, result.idx);
     return result;
 }
@@ -109,22 +105,12 @@ void reduce(const communicator& comm,
     result = result_.get<T>();
 }
 
-inline
-reduce_result<scalar> reduce(const communicator& comm,
-                             reduce_t op,
-                             const tensor& A)
-{
-    reduce_result<scalar> result({0, A.type}, 0);
-    reduce(comm, op, A, result.value, result.idx);
-    return result;
-}
-
-template <typename T>
+template <typename T=scalar>
 reduce_result<T> reduce(const communicator& comm,
                         reduce_t op,
                         const tensor& A)
 {
-    reduce_result<T> result;
+    reduce_result<T> result(A.type);
     reduce(comm, op, A, result.value, result.idx);
     return result;
 }
@@ -151,22 +137,12 @@ void reduce(reduce_t op,
     result = result_.get<T>();
 }
 
-inline
-reduce_result<scalar> reduce(reduce_t op,
-                             const tensor& A,
-                             const label_vector& idx_A)
-{
-    reduce_result<scalar> result({0, A.type}, 0);
-    reduce(op, A, idx_A, result.value, result.idx);
-    return result;
-}
-
-template <typename T>
+template <typename T=scalar>
 reduce_result<T> reduce(reduce_t op,
                         const tensor& A,
                         const label_vector& idx_A)
 {
-    reduce_result<T> result;
+    reduce_result<T> result(A.type);
     reduce(op, A, idx_A, result.value, result.idx);
     return result;
 }
@@ -191,18 +167,10 @@ void reduce(reduce_t op,
     result = result_.get<T>();
 }
 
-inline
-reduce_result<scalar> reduce(reduce_t op, const tensor& A)
-{
-    reduce_result<scalar> result({0, A.type}, 0);
-    reduce(op, A, result.value, result.idx);
-    return result;
-}
-
-template <typename T>
+template <typename T=scalar>
 reduce_result<T> reduce(reduce_t op, const tensor& A)
 {
-    reduce_result<T> result;
+    reduce_result<T> result(A.type);
     reduce(op, A, result.value, result.idx);
     return result;
 }
@@ -230,7 +198,7 @@ void reduce(reduce_t op, dpd_varray_view<const T> A, const label_vector& idx_A,
 template <typename T>
 reduce_result<T> reduce(reduce_t op, dpd_varray_view<const T> A, const label_vector& idx_A)
 {
-    reduce_result<T> result;
+    reduce_result<T> result(type_tag<T>::value);
     reduce(op, A, idx_A, result.value, result.idx);
     return result;
 }
@@ -265,7 +233,7 @@ void reduce(reduce_t op, indexed_varray_view<const T> A, const label_vector& idx
 template <typename T>
 reduce_result<T> reduce(reduce_t op, indexed_varray_view<const T> A, const label_vector& idx_A)
 {
-    reduce_result<T> result;
+    reduce_result<T> result(type_tag<T>::value);
     reduce(op, A, idx_A, result.value, result.idx);
     return result;
 }
@@ -300,7 +268,7 @@ void reduce(reduce_t op, indexed_dpd_varray_view<const T> A, const label_vector&
 template <typename T>
 reduce_result<T> reduce(reduce_t op, indexed_dpd_varray_view<const T> A, const label_vector& idx_A)
 {
-    reduce_result<T> result;
+    reduce_result<T> result(type_tag<T>::value);
     reduce(op, A, idx_A, result.value, result.idx);
     return result;
 }
@@ -313,6 +281,96 @@ reduce_result<T> reduce(const communicator& comm, reduce_t op,
     reduce(comm, op, A, idx_A, result.value, result.idx);
     return result;
 }
+
+namespace internal
+{
+
+template <typename Tensor>
+struct data_type_helper
+{
+    static void check(...);
+
+    static scalar check(scalar&);
+
+    template <typename T, int N, typename D, bool O>
+    static std::decay_t<T> check(MArray::marray_base<T,N,D,O>&);
+
+    template <typename T, typename D, bool O>
+    static std::decay_t<T> check(MArray::varray_base<T,D,O>&);
+
+    template <typename T, int N, int I, typename... D>
+    static std::decay_t<T> check(MArray::marray_slice<T,N,I,D...>&);
+
+    template <typename T, int N, typename D, bool O>
+    static std::decay_t<T> check(MArray::dpd_marray_base<T,N,D,O>&);
+
+    template <typename T, typename D, bool O>
+    static std::decay_t<T> check(MArray::dpd_varray_base<T,D,O>&);
+
+    template <typename T, typename D, bool O>
+    static std::decay_t<T> check(MArray::indexed_varray_base<T,D,O>&);
+
+    template <typename T, typename D, bool O>
+    static std::decay_t<T> check(MArray::indexed_dpd_varray_base<T,D,O>&);
+
+    #if defined(EIGEN_CXX11_TENSOR_TENSOR_FORWARD_DECLARATIONS_H)
+
+    template <typename D, int A>
+    static std::decay_t<Eigen::TensorBase<D,A>::Scalar> check(Eigen::TensorBase<D,A>&);
+
+    #endif
+
+    typedef decltype(check(std::declval<Tensor&>())) type;
+};
+
+template <typename T>
+struct data_type_helper2 { typedef T type; };
+
+template <>
+struct data_type_helper2<void> {};
+
+template <typename T>
+using data_type = typename data_type_helper2<typename data_type_helper<std::decay_t<T>>::type>::type;
+
+}
+
+#define TBLIS_ALIAS_REDUCTION(name, op, which) \
+\
+template <typename Tensor, typename... Args> \
+inline auto name(const Tensor& t, Args&&... args) \
+-> decltype(reduce<internal::data_type<Tensor>>(op, t, std::forward<Args>(args)...)which) \
+{ \
+    return reduce<internal::data_type<Tensor>>(op, t, std::forward<Args>(args)...)which; \
+} \
+\
+template <typename Tensor, typename... Args> \
+inline auto name(const communicator& comm, const Tensor& t, Args&&... args) \
+-> decltype(reduce<internal::data_type<Tensor>>(comm, t, op, std::forward<Args>(args)...)which) \
+{ \
+    return reduce<internal::data_type<Tensor>>(comm, t, op, std::forward<Args>(args)...)which; \
+} \
+\
+template <typename... Args> \
+inline auto name(const tensor& t, Args&&... args) \
+-> decltype(reduce(op, t, std::forward<Args>(args)...)which) \
+{ \
+    return reduce(op, t, std::forward<Args>(args)...)which; \
+} \
+\
+template <typename... Args> \
+inline auto name(const communicator& comm, const tensor& t, Args&&... args) \
+-> decltype(reduce(comm, t, op, std::forward<Args>(args)...)which) \
+{ \
+    return reduce(comm, t, op, std::forward<Args>(args)...)which; \
+}
+
+TBLIS_ALIAS_REDUCTION(asum, REDUCE_SUM_ABS, .value)
+TBLIS_ALIAS_REDUCTION(norm, REDUCE_NORM_2, .value)
+TBLIS_ALIAS_REDUCTION(amaxv, REDUCE_MAX_ABS, .value)
+TBLIS_ALIAS_REDUCTION(iamax, REDUCE_MAX_ABS, .idx)
+TBLIS_ALIAS_REDUCTION(amax, REDUCE_MAX_ABS, )
+
+#undef TBLIS_ALIAS_REDUCTION
 
 #endif
 

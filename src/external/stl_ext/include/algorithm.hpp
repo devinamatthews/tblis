@@ -84,6 +84,50 @@ typename T::value_type min(const T& t)
     return v;
 }
 
+template <typename T>
+size_t max_pos(const T& t)
+{
+    typedef typename T::value_type V;
+
+    if (t.empty()) return 0;
+
+    size_t pos = 0;
+    typename T::const_iterator i = t.begin();
+    V v = *i;
+    for (size_t j = 0;i != t.end();++i,++j)
+    {
+        if (v < *i)
+        {
+            v = *i;
+            pos = j;
+        }
+    }
+
+    return pos;
+}
+
+template <typename T>
+size_t min_pos(const T& t)
+{
+    typedef typename T::value_type V;
+
+    if (t.empty()) return 0;
+
+    size_t pos = 0;
+    typename T::const_iterator i = t.begin();
+    V v = *i;
+    for (size_t j = 0;i != t.end();++i,++j)
+    {
+        if (*i < v)
+        {
+            v = *i;
+            pos = j;
+        }
+    }
+
+    return pos;
+}
+
 template <typename T, typename Functor>
 enable_if_not_same_t<typename T::value_type,Functor,T&>
 erase(T& v, const Functor& f)
@@ -99,6 +143,18 @@ T& erase(T& v, const typename T::value_type& e)
     return v;
 }
 
+inline std::string& erase(std::string& v, const std::string& e)
+{
+    for (auto c : e) erase(v, c);
+    return v;
+}
+
+inline std::string& erase(std::string& v, const char* e)
+{
+    while (*e) erase(v, *e++);
+    return v;
+}
+
 template <typename T, typename Functor>
 enable_if_not_same_t<typename T::value_type,Functor,T>
 erased(T v, const Functor& x)
@@ -109,6 +165,18 @@ erased(T v, const Functor& x)
 
 template <typename T>
 T erased(T v, const typename T::value_type& e)
+{
+    erase(v, e);
+    return v;
+}
+
+inline std::string erased(std::string v, const std::string& e)
+{
+    erase(v, e);
+    return v;
+}
+
+inline std::string erased(std::string v, const char* e)
 {
     erase(v, e);
     return v;
@@ -227,6 +295,12 @@ template <typename T, typename U>
 bool contains(const T& v, const U& e)
 {
     return find(v, e) != v.end();
+}
+
+template <typename T, typename U>
+auto count(const T& v, const U& e)
+{
+    return std::count(v.begin(), v.end(), e);
 }
 
 template <typename T, typename Predicate>
@@ -618,6 +692,17 @@ T appended(T t, U&&... u)
 {
     append(t, std::forward<U&&>(u)...);
     return t;
+}
+
+template <typename Functor, typename T>
+auto map(Functor&& func, const T& v)
+{
+    typedef std::decay_t<decltype(*v.begin())> R;
+    typedef std::decay_t<decltype(func(*v.begin()))> S;
+    typedef std::conditional_t<std::is_same<R,S>::value,T,std::vector<R>> U;
+    U v2; v2.reserve(v.size());
+    for (auto& e : v) v2.push_back(func(e));
+    return v2;
 }
 
 }

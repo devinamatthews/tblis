@@ -21,6 +21,19 @@ struct underlying_type_if<T, detail::enable_if_t<std::is_enum<T>::value>>
     typedef typename std::underlying_type<T>::type type;
 };
 
+template <typename... Ts> struct are_numeric;
+
+template <> struct are_numeric<>
+: std::integral_constant<bool,true> {};
+
+template <typename T, typename... Ts> struct are_numeric<T, Ts...>
+: std::integral_constant<bool, (std::is_integral<T>::value ||
+                                std::is_enum<T>::value) &&
+                               are_numeric<Ts...>::value> {};
+
+template <typename... Ts> using enable_if_numeric =
+    std::enable_if_t<are_numeric<Ts...>::value>;
+
 }
 
 template <typename T>
@@ -228,16 +241,60 @@ class range_t
         {
             return U(begin(), end());
         }
+
+        range_t& operator+=(T shift)
+        {
+            from_ += shift;
+            to_ += shift;
+            return *this;
+        }
+
+        range_t& operator-=(T shift)
+        {
+            from_ -= shift;
+            to_ -= shift;
+            return *this;
+        }
+
+        range_t operator+(T shift)
+        {
+            range_t shifted(*this);
+            shifted += shift;
+            return shifted;
+        }
+
+        range_t operator-(T shift)
+        {
+            range_t shifted(*this);
+            shifted -= shift;
+            return shifted;
+        }
+
+        friend range_t operator+(T shift, const range_t& other)
+        {
+            return other + shift;
+        }
+
+        friend range_t operator-(T shift, const range_t& other)
+        {
+            range_t shifted(other);
+            shifted.from_ = shift - shifted.from_;
+            shifted.to_ -= shift - shifted.to_;
+            shifted.delta_ = -shifted.delta_;
+            return shifted;
+        }
 };
 
-template <typename T>
+template <typename T, typename=
+    detail::enable_if_numeric<T>>
 auto range(T to)
 {
     typedef typename detail::underlying_type_if<T>::type U;
     return range_t<U>{U(to)};
 }
 
-template <typename T, typename U>
+template <typename T, typename U, typename=
+    detail::enable_if_numeric<T,U>>
 auto rangeN(T from, U N)
 {
     typedef decltype(std::declval<T>() + std::declval<U>()) V0;
@@ -245,7 +302,8 @@ auto rangeN(T from, U N)
     return range_t<V>{V(from), V(from+N)};
 }
 
-template <typename T, typename U>
+template <typename T, typename U, typename=
+    detail::enable_if_numeric<T,U>>
 auto range(T from, U to)
 {
     typedef decltype(std::declval<T>() + std::declval<U>()) V0;
@@ -255,7 +313,8 @@ auto range(T from, U to)
     return range_t<V>{(V)from, (V)to};
 }
 
-template <typename T, typename U, typename V>
+template <typename T, typename U, typename V, typename=
+    detail::enable_if_numeric<T,U,V>>
 auto range(T from, U to, V delta)
 {
     typedef decltype(std::declval<T>() + std::declval<U>() + std::declval<V>()) W0;
@@ -266,19 +325,22 @@ auto range(T from, U to, V delta)
     return range_t<W>{(W)from, (W)to, (W)delta};
 }
 
-template <typename T>
+template <typename T, typename=
+    detail::enable_if_numeric<T>>
 auto reversed_range(T to)
 {
     return range(to-1, -1, -1);
 }
 
-template <typename T, typename U>
+template <typename T, typename U, typename=
+    detail::enable_if_numeric<T,U>>
 auto reversed_rangeN(T from, U N)
 {
     return range(from-1, from-N-1, -1);
 }
 
-template <typename T, typename U>
+template <typename T, typename U, typename=
+    detail::enable_if_numeric<T,U>>
 auto reversed_range(T from, U to)
 {
     return range(to-1, from-1, -1);

@@ -295,6 +295,11 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
         void resize(const detail::array_1d<len_type>& len,
                     const Type& val=Type())
         {
+            std::array<len_type, NDim> new_len;
+            len.slurp(new_len);
+
+            if (new_len == len_) return;
+
             marray a(std::move(*this));
             reset(len, val, layout_);
             marray_view<Type, NDim> b(*this);

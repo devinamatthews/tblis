@@ -86,8 +86,13 @@ inline void tblis_check_assert(const char*, bool cond, const char* fmt, Args&&..
 #define MARRAY_ENABLE_ASSERTS
 #endif
 
+#ifndef MARRAY_LEN_TYPE
 #define MARRAY_LEN_TYPE TBLIS_LEN_TYPE
+#endif
+
+#ifndef MARRAY_STRIDE_TYPE
 #define MARRAY_STRIDE_TYPE TBLIS_STRIDE_TYPE
+#endif
 
 #include "../external/marray/include/varray.hpp"
 #include "../external/marray/include/marray.hpp"

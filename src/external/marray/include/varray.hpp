@@ -213,6 +213,11 @@ class varray : public varray_base<Type, varray<Type, Allocator>, true>
         {
             MARRAY_ASSERT(len.size() == dimension());
 
+            len_vector new_len;
+            len.slurp(new_len);
+
+            if (new_len == len_) return;
+
             varray a(std::move(*this));
             reset(len, val, layout_);
             auto b = view();

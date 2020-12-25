@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <utility>
+#include <vector>
 
 #include <iostream>
 
@@ -100,6 +101,60 @@ inline string tolower(const string& S)
     string s(S);
     for (auto& c : s) c = std::tolower(c);
     return s;
+}
+
+inline std::string trim(const std::string& s)
+{
+    auto begin = s.find_first_not_of(" \n\r\t");
+    auto end = s.find_last_not_of(" \n\r\t");
+
+    if (begin == s.npos) return "";
+    else return s.substr(begin, end-begin+1);
+}
+
+inline std::vector<std::string> split(const std::string& s,
+                                      const std::string& sep = "",
+                                      int max_split = -1)
+{
+    std::vector<std::string> tokens;
+
+    if (sep == "")
+    {
+        std::istringstream iss(s);
+        std::string token;
+        for (auto i = 0;(i < max_split || max_split == -1) && (iss >> token);i++)
+            tokens.push_back(token);
+
+        token.clear();
+        char c;
+        while (iss.get(c)) token.push_back(c);
+        if (!token.empty()) tokens.push_back(token);
+    }
+    else
+    {
+        auto begin = 0;
+        for (auto i = 0;i < max_split || max_split == -1;i++)
+        {
+            auto end = s.find(sep, begin);
+
+            if (end == s.npos)
+            {
+                tokens.push_back(s.substr(begin));
+                begin = end;
+                break;
+            }
+            else
+            {
+                tokens.push_back(s.substr(begin, end-begin+1));
+                begin = end+1;
+            }
+        }
+
+        if (begin != s.npos)
+            tokens.push_back(s.substr(begin));
+    }
+
+    return tokens;
 }
 
 }

@@ -7,6 +7,7 @@
 #include <tuple>
 #include <vector>
 #include <stdexcept>
+#include <cstring>
 
 #include "complex.hpp"
 #include "type_traits.hpp"
@@ -543,6 +544,8 @@ std::ostream& operator<<(std::ostream& os, const T v[N])
 
 }
 
+#if 0
+
 namespace stl_ext
 {
 
@@ -617,5 +620,7 @@ detail::sigfig_printer<T> printToAccuracy(const T& value, double accuracy)
 }
 
 }
+
+#endif
 
 #endif

@@ -149,6 +149,10 @@ stl_extinclude_HEADERS = \
 noinst_LTLIBRARIES =
 lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la
 
+if IS_CLANG
+CXXFLAGS += -Wno-pass-failed
+endif
+
 if ENABLE_REFERENCE
 noinst_LTLIBRARIES += lib/libreference.la
 lib_libtblis_la_LIBADD += lib/libreference.la

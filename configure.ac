@@ -18,7 +18,7 @@ AC_PROG_AWK
 AX_BLAS([blas_found=yes])
 AC_PROG_CXX([icpc g++ clang++])
 AX_CXX_COMPILE_STDCXX_14([noext])
-AC_LANG([C++])
+
 #
 # Apple's sys/cdefs.h redefines __restrict to null in C++ mode (!!!!!!)
 # Stick with __restrict__ for now, as it works with everything except MSVC
@@ -32,6 +32,8 @@ AC_SEARCH_LIBS([clock_gettime], [rt])
 
 topdir="\"`(cd $srcdir && pwd)`\""
 AC_DEFINE_UNQUOTED([TOPDIR], [$topdir], [The top source directory.])
+
+AM_CONDITIONAL(IS_CLANG, [$CXX --version 2>/dev/null | grep -q clang])
 
 #
 # Check for openmp simd flag

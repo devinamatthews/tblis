@@ -1,42 +1,44 @@
 language: cpp
-dist: trusty
+dist: bionic
 sudo: required
-osx_image: xcode10.1
+osx_image: xcode12.2
 
 jobs:
   include:
-    - env: TEST_INSTALL=1 RUN_TEST=1 THREADING="dispatch" BUILD_CONFIG="auto"
+    - env: TEST_INSTALL=1 RUN_TEST=1 THREADING="dispatch" BUILD_CONFIG="auto" CC=clang
       os: osx
-    - env: TEST_INSTALL=1 RUN_TEST=1 THREADING="openmp" BUILD_CONFIG="auto"
+    - env: TEST_INSTALL=1 RUN_TEST=1 THREADING="openmp" BUILD_CONFIG="auto" CC=clang
       os: linux
-    - env: TEST_INSTALL=1 RUN_TEST=1 THREADING="pthread" BUILD_CONFIG="auto"
+    - env: TEST_INSTALL=1 RUN_TEST=1 THREADING="openmp" BUILD_CONFIG="auto" CC=gcc
       os: linux
-    - env: TEST_INSTALL=1 RUN_TEST=1 THREADING="tbb" BUILD_CONFIG="auto"
+    - env: TEST_INSTALL=1 RUN_TEST=1 THREADING="pthread" BUILD_CONFIG="auto" CC=gcc
       os: linux
-    - env: TEST_INSTALL=1 RUN_TEST=1 THREADING="none" BUILD_CONFIG="auto"
+    - env: TEST_INSTALL=1 RUN_TEST=1 THREADING="tbb" BUILD_CONFIG="auto" CC=gcc
       os: linux
-  
-before_install:
-  - 'if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-        brew update && brew install libomp;
-    fi'
+    - env: TEST_INSTALL=1 RUN_TEST=1 THREADING="none" BUILD_CONFIG="auto" CC=gcc
+      os: linux
 
 addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
+    - llvm-toolchain-6
     packages:
-    - gcc-6
-    - g++-6
+    - gcc-9
+    - g++-9
     - libtbb-dev
-    - binutils-2.26
+    - clang-6.0
+    - libiomp-dev
     
 install:
-  - 'if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-        export PATH=/usr/lib/binutils-2.26/bin:${PATH};
-        export CC="gcc-6" CXX="g++-6";
+  - 'if [ "$CC" = "gcc" ]; then
+        export CC="gcc-9" CXX="g++-9";
     else
-        export CC="clang" CXX="clang++";
+        if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+            export CC="clang-6.0 -fopenmp=libiomp5" CXX="clang++-6.0 -fopenmp=libiomp5";
+        else
+            export CC="clang" CXX="clang++";
+        fi;
     fi'
 
 script:

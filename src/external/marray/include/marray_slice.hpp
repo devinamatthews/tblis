@@ -228,6 +228,11 @@ class marray_slice
             return (*this)[std::forward<Arg>(arg)](std::forward<Args>(args)...);
         }
 
+        friend std::ostream& operator<<(std::ostream& os, const marray_slice& x)
+        {
+            return os << x.view();
+        }
+
         const_pointer cdata() const
         {
             return data_;

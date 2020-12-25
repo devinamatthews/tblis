@@ -1,6 +1,6 @@
 #include "../test.hpp"
 
-static map<reduce_t, string> ops =
+static std::map<reduce_t, string> ops =
 {
  {REDUCE_SUM, "REDUCE_SUM"},
  {REDUCE_SUM_ABS, "REDUCE_SUM_ABS"},

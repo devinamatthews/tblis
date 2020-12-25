@@ -61,13 +61,13 @@ struct default_config
         }
 
         if (!value_fn)
-            tblis_abort_with_message(nullptr,
+            tblis_abort_with_message(
                 "tblis: No usable configuration enabled, aborting!");
 
         value = &value_fn();
 
         if (!value)
-            tblis_abort_with_message(nullptr,
+            tblis_abort_with_message(
                 "tblis: Could not get config instance, aborting!");
 
         if (get_verbose() >= 1)
@@ -97,13 +97,13 @@ const config& get_config(const std::string& name)
         if (names[cfg] == name)
         {
             if (check[cfg]() == -1)
-                tblis_abort_with_message(nullptr,
+                tblis_abort_with_message(
                     "tblis: Configuration %s cannot be used!", name.c_str());
             return instance[cfg]();
         }
     }
 
-    tblis_abort_with_message(nullptr,
+    tblis_abort_with_message(
         "tblis: No configuration named %s!", name.c_str());
 }
 

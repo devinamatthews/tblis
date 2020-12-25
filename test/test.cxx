@@ -25,6 +25,12 @@ template <> const string& type_name<dcomplex>()
     return name;
 }
 
+template <typename Iter>
+void shuffle(Iter begin, Iter end)
+{
+    std::shuffle(begin, end, rand_engine);
+}
+
 stride_type N = 10*1024*1024;
 int R = 50;
 
@@ -409,7 +415,7 @@ void random_lengths(stride_type N,
         for (auto j : range(ndim_A_only)) types_A[i++] = {TYPE_A, j};
         for (auto j : range(ndim_AB    )) types_A[i++] = {TYPE_AB, j};
     }
-    random_shuffle(types_A.begin(), types_A.end());
+    shuffle(types_A.begin(), types_A.end());
 
     vector<pair<index_type,int>> types_B(ndim_B);
     {
@@ -417,10 +423,10 @@ void random_lengths(stride_type N,
         for (auto j : range(ndim_B_only)) types_B[i++] = {TYPE_B, j};
         for (auto j : range(ndim_AB    )) types_B[i++] = {TYPE_AB, j};
     }
-    random_shuffle(types_B.begin(), types_B.end());
+    shuffle(types_B.begin(), types_B.end());
 
     label_vector idx = range<label_type>('a', static_cast<char>('a'+ndim_A+ndim_B-ndim_AB));
-    random_shuffle(idx.begin(), idx.end());
+    shuffle(idx.begin(), idx.end());
 
     auto c = 0;
     label_vector idx_A_only(ndim_A_only, 0);
@@ -733,7 +739,7 @@ void random_lengths(stride_type N,
         for (auto j : range(ndim_AC    )) types_A[i++] = {TYPE_AC, j};
         for (auto j : range(ndim_ABC   )) types_A[i++] = {TYPE_ABC, j};
     }
-    random_shuffle(types_A.begin(), types_A.end());
+    shuffle(types_A.begin(), types_A.end());
 
     vector<pair<index_type,int>> types_B(ndim_B);
     {
@@ -743,7 +749,7 @@ void random_lengths(stride_type N,
         for (auto j : range(ndim_BC    )) types_B[i++] = {TYPE_BC, j};
         for (auto j : range(ndim_ABC   )) types_B[i++] = {TYPE_ABC, j};
     }
-    random_shuffle(types_B.begin(), types_B.end());
+    shuffle(types_B.begin(), types_B.end());
 
     vector<pair<index_type,int>> types_C(ndim_C);
     {
@@ -753,12 +759,12 @@ void random_lengths(stride_type N,
         for (auto j : range(ndim_BC    )) types_C[i++] = {TYPE_BC, j};
         for (auto j : range(ndim_ABC   )) types_C[i++] = {TYPE_ABC, j};
     }
-    random_shuffle(types_C.begin(), types_C.end());
+    shuffle(types_C.begin(), types_C.end());
 
     label_vector idx =
         range<label_type>('a', static_cast<char>('a'+ndim_A_only+ndim_B_only+ndim_C_only+
                       ndim_AB+ndim_AC+ndim_BC+ndim_ABC));
-    random_shuffle(idx.begin(), idx.end());
+    shuffle(idx.begin(), idx.end());
 
     auto c = 0;
     label_vector idx_A_only(ndim_A_only, 0);
@@ -1333,8 +1339,8 @@ void random_tensors(stride_type N, \
 
 int main(int argc, char **argv)
 {
-    time_t seed = chrono::duration_cast<chrono::nanoseconds>(
-        chrono::high_resolution_clock::now().time_since_epoch()).count();
+    time_t seed = duration_cast<nanoseconds>(
+        high_resolution_clock::now().time_since_epoch()).count();
 
     struct option opts[] = {{"size", required_argument, NULL, 'n'},
                             {"rep",  required_argument, NULL, 'r'},

@@ -30,24 +30,28 @@
 
 #include <type_traits>
 
+inline void __attribute__((format(printf, 1, 2),noreturn))
+tblis_abort_with_message(const char* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    vfprintf(stderr, fmt, args);
+    va_end(args);
+    fprintf(stderr, "\n");
+    abort();
+}
+
 inline void tblis_check_assert(const char* cond_str, bool cond)
 {
     if (__builtin_expect(!cond,0))
-    {
-        fprintf(stderr, "%s\n", cond_str);
-        abort();
-    }
+        tblis_abort_with_message("%s", cond_str);
 }
 
 template <typename... Args>
 inline void tblis_check_assert(const char*, bool cond, const char* fmt, Args&&... args)
 {
     if (__builtin_expect(!cond,0))
-    {
-        fprintf(stderr, fmt, std::forward<Args>(args)...);
-        fprintf(stderr, "\n");
-        abort();
-    }
+        tblis_abort_with_message(fmt, std::forward<Args>(args)...);
 }
 
 #ifdef TBLIS_DEBUG

@@ -24,7 +24,17 @@
 
 #include "external/catch/catch.hpp"
 
-using namespace std;
+using std::string;
+using std::min;
+using std::max;
+using std::numeric_limits;
+using std::pair;
+using std::map;
+using std::swap;
+using std::chrono::duration_cast;
+using std::chrono::high_resolution_clock;
+using std::chrono::nanoseconds;
+using std::istringstream;
 using namespace stl_ext;
 using namespace tblis;
 using namespace tblis::internal;

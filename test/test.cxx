@@ -415,7 +415,7 @@ void random_lengths(stride_type N,
         for (auto j : range(ndim_A_only)) types_A[i++] = {TYPE_A, j};
         for (auto j : range(ndim_AB    )) types_A[i++] = {TYPE_AB, j};
     }
-    shuffle(types_A.begin(), types_A.end());
+    shuffle(types_A.begin(), types_A.end(), rand_engine);
 
     vector<pair<index_type,int>> types_B(ndim_B);
     {
@@ -423,10 +423,10 @@ void random_lengths(stride_type N,
         for (auto j : range(ndim_B_only)) types_B[i++] = {TYPE_B, j};
         for (auto j : range(ndim_AB    )) types_B[i++] = {TYPE_AB, j};
     }
-    shuffle(types_B.begin(), types_B.end());
+    shuffle(types_B.begin(), types_B.end(), rand_engine);
 
     label_vector idx = range<label_type>('a', static_cast<char>('a'+ndim_A+ndim_B-ndim_AB));
-    shuffle(idx.begin(), idx.end());
+    shuffle(idx.begin(), idx.end(), rand_engine);
 
     auto c = 0;
     label_vector idx_A_only(ndim_A_only, 0);
@@ -739,7 +739,7 @@ void random_lengths(stride_type N,
         for (auto j : range(ndim_AC    )) types_A[i++] = {TYPE_AC, j};
         for (auto j : range(ndim_ABC   )) types_A[i++] = {TYPE_ABC, j};
     }
-    shuffle(types_A.begin(), types_A.end());
+    shuffle(types_A.begin(), types_A.end(), rand_engine);
 
     vector<pair<index_type,int>> types_B(ndim_B);
     {
@@ -749,7 +749,7 @@ void random_lengths(stride_type N,
         for (auto j : range(ndim_BC    )) types_B[i++] = {TYPE_BC, j};
         for (auto j : range(ndim_ABC   )) types_B[i++] = {TYPE_ABC, j};
     }
-    shuffle(types_B.begin(), types_B.end());
+    shuffle(types_B.begin(), types_B.end(), rand_engine);
 
     vector<pair<index_type,int>> types_C(ndim_C);
     {
@@ -759,12 +759,12 @@ void random_lengths(stride_type N,
         for (auto j : range(ndim_BC    )) types_C[i++] = {TYPE_BC, j};
         for (auto j : range(ndim_ABC   )) types_C[i++] = {TYPE_ABC, j};
     }
-    shuffle(types_C.begin(), types_C.end());
+    shuffle(types_C.begin(), types_C.end(), rand_engine);
 
     label_vector idx =
         range<label_type>('a', static_cast<char>('a'+ndim_A_only+ndim_B_only+ndim_C_only+
                       ndim_AB+ndim_AC+ndim_BC+ndim_ABC));
-    shuffle(idx.begin(), idx.end());
+    shuffle(idx.begin(), idx.end(), rand_engine);
 
     auto c = 0;
     label_vector idx_A_only(ndim_A_only, 0);

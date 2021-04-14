@@ -244,9 +244,10 @@ int get_cpu_type(int& model, int& part, int& features)
     else if (proc.find("AArch64") != std::string::npos)
         model = MODEL_ARMV8;
 
+    char *epos;
     auto pos = ptno.find("0x");
     TBLIS_ASSERT(pos != std::string::npos);
-    part = strtoi(ptno, pos, 16);
+    part = strtol(ptno.c_str() + pos, &epos, 16);
 
     return VENDOR_ARM;
 }

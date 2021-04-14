@@ -35,6 +35,7 @@ void tblis_init_tensor_scaled_s(tblis_tensor* t, float scalar,
                                 stride_type* stride)
 {
     t->type = TYPE_SINGLE;
+    t->scalar.type = TYPE_SINGLE;
     t->conj = 0;
     t->scalar.data.s = scalar;
     t->data = data;
@@ -48,6 +49,7 @@ void tblis_init_tensor_scaled_d(tblis_tensor* t, double scalar,
                                 stride_type* stride)
 {
     t->type = TYPE_DOUBLE;
+    t->scalar.type = TYPE_DOUBLE;
     t->conj = 0;
     t->scalar.data.d = scalar;
     t->data = data;
@@ -61,6 +63,7 @@ void tblis_init_tensor_scaled_c(tblis_tensor* t, scomplex scalar,
                                 stride_type* stride)
 {
     t->type = TYPE_SCOMPLEX;
+    t->scalar.type = TYPE_SCOMPLEX;
     t->conj = 0;
     t->scalar.data.c = scalar;
     t->data = data;
@@ -74,6 +77,7 @@ void tblis_init_tensor_scaled_z(tblis_tensor* t, dcomplex scalar,
                                 stride_type* stride)
 {
     t->type = TYPE_DCOMPLEX;
+    t->scalar.type = TYPE_DCOMPLEX;
     t->conj = 0;
     t->scalar.data.z = scalar;
     t->data = data;

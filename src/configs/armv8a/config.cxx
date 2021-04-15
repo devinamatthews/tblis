@@ -7,12 +7,12 @@ namespace tblis
 
 int armv8a_check()
 {
-    int family, model, features;
-    int vendor = get_cpu_type(family, model, features);
+    int model, part, features;
+    int vendor = get_cpu_type(model, part, features);
 
-    if (vendor != VENDOR_ARM)
+    if (model != MODEL_ARMV8)
     {
-        if (get_verbose() >= 1) printf("tblis: armv8a: Wrong vendor.\n");
+        if (get_verbose() >= 1) printf("tblis: armv8a: Not Arm64.\n");
         return -1;
     }
 
@@ -23,7 +23,7 @@ int armv8a_check()
     //     return -1;
     // }
 
-    return 1;
+    return 2;
 }
 
 }

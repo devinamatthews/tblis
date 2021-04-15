@@ -6,9 +6,9 @@
  * uniformly.
  */
 template <typename T>
-void random_mult(stride_type N, T&& A, label_vector& idx_A,
-                                T&& B, label_vector& idx_B,
-                                T&& C, label_vector& idx_C)
+void random_mult(stride_type N, T&& A, string& idx_A,
+                                T&& B, string& idx_B,
+                                T&& C, string& idx_C)
 {
     int ndim_A, ndim_B, ndim_C;
     int ndim_AB, ndim_AC, ndim_BC;
@@ -44,7 +44,7 @@ void random_mult(stride_type N, T&& A, label_vector& idx_A,
 REPLICATED_TEMPLATED_TEST_CASE(mult, R, T, all_types)
 {
     varray<T> A, B, C, D, E;
-    label_vector idx_A, idx_B, idx_C;
+    string idx_A, idx_B, idx_C;
 
     T scale(10.0*random_unit<T>());
 
@@ -83,7 +83,7 @@ REPLICATED_TEMPLATED_TEST_CASE(mult, R, T, all_types)
 REPLICATED_TEMPLATED_TEST_CASE(dpd_mult, R, T, all_types)
 {
     dpd_varray<T> A, B, C, D, E;
-    label_vector idx_A, idx_B, idx_C;
+    string idx_A, idx_B, idx_C;
 
     T scale(10.0*random_unit<T>());
 
@@ -143,7 +143,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_mult, R, T, all_types)
 REPLICATED_TEMPLATED_TEST_CASE(indexed_mult, R, T, all_types)
 {
     indexed_varray<T> A, B, C, D, E;
-    label_vector idx_A, idx_B, idx_C;
+    string idx_A, idx_B, idx_C;
 
     T scale(10.0*random_unit<T>());
     scale = 1;
@@ -176,7 +176,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_mult, R, T, all_types)
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_mult, R, T, all_types)
 {
     indexed_dpd_varray<T> A, B, C, D, E;
-    label_vector idx_A, idx_B, idx_C;
+    string idx_A, idx_B, idx_C;
 
     T scale(10.0*random_unit<T>());
     scale = 1;

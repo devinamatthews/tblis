@@ -6,8 +6,8 @@
  * uniformly.
  */
 template <typename T>
-void random_replicate(stride_type N, T&& A, label_vector& idx_A,
-                                     T&& B, label_vector& idx_B)
+void random_replicate(stride_type N, T&& A, string& idx_A,
+                                     T&& B, string& idx_B)
 {
     int ndim_A, ndim_B;
 
@@ -29,7 +29,7 @@ void random_replicate(stride_type N, T&& A, label_vector& idx_A,
 REPLICATED_TEMPLATED_TEST_CASE(replicate, R, T, all_types)
 {
     varray<T> A, B;
-    label_vector idx_A, idx_B;
+    string idx_A, idx_B;
 
     random_replicate(1000, A, idx_A, B, idx_B);
 
@@ -57,7 +57,7 @@ REPLICATED_TEMPLATED_TEST_CASE(replicate, R, T, all_types)
 REPLICATED_TEMPLATED_TEST_CASE(dpd_replicate, R, T, all_types)
 {
     dpd_varray<T> A, B, C, D;
-    label_vector idx_A, idx_B;
+    string idx_A, idx_B;
 
     random_replicate(1000, A, idx_A, B, idx_B);
 
@@ -85,7 +85,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_replicate, R, T, all_types)
 REPLICATED_TEMPLATED_TEST_CASE(indexed_replicate, R, T, all_types)
 {
     indexed_varray<T> A, B, C, D;
-    label_vector idx_A, idx_B;
+    string idx_A, idx_B;
 
     random_replicate(1000, A, idx_A, B, idx_B);
 
@@ -113,7 +113,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_replicate, R, T, all_types)
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_replicate, R, T, all_types)
 {
     indexed_dpd_varray<T> A, B, C, D;
-    label_vector idx_A, idx_B;
+    string idx_A, idx_B;
 
     random_replicate(1000, A, idx_A, B, idx_B);
 

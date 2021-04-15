@@ -1,5 +1,7 @@
 #include "../test.hpp"
 
+#include <tblis/internal/thread.hpp>
+
 static std::map<reduce_t, string> ops =
 {
  {REDUCE_SUM, "REDUCE_SUM"},
@@ -65,7 +67,7 @@ REPLICATED_TEMPLATED_TEST_CASE(reduce, R, T, all_types)
     varray<T> A;
 
     random_tensor(100, A);
-    label_vector idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
+    string idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
     TENSOR_INFO(A);
 
@@ -95,7 +97,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_reduce, R, T, all_types)
     dpd_varray<T> A;
 
     random_tensor(100, A);
-    label_vector idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
+    string idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
     DPD_TENSOR_INFO(A);
 
@@ -121,7 +123,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_reduce, R, T, all_types)
     indexed_varray<T> A;
 
     random_tensor(100, A);
-    label_vector idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
+    string idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
     INDEXED_TENSOR_INFO(A);
 
@@ -147,7 +149,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_reduce, R, T, all_types)
     indexed_dpd_varray<T> A;
 
     random_tensor(100, A);
-    label_vector idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
+    string idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
     INDEXED_DPD_TENSOR_INFO(A);
 

@@ -1,4 +1,4 @@
-AC_INIT(tblis, 1.2.0, dmatthews@utexas.edu, tblis, http://www.github.com/devinamatthews/tblis)
+AC_INIT(tblis, 2.0.0, damatthews@smu.edu, tblis, http://www.github.com/devinamatthews/tblis)
 AM_INIT_AUTOMAKE([foreign silent-rules subdir-objects])
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE([disable])
@@ -477,11 +477,11 @@ LT_INIT
 mkdir -p bin
 
 AC_CONFIG_FILES([Makefile 
-                 src/configs/foreach_type.h
-                 src/configs/foreach_config.h
-                 src/configs/foreach_config_and_type.h
-                 src/configs/include_configs.hpp])
-AX_PREFIX_CONFIG_H([src/tblis_config.h], [TBLIS])
+                 tblis/internal/foreach_type.h
+                 tblis/internal/foreach_config.h
+                 tblis/internal/foreach_config_and_type.h
+                 tblis/internal/include_configs.hpp])
+AX_PREFIX_CONFIG_H([tblis/config.h], [TBLIS])
 AC_OUTPUT
 
-TBLIS_CONFIG_SUBDIR([src/external/tci])
+TBLIS_CONFIG_SUBDIR([external/tci])

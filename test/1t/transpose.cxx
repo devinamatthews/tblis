@@ -6,8 +6,8 @@
  * uniformly.
  */
 template <typename T>
-void random_transpose(stride_type N, T&& A, label_vector& idx_A,
-                                     T&& B, label_vector& idx_B)
+void random_transpose(stride_type N, T&& A, string& idx_A,
+                                     T&& B, string& idx_B)
 {
     auto ndim_A = random_number(1,8);
 
@@ -21,7 +21,7 @@ void random_transpose(stride_type N, T&& A, label_vector& idx_A,
 REPLICATED_TEMPLATED_TEST_CASE(transpose, R, T, all_types)
 {
     varray<T> A, B, C;
-    label_vector idx_A, idx_B;
+    string idx_A, idx_B;
 
     random_transpose(1000, A, idx_A, B, idx_B);
 
@@ -46,7 +46,7 @@ REPLICATED_TEMPLATED_TEST_CASE(transpose, R, T, all_types)
 
     B.reset(A);
     idx_B = idx_A;
-    label_vector idx_C(ndim, 0);
+    string idx_C(ndim, 0);
     len_vector len_C(ndim);
     do
     {
@@ -73,7 +73,7 @@ REPLICATED_TEMPLATED_TEST_CASE(transpose, R, T, all_types)
 REPLICATED_TEMPLATED_TEST_CASE(dpd_transpose, R, T, all_types)
 {
     dpd_varray<T> A, B, C, D;
-    label_vector idx_A, idx_B;
+    string idx_A, idx_B;
 
     random_transpose(1000, A, idx_A, B, idx_B);
 
@@ -101,7 +101,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_transpose, R, T, all_types)
 REPLICATED_TEMPLATED_TEST_CASE(indexed_transpose, R, T, all_types)
 {
     indexed_varray<T> A, B, C, D;
-    label_vector idx_A, idx_B;
+    string idx_A, idx_B;
 
     random_transpose(1000, A, idx_A, B, idx_B);
 
@@ -129,7 +129,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_transpose, R, T, all_types)
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_transpose, R, T, all_types)
 {
     indexed_dpd_varray<T> A, B, C, D;
-    label_vector idx_A, idx_B;
+    string idx_A, idx_B;
 
     random_transpose(1000, A, idx_A, B, idx_B);
 

@@ -13,17 +13,25 @@
 #include <chrono>
 #include <list>
 
-#include "tblis.h"
-#include "util/random.hpp"
-#include "util/tensor.hpp"
-#include "util/macros.h"
-#include "external/stl_ext/include/algorithm.hpp"
-#include "external/stl_ext/include/iostream.hpp"
-#include "internal/3t/dense/mult.hpp"
-#include "internal/3t/dpd/mult.hpp"
+#include <marray/marray.hpp>
+#include <marray/varray.hpp>
+#include <marray/dpd_varray.hpp>
+#include <marray/indexed_varray.hpp>
+#include <marray/indexed_dpd_varray.hpp>
 
-#include "external/catch/catch.hpp"
+#include <tblis/tblis.h>
 
+#include <tblis/internal/types.hpp>
+#include <tblis/internal/indexed_dpd.hpp>
+
+#include <stl_ext/algorithm.hpp>
+#include <stl_ext/iostream.hpp>
+
+#include <catch.hpp>
+
+#include "random.hpp"
+
+using std::vector;
 using std::string;
 using std::min;
 using std::max;
@@ -39,7 +47,8 @@ using namespace stl_ext;
 using namespace tblis;
 using namespace tblis::internal;
 using namespace tblis::detail;
-using namespace tblis::slice;
+using namespace MArray::slice;
+using namespace MArray;
 
 #define INFO_OR_PRINT(...) INFO(__VA_ARGS__); //cout << __VA_ARGS__ << endl;
 
@@ -349,77 +358,77 @@ void random_tensor(stride_type N, T& A)
 void random_lengths(stride_type N,
                     int ndim_A_only, int ndim_B_only,
                     int ndim_AB,
-                    len_vector& len_A, label_vector& idx_A,
-                    len_vector& len_B, label_vector& idx_B);
+                    len_vector& len_A, string& idx_A,
+                    len_vector& len_B, string& idx_B);
 
 template <typename T>
 void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only,
                     int ndim_AB,
-                    varray<T>& A, label_vector& idx_A,
-                    varray<T>& B, label_vector& idx_B);
+                    varray<T>& A, string& idx_A,
+                    varray<T>& B, string& idx_B);
 
 template <typename T>
 void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_AB,
-                    dpd_varray<T>& A, label_vector& idx_A,
-                    dpd_varray<T>& B, label_vector& idx_B);
+                    dpd_varray<T>& A, string& idx_A,
+                    dpd_varray<T>& B, string& idx_B);
 
 template <typename T>
 void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only,
                     int ndim_AB,
-                    indexed_varray<T>& A, label_vector& idx_A,
-                    indexed_varray<T>& B, label_vector& idx_B);
+                    indexed_varray<T>& A, string& idx_A,
+                    indexed_varray<T>& B, string& idx_B);
 
 template <typename T>
 void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_AB,
-                    indexed_dpd_varray<T>& A, label_vector& idx_A,
-                    indexed_dpd_varray<T>& B, label_vector& idx_B);
+                    indexed_dpd_varray<T>& A, string& idx_A,
+                    indexed_dpd_varray<T>& B, string& idx_B);
 
 void random_lengths(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_C_only,
                     int ndim_AB, int ndim_AC, int ndim_BC,
                     int ndim_ABC,
-                    len_vector& len_A, label_vector& idx_A,
-                    len_vector& len_B, label_vector& idx_B,
-                    len_vector& len_C, label_vector& idx_C);
+                    len_vector& len_A, string& idx_A,
+                    len_vector& len_B, string& idx_B,
+                    len_vector& len_C, string& idx_C);
 
 template <typename T>
 void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_C_only,
                     int ndim_AB, int ndim_AC, int ndim_BC,
                     int ndim_ABC,
-                    varray<T>& A, label_vector& idx_A,
-                    varray<T>& B, label_vector& idx_B,
-                    varray<T>& C, label_vector& idx_C);
+                    varray<T>& A, string& idx_A,
+                    varray<T>& B, string& idx_B,
+                    varray<T>& C, string& idx_C);
 
 template <typename T>
 void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_C_only,
                     int ndim_AB, int ndim_AC, int ndim_BC,
                     int ndim_ABC,
-                    dpd_varray<T>& A, label_vector& idx_A,
-                    dpd_varray<T>& B, label_vector& idx_B,
-                    dpd_varray<T>& C, label_vector& idx_C);
+                    dpd_varray<T>& A, string& idx_A,
+                    dpd_varray<T>& B, string& idx_B,
+                    dpd_varray<T>& C, string& idx_C);
 
 template <typename T>
 void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_C_only,
                     int ndim_AB, int ndim_AC, int ndim_BC,
                     int ndim_ABC,
-                    indexed_varray<T>& A, label_vector& idx_A,
-                    indexed_varray<T>& B, label_vector& idx_B,
-                    indexed_varray<T>& C, label_vector& idx_C);
+                    indexed_varray<T>& A, string& idx_A,
+                    indexed_varray<T>& B, string& idx_B,
+                    indexed_varray<T>& C, string& idx_C);
 
 template <typename T>
 void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_C_only,
                     int ndim_AB, int ndim_AC, int ndim_BC,
                     int ndim_ABC,
-                    indexed_dpd_varray<T>& A, label_vector& idx_A,
-                    indexed_dpd_varray<T>& B, label_vector& idx_B,
-                    indexed_dpd_varray<T>& C, label_vector& idx_C);
+                    indexed_dpd_varray<T>& A, string& idx_A,
+                    indexed_dpd_varray<T>& B, string& idx_B,
+                    indexed_dpd_varray<T>& C, string& idx_C);
 
 #endif

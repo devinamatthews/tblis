@@ -374,9 +374,9 @@ am__lib_libtblis_la_SOURCES_DIST = tblis/iface/1t/add.cxx \
 	tblis/internal/3t/indexed/mult.cxx \
 	tblis/internal/3t/indexed_dpd/mult.cxx \
 	tblis/internal/dense.cxx tblis/internal/dpd.cxx \
-	tblis/internal/error.cxx tblis/internal/cpuid.cxx \
-	tblis/internal/gemm_thread.cxx tblis/internal/thread.cxx \
-	tblis/base/types.cxx tblis/base/configs.cxx tblis/base/env.cxx \
+	tblis/internal/cpuid.cxx tblis/internal/gemm_thread.cxx \
+	tblis/internal/thread.cxx tblis/base/types.cxx \
+	tblis/base/configs.cxx tblis/base/env.cxx \
 	tblis/base/thread.cxx tblis/configs/bulldozer/config.cxx \
 	tblis/configs/piledriver/config.cxx \
 	tblis/configs/excavator/config.cxx \
@@ -427,14 +427,13 @@ am_lib_libtblis_la_OBJECTS = tblis/iface/1t/add.lo \
 	tblis/internal/3t/dense/mult.lo tblis/internal/3t/dpd/mult.lo \
 	tblis/internal/3t/indexed/mult.lo \
 	tblis/internal/3t/indexed_dpd/mult.lo tblis/internal/dense.lo \
-	tblis/internal/dpd.lo tblis/internal/error.lo \
-	tblis/internal/cpuid.lo tblis/internal/gemm_thread.lo \
-	tblis/internal/thread.lo tblis/base/types.lo \
-	tblis/base/configs.lo tblis/base/env.lo tblis/base/thread.lo \
-	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
-	$(am__objects_6) $(am__objects_7) $(am__objects_8) \
-	$(am__objects_9) $(am__objects_10) $(am__objects_11) \
-	$(am__objects_12)
+	tblis/internal/dpd.lo tblis/internal/cpuid.lo \
+	tblis/internal/gemm_thread.lo tblis/internal/thread.lo \
+	tblis/base/types.lo tblis/base/configs.lo tblis/base/env.lo \
+	tblis/base/thread.lo $(am__objects_3) $(am__objects_4) \
+	$(am__objects_5) $(am__objects_6) $(am__objects_7) \
+	$(am__objects_8) $(am__objects_9) $(am__objects_10) \
+	$(am__objects_11) $(am__objects_12)
 lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
 lib_libzen_la_LIBADD =
 am__lib_libzen_la_SOURCES_DIST = tblis/configs/zen/config_ker.cxx \
@@ -532,7 +531,6 @@ am__depfiles_remade = tblis/base/$(DEPDIR)/configs.Plo \
 	tblis/internal/$(DEPDIR)/cpuid.Plo \
 	tblis/internal/$(DEPDIR)/dense.Plo \
 	tblis/internal/$(DEPDIR)/dpd.Plo \
-	tblis/internal/$(DEPDIR)/error.Plo \
 	tblis/internal/$(DEPDIR)/gemm_thread.Plo \
 	tblis/internal/$(DEPDIR)/thread.Plo \
 	tblis/internal/0/$(DEPDIR)/add.Plo \
@@ -893,9 +891,9 @@ lib_libtblis_la_SOURCES = tblis/iface/1t/add.cxx \
 	tblis/internal/3t/indexed/mult.cxx \
 	tblis/internal/3t/indexed_dpd/mult.cxx \
 	tblis/internal/dense.cxx tblis/internal/dpd.cxx \
-	tblis/internal/error.cxx tblis/internal/cpuid.cxx \
-	tblis/internal/gemm_thread.cxx tblis/internal/thread.cxx \
-	tblis/base/types.cxx tblis/base/configs.cxx tblis/base/env.cxx \
+	tblis/internal/cpuid.cxx tblis/internal/gemm_thread.cxx \
+	tblis/internal/thread.cxx tblis/base/types.cxx \
+	tblis/base/configs.cxx tblis/base/env.cxx \
 	tblis/base/thread.cxx $(am__append_6) $(am__append_9) \
 	$(am__append_12) $(am__append_16) $(am__append_20) \
 	$(am__append_23) $(am__append_26) $(am__append_29) \
@@ -1517,8 +1515,6 @@ tblis/internal/dense.lo: tblis/internal/$(am__dirstamp) \
 	tblis/internal/$(DEPDIR)/$(am__dirstamp)
 tblis/internal/dpd.lo: tblis/internal/$(am__dirstamp) \
 	tblis/internal/$(DEPDIR)/$(am__dirstamp)
-tblis/internal/error.lo: tblis/internal/$(am__dirstamp) \
-	tblis/internal/$(DEPDIR)/$(am__dirstamp)
 tblis/internal/cpuid.lo: tblis/internal/$(am__dirstamp) \
 	tblis/internal/$(DEPDIR)/$(am__dirstamp)
 tblis/internal/gemm_thread.lo: tblis/internal/$(am__dirstamp) \
@@ -1772,7 +1768,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tblis/internal/$(DEPDIR)/cpuid.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tblis/internal/$(DEPDIR)/dense.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tblis/internal/$(DEPDIR)/dpd.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@tblis/internal/$(DEPDIR)/error.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tblis/internal/$(DEPDIR)/gemm_thread.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tblis/internal/$(DEPDIR)/thread.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tblis/internal/0/$(DEPDIR)/add.Plo@am__quote@ # am--include-marker
@@ -2638,7 +2633,6 @@ distclean: distclean-recursive
 	-rm -f tblis/internal/$(DEPDIR)/cpuid.Plo
 	-rm -f tblis/internal/$(DEPDIR)/dense.Plo
 	-rm -f tblis/internal/$(DEPDIR)/dpd.Plo
-	-rm -f tblis/internal/$(DEPDIR)/error.Plo
 	-rm -f tblis/internal/$(DEPDIR)/gemm_thread.Plo
 	-rm -f tblis/internal/$(DEPDIR)/thread.Plo
 	-rm -f tblis/internal/0/$(DEPDIR)/add.Plo
@@ -2790,7 +2784,6 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f tblis/internal/$(DEPDIR)/cpuid.Plo
 	-rm -f tblis/internal/$(DEPDIR)/dense.Plo
 	-rm -f tblis/internal/$(DEPDIR)/dpd.Plo
-	-rm -f tblis/internal/$(DEPDIR)/error.Plo
 	-rm -f tblis/internal/$(DEPDIR)/gemm_thread.Plo
 	-rm -f tblis/internal/$(DEPDIR)/thread.Plo
 	-rm -f tblis/internal/0/$(DEPDIR)/add.Plo

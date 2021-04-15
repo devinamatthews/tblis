@@ -52,7 +52,6 @@ lib_libtblis_la_SOURCES = \
     \
     tblis/internal/dense.cxx \
     tblis/internal/dpd.cxx \
-    tblis/internal/error.cxx \
     tblis/internal/cpuid.cxx \
     tblis/internal/gemm_thread.cxx \
     tblis/internal/thread.cxx \

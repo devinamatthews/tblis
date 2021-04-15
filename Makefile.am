@@ -357,25 +357,16 @@ endif
 # ARM architectures
 # 
     
-#if ENABLE_ARMV7A
-#noinst_LTLIBRARIES += lib/libarmv7a.la
-#lib_libtblis_la_LIBADD += lib/libarmv7a.la
-#lib_libarmv7a_la_SOURCES = src/external/blis/config/armv7a/kernels/3/bli_cgemm_kernel_2x2.S \
-#                           src/external/blis/config/armv7a/kernels/3/bli_dgemm_kernel_4x4.S \
-#                           src/external/blis/config/armv7a/kernels/3/bli_sgemm_kernel_4x4.S \
-#                           src/external/blis/config/armv7a/kernels/3/bli_zgemm_kernel_2x2.S \
-#                           src/external/blis/config/armv7a/kernels/3/bli_gemm_opt_4x4.c
-#lib_libarmv7a_la_CCASFLAGS = -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
-#lib_libarmv7a_la_CFLAGS = -Isrc/external/blis/config/armv7a -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
-#endif
-#
-#if ENABLE_ARMV8A
-#noinst_LTLIBRARIES += lib/libarmv8a.la
-#lib_libtblis_la_LIBADD += lib/libarmv8a.la
-#lib_libarmv8a_la_SOURCES = src/external/blis/config/armv8a/kernels/3/bli_gemm_opt_4x4.c
-#lib_libarmv8a_la_CFLAGS = -Isrc/external/blis/config/armv8a -march=armv8-a+fp+simd -mcpu=cortex-a57.cortex-a53
-#endif
-#
+if ENABLE_ARMV7A
+noinst_LTLIBRARIES += lib/libarmv7a.la
+lib_libtblis_la_LIBADD += lib/libarmv7a.la
+lib_libtblis_la_SOURCES += src/configs/armv7a/config.cxx
+lib_libarmv7a_la_SOURCES = src/configs/armv7a/config_ker.cxx \
+                           src/configs/armv7a/bli_gemm_armv7a_int_d4x4.c
+lib_libarmv7a_la_CCASFLAGS = -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
+lib_libarmv7a_la_CFLAGS = -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
+endif
+
 #if ENABLE_CORTEX_A15
 #noinst_LTLIBRARIES += lib/libcortex-a15.la
 #lib_libtblis_la_LIBADD += lib/libcortex-a15.la
@@ -389,6 +380,26 @@ endif
 #lib_libcortex_a9_la_SOURCES = src/external/blis/config/cortex-a9/kernels/3/bli_gemm_opt_4x4.c
 #lib_libcortex_a9_la_CFLAGS = -Isrc/external/blis/config/cortex-a9 -mfloat-abi=hard -mfpu=neon -march=armv7-a
 #endif
+
+if ENABLE_ARMV8A
+noinst_LTLIBRARIES += lib/libarmv8a.la
+lib_libtblis_la_LIBADD += lib/libarmv8a.la
+lib_libtblis_la_SOURCES += src/configs/armv8a/config.cxx
+lib_libarmv8a_la_SOURCES = src/configs/armv8a/config_ker.cxx \
+                           src/configs/armv8a/bli_gemm_asm_d6x8.c
+lib_libarmv8a_la_CFLAGS = -march=armv8-a+fp+simd
+endif
+
+if ENABLE_THUNDERX2
+noinst_LTLIBRARIES += lib/libthunderx2.la
+lib_libtblis_la_LIBADD += lib/libthunderx2.la
+lib_libtblis_la_SOURCES += src/configs/thunderx2/config.cxx
+lib_libthunderx2_la_SOURCES = src/configs/thunderx2/config_ker.cxx
+if !ENABLE_ARMV8A
+lib_libthunderx2_la_SOURCES += src/configs/armv8a/bli_gemm_asm_d6x8.c
+endif
+lib_libthunderx2_la_CFLAGS = -march=armv8-a+fp+simd -mcpu=thunderx2t99
+endif
 
 #
 # IBM architectures

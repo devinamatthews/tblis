@@ -694,6 +694,12 @@ ENABLE_BULLDOZER_FALSE
 ENABLE_BULLDOZER_TRUE
 ENABLE_BGQ_FALSE
 ENABLE_BGQ_TRUE
+ENABLE_A64FX_FALSE
+ENABLE_A64FX_TRUE
+ENABLE_ARMV8A_SVE_FALSE
+ENABLE_ARMV8A_SVE_TRUE
+ENABLE_THUNDERX2_FALSE
+ENABLE_THUNDERX2_TRUE
 ENABLE_ARMV8A_FALSE
 ENABLE_ARMV8A_TRUE
 ENABLE_ARMV7A_FALSE
@@ -1486,11 +1492,15 @@ Optional Features:
 
                           possible values are:
 
-                          reference, bulldozer, piledriver, excavator, zen,
-                          core2, sandybridge, haswell, skx1, skx2, knl, auto
+                          reference, auto,
+                          core2, sandybridge, haswell, skx1, skx2, knl,
+                          bulldozer, piledriver, excavator, zen,
+                          armv7a, armv8a, thunderx2, armv8a_sve, a64fx
 
                           the following meta-configurations are also available:
 
+                          arm32 = armv7a,
+                          arm64 = armv8a,thunderx2,armv8a_sve,a64fx
                           skx = skx1,skx2
                           intel = core2,sandybridge,haswell,skx,knl
                           amd = bulldozer,piledriver,excavator,zen
@@ -6032,12 +6042,14 @@ _ACEOF
 #
 # Supported:
 #
-# reference, bulldozer, piledriver, excavator, zen, core2, sandybridge,
-# haswell, skx1, skx2, knl, auto
+# reference, auto,
+# core2, sandybridge, haswell, skx1, skx2, knl,
+# bulldozer, piledriver, excavator, zen,
+# armv7a, armv8a, thunderx2, armv8a_sve, a64fx
 #
 # Possible with porting from BLIS:
 #
-# armv7a, armv8a, bgq, cortex-a15, cortex-a9, power7, loongson3a, mic
+# loongson3a, power7, bgq, mic
 #
 
 # Check whether --enable-config was given.
@@ -6192,9 +6204,111 @@ $as_echo "$ac_cv_defined__M_IX86" >&6; }
 if test $ac_cv_defined__M_IX86 != "no"; then :
   enable_config=x86
 fi
-#    AC_CHECK_DEFINE([__aarch64__], [enable_config=arm])
-#    AC_CHECK_DEFINE([__arm__], [enable_config=arm])
-#    AC_CHECK_DEFINE([_M_ARM], [enable_config=arm])
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __aarch64__ defined" >&5
+$as_echo_n "checking for __aarch64__ defined... " >&6; }
+if ${ac_cv_defined___aarch64__+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  #ifdef __aarch64__
+  int ok;
+  #else
+  choke me
+  #endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_defined___aarch64__=yes
+else
+  ac_cv_defined___aarch64__=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined___aarch64__" >&5
+$as_echo "$ac_cv_defined___aarch64__" >&6; }
+if test $ac_cv_defined___aarch64__ != "no"; then :
+  enable_config=arm64
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __arm__ defined" >&5
+$as_echo_n "checking for __arm__ defined... " >&6; }
+if ${ac_cv_defined___arm__+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  #ifdef __arm__
+  int ok;
+  #else
+  choke me
+  #endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_defined___arm__=yes
+else
+  ac_cv_defined___arm__=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined___arm__" >&5
+$as_echo "$ac_cv_defined___arm__" >&6; }
+if test $ac_cv_defined___arm__ != "no"; then :
+  enable_config=arm32
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for _M_ARM defined" >&5
+$as_echo_n "checking for _M_ARM defined... " >&6; }
+if ${ac_cv_defined__M_ARM+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  #ifdef _M_ARM
+  int ok;
+  #else
+  choke me
+  #endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_defined__M_ARM=yes
+else
+  ac_cv_defined__M_ARM=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined__M_ARM" >&5
+$as_echo "$ac_cv_defined__M_ARM" >&6; }
+if test $ac_cv_defined__M_ARM != "no"; then :
+  enable_config=arm32
+fi
 #    AC_CHECK_DEFINE([__powerpc64__], [enable_config=power7])
 #    AC_CHECK_DEFINE([__ppc64__], [enable_config=power7])
 #    AC_CHECK_DEFINE([__PPC64__], [enable_config=power7])
@@ -6249,10 +6363,12 @@ configs=`echo $enable_config | sed 's/x86/intel,amd/' \
                              | sed 's/amd/bulldozer,piledriver,excavator,zen/' \
                              | sed 's/skx,/skx1,skx2,/' \
                              | sed 's/skx$/skx1,skx2/' \
+                             | sed 's/arm64/armv8a,thunderx2,armv8a_sve,a64fx/' \
+                             | sed 's/arm32/armv7a/' \
                              | sed 's/,/ /g'`
 
 for config in $configs; do
-    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|bulldozer|piledriver|excavator|zen)$' ); then
+    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|bulldozer|piledriver|excavator|zen|armv7a|armv8a|thunderx2|armv8a_sve|a64fx)$' ); then
         as_fn_error $? "Unknown configuration $config" "$LINENO" 5
     fi
 done
@@ -6609,6 +6725,30 @@ fi
 else
   ENABLE_ARMV8A_TRUE='#'
   ENABLE_ARMV8A_FALSE=
+fi
+
+ if echo $configs | grep -q thunderx2; then
+  ENABLE_THUNDERX2_TRUE=
+  ENABLE_THUNDERX2_FALSE='#'
+else
+  ENABLE_THUNDERX2_TRUE='#'
+  ENABLE_THUNDERX2_FALSE=
+fi
+
+ if echo $configs | grep -q armv8a_sve; then
+  ENABLE_ARMV8A_SVE_TRUE=
+  ENABLE_ARMV8A_SVE_FALSE='#'
+else
+  ENABLE_ARMV8A_SVE_TRUE='#'
+  ENABLE_ARMV8A_SVE_FALSE=
+fi
+
+ if echo $configs | grep -q a64fx; then
+  ENABLE_A64FX_TRUE=
+  ENABLE_A64FX_FALSE='#'
+else
+  ENABLE_A64FX_TRUE='#'
+  ENABLE_A64FX_FALSE=
 fi
 
  if echo $configs | grep -q bgq; then
@@ -17880,6 +18020,18 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_ARMV8A_TRUE}" && test -z "${ENABLE_ARMV8A_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_ARMV8A\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_THUNDERX2_TRUE}" && test -z "${ENABLE_THUNDERX2_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_THUNDERX2\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_ARMV8A_SVE_TRUE}" && test -z "${ENABLE_ARMV8A_SVE_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_ARMV8A_SVE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_A64FX_TRUE}" && test -z "${ENABLE_A64FX_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_A64FX\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_BGQ_TRUE}" && test -z "${ENABLE_BGQ_FALSE}"; then

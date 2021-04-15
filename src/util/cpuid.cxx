@@ -231,7 +231,7 @@ int get_cpu_type(int& model, int& part, int& features)
     {
         char c;
         std::string feat;
-        while ((c = fgetc(fid)) != EOF)
+        while ((c = fgetc(fid)) != EOF && c != '\n')
             feat.push_back(c);
         pclose(fid);
 

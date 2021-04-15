@@ -1,5 +1,5 @@
-#ifndef _TBLIS_CONFIGS_ARM64_CONFIG_HPP_
-#define _TBLIS_CONFIGS_ARM64_CONFIG_HPP_
+#ifndef _TBLIS_CONFIGS_ARMV8A_CONFIG_HPP_
+#define _TBLIS_CONFIGS_ARMV8A_CONFIG_HPP_
 
 #include "configs/config_builder.hpp"
 

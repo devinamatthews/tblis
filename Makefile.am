@@ -401,6 +401,28 @@ endif
 lib_libthunderx2_la_CFLAGS = -march=armv8-a+fp+simd -mcpu=thunderx2t99
 endif
 
+if ENABLE_ARMV8A_SVE512
+noinst_LTLIBRARIES += lib/libarmv8a_sve512.la
+lib_libtblis_la_LIBADD += lib/libarmv8a_sve512.la
+lib_libtblis_la_SOURCES += src/configs/armv8a_sve512/config.cxx
+lib_libarmv8a_sve512_la_SOURCES = src/configs/armv8a_sve512/config_ker.cxx \
+                                  src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c \
+                                  src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_16xk.c \
+                                  src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_10xk.c
+lib_libarmv8a_sve512_la_CFLAGS = -march=armv8-a+sve
+CXXFLAGS += -march=armv8-a+sve
+endif
+
+if ENABLE_ARMV8A_SVE256
+noinst_LTLIBRARIES += lib/libarmv8a_sve256.la
+lib_libtblis_la_LIBADD += lib/libarmv8a_sve256.la
+lib_libtblis_la_SOURCES += src/configs/armv8a_sve256/config.cxx
+lib_libarmv8a_sve256_la_SOURCES = src/configs/armv8a_sve256/config_ker.cxx \
+                                  src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c
+lib_libarmv8a_sve256_la_CFLAGS = -march=armv8-a+sve
+CXXFLAGS += -march=armv8-a+sve
+endif
+
 #
 # IBM architectures
 #

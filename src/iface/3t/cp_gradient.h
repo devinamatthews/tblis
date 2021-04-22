@@ -17,7 +17,7 @@ extern "C"
 #endif
 
 void tblis_tensor_cp_gradient(const tblis_comm* comm, const tblis_config* cfg,
-                              tblis_tensor* A, const label_type* idx_A,
+                              const tblis_tensor* A, const label_type* idx_A,
                               const tblis_matrix* const * U, const label_type* const * idx_U,
                               tblis_matrix* G, const label_type* idx_G);
 

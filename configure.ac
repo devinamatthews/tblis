@@ -16,6 +16,7 @@ AM_PROG_AS
 AC_PROG_EGREP
 AC_PROG_AWK
 AX_BLAS([blas_found=yes])
+AX_LAPACK([lapack_found=yes])
 AC_PROG_CXX([icpc g++ clang++])
 AX_CXX_COMPILE_STDCXX_14([noext])
 AC_LANG([C++])
@@ -23,6 +24,7 @@ AC_C_RESTRICT
 
 AC_DEFINE([RESTRICT], [_tblis_restrict], [More convenient macro for restrict.])
 AM_CONDITIONAL([ENABLE_BLAS], [test x"$blas_found" = xyes])
+AM_CONDITIONAL([ENABLE_LAPACK], [test x"$lapack_found" = xyes])
 
 AC_SEARCH_LIBS([clock_gettime], [rt])
 

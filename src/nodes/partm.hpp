@@ -69,6 +69,7 @@ struct partition
             len_type m_off = m_first;
             len_type m_len = m_last-m_first;
 
+            length(m_len, m_len);
             shift(m_off, m_off);
 
             len_type M_cur = (m_len%M_def <= M_over ? M_max : M_def);
@@ -81,8 +82,9 @@ struct partition
                 child(*subcomm, cfg, alpha, local_A, local_B, local_beta, local_C);
                 if (Dim == DIM_K) local_beta = 1.0;
 
-                shift(M_cur, M_cur);
-                m_off += M_cur;
+                length(0, 0);
+                shift(m_loc, m_loc);
+                m_off += m_loc;
                 M_cur = M_def;
             }
         });

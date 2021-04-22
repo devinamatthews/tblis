@@ -20,9 +20,9 @@ struct gemm_macro_kernel
 
     template <typename T>
     void operator()(const communicator& comm, const config& cfg,
-                    T alpha, matrix_view<T>& A,
-                             matrix_view<T>& B,
-                    T  beta, matrix_view<T>& C) const
+                    T alpha, normal_matrix<T>& A,
+                             normal_matrix<T>& B,
+                    T  beta, normal_matrix<T>& C) const
     {
         const len_type MR = cfg.gemm_mr.def<T>();
         const len_type NR = cfg.gemm_nr.def<T>();

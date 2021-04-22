@@ -55,7 +55,7 @@ int tci_context_receive(tci_context* context, unsigned tid, void** object)
 {
     int ret = tci_context_barrier(context, tid);
     if (ret != 0) return ret;
-    __atomic_load(&context->buffer, object, __ATOMIC_ACQUIRE);
+    *object = (void*)__atomic_load_n(&context->buffer, __ATOMIC_ACQUIRE);
     return tci_context_barrier(context, tid);
 }
 
@@ -64,6 +64,6 @@ int tci_context_receive_nowait(tci_context* context,
 {
     int ret = tci_context_barrier(context, tid);
     if (ret != 0) return ret;
-    __atomic_load(&context->buffer, object, __ATOMIC_ACQUIRE);
+    *object = (void*)__atomic_load_n(&context->buffer, __ATOMIC_ACQUIRE);
     return 0;
 }

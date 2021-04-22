@@ -14,6 +14,7 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
     template <typename, typename, bool> friend class dpd_varray_base;
     template <typename> friend class dpd_varray_view;
     template <typename, typename> friend class dpd_varray;
+    template <typename, typename, bool> friend class indexed_dpd_varray_base;
 
     public:
         typedef Type value_type;
@@ -28,6 +29,9 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
 
     protected:
         matrix<stride_type> size_;
+        matrix<len_type> len_;
+        matrix<len_type> off_;
+        matrix<stride_type> stride_;
         dim_vector leaf_;
         dim_vector parent_;
         dim_vector perm_;
@@ -46,6 +50,9 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
         void reset()
         {
             size_.reset();
+            len_.reset();
+            off_.reset();
+            stride_.reset();
             leaf_.clear();
             parent_.clear();
             perm_.clear();
@@ -70,6 +77,9 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
         void reset(dpd_varray_base<U, D, O>& other)
         {
             size_.reset(other.size_);
+            len_.reset(other.len_);
+            off_.reset(other.off_);
+            stride_.reset(other.stride_);
             leaf_ = other.leaf_;
             parent_ = other.parent_;
             perm_ = other.perm_;
@@ -105,16 +115,16 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
             nirrep_ = nirrep;
             layout_ = layout;
             size_.reset({2*ndim-1, nirrep}, ROW_MAJOR);
+            len.slurp(len_, ROW_MAJOR);
+            off_.reset({ndim, nirrep}, ROW_MAJOR);
+            stride_.reset({ndim, nirrep}, 1, ROW_MAJOR);
             leaf_.resize(ndim);
             parent_.resize(2*ndim-1);
             perm_.resize(ndim);
             depth.slurp(depth_);
 
-            matrix<len_type> len_;
-            len.slurp(len_, ROW_MAJOR);
-
             this->set_tree();
-            this->set_size(len_);
+            this->set_size();
         }
 
         /***********************************************************************
@@ -285,6 +295,9 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
         {
             using std::swap;
             swap(size_, other.size_);
+            swap(len_, other.len_);
+            swap(off_, other.off_);
+            swap(stride_, other.stride_);
             swap(leaf_, other.leaf_);
             swap(parent_, other.parent_);
             swap(perm_, other.perm_);
@@ -334,29 +347,22 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
                 MARRAY_ASSERT(lengths(i) == other.lengths(i));
             }
 
-            if (layout_ == other.layout_ && perm_ == other.perm_ && depth_ == other.depth_)
-            {
-                std::copy_n(other.data(), size(), data());
-            }
-            else
-            {
-                unsigned mask = nirrep_-1;
-                unsigned shift = (nirrep_>1) + (nirrep_>2) + (nirrep_>4);
+            unsigned mask = nirrep_-1;
+            unsigned shift = (nirrep_>1) + (nirrep_>2) + (nirrep_>4);
 
-                unsigned nblocks = 1u << (shift*(ndim-1));
-                irrep_vector irreps(ndim);
-                for (unsigned block = 0;block < nblocks;block++)
+            unsigned nblocks = 1u << (shift*(ndim-1));
+            irrep_vector irreps(ndim);
+            for (unsigned block = 0;block < nblocks;block++)
+            {
+                unsigned b = block;
+                irreps[0] = irrep_;
+                for (unsigned i = 1;i < ndim;i++)
                 {
-                    unsigned b = block;
-                    irreps[0] = irrep_;
-                    for (unsigned i = 1;i < ndim;i++)
-                    {
-                        irreps[0] ^= irreps[i] = b & mask;
-                        b >>= shift;
-                    }
-
-                    (*this)(irreps) = other(irreps);
+                    irreps[0] ^= irreps[i] = b & mask;
+                    b >>= shift;
                 }
+
+                (*this)(irreps) = other(irreps);
             }
 
             return static_cast<Derived&>(*this);
@@ -364,7 +370,25 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
 
         Derived& operator=(const Type& value)
         {
-            std::fill_n(data(), size(), value);
+            unsigned ndim = dimension();
+            unsigned mask = nirrep_-1;
+            unsigned shift = (nirrep_>1) + (nirrep_>2) + (nirrep_>4);
+
+            unsigned nblocks = 1u << (shift*(ndim-1));
+            irrep_vector irreps(ndim);
+            for (unsigned block = 0;block < nblocks;block++)
+            {
+                unsigned b = block;
+                irreps[0] = irrep_;
+                for (unsigned i = 1;i < ndim;i++)
+                {
+                    irreps[0] ^= irreps[i] = b & mask;
+                    b >>= shift;
+                }
+
+                (*this)(irreps) = value;
+            }
+
             return static_cast<Derived&>(*this);
         }
 
@@ -428,16 +452,18 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
          *
          **********************************************************************/
 
-        template <typename... Irreps,
-            typename=detail::enable_if_t<detail::are_assignable<unsigned&, Irreps...>::value>>
-        marray_view<ctype, sizeof...(Irreps)> operator()(const Irreps&... irreps) const
+        template <typename... Irreps>
+        detail::enable_if_t<detail::are_assignable<unsigned&, Irreps...>::value,
+                            marray_view<ctype, sizeof...(Irreps)>>
+        operator()(const Irreps&... irreps) const
         {
             return const_cast<dpd_varray_base&>(*this)(irreps...);
         }
 
-        template <typename... Irreps,
-            typename=detail::enable_if_t<detail::are_assignable<unsigned&, Irreps...>::value>>
-        marray_view<Type, sizeof...(Irreps)> operator()(const Irreps&... irreps_)
+        template <typename... Irreps>
+        detail::enable_if_t<detail::are_assignable<unsigned&, Irreps...>::value,
+                            marray_view<Type, sizeof...(Irreps)>>
+        operator()(const Irreps&... irreps_)
         {
             constexpr unsigned NDim = sizeof...(Irreps);
 
@@ -462,16 +488,77 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
         {
             unsigned ndim = dimension();
 
+            MARRAY_ASSERT(irreps_.size() == ndim);
+
             irrep_vector irreps;
             irreps_.slurp(irreps);
 
             len_vector len(ndim);
             stride_vector stride(ndim);
 
+            unsigned irrep = 0;
+            for (auto& i: irreps) irrep ^= i;
+            MARRAY_ASSERT(irrep == irrep_);
+
             pointer ptr = data();
             this->get_block(irreps, len, ptr, stride);
 
             return varray_view<Type>(len, ptr, stride);
+        }
+
+        /***********************************************************************
+         *
+         * Slicing
+         *
+         **********************************************************************/
+
+        template <typename... Slices>
+        detail::enable_if_t<detail::are_dpd_indices_or_slices<Slices...>::value &&
+                            (detail::sliced_dimension<Slices...>::value > 0),
+                            dpd_marray_view<ctype, detail::sliced_dimension<Slices...>::value>>
+        operator()(const Slices&... slices) const
+        {
+            return const_cast<dpd_varray_base&>(*this)(slices...);
+        }
+
+        template <typename... Slices>
+        detail::enable_if_t<detail::are_dpd_indices_or_slices<Slices...>::value &&
+                            (detail::sliced_dimension<Slices...>::value > 0),
+                            dpd_marray_view<Type, detail::sliced_dimension<Slices...>::value>>
+        operator()(const Slices&... slices)
+        {
+            constexpr unsigned NDim = detail::sliced_dimension<Slices...>::value;
+
+            abort();
+            //TODO
+        }
+
+        dpd_varray_view<ctype> operator()(const detail::array_1d<dpd_range_t>& slices) const
+        {
+            return const_cast<dpd_varray_base&>(*this)(slices);
+        }
+
+        dpd_varray_view<Type> operator()(const detail::array_1d<dpd_range_t>& slices_)
+        {
+            unsigned ndim = dimension();
+
+            MARRAY_ASSERT(slices_.size() == ndim);
+
+            short_vector<dpd_range_t, MARRAY_OPT_NDIM> slices;
+            slices_.slurp(slices);
+
+            dpd_varray_view<Type> v = view();
+
+            for (unsigned i = 0;i < ndim;i++)
+            {
+                for (unsigned j = 0;j < nirrep_;j++)
+                {
+                    v.off_[i][j] = slices[i].from(j);
+                    v.len_[i][j] = slices[i].size(j);
+                }
+            }
+
+            return v;
         }
 
         /***********************************************************************
@@ -553,13 +640,13 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
         {
             MARRAY_ASSERT(dim < dimension());
             MARRAY_ASSERT(irrep < nirrep_);
-            return size_[leaf_[perm_[dim]]][irrep];
+            return len_[perm_[dim]][irrep];
         }
 
         row_view<const len_type> lengths(unsigned dim) const
         {
             MARRAY_ASSERT(dim < dimension());
-            return size_[leaf_[perm_[dim]]];
+            return len_[perm_[dim]];
         }
 
         matrix<len_type> lengths() const
@@ -588,11 +675,6 @@ class dpd_varray_base : protected detail::dpd_base<dpd_varray_base<Type, Derived
         unsigned dimension() const
         {
             return perm_.size();
-        }
-
-        stride_type size() const
-        {
-            return size_[2*dimension()-2][irrep_];
         }
 };
 

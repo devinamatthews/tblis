@@ -1,4 +1,4 @@
-AC_INIT(tblis, m4_esyscmd_s([cat version]), dmatthews@utexas.edu, tblis, http://www.github.com/devinamatthews/tblis)
+AC_INIT(tblis, 1.2.0, dmatthews@utexas.edu, tblis, http://www.github.com/devinamatthews/tblis)
 AM_INIT_AUTOMAKE([foreign silent-rules subdir-objects])
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE([disable])
@@ -17,7 +17,7 @@ AC_PROG_EGREP
 AC_PROG_AWK
 AX_BLAS([blas_found=yes])
 AC_PROG_CXX([icpc g++ clang++])
-AX_CXX_COMPILE_STDCXX_11([noext])
+AX_CXX_COMPILE_STDCXX_14([noext])
 AC_LANG([C++])
 AC_C_RESTRICT
 

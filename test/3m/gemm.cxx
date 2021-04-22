@@ -23,7 +23,7 @@ REPLICATED_TEMPLATED_TEST_CASE(gemm, R, T, all_types)
 {
     matrix<T> A, B, C, D, E;
 
-    random_gemm(N, A, B, C);
+    random_gemm(N/10, A, B, C);
 
     T scale(10.0*random_unit<T>());
 
@@ -52,7 +52,7 @@ REPLICATED_TEMPLATED_TEST_CASE(gemm_diag, R, T, all_types)
 {
     matrix<T> A, B, C, E, F;
 
-    random_gemm(N, A, B, C);
+    random_gemm(N/10, A, B, C);
 
     T scale(10.0*random_unit<T>());
 

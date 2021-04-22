@@ -19,21 +19,45 @@ void shift_ukr_def(len_type n,
 {
     if (beta == T(0))
     {
-        TBLIS_SPECIAL_CASE(inc_A == 1,
+        if (inc_A == 1)
         {
-            for (int i = 0;i < n;i++) A[i*inc_A] = alpha;
+            for (len_type i = 0;i < n;i++) A[i] = alpha;
         }
-        )
+        else
+        {
+            for (len_type i = 0;i < n;i++) A[i*inc_A] = alpha;
+        }
     }
     else
     {
-        TBLIS_SPECIAL_CASE(conj_A,
-        TBLIS_SPECIAL_CASE(inc_A == 1,
+        if (is_complex<T>::value && conj_A)
         {
-            for (int i = 0;i < n;i++)
-                A[i*inc_A] = alpha + beta*(conj_A ? conj(A[i*inc_A]) : A[i*inc_A]);
+            if (inc_A == 1)
+            {
+                #pragma omp simd
+                for (len_type i = 0;i < n;i++)
+                    A[i] = alpha + beta*conj(A[i]);
+            }
+            else
+            {
+                for (len_type i = 0;i < n;i++)
+                    A[i*inc_A] = alpha + beta*conj(A[i*inc_A]);
+            }
         }
-        ))
+        else
+        {
+            if (inc_A == 1)
+            {
+                #pragma omp simd
+                for (len_type i = 0;i < n;i++)
+                    A[i] = alpha + beta*A[i];
+            }
+            else
+            {
+                for (len_type i = 0;i < n;i++)
+                    A[i*inc_A] = alpha + beta*A[i*inc_A];
+            }
+        }
     }
 }
 

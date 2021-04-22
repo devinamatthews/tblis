@@ -2,7 +2,8 @@ VPATH += $(srcdir)
 
 ACLOCAL_AMFLAGS = -I m4
 
-AM_CPPFLAGS = -DMARRAY_ENABLE_ASSERTS -I$(srcdir)/include -Ithird_party
+AM_CPPFLAGS = -DMARRAY_ENABLE_ASSERTS -I$(srcdir)/include -I$(srcdir)/third_party
+AM_LDFLAGS = -lpthread
 
 noinst_PROGRAMS = bin/test
 bin_test_SOURCES = test/dpd_marray_view.cxx \

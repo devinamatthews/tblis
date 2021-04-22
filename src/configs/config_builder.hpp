@@ -18,22 +18,22 @@
     TBLIS_GET_VALUE_OR_DEFAULT_CASE(value,default,TBLIS_IS_EMPTY(value))
 
 #define TBLIS_BEGIN_CONFIG(cfg) \
-extern config cfg##_config_instance; \
 struct cfg##_config : config_template<cfg##_config> \
 { \
     typedef cfg##_config this_config; \
  \
     static constexpr const char* name = #cfg; \
  \
-    static const config& instance() \
-    { \
-        return cfg##_config_instance; \
-    } \
+    static const config& instance();
 
 #define TBLIS_END_CONFIG };
 
 #define TBLIS_CONFIG_INSTANTIATE(cfg) \
-config cfg##_config_instance = config(cfg##_config());
+const config& cfg##_config::instance() \
+{ \
+    static config _instance(cfg##_config{}); \
+    return _instance; \
+}
 
 #define TBLIS_CONFIG_REGISTER_BLOCKSIZE(name, S,D,C,Z, SE,DE,CE,ZE, SD,DD,CD,ZD) \
     template <typename T> struct name : register_blocksize<T, \
@@ -56,6 +56,11 @@ config cfg##_config_instance = config(cfg##_config());
         TBLIS_GET_VALUE_OR_DEFAULT(DM,TBLIS_GET_VALUE_OR_DEFAULT(D,DD)), \
         TBLIS_GET_VALUE_OR_DEFAULT(CM,TBLIS_GET_VALUE_OR_DEFAULT(C,CD)), \
         TBLIS_GET_VALUE_OR_DEFAULT(ZM,TBLIS_GET_VALUE_OR_DEFAULT(Z,ZD))> {};
+
+#define TBLIS_CONFIG_ADDF_NF(S,D,C,Z) \
+    TBLIS_CONFIG_REGISTER_BLOCKSIZE(addf_nf, S,D,C,Z, S,D,C,Z, 4,4,4,4)
+#define TBLIS_CONFIG_DOTF_NF(S,D,C,Z) \
+    TBLIS_CONFIG_REGISTER_BLOCKSIZE(dotf_nf, S,D,C,Z, S,D,C,Z, 4,4,4,4)
 
 #define TBLIS_CONFIG_TRANS_MR(S,D,C,Z) \
     TBLIS_CONFIG_REGISTER_BLOCKSIZE(trans_mr, S,D,C,Z, S,D,C,Z, 8,4,4,4)
@@ -97,8 +102,6 @@ config cfg##_config_instance = config(cfg##_config());
         TBLIS_GET_VALUE_OR_DEFAULT(C,CD), \
         TBLIS_GET_VALUE_OR_DEFAULT(Z,ZD)> {};
 
-#define TBLIS_CONFIG_TRANS_ROW_MAJOR(S,D,C,Z) \
-    TBLIS_CONFIG_PARAMETER(trans_row_major, bool, S,D,C,Z, false,false,false,false)
 #define TBLIS_CONFIG_GEMM_ROW_MAJOR(S,D,C,Z) \
     TBLIS_CONFIG_PARAMETER(gemm_row_major, bool, S,D,C,Z, false,false,false,false)
 #define TBLIS_CONFIG_GEMM_FLIP_UKR(S,D,C,Z) \
@@ -147,8 +150,17 @@ config cfg##_config_instance = config(cfg##_config());
     TBLIS_CONFIG_UKR2(this_config, reduce_ukr, reduce_ukr_t, S,D,C,Z, reduce_ukr_def)
 #define TBLIS_CONFIG_SCALE_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, scale_ukr, scale_ukr_t, S,D,C,Z, scale_ukr_def)
+#define TBLIS_CONFIG_SET_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR2(this_config, set_ukr, set_ukr_t, S,D,C,Z, set_ukr_def)
 #define TBLIS_CONFIG_SHIFT_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, shift_ukr, shift_ukr_t, S,D,C,Z, shift_ukr_def)
+
+#define TBLIS_CONFIG_ADDF_SUM_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR2(this_config, addf_sum_ukr, addf_sum_ukr_t, S,D,C,Z, addf_sum_ukr_def)
+#define TBLIS_CONFIG_ADDF_REP_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR2(this_config, addf_rep_ukr, addf_rep_ukr_t, S,D,C,Z, addf_rep_ukr_def)
+#define TBLIS_CONFIG_DOTF_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR2(this_config, dotf_ukr, dotf_ukr_t, S,D,C,Z, dotf_ukr_def)
 
 #define TBLIS_CONFIG_GEMM_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, gemm_ukr, gemm_ukr_t, S,D,C,Z, gemm_ukr_def)
@@ -185,6 +197,10 @@ config cfg##_config_instance = config(cfg##_config());
     TBLIS_CONFIG_UKR3(this_config, matrix_constants::MAT_A, pack_sb_mr_ukr, pack_sb_ukr_t, S,D,C,Z, pack_sb_ukr_def)
 #define TBLIS_CONFIG_PACK_SB_NR_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR3(this_config, matrix_constants::MAT_B, pack_sb_nr_ukr, pack_sb_ukr_t, S,D,C,Z, pack_sb_ukr_def)
+#define TBLIS_CONFIG_PACK_SS_SCAL_MR_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR3(this_config, matrix_constants::MAT_A, pack_ss_scal_mr_ukr, pack_ss_scal_ukr_t, S,D,C,Z, pack_ss_scal_ukr_def)
+#define TBLIS_CONFIG_PACK_SS_SCAL_NR_UKR(S,D,C,Z) \
+    TBLIS_CONFIG_UKR3(this_config, matrix_constants::MAT_B, pack_ss_scal_nr_ukr, pack_ss_scal_ukr_t, S,D,C,Z, pack_ss_scal_ukr_def)
 
 #define TBLIS_CONFIG_CHECK(func) static constexpr check_fn_t check = func;
 
@@ -285,12 +301,18 @@ struct config_template
     TBLIS_CONFIG_MULT_UKR(_,_,_,_)
     TBLIS_CONFIG_REDUCE_UKR(_,_,_,_)
     TBLIS_CONFIG_SCALE_UKR(_,_,_,_)
+    TBLIS_CONFIG_SET_UKR(_,_,_,_)
     TBLIS_CONFIG_SHIFT_UKR(_,_,_,_)
+
+    TBLIS_CONFIG_ADDF_NF(_,_,_,_)
+    TBLIS_CONFIG_DOTF_NF(_,_,_,_)
+    TBLIS_CONFIG_ADDF_SUM_UKR(_,_,_,_)
+    TBLIS_CONFIG_ADDF_REP_UKR(_,_,_,_)
+    TBLIS_CONFIG_DOTF_UKR(_,_,_,_)
 
     TBLIS_CONFIG_TRANS_MR(_,_,_,_)
     TBLIS_CONFIG_TRANS_NR(_,_,_,_)
     TBLIS_CONFIG_TRANS_UKR(_,_,_,_)
-    TBLIS_CONFIG_TRANS_ROW_MAJOR(_,_,_,_)
 
     TBLIS_CONFIG_GEMM_MR(_,_,_,_)
     TBLIS_CONFIG_GEMM_NR(_,_,_,_)
@@ -318,6 +340,8 @@ struct config_template
     TBLIS_CONFIG_PACK_NB_NR_UKR(_,_,_,_)
     TBLIS_CONFIG_PACK_SB_MR_UKR(_,_,_,_)
     TBLIS_CONFIG_PACK_SB_NR_UKR(_,_,_,_)
+    TBLIS_CONFIG_PACK_SS_SCAL_MR_UKR(_,_,_,_)
+    TBLIS_CONFIG_PACK_SS_SCAL_NR_UKR(_,_,_,_)
 
     TBLIS_CONFIG_M_THREAD_RATIO(_,_,_,_)
     TBLIS_CONFIG_N_THREAD_RATIO(_,_,_,_)

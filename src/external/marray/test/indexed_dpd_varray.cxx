@@ -56,7 +56,7 @@ static stride_type offsets[6][8] =
     EXPECT_EQ(0u, v.dimension()); \
     EXPECT_EQ(0u, v.dense_dimension()); \
     EXPECT_EQ(0u, v.indexed_dimension()); \
-    EXPECT_EQ(0u, v.num_indices()); \
+    EXPECT_EQ(1u, v.num_indices()); \
     EXPECT_EQ((dim_vector{}), v.permutation()); \
     EXPECT_EQ((matrix<len_type>{}), v.lengths()); \
     EXPECT_EQ(0u, v.data().size());

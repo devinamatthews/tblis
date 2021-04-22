@@ -16,11 +16,13 @@ endif
 
 nobase_include_HEADERS = tci.h \
 						 tci/tci_config.h \
+                         tci/tci_global.h \
                          tci/barrier.h \
                          tci/communicator.h \
                          tci/context.h \
                          tci/mutex.h \
                          tci/parallel.h \
+                         tci/pipeline.h \
                          tci/slot.h \
                          tci/task_set.h \
                          tci/work_item.h \

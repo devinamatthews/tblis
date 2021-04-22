@@ -1,7 +1,7 @@
 #ifndef _TCI_BARRIER_H_
 #define _TCI_BARRIER_H_
 
-#include "tci_config.h"
+#include "tci_global.h"
 
 #include "yield.h"
 #include "mutex.h"

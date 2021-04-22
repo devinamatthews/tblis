@@ -21,14 +21,15 @@ void tblis_vector_mult(const tblis_comm* comm, const tblis_config* cfg,
 
     TBLIS_WITH_TYPE_AS(A->type, T,
     {
+        T alpha = A->alpha<T>()*B->alpha<T>();
+        T beta = C->alpha<T>();
+
         parallelize_if(
         [&](const communicator& comm)
         {
-            T alpha = A->alpha<T>()*B->alpha<T>();
-
             if (alpha == T(0))
             {
-                if (C->alpha<T>() == T(0))
+                if (beta == T(0))
                 {
                     internal::set<T>(comm, get_config(cfg), A->n,
                                      T(0), static_cast<T*>(C->data), C->inc);
@@ -36,16 +37,16 @@ void tblis_vector_mult(const tblis_comm* comm, const tblis_config* cfg,
                 else if (C->alpha<T>() != T(1) || (is_complex<T>::value && C->conj))
                 {
                     internal::scale<T>(comm, get_config(cfg), A->n,
-                                       C->alpha<T>(), C->conj,
+                                       beta, C->conj,
                                        static_cast<T*>(C->data), C->inc);
                 }
             }
             else
             {
-                internal::mult<T>(comm, get_config(cfg), A->n,
-                                  alpha, A->conj, static_cast<const T*>(A->data), A->inc,
-                                         B->conj, static_cast<const T*>(B->data), B->inc,
-                                  C->alpha<T>(), C->conj, static_cast<T*>(C->data), C->inc);
+                internal::mult<T>(comm, get_config(cfg), A->n, alpha,
+                                  A->conj, static_cast<const T*>(A->data), A->inc,
+                                  B->conj, static_cast<const T*>(B->data), B->inc,
+                                  beta, C->conj, static_cast<T*>(C->data), C->inc);
             }
         }, comm);
 

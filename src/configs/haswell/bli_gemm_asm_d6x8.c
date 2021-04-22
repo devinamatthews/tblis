@@ -659,7 +659,8 @@ void bli_dgemm_asm_6x8
      )
 {
 	//void*   a_next = bli_auxinfo_next_a( data );
-	//void*   b_next = bli_auxinfo_next_b( data );
+    //void*   b_next = bli_auxinfo_next_b( data );
+    void* c_prefetch = data->c_prefetch;
 
     uint64_t   k_iter = k / 4;
     uint64_t   k_left = k % 4;
@@ -679,15 +680,16 @@ void bli_dgemm_asm_6x8
 	"vmovaps           -4 * 32(%%rbx), %%ymm0    \n\t"
 	"vmovaps           -3 * 32(%%rbx), %%ymm1    \n\t"
 	"                                            \n\t"
-	"movq                %6, %%rcx               \n\t" // load address of c
+    "movq                %6, %%rcx               \n\t" // load address of c
+    "movq                %9, %%r8                \n\t" // load address of c_prefetch
 	"movq                %7, %%rdi               \n\t" // load rs_c
 	"leaq        (,%%rdi,8), %%rdi               \n\t" // rs_c *= sizeof(double)
 	"                                            \n\t"
 	"leaq   (%%rdi,%%rdi,2), %%r13               \n\t" // r13 = 3*rs_c;
-	"leaq   (%%rcx,%%r13,1), %%rdx               \n\t" // rdx = c + 3*rs_c;
-	"prefetcht0   7 * 8(%%rcx)                   \n\t" // prefetch c + 0*rs_c
-	"prefetcht0   7 * 8(%%rcx,%%rdi)             \n\t" // prefetch c + 1*rs_c
-	"prefetcht0   7 * 8(%%rcx,%%rdi,2)           \n\t" // prefetch c + 2*rs_c
+	"leaq   (%%r8,%%r13,1), %%rdx                \n\t" // rdx = c_prefetch + 3*rs_c;
+	"prefetcht0   7 * 8(%%r8)                    \n\t" // prefetch c + 0*rs_c
+	"prefetcht0   7 * 8(%%r8,%%rdi)              \n\t" // prefetch c + 1*rs_c
+	"prefetcht0   7 * 8(%%r8,%%rdi,2)            \n\t" // prefetch c + 2*rs_c
 	"prefetcht0   7 * 8(%%rdx)                   \n\t" // prefetch c + 3*rs_c
 	"prefetcht0   7 * 8(%%rdx,%%rdi)             \n\t" // prefetch c + 4*rs_c
 	"prefetcht0   7 * 8(%%rdx,%%rdi,2)           \n\t" // prefetch c + 5*rs_c
@@ -732,6 +734,8 @@ void bli_dgemm_asm_6x8
 	"vmovaps           -1 * 32(%%rbx), %%ymm1    \n\t"
 	"                                            \n\t"
 	"                                            \n\t" // iteration 1
+    "prefetcht0   72 * 8(%%rax)                  \n\t"
+    "                                            \n\t"
 	"vbroadcastsd       6 *  8(%%rax), %%ymm2    \n\t"
 	"vbroadcastsd       7 *  8(%%rax), %%ymm3    \n\t"
 	"vfmadd231pd       %%ymm0, %%ymm2, %%ymm4    \n\t"
@@ -757,7 +761,7 @@ void bli_dgemm_asm_6x8
 	"vmovaps            1 * 32(%%rbx), %%ymm1    \n\t"
 	"                                            \n\t"
 	"                                            \n\t" // iteration 2
-	"prefetcht0   76 * 8(%%rax)                  \n\t"
+	"prefetcht0   80 * 8(%%rax)                  \n\t"
 	"                                            \n\t"
 	"vbroadcastsd      12 *  8(%%rax), %%ymm2    \n\t"
 	"vbroadcastsd      13 *  8(%%rax), %%ymm3    \n\t"
@@ -1183,7 +1187,8 @@ void bli_dgemm_asm_6x8
 	  "m" (beta),   // 5
 	  "m" (c),      // 6
 	  "m" (rs_c),   // 7
-	  "m" (cs_c)/*,   // 8
+      "m" (cs_c),   // 8
+      "m" (c_prefetch)/*,   // 9
 	  "m" (b_next), // 9
 	  "m" (a_next)*/  // 10
 	: // register clobber list

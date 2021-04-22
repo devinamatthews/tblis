@@ -1,7 +1,7 @@
 #ifndef _TCI_CONTEXT_H_
 #define _TCI_CONTEXT_H_
 
-#include "tci_config.h"
+#include "tci_global.h"
 
 #include "barrier.h"
 

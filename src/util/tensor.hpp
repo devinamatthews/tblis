@@ -105,6 +105,18 @@ struct sort_by_stride_helper
 
     bool operator()(unsigned i, unsigned j) const
     {
+        auto min_i = (*strides[0])[i];
+        auto min_j = (*strides[0])[j];
+
+        for (size_t k = 1;k < N;k++)
+        {
+            min_i = std::min(min_i, (*strides[k])[i]);
+            min_j = std::min(min_j, (*strides[k])[j]);
+        }
+
+        if (min_i < min_j) return true;
+        if (min_i > min_j) return false;
+
         for (size_t k = 0;k < N;k++)
         {
             auto s_i = (*strides[k])[i];
@@ -467,6 +479,15 @@ void matricize(varray_view<T>  A,
                matrix_view<T>& AM, unsigned split)
 {
     matricize<T>(A, reinterpret_cast<matrix_view<const T>&>(AM), split);
+}
+
+inline unsigned unit_dim(const stride_vector& stride, const dim_vector& reorder)
+{
+    for (unsigned i = 0;i < reorder.size();i++)
+        if (stride[reorder[i]] == 1)
+            return i;
+
+    return reorder.size();
 }
 
 }

@@ -185,6 +185,7 @@ struct dpd_index_group
     unsigned batch_ndim = 0;
     unsigned dense_nblock = 1;
     stride_type dense_size = 0;
+    bool pack_3d = false;
 
     std::array<dim_vector,N> dense_idx;
 
@@ -241,11 +242,18 @@ struct dpd_index_group
         dense_total_lengths_and_strides(dense_len, dense_stride,
                                         A, idx_A, args...);
 
-        dense_size = stl_ext::prod(batch_len);
-        for (unsigned i = 0;i < dense_ndim;i++) dense_nblock *= nirrep;
-        dense_size /= dense_nblock;
+        dense_size = 1;
+        for (unsigned i = 0;i < dense_ndim;i++)
+        {
+            dense_size *= dense_len[0][i];
+            dense_nblock *= nirrep;
+        }
 
-        if (dense_nblock > 1) dense_nblock /= nirrep;
+        if (dense_nblock > 1)
+        {
+            dense_size = std::max<stride_type>(1, dense_size/nirrep);
+            dense_nblock /= nirrep;
+        }
 
         std::array<stride_vector,N> dense_stride_sub;
         for (unsigned i = 0;i < N;i++)
@@ -257,6 +265,24 @@ struct dpd_index_group
 
         for (unsigned i = 0;i < N;i++)
             stl_ext::permute(dense_idx[i], reorder);
+
+        unsigned unit = 0;
+        for (unsigned i = 0;i < N;i++)
+        {
+            for (unsigned j = 1;j < dense_ndim;j++)
+            {
+                if (dense_stride[i][reorder[j]] == 1)
+                {
+                    pack_3d = true;
+                    unit = std::max(unit, j);
+                    break;
+                }
+            }
+        }
+
+        if (pack_3d)
+            for (unsigned i = 0;i < N;i++)
+                std::rotate(dense_idx[i].begin()+1, dense_idx[i].begin()+unit, dense_idx[i].end());
     }
 };
 
@@ -290,17 +316,13 @@ template <unsigned I, unsigned N, typename T, typename... Args>
 void get_local_geometry_helper(const len_vector& idx,
                                const dpd_index_group<N>& group,
                                len_vector& len,  const varray_view<T>& local_A,
-                               stride_type& off, stride_vector& stride,
+                               stride_vector& stride,
                                unsigned i, Args&&... args)
 {
     if (I == 0)
         len = stl_ext::select_from(local_A.lengths(), group.dense_idx[I]);
 
     stride = stl_ext::select_from(local_A.strides(), group.dense_idx[I]);
-
-    off = 0;
-    for (unsigned j = 0;j < group.mixed_idx[i].size();j++)
-        off += idx[group.mixed_pos[i][j]]*local_A.stride(group.mixed_idx[i][j]);
 
     get_local_geometry_helper<I+1>(idx, group, len, std::forward<Args>(args)...);
 }
@@ -310,6 +332,31 @@ void get_local_geometry(const len_vector& idx, const dpd_index_group<N>& group,
                         len_vector& len, Args&&... args)
 {
     get_local_geometry_helper<0>(idx, group, len, std::forward<Args>(args)...);
+}
+
+template <unsigned I, unsigned N>
+void get_local_offset_helper(const len_vector& idx,
+                             const dpd_index_group<N>& group) {}
+
+template <unsigned I, unsigned N, typename T, typename... Args>
+void get_local_offset_helper(const len_vector& idx,
+                             const dpd_index_group<N>& group,
+                             const T& A, stride_type& off,
+                             unsigned i, Args&&... args)
+{
+    off = 0;
+    for (unsigned j = 0;j < group.mixed_idx[i].size();j++)
+        off += idx[group.mixed_pos[i][j]]*
+            A.stride(group.mixed_idx[i][j]);
+
+    get_local_offset_helper<I+1>(idx, group, std::forward<Args>(args)...);
+}
+
+template <unsigned N, typename... Args>
+void get_local_offset(const len_vector& idx, const dpd_index_group<N>& group,
+                      Args&&... args)
+{
+    get_local_offset_helper<0>(idx, group, std::forward<Args>(args)...);
 }
 
 }

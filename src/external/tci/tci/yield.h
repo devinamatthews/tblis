@@ -1,7 +1,7 @@
 #ifndef _TCI_YIELD_H_
 #define _TCI_YIELD_H_
 
-#include "tci_config.h"
+#include "tci_global.h"
 
 #ifdef __cplusplus
 extern "C" {

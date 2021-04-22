@@ -142,7 +142,7 @@ class indexed_varray : public indexed_varray_base<Type, indexed_varray<Type, All
             {
                 for (stride_type i = storage_.size;i --> 0;)
                 {
-                    alloc_traits::destroy(storage_, data_[i]);
+                    alloc_traits::destroy(storage_, data_[0]+i);
                 }
                 alloc_traits::deallocate(storage_, data_[0], storage_.size);
                 storage_.size = 0;

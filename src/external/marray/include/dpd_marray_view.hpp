@@ -13,6 +13,9 @@ class dpd_marray_view : public dpd_marray_base<Type, NDim, dpd_marray_view<Type,
         typedef dpd_marray_base<Type, NDim, dpd_marray_view, false> base;
 
         using base::size_;
+        using base::len_;
+        using base::off_;
+        using base::stride_;
         using base::leaf_;
         using base::parent_;
         using base::perm_;

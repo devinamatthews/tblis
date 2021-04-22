@@ -585,9 +585,9 @@ namespace detail
     {
         ios_flag_saver flags(os);
 
-        double l = log10(fabs(p.val));
+        double l = log10(std::abs(p.val));
         auto d = lrint(l < 0 ? l-1 : l);
-        if (fabs(d) > 2)
+        if (std::abs(d) > 2)
         {
             os << std::scientific << std::setprecision(p.sigfigs) << p.val;
         }

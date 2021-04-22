@@ -26,6 +26,9 @@ class indexed_dpd_varray : public indexed_dpd_varray_base<Type, indexed_dpd_varr
 
     protected:
         using base::size_;
+        using base::len_;
+        using base::off_;
+        using base::stride_;
         using base::idx_irrep_;
         using base::leaf_;
         using base::parent_;
@@ -182,8 +185,16 @@ class indexed_dpd_varray : public indexed_dpd_varray_base<Type, indexed_dpd_varr
         using base::dimension;
         using base::dense_dimension;
         using base::indexed_dimension;
-        using base::dense_size;
-        using base::size;
+
+        stride_type dense_size() const
+        {
+            return size_[2*dense_dimension()-2][dense_irrep_];
+        }
+
+        stride_type size() const
+        {
+            return dense_size()*num_indices();
+        }
 
         /***********************************************************************
          *
@@ -197,7 +208,7 @@ class indexed_dpd_varray : public indexed_dpd_varray_base<Type, indexed_dpd_varr
             {
                 for (stride_type i = storage_.size;i --> 0;)
                 {
-                    alloc_traits::destroy(storage_, data_[i]);
+                    alloc_traits::destroy(storage_, data_[0]+i);
                 }
                 alloc_traits::deallocate(storage_, data_[0], storage_.size);
                 storage_.size = 0;
@@ -337,17 +348,17 @@ class indexed_dpd_varray : public indexed_dpd_varray_base<Type, indexed_dpd_varr
             idx_irrep.slurp(idx_irrep_);
             idx_len_.reset({idx_ndim, nirrep}, ROW_MAJOR);
             size_.reset({2*dense_ndim-1, nirrep}, ROW_MAJOR);
+            len.slurp(len_, ROW_MAJOR);
+            off_.reset({dense_ndim, nirrep}, ROW_MAJOR);
+            stride_.reset({dense_ndim, nirrep}, 1, ROW_MAJOR);
             leaf_.resize(dense_ndim);
             parent_.resize(2*dense_ndim-1);
             perm_.resize(dense_ndim);
             depth.slurp(depth_);
             factor_.assign(num_idx, Type(1));
 
-            matrix<len_type> len_;
-            len.slurp(len_, ROW_MAJOR);
-
             this->set_tree();
-            this->set_size(len_);
+            this->set_size();
 
             for (unsigned i = 0;i < idx_ndim;i++)
             {

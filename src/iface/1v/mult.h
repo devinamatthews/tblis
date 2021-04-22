@@ -24,8 +24,7 @@ void tblis_vector_mult(const tblis_comm* comm, const tblis_config* cfg,
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
 template <typename T>
-void mult(T alpha, row_view<const T> A, row_view<const T> B,
-          T  beta, row_view<      T> C)
+void mult(T alpha, row_view<const T> A, row_view<const T> B, T beta, row_view<T> C)
 {
     tblis_vector A_s(alpha, A);
     tblis_vector B_s(B);
@@ -35,9 +34,9 @@ void mult(T alpha, row_view<const T> A, row_view<const T> B,
 }
 
 template <typename T>
-void mult(const communicator& comm,
-          T alpha, row_view<const T> A, row_view<const T> B,
-          T  beta, row_view<      T> C)
+void mult(const communicator& comm, T alpha, row_view<const T> A,
+                                             row_view<const T> B,
+                                    T  beta,       row_view<T> C)
 {
     tblis_vector A_s(alpha, A);
     tblis_vector B_s(B);

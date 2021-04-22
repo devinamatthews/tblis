@@ -50,7 +50,7 @@ REPLICATED_TEMPLATED_TEST_CASE(contract, R, T, all_types)
     TENSOR_INFO(C);
 
     auto idx_AB = intersection(idx_A, idx_B);
-    auto neps = prod(select_from(A.lengths(), idx_A, idx_AB))*prod(C.lengths());
+    auto neps = (prod(select_from(A.lengths(), idx_A, idx_AB))+1)*prod(C.lengths());
 
     impl = BLAS_BASED;
     D.reset(C);
@@ -103,16 +103,16 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_contract, R, T, all_types)
         unsigned irrep_AC = A.irrep()^irrep_AB;
         unsigned irrep_BC = B.irrep()^irrep_AB;
 
-        neps += size_AB[irrep_AB]*
+        neps += (size_AB[irrep_AB]+1)*
                 size_AC[irrep_AC]*
                 size_BC[irrep_BC];
     }
 
-    dpd_impl = dpd_impl_t::BLOCKED;
+    dpd_impl = dpd_impl_t::FULL;
     D.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, D, idx_C.data());
 
-    dpd_impl = dpd_impl_t::FULL;
+    dpd_impl = dpd_impl_t::BLOCKED;
     E.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
 
@@ -120,6 +120,15 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_contract, R, T, all_types)
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
 
     check("BLOCKED", error, scale*neps);
+
+    dpd_impl = dpd_impl_t::BLIS;
+    E.reset(C);
+    mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
+
+    add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
+    error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;
+
+    check("BLIS", error, scale*neps);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_contract, R, T, all_types)
@@ -136,7 +145,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_contract, R, T, all_types)
     INDEXED_TENSOR_INFO(C);
 
     auto idx_AB = intersection(idx_A, idx_B);
-    auto neps = prod(select_from(A.lengths(), idx_A, idx_AB))*prod(C.lengths());
+    auto neps = (prod(select_from(A.lengths(), idx_A, idx_AB))+1)*prod(C.lengths());
 
     dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
@@ -180,7 +189,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_contract, R, T, all_types)
         unsigned irrep_AC = A.irrep()^irrep_AB;
         unsigned irrep_BC = B.irrep()^irrep_AB;
 
-        neps += size_AB[irrep_AB]*
+        neps += (size_AB[irrep_AB]+1)*
                 size_AC[irrep_AC]*
                 size_BC[irrep_BC];
     }
@@ -192,6 +201,11 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_contract, R, T, all_types)
     dpd_impl = dpd_impl_t::FULL;
     E.reset(C);
     mult<T>(scale, A, idx_A.data(), B, idx_B.data(), scale, E, idx_C.data());
+
+    //PRINT_DPD_TENSOR(A);
+    //PRINT_DPD_TENSOR(B);
+    //PRINT_DPD_TENSOR(D);
+    //PRINT_DPD_TENSOR(E);
 
     add<T>(T(-1), D, idx_C.data(), T(1), E, idx_C.data());
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C.data()).first;

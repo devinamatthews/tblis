@@ -10,19 +10,19 @@ int piledriver_check()
     int vendor = get_cpu_type(family, model, features);
 
     if (vendor != VENDOR_AMD)
-    {   
+    {
         if (get_verbose() >= 1) printf("tblis: piledriver: Wrong vendor.\n");
         return -1;
     }
 
     if (!check_features(features, FEATURE_AVX))
-    {   
+    {
         if (get_verbose() >= 1) printf("tblis: piledriver: Doesn't support AVX.\n");
         return -1;
     }
 
     if (!check_features(features, FEATURE_FMA3))
-    {   
+    {
         if (get_verbose() >= 1) printf("tblis: piledriver: Doesn't support FMA3.\n");
         return -1;
     }
@@ -32,9 +32,9 @@ int piledriver_check()
         if (get_verbose() >= 1) printf("tblis: piledriver: Doesn't support FMA4.\n");
         return -1;
     }
-    
+
     if (family != 0x15)
-    {   
+    {
         if (get_verbose() >= 1) printf("tblis: piledriver: Wrong family (%xh).\n", family);
         return -1;
     }
@@ -47,7 +47,5 @@ int piledriver_check()
 
     return 2;
 }
-
-TBLIS_CONFIG_INSTANTIATE(piledriver);
 
 }

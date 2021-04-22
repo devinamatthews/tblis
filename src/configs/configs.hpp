@@ -11,11 +11,16 @@
 #include "kernels/1v/mult.hpp"
 #include "kernels/1v/reduce.hpp"
 #include "kernels/1v/scale.hpp"
+#include "kernels/1v/set.hpp"
 #include "kernels/1v/shift.hpp"
+
+#include "kernels/1f/addf.hpp"
+#include "kernels/1f/dotf.hpp"
 
 #include "kernels/1m/trans.hpp"
 
 #include "kernels/3m/gemm.hpp"
+#include "kernels/3m/packm.hpp"
 
 namespace tblis
 {
@@ -98,7 +103,19 @@ struct config
     microkernel<mult_ukr_t> mult_ukr;
     microkernel<reduce_ukr_t> reduce_ukr;
     microkernel<scale_ukr_t> scale_ukr;
+    microkernel<set_ukr_t> set_ukr;
     microkernel<shift_ukr_t> shift_ukr;
+
+    /*
+     * Level 1f kernels
+     */
+
+    blocksize addf_nf;
+    blocksize dotf_nf;
+
+    microkernel<addf_sum_ukr_t> addf_sum_ukr;
+    microkernel<addf_rep_ukr_t> addf_rep_ukr;
+    microkernel<dotf_ukr_t> dotf_ukr;
 
     /*
      * Level 1m kernels
@@ -108,8 +125,6 @@ struct config
     blocksize trans_nr;
 
     microkernel<trans_ukr_t> trans_ukr;
-
-    parameter<bool> trans_row_major;
 
     /*
      * GEMM blocksizes and kernels
@@ -143,6 +158,8 @@ struct config
     microkernel<pack_nb_ukr_t> pack_nb_nr_ukr;
     microkernel<pack_sb_ukr_t> pack_sb_mr_ukr;
     microkernel<pack_sb_ukr_t> pack_sb_nr_ukr;
+    microkernel<pack_ss_scal_ukr_t> pack_ss_scal_mr_ukr;
+    microkernel<pack_ss_scal_ukr_t> pack_ss_scal_nr_ukr;
 
     parameter<unsigned> m_thread_ratio;
     parameter<unsigned> n_thread_ratio;
@@ -158,14 +175,20 @@ struct config
       mult_ukr(typename Traits::template mult_ukr<float>()),
       reduce_ukr(typename Traits::template reduce_ukr<float>()),
       scale_ukr(typename Traits::template scale_ukr<float>()),
+      set_ukr(typename Traits::template set_ukr<float>()),
       shift_ukr(typename Traits::template shift_ukr<float>()),
+
+      addf_nf(typename Traits::template addf_nf<float>()),
+      dotf_nf(typename Traits::template dotf_nf<float>()),
+
+      addf_sum_ukr(typename Traits::template addf_sum_ukr<float>()),
+      addf_rep_ukr(typename Traits::template addf_rep_ukr<float>()),
+      dotf_ukr(typename Traits::template dotf_ukr<float>()),
 
       trans_mr(typename Traits::template trans_mr<float>()),
       trans_nr(typename Traits::template trans_nr<float>()),
 
       trans_ukr(typename Traits::template trans_ukr<float>()),
-
-      trans_row_major(typename Traits::template trans_row_major<float>()),
 
       gemm_mr(typename Traits::template gemm_mr<float>()),
       gemm_nr(typename Traits::template gemm_nr<float>()),
@@ -195,6 +218,8 @@ struct config
       pack_nb_nr_ukr(typename Traits::template pack_nb_nr_ukr<float>()),
       pack_sb_mr_ukr(typename Traits::template pack_sb_mr_ukr<float>()),
       pack_sb_nr_ukr(typename Traits::template pack_sb_nr_ukr<float>()),
+      pack_ss_scal_mr_ukr(typename Traits::template pack_ss_scal_mr_ukr<float>()),
+      pack_ss_scal_nr_ukr(typename Traits::template pack_ss_scal_nr_ukr<float>()),
 
       m_thread_ratio(typename Traits::template m_thread_ratio<float>()),
       n_thread_ratio(typename Traits::template n_thread_ratio<float>()),

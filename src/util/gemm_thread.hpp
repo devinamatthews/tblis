@@ -56,31 +56,6 @@ gemm_thread_config make_gemm_thread_config(const config& cfg,
     return {jc_nt, ic_nt, jr_nt, ir_nt};
 }
 
-template <int N> struct step_helper;
-
-template <>
-struct step_helper<0>
-{
-    template <typename T>
-    T& operator()(T& tree) const { return tree; }
-};
-
-template <int N>
-struct step_helper
-{
-    template <typename T>
-    auto operator()(T& tree) const -> decltype(step_helper<N-1>()(tree.child))
-    {
-        return step_helper<N-1>()(tree.child);
-    }
-};
-
-template <int N, typename T>
-auto step(T& tree) -> decltype(step_helper<N>()(tree))
-{
-    return step_helper<N>()(tree);
-}
-
 }
 
 #endif

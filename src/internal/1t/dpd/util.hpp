@@ -11,6 +11,62 @@ namespace tblis
 namespace internal
 {
 
+class irrep_iterator
+{
+    protected:
+        const unsigned irrep_;
+        const unsigned irrep_bits_;
+        const unsigned irrep_mask_;
+        viterator<0> it_;
+
+    public:
+        irrep_iterator(unsigned irrep, unsigned nirrep, unsigned ndim)
+        : irrep_(irrep), irrep_bits_(__builtin_popcount(nirrep-1)),
+          irrep_mask_ (nirrep-1), it_(irrep_vector(ndim ? ndim-1 : 0, nirrep)) {}
+
+        bool next()
+        {
+            return it_.next();
+        }
+
+        unsigned nblock() const
+        {
+            return 1u << (irrep_bits_*it_.dimension());
+        }
+
+        void block(unsigned b)
+        {
+            irrep_vector irreps(it_.dimension());
+
+            for (unsigned i = 0;i < it_.dimension();i++)
+            {
+                irreps[i] = b & irrep_mask_;
+                b >>= irrep_bits_;
+            }
+
+            it_.position(irreps);
+        }
+
+        void reset()
+        {
+            it_.reset();
+        }
+
+        unsigned irrep(unsigned dim)
+        {
+            TBLIS_ASSERT(dim <= it_.dimension());
+
+            if (dim == 0)
+            {
+                unsigned irr0 = irrep_;
+                for (unsigned irr : it_.position()) irr0 ^= irr;
+                return irr0;
+            }
+
+            return it_.position()[dim-1];
+        }
+};
+
 template <typename T, typename U>
 void block_to_full(const communicator& comm, const config& cfg,
                    const dpd_varray_view<T>& A, varray<U>& A2)
@@ -119,11 +175,15 @@ void dense_total_lengths_and_strides(std::array<len_vector,N>& len,
 template <typename T>
 bool is_block_empty(const dpd_varray_view<T>& A, const irrep_vector& irreps)
 {
+    unsigned irrep = 0;
+
     for (unsigned i = 0;i < A.dimension();i++)
     {
+        irrep ^= irreps[i];
         if (!A.length(i, irreps[i])) return true;
     }
-    return false;
+
+    return irrep != A.irrep();
 }
 
 inline unsigned assign_irrep(unsigned dim, unsigned irrep)

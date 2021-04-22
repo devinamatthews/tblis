@@ -48,6 +48,4 @@ int excavator_check()
     return 4;
 }
 
-TBLIS_CONFIG_INSTANTIATE(excavator);
-
 }

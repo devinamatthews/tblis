@@ -123,8 +123,16 @@ void trace_block(const communicator& comm, const config& cfg,
                         stride_vector stride_A_AB, stride_B_AB;
                         stride_type off_A_AB, off_B_AB;
                         get_local_geometry(indices_A[idx_A].idx[0], group_AB, len_AB,
-                                           local_A, off_A_AB, stride_A_AB, 0,
-                                           local_B, off_B_AB, stride_B_AB, 1);
+                                           local_A, stride_A_AB, 0,
+                                           local_B, stride_B_AB, 1);
+                        get_local_offset(indices_A[idx_A].idx[0], group_AB,
+                                         local_A, off_A_AB, 0,
+                                         local_B, off_B_AB, 1);
+
+                        len_vector len_A;
+                        stride_vector stride_A_A;
+                        get_local_geometry(indices_A[idx_A].idx[1], group_A, len_A,
+                                           local_A, stride_A_A, 0);
 
                         auto data_B = local_B.data() + indices_B[idx_B].offset + off_B_AB;
 
@@ -134,11 +142,9 @@ void trace_block(const communicator& comm, const config& cfg,
                                                 indices_B[idx_B].factor;
                             if (factor == T(0)) continue;
 
-                            len_vector len_A;
-                            stride_vector stride_A_A;
                             stride_type off_A_A;
-                            get_local_geometry(indices_A[idx_A].idx[1], group_A, len_A,
-                                               local_A, off_A_A, stride_A_A, 0);
+                            get_local_offset(indices_A[idx_A].idx[1], group_A,
+                                             local_A, off_A_A, 0);
 
                             auto data_A = local_A.data() +
                                 indices_A[local_idx_A].offset + off_A_A + off_A_AB;
@@ -235,14 +241,19 @@ void replicate_block(const communicator& comm, const config& cfg,
                             stride_vector stride_A_AB, stride_B_AB;
                             stride_type off_A_AB, off_B_AB;
                             get_local_geometry(indices_A[idx_A].idx[0], group_AB, len_AB,
-                                               local_A, off_A_AB, stride_A_AB, 0,
-                                               local_B, off_B_AB, stride_B_AB, 1);
+                                               local_A, stride_A_AB, 0,
+                                               local_B, stride_B_AB, 1);
+                            get_local_offset(indices_A[idx_A].idx[0], group_AB,
+                                             local_A, off_A_AB, 0,
+                                             local_B, off_B_AB, 1);
 
                             len_vector len_B;
                             stride_vector stride_B_B;
                             stride_type off_B_B;
                             get_local_geometry(indices_B[local_idx_B].idx[1], group_B, len_B,
-                                               local_B, off_B_B, stride_B_B, 0);
+                                               local_B, stride_B_B, 0);
+                            get_local_offset(indices_B[local_idx_B].idx[1], group_B,
+                                             local_B, off_B_B, 0);
 
                             auto data_A = local_A.data() + indices_A[idx_A].offset + off_A_AB;
                             auto data_B = local_B.data() + indices_B[local_idx_B].offset + off_B_B + off_B_AB;
@@ -322,8 +333,11 @@ void transpose_block(const communicator& comm, const config& cfg,
                     stride_vector stride_A_AB, stride_B_AB;
                     stride_type off_A_AB, off_B_AB;
                     get_local_geometry(indices_A[idx_A].idx[0], group_AB, len_AB,
-                                       local_A, off_A_AB, stride_A_AB, 0,
-                                       local_B, off_B_AB, stride_B_AB, 1);
+                                       local_A, stride_A_AB, 0,
+                                       local_B, stride_B_AB, 1);
+                    get_local_offset(indices_A[idx_A].idx[0], group_AB,
+                                     local_A, off_A_AB, 0,
+                                     local_B, off_B_AB, 1);
 
                     auto data_A = local_A.data() + indices_A[idx_A].offset + off_A_AB;
                     auto data_B = local_B.data() + indices_B[idx_B].offset + off_B_AB;

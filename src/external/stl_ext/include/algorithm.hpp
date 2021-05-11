@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <vector>
 
 #include "cosort.hpp"
 #include "type_traits.hpp"

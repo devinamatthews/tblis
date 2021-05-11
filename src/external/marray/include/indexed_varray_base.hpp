@@ -2,7 +2,7 @@
 #define _MARRAY_INDEXED_VARRAY_BASE_HPP_
 
 #include "varray_view.hpp"
-#include "dpd_marray_base.hpp"
+#include "dpd_varray_base.hpp"
 
 namespace MArray
 {

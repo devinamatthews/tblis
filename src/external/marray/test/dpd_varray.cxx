@@ -4,7 +4,7 @@
 using namespace std;
 using namespace MArray;
 
-static dpd_layout layouts[6] =
+static std::array<dpd_layout,6> layouts =
 {
     PREFIX_ROW_MAJOR,
     PREFIX_COLUMN_MAJOR,
@@ -374,4 +374,99 @@ TEST(dpd_varray, swap)
     EXPECT_EQ(2u, v2.num_irreps());
     EXPECT_EQ((dim_vector{0, 1, 2}), v2.permutation());
     EXPECT_EQ((matrix<len_type>{{1, 1}, {6, 3}, {2, 4}}), v2.lengths());
+}
+
+TEST(dpd_varray, slice)
+{
+    for (auto k : range(layouts.size()))
+    {
+        SCOPED_TRACE(k);
+        dpd_varray<double> v1(1, 2, {{2, 3}, {2, 1}, {5, 3}}, layouts[k]);
+
+        auto v2 = v1(dpd_range(1, {2}), slice::all, dpd_index{1, 1});
+        EXPECT_EQ(2, v2.dimension());
+        EXPECT_EQ(0, v2.irrep());
+        EXPECT_EQ(2, v2.num_irreps());
+        EXPECT_EQ((matrix<len_type>{{0, 2}, {2, 1}}), v2.lengths());
+
+        v2.for_each_element<2>([&](double& v, int irrepi, int irrepj, len_type i, len_type j)
+        {
+            SCOPED_TRACE(irrepi);
+            SCOPED_TRACE(irrepj);
+            SCOPED_TRACE(i);
+            SCOPED_TRACE(j);
+            EXPECT_EQ(&v1(irrepi,irrepj,1)(i,j,1)-v1.data(), &v-v1.data());
+        });
+
+        v1.for_each_element<3>([&](double& v, int irrepi, int irrepj, int irrepk, len_type i, len_type j, len_type k)
+        {
+            if (irrepi != 1 || i > 1) return;
+            if (irrepk != 1 || k != 1) return;
+            SCOPED_TRACE(irrepi);
+            SCOPED_TRACE(irrepj);
+            SCOPED_TRACE(irrepk);
+            SCOPED_TRACE(i);
+            SCOPED_TRACE(j);
+            SCOPED_TRACE(k);
+            EXPECT_EQ(&v-v1.data(), &v2(irrepi,irrepj)(i,j)-v1.data());
+        });
+
+        auto v3 = v2(dpd_index{1, 1}, dpd_range(0, {1, 2})(1, {1}));
+        EXPECT_EQ(1, v3.dimension());
+        EXPECT_EQ(1, v3.irrep());
+        EXPECT_EQ(2, v3.num_irreps());
+        EXPECT_EQ((matrix<len_type>{{1, 1}}), v3.lengths());
+
+        v3.for_each_element<1>([&](double& v, int irrepi, len_type i)
+        {
+            SCOPED_TRACE(irrepi);
+            SCOPED_TRACE(i);
+            EXPECT_EQ(&v1(1,irrepi,1)(1,i,1)-v1.data(), &v-v1.data());
+        });
+
+        v1.for_each_element<3>([&](double& v, int irrepi, int irrepj, int irrepk, len_type i, len_type j, len_type k)
+        {
+            if (irrepi != 1 || i != 1) return;
+            if (irrepj == 0 && i != 1) return;
+            if (irrepk != 1 || k != 1) return;
+            SCOPED_TRACE(irrepi);
+            SCOPED_TRACE(irrepj);
+            SCOPED_TRACE(irrepk);
+            SCOPED_TRACE(i);
+            SCOPED_TRACE(j);
+            SCOPED_TRACE(k);
+            EXPECT_EQ(&v-v1.data(), &v3(irrepj)(irrepj == 0 ? j-1 : j)-v1.data());
+        });
+
+        auto v4 = v1({dpd_range(1, {2}), dpd_range(0, {1, 2})(1, {1}), dpd_range(0, {2})(1, {2, 3})});
+        EXPECT_EQ(3, v4.dimension());
+        EXPECT_EQ(1, v4.irrep());
+        EXPECT_EQ(2, v4.num_irreps());
+        EXPECT_EQ((matrix<len_type>{{0, 2}, {1, 1}, {2, 1}}), v4.lengths());
+
+        v4.for_each_element<3>([&](double& v, int irrepi, int irrepj, int irrepk, len_type i, len_type j, len_type k)
+        {
+            SCOPED_TRACE(irrepi);
+            SCOPED_TRACE(irrepj);
+            SCOPED_TRACE(irrepk);
+            SCOPED_TRACE(i);
+            SCOPED_TRACE(j);
+            SCOPED_TRACE(k);
+            EXPECT_EQ(&v1(irrepi,irrepj,irrepk)(i, irrepj == 0 ? j+1 : j, irrepk == 1 ? k+2 : k)-v1.data(), &v-v1.data());
+        });
+
+        v1.for_each_element<3>([&](double& v, int irrepi, int irrepj, int irrepk, len_type i, len_type j, len_type k)
+        {
+            if (irrepi != 1 || i > 1) return;
+            if (irrepj == 0 && j != 1) return;
+            if (k > (irrepk == 0 ? 1 : 2) || k < (irrepk == 0 ? 0 : 2)) return;
+            SCOPED_TRACE(irrepi);
+            SCOPED_TRACE(irrepj);
+            SCOPED_TRACE(irrepk);
+            SCOPED_TRACE(i);
+            SCOPED_TRACE(j);
+            SCOPED_TRACE(k);
+            EXPECT_EQ(&v-v1.data(), &v4(irrepi,irrepj,irrepk)(i, irrepj == 0 ? j-1 : j, irrepk == 1 ? k-2 : k)-v1.data());
+        });
+    }
 }

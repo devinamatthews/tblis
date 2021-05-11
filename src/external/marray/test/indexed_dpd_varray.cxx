@@ -276,7 +276,7 @@ TEST(indexed_dpd_varray, index_iteration)
 
     visited = {};
     v1.for_each_index<4,2>(
-    [&](const dpd_marray_view<double,4>& v, len_type i, len_type j)
+    [&](const auto& v, len_type i, len_type j)
     {
         bool found = false;
         for (int m = 0;m < 3;m++)
@@ -291,8 +291,8 @@ TEST(indexed_dpd_varray, index_iteration)
         EXPECT_TRUE(found);
         EXPECT_EQ(1u, v.irrep());
         EXPECT_EQ(2u, v.num_irreps());
-        EXPECT_EQ((*reinterpret_cast<std::array<int,4>*>(perms[0].data())), v.permutation());
-        EXPECT_EQ((std::array<std::array<len_type,8>,4>{{{3, 1}, {2, 2}, {1, 2}, {3, 4}}}), v.lengths());
+        EXPECT_EQ(perms[0], v.permutation());
+        EXPECT_EQ((matrix<len_type>{{3, 1}, {2, 2}, {1, 2}, {3, 4}}), v.lengths());
     });
 
     for (len_type i = 0;i < 3;i++)
@@ -302,7 +302,7 @@ TEST(indexed_dpd_varray, index_iteration)
 
     visited = {};
     v2.for_each_index<4,2>(
-    [&](const dpd_marray_view<const double,4>& v, len_type i, len_type j)
+    [&](const auto& v, len_type i, len_type j)
     {
         bool found = false;
         for (int m = 0;m < 3;m++)
@@ -317,8 +317,8 @@ TEST(indexed_dpd_varray, index_iteration)
         EXPECT_TRUE(found);
         EXPECT_EQ(1u, v.irrep());
         EXPECT_EQ(2u, v.num_irreps());
-        EXPECT_EQ((*reinterpret_cast<std::array<int,4>*>(perms[0].data())), v.permutation());
-        EXPECT_EQ((std::array<std::array<len_type,8>,4>{{{3, 1}, {2, 2}, {1, 2}, {3, 4}}}), v.lengths());
+        EXPECT_EQ(perms[0], v.permutation());
+        EXPECT_EQ((matrix<len_type>{{3, 1}, {2, 2}, {1, 2}, {3, 4}}), v.lengths());
     });
 
     for (len_type i = 0;i < 3;i++)

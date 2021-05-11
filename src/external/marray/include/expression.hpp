@@ -5,9 +5,22 @@
 
 #include "utility.hpp"
 #include "vector.hpp"
+#include "range.hpp"
 
 namespace MArray
 {
+
+template <typename Type, int NDim, int NIndexed, typename... Dims>
+class marray_slice;
+
+template <typename Type, int NDim, typename Derived, bool Owner>
+class marray_base;
+
+template <typename Type, int NDim>
+class marray_view;
+
+template <typename Type, int NDim, typename Allocator>
+class marray;
 
 struct bcast_dim {};
 
@@ -19,11 +32,6 @@ struct slice_dim
     slice_dim(len_type len, stride_type stride)
     : len(len), stride(stride) {}
 };
-
-}
-
-namespace MArray
-{
 
 template <typename Expr, typename=void> struct is_expression;
 template <typename Expr, typename=void> struct expression_type;

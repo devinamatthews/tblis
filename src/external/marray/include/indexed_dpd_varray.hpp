@@ -33,14 +33,12 @@ class indexed_dpd_varray : public indexed_dpd_varray_base<Type, indexed_dpd_varr
         using base::leaf_;
         using base::parent_;
         using base::perm_;
-        using base::depth_;
         using base::data_;
         using base::idx_len_;
         using base::idx_;
         using base::irrep_;
         using base::dense_irrep_;
         using base::nirrep_;
-        using base::layout_;
         using base::factor_;
         struct : Allocator { stride_type size = 0; } storage_;
 
@@ -226,7 +224,18 @@ class indexed_dpd_varray : public indexed_dpd_varray_base<Type, indexed_dpd_varr
             typename=detail::enable_if_assignable_t<reference,U>>
         void reset(const indexed_dpd_varray<U, A>& other)
         {
-            reset(other, other.depth_, other.layout_);
+            reset();
+            base::reset(const_cast<indexed_dpd_varray<U, A>&>(other));
+
+            storage_.size = size();
+            if (storage_.size > 0)
+            {
+                data_[0] = alloc_traits::allocate(storage_, storage_.size);
+                for (auto i : range(1, data_.size()))
+                    data_[i] = data_[i-1] + dense_size();
+            }
+
+            base::template operator=<>(other);
         }
 
         template <typename U, bool O, typename D,
@@ -312,9 +321,9 @@ class indexed_dpd_varray : public indexed_dpd_varray_base<Type, indexed_dpd_varr
                    const detail::array_2d<len_type>& idx,
                    uninitialized_t, dpd_layout layout = DEFAULT)
         {
-            int total_ndim = len.length(0);
-            int idx_ndim = idx_irrep.size();
-            int dense_ndim = total_ndim - idx_ndim;
+            auto total_ndim = len.length(0);
+            auto idx_ndim = idx_irrep.size();
+            auto dense_ndim = total_ndim - idx_ndim;
 
             reset(irrep, nirrep, len, idx_irrep, idx, uninitialized,
                   this->default_depth(layout, dense_ndim), layout.base());
@@ -326,53 +335,16 @@ class indexed_dpd_varray : public indexed_dpd_varray_base<Type, indexed_dpd_varr
                    const detail::array_2d<len_type>& idx, uninitialized_t,
                    const detail::array_1d<int>& depth, layout layout = DEFAULT)
         {
-            MARRAY_ASSERT(nirrep == 1 || nirrep == 2 ||
-                          nirrep == 4 || nirrep == 8);
+            reset();
+            base::reset(irrep, nirrep, len,
+                        std::vector<pointer>(idx_irrep.size() ? idx.length(0) : 1),
+                        idx_irrep, idx, depth, layout);
 
-            int total_ndim = len.length(0);
-            int idx_ndim = idx_irrep.size();
-            int dense_ndim = total_ndim - idx_ndim;
-            MARRAY_ASSERT(total_ndim > idx_ndim);
-            MARRAY_ASSERT(idx.length(1) == idx_ndim);
-            MARRAY_ASSERT(len.length(1) == nirrep);
-
-            auto num_idx = idx.length(0);
-            MARRAY_ASSERT(num_idx > 0);
-            MARRAY_ASSERT(idx_ndim > 0 || num_idx == 1);
-
-            irrep_ = irrep;
-            dense_irrep_ = irrep;
-            nirrep_ = nirrep;
-            idx.slurp(idx_, ROW_MAJOR);
-            layout_ = layout;
-            idx_irrep.slurp(idx_irrep_);
-            idx_len_.resize(idx_ndim);
-            size_.resize(2*dense_ndim-1);
-            len.slurp(len_);
-            off_.resize(dense_ndim);
-            stride_.resize(dense_ndim, {1,1,1,1,1,1,1,1});
-            leaf_.resize(dense_ndim);
-            parent_.resize(2*dense_ndim-1);
-            perm_.resize(dense_ndim);
-            depth.slurp(depth_);
-            factor_.assign(num_idx, Type(1));
-
-            this->set_tree();
-            this->set_size();
-
-            for (auto i : range(idx_ndim))
-            {
-                MARRAY_ASSERT(idx_irrep_[i] < nirrep);
-                dense_irrep_ ^= idx_irrep_[i];
-                std::copy_n(&len_[i+dense_ndim][0], nirrep, &idx_len_[i][0]);
-            }
-
-            data_.resize(num_idx);
             storage_.size = size();
             if (storage_.size > 0)
             {
                 data_[0] = alloc_traits::allocate(storage_, storage_.size);
-                for (len_type i = 1;i < num_idx;i++)
+                for (auto i : range(1, data_.size()))
                     data_[i] = data_[i-1] + dense_size();
             }
         }

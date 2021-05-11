@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "varray.hpp"
+#include "marray.hpp"
 #include "rotate.hpp"
 
 using namespace std;

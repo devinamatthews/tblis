@@ -3,6 +3,7 @@
 
 #include "utility.hpp"
 #include "range.hpp"
+#include "expression.hpp"
 
 namespace MArray
 {
@@ -10,12 +11,31 @@ namespace MArray
 template <typename Type, int NDim, int NIndexed, typename... Dims>
 class marray_slice;
 
+/**
+ * Tensor base class.
+ */
 template <typename Type, int NDim, typename Derived, bool Owner>
 class marray_base;
 
+/**
+ * A tensor (multi-dimensional array) view, which may either be mutable or immutable.
+ *
+ * @tparam Type     The type of the tensor elements. The view is immutable if this is const-qualified.
+ *
+ * @tparam NDim     The number of tensor dimensions, must be positive.
+ */
 template <typename Type, int NDim>
 class marray_view;
 
+/**
+ * A tensor (multi-dimensional array) container.
+ *
+ * @tparam Type         The type of the tensor elements.
+ *
+ * @tparam NDim         The number of tensor dimensions, must be positive.
+ *
+ * @tparam Allocator    An allocator. If not specified, `std::allocator<Type>` is used.
+ */
 template <typename Type, int NDim, typename Allocator=std::allocator<Type>>
 class marray;
 
@@ -326,25 +346,26 @@ class array_1d
 
             virtual void slurp(T*) const = 0;
 
-            virtual adaptor_base& move(adaptor_base& other) = 0;
+            virtual adaptor_base& copy(adaptor_base& other) = 0;
         };
 
         template <typename U>
         struct adaptor : adaptor_base
         {
             U data;
+            using adaptor_base::len;
 
             adaptor(U data)
             : adaptor_base(detail::length(data)), data(std::move(data)) {}
 
             virtual void slurp(T* x) const override
             {
-                std::copy_n(data.begin(), this->len, x);
+                std::copy_n(data.begin(), len, x);
             }
 
-            virtual adaptor_base& move(adaptor_base& other) override
+            virtual adaptor_base& copy(adaptor_base& other) override
             {
-            	return *(new (static_cast<adaptor*>(&other)) adaptor(std::move(*this)));
+            	return *(new (static_cast<adaptor*>(&other)) adaptor(*this));
             }
         };
 
@@ -366,7 +387,7 @@ class array_1d
         : adaptor_(adapt(std::array<T,0>{})) {}
 
         array_1d(const array_1d& other)
-        : adaptor_(other.adaptor_.move(reinterpret_cast<adaptor_base&>(raw_adaptor_))) {}
+        : adaptor_(other.adaptor_.copy(reinterpret_cast<adaptor_base&>(raw_adaptor_))) {}
 
         template <typename... Args, typename =
             detail::enable_if_t<detail::are_convertible<T,Args...>::value>>
@@ -431,6 +452,7 @@ class array_2d
             static constexpr bool IsMatrix = is_matrix<typename std::decay<U>::type>::value;
 
             U data;
+            using adaptor_base::len;
 
             adaptor(U data)
             : adaptor_base(detail::length(data, 0), detail::length(data, 1)),
@@ -441,7 +463,7 @@ class array_2d
             do_slurp(T* x, len_type rs, len_type cs) const
             {
                 int i = 0;
-                for (auto it = this->data.begin(), end = this->data.end();it != end;++it)
+                for (auto it = data.begin(), end = data.end();it != end;++it)
                 {
                     int j = 0;
                     for (auto it2 = it->begin(), end2 = it->end();it2 != end2;++it2)
@@ -458,7 +480,7 @@ class array_2d
             do_slurp(std::vector<std::vector<T>>& x) const
             {
                 x.clear();
-                for (auto it = this->data.begin(), end = this->data.end();it != end;++it)
+                for (auto it = data.begin(), end = data.end();it != end;++it)
                 {
                     x.emplace_back(it->begin(), it->end());
                 }
@@ -468,11 +490,11 @@ class array_2d
             typename std::enable_if<IsMatrix_>::type
             do_slurp(T* x, len_type rs, len_type cs) const
             {
-                for (len_type i = 0;i < this->len[0];i++)
+                for (len_type i = 0;i < len[0];i++)
                 {
-                    for (len_type j = 0;j < this->len[1];j++)
+                    for (len_type j = 0;j < len[1];j++)
                     {
-                        x[i*rs + j*cs] = this->data[i][j];
+                        x[i*rs + j*cs] = data[i][j];
                     }
                 }
             }
@@ -481,13 +503,13 @@ class array_2d
             typename std::enable_if<IsMatrix_>::type
             do_slurp(std::vector<std::vector<T>>& x) const
             {
-                x.resize(this->len[0]);
-                for (len_type i = 0;i < this->len[0];i++)
+                x.resize(len[0]);
+                for (len_type i = 0;i < len[0];i++)
                 {
-                    x[i].resize(this->len[1]);
-                    for (len_type j = 0;j < this->len[1];j++)
+                    x[i].resize(len[1]);
+                    for (len_type j = 0;j < len[1];j++)
                     {
-                        x[i][j] = this->data[i][j];
+                        x[i][j] = data[i][j];
                     }
                 }
             }
@@ -628,6 +650,9 @@ class marray_base
          *
          **********************************************************************/
 
+        /**
+         * Reset to an empty view.
+         */
         void reset()
         {
             data_ = nullptr;
@@ -635,10 +660,24 @@ class marray_base
             stride_ = {};
         }
 
+        /**
+         * Reset to a view of the given tensor, view, or partially-indexed tensor.
+         *
+         * @param other     The tensor, view, or partially-indexed tensor to view.
+         *                  If this is a mutable view (the value type is not
+         *                  const-qualified), then `other` may not be a const-
+         *                  qualified tensor instance or a view with a const-
+         *                  qualified value type. May be either an lvalue- or
+         *                  rvalue-reference.
+         */
+#if MARRAY_DOXYGEN
+        void reset(tensor_or_view_reference other)
+#else
         template <typename U, bool O, typename D,
             typename=detail::enable_if_convertible_t<
                 typename marray_base<U, NDim, D, O>::cptr,pointer>>
         void reset(const marray_base<U, NDim, D, O>& other)
+#endif
         {
             reset(const_cast<marray_base<U, NDim, D, O>&>(other));
         }
@@ -660,12 +699,48 @@ class marray_base
             reset(other.view());
         }
 
+        /**
+         * Reset to a view that wraps a raw data pointer, using the provided
+         * shape and layout.
+         *
+         * @param len   The lengths of the tensor dimensions. May be any one-
+         *              dimensional container whose elements are convertible to
+         *              tensor lengths, including initializer lists.
+         *
+         * @param ptr   A pointer to the tensor element with all zero inidices.
+         *              If this is a mutable view, then the pointer may not be
+         *              const-qualified.
+         *
+         * @param layout    The layout to use, either #ROW_MAJOR or #COLUMN_MAJOR,
+         *                  if not specified, the default layout is used.
+         */
         void reset(const detail::array_1d<len_type>& len, pointer ptr,
                    layout layout = DEFAULT)
         {
             reset(len, ptr, strides(len, layout));
         }
 
+        /**
+         * Reset to a view that wraps a raw data pointer, using the provided
+         * shape and layout.
+         *
+         * @param len   The lengths of the tensor dimensions. May be any one-
+         *              dimensional container whose elements are convertible to
+         *              tensor lengths, including initializer lists.
+         *
+         * @param ptr   A pointer to the tensor element with all zero inidices.
+         *              If this is a mutable view, then the pointer may not be
+         *              const-qualified.
+         *
+         * @param stride    The strides along each dimension. The stride is the distance
+         *                  in memory (in units of the value type) between successive
+         *                  elements along this direction. In general, the strides need
+         *                  not be defined such that elements have unique locations,
+         *                  although such a view should not be written into. Strides may
+         *                  also be negative. In this case, `ptr` still refers to the
+         *                  location of the element with all zero indices, although this
+         *                  is not the lowest address of any tensor element.
+         */
         void reset(const detail::array_1d<len_type>& len, pointer ptr,
                    const detail::array_1d<stride_type>& stride)
         {
@@ -748,43 +823,57 @@ class marray_base
          *
          **********************************************************************/
 
-
+        /**
+         * Return the strides for a hypothetical tensor with the given lengths and layout.
+         *
+         * @param len       The lengths of the hypothetical tensor.
+         *
+         * @param layout    The layout to use, either #ROW_MAJOR or #COLUMN_MAJOR.
+         *                  If omitted, the default layout is used.
+         */
         static std::array<stride_type, NDim>
-        strides(const detail::array_1d<len_type>& len_, layout layout = DEFAULT)
+        strides(const detail::array_1d<len_type>& len, layout layout = DEFAULT)
         {
             //TODO: add alignment option
 
-            MARRAY_ASSERT(len_.size() == NDim);
+            MARRAY_ASSERT(len.size() == NDim);
 
-            std::array<len_type, NDim> len;
-            len_.slurp(len);
+            std::array<len_type, NDim> len_;
+            len.slurp(len_);
             std::array<stride_type, NDim> stride;
 
             if (layout == ROW_MAJOR)
             {
                 stride[NDim-1] = 1;
                 for (auto i : reversed_range(NDim-1))
-                    stride[i] = stride[i+1]*len[i+1];
+                    stride[i] = stride[i+1]*len_[i+1];
             }
             else
             {
                 stride[0] = 1;
                 for (auto i : range(1,NDim))
-                    stride[i] = stride[i-1]*len[i-1];
+                    stride[i] = stride[i-1]*len_[i-1];
             }
 
             return stride;
         }
 
-        static stride_type size(const detail::array_1d<len_type>& len_)
+        /**
+         * Return the number of elements in a hypothetical tensor with the given lengths.
+         *
+         * @param len       The lengths of the hypothetical tensor.
+         *
+         * @return          The number of elements, which is equal to the product of the lengths.
+         */
+        static stride_type size(const detail::array_1d<len_type>& len)
         {
             //TODO: add alignment option
 
-            len_vector len;
-            len_.slurp(len);
+            len_vector len_;
+            len.slurp(len_);
 
             stride_type s = 1;
-            for (auto& l : len) s *= l;
+            for (auto& l : len_) s *= l;
             return s;
         }
 
@@ -799,6 +888,15 @@ class marray_base
             return operator=<>(other);
         }
 
+        /**
+         * Set the tensor data using a nested initializer list.
+         *
+         * @param data  A nested initializer list. The number of levels must be
+         *              equal to the number of dimensions, and the supplied initializer
+         *              lists must be "dense", i.e. every element must be specified.
+         *
+         * @return      *this
+         */
         Derived& operator=(initializer_type data)
         {
             std::array<len_type, NDim> len;
@@ -808,8 +906,25 @@ class marray_base
             return static_cast<Derived&>(*this);
         }
 
+        /**
+         * Set the tensor elements to the result of the specified expression.
+         *
+         * For a tensor ([marray](@ref MArray::marray)), the instance must not be
+         * const-qualified. For a tensor view (marray_view),
+         * the value type must not be const-qualified.
+         *
+         * @param other     An expression object; either the result of one or
+         *                  more mathematical operations on a set of tensors, a
+         *                  single tensor or tensor view, or a scalar. The dimensions of
+         *                  the expression or tensor must either match those of this tensor
+         *                  or be broadcast-compatible.
+         *
+         * @return      *this
+         */
+#if !MARRAY_DOXYGEN
         template <typename Expression,
             typename=detail::enable_if_t<is_expression_arg_or_scalar<Expression>::value>>
+#endif
         Derived& operator=(const Expression& other)
         {
             assign_expr(*this, other);
@@ -824,8 +939,25 @@ class marray_base
             return static_cast<const Derived&>(*this);
         }
 
+        /**
+         * Increment the elements by the result of the specified expression.
+         *
+         * For a tensor ([marray](@ref MArray::marray)), the instance must not be
+         * const-qualified. For a tensor view (marray_view),
+         * the value type must not be const-qualified.
+         *
+         * @param other     An expression object; either the result of one or
+         *                  more mathematical operations on a set of tensors, a
+         *                  single tensor or tensor view, or a scalar. The dimensions of
+         *                  the expression or tensor must either match those of this tensor
+         *                  or be broadcast-compatible.
+         *
+         * @return      *this
+         */
+#if !MARRAY_DOXYGEN
         template <typename Expression,
             typename=detail::enable_if_t<is_expression_arg_or_scalar<Expression>::value>>
+#endif
         Derived& operator+=(const Expression& other)
         {
             *this = *this + other;
@@ -840,8 +972,25 @@ class marray_base
             return static_cast<const Derived&>(*this);
         }
 
+        /**
+         * Decrement the elements by the result of the specified expression.
+         *
+         * For a tensor ([marray](@ref MArray::marray)), the instance must not be
+         * const-qualified. For a tensor view (marray_view),
+         * the value type must not be const-qualified.
+         *
+         * @param other     An expression object; either the result of one or
+         *                  more mathematical operations on a set of tensors, a
+         *                  single tensor or tensor view, or a scalar. The dimensions of
+         *                  the expression or tensor must either match those of this tensor
+         *                  or be broadcast-compatible.
+         *
+         * @return      *this
+         */
+#if !MARRAY_DOXYGEN
         template <typename Expression,
             typename=detail::enable_if_t<is_expression_arg_or_scalar<Expression>::value>>
+#endif
         Derived& operator-=(const Expression& other)
         {
             *this = *this - other;
@@ -856,8 +1005,25 @@ class marray_base
             return static_cast<const Derived&>(*this);
         }
 
+        /**
+         * Perform an element-wise multiplication by the result of the specified expression.
+         *
+         * For a tensor ([marray](@ref MArray::marray)), the instance must not be
+         * const-qualified. For a tensor view (marray_view),
+         * the value type must not be const-qualified.
+         *
+         * @param other     An expression object; either the result of one or
+         *                  more mathematical operations on a set of tensors, a
+         *                  single tensor or tensor view, or a scalar. The dimensions of
+         *                  the expression or tensor must either match those of this tensor
+         *                  or be broadcast-compatible.
+         *
+         * @return      *this
+         */
+#if !MARRAY_DOXYGEN
         template <typename Expression,
             typename=detail::enable_if_t<is_expression_arg_or_scalar<Expression>::value>>
+#endif
         Derived& operator*=(const Expression& other)
         {
             *this = *this * other;
@@ -872,8 +1038,25 @@ class marray_base
             return static_cast<const Derived&>(*this);
         }
 
+        /**
+         * Perform an element-wise division by the result of the specified expression.
+         *
+         * For a tensor ([marray](@ref MArray::marray)), the instance must not be
+         * const-qualified. For a tensor view (marray_view),
+         * the value type must not be const-qualified.
+         *
+         * @param other     An expression object; either the result of one or
+         *                  more mathematical operations on a set of tensors, a
+         *                  single tensor or tensor view, or a scalar. The dimensions of
+         *                  the expression or tensor must either match those of this tensor
+         *                  or be broadcast-compatible.
+         *
+         * @return      *this
+         */
+#if !MARRAY_DOXYGEN
         template <typename Expression,
             typename=detail::enable_if_t<is_expression_arg_or_scalar<Expression>::value>>
+#endif
         Derived& operator/=(const Expression& other)
         {
             *this = *this / other;
@@ -888,8 +1071,21 @@ class marray_base
             return static_cast<const Derived&>(*this);
         }
 
+        /**
+         * Return true if this tensor is the same size and shape and has the same elements
+         * as another tensor.
+         *
+         * @param other     A tensor or tensor view against which to check.
+         *
+         * @return          True if all elements match, false otherwise. If the tensors
+         *                  are not the same size and shape, then false.
+         */
+#if MARRAY_DOXYGEN
+        bool
+#else
         template <typename U, int N, typename D, bool O>
         detail::enable_if_t<N==NDim, bool>
+#endif
         operator==(const marray_base<U, N, D, O>& other) const
         {
             if (len_ != other.len_) return false;
@@ -913,7 +1109,18 @@ class marray_base
             return false;
         }
 
+        /**
+         * Return false if this tensor is the same size and shape and has the same elements
+         * as another tensor.
+         *
+         * @param other     A tensor or tensor view against which to check.
+         *
+         * @return          False if all elements match, true otherwise. If the tensors
+         *                  are not the same size and shape, then true.
+         */
+#if !MARRAY_DOXYGEN
         template <typename U, int N, typename D, bool O>
+#endif
         bool operator!=(const marray_base<U, N, D, O>& other) const
         {
             return !(*this == other);
@@ -925,32 +1132,111 @@ class marray_base
          *
          **********************************************************************/
 
-        marray_view<const Type, NDim> cview() const
+        /**
+         * Return an immutable view of this tensor.
+         *
+         * @return an immutable view.
+         */
+#if MARRAY_DOXYGEN
+        immutable_view
+#else
+        marray_view<const Type, NDim>
+#endif
+        cview() const
         {
             return const_cast<marray_base&>(*this).view();
         }
 
-        marray_view<ctype, NDim> view() const
+        /**
+         * Return a view of this tensor.
+         *
+         * @return  A possibly-mutable tensor view. For a tensor
+         *          ([marray](@ref MArray::marray)), the returned view is
+         *          mutable if the instance is not const-qualified.
+         *          For a tensor view (marray_view),
+         *          the returned view is mutable if the value type is not
+         *          const-qualified.
+         */
+#if MARRAY_DOXYGEN
+        possible_immutable_view
+#else
+        marray_view<ctype, NDim>
+#endif
+        view() const
         {
             return const_cast<marray_base&>(*this).view();
         }
 
-        marray_view<Type, NDim> view()
+        /**
+         * Return a mutable view of this tensor.
+         *
+         * @return a mutable view.
+         */
+#if MARRAY_DOXYGEN
+        mutable_view
+#else
+        marray_view<Type, NDim>
+#endif
+        view()
         {
             return *this;
         }
 
-        friend marray_view<const Type, NDim> cview(const marray_base& x)
+        /**
+         * Return an immutable view of the given tensor.
+         *
+         * @param x The tensor to view.
+         *
+         * @return an immutable view.
+         */
+        friend
+#if MARRAY_DOXYGEN
+        immutable_view
+#else
+        marray_view<const Type, NDim>
+#endif
+        cview(const marray_base& x)
         {
             return x.view();
         }
 
-        friend marray_view<ctype, NDim> view(const marray_base& x)
+        /**
+         * Return a view of the given tensor.
+         *
+         * @param x The tensor to view.
+         *
+         * @return  A possibly-mutable tensor view. For a tensor
+         *          ([marray](@ref MArray::marray)), the returned view is
+         *          mutable if the instance is not const-qualified.
+         *          For a tensor view (marray_view),
+         *          the returned view is mutable if the value type is not
+         *          const-qualified.
+         */
+        friend
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
+        marray_view<ctype, NDim>
+#endif
+        view(const marray_base& x)
         {
             return x.view();
         }
 
-        friend marray_view<Type, NDim> view(marray_base& x)
+        /**
+         * Return a mutable view of the given tensor.
+         *
+         * @param x The tensor to view.
+         *
+         * @return a mutable view.
+         */
+        friend
+#if MARRAY_DOXYGEN
+        mutable_view
+#else
+        marray_view<Type, NDim>
+#endif
+        view(marray_base& x)
         {
             return x.view();
         }
@@ -1032,7 +1318,30 @@ class marray_base
             return const_cast<marray_base&>(*this).shifted(n);
         }
 
-        marray_view<Type, NDim> shifted(const detail::array_1d<len_type>& n)
+        /**
+         * Return a view that references elements whose indices are
+         * shifted by the given amount along each dimension.
+         *
+         * An index `i` in the shifted view is equivalent to an index `i+n[i]`
+         * in the original tensor or tensor view.
+         *
+         * @param n The amount by which to shift for each dimension. May be any
+         *          one-dimensional container type whose elements are convertible
+         *          to a tensor length, including initializer lists.
+         *
+         * @return  A possibly-mutable tensor view. For a tensor
+         *          ([marray](@ref MArray::marray)), the returned view is
+         *          mutable if the instance is not const-qualified.
+         *          For a tensor view (marray_view),
+         *          the returned view is mutable if the value type is not
+         *          const-qualified.
+         */
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
+        marray_view<Type, NDim>
+#endif
+        shifted(const detail::array_1d<len_type>& n)
         {
             marray_view<Type,NDim> r(*this);
             r.shift(n);
@@ -1045,8 +1354,30 @@ class marray_base
             return const_cast<marray_base&>(*this).shifted(n);
         }
 
+        /**
+         * Return a view that references elements whose indices are
+         * shifted by the given amount.
+         *
+         * This overload is only available for vectors or vector views.
+         * An index `i` in the shifted view is equivalent to an index `i+n`
+         * in the original tensor or tensor view.
+         *
+         * @param n The amount by which to shift.
+         *
+         * @return  A possibly-mutable tensor view. For a tensor
+         *          ([marray](@ref MArray::marray)), the returned view is
+         *          mutable if the instance is not const-qualified.
+         *          For a tensor view (marray_view),
+         *          the returned view is mutable if the value type is not
+         *          const-qualified.
+         */
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
         template <typename=void, int N=NDim, typename=detail::enable_if_t<N==1>>
-        marray_view<Type,1> shifted(len_type n)
+        marray_view<Type,1>
+#endif
+        shifted(len_type n)
         {
             return shifted(0, n);
         }
@@ -1057,8 +1388,31 @@ class marray_base
             return const_cast<marray_base&>(*this).shifted<Dim>(n);
         }
 
+        /**
+         * Return a view that references elements whose indices are
+         * shifted by the given amount along one dimension.
+         *
+         * Only for the specified dimension, an index `i` in the shifted view
+         * is equivalent to an index `i+n` in the original tensor or tensor view.
+         *
+         * @tparam Dim  The dimension along which to shift the returned view.
+         *
+         * @param n     The amount by which to shift.
+         *
+         * @return      A possibly-mutable tensor view. For a tensor
+         *              ([marray](@ref MArray::marray)), the returned view is
+         *              mutable if the instance is not const-qualified.
+         *              For a tensor view (marray_view),
+         *              the returned view is mutable if the value type is not
+         *              const-qualified.
+         */
         template <int Dim>
-        marray_view<Type, NDim> shifted(len_type n)
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
+        marray_view<Type, NDim>
+#endif
+        shifted(len_type n)
         {
             return shifted(Dim, n);
         }
@@ -1068,7 +1422,30 @@ class marray_base
             return const_cast<marray_base&>(*this).shifted(dim, n);
         }
 
-        marray_view<Type, NDim> shifted(int dim, len_type n)
+        /**
+         * Return a view that references elements whose indices are
+         * shifted by the given amount along one dimension.
+         *
+         * Only for the specified dimension, an index `i` in the shifted view
+         * is equivalent to an index `i+n` in the original tensor or tensor view.
+         *
+         * @param dim   The dimension along which to shift the returned view.
+         *
+         * @param n     The amount by which to shift.
+         *
+         * @return      A possibly-mutable tensor view. For a tensor
+         *              ([marray](@ref MArray::marray)), the returned view is
+         *              mutable if the instance is not const-qualified.
+         *              For a tensor view (marray_view),
+         *              the returned view is mutable if the value type is not
+         *              const-qualified.
+         */
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
+        marray_view<Type, NDim>
+#endif
+        shifted(int dim, len_type n)
         {
             marray_view<Type,NDim> r(*this);
             r.shift(dim, n);
@@ -1081,8 +1458,29 @@ class marray_base
             return const_cast<marray_base&>(*this).shifted_down();
         }
 
+        /**
+         * Return a view that references elements whose indices are
+         * shifted "down".
+         *
+         * This overload is only available for vectors and vector views.
+         * An index `i` in the shifted view
+         * is equivalent to an index `i+n` in the original vector or vector view,
+         * where `n` is the vector length.
+         *
+         * @return      A possibly-mutable tensor view. For a tensor
+         *              ([marray](@ref MArray::marray)), the returned view is
+         *              mutable if the instance is not const-qualified.
+         *              For a tensor view (marray_view),
+         *              the returned view is mutable if the value type is not
+         *              const-qualified.
+         */
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
         template <typename=void, int N=NDim, typename=detail::enable_if_t<N==1>>
-        marray_view<Type,1> shifted_down()
+        marray_view<Type,1>
+#endif
+        shifted_down()
         {
             return shifted_down(0);
         }
@@ -1093,8 +1491,30 @@ class marray_base
             return const_cast<marray_base&>(*this).shifted_down<Dim>();
         }
 
+        /**
+         * Return a view that references elements whose indices are
+         * shifted "down" along one dimension.
+         *
+         * Only for the specified dimension, an index `i` in the shifted view
+         * is equivalent to an index `i+n` in the original tensor or tensor view,
+         * where `n` is the tensor length in that dimension.
+         *
+         * @tparam Dim  The dimension along which to shift the returned view.
+         *
+         * @return      A possibly-mutable tensor view. For a tensor
+         *              ([marray](@ref MArray::marray)), the returned view is
+         *              mutable if the instance is not const-qualified.
+         *              For a tensor view (marray_view),
+         *              the returned view is mutable if the value type is not
+         *              const-qualified.
+         */
         template <int Dim>
-        marray_view<Type,NDim> shifted_down()
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
+        marray_view<Type,NDim>
+#endif
+        shifted_down()
         {
             return shifted_down(Dim);
         }
@@ -1104,7 +1524,29 @@ class marray_base
             return const_cast<marray_base&>(*this).shifted_down(dim);
         }
 
-        marray_view<Type,NDim> shifted_down(int dim)
+        /**
+         * Return a view that references elements whose indices are
+         * shifted "down" along one dimension.
+         *
+         * Only for the specified dimension, an index `i` in the shifted view
+         * is equivalent to an index `i+n` in the original tensor or tensor view,
+         * where `n` is the tensor length in that dimension.
+         *
+         * @param dim   The dimension along which to shift the returned view.
+         *
+         * @return      A possibly-mutable tensor view. For a tensor
+         *              ([marray](@ref MArray::marray)), the returned view is
+         *              mutable if the instance is not const-qualified.
+         *              For a tensor view (marray_view),
+         *              the returned view is mutable if the value type is not
+         *              const-qualified.
+         */
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
+        marray_view<Type,NDim>
+#endif
+        shifted_down(int dim)
         {
             return shifted(dim, len_[dim]);
         }
@@ -1115,8 +1557,29 @@ class marray_base
             return const_cast<marray_base&>(*this).shifted_up();
         }
 
+        /**
+         * Return a view that references elements whose indices are
+         * shifted "up".
+         *
+         * This overload is only available for vectors and vector views.
+         * An index `i` in the shifted view
+         * is equivalent to an index `i-n` in the original vector or vector view,
+         * where `n` is the vector length.
+         *
+         * @return      A possibly-mutable tensor view. For a tensor
+         *              ([marray](@ref MArray::marray)), the returned view is
+         *              mutable if the instance is not const-qualified.
+         *              For a tensor view (marray_view),
+         *              the returned view is mutable if the value type is not
+         *              const-qualified.
+         */
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
         template <typename=void, int N=NDim, typename=detail::enable_if_t<N==1>>
-        marray_view<Type,1> shifted_up()
+        marray_view<Type,1>
+#endif
+        shifted_up()
         {
             return shifted_up(0);
         }
@@ -1127,8 +1590,30 @@ class marray_base
             return const_cast<marray_base&>(*this).shifted_up<Dim>();
         }
 
+        /**
+         * Return a view that references elements whose indices are
+         * shifted "up" along one dimension.
+         *
+         * Only for the specified dimension, an index `i` in the shifted view
+         * is equivalent to an index `i-n` in the original tensor or tensor view,
+         * where `n` is the tensor length in that dimension.
+         *
+         * @tparam Dim  The dimension along which to shift the returned view.
+         *
+         * @return      A possibly-mutable tensor view. For a tensor
+         *              ([marray](@ref MArray::marray)), the returned view is
+         *              mutable if the instance is not const-qualified.
+         *              For a tensor view (marray_view),
+         *              the returned view is mutable if the value type is not
+         *              const-qualified.
+         */
         template <int Dim>
-        marray_view<Type,NDim> shifted_up()
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
+        marray_view<Type,NDim>
+#endif
+        shifted_up()
         {
             return shifted_up(Dim);
         }
@@ -1138,7 +1623,29 @@ class marray_base
             return const_cast<marray_base&>(*this).shifted_up(dim);
         }
 
-        marray_view<Type,NDim> shifted_up(int dim)
+        /**
+         * Return a view that references elements whose indices are
+         * shifted "up" along one dimension.
+         *
+         * Only for the specified dimension, an index `i` in the shifted view
+         * is equivalent to an index `i-n` in the original tensor or tensor view,
+         * where `n` is the tensor length in that dimension.
+         *
+         * @param dim   The dimension along which to shift the returned view.
+         *
+         * @return      A possibly-mutable tensor view. For a tensor
+         *              ([marray](@ref MArray::marray)), the returned view is
+         *              mutable if the instance is not const-qualified.
+         *              For a tensor view (marray_view),
+         *              the returned view is mutable if the value type is not
+         *              const-qualified.
+         */
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
+        marray_view<Type,NDim>
+#endif
+        shifted_up(int dim)
         {
             return shifted(dim, -len_[dim]);
         }
@@ -1154,7 +1661,32 @@ class marray_base
             return const_cast<marray_base&>(*this).permuted(perm);
         }
 
-        marray_view<Type,NDim> permuted(const detail::array_1d<int>& perm)
+        /**
+         * Return a permuted view.
+         *
+         * Indexing into dimension `i` of the permuted view is equivalent to
+         * indexing into dimension `perm[i]` of the original tensor or tensor
+         * view.
+         *
+         * @param perm  The permutation vector. May be any
+         *              one-dimensional container type whose elements are convertible
+         *              to `int`, including initializer lists. The values must form
+         *              a permutation of `[0,NDim)`, where `NDim` is the number of
+         *              tensor dimensions.
+         *
+         * @return      A possibly-mutable tensor view. For a tensor
+         *              ([marray](@ref MArray::marray)), the returned view is
+         *              mutable if the instance is not const-qualified.
+         *              For a tensor view (marray_view),
+         *              the returned view is mutable if the value type is not
+         *              const-qualified.
+         */
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
+        marray_view<Type,NDim>
+#endif
+        permuted(const detail::array_1d<int>& perm)
         {
             marray_view<Type,NDim> r(*this);
             r.permute(perm);
@@ -1167,8 +1699,25 @@ class marray_base
             return const_cast<marray_base&>(*this).transposed();
         }
 
+        /**
+         * Return a transposed view.
+         *
+         * This overload is only available for matrices and matrix views.
+         *
+         * @return      A possibly-mutable tensor view. For a tensor
+         *              ([marray](@ref MArray::marray)), the returned view is
+         *              mutable if the instance is not const-qualified.
+         *              For a tensor view (marray_view),
+         *              the returned view is mutable if the value type is not
+         *              const-qualified.
+         */
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
         template <int N=NDim, typename=detail::enable_if_t<N==2>>
-        marray_view<Type, NDim> transposed()
+        marray_view<Type, NDim>
+#endif
+        transposed()
         {
             return permuted({1, 0});
         }
@@ -1179,8 +1728,25 @@ class marray_base
             return const_cast<marray_base&>(*this).T();
         }
 
+        /**
+         * Return a transposed view.
+         *
+         * This overload is only available for matrices and matrix views.
+         *
+         * @return      A possibly-mutable tensor view. For a tensor
+         *              ([marray](@ref MArray::marray)), the returned view is
+         *              mutable if the instance is not const-qualified.
+         *              For a tensor view (marray_view),
+         *              the returned view is mutable if the value type is not
+         *              const-qualified.
+         */
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
         template <int N=NDim, typename=detail::enable_if_t<N==2>>
-        marray_view<Type, NDim> T()
+        marray_view<Type, NDim>
+#endif
+        T()
         {
             return transposed();
         }
@@ -1197,22 +1763,55 @@ class marray_base
             return const_cast<marray_base&>(*this).lowered<NewNDim>(split);
         }
 
+        /**
+         * Return a view of lower dimensionality.
+         *
+         * The values along each lowered dimension (which corresponds to one or
+         * more dimensions in the original tensor or tensor view) must have a
+         * consistent stride.
+         *
+         * @tparam NewNDim  The number of dimensions in the lowered view.
+         *
+         * @param split The "split" or "pivot" vector. The number of split points/pivots
+         *              must be equal to the number of dimensions in the lowered view
+         *              minus one. Dimensions `[0,split[0])` correspond to the
+         *              first dimension of the return view, dimensions `[split[NewNDim-1],NDim)`
+         *              correspond to the last dimension of the returned view, and
+         *              dimensions `[split[i-1],split[i])` correspond to the `i`th
+         *              dimension of the return view otherwise, where `NDim` is the
+         *              dimensionality of the original tensor. The split points must be
+         *              in increasing order. May be any
+         *              one-dimensional container type whose elements are convertible
+         *              to `int`, including initializer lists.
+         *
+         * @return      A possibly-mutable tensor view. For a tensor
+         *              ([marray](@ref MArray::marray)), the returned view is
+         *              mutable if the instance is not const-qualified.
+         *              For a tensor view (marray_view),
+         *              the returned view is mutable if the value type is not
+         *              const-qualified.
+         */
         template <int NewNDim>
-        marray_view<Type, NewNDim> lowered(const detail::array_1d<int>& split_)
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
+        marray_view<Type, NewNDim>
+#endif
+        lowered(const detail::array_1d<int>& split)
         {
             static_assert(NewNDim > 0 && NewNDim <= NDim,
                           "Cannot split into this number of dimensions");
 
             constexpr auto NSplit = NewNDim-1;
-            MARRAY_ASSERT(split_.size() == NSplit);
+            MARRAY_ASSERT(split.size() == NSplit);
 
-            std::array<int, NSplit> split;
-            split_.slurp(split);
+            std::array<int, NSplit> split_;
+            split.slurp(split_);
 
             for (auto i : range(NSplit))
             {
-                MARRAY_ASSERT(split[i] <= NDim);
-                if (i != 0) MARRAY_ASSERT(split[i-1] <= split[i]);
+                MARRAY_ASSERT(split_[i] <= NDim);
+                if (i != 0) MARRAY_ASSERT(split_[i-1] <= split_[i]);
             }
 
             std::array<len_type, NSplit+1> newlen;
@@ -1220,8 +1819,8 @@ class marray_base
 
             for (auto i : range(NSplit+1))
             {
-                auto begin = (i == 0 ? 0 : split[i-1]);
-                auto end = (i == NSplit ? NDim-1 : split[i]-1);
+                auto begin = (i == 0 ? 0 : split_[i-1]);
+                auto end = (i == NSplit ? NDim-1 : split_[i]-1);
                 if (begin > end) continue;
 
                 if (stride_[begin] < stride_[end] ||
@@ -1261,7 +1860,27 @@ class marray_base
             return const_cast<marray_base&>(*this).reversed();
         }
 
-        marray_view<Type, NDim> reversed()
+        /**
+         * Return a view where the order of the indices along each dimension has
+         * been reversed.
+         *
+         * An index of `i` in the reversed view corresponds to an index of
+         * `n-1-i` in the original tensor or view, where `n` is the tensor length along
+         * that dimension.
+         *
+         * @return      A possibly-mutable tensor view. For a tensor
+         *              ([marray](@ref MArray::marray)), the returned view is
+         *              mutable if the instance is not const-qualified.
+         *              For a tensor view (marray_view),
+         *              the returned view is mutable if the value type is not
+         *              const-qualified.
+         */
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
+        marray_view<Type, NDim>
+#endif
+        reversed()
         {
             marray_view<Type,NDim> r(*this);
             r.reverse();
@@ -1274,8 +1893,30 @@ class marray_base
             return const_cast<marray_base&>(*this).reversed<Dim>();
         }
 
+        /**
+         * Return a view where the order of the indices along the given dimension has
+         * been reversed.
+         *
+         * Only for the indicated dimension, an index of `i` in the reversed tensor corresponds to an index of
+         * `n-1-i` in the original tensor, where `n` is the tensor length along
+         * that dimension.
+         *
+         * @tparam Dim  The dimension along which to reverse the indices.
+         *
+         * @return      A possibly-mutable tensor view. For a tensor
+         *              ([marray](@ref MArray::marray)), the returned view is
+         *              mutable if the instance is not const-qualified.
+         *              For a tensor view (marray_view),
+         *              the returned view is mutable if the value type is not
+         *              const-qualified.
+         */
         template <int Dim>
-        marray_view<Type, NDim> reversed()
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
+        marray_view<Type, NDim>
+#endif
+        reversed()
         {
             return reversed(Dim);
         }
@@ -1285,7 +1926,29 @@ class marray_base
             return const_cast<marray_base&>(*this).reversed(dim);
         }
 
-        marray_view<Type, NDim> reversed(int dim)
+        /**
+         * Return a view where the order of the indices along the given dimension has
+         * been reversed.
+         *
+         * Only for the indicated dimension, an index of `i` in the reversed tensor corresponds to an index of
+         * `n-1-i` in the original tensor, where `n` is the tensor length along
+         * that dimension.
+         *
+         * @param dim   The dimension along which to reverse the indices.
+         *
+         * @return      A possibly-mutable tensor view. For a tensor
+         *              ([marray](@ref MArray::marray)), the returned view is
+         *              mutable if the instance is not const-qualified.
+         *              For a tensor view (marray_view),
+         *              the returned view is mutable if the value type is not
+         *              const-qualified.
+         */
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
+        marray_view<Type, NDim>
+#endif
+        reversed(int dim)
         {
             marray_view<Type,NDim> r(*this);
             r.reverse(dim);
@@ -1298,22 +1961,59 @@ class marray_base
          *
          **********************************************************************/
 
+        /**
+         * Return an immutable reference to the first element in this vector.
+         *
+         * This overload is only avaialble for vectors and vector views.
+         *
+         * @return  An immutable reference.
+         */
+#if MARRAY_DOXYGEN
+        immutable_reference
+#else
         template <int Dim=0, int N=NDim>
         detail::enable_if_t<N==1, const_reference>
+#endif
         cfront() const
         {
             return const_cast<marray_base&>(*this).front<Dim>();
         }
 
+        /**
+         * Return a reference to the first element in this vector.
+         *
+         * This overload is only avaialble for vectors and vector views.
+         *
+         * @return  For a tensor ([marray](@ref MArray::marray)), the returned reference is
+         *          mutable if the instance is not const-qualified.
+         *          For a tensor view (marray_view),
+         *          the returned reference is mutable if the value type is not
+         *          const-qualified.
+         */
+#if MARRAY_DOXYGEN
+        possibly_mutable_reference
+#else
         template <int Dim=0, int N=NDim>
         detail::enable_if_t<N==1, cref>
+#endif
         front() const
         {
             return const_cast<marray_base&>(*this).front<Dim>();
         }
 
+        /**
+         * Return a mutable reference to the first element in this vector.
+         *
+         * This overload is only avaialble for vectors and vector views.
+         *
+         * @return  A mutable reference.
+         */
+#if MARRAY_DOXYGEN
+        mutable_reference
+#else
         template <int Dim=0, int N=NDim>
         detail::enable_if_t<N==1, reference>
+#endif
         front()
         {
             static_assert(Dim == 0, "Dim out of range");
@@ -1344,43 +2044,129 @@ class marray_base
             return front();
         }
 
+        /**
+         * Return an immutable reference or view to the first element or face along the specified dimension.
+         *
+         * If the tensor has more than one dimension, a tensor face is returned.
+         * Otherwise, a reference to an element is returned.
+         *
+         * @tparam Dim   The dimension along which to extract the reference or face.
+         *
+         * @return      an immutable reference or view.
+         */
+#ifdef MARRAY_DOXYGEN
+        template <int Dim>
+        immutable_reference_or_view
+#else
         template <int Dim, int N=NDim>
         detail::enable_if_t<N!=1, marray_view<const Type, NDim-1>>
+#endif
         cfront() const
         {
             return const_cast<marray_base&>(*this).front<Dim>();
         }
 
+        /**
+         * Return a reference view to the first element or face along the specified dimension.
+         *
+         * If the tensor has more than one dimension, a tensor face is returned.
+         * Otherwise, a reference to an element is returned.
+         *
+         * @tparam Dim  The dimension along which to extract the reference or face.
+         *
+         * @return  For a tensor ([marray](@ref MArray::marray)), the returned reference or view is
+         *          mutable if the instance is not const-qualified.
+         *          For a tensor view (marray_view),
+         *          the returned reference or view is mutable if the value type is not
+         *          const-qualified.
+         */
+#ifdef MARRAY_DOXYGEN
+        template <int Dim>
+        possibly_mutable_reference_or_view
+#else
         template <int Dim, int N=NDim>
         detail::enable_if_t<N!=1, marray_view<ctype, NDim-1>>
+#endif
         front() const
         {
             return const_cast<marray_base&>(*this).front<Dim>();
         }
 
+        /**
+         * Return a mutable reference or view to the first element or face along the specified dimension.
+         *
+         * If the tensor has more than one dimension, a tensor face is returned.
+         * Otherwise, a reference to an element is returned.
+         *
+         * @tparam Dim   The dimension along which to extract the reference or face.
+         *
+         * @return      A mutable reference or view.
+         */
+#ifdef MARRAY_DOXYGEN
+        template <int Dim>
+        mutable_reference_or_view
+#else
         template <int Dim, int N=NDim>
         detail::enable_if_t<N!=1, marray_view<Type, NDim-1>>
+#endif
         front()
         {
             return front<N>(Dim);
         }
 
+        /**
+         * Return an immutable reference or view to the first element or face along the specified dimension.
+         *
+         * @param dim   The dimension along which to extract the element or face.
+         *
+         * @return      An immutable reference or view.
+         */
+#ifdef MARRAY_DOXYGEN
+        immutable_reference_or_view
+#else
         template <int N=NDim>
         detail::enable_if_t<N!=1, marray_view<const Type, NDim-1>>
+#endif
         cfront(int dim) const
         {
             return const_cast<marray_base&>(*this).front(dim);
         }
 
+        /**
+         * Return a reference or view to the first element or face along the specified dimension.
+         *
+         * @param dim   The dimension along which to extract the element or face.
+         *
+         * @return  For a tensor ([marray](@ref MArray::marray)), the returned reference or view is
+         *          mutable if the instance is not const-qualified.
+         *          For a tensor view (marray_view),
+         *          the returned reference or view is mutable if the value type is not
+         *          const-qualified.
+         */
+#ifdef MARRAY_DOXYGEN
+        possibly_mutable_reference_or_view
+#else
         template <int N=NDim>
         detail::enable_if_t<N!=1, marray_view<ctype, NDim-1>>
+#endif
         front(int dim) const
         {
             return const_cast<marray_base&>(*this).front(dim);
         }
 
+        /**
+         * Return a mutable reference or view to the first element or face along the specified dimension.
+         *
+         * @param dim   The dimension along which to extract the element or face.
+         *
+         * @return      A mutable reference or view.
+         */
+#ifdef MARRAY_DOXYGEN
+        mutable_reference_or_view
+#else
         template <int N=NDim>
         detail::enable_if_t<N!=1, marray_view<Type, NDim-1>>
+#endif
         front(int dim)
         {
             MARRAY_ASSERT(dim >= 0 && dim < NDim);
@@ -1397,22 +2183,59 @@ class marray_base
             return {len, data_, stride};
         }
 
+        /**
+         * Return an immutable reference to the last element in this vector.
+         *
+         * This overload is only avaialble for vectors and vector views.
+         *
+         * @return  An immutable reference.
+         */
+#ifdef MARRAY_DOXYGEN
+        immutable_reference
+#else
         template <int Dim=0, int N=NDim>
         detail::enable_if_t<N==1, const_reference>
+#endif
         cback() const
         {
             return const_cast<marray_base&>(*this).back<Dim>();
         }
 
+        /**
+         * Return a reference to the last element in this vector.
+         *
+         * This overload is only avaialble for vectors and vector views.
+         *
+         * @return  For a tensor ([marray](@ref MArray::marray)), the returned reference is
+         *          mutable if the instance is not const-qualified.
+         *          For a tensor view (marray_view),
+         *          the returned reference is mutable if the value type is not
+         *          const-qualified.
+         */
+#ifdef MARRAY_DOXYGEN
+        possibly_mutable_reference
+#else
         template <int Dim=0, int N=NDim>
         detail::enable_if_t<N==1, cref>
+#endif
         back() const
         {
             return const_cast<marray_base&>(*this).back<Dim>();
         }
 
+        /**
+         * Return a mutable reference to the last element in this vector.
+         *
+         * This overload is only avaialble for vectors and vector views.
+         *
+         * @return  A mutable reference.
+         */
+#ifdef MARRAY_DOXYGEN
+        mutable_reference
+#else
         template <int Dim=0, int N=NDim>
         detail::enable_if_t<N==1, reference>
+#endif
         back()
         {
             static_assert(Dim == 0, "Dim out of range");
@@ -1443,43 +2266,120 @@ class marray_base
             return back();
         }
 
+        /**
+         * Return an immutable reference or view to the last element or face along the specified dimension.
+         *
+         * @tparam Dim   The dimension along which to extract the element or face.
+         *
+         * @return      An immutable reference or view.
+         */
+#ifdef MARRAY_DOXYGEN
+        template <int Dim>
+        immutable_reference_or_view
+#else
         template <int Dim, int N=NDim>
         detail::enable_if_t<N!=1, marray_view<const Type, NDim-1>>
+#endif
         cback() const
         {
             return const_cast<marray_base&>(*this).back<Dim>();
         }
 
+        /**
+         * Return a reference or view to the last element or face along the specified dimension.
+         *
+         * @tparam Dim   The dimension along which to extract the element or face.
+         *
+         * @return  For a tensor ([marray](@ref MArray::marray)), the returned reference or view is
+         *          mutable if the instance is not const-qualified.
+         *          For a tensor view (marray_view),
+         *          the returned reference or view is mutable if the value type is not
+         *          const-qualified.
+         */
+#ifdef MARRAY_DOXYGEN
+        template <int Dim>
+        possibly_mutable_reference_or_view
+#else
         template <int Dim, int N=NDim>
         detail::enable_if_t<N!=1, marray_view<ctype, NDim-1>>
+#endif
         back() const
         {
             return const_cast<marray_base&>(*this).back<Dim>();
         }
 
+        /**
+         * Return a mutable reference or view to the last element or face along the specified dimension.
+         *
+         * @tparam Dim   The dimension along which to extract the element or face.
+         *
+         * @return      A mutable reference or view.
+         */
+#ifdef MARRAY_DOXYGEN
+        template <int Dim>
+        possibly_mutable_reference_or_view
+#else
         template <int Dim, int N=NDim>
         detail::enable_if_t<N!=1, marray_view<Type, NDim-1>>
+#endif
         back()
         {
             return back<N>(Dim);
         }
 
+        /**
+         * Return an immutable reference or view to the last element or face along the specified dimension.
+         *
+         * @param dim   The dimension along which to extract the element or face.
+         *
+         * @return      An immutable reference or view.
+         */
+#ifdef MARRAY_DOXYGEN
+        immutable_reference_or_view
+#else
         template <int N=NDim>
         detail::enable_if_t<N!=1, marray_view<const Type, NDim-1>>
+#endif
         cback(int dim) const
         {
             return const_cast<marray_base&>(*this).back(dim);
         }
 
+        /**
+         * Return a reference or view to the last element or face along the specified dimension.
+         *
+         * @param dim   The dimension along which to extract the element or face.
+         *
+         * @return  For a tensor ([marray](@ref MArray::marray)), the returned reference or view is
+         *          mutable if the instance is not const-qualified.
+         *          For a tensor view (marray_view),
+         *          the returned reference or view is mutable if the value type is not
+         *          const-qualified.
+         */
+#ifdef MARRAY_DOXYGEN
+        possibly_mutable_reference_or_view
+#else
         template <int N=NDim>
         detail::enable_if_t<N!=1, marray_view<ctype, NDim-1>>
+#endif
         back(int dim) const
         {
             return const_cast<marray_base&>(*this).back(dim);
         }
 
+        /**
+         * Return a mutable reference or view to the last element or face along the specified dimension.
+         *
+         * @param dim   The dimension along which to extract the element or face.
+         *
+         * @return      A mutable reference or view.
+         */
+#ifdef MARRAY_DOXYGEN
+        mutable_reference_or_view
+#else
         template <int N=NDim>
         detail::enable_if_t<N!=1, marray_view<Type, NDim-1>>
+#endif
         back(int dim)
         {
             MARRAY_ASSERT(dim >= 0 && dim < NDim);
@@ -1509,8 +2409,37 @@ class marray_base
             return const_cast<marray_base&>(*this)[i];
         }
 
+        /**
+         * Return a reference or subtensor.
+         *
+         * The overloaded [] operators may be applied multiple times in any
+         * combination.
+         *
+         * This overload specifies a particular index along a dimension, and so
+         * reduces the dimensionality of the resulting view by one. If specific
+         * indices are given for all dimensions then the result is a reference to
+         * the specified tensor element. If this overload is mixed with others
+         * that specify ranges of indices, then the result is a subtensor view.
+         *
+         * For a tensor ([marray](@ref MArray::marray)),
+         * the final view or reference is mutable if the instance is not const-qualified.
+         * For a tensor view (marray_view), the final
+         * view or reference is mutable if the value type is not const-qualified.
+         *
+         * @param i     The specified index. The dimension to which this index
+         *              refers depends on how many [] operators have been applied.
+         *              The first [] refers to the first dimension and so on.
+         *
+         * @return      If all indices have been explicitly specified, a reference
+         *              to the indicated tensor element. Otherwise, a temporary
+         *              indexing object which can be converted to a tensor view.
+         */
+#if MARRAY_DOXYGEN
+        possibly_mutable_reference_or_view
+#else
         template <int N=NDim>
         detail::enable_if_t<N==1, reference>
+#endif
         operator[](len_type i)
         {
             MARRAY_ASSERT(i < len_[0]);
@@ -1537,19 +2466,44 @@ class marray_base
         marray_slice<ctype, NDim, 1, slice_dim>
         operator[](const range_t<I>& x) const
         {
-            MARRAY_ASSERT(x.size() >= 0);
-            MARRAY_ASSERT(x.front() >= 0);
-            MARRAY_ASSERT(x.front()+x.size() <= len_[0]);
+            MARRAY_ASSERT_RANGE_IN(x, 0, len_[0]);
             return {*this, x};
         }
 
+        /**
+         * Return a subtensor.
+         *
+         * The overloaded [] operators may be applied multiple times in any
+         * combination.
+         *
+         * This overload specifies a range of indices along a dimension, and so
+         * always produces a subtensor view. If mixed with [] operators that specify
+         * particular indices, then the dimensionality of the resulting view is reduced.
+         * An index of `i` in the resulting view, along the current dimension, corresponds
+         * to an index of `i+x.front()` in the original tensor or tensor view, and the length
+         * of the resulting view along this dimension is `x.size()`.
+         *
+         * For a tensor ([marray](@ref MArray::marray)),
+         * the final reference or view is mutable if the instance is not const-qualified.
+         * For a tensor view (marray_view), the final
+         * reference or view is mutable if the value type is not const-qualified.
+         *
+         * @param x     The specified range of indices. The dimension to which this range
+         *              refers depends on how many [] operators have been applied.
+         *              The first [] refers to the first dimension and so on. The specified
+         *              range must not exceed the bounds of this tensor or tensor view.
+         *
+         * @return      A temporary indexing object which can be converted to a tensor view.
+         */
         template <typename I>
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
         marray_slice<Type, NDim, 1, slice_dim>
+#endif
         operator[](const range_t<I>& x)
         {
-            MARRAY_ASSERT(x.size() >= 0);
-            MARRAY_ASSERT(x.front() >= 0);
-            MARRAY_ASSERT(x.front()+x.size() <= len_[0]);
+            MARRAY_ASSERT_RANGE_IN(x, 0, len_[0]);
             return {*this, x};
         }
 
@@ -1559,7 +2513,31 @@ class marray_base
             return {*this, range(len_[0])};
         }
 
+        /**
+         * Return a subtensor.
+         *
+         * The overloaded [] operators may be applied multiple times in any
+         * combination.
+         *
+         * This overload is triggered using the special #slice::all value.
+         *
+         * This overload specifies all indices along a dimension, and so
+         * always produces a subtensor view. If mixed with [] operators that specify
+         * particular indices, then the dimensionality of the resulting view is reduced.
+         * Indices in the resulting view, along the current dimension, are unchanged.
+         *
+         * For a tensor ([marray](@ref MArray::marray)),
+         * the final reference or view is mutable if the instance is not const-qualified.
+         * For a tensor view (marray_view), the final
+         * reference or view is mutable if the value type is not const-qualified.
+         *
+         * @return      A temporary indexing object which can be converted to a tensor view.
+         */
+#if MARRAY_DOXYGEN
+        possibly_mutable_view
+#else
         marray_slice<Type, NDim, 1, slice_dim>
+#endif
         operator[](all_t)
         {
             return {*this, range(len_[0])};
@@ -1574,24 +2552,43 @@ class marray_base
         marray_slice<Type, NDim, 0, bcast_dim>
         operator[](bcast_t)
         {
-            return {*this, slice::bcast, len_[0]};
+            return {*this, slice::bcast};
         }
 
-        cref operator()(detail::array_1d<len_type> idx_) const
+        cref operator()(detail::array_1d<len_type> idx) const
         {
-            return const_cast<marray_base&>(*this)(idx_);
+            return const_cast<marray_base&>(*this)(idx);
         }
 
-        reference operator()(detail::array_1d<len_type> idx_)
+        /**
+         * Return a reference to the indicated element.
+         *
+         * @param idx   The indices of the desired element. The number of indices must be
+         *              equal to the number of dimensions. May be any
+         *              one-dimensional container type whose elements are convertible
+         *              to a tensor length, including initializer lists.
+         *
+         * @return  For a tensor ([marray](@ref MArray::marray)), the returned reference is
+         *          mutable if the instance is not const-qualified.
+         *          For a tensor view (marray_view),
+         *          the returned reference is mutable if the value type is not
+         *          const-qualified.
+         */
+#if MARRAY_DOXYGEN
+        possibly_mutable_reference
+#else
+        reference
+#endif
+        operator()(detail::array_1d<len_type> idx)
         {
-            MARRAY_ASSERT(idx_.size() == dimension());
+            MARRAY_ASSERT(idx.size() == dimension());
 
-            std::array<len_type,NDim> idx;
-            idx_.slurp(idx);
+            std::array<len_type,NDim> idx_;
+            idx.slurp(idx_);
 
             auto ptr = data();
             for (auto i : range(NDim))
-                ptr += idx[i]*stride(i);
+                ptr += idx_[i]*stride(i);
 
             return *ptr;
         }
@@ -1621,11 +2618,31 @@ class marray_base
             return (*this)[std::forward<Arg>(arg)](std::forward<Args>(args)...);
         }
 
+        /**
+         * Return a reference to the indicated element or subtensor.
+         *
+         * This function is equivalent to calling the [] operator multiple times with
+         * the given arguments.
+         *
+         * @param indices   An index or index range for each tensor dimension.
+         *
+         * @return  For a tensor ([marray](@ref MArray::marray)), the returned reference or view is
+         *          mutable if the instance is not const-qualified.
+         *          For a tensor view (marray_view),
+         *          the returned reference or view is mutable if the value type is not
+         *          const-qualified.
+         */
+#if MARRAY_DOXYGEN
+        template <typename... Indices>
+        possibly_mutable_reference_or_view
+        operator(Indices&&... indices)
+#else
         template <typename Arg, typename... Args, typename=
             detail::enable_if_t<sizeof...(Args) &&
                 detail::are_indices_or_slices<Arg, Args...>::value>>
         auto operator()(Arg&& arg, Args&&... args) ->
         decltype((*this)[std::forward<Arg>(arg)](std::forward<Args>(args)...))
+#endif
         {
             return (*this)[std::forward<Arg>(arg)](std::forward<Args>(args)...);
         }
@@ -1636,6 +2653,18 @@ class marray_base
          *
          **********************************************************************/
 
+        /**
+         * Iterate over the elements and call a function.
+         *
+         * @param f   A function or functor callable as either `f(e)` or
+         *            `f(e, i0, i1, ...)` where `e` is a tensor element and
+         *            `i0, i1, ...` are indices, one for each dimension.
+         *            For a tensor ([marray](@ref MArray::marray)),
+         *            the elements are mutable if the instance is not const-qualified.
+         *            For a tensor view (marray_view),
+         *            the elements are mutable if the value type is not
+         *            const-qualified.
+         */
         template <typename Func>
         void for_each_element(Func&& f) const
         {
@@ -1656,27 +2685,80 @@ class marray_base
          *
          **********************************************************************/
 
-        const_pointer cdata() const
+        /**
+         * Return an immutable pointer to the tensor data.
+         *
+         * @return An immutable pointer that points to the element with
+         *         all zero indices.
+         */
+#if MARRAY_DOXYGEN
+        immutable_pointer
+#else
+        const_pointer
+#endif
+        cdata() const
         {
             return const_cast<marray_base&>(*this).data();
         }
 
-        cptr data() const
+        /**
+         * Return a pointer to the tensor data.
+         *
+         * @return A pointer that points to the element with
+         *         all zero indices. For a tensor ([marray](@ref MArray::marray)),
+         *            the returned pointer is immutable if the instance is const-qualified.
+         *            For a tensor view (marray_view),
+         *            the returned pointer is immutable if the value type is
+         *            const-qualified.
+         */
+#if MARRAY_DOXYGEN
+        possible_mutable_pointer
+#else
+        cptr
+#endif
+        data() const
         {
             return const_cast<marray_base&>(*this).data();
         }
 
-        pointer data()
+        /**
+         * Return a mutable pointer to the tensor data.
+         *
+         * @return A mutable pointer that points to the element with
+         *         all zero indices.
+         */
+#if MARRAY_DOXYGEN
+        mutable_pointer
+#else
+        pointer
+#endif
+        data()
         {
             return data_;
         }
 
+        /**
+         * Return the length of the vector.
+         *
+         * This overload is only available for vectors and vector views.
+         *
+         * @return  The vector length, or number of elements.
+         */
+#if !MARRAY_DOXYGEN
         template <typename=void, int N=NDim, typename=detail::enable_if_t<N==1>>
+#endif
         len_type length() const
         {
             return len_[0];
         }
 
+        /**
+         * Return the tensor length along the specified dimension.
+         *
+         * @tparam Dim  A dimension.
+         *
+         * @return      The length of the specified dimension.
+         */
         template <int Dim>
         len_type length() const
         {
@@ -1684,23 +2766,51 @@ class marray_base
             return len_[Dim];
         }
 
+        /**
+         * Return the tensor length along the specified dimension.
+         *
+         * @param dim   A dimension.
+         *
+         * @return      The length of the specified dimension.
+         */
         len_type length(int dim) const
         {
             MARRAY_ASSERT(dim >= 0 && dim < NDim);
             return len_[dim];
         }
 
+        /**
+         * Return the tensor lengths.
+         *
+         * @return The lengths of the tensor; immutable.
+         */
         const std::array<len_type, NDim>& lengths() const
         {
             return len_;
         }
 
+        /**
+         * Return the stride of the vector.
+         *
+         * This overload is only available for vectors and vector views.
+         *
+         * @return  The vector stride, or the distance between consecutive elements.
+         */
+#if !MARRAY_DOXYGEN
         template <typename=void, int N=NDim, typename=detail::enable_if_t<N==1>>
+#endif
         stride_type stride() const
         {
             return stride_[0];
         }
 
+        /**
+         * Return the tensor stride along the specified dimension.
+         *
+         * @tparam Dim  A dimension.
+         *
+         * @return      The stride of the specified dimension.
+         */
         template <int Dim>
         stride_type stride() const
         {
@@ -1708,17 +2818,34 @@ class marray_base
             return stride_[Dim];
         }
 
+        /**
+         * Return the tensor stride along the specified dimension.
+         *
+         * @param dim   A dimension.
+         *
+         * @return      The stride of the specified dimension.
+         */
         stride_type stride(int dim) const
         {
             MARRAY_ASSERT(dim >= 0 && dim < NDim);
             return stride_[dim];
         }
 
+        /**
+         * Return the tensor strides.
+         *
+         * @return The strides of the tensor; immutable.
+         */
         const std::array<stride_type, NDim>& strides() const
         {
             return stride_;
         }
 
+        /**
+         * Return the number of dimensions.
+         *
+         * @return The number of dimensions.
+         */
         static constexpr auto dimension()
         {
             return NDim;

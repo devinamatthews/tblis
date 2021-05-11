@@ -74,8 +74,8 @@ if AC_TRY_EVAL(ac_compile); then
   ifelse([$2], , :, [  $2
   rm -rf conftest*])
 else
-  echo "configure: failed program was:" >&AC_FD_CC
-  cat conftest.$ac_ext >&AC_FD_CC
+  echo "configure: failed program was:" >&AS_MESSAGE_LOG_FD
+  cat conftest.$ac_ext >&AS_MESSAGE_LOG_FD
   ac_ext=$ac_c_ext
 ifelse([$3], , , [  rm -rf conftest*
   $3

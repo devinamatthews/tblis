@@ -239,7 +239,7 @@ void random_lengths(stride_type N, int d, const vector<len_type>& len_min, len_v
 matrix<len_type> random_indices(const len_vector& len, double sparsity)
 {
     stride_type num_idx = prod(len);
-    matrix<len_type> idx{{num_idx, len.size()}};
+    matrix<len_type> idx{num_idx, len.size()};
     stride_type min_idx = (num_idx == 0 ? 0 : 1);
 
     stride_type i = 0;

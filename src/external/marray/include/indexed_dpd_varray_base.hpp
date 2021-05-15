@@ -175,7 +175,7 @@ class indexed_dpd_varray_base : detail::dpd_base
             {
                 std::copy_n(idx_[i].data(), ndim, indices.data());
                 detail::call(std::forward<Func>(f),
-                             View(*this, const_cast<Ptr>(data_[i])),
+                             View(*this, dense_irrep_, const_cast<Ptr>(data_[i])),
                              indices);
             }
         }
@@ -192,7 +192,7 @@ class indexed_dpd_varray_base : detail::dpd_base
             for (auto i : range(num_indices()))
             {
                 detail::call(std::forward<Func>(f),
-                             View(*this, const_cast<Ptr>(data_[i])),
+                             View(*this, dense_irrep_, const_cast<Ptr>(data_[i])),
                              idx_[i][I]...);
             }
         }
@@ -411,7 +411,7 @@ class indexed_dpd_varray_base : detail::dpd_base
         dpd_varray_view<Type> operator[](len_type idx)
         {
             MARRAY_ASSERT(0 <= idx && idx < num_indices());
-            return {*this, data_[idx]};
+            return {*this, dense_irrep_, data_[idx]};
         }
 
         /***********************************************************************

@@ -27,9 +27,10 @@ class dpd_varray_view : public dpd_varray_base<Type, dpd_varray_view<Type>, fals
         using base::irrep_;
         using base::nirrep_;
 
-        dpd_varray_view(const detail::dpd_base& other, typename base::pointer data)
+        dpd_varray_view(const detail::dpd_base& other, int irrep, typename base::pointer data)
         {
             detail::dpd_base::reset(other);
+            irrep_ = irrep;
             data_ = data;
         }
 

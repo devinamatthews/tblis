@@ -1,4 +1,4 @@
-AC_INIT(tci, 1.0, dmatthews@utexas.edu, tblis, http://www.github.com/devinamatthews/tci)
+AC_INIT([tci],[1.0],[dmatthews@utexas.edu],[tblis],[http://www.github.com/devinamatthews/tci])
 AM_INIT_AUTOMAKE([foreign silent-rules subdir-objects])
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE([disable])
@@ -6,7 +6,6 @@ AM_MAINTAINER_MODE([disable])
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_PROG_CC([icc gcc clang])
-AC_PROG_CC_C99
 AC_PROG_CXX([icpc g++ clang++])
 LT_INIT
 

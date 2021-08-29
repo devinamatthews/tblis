@@ -1,7 +1,7 @@
 #ifndef _MARRAY_VARRAY_BASE_HPP_
 #define _MARRAY_VARRAY_BASE_HPP_
 
-#include "marray_base.hpp"
+#include "marray_view.hpp"
 #include "viterator.hpp"
 
 namespace MArray
@@ -141,9 +141,7 @@ class varray_base
                        stride_vector& stride,
                        const range_t<I>& arg, Args&&... args) const
         {
-            MARRAY_ASSERT(arg.front() >= 0);
-            MARRAY_ASSERT(arg.size() >= 0);
-            MARRAY_ASSERT(arg.front()+arg.size() <= len_[Dim]);
+            MARRAY_ASSERT_RANGE_IN(arg, 0, len_[Dim]);
             ptr += arg.front()*stride_[Dim];
             len.push_back(arg.size());
             stride.push_back(arg.step()*stride_[Dim]);
@@ -267,25 +265,15 @@ class varray_base
 
             if (layout == ROW_MAJOR)
             {
-                /*
-                 * Some monkeying around has to be done to support len as a
-                 * std::initializer_list (or other forward iterator range)
-                 */
-                auto it = len.begin(); ++it;
-                std::copy_n(it, ndim-1, stride.begin());
                 stride[ndim-1] = 1;
                 for (auto i : reversed_range(ndim-1))
-                    stride[i] *= stride[i+1];
+                    stride[i] = stride[i+1]*len[i+1];
             }
             else
             {
                 stride[0] = 1;
-                auto it = len.begin();
                 for (auto i : range(1,ndim))
-                {
-                    stride[i] = stride[i-1]*(*it);
-                    ++it;
-                }
+                    stride[i] = stride[i-1]*len[i-1];
             }
 
             return stride;
@@ -567,6 +555,20 @@ class varray_base
             varray_view<Type> r(*this);
             r.lower(split);
             return r;
+        }
+
+        template <int NDimNew>
+        marray_view<ctype,NDimNew> lowered(detail::array_1d<int> split) const
+        {
+            return const_cast<varray_base&>(*this).template lowered<NDimNew>(split);
+        }
+
+        template <int NDimNew>
+        marray_view<Type,NDimNew> lowered(detail::array_1d<int> split)
+        {
+            varray_view<Type> r(*this);
+            r.lower(split);
+            return r.template fix<NDimNew>();
         }
 
         /***********************************************************************

@@ -3,6 +3,14 @@
 
 #include "utility.hpp"
 
+#define MARRAY_ASSERT_RANGE_IN(x, from, to) \
+MARRAY_ASSERT((x).size() >= 0); \
+if ((x).size()) \
+{ \
+    MARRAY_ASSERT((x).front() >= (from) && (x).front() < (to)); \
+    MARRAY_ASSERT((x).back() >= (from) && (x).back() < (to)); \
+}
+
 namespace MArray
 {
 
@@ -12,13 +20,13 @@ namespace detail
 template <typename T, typename=void>
 struct underlying_type_if
 {
-    typedef T type;
+    typedef std::make_signed_t<T> type;
 };
 
 template <typename T>
 struct underlying_type_if<T, detail::enable_if_t<std::is_enum<T>::value>>
 {
-    typedef typename std::underlying_type<T>::type type;
+    typedef std::make_signed_t<std::underlying_type_t<T>> type;
 };
 
 template <typename... Ts> struct are_numeric;
@@ -174,7 +182,7 @@ class range_t
         };
 
         constexpr range_t()
-        : from_(0), to_(0), delta_(0) {}
+        : from_(0), to_(0), delta_(1) {}
 
         constexpr range_t(T to)
         : from_(0), to_(to), delta_(1) {}
@@ -256,14 +264,14 @@ class range_t
             return *this;
         }
 
-        range_t operator+(T shift)
+        range_t operator+(T shift) const
         {
             range_t shifted(*this);
             shifted += shift;
             return shifted;
         }
 
-        range_t operator-(T shift)
+        range_t operator-(T shift) const
         {
             range_t shifted(*this);
             shifted -= shift;
@@ -277,14 +285,24 @@ class range_t
 
         friend range_t operator-(T shift, const range_t& other)
         {
-            range_t shifted(other);
-            shifted.from_ = shift - shifted.from_;
-            shifted.to_ -= shift - shifted.to_;
-            shifted.delta_ = -shifted.delta_;
-            return shifted;
+            return range_t(shift - other.from_, shift - other.to_, -other.delta_);
+        }
+
+        range_t reverse()
+        {
+            return range_t(back(), front()-step(), -step());
         }
 };
 
+/**
+ * The range `[0,to)`.
+ *
+ * @param to    The value one higher than the last element in the range.
+ *              This is equal to the number of elements in the range. Must be
+ *              an integral or enum type.
+ *
+ * @return      Range object, of the same type as `to`, that can be used to index a tensor.
+ */
 template <typename T, typename=
     detail::enable_if_numeric<T>>
 auto range(T to)
@@ -293,15 +311,19 @@ auto range(T to)
     return range_t<U>{U(to)};
 }
 
-template <typename T, typename U, typename=
-    detail::enable_if_numeric<T,U>>
-auto rangeN(T from, U N)
-{
-    typedef decltype(std::declval<T>() + std::declval<U>()) V0;
-    typedef typename detail::underlying_type_if<V0>::type V;
-    return range_t<V>{V(from), V(from+N)};
-}
-
+/**
+ * The range `[from,to)`.
+ *
+ * @param from  The value of the first element in the range. Must be
+ *              an integral or enum type.
+ *
+ * @param to    The value one higher than the last element in the range.
+ *              The number of elements is equal to `to-from`. Must be
+ *              an integral or enum type.
+ *
+ * @return      Range object, whose type is the common arithmetic type of `from`
+ *              and `to`, that can be used to index a tensor.
+ */
 template <typename T, typename U, typename=
     detail::enable_if_numeric<T,U>>
 auto range(T from, U to)
@@ -313,6 +335,22 @@ auto range(T from, U to)
     return range_t<V>{(V)from, (V)to};
 }
 
+/**
+ * The range `[from,to)` with spacing `delta`.
+ *
+ * @param from  The value of the first element in the range. Must be
+ *              an integral or enum type.
+ *
+ * @param to    The value higher than all elements in the range. Must be
+ *              an integral or enum type.
+ *
+ * @param delta The distance between consecutive elements in the range.
+ *              The number of elements is equal to `(to-from)/delta`. Must be
+ *              an integral or enum type.
+ *
+ * @return      Range object, whose type is the common arithmetic type of `from`,
+ *              `to`, and `delta`, that can be used to index a tensor.
+ */
 template <typename T, typename U, typename V, typename=
     detail::enable_if_numeric<T,U,V>>
 auto range(T from, U to, V delta)
@@ -325,25 +363,149 @@ auto range(T from, U to, V delta)
     return range_t<W>{(W)from, (W)to, (W)delta};
 }
 
+/**
+ * The range `[from,from+N)`.
+ *
+ * @param from  The value of the first element in the range. Must be
+ *              an integral or enum type.
+ *
+ * @param N     The number of elements in the range. Must be
+ *              an integral or enum type.
+ *
+ * @return      Range object, whose type is the common arithmetic type of `from`
+ *              and `N`, that can be used to index a tensor.
+ */
+template <typename T, typename U, typename=
+    detail::enable_if_numeric<T,U>>
+auto rangeN(T from, U N)
+{
+    typedef decltype(std::declval<T>() + std::declval<U>()) V0;
+    typedef typename detail::underlying_type_if<V0>::type V;
+    return range_t<V>{V(from), V(from+N)};
+}
+
+/**
+ * The range `[from,from+N*delta)` with spacing `delta`.
+ *
+ * @param from  The value of the first element in the range. Must be
+ *              an integral or enum type.
+ *
+ * @param N     The number of elements in the range. Must be
+ *              an integral or enum type.
+ *
+ * @param delta The distance between consecutive elements in the range.
+ *              Must be an integral or enum type.
+ *
+ * @return      Range object, whose type is the common arithmetic type of `from`,
+ *              `N`, and `delta`, that can be used to index a tensor.
+ */
+template <typename T, typename U, typename V, typename=
+    detail::enable_if_numeric<T,U,V>>
+auto rangeN(T from, U N, V delta)
+{
+    typedef decltype(std::declval<T>() + std::declval<U>() + std::declval<V>()) W0;
+    typedef typename detail::underlying_type_if<W0>::type W;
+    return range_t<W>{W(from), W(from+N*delta), W(delta)};
+}
+
+/**
+ * The range `[0,to)` in reverse order.
+ *
+ * @param to    The value one higher than the first element in the range.
+ *              This is equal to the number of elements in the range. Must be
+ *              an integral or enum type.
+ *
+ * @return      Range object, of the same type as `to`, that can be used to index a tensor.
+ */
 template <typename T, typename=
     detail::enable_if_numeric<T>>
 auto reversed_range(T to)
 {
-    return range(to-1, -1, -1);
+    return range(to).reverse();
 }
 
-template <typename T, typename U, typename=
-    detail::enable_if_numeric<T,U>>
-auto reversed_rangeN(T from, U N)
-{
-    return range(from-1, from-N-1, -1);
-}
-
+/**
+ * The range `[from,to)` in reverse order.
+ *
+ * @param from  The value of the last element in the range. Must be
+ *              an integral or enum type.
+ *
+ * @param to    The value one higher than the first element in the range.
+ *              The number of elements is equal to `to-from`. Must be
+ *              an integral or enum type.
+ *
+ * @return      Range object, whose type is the common arithmetic type of `from`
+ *              and `to`, that can be used to index a tensor.
+ */
 template <typename T, typename U, typename=
     detail::enable_if_numeric<T,U>>
 auto reversed_range(T from, U to)
 {
-    return range(to-1, from-1, -1);
+    return range(from, to).reverse();
+}
+
+/**
+ * The range `[from,to)` with spacing `delta` in reverse order.
+ *
+ * @param from  The value of the last element in the range. Must be
+ *              an integral or enum type.
+ *
+ * @param to    The value one higher than the first element in the range.
+ *              Must be an integral or enum type.
+ *
+ * @param delta The distance between consecutive elements in the range.
+ *              The number of elements is equal to `(to-from)/delta`. Must be
+ *              an integral or enum type.
+ *
+ * @return      Range object, whose type is the common arithmetic type of `from`,
+ *              `to`, and `delta`, that can be used to index a tensor.
+ */
+template <typename T, typename U, typename V, typename=
+    detail::enable_if_numeric<T,U,V>>
+auto reversed_range(T from, U to, V delta)
+{
+    return range(from, to, delta).reverse();
+}
+
+/**
+ * The range `[to-N,to)` in reverse order.
+ *
+ * @param to    The value one larger than the first element in the range. Must be
+ *              an integral or enum type.
+ *
+ * @param N     The number of elements in the range. Must be
+ *              an integral or enum type.
+ *
+ * @return      Range object, whose type is the common arithmetic type of `from`
+ *              and `N`, that can be used to index a tensor.
+ */
+template <typename T, typename U, typename=
+    detail::enable_if_numeric<T,U>>
+auto reversed_rangeN(T to, U N)
+{
+    return range(to-1, to-N-1, -1);
+}
+
+/**
+ * The range `[to-N,to)` with spacing `delta` in reverse order.
+ *
+ * @param to    The value one larger than the first element in the range. Must be
+ *              an integral or enum type.
+ *
+ * @param N     The number of elements in the range. Must be
+ *              an integral or enum type.
+ *
+ * @param delta The distance between consecutive elements in the range.
+ *              Must be an integral or enum type.
+ *
+ * @return      Range object, whose type is the common arithmetic type of `from`
+ *              and `N`, that can be used to index a tensor.
+ */
+template <typename T, typename U, typename V, typename=
+    detail::enable_if_numeric<T,U,V>>
+auto reversed_rangeN(T to, U N, V delta)
+{
+    return range(to-delta, to-(N+1)*delta, -delta);
 }
 
 }

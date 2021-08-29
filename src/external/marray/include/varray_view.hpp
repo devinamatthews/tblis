@@ -65,6 +65,30 @@ class varray_view : public varray_base<Type, varray_view<Type>, false>
             reset(other);
         }
 
+        template <typename U, int N, typename D, bool O,
+            typename=detail::enable_if_convertible_t<
+                typename marray_base<U, N, D, O>::cptr,pointer>>
+        varray_view(const marray_base<U, N, D, O>& other)
+        {
+            reset(other);
+        }
+
+        template <typename U, int N, typename D, bool O,
+            typename=detail::enable_if_convertible_t<
+                typename marray_base<U, N, D, O>::pointer,pointer>>
+        varray_view(marray_base<U, N, D, O>&& other)
+        {
+            reset(other);
+        }
+
+        template <typename U, int N, typename D, bool O,
+            typename=detail::enable_if_convertible_t<
+                typename marray_base<U, N, D, O>::pointer,pointer>>
+        varray_view(marray_base<U, N, D, O>& other)
+        {
+            reset(other);
+        }
+
         varray_view(detail::array_1d<len_type> len, pointer ptr, layout layout = DEFAULT)
         {
             reset(len, ptr, layout);

@@ -97,7 +97,6 @@ inline void tblis_check_assert(const char*, bool cond, const char* fmt, Args&&..
 #include "../external/marray/include/varray.hpp"
 #include "../external/marray/include/marray.hpp"
 #include "../external/marray/include/dpd_varray.hpp"
-#include "../external/marray/include/dpd_marray.hpp"
 #include "../external/marray/include/indexed_varray.hpp"
 #include "../external/marray/include/indexed_dpd_varray.hpp"
 

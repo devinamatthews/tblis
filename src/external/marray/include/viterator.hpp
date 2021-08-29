@@ -2,6 +2,7 @@
 #define _MARRAY_VITERATOR_HPP_
 
 #include "utility.hpp"
+#include "range.hpp"
 
 namespace MArray
 {

@@ -18,6 +18,12 @@ TEST(varray, constructor)
     EXPECT_EQ(0u, v1.dimension());
     EXPECT_EQ(nullptr, v1.data());
 
+    varray<double> v21{4, 2, 5};
+    EXPECT_EQ(3u, v21.dimension());
+    EXPECT_EQ((len_vector{4, 2, 5}), v21.lengths());
+    EXPECT_EQ((stride_vector{10, 5, 1}), v21.strides());
+    EXPECT_EQ(0, v21.data()[0]);
+
     varray<double> v2({4, 2, 5});
     EXPECT_EQ(3u, v2.dimension());
     EXPECT_EQ((len_vector{4, 2, 5}), v2.lengths());
@@ -30,17 +36,17 @@ TEST(varray, constructor)
     EXPECT_EQ((stride_vector{10, 5, 1}), v3.strides());
     EXPECT_EQ(0, v3.data()[0]);
 
-    varray<double> v21({4, 2, 5}, 1.0);
-    EXPECT_EQ(3u, v21.dimension());
-    EXPECT_EQ((len_vector{4, 2, 5}), v21.lengths());
-    EXPECT_EQ((stride_vector{10, 5, 1}), v21.strides());
-    EXPECT_EQ(1, v21.data()[0]);
-
-    varray<double> v31(vector<char>{4, 2, 5}, 1.0);
+    varray<double> v31({4, 2, 5}, 1.0);
     EXPECT_EQ(3u, v31.dimension());
     EXPECT_EQ((len_vector{4, 2, 5}), v31.lengths());
     EXPECT_EQ((stride_vector{10, 5, 1}), v31.strides());
     EXPECT_EQ(1, v31.data()[0]);
+
+    varray<double> v32(vector<char>{4, 2, 5}, 1.0);
+    EXPECT_EQ(3u, v32.dimension());
+    EXPECT_EQ((len_vector{4, 2, 5}), v32.lengths());
+    EXPECT_EQ((stride_vector{10, 5, 1}), v32.strides());
+    EXPECT_EQ(1, v32.data()[0]);
 
     varray<double> v4({4, 2, 5}, 1.0, COLUMN_MAJOR);
     EXPECT_EQ(3u, v4.dimension());
@@ -74,7 +80,7 @@ TEST(varray, constructor)
     EXPECT_EQ((len_vector{4, 2, 5}), v54.lengths());
     EXPECT_EQ((stride_vector{10, 5, 1}), v54.strides());
 
-    varray<double> v51(v21);
+    varray<double> v51(v31);
     EXPECT_EQ(3u, v51.dimension());
     EXPECT_EQ((len_vector{4, 2, 5}), v51.lengths());
     EXPECT_EQ((stride_vector{10, 5, 1}), v51.strides());

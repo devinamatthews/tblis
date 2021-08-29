@@ -301,9 +301,6 @@ struct data_type_helper
     template <typename T, int N, int I, typename... D>
     static std::decay_t<T> check(MArray::marray_slice<T,N,I,D...>&);
 
-    template <typename T, int N, typename D, bool O>
-    static std::decay_t<T> check(MArray::dpd_marray_base<T,N,D,O>&);
-
     template <typename T, typename D, bool O>
     static std::decay_t<T> check(MArray::dpd_varray_base<T,D,O>&);
 

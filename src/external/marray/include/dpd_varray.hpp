@@ -19,11 +19,9 @@ class dpd_varray : public dpd_varray_base<Type, dpd_varray<Type, Allocator>, tru
         using base::leaf_;
         using base::parent_;
         using base::perm_;
-        using base::depth_;
         using base::data_;
         using base::irrep_;
         using base::nirrep_;
-        using base::layout_;
         struct : Allocator { stride_type size = 0; } storage_;
 
     public:
@@ -180,7 +178,12 @@ class dpd_varray : public dpd_varray_base<Type, dpd_varray<Type, Allocator>, tru
             typename=detail::enable_if_assignable_t<reference, U>>
         void reset(const dpd_varray<U, A>& other)
         {
-            reset(other, other.depth_, other.layout_);
+            reset();
+            base::reset(const_cast<dpd_varray<U, A>&>(other));
+
+            storage_.size = other.size();
+            data_ = alloc_traits::allocate(storage_, storage_.size);
+            *this = other;
         }
 
         template <typename U, typename D, bool O,

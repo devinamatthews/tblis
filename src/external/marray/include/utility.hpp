@@ -17,6 +17,7 @@
 #include <ostream>
 #include <stdexcept>
 #include <limits>
+#include <initializer_list>
 
 #ifdef MARRAY_ENABLE_ASSERTS
 #define MARRAY_ASSERT(e) assert(e)
@@ -26,19 +27,37 @@
 
 #include "short_vector.hpp"
 
+/**
+ * Main MArray namespace.
+ */
 namespace MArray
 {
 
-/*
- * The type all_t specifies a range [0,len_i) for an array
- * dimension i of length len_i (i.e. it selects all of the data along
- * that dimension).
- */
 struct all_t { constexpr all_t() {} };
 struct bcast_t { constexpr bcast_t() {} };
+
+/**
+ * Contains constants that can be used for indexing and slicing.
+ */
 namespace slice
 {
+    /**
+     * Select all indices along a dimension.
+     */
     constexpr all_t all;
+    /**
+     * Create a new dimension along which the tensor will be replicated.
+     *
+     * This can be used to broadcast data into a destination tensor of larger
+     * dimensionality, e.g.:
+     *
+     * @code{.cxx}
+     * marray<3> A{3,5,8};
+     * marray<4> B{3,6,5,8};
+     * B = A[all][bcast][all][all];
+     * //now B[i][j][k][l] == A[i][k][l] for all j
+     * @endcode
+     */
     constexpr bcast_t bcast;
 }
 
@@ -62,9 +81,12 @@ typedef short_vector<len_type,MARRAY_OPT_NDIM> len_vector;
 typedef short_vector<stride_type,MARRAY_OPT_NDIM> stride_vector;
 typedef short_vector<std::array<len_type,8>,MARRAY_OPT_NDIM> dpd_len_vector;
 typedef short_vector<std::array<stride_type,8>,MARRAY_OPT_NDIM> dpd_stride_vector;
+typedef short_vector<std::array<len_type,8>,2*MARRAY_OPT_NDIM> dpd_len_vector2;
 typedef short_vector<std::array<stride_type,8>,2*MARRAY_OPT_NDIM> dpd_stride_vector2;
 typedef short_vector<int,MARRAY_OPT_NDIM> dim_vector;
 typedef short_vector<int,2*MARRAY_OPT_NDIM> dim_vector2;
+typedef short_vector<len_type,2*MARRAY_OPT_NDIM> len_vector2;
+typedef short_vector<stride_type,2*MARRAY_OPT_NDIM> stride_vector2;
 typedef short_vector<len_type,MARRAY_OPT_NDIM> index_vector;
 typedef short_vector<int,MARRAY_OPT_NDIM> irrep_vector;
 template <typename T>
@@ -115,12 +137,15 @@ inline void divide(len_type x_, len_type y_, len_type& q, len_type& r)
     }
 }
 
-/*
- * The special value uninitialized is used to construct an array which
+struct uninitialized_t { constexpr uninitialized_t() {} };
+
+/**
+ * Do not initialize allocated memory.
+ *
+ * This special value is used to construct an array which
  * does not default- or value-initialize its elements (useful for avoiding
  * redundant memory operations for scalar types).
  */
-struct uninitialized_t { constexpr uninitialized_t() {} };
 constexpr uninitialized_t uninitialized;
 
 /*
@@ -139,9 +164,17 @@ struct layout
 };
 
 struct column_major_layout : layout { constexpr column_major_layout() : layout(0, construct{}) {} };
+
+/**
+ * Specifies that elements should be laid out in column-major order.
+ */
 constexpr column_major_layout COLUMN_MAJOR;
 
 struct row_major_layout : layout { constexpr row_major_layout() : layout(1, construct{}) {} };
+
+/**
+ * Specifies that elements should be laid out in row-major order.
+ */
 constexpr row_major_layout ROW_MAJOR;
 
 constexpr decltype(MARRAY_DEFAULT_LAYOUT) DEFAULT;

@@ -1,4 +1,4 @@
-AC_INIT(tblis, 1.2.0, dmatthews@utexas.edu, tblis, http://www.github.com/devinamatthews/tblis)
+AC_INIT([tblis],[1.2.0],[dmatthews@utexas.edu],[tblis],[http://www.github.com/devinamatthews/tblis])
 AM_INIT_AUTOMAKE([foreign silent-rules subdir-objects])
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE([disable])
@@ -11,7 +11,6 @@ AC_CONFIG_HEADERS(config.h)
 : ${CXXFLAGS="-O3"}
 
 AC_PROG_CC([icc gcc clang])
-AC_PROG_CC_C99
 AM_PROG_AS
 AC_PROG_EGREP
 AC_PROG_AWK
@@ -44,13 +43,13 @@ omp_simd_flag="not supported"
 for flag in -fopenmp-simd -qopenmp-simd; do
     CXXFLAGS_save="$CXXFLAGS"
     CXXFLAGS="$CXXFLAGS $flag -Werror"
-    AC_TRY_COMPILE([#include <cstdio>], [
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <cstdio>]], [[
         auto f = [](int* x){
         #pragma omp simd
         for (int i = 0;i < 256;i++)
             x[i] = i;
         }; printf("%p", &f);
-        ], [omp_simd_flag="$flag"], [])
+        ]])],[omp_simd_flag="$flag"],[])
     CXXFLAGS="$CXXFLAGS_save"
 done
 AC_MSG_RESULT([$omp_simd_flag])

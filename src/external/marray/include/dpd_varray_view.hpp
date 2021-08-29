@@ -9,6 +9,11 @@ namespace MArray
 template <typename Type>
 class dpd_varray_view : public dpd_varray_base<Type, dpd_varray_view<Type>, false>
 {
+    template <typename, typename, bool> friend class dpd_varray_base;
+    template <typename> friend class dpd_varray_view;
+    template <typename, typename> friend class dpd_varray;
+    template <typename, typename, bool> friend class indexed_dpd_varray_base;
+
     protected:
         typedef dpd_varray_base<Type, dpd_varray_view, false> base;
 
@@ -18,11 +23,16 @@ class dpd_varray_view : public dpd_varray_base<Type, dpd_varray_view<Type>, fals
         using base::leaf_;
         using base::parent_;
         using base::perm_;
-        using base::depth_;
         using base::data_;
         using base::irrep_;
         using base::nirrep_;
-        using base::layout_;
+
+        dpd_varray_view(const detail::dpd_base& other, int irrep, typename base::pointer data)
+        {
+            detail::dpd_base::reset(other);
+            irrep_ = irrep;
+            data_ = data;
+        }
 
     public:
         using typename base::value_type;

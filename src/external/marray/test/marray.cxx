@@ -25,20 +25,25 @@ TEST(marray, constructor)
     EXPECT_EQ((array<stride_type,3>{10, 5, 1}), v2.strides());
     EXPECT_EQ(0, v2.data()[0]);
 
+    marray<double,3> v21{4, 2, 5};
+    EXPECT_EQ((array<len_type,3>{4, 2, 5}), v21.lengths());
+    EXPECT_EQ((array<stride_type,3>{10, 5, 1}), v21.strides());
+    EXPECT_EQ(0, v21.data()[0]);
+
     marray<double,3> v3(array<char,3>{4, 2, 5});
     EXPECT_EQ((array<len_type,3>{4, 2, 5}), v3.lengths());
     EXPECT_EQ((array<stride_type,3>{10, 5, 1}), v3.strides());
     EXPECT_EQ(0, v3.data()[0]);
 
-    marray<double,3> v21({4, 2, 5}, 1.0);
-    EXPECT_EQ((array<len_type,3>{4, 2, 5}), v21.lengths());
-    EXPECT_EQ((array<stride_type,3>{10, 5, 1}), v21.strides());
-    EXPECT_EQ(1, v21.data()[0]);
-
-    marray<double,3> v31(array<char,3>{4, 2, 5}, 1.0);
+    marray<double,3> v31({4, 2, 5}, 1.0);
     EXPECT_EQ((array<len_type,3>{4, 2, 5}), v31.lengths());
     EXPECT_EQ((array<stride_type,3>{10, 5, 1}), v31.strides());
     EXPECT_EQ(1, v31.data()[0]);
+
+    marray<double,3> v32(array<char,3>{4, 2, 5}, 1.0);
+    EXPECT_EQ((array<len_type,3>{4, 2, 5}), v32.lengths());
+    EXPECT_EQ((array<stride_type,3>{10, 5, 1}), v32.strides());
+    EXPECT_EQ(1, v32.data()[0]);
 
     marray<double,3> v4({4, 2, 5}, 1.0, COLUMN_MAJOR);
     EXPECT_EQ((array<len_type,3>{4, 2, 5}), v4.lengths());
@@ -70,7 +75,7 @@ TEST(marray, constructor)
     EXPECT_EQ((array<len_type,3>{4, 2, 5}), v55.lengths());
     EXPECT_EQ((array<stride_type,3>{10, 5, 1}), v55.strides());
 
-    marray<double,3> v51(v21);
+    marray<double,3> v51(v31);
     EXPECT_EQ((array<len_type,3>{4, 2, 5}), v51.lengths());
     EXPECT_EQ((array<stride_type,3>{10, 5, 1}), v51.strides());
     EXPECT_EQ(1, v51.data()[0]);

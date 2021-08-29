@@ -24,14 +24,12 @@ class indexed_dpd_varray_view : public indexed_dpd_varray_base<Type, indexed_dpd
         using base::leaf_;
         using base::parent_;
         using base::perm_;
-        using base::depth_;
         using base::data_;
         using base::idx_len_;
         using base::idx_;
         using base::irrep_;
         using base::dense_irrep_;
         using base::nirrep_;
-        using base::layout_;
         using base::factor_;
 
     public:

@@ -32,8 +32,8 @@ TBLIS_BEGIN_CONFIG(a64fx)
                                bli_dgemm_armsve_asm_2vx10_unindexed,
                                _,
                                _)
-    // TBLIS_CONFIG_PACK_NN_MR_UKR(_, sve512_dpackm_asm_16xk, _, _)
-    // TBLIS_CONFIG_PACK_NN_NR_UKR(_, sve512_dpackm_asm_10xk, _, _)
+    TBLIS_CONFIG_PACK_NN_MR_UKR(_, sve512_dpackm_asm_16xk, _, _)
+    TBLIS_CONFIG_PACK_NN_NR_UKR(_, sve512_dpackm_asm_10xk, _, _)
 
     TBLIS_CONFIG_GEMM_ROW_MAJOR(false, false, _, _)
     TBLIS_CONFIG_GEMM_FLIP_UKR(true, true, _, _)

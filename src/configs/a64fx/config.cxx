@@ -32,11 +32,11 @@ int a64fx_check()
     }
 
     // Have to return early in order not to execute unsupported instructions in bli_vl().
-    // if (!has_sve)
-    // {
-    //     if (get_verbose() >= 1) printf("tblis: a64fx: Doesn't support SVE.\n");
-    //     return -1;
-    // }
+    if (!has_sve)
+    {
+        if (get_verbose() >= 1) printf("tblis: a64fx: Doesn't support SVE.\n");
+        return -1;
+    }
     
     if (bli_vl()*8 != 512)
     {

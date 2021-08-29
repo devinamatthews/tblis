@@ -206,49 +206,64 @@ namespace tblis
 
 int get_cpu_type(int& model, int& part, int& features)
 {
+    uint64_t midr_el1 = 0, implementer;
     model = MODEL_UNKNOWN;
     features = 0;
 
-    FILE *fd1 = popen("grep -m 1 Processor /proc/cpuinfo", "r");
-    if (!fd1) return VENDOR_ARM;
-    FILE *fd2 = popen("grep -m 1 'CPU part' /proc/cpuinfo", "r");
-    if (!fd2)
+#if !defined(__aarch64__)
+    // Armv7. Return early.
+    // NOTE: For ARM, It's common for /proc/cpuinfo to
+    //       not contain vendor name or arch name at all.
+    model = MODEL_ARMV7;
+    return VENDOR_UNKNOWN;
+#endif
+    // Armv8. Look into more details.
+    model = MODEL_ARMV8;
+
+#if defined(__APPLE__)
+    // Simple workaround for Apple Silicon.
+    features |= FEATURE_NEON;
+    return VENDOR_APPLE;
+#endif
+
+    FILE *fid = popen("grep -m 1 Features /proc/cpuinfo", "r");
+    if (fid)
     {
-        pclose(fd1);
-        return VENDOR_ARM;
+        char c;
+        std::string feat;
+        while ((c = fgetc(fid)) != EOF && c != '\n')
+            feat.push_back(c);
+        pclose(fid);
+
+        if (feat.find("neon") != std::string::npos ||
+            feat.find("asimd") != std::string::npos)
+            features |= FEATURE_NEON;
+        if (feat.find("sve") != std::string::npos)
+            features |= FEATURE_SVE;
     }
-    FILE *fd3 = popen("grep -m 1 Features /proc/cpuinfo", "r");
-    if (!fd3)
+
+    // https://github.com/flame/blis/pull/344
+    __asm__ ("mrs %0, MIDR_EL1" : "=r" (midr_el1));
+    implementer = (midr_el1 >> 24) & 0xFF;
+    part        = (midr_el1 >> 4)  & 0xFFF;
+
+    switch (implementer)
     {
-        pclose(fd1);
-        pclose(fd2);
-        return VENDOR_ARM;
+        case VENDOR_ARM:
+        case VENDOR_BROADCOM:
+        case VENDOR_CAVIUM:
+        case VENDOR_DEC:
+        case VENDOR_FUJITSU:
+        case VENDOR_NVIDIA:
+        case VENDOR_APM:
+        case VENDOR_QUALCOMM:
+        case VENDOR_SAMSUNG:
+        case VENDOR_TEXAS:
+        case VENDOR_MARVELL:
+            return implementer;
+        default:
+            return VENDOR_UNKNOWN;
     }
-
-    char c;
-    std::string proc, ptno, feat;
-    while ((c = fgetc(fd1)) != EOF) proc.push_back(c);
-    while ((c = fgetc(fd2)) != EOF) ptno.push_back(c);
-    while ((c = fgetc(fd3)) != EOF) feat.push_back(c);
-
-    pclose(fd1);
-    pclose(fd2);
-    pclose(fd3);
-
-    if (feat.find("neon") != std::string::npos ||
-        feat.find("asimd") != std::string::npos)
-        features |= FEATURE_NEON;
-
-    if (proc.find("ARMv7") != std::string::npos)
-        model = MODEL_ARMV7;
-    else if (proc.find("AArch64") != std::string::npos)
-        model = MODEL_ARMV8;
-
-    auto pos = ptno.find("0x");
-    TBLIS_ASSERT(pos != std::string::npos);
-    part = strtoi(ptno, pos, 16);
-
-    return VENDOR_ARM;
 }
 
 }

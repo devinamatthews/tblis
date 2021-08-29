@@ -711,20 +711,22 @@ ENABLE_HASWELL_FALSE
 ENABLE_HASWELL_TRUE
 ENABLE_CORE2_FALSE
 ENABLE_CORE2_TRUE
-ENABLE_CORTEX_A9_FALSE
-ENABLE_CORTEX_A9_TRUE
-ENABLE_CORTEX_A15_FALSE
-ENABLE_CORTEX_A15_TRUE
 ENABLE_EXCAVATOR_FALSE
 ENABLE_EXCAVATOR_TRUE
 ENABLE_BULLDOZER_FALSE
 ENABLE_BULLDOZER_TRUE
 ENABLE_BGQ_FALSE
 ENABLE_BGQ_TRUE
-ENABLE_ARMV8A_FALSE
-ENABLE_ARMV8A_TRUE
-ENABLE_ARMV7A_FALSE
-ENABLE_ARMV7A_TRUE
+ENABLE_NEOVERSEV1_FALSE
+ENABLE_NEOVERSEV1_TRUE
+ENABLE_A64FX_FALSE
+ENABLE_A64FX_TRUE
+ENABLE_THUNDERX2_FALSE
+ENABLE_THUNDERX2_TRUE
+ENABLE_CORTEXA53_FALSE
+ENABLE_CORTEXA53_TRUE
+ENABLE_CORTEXA9_FALSE
+ENABLE_CORTEXA9_TRUE
 IS_OSX_FALSE
 IS_OSX_TRUE
 ENABLE_INTEL_COMPILER_FALSE
@@ -1521,11 +1523,16 @@ Optional Features:
 
                           possible values are:
 
-                          reference, bulldozer, piledriver, excavator, zen,
-                          core2, sandybridge, haswell, skx1, skx2, knl, auto
+                          reference, auto,
+                          core2, sandybridge, haswell, skx1, skx2, knl,
+                          bulldozer, piledriver, excavator, zen,
+                          cortexa9, cortexa53, thunderx2, a64fx, neoversev1
 
                           the following meta-configurations are also available:
 
+                          armsve = a64fx,neoversev1
+                          arm64 = cortexa53,thunderx2
+                          arm32 = cortexa9
                           skx = skx1,skx2
                           intel = core2,sandybridge,haswell,skx,knl
                           amd = bulldozer,piledriver,excavator,zen
@@ -6380,12 +6387,16 @@ printf "%s\n" "#define LABEL_TYPE $label_type" >>confdefs.h
 #
 # Supported:
 #
-# reference, bulldozer, piledriver, excavator, zen, core2, sandybridge,
-# haswell, skx1, skx2, knl, auto
+# reference, auto,
+# core2, sandybridge, haswell, skx1, skx2, knl,
+# bulldozer, piledriver, excavator, zen,
+# cortexa9(generic arm32), cortexa53(generic arm64),
+# thunderx2, a64fx, neoversev1
+#
 #
 # Possible with porting from BLIS:
 #
-# armv7a, armv8a, bgq, cortex-a15, cortex-a9, power7, loongson3a, mic
+# loongson3a, power7, bgq, mic
 #
 
 # Check whether --enable-config was given.
@@ -6553,9 +6564,120 @@ if test $ac_cv_defined__M_IX86 != "no"
 then :
   enable_config=x86
 fi
-#    AC_CHECK_DEFINE([__aarch64__], [enable_config=arm])
-#    AC_CHECK_DEFINE([__arm__], [enable_config=arm])
-#    AC_CHECK_DEFINE([_M_ARM], [enable_config=arm])
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for __aarch64__ defined" >&5
+printf %s "checking for __aarch64__ defined... " >&6; }
+if test ${ac_cv_defined___aarch64__+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main (void)
+{
+
+  #ifdef __aarch64__
+  int ok;
+  #else
+  choke me
+  #endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  ac_cv_defined___aarch64__=yes
+else $as_nop
+  ac_cv_defined___aarch64__=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined___aarch64__" >&5
+printf "%s\n" "$ac_cv_defined___aarch64__" >&6; }
+if test $ac_cv_defined___aarch64__ != "no"
+then :
+  enable_config=arm64
+fi
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for __arm__ defined" >&5
+printf %s "checking for __arm__ defined... " >&6; }
+if test ${ac_cv_defined___arm__+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main (void)
+{
+
+  #ifdef __arm__
+  int ok;
+  #else
+  choke me
+  #endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  ac_cv_defined___arm__=yes
+else $as_nop
+  ac_cv_defined___arm__=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined___arm__" >&5
+printf "%s\n" "$ac_cv_defined___arm__" >&6; }
+if test $ac_cv_defined___arm__ != "no"
+then :
+  enable_config=arm32
+fi
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for _M_ARM defined" >&5
+printf %s "checking for _M_ARM defined... " >&6; }
+if test ${ac_cv_defined__M_ARM+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main (void)
+{
+
+  #ifdef _M_ARM
+  int ok;
+  #else
+  choke me
+  #endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  ac_cv_defined__M_ARM=yes
+else $as_nop
+  ac_cv_defined__M_ARM=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined__M_ARM" >&5
+printf "%s\n" "$ac_cv_defined__M_ARM" >&6; }
+if test $ac_cv_defined__M_ARM != "no"
+then :
+  enable_config=arm32
+fi
 #    AC_CHECK_DEFINE([__powerpc64__], [enable_config=power7])
 #    AC_CHECK_DEFINE([__ppc64__], [enable_config=power7])
 #    AC_CHECK_DEFINE([__PPC64__], [enable_config=power7])
@@ -6613,10 +6735,13 @@ configs=`echo $enable_config | sed 's/x86/intel,amd/' \
                              | sed 's/amd/bulldozer,piledriver,excavator,zen/' \
                              | sed 's/skx,/skx1,skx2,/' \
                              | sed 's/skx$/skx1,skx2/' \
+                             | sed 's/arm32/cortexa9/' \
+                             | sed 's/arm64/cortexa53,thunderx2/' \
+                             | sed 's/armsve/a64fx,neoversev1/' \
                              | sed 's/,/ /g'`
 
 for config in $configs; do
-    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|bulldozer|piledriver|excavator|zen)$' ); then
+    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|bulldozer|piledriver|excavator|zen|cortexa9|cortexa53|thunderx2|a64fx|neoversev1)$' ); then
         as_fn_error $? "Unknown configuration $config" "$LINENO" 5
     fi
 done
@@ -6959,20 +7084,44 @@ printf %s "checking enabled configurations... " >&6; }
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $configs" >&5
 printf "%s\n" "$configs" >&6; }
 
- if echo $configs | grep -q armv7a; then
-  ENABLE_ARMV7A_TRUE=
-  ENABLE_ARMV7A_FALSE='#'
+ if echo $configs | grep -q cortexa9; then
+  ENABLE_CORTEXA9_TRUE=
+  ENABLE_CORTEXA9_FALSE='#'
 else
-  ENABLE_ARMV7A_TRUE='#'
-  ENABLE_ARMV7A_FALSE=
+  ENABLE_CORTEXA9_TRUE='#'
+  ENABLE_CORTEXA9_FALSE=
 fi
 
- if echo $configs | grep -q armv8a; then
-  ENABLE_ARMV8A_TRUE=
-  ENABLE_ARMV8A_FALSE='#'
+ if echo $configs | grep -q cortexa53; then
+  ENABLE_CORTEXA53_TRUE=
+  ENABLE_CORTEXA53_FALSE='#'
 else
-  ENABLE_ARMV8A_TRUE='#'
-  ENABLE_ARMV8A_FALSE=
+  ENABLE_CORTEXA53_TRUE='#'
+  ENABLE_CORTEXA53_FALSE=
+fi
+
+ if echo $configs | grep -q thunderx2; then
+  ENABLE_THUNDERX2_TRUE=
+  ENABLE_THUNDERX2_FALSE='#'
+else
+  ENABLE_THUNDERX2_TRUE='#'
+  ENABLE_THUNDERX2_FALSE=
+fi
+
+ if echo $configs | grep -q a64fx; then
+  ENABLE_A64FX_TRUE=
+  ENABLE_A64FX_FALSE='#'
+else
+  ENABLE_A64FX_TRUE='#'
+  ENABLE_A64FX_FALSE=
+fi
+
+ if echo $configs | grep -q neoversev1; then
+  ENABLE_NEOVERSEV1_TRUE=
+  ENABLE_NEOVERSEV1_FALSE='#'
+else
+  ENABLE_NEOVERSEV1_TRUE='#'
+  ENABLE_NEOVERSEV1_FALSE=
 fi
 
  if echo $configs | grep -q bgq; then
@@ -6997,22 +7146,6 @@ fi
 else
   ENABLE_EXCAVATOR_TRUE='#'
   ENABLE_EXCAVATOR_FALSE=
-fi
-
- if echo $configs | grep -q cortex-a15; then
-  ENABLE_CORTEX_A15_TRUE=
-  ENABLE_CORTEX_A15_FALSE='#'
-else
-  ENABLE_CORTEX_A15_TRUE='#'
-  ENABLE_CORTEX_A15_FALSE=
-fi
-
- if echo $configs | grep -q cortex-a9; then
-  ENABLE_CORTEX_A9_TRUE=
-  ENABLE_CORTEX_A9_FALSE='#'
-else
-  ENABLE_CORTEX_A9_TRUE='#'
-  ENABLE_CORTEX_A9_FALSE=
 fi
 
  if echo $configs | grep -q core2; then
@@ -18435,12 +18568,24 @@ if test -z "${IS_OSX_TRUE}" && test -z "${IS_OSX_FALSE}"; then
   as_fn_error $? "conditional \"IS_OSX\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${ENABLE_ARMV7A_TRUE}" && test -z "${ENABLE_ARMV7A_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_ARMV7A\" was never defined.
+if test -z "${ENABLE_CORTEXA9_TRUE}" && test -z "${ENABLE_CORTEXA9_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_CORTEXA9\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${ENABLE_ARMV8A_TRUE}" && test -z "${ENABLE_ARMV8A_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_ARMV8A\" was never defined.
+if test -z "${ENABLE_CORTEXA53_TRUE}" && test -z "${ENABLE_CORTEXA53_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_CORTEXA53\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_THUNDERX2_TRUE}" && test -z "${ENABLE_THUNDERX2_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_THUNDERX2\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_A64FX_TRUE}" && test -z "${ENABLE_A64FX_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_A64FX\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_NEOVERSEV1_TRUE}" && test -z "${ENABLE_NEOVERSEV1_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_NEOVERSEV1\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_BGQ_TRUE}" && test -z "${ENABLE_BGQ_FALSE}"; then
@@ -18453,14 +18598,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_EXCAVATOR_TRUE}" && test -z "${ENABLE_EXCAVATOR_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_EXCAVATOR\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${ENABLE_CORTEX_A15_TRUE}" && test -z "${ENABLE_CORTEX_A15_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_CORTEX_A15\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${ENABLE_CORTEX_A9_TRUE}" && test -z "${ENABLE_CORTEX_A9_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_CORTEX_A9\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_CORE2_TRUE}" && test -z "${ENABLE_CORE2_FALSE}"; then

@@ -151,12 +151,16 @@ AC_DEFINE_UNQUOTED([LABEL_TYPE], [$label_type], [label_type])
 #
 # Supported:
 #
-# reference, bulldozer, piledriver, excavator, zen, core2, sandybridge,
-# haswell, skx1, skx2, knl, auto
+# reference, auto,
+# core2, sandybridge, haswell, skx1, skx2, knl,
+# bulldozer, piledriver, excavator, zen,
+# cortexa9(generic arm32), cortexa53(generic arm64),
+# thunderx2, a64fx, neoversev1
+#
 #
 # Possible with porting from BLIS:
 #
-# armv7a, armv8a, bgq, cortex-a15, cortex-a9, power7, loongson3a, mic
+# loongson3a, power7, bgq, mic
 #
 
 AC_ARG_ENABLE([config],
@@ -165,11 +169,16 @@ AC_ARG_ENABLE([config],
   
                           possible values are:
                           
-                          reference, bulldozer, piledriver, excavator, zen,
-                          core2, sandybridge, haswell, skx1, skx2, knl, auto
+                          reference, auto,
+                          core2, sandybridge, haswell, skx1, skx2, knl,
+                          bulldozer, piledriver, excavator, zen,
+                          cortexa9, cortexa53, thunderx2, a64fx, neoversev1
 
                           the following meta-configurations are also available:
  
+                          armsve = a64fx,neoversev1
+                          arm64 = cortexa53,thunderx2
+                          arm32 = cortexa9
                           skx = skx1,skx2
                           intel = core2,sandybridge,haswell,skx,knl
                           amd = bulldozer,piledriver,excavator,zen
@@ -184,9 +193,9 @@ if echo $enable_config | grep -q auto; then
     AC_CHECK_DEFINE([_M_X64], [enable_config=x86])
     AC_CHECK_DEFINE([__i386], [enable_config=x86])
     AC_CHECK_DEFINE([_M_IX86], [enable_config=x86])
-#    AC_CHECK_DEFINE([__aarch64__], [enable_config=arm])
-#    AC_CHECK_DEFINE([__arm__], [enable_config=arm])
-#    AC_CHECK_DEFINE([_M_ARM], [enable_config=arm])
+    AC_CHECK_DEFINE([__aarch64__], [enable_config=arm64])
+    AC_CHECK_DEFINE([__arm__], [enable_config=arm32])
+    AC_CHECK_DEFINE([_M_ARM], [enable_config=arm32])
 #    AC_CHECK_DEFINE([__powerpc64__], [enable_config=power7])
 #    AC_CHECK_DEFINE([__ppc64__], [enable_config=power7])
 #    AC_CHECK_DEFINE([__PPC64__], [enable_config=power7])
@@ -207,10 +216,13 @@ configs=`echo $enable_config | sed 's/x86/intel,amd/' \
                              | sed 's/amd/bulldozer,piledriver,excavator,zen/' \
                              | sed 's/skx,/skx1,skx2,/' \
                              | sed 's/skx$/skx1,skx2/' \
+                             | sed 's/arm32/cortexa9/' \
+                             | sed 's/arm64/cortexa53,thunderx2/' \
+                             | sed 's/armsve/a64fx,neoversev1/' \
                              | sed 's/,/ /g'`
 
 for config in $configs; do
-    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|bulldozer|piledriver|excavator|zen)$' ); then
+    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|bulldozer|piledriver|excavator|zen|cortexa9|cortexa53|thunderx2|a64fx|neoversev1)$' ); then
         AC_MSG_ERROR([Unknown configuration $config])
     fi
 done
@@ -412,13 +424,14 @@ fi
 AC_MSG_CHECKING([enabled configurations])
 AC_MSG_RESULT([$configs])
 
-AM_CONDITIONAL(ENABLE_ARMV7A, [echo $configs | grep -q armv7a])
-AM_CONDITIONAL(ENABLE_ARMV8A, [echo $configs | grep -q armv8a])
+AM_CONDITIONAL(ENABLE_CORTEXA9, [echo $configs | grep -q cortexa9])
+AM_CONDITIONAL(ENABLE_CORTEXA53, [echo $configs | grep -q cortexa53])
+AM_CONDITIONAL(ENABLE_THUNDERX2, [echo $configs | grep -q thunderx2])
+AM_CONDITIONAL(ENABLE_A64FX, [echo $configs | grep -q a64fx])
+AM_CONDITIONAL(ENABLE_NEOVERSEV1, [echo $configs | grep -q neoversev1])
 AM_CONDITIONAL(ENABLE_BGQ, [echo $configs | grep -q bgq])
 AM_CONDITIONAL(ENABLE_BULLDOZER, [echo $configs | grep -q bulldozer])
 AM_CONDITIONAL(ENABLE_EXCAVATOR, [echo $configs | grep -q excavator])
-AM_CONDITIONAL(ENABLE_CORTEX_A15, [echo $configs | grep -q cortex-a15])
-AM_CONDITIONAL(ENABLE_CORTEX_A9, [echo $configs | grep -q cortex-a9])
 AM_CONDITIONAL(ENABLE_CORE2, [echo $configs | grep -q core2])
 AM_CONDITIONAL(ENABLE_HASWELL, [echo $configs | grep -q haswell])
 AM_CONDITIONAL(ENABLE_SKX1, [echo $configs | grep -q skx1])

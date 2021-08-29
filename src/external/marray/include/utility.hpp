@@ -15,6 +15,8 @@
 #include <string>
 #include <functional>
 #include <ostream>
+#include <stdexcept>
+#include <limits>
 #include <initializer_list>
 
 #ifdef MARRAY_ENABLE_ASSERTS

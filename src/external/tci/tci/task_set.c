@@ -1,5 +1,6 @@
 #include "communicator.h"
 #include "task_set.h"
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {

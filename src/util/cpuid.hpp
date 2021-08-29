@@ -42,9 +42,21 @@ int get_cpu_type(int& family, int& model, int& features);
 namespace tblis
 {
 
-enum {VENDOR_ARM, VENDOR_UNKNOWN}
-enum {MODEL_ARMV7, MODEL_ARMV8, MODEL_UNKNOWN}
-enum {FEATURE_NEON = 0x1};
+enum {VENDOR_ARM      = 0x41,
+      VENDOR_BROADCOM = 0x42,
+      VENDOR_CAVIUM   = 0x43,
+      VENDOR_DEC      = 0x44,
+      VENDOR_FUJITSU  = 0x45,
+      VENDOR_NVIDIA   = 0x4e,
+      VENDOR_APM      = 0x50,
+      VENDOR_QUALCOMM = 0x51,
+      VENDOR_SAMSUNG  = 0x53,
+      VENDOR_TEXAS    = 0x54,
+      VENDOR_MARVELL  = 0x56,
+      VENDOR_UNKNOWN  = 0x00,
+      VENDOR_APPLE    = 0xff}; // Apple does not have /proc/cpuinfo.
+enum {MODEL_ARMV7, MODEL_ARMV8, MODEL_UNKNOWN};
+enum {FEATURE_NEON, FEATURE_SVE};
 
 int get_cpu_type(int& model, int& part, int& features);
 

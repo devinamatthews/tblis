@@ -5,7 +5,7 @@
 namespace tblis
 {
 
-int armv7a_check()
+int cortexa9_check()
 {
     int model, part, features;
     int vendor = get_cpu_type(model, part, features);

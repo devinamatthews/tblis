@@ -34,7 +34,7 @@ void sve512_dpackm_asm_16xk(len_type m, len_type k,
     }
     else
     {
-        pack_nn_ukr_def<armv8a_sve512_config, double, matrix_constants::MAT_A>
+        pack_nn_ukr_def<a64fx_config, double, matrix_constants::MAT_A>
             (m, k, alpha, conj, p_a, rs_a, cs_a, p_d, inc_d, p_e, inc_e, p_ap);
     }
 }
@@ -57,11 +57,11 @@ void sve512_dpackm_asm_10xk(len_type m, len_type k,
     }
     else
     {
-        pack_nn_ukr_def<armv8a_sve512_config, double, matrix_constants::MAT_B>
+        pack_nn_ukr_def<a64fx_config, double, matrix_constants::MAT_B>
             (m, k, alpha, conj, p_a, rs_a, cs_a, p_d, inc_d, p_e, inc_e, p_ap);
     }
 }
 
-TBLIS_CONFIG_INSTANTIATE(armv8a_sve512);
+TBLIS_CONFIG_INSTANTIATE(a64fx);
 
 }

@@ -148,43 +148,30 @@ host_triplet = @host@
 #
 # ARM architectures
 # 
-@ENABLE_ARMV7A_TRUE@am__append_38 = lib/libarmv7a.la
-@ENABLE_ARMV7A_TRUE@am__append_39 = lib/libarmv7a.la
-@ENABLE_ARMV7A_TRUE@am__append_40 = src/configs/armv7a/config.cxx
-
-#if ENABLE_CORTEX_A15
-#noinst_LTLIBRARIES += lib/libcortex-a15.la
-#lib_libtblis_la_LIBADD += lib/libcortex-a15.la
-#lib_libcortex_a15_la_SOURCES = src/external/blis/config/cortex-a15/kernels/3/bli_gemm_opt_4x4.c
-#lib_libcortex_a15_la_CFLAGS = -Isrc/external/blis/config/cortex-a15 -mfloat-abi=hard -mfpu=neon -march=armv7-a
-#endif
-#
-#if ENABLE_CORTEX_A9
-#noinst_LTLIBRARIES += lib/libcortex-a9.la
-#lib_libtblis_la_LIBADD += lib/libcortex-a9.la
-#lib_libcortex_a9_la_SOURCES = src/external/blis/config/cortex-a9/kernels/3/bli_gemm_opt_4x4.c
-#lib_libcortex_a9_la_CFLAGS = -Isrc/external/blis/config/cortex-a9 -mfloat-abi=hard -mfpu=neon -march=armv7-a
-#endif
-@ENABLE_ARMV8A_TRUE@am__append_41 = lib/libarmv8a.la
-@ENABLE_ARMV8A_TRUE@am__append_42 = lib/libarmv8a.la
-@ENABLE_ARMV8A_TRUE@am__append_43 = src/configs/armv8a/config.cxx
+@ENABLE_CORTEXA9_TRUE@am__append_38 = lib/libcortexa9.la
+@ENABLE_CORTEXA9_TRUE@am__append_39 = lib/libcortexa9.la
+@ENABLE_CORTEXA9_TRUE@am__append_40 = src/configs/cortexa9/config.cxx
+@ENABLE_CORTEXA53_TRUE@am__append_41 = lib/libcortexa53.la
+@ENABLE_CORTEXA53_TRUE@am__append_42 = lib/libcortexa53.la
+@ENABLE_CORTEXA53_TRUE@am__append_43 = src/configs/cortexa53/config.cxx
 @ENABLE_THUNDERX2_TRUE@am__append_44 = lib/libthunderx2.la
 @ENABLE_THUNDERX2_TRUE@am__append_45 = lib/libthunderx2.la
 @ENABLE_THUNDERX2_TRUE@am__append_46 = src/configs/thunderx2/config.cxx
-@ENABLE_ARMV8A_FALSE@@ENABLE_THUNDERX2_TRUE@am__append_47 = src/configs/armv8a/bli_gemm_asm_d6x8.c
-@ENABLE_ARMV8A_SVE512_TRUE@am__append_48 = lib/libarmv8a_sve512.la
-@ENABLE_ARMV8A_SVE512_TRUE@am__append_49 = lib/libarmv8a_sve512.la
-@ENABLE_ARMV8A_SVE512_TRUE@am__append_50 = src/configs/armv8a_sve512/config.cxx
-@ENABLE_ARMV8A_SVE512_TRUE@am__append_51 = -march=armv8-a+sve
-@ENABLE_ARMV8A_SVE256_TRUE@am__append_52 = lib/libarmv8a_sve256.la
-@ENABLE_ARMV8A_SVE256_TRUE@am__append_53 = lib/libarmv8a_sve256.la
-@ENABLE_ARMV8A_SVE256_TRUE@am__append_54 = src/configs/armv8a_sve256/config.cxx
-@ENABLE_ARMV8A_SVE256_TRUE@am__append_55 = -march=armv8-a+sve
+@ENABLE_CORTEXA53_FALSE@@ENABLE_THUNDERX2_TRUE@am__append_47 = src/configs/cortexa53/bli_gemm_asm_d6x8.c
+@ENABLE_A64FX_TRUE@am__append_48 = lib/liba64fx.la
+@ENABLE_A64FX_TRUE@am__append_49 = lib/liba64fx.la
+@ENABLE_A64FX_TRUE@am__append_50 = src/configs/a64fx/config.cxx
+@ENABLE_NEOVERSEV1_TRUE@am__append_51 = lib/libneoversev1.la
+@ENABLE_NEOVERSEV1_TRUE@am__append_52 = lib/libneoversev1.la
+@ENABLE_NEOVERSEV1_TRUE@am__append_53 = src/configs/neoversev1/config.cxx
+@ENABLE_A64FX_FALSE@@ENABLE_NEOVERSEV1_TRUE@am__append_54 = src/configs/a64fx/bli_vl.c \
+@ENABLE_A64FX_FALSE@@ENABLE_NEOVERSEV1_TRUE@                                src/configs/a64fx/bli_gemm_armsve_asm_2vx10_unindexed.c
+
 noinst_PROGRAMS = bin/test$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
 	$(am__EXEEXT_3)
-@ENABLE_BLAS_TRUE@am__append_56 = bin/bench bin/batched_bench #bin/dpd_bench
-@ENABLE_BLAS_TRUE@@ENABLE_SKX1_TRUE@am__append_57 = bin/skx_bench
-@ENABLE_BLAS_TRUE@@ENABLE_SKX1_FALSE@@ENABLE_SKX2_TRUE@am__append_58 = bin/skx_bench
+@ENABLE_BLAS_TRUE@am__append_55 = bin/bench bin/batched_bench #bin/dpd_bench
+@ENABLE_BLAS_TRUE@@ENABLE_SKX1_TRUE@am__append_56 = bin/skx_bench
+@ENABLE_BLAS_TRUE@@ENABLE_SKX1_FALSE@@ENABLE_SKX2_TRUE@am__append_57 = bin/skx_bench
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/as-gcc-inline-assembly.m4 \
@@ -255,49 +242,25 @@ am__installdirs = "$(DESTDIR)$(libdir)" \
 	"$(DESTDIR)$(memoryincludedir)" "$(DESTDIR)$(pkgincludedir)" \
 	"$(DESTDIR)$(stl_extincludedir)" "$(DESTDIR)$(utilincludedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES) $(noinst_LTLIBRARIES)
-lib_libarmv7a_la_LIBADD =
-am__lib_libarmv7a_la_SOURCES_DIST = src/configs/armv7a/config_ker.cxx \
-	src/configs/armv7a/bli_gemm_armv7a_int_d4x4.c
+lib_liba64fx_la_LIBADD =
+am__lib_liba64fx_la_SOURCES_DIST = src/configs/a64fx/config_ker.cxx \
+	src/configs/a64fx/bli_gemm_armsve_asm_2vx10_unindexed.c \
+	src/configs/a64fx/bli_dpackm_armsve512_asm_16xk.c \
+	src/configs/a64fx/bli_dpackm_armsve512_asm_10xk.c \
+	src/configs/a64fx/bli_vl.c
 am__dirstamp = $(am__leading_dot)dirstamp
-@ENABLE_ARMV7A_TRUE@am_lib_libarmv7a_la_OBJECTS =  \
-@ENABLE_ARMV7A_TRUE@	src/configs/armv7a/config_ker.lo \
-@ENABLE_ARMV7A_TRUE@	src/configs/armv7a/lib_libarmv7a_la-bli_gemm_armv7a_int_d4x4.lo
-lib_libarmv7a_la_OBJECTS = $(am_lib_libarmv7a_la_OBJECTS)
+@ENABLE_A64FX_TRUE@am_lib_liba64fx_la_OBJECTS =  \
+@ENABLE_A64FX_TRUE@	src/configs/a64fx/config_ker.lo \
+@ENABLE_A64FX_TRUE@	src/configs/a64fx/lib_liba64fx_la-bli_gemm_armsve_asm_2vx10_unindexed.lo \
+@ENABLE_A64FX_TRUE@	src/configs/a64fx/lib_liba64fx_la-bli_dpackm_armsve512_asm_16xk.lo \
+@ENABLE_A64FX_TRUE@	src/configs/a64fx/lib_liba64fx_la-bli_dpackm_armsve512_asm_10xk.lo \
+@ENABLE_A64FX_TRUE@	src/configs/a64fx/lib_liba64fx_la-bli_vl.lo
+lib_liba64fx_la_OBJECTS = $(am_lib_liba64fx_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-@ENABLE_ARMV7A_TRUE@am_lib_libarmv7a_la_rpath =
-lib_libarmv8a_la_LIBADD =
-am__lib_libarmv8a_la_SOURCES_DIST = src/configs/armv8a/config_ker.cxx \
-	src/configs/armv8a/bli_gemm_asm_d6x8.c
-@ENABLE_ARMV8A_TRUE@am_lib_libarmv8a_la_OBJECTS =  \
-@ENABLE_ARMV8A_TRUE@	src/configs/armv8a/config_ker.lo \
-@ENABLE_ARMV8A_TRUE@	src/configs/armv8a/lib_libarmv8a_la-bli_gemm_asm_d6x8.lo
-lib_libarmv8a_la_OBJECTS = $(am_lib_libarmv8a_la_OBJECTS)
-@ENABLE_ARMV8A_TRUE@am_lib_libarmv8a_la_rpath =
-lib_libarmv8a_sve256_la_LIBADD =
-am__lib_libarmv8a_sve256_la_SOURCES_DIST =  \
-	src/configs/armv8a_sve256/config_ker.cxx \
-	src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c
-@ENABLE_ARMV8A_SVE256_TRUE@am_lib_libarmv8a_sve256_la_OBJECTS = src/configs/armv8a_sve256/config_ker.lo \
-@ENABLE_ARMV8A_SVE256_TRUE@	src/configs/armv8a_sve512/lib_libarmv8a_sve256_la-bli_gemm_armsve_asm_2vx10_unindexed.lo
-lib_libarmv8a_sve256_la_OBJECTS =  \
-	$(am_lib_libarmv8a_sve256_la_OBJECTS)
-@ENABLE_ARMV8A_SVE256_TRUE@am_lib_libarmv8a_sve256_la_rpath =
-lib_libarmv8a_sve512_la_LIBADD =
-am__lib_libarmv8a_sve512_la_SOURCES_DIST =  \
-	src/configs/armv8a_sve512/config_ker.cxx \
-	src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c \
-	src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_16xk.c \
-	src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_10xk.c
-@ENABLE_ARMV8A_SVE512_TRUE@am_lib_libarmv8a_sve512_la_OBJECTS = src/configs/armv8a_sve512/config_ker.lo \
-@ENABLE_ARMV8A_SVE512_TRUE@	src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_gemm_armsve_asm_2vx10_unindexed.lo \
-@ENABLE_ARMV8A_SVE512_TRUE@	src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_16xk.lo \
-@ENABLE_ARMV8A_SVE512_TRUE@	src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_10xk.lo
-lib_libarmv8a_sve512_la_OBJECTS =  \
-	$(am_lib_libarmv8a_sve512_la_OBJECTS)
-@ENABLE_ARMV8A_SVE512_TRUE@am_lib_libarmv8a_sve512_la_rpath =
+@ENABLE_A64FX_TRUE@am_lib_liba64fx_la_rpath =
 lib_libbulldozer_la_LIBADD =
 am__lib_libbulldozer_la_SOURCES_DIST =  \
 	src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c \
@@ -322,6 +285,24 @@ lib_libcore2_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(lib_libcore2_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 @ENABLE_CORE2_TRUE@am_lib_libcore2_la_rpath =
+lib_libcortexa53_la_LIBADD =
+am__lib_libcortexa53_la_SOURCES_DIST =  \
+	src/configs/cortexa53/config_ker.cxx \
+	src/configs/cortexa53/bli_gemm_asm_d6x8.c
+@ENABLE_CORTEXA53_TRUE@am_lib_libcortexa53_la_OBJECTS =  \
+@ENABLE_CORTEXA53_TRUE@	src/configs/cortexa53/config_ker.lo \
+@ENABLE_CORTEXA53_TRUE@	src/configs/cortexa53/lib_libcortexa53_la-bli_gemm_asm_d6x8.lo
+lib_libcortexa53_la_OBJECTS = $(am_lib_libcortexa53_la_OBJECTS)
+@ENABLE_CORTEXA53_TRUE@am_lib_libcortexa53_la_rpath =
+lib_libcortexa9_la_LIBADD =
+am__lib_libcortexa9_la_SOURCES_DIST =  \
+	src/configs/cortexa9/config_ker.cxx \
+	src/configs/cortexa9/bli_gemm_armv7a_int_d4x4.c
+@ENABLE_CORTEXA9_TRUE@am_lib_libcortexa9_la_OBJECTS =  \
+@ENABLE_CORTEXA9_TRUE@	src/configs/cortexa9/config_ker.lo \
+@ENABLE_CORTEXA9_TRUE@	src/configs/cortexa9/lib_libcortexa9_la-bli_gemm_armv7a_int_d4x4.lo
+lib_libcortexa9_la_OBJECTS = $(am_lib_libcortexa9_la_OBJECTS)
+@ENABLE_CORTEXA9_TRUE@am_lib_libcortexa9_la_rpath =
 lib_libexcavator_la_LIBADD =
 am__lib_libexcavator_la_SOURCES_DIST =  \
 	src/configs/excavator/config_ker.cxx \
@@ -367,6 +348,18 @@ lib_libknl_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(lib_libknl_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
 @ENABLE_KNL_TRUE@am_lib_libknl_la_rpath =
+lib_libneoversev1_la_LIBADD =
+am__lib_libneoversev1_la_SOURCES_DIST =  \
+	src/configs/neoversev1/config_ker.cxx \
+	src/configs/a64fx/bli_vl.c \
+	src/configs/a64fx/bli_gemm_armsve_asm_2vx10_unindexed.c
+@ENABLE_A64FX_FALSE@@ENABLE_NEOVERSEV1_TRUE@am__objects_2 = src/configs/a64fx/lib_libneoversev1_la-bli_vl.lo \
+@ENABLE_A64FX_FALSE@@ENABLE_NEOVERSEV1_TRUE@	src/configs/a64fx/lib_libneoversev1_la-bli_gemm_armsve_asm_2vx10_unindexed.lo
+@ENABLE_NEOVERSEV1_TRUE@am_lib_libneoversev1_la_OBJECTS =  \
+@ENABLE_NEOVERSEV1_TRUE@	src/configs/neoversev1/config_ker.lo \
+@ENABLE_NEOVERSEV1_TRUE@	$(am__objects_2)
+lib_libneoversev1_la_OBJECTS = $(am_lib_libneoversev1_la_OBJECTS)
+@ENABLE_NEOVERSEV1_TRUE@am_lib_libneoversev1_la_rpath =
 lib_libpiledriver_la_LIBADD =
 am__lib_libpiledriver_la_SOURCES_DIST =  \
 	src/configs/piledriver/bli_gemm_asm_d8x3.c \
@@ -404,9 +397,9 @@ lib_libsandybridge_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 lib_libskx1_la_LIBADD =
 am__lib_libskx1_la_SOURCES_DIST = src/configs/skx1/config_ker.cxx \
 	src/configs/haswell/bli_gemm_asm_d6x8.c
-@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@am__objects_2 = src/configs/haswell/lib_libskx1_la-bli_gemm_asm_d6x8.lo
+@ENABLE_HASWELL_FALSE@@ENABLE_SKX1_TRUE@am__objects_3 = src/configs/haswell/lib_libskx1_la-bli_gemm_asm_d6x8.lo
 @ENABLE_SKX1_TRUE@am_lib_libskx1_la_OBJECTS = src/configs/skx1/lib_libskx1_la-config_ker.lo \
-@ENABLE_SKX1_TRUE@	$(am__objects_2)
+@ENABLE_SKX1_TRUE@	$(am__objects_3)
 lib_libskx1_la_OBJECTS = $(am_lib_libskx1_la_OBJECTS)
 lib_libskx1_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -433,7 +426,7 @@ lib_libtblis_la_DEPENDENCIES = src/external/tci/lib/libtci.la \
 	$(am__append_22) $(am__append_25) $(am__append_28) \
 	$(am__append_31) $(am__append_36) $(am__append_39) \
 	$(am__append_42) $(am__append_45) $(am__append_49) \
-	$(am__append_53)
+	$(am__append_52)
 am__lib_libtblis_la_SOURCES_DIST = src/iface/1t/add.cxx \
 	src/iface/1t/dot.cxx src/iface/1t/reduce.cxx \
 	src/iface/1t/scale.cxx src/iface/1t/set.cxx \
@@ -470,32 +463,34 @@ am__lib_libtblis_la_SOURCES_DIST = src/iface/1t/add.cxx \
 	src/configs/sandybridge/config.cxx \
 	src/configs/haswell/config.cxx src/configs/knl/config.cxx \
 	src/configs/skx1/config.cxx src/configs/skx2/vpu_count.cxx \
-	src/configs/skx2/config.cxx src/configs/armv7a/config.cxx \
-	src/configs/armv8a/config.cxx src/configs/thunderx2/config.cxx \
-	src/configs/armv8a_sve512/config.cxx \
-	src/configs/armv8a_sve256/config.cxx
-@ENABLE_BULLDOZER_TRUE@am__objects_3 =  \
+	src/configs/skx2/config.cxx src/configs/cortexa9/config.cxx \
+	src/configs/cortexa53/config.cxx \
+	src/configs/thunderx2/config.cxx src/configs/a64fx/config.cxx \
+	src/configs/neoversev1/config.cxx
+@ENABLE_BULLDOZER_TRUE@am__objects_4 =  \
 @ENABLE_BULLDOZER_TRUE@	src/configs/bulldozer/config.lo
-@ENABLE_PILEDRIVER_TRUE@am__objects_4 =  \
+@ENABLE_PILEDRIVER_TRUE@am__objects_5 =  \
 @ENABLE_PILEDRIVER_TRUE@	src/configs/piledriver/config.lo
-@ENABLE_EXCAVATOR_TRUE@am__objects_5 =  \
+@ENABLE_EXCAVATOR_TRUE@am__objects_6 =  \
 @ENABLE_EXCAVATOR_TRUE@	src/configs/excavator/config.lo
-@ENABLE_ZEN_TRUE@am__objects_6 = src/configs/zen/config.lo
-@ENABLE_CORE2_TRUE@am__objects_7 = src/configs/core2/config.lo
-@ENABLE_SANDYBRIDGE_TRUE@am__objects_8 =  \
+@ENABLE_ZEN_TRUE@am__objects_7 = src/configs/zen/config.lo
+@ENABLE_CORE2_TRUE@am__objects_8 = src/configs/core2/config.lo
+@ENABLE_SANDYBRIDGE_TRUE@am__objects_9 =  \
 @ENABLE_SANDYBRIDGE_TRUE@	src/configs/sandybridge/config.lo
-@ENABLE_HASWELL_TRUE@am__objects_9 = src/configs/haswell/config.lo
-@ENABLE_KNL_TRUE@am__objects_10 = src/configs/knl/config.lo
-@ENABLE_SKX1_TRUE@am__objects_11 = src/configs/skx1/config.lo
-@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@am__objects_12 = src/configs/skx2/vpu_count.lo
-@ENABLE_SKX2_TRUE@am__objects_13 = src/configs/skx2/vpu_count.lo \
+@ENABLE_HASWELL_TRUE@am__objects_10 = src/configs/haswell/config.lo
+@ENABLE_KNL_TRUE@am__objects_11 = src/configs/knl/config.lo
+@ENABLE_SKX1_TRUE@am__objects_12 = src/configs/skx1/config.lo
+@ENABLE_SKX1_TRUE@@ENABLE_SKX2_FALSE@am__objects_13 = src/configs/skx2/vpu_count.lo
+@ENABLE_SKX2_TRUE@am__objects_14 = src/configs/skx2/vpu_count.lo \
 @ENABLE_SKX2_TRUE@	src/configs/skx2/config.lo
-@ENABLE_ARMV7A_TRUE@am__objects_14 = src/configs/armv7a/config.lo
-@ENABLE_ARMV8A_TRUE@am__objects_15 = src/configs/armv8a/config.lo
-@ENABLE_THUNDERX2_TRUE@am__objects_16 =  \
+@ENABLE_CORTEXA9_TRUE@am__objects_15 = src/configs/cortexa9/config.lo
+@ENABLE_CORTEXA53_TRUE@am__objects_16 =  \
+@ENABLE_CORTEXA53_TRUE@	src/configs/cortexa53/config.lo
+@ENABLE_THUNDERX2_TRUE@am__objects_17 =  \
 @ENABLE_THUNDERX2_TRUE@	src/configs/thunderx2/config.lo
-@ENABLE_ARMV8A_SVE512_TRUE@am__objects_17 = src/configs/armv8a_sve512/config.lo
-@ENABLE_ARMV8A_SVE256_TRUE@am__objects_18 = src/configs/armv8a_sve256/config.lo
+@ENABLE_A64FX_TRUE@am__objects_18 = src/configs/a64fx/config.lo
+@ENABLE_NEOVERSEV1_TRUE@am__objects_19 =  \
+@ENABLE_NEOVERSEV1_TRUE@	src/configs/neoversev1/config.lo
 am_lib_libtblis_la_OBJECTS = src/iface/1t/add.lo src/iface/1t/dot.lo \
 	src/iface/1t/reduce.lo src/iface/1t/scale.lo \
 	src/iface/1t/set.lo src/iface/1t/shift.lo src/iface/3t/mult.lo \
@@ -523,30 +518,30 @@ am_lib_libtblis_la_OBJECTS = src/iface/1t/add.lo src/iface/1t/dot.lo \
 	src/internal/3t/indexed_dpd/mult.lo src/configs/configs.lo \
 	src/util/basic_types.lo src/util/configs.lo \
 	src/util/gemm_thread.lo src/util/cpuid.lo src/util/env.lo \
-	src/util/random.lo src/util/thread.lo $(am__objects_3) \
-	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
-	$(am__objects_7) $(am__objects_8) $(am__objects_9) \
-	$(am__objects_10) $(am__objects_11) $(am__objects_12) \
-	$(am__objects_13) $(am__objects_14) $(am__objects_15) \
-	$(am__objects_16) $(am__objects_17) $(am__objects_18)
+	src/util/random.lo src/util/thread.lo $(am__objects_4) \
+	$(am__objects_5) $(am__objects_6) $(am__objects_7) \
+	$(am__objects_8) $(am__objects_9) $(am__objects_10) \
+	$(am__objects_11) $(am__objects_12) $(am__objects_13) \
+	$(am__objects_14) $(am__objects_15) $(am__objects_16) \
+	$(am__objects_17) $(am__objects_18) $(am__objects_19)
 lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
 lib_libthunderx2_la_LIBADD =
 am__lib_libthunderx2_la_SOURCES_DIST =  \
 	src/configs/thunderx2/config_ker.cxx \
-	src/configs/armv8a/bli_gemm_asm_d6x8.c
-@ENABLE_ARMV8A_FALSE@@ENABLE_THUNDERX2_TRUE@am__objects_19 = src/configs/armv8a/lib_libthunderx2_la-bli_gemm_asm_d6x8.lo
+	src/configs/cortexa53/bli_gemm_asm_d6x8.c
+@ENABLE_CORTEXA53_FALSE@@ENABLE_THUNDERX2_TRUE@am__objects_20 = src/configs/cortexa53/lib_libthunderx2_la-bli_gemm_asm_d6x8.lo
 @ENABLE_THUNDERX2_TRUE@am_lib_libthunderx2_la_OBJECTS =  \
 @ENABLE_THUNDERX2_TRUE@	src/configs/thunderx2/config_ker.lo \
-@ENABLE_THUNDERX2_TRUE@	$(am__objects_19)
+@ENABLE_THUNDERX2_TRUE@	$(am__objects_20)
 lib_libthunderx2_la_OBJECTS = $(am_lib_libthunderx2_la_OBJECTS)
 @ENABLE_THUNDERX2_TRUE@am_lib_libthunderx2_la_rpath =
 lib_libzen_la_LIBADD =
 am__lib_libzen_la_SOURCES_DIST = src/configs/zen/config_ker.cxx \
 	src/configs/haswell/bli_gemm_asm_d6x8.c
-@ENABLE_HASWELL_FALSE@@ENABLE_ZEN_TRUE@am__objects_20 = src/configs/haswell/lib_libzen_la-bli_gemm_asm_d6x8.lo
+@ENABLE_HASWELL_FALSE@@ENABLE_ZEN_TRUE@am__objects_21 = src/configs/haswell/lib_libzen_la-bli_gemm_asm_d6x8.lo
 @ENABLE_ZEN_TRUE@am_lib_libzen_la_OBJECTS =  \
 @ENABLE_ZEN_TRUE@	src/configs/zen/lib_libzen_la-config_ker.lo \
-@ENABLE_ZEN_TRUE@	$(am__objects_20)
+@ENABLE_ZEN_TRUE@	$(am__objects_21)
 lib_libzen_la_OBJECTS = $(am_lib_libzen_la_OBJECTS)
 lib_libzen_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -589,27 +584,27 @@ DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = src/configs/$(DEPDIR)/configs.Plo \
-	src/configs/armv7a/$(DEPDIR)/config.Plo \
-	src/configs/armv7a/$(DEPDIR)/config_ker.Plo \
-	src/configs/armv7a/$(DEPDIR)/lib_libarmv7a_la-bli_gemm_armv7a_int_d4x4.Plo \
-	src/configs/armv8a/$(DEPDIR)/config.Plo \
-	src/configs/armv8a/$(DEPDIR)/config_ker.Plo \
-	src/configs/armv8a/$(DEPDIR)/lib_libarmv8a_la-bli_gemm_asm_d6x8.Plo \
-	src/configs/armv8a/$(DEPDIR)/lib_libthunderx2_la-bli_gemm_asm_d6x8.Plo \
-	src/configs/armv8a_sve256/$(DEPDIR)/config.Plo \
-	src/configs/armv8a_sve256/$(DEPDIR)/config_ker.Plo \
-	src/configs/armv8a_sve512/$(DEPDIR)/config.Plo \
-	src/configs/armv8a_sve512/$(DEPDIR)/config_ker.Plo \
-	src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve256_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo \
-	src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_10xk.Plo \
-	src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_16xk.Plo \
-	src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo \
+	src/configs/a64fx/$(DEPDIR)/config.Plo \
+	src/configs/a64fx/$(DEPDIR)/config_ker.Plo \
+	src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_dpackm_armsve512_asm_10xk.Plo \
+	src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_dpackm_armsve512_asm_16xk.Plo \
+	src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo \
+	src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_vl.Plo \
+	src/configs/a64fx/$(DEPDIR)/lib_libneoversev1_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo \
+	src/configs/a64fx/$(DEPDIR)/lib_libneoversev1_la-bli_vl.Plo \
 	src/configs/bulldozer/$(DEPDIR)/config.Plo \
 	src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.Plo \
 	src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config_ker.Plo \
 	src/configs/core2/$(DEPDIR)/config.Plo \
 	src/configs/core2/$(DEPDIR)/lib_libcore2_la-bli_gemm_asm_d4x4.Plo \
 	src/configs/core2/$(DEPDIR)/lib_libcore2_la-config_ker.Plo \
+	src/configs/cortexa53/$(DEPDIR)/config.Plo \
+	src/configs/cortexa53/$(DEPDIR)/config_ker.Plo \
+	src/configs/cortexa53/$(DEPDIR)/lib_libcortexa53_la-bli_gemm_asm_d6x8.Plo \
+	src/configs/cortexa53/$(DEPDIR)/lib_libthunderx2_la-bli_gemm_asm_d6x8.Plo \
+	src/configs/cortexa9/$(DEPDIR)/config.Plo \
+	src/configs/cortexa9/$(DEPDIR)/config_ker.Plo \
+	src/configs/cortexa9/$(DEPDIR)/lib_libcortexa9_la-bli_gemm_armv7a_int_d4x4.Plo \
 	src/configs/excavator/$(DEPDIR)/config.Plo \
 	src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-bli_gemm_asm_d8x3.Plo \
 	src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config_ker.Plo \
@@ -625,6 +620,8 @@ am__depfiles_remade = src/configs/$(DEPDIR)/configs.Plo \
 	src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_sgemm_opt_24x16.Plo \
 	src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_spackm_opt_24x16.Plo \
 	src/configs/knl/$(DEPDIR)/lib_libknl_la-config_ker.Plo \
+	src/configs/neoversev1/$(DEPDIR)/config.Plo \
+	src/configs/neoversev1/$(DEPDIR)/config_ker.Plo \
 	src/configs/piledriver/$(DEPDIR)/config.Plo \
 	src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Plo \
 	src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config_ker.Plo \
@@ -730,27 +727,26 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(lib_libarmv7a_la_SOURCES) $(lib_libarmv8a_la_SOURCES) \
-	$(lib_libarmv8a_sve256_la_SOURCES) \
-	$(lib_libarmv8a_sve512_la_SOURCES) \
-	$(lib_libbulldozer_la_SOURCES) $(lib_libcore2_la_SOURCES) \
-	$(lib_libexcavator_la_SOURCES) $(lib_libhaswell_la_SOURCES) \
-	$(lib_libknl_la_SOURCES) $(lib_libpiledriver_la_SOURCES) \
-	$(lib_libreference_la_SOURCES) \
+SOURCES = $(lib_liba64fx_la_SOURCES) $(lib_libbulldozer_la_SOURCES) \
+	$(lib_libcore2_la_SOURCES) $(lib_libcortexa53_la_SOURCES) \
+	$(lib_libcortexa9_la_SOURCES) $(lib_libexcavator_la_SOURCES) \
+	$(lib_libhaswell_la_SOURCES) $(lib_libknl_la_SOURCES) \
+	$(lib_libneoversev1_la_SOURCES) \
+	$(lib_libpiledriver_la_SOURCES) $(lib_libreference_la_SOURCES) \
 	$(lib_libsandybridge_la_SOURCES) $(lib_libskx1_la_SOURCES) \
 	$(lib_libskx2_la_SOURCES) $(lib_libtblis_la_SOURCES) \
 	$(lib_libthunderx2_la_SOURCES) $(lib_libzen_la_SOURCES) \
 	$(bin_batched_bench_SOURCES) $(bin_bench_SOURCES) \
 	$(bin_skx_bench_SOURCES) $(bin_test_SOURCES)
-DIST_SOURCES = $(am__lib_libarmv7a_la_SOURCES_DIST) \
-	$(am__lib_libarmv8a_la_SOURCES_DIST) \
-	$(am__lib_libarmv8a_sve256_la_SOURCES_DIST) \
-	$(am__lib_libarmv8a_sve512_la_SOURCES_DIST) \
+DIST_SOURCES = $(am__lib_liba64fx_la_SOURCES_DIST) \
 	$(am__lib_libbulldozer_la_SOURCES_DIST) \
 	$(am__lib_libcore2_la_SOURCES_DIST) \
+	$(am__lib_libcortexa53_la_SOURCES_DIST) \
+	$(am__lib_libcortexa9_la_SOURCES_DIST) \
 	$(am__lib_libexcavator_la_SOURCES_DIST) \
 	$(am__lib_libhaswell_la_SOURCES_DIST) \
 	$(am__lib_libknl_la_SOURCES_DIST) \
+	$(am__lib_libneoversev1_la_SOURCES_DIST) \
 	$(am__lib_libpiledriver_la_SOURCES_DIST) \
 	$(am__lib_libreference_la_SOURCES_DIST) \
 	$(am__lib_libsandybridge_la_SOURCES_DIST) \
@@ -879,8 +875,7 @@ CPPFLAGS = @CPPFLAGS@
 CXX = @CXX@
 CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
-CXXFLAGS = @CXXFLAGS@ $(am__append_1) $(am__append_51) \
-	$(am__append_55)
+CXXFLAGS = @CXXFLAGS@ $(am__append_1)
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
@@ -1022,7 +1017,7 @@ lib_libtblis_la_SOURCES = src/iface/1t/add.cxx src/iface/1t/dot.cxx \
 	$(am__append_20) $(am__append_23) $(am__append_26) \
 	$(am__append_29) $(am__append_32) $(am__append_33) \
 	$(am__append_37) $(am__append_40) $(am__append_43) \
-	$(am__append_46) $(am__append_50) $(am__append_54)
+	$(am__append_46) $(am__append_50) $(am__append_53)
 pkginclude_HEADERS = src/tblis.h src/tblis_config.h
 utilincludedir = $(pkgincludedir)/util
 utilinclude_HEADERS = \
@@ -1113,14 +1108,14 @@ noinst_LTLIBRARIES = $(am__append_2) $(am__append_4) $(am__append_7) \
 	$(am__append_21) $(am__append_24) $(am__append_27) \
 	$(am__append_30) $(am__append_35) $(am__append_38) \
 	$(am__append_41) $(am__append_44) $(am__append_48) \
-	$(am__append_52)
+	$(am__append_51)
 lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la \
 	$(am__append_3) $(am__append_5) $(am__append_8) \
 	$(am__append_11) $(am__append_15) $(am__append_19) \
 	$(am__append_22) $(am__append_25) $(am__append_28) \
 	$(am__append_31) $(am__append_36) $(am__append_39) \
 	$(am__append_42) $(am__append_45) $(am__append_49) \
-	$(am__append_53)
+	$(am__append_52)
 @ENABLE_REFERENCE_TRUE@lib_libreference_la_SOURCES = src/configs/reference/config.cxx
 @ENABLE_REFERENCE_TRUE@lib_libreference_la_CFLAGS = -O3
 @ENABLE_REFERENCE_TRUE@lib_libreference_la_CXXFLAGS = -O3
@@ -1213,29 +1208,30 @@ lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la \
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SKX2_TRUE@@IS_OSX_FALSE@lib_libskx2_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SKX2_TRUE@@IS_OSX_TRUE@lib_libskx2_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SKX2_TRUE@lib_libskx2_la_CXXFLAGS = -O3 -xCORE-AVX512
-@ENABLE_ARMV7A_TRUE@lib_libarmv7a_la_SOURCES = src/configs/armv7a/config_ker.cxx \
-@ENABLE_ARMV7A_TRUE@                           src/configs/armv7a/bli_gemm_armv7a_int_d4x4.c
+@ENABLE_CORTEXA9_TRUE@lib_libcortexa9_la_SOURCES = src/configs/cortexa9/config_ker.cxx \
+@ENABLE_CORTEXA9_TRUE@                           src/configs/cortexa9/bli_gemm_armv7a_int_d4x4.c
 
-@ENABLE_ARMV7A_TRUE@lib_libarmv7a_la_CCASFLAGS = -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
-@ENABLE_ARMV7A_TRUE@lib_libarmv7a_la_CFLAGS = -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
-@ENABLE_ARMV8A_TRUE@lib_libarmv8a_la_SOURCES = src/configs/armv8a/config_ker.cxx \
-@ENABLE_ARMV8A_TRUE@                           src/configs/armv8a/bli_gemm_asm_d6x8.c
+@ENABLE_CORTEXA9_TRUE@lib_libcortexa9_la_CCASFLAGS = -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
+@ENABLE_CORTEXA9_TRUE@lib_libcortexa9_la_CFLAGS = -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
+@ENABLE_CORTEXA53_TRUE@lib_libcortexa53_la_SOURCES = src/configs/cortexa53/config_ker.cxx \
+@ENABLE_CORTEXA53_TRUE@                              src/configs/cortexa53/bli_gemm_asm_d6x8.c
 
-@ENABLE_ARMV8A_TRUE@lib_libarmv8a_la_CFLAGS = -march=armv8-a+fp+simd
+@ENABLE_CORTEXA53_TRUE@lib_libcortexa53_la_CFLAGS = -march=armv8-a+fp+simd
 @ENABLE_THUNDERX2_TRUE@lib_libthunderx2_la_SOURCES =  \
 @ENABLE_THUNDERX2_TRUE@	src/configs/thunderx2/config_ker.cxx \
 @ENABLE_THUNDERX2_TRUE@	$(am__append_47)
 @ENABLE_THUNDERX2_TRUE@lib_libthunderx2_la_CFLAGS = -march=armv8-a+fp+simd -mcpu=thunderx2t99
-@ENABLE_ARMV8A_SVE512_TRUE@lib_libarmv8a_sve512_la_SOURCES = src/configs/armv8a_sve512/config_ker.cxx \
-@ENABLE_ARMV8A_SVE512_TRUE@                                  src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c \
-@ENABLE_ARMV8A_SVE512_TRUE@                                  src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_16xk.c \
-@ENABLE_ARMV8A_SVE512_TRUE@                                  src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_10xk.c
+@ENABLE_A64FX_TRUE@lib_liba64fx_la_SOURCES = src/configs/a64fx/config_ker.cxx \
+@ENABLE_A64FX_TRUE@                          src/configs/a64fx/bli_gemm_armsve_asm_2vx10_unindexed.c \
+@ENABLE_A64FX_TRUE@                          src/configs/a64fx/bli_dpackm_armsve512_asm_16xk.c \
+@ENABLE_A64FX_TRUE@                          src/configs/a64fx/bli_dpackm_armsve512_asm_10xk.c \
+@ENABLE_A64FX_TRUE@                          src/configs/a64fx/bli_vl.c
 
-@ENABLE_ARMV8A_SVE512_TRUE@lib_libarmv8a_sve512_la_CFLAGS = -march=armv8-a+sve
-@ENABLE_ARMV8A_SVE256_TRUE@lib_libarmv8a_sve256_la_SOURCES = src/configs/armv8a_sve256/config_ker.cxx \
-@ENABLE_ARMV8A_SVE256_TRUE@                                  src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c
-
-@ENABLE_ARMV8A_SVE256_TRUE@lib_libarmv8a_sve256_la_CFLAGS = -march=armv8-a+sve
+@ENABLE_A64FX_TRUE@lib_liba64fx_la_CFLAGS = -march=armv8-a+sve
+@ENABLE_NEOVERSEV1_TRUE@lib_libneoversev1_la_SOURCES =  \
+@ENABLE_NEOVERSEV1_TRUE@	src/configs/neoversev1/config_ker.cxx \
+@ENABLE_NEOVERSEV1_TRUE@	$(am__append_54)
+@ENABLE_NEOVERSEV1_TRUE@lib_libneoversev1_la_CFLAGS = -march=armv8-a+sve
 bin_test_SOURCES = test/test.cxx \
                    \
                    test/1t/dot.cxx \
@@ -1385,73 +1381,32 @@ clean-noinstLTLIBRARIES:
 	  echo rm -f $${locs}; \
 	  rm -f $${locs}; \
 	}
-src/configs/armv7a/$(am__dirstamp):
-	@$(MKDIR_P) src/configs/armv7a
-	@: > src/configs/armv7a/$(am__dirstamp)
-src/configs/armv7a/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/configs/armv7a/$(DEPDIR)
-	@: > src/configs/armv7a/$(DEPDIR)/$(am__dirstamp)
-src/configs/armv7a/config_ker.lo: src/configs/armv7a/$(am__dirstamp) \
-	src/configs/armv7a/$(DEPDIR)/$(am__dirstamp)
-src/configs/armv7a/lib_libarmv7a_la-bli_gemm_armv7a_int_d4x4.lo:  \
-	src/configs/armv7a/$(am__dirstamp) \
-	src/configs/armv7a/$(DEPDIR)/$(am__dirstamp)
+src/configs/a64fx/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/a64fx
+	@: > src/configs/a64fx/$(am__dirstamp)
+src/configs/a64fx/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/a64fx/$(DEPDIR)
+	@: > src/configs/a64fx/$(DEPDIR)/$(am__dirstamp)
+src/configs/a64fx/config_ker.lo: src/configs/a64fx/$(am__dirstamp) \
+	src/configs/a64fx/$(DEPDIR)/$(am__dirstamp)
+src/configs/a64fx/lib_liba64fx_la-bli_gemm_armsve_asm_2vx10_unindexed.lo:  \
+	src/configs/a64fx/$(am__dirstamp) \
+	src/configs/a64fx/$(DEPDIR)/$(am__dirstamp)
+src/configs/a64fx/lib_liba64fx_la-bli_dpackm_armsve512_asm_16xk.lo:  \
+	src/configs/a64fx/$(am__dirstamp) \
+	src/configs/a64fx/$(DEPDIR)/$(am__dirstamp)
+src/configs/a64fx/lib_liba64fx_la-bli_dpackm_armsve512_asm_10xk.lo:  \
+	src/configs/a64fx/$(am__dirstamp) \
+	src/configs/a64fx/$(DEPDIR)/$(am__dirstamp)
+src/configs/a64fx/lib_liba64fx_la-bli_vl.lo:  \
+	src/configs/a64fx/$(am__dirstamp) \
+	src/configs/a64fx/$(DEPDIR)/$(am__dirstamp)
 lib/$(am__dirstamp):
 	@$(MKDIR_P) lib
 	@: > lib/$(am__dirstamp)
 
-lib/libarmv7a.la: $(lib_libarmv7a_la_OBJECTS) $(lib_libarmv7a_la_DEPENDENCIES) $(EXTRA_lib_libarmv7a_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CXXLD)$(CXXLINK) $(am_lib_libarmv7a_la_rpath) $(lib_libarmv7a_la_OBJECTS) $(lib_libarmv7a_la_LIBADD) $(LIBS)
-src/configs/armv8a/$(am__dirstamp):
-	@$(MKDIR_P) src/configs/armv8a
-	@: > src/configs/armv8a/$(am__dirstamp)
-src/configs/armv8a/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/configs/armv8a/$(DEPDIR)
-	@: > src/configs/armv8a/$(DEPDIR)/$(am__dirstamp)
-src/configs/armv8a/config_ker.lo: src/configs/armv8a/$(am__dirstamp) \
-	src/configs/armv8a/$(DEPDIR)/$(am__dirstamp)
-src/configs/armv8a/lib_libarmv8a_la-bli_gemm_asm_d6x8.lo:  \
-	src/configs/armv8a/$(am__dirstamp) \
-	src/configs/armv8a/$(DEPDIR)/$(am__dirstamp)
-
-lib/libarmv8a.la: $(lib_libarmv8a_la_OBJECTS) $(lib_libarmv8a_la_DEPENDENCIES) $(EXTRA_lib_libarmv8a_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CXXLD)$(CXXLINK) $(am_lib_libarmv8a_la_rpath) $(lib_libarmv8a_la_OBJECTS) $(lib_libarmv8a_la_LIBADD) $(LIBS)
-src/configs/armv8a_sve256/$(am__dirstamp):
-	@$(MKDIR_P) src/configs/armv8a_sve256
-	@: > src/configs/armv8a_sve256/$(am__dirstamp)
-src/configs/armv8a_sve256/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/configs/armv8a_sve256/$(DEPDIR)
-	@: > src/configs/armv8a_sve256/$(DEPDIR)/$(am__dirstamp)
-src/configs/armv8a_sve256/config_ker.lo:  \
-	src/configs/armv8a_sve256/$(am__dirstamp) \
-	src/configs/armv8a_sve256/$(DEPDIR)/$(am__dirstamp)
-src/configs/armv8a_sve512/$(am__dirstamp):
-	@$(MKDIR_P) src/configs/armv8a_sve512
-	@: > src/configs/armv8a_sve512/$(am__dirstamp)
-src/configs/armv8a_sve512/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/configs/armv8a_sve512/$(DEPDIR)
-	@: > src/configs/armv8a_sve512/$(DEPDIR)/$(am__dirstamp)
-src/configs/armv8a_sve512/lib_libarmv8a_sve256_la-bli_gemm_armsve_asm_2vx10_unindexed.lo:  \
-	src/configs/armv8a_sve512/$(am__dirstamp) \
-	src/configs/armv8a_sve512/$(DEPDIR)/$(am__dirstamp)
-
-lib/libarmv8a_sve256.la: $(lib_libarmv8a_sve256_la_OBJECTS) $(lib_libarmv8a_sve256_la_DEPENDENCIES) $(EXTRA_lib_libarmv8a_sve256_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CXXLD)$(CXXLINK) $(am_lib_libarmv8a_sve256_la_rpath) $(lib_libarmv8a_sve256_la_OBJECTS) $(lib_libarmv8a_sve256_la_LIBADD) $(LIBS)
-src/configs/armv8a_sve512/config_ker.lo:  \
-	src/configs/armv8a_sve512/$(am__dirstamp) \
-	src/configs/armv8a_sve512/$(DEPDIR)/$(am__dirstamp)
-src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_gemm_armsve_asm_2vx10_unindexed.lo:  \
-	src/configs/armv8a_sve512/$(am__dirstamp) \
-	src/configs/armv8a_sve512/$(DEPDIR)/$(am__dirstamp)
-src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_16xk.lo:  \
-	src/configs/armv8a_sve512/$(am__dirstamp) \
-	src/configs/armv8a_sve512/$(DEPDIR)/$(am__dirstamp)
-src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_10xk.lo:  \
-	src/configs/armv8a_sve512/$(am__dirstamp) \
-	src/configs/armv8a_sve512/$(DEPDIR)/$(am__dirstamp)
-
-lib/libarmv8a_sve512.la: $(lib_libarmv8a_sve512_la_OBJECTS) $(lib_libarmv8a_sve512_la_DEPENDENCIES) $(EXTRA_lib_libarmv8a_sve512_la_DEPENDENCIES) lib/$(am__dirstamp)
-	$(AM_V_CXXLD)$(CXXLINK) $(am_lib_libarmv8a_sve512_la_rpath) $(lib_libarmv8a_sve512_la_OBJECTS) $(lib_libarmv8a_sve512_la_LIBADD) $(LIBS)
+lib/liba64fx.la: $(lib_liba64fx_la_OBJECTS) $(lib_liba64fx_la_DEPENDENCIES) $(EXTRA_lib_liba64fx_la_DEPENDENCIES) lib/$(am__dirstamp)
+	$(AM_V_CXXLD)$(CXXLINK) $(am_lib_liba64fx_la_rpath) $(lib_liba64fx_la_OBJECTS) $(lib_liba64fx_la_LIBADD) $(LIBS)
 src/configs/bulldozer/$(am__dirstamp):
 	@$(MKDIR_P) src/configs/bulldozer
 	@: > src/configs/bulldozer/$(am__dirstamp)
@@ -1482,6 +1437,36 @@ src/configs/core2/lib_libcore2_la-config_ker.lo:  \
 
 lib/libcore2.la: $(lib_libcore2_la_OBJECTS) $(lib_libcore2_la_DEPENDENCIES) $(EXTRA_lib_libcore2_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CXXLD)$(lib_libcore2_la_LINK) $(am_lib_libcore2_la_rpath) $(lib_libcore2_la_OBJECTS) $(lib_libcore2_la_LIBADD) $(LIBS)
+src/configs/cortexa53/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/cortexa53
+	@: > src/configs/cortexa53/$(am__dirstamp)
+src/configs/cortexa53/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/cortexa53/$(DEPDIR)
+	@: > src/configs/cortexa53/$(DEPDIR)/$(am__dirstamp)
+src/configs/cortexa53/config_ker.lo:  \
+	src/configs/cortexa53/$(am__dirstamp) \
+	src/configs/cortexa53/$(DEPDIR)/$(am__dirstamp)
+src/configs/cortexa53/lib_libcortexa53_la-bli_gemm_asm_d6x8.lo:  \
+	src/configs/cortexa53/$(am__dirstamp) \
+	src/configs/cortexa53/$(DEPDIR)/$(am__dirstamp)
+
+lib/libcortexa53.la: $(lib_libcortexa53_la_OBJECTS) $(lib_libcortexa53_la_DEPENDENCIES) $(EXTRA_lib_libcortexa53_la_DEPENDENCIES) lib/$(am__dirstamp)
+	$(AM_V_CXXLD)$(CXXLINK) $(am_lib_libcortexa53_la_rpath) $(lib_libcortexa53_la_OBJECTS) $(lib_libcortexa53_la_LIBADD) $(LIBS)
+src/configs/cortexa9/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/cortexa9
+	@: > src/configs/cortexa9/$(am__dirstamp)
+src/configs/cortexa9/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/cortexa9/$(DEPDIR)
+	@: > src/configs/cortexa9/$(DEPDIR)/$(am__dirstamp)
+src/configs/cortexa9/config_ker.lo:  \
+	src/configs/cortexa9/$(am__dirstamp) \
+	src/configs/cortexa9/$(DEPDIR)/$(am__dirstamp)
+src/configs/cortexa9/lib_libcortexa9_la-bli_gemm_armv7a_int_d4x4.lo:  \
+	src/configs/cortexa9/$(am__dirstamp) \
+	src/configs/cortexa9/$(DEPDIR)/$(am__dirstamp)
+
+lib/libcortexa9.la: $(lib_libcortexa9_la_OBJECTS) $(lib_libcortexa9_la_DEPENDENCIES) $(EXTRA_lib_libcortexa9_la_DEPENDENCIES) lib/$(am__dirstamp)
+	$(AM_V_CXXLD)$(CXXLINK) $(am_lib_libcortexa9_la_rpath) $(lib_libcortexa9_la_OBJECTS) $(lib_libcortexa9_la_LIBADD) $(LIBS)
 src/configs/excavator/$(am__dirstamp):
 	@$(MKDIR_P) src/configs/excavator
 	@: > src/configs/excavator/$(am__dirstamp)
@@ -1539,6 +1524,24 @@ src/configs/knl/lib_libknl_la-config_ker.lo:  \
 
 lib/libknl.la: $(lib_libknl_la_OBJECTS) $(lib_libknl_la_DEPENDENCIES) $(EXTRA_lib_libknl_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CXXLD)$(lib_libknl_la_LINK) $(am_lib_libknl_la_rpath) $(lib_libknl_la_OBJECTS) $(lib_libknl_la_LIBADD) $(LIBS)
+src/configs/neoversev1/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/neoversev1
+	@: > src/configs/neoversev1/$(am__dirstamp)
+src/configs/neoversev1/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/configs/neoversev1/$(DEPDIR)
+	@: > src/configs/neoversev1/$(DEPDIR)/$(am__dirstamp)
+src/configs/neoversev1/config_ker.lo:  \
+	src/configs/neoversev1/$(am__dirstamp) \
+	src/configs/neoversev1/$(DEPDIR)/$(am__dirstamp)
+src/configs/a64fx/lib_libneoversev1_la-bli_vl.lo:  \
+	src/configs/a64fx/$(am__dirstamp) \
+	src/configs/a64fx/$(DEPDIR)/$(am__dirstamp)
+src/configs/a64fx/lib_libneoversev1_la-bli_gemm_armsve_asm_2vx10_unindexed.lo:  \
+	src/configs/a64fx/$(am__dirstamp) \
+	src/configs/a64fx/$(DEPDIR)/$(am__dirstamp)
+
+lib/libneoversev1.la: $(lib_libneoversev1_la_OBJECTS) $(lib_libneoversev1_la_DEPENDENCIES) $(EXTRA_lib_libneoversev1_la_DEPENDENCIES) lib/$(am__dirstamp)
+	$(AM_V_CXXLD)$(CXXLINK) $(am_lib_libneoversev1_la_rpath) $(lib_libneoversev1_la_OBJECTS) $(lib_libneoversev1_la_LIBADD) $(LIBS)
 src/configs/piledriver/$(am__dirstamp):
 	@$(MKDIR_P) src/configs/piledriver
 	@: > src/configs/piledriver/$(am__dirstamp)
@@ -1831,10 +1834,11 @@ src/configs/skx2/vpu_count.lo: src/configs/skx2/$(am__dirstamp) \
 	src/configs/skx2/$(DEPDIR)/$(am__dirstamp)
 src/configs/skx2/config.lo: src/configs/skx2/$(am__dirstamp) \
 	src/configs/skx2/$(DEPDIR)/$(am__dirstamp)
-src/configs/armv7a/config.lo: src/configs/armv7a/$(am__dirstamp) \
-	src/configs/armv7a/$(DEPDIR)/$(am__dirstamp)
-src/configs/armv8a/config.lo: src/configs/armv8a/$(am__dirstamp) \
-	src/configs/armv8a/$(DEPDIR)/$(am__dirstamp)
+src/configs/cortexa9/config.lo: src/configs/cortexa9/$(am__dirstamp) \
+	src/configs/cortexa9/$(DEPDIR)/$(am__dirstamp)
+src/configs/cortexa53/config.lo:  \
+	src/configs/cortexa53/$(am__dirstamp) \
+	src/configs/cortexa53/$(DEPDIR)/$(am__dirstamp)
 src/configs/thunderx2/$(am__dirstamp):
 	@$(MKDIR_P) src/configs/thunderx2
 	@: > src/configs/thunderx2/$(am__dirstamp)
@@ -1844,21 +1848,20 @@ src/configs/thunderx2/$(DEPDIR)/$(am__dirstamp):
 src/configs/thunderx2/config.lo:  \
 	src/configs/thunderx2/$(am__dirstamp) \
 	src/configs/thunderx2/$(DEPDIR)/$(am__dirstamp)
-src/configs/armv8a_sve512/config.lo:  \
-	src/configs/armv8a_sve512/$(am__dirstamp) \
-	src/configs/armv8a_sve512/$(DEPDIR)/$(am__dirstamp)
-src/configs/armv8a_sve256/config.lo:  \
-	src/configs/armv8a_sve256/$(am__dirstamp) \
-	src/configs/armv8a_sve256/$(DEPDIR)/$(am__dirstamp)
+src/configs/a64fx/config.lo: src/configs/a64fx/$(am__dirstamp) \
+	src/configs/a64fx/$(DEPDIR)/$(am__dirstamp)
+src/configs/neoversev1/config.lo:  \
+	src/configs/neoversev1/$(am__dirstamp) \
+	src/configs/neoversev1/$(DEPDIR)/$(am__dirstamp)
 
 lib/libtblis.la: $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_DEPENDENCIES) $(EXTRA_lib_libtblis_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CXXLD)$(CXXLINK) -rpath $(libdir) $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_LIBADD) $(LIBS)
 src/configs/thunderx2/config_ker.lo:  \
 	src/configs/thunderx2/$(am__dirstamp) \
 	src/configs/thunderx2/$(DEPDIR)/$(am__dirstamp)
-src/configs/armv8a/lib_libthunderx2_la-bli_gemm_asm_d6x8.lo:  \
-	src/configs/armv8a/$(am__dirstamp) \
-	src/configs/armv8a/$(DEPDIR)/$(am__dirstamp)
+src/configs/cortexa53/lib_libthunderx2_la-bli_gemm_asm_d6x8.lo:  \
+	src/configs/cortexa53/$(am__dirstamp) \
+	src/configs/cortexa53/$(DEPDIR)/$(am__dirstamp)
 
 lib/libthunderx2.la: $(lib_libthunderx2_la_OBJECTS) $(lib_libthunderx2_la_DEPENDENCIES) $(EXTRA_lib_libthunderx2_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CXXLD)$(CXXLINK) $(am_lib_libthunderx2_la_rpath) $(lib_libthunderx2_la_OBJECTS) $(lib_libthunderx2_la_LIBADD) $(LIBS)
@@ -1955,24 +1958,24 @@ mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f src/configs/*.$(OBJEXT)
 	-rm -f src/configs/*.lo
-	-rm -f src/configs/armv7a/*.$(OBJEXT)
-	-rm -f src/configs/armv7a/*.lo
-	-rm -f src/configs/armv8a/*.$(OBJEXT)
-	-rm -f src/configs/armv8a/*.lo
-	-rm -f src/configs/armv8a_sve256/*.$(OBJEXT)
-	-rm -f src/configs/armv8a_sve256/*.lo
-	-rm -f src/configs/armv8a_sve512/*.$(OBJEXT)
-	-rm -f src/configs/armv8a_sve512/*.lo
+	-rm -f src/configs/a64fx/*.$(OBJEXT)
+	-rm -f src/configs/a64fx/*.lo
 	-rm -f src/configs/bulldozer/*.$(OBJEXT)
 	-rm -f src/configs/bulldozer/*.lo
 	-rm -f src/configs/core2/*.$(OBJEXT)
 	-rm -f src/configs/core2/*.lo
+	-rm -f src/configs/cortexa53/*.$(OBJEXT)
+	-rm -f src/configs/cortexa53/*.lo
+	-rm -f src/configs/cortexa9/*.$(OBJEXT)
+	-rm -f src/configs/cortexa9/*.lo
 	-rm -f src/configs/excavator/*.$(OBJEXT)
 	-rm -f src/configs/excavator/*.lo
 	-rm -f src/configs/haswell/*.$(OBJEXT)
 	-rm -f src/configs/haswell/*.lo
 	-rm -f src/configs/knl/*.$(OBJEXT)
 	-rm -f src/configs/knl/*.lo
+	-rm -f src/configs/neoversev1/*.$(OBJEXT)
+	-rm -f src/configs/neoversev1/*.lo
 	-rm -f src/configs/piledriver/*.$(OBJEXT)
 	-rm -f src/configs/piledriver/*.lo
 	-rm -f src/configs/reference/*.$(OBJEXT)
@@ -2020,27 +2023,27 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/$(DEPDIR)/configs.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/armv7a/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/armv7a/$(DEPDIR)/config_ker.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/armv7a/$(DEPDIR)/lib_libarmv7a_la-bli_gemm_armv7a_int_d4x4.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/armv8a/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/armv8a/$(DEPDIR)/config_ker.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/armv8a/$(DEPDIR)/lib_libarmv8a_la-bli_gemm_asm_d6x8.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/armv8a/$(DEPDIR)/lib_libthunderx2_la-bli_gemm_asm_d6x8.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/armv8a_sve256/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/armv8a_sve256/$(DEPDIR)/config_ker.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/armv8a_sve512/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/armv8a_sve512/$(DEPDIR)/config_ker.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve256_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_10xk.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_16xk.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/a64fx/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/a64fx/$(DEPDIR)/config_ker.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_dpackm_armsve512_asm_10xk.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_dpackm_armsve512_asm_16xk.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_vl.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/a64fx/$(DEPDIR)/lib_libneoversev1_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/a64fx/$(DEPDIR)/lib_libneoversev1_la-bli_vl.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/bulldozer/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config_ker.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/core2/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/core2/$(DEPDIR)/lib_libcore2_la-bli_gemm_asm_d4x4.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/core2/$(DEPDIR)/lib_libcore2_la-config_ker.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/cortexa53/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/cortexa53/$(DEPDIR)/config_ker.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/cortexa53/$(DEPDIR)/lib_libcortexa53_la-bli_gemm_asm_d6x8.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/cortexa53/$(DEPDIR)/lib_libthunderx2_la-bli_gemm_asm_d6x8.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/cortexa9/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/cortexa9/$(DEPDIR)/config_ker.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/cortexa9/$(DEPDIR)/lib_libcortexa9_la-bli_gemm_armv7a_int_d4x4.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/excavator/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-bli_gemm_asm_d8x3.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config_ker.Plo@am__quote@ # am--include-marker
@@ -2056,6 +2059,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_sgemm_opt_24x16.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_spackm_opt_24x16.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/knl/$(DEPDIR)/lib_libknl_la-config_ker.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/neoversev1/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/configs/neoversev1/$(DEPDIR)/config_ker.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/piledriver/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config_ker.Plo@am__quote@ # am--include-marker
@@ -2168,47 +2173,33 @@ am--depfiles: $(am__depfiles_remade)
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
 
-src/configs/armv7a/lib_libarmv7a_la-bli_gemm_armv7a_int_d4x4.lo: src/configs/armv7a/bli_gemm_armv7a_int_d4x4.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv7a_la_CFLAGS) $(CFLAGS) -MT src/configs/armv7a/lib_libarmv7a_la-bli_gemm_armv7a_int_d4x4.lo -MD -MP -MF src/configs/armv7a/$(DEPDIR)/lib_libarmv7a_la-bli_gemm_armv7a_int_d4x4.Tpo -c -o src/configs/armv7a/lib_libarmv7a_la-bli_gemm_armv7a_int_d4x4.lo `test -f 'src/configs/armv7a/bli_gemm_armv7a_int_d4x4.c' || echo '$(srcdir)/'`src/configs/armv7a/bli_gemm_armv7a_int_d4x4.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/armv7a/$(DEPDIR)/lib_libarmv7a_la-bli_gemm_armv7a_int_d4x4.Tpo src/configs/armv7a/$(DEPDIR)/lib_libarmv7a_la-bli_gemm_armv7a_int_d4x4.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/armv7a/bli_gemm_armv7a_int_d4x4.c' object='src/configs/armv7a/lib_libarmv7a_la-bli_gemm_armv7a_int_d4x4.lo' libtool=yes @AMDEPBACKSLASH@
+src/configs/a64fx/lib_liba64fx_la-bli_gemm_armsve_asm_2vx10_unindexed.lo: src/configs/a64fx/bli_gemm_armsve_asm_2vx10_unindexed.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_liba64fx_la_CFLAGS) $(CFLAGS) -MT src/configs/a64fx/lib_liba64fx_la-bli_gemm_armsve_asm_2vx10_unindexed.lo -MD -MP -MF src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_gemm_armsve_asm_2vx10_unindexed.Tpo -c -o src/configs/a64fx/lib_liba64fx_la-bli_gemm_armsve_asm_2vx10_unindexed.lo `test -f 'src/configs/a64fx/bli_gemm_armsve_asm_2vx10_unindexed.c' || echo '$(srcdir)/'`src/configs/a64fx/bli_gemm_armsve_asm_2vx10_unindexed.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_gemm_armsve_asm_2vx10_unindexed.Tpo src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/a64fx/bli_gemm_armsve_asm_2vx10_unindexed.c' object='src/configs/a64fx/lib_liba64fx_la-bli_gemm_armsve_asm_2vx10_unindexed.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv7a_la_CFLAGS) $(CFLAGS) -c -o src/configs/armv7a/lib_libarmv7a_la-bli_gemm_armv7a_int_d4x4.lo `test -f 'src/configs/armv7a/bli_gemm_armv7a_int_d4x4.c' || echo '$(srcdir)/'`src/configs/armv7a/bli_gemm_armv7a_int_d4x4.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_liba64fx_la_CFLAGS) $(CFLAGS) -c -o src/configs/a64fx/lib_liba64fx_la-bli_gemm_armsve_asm_2vx10_unindexed.lo `test -f 'src/configs/a64fx/bli_gemm_armsve_asm_2vx10_unindexed.c' || echo '$(srcdir)/'`src/configs/a64fx/bli_gemm_armsve_asm_2vx10_unindexed.c
 
-src/configs/armv8a/lib_libarmv8a_la-bli_gemm_asm_d6x8.lo: src/configs/armv8a/bli_gemm_asm_d6x8.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv8a_la_CFLAGS) $(CFLAGS) -MT src/configs/armv8a/lib_libarmv8a_la-bli_gemm_asm_d6x8.lo -MD -MP -MF src/configs/armv8a/$(DEPDIR)/lib_libarmv8a_la-bli_gemm_asm_d6x8.Tpo -c -o src/configs/armv8a/lib_libarmv8a_la-bli_gemm_asm_d6x8.lo `test -f 'src/configs/armv8a/bli_gemm_asm_d6x8.c' || echo '$(srcdir)/'`src/configs/armv8a/bli_gemm_asm_d6x8.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/armv8a/$(DEPDIR)/lib_libarmv8a_la-bli_gemm_asm_d6x8.Tpo src/configs/armv8a/$(DEPDIR)/lib_libarmv8a_la-bli_gemm_asm_d6x8.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/armv8a/bli_gemm_asm_d6x8.c' object='src/configs/armv8a/lib_libarmv8a_la-bli_gemm_asm_d6x8.lo' libtool=yes @AMDEPBACKSLASH@
+src/configs/a64fx/lib_liba64fx_la-bli_dpackm_armsve512_asm_16xk.lo: src/configs/a64fx/bli_dpackm_armsve512_asm_16xk.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_liba64fx_la_CFLAGS) $(CFLAGS) -MT src/configs/a64fx/lib_liba64fx_la-bli_dpackm_armsve512_asm_16xk.lo -MD -MP -MF src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_dpackm_armsve512_asm_16xk.Tpo -c -o src/configs/a64fx/lib_liba64fx_la-bli_dpackm_armsve512_asm_16xk.lo `test -f 'src/configs/a64fx/bli_dpackm_armsve512_asm_16xk.c' || echo '$(srcdir)/'`src/configs/a64fx/bli_dpackm_armsve512_asm_16xk.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_dpackm_armsve512_asm_16xk.Tpo src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_dpackm_armsve512_asm_16xk.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/a64fx/bli_dpackm_armsve512_asm_16xk.c' object='src/configs/a64fx/lib_liba64fx_la-bli_dpackm_armsve512_asm_16xk.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv8a_la_CFLAGS) $(CFLAGS) -c -o src/configs/armv8a/lib_libarmv8a_la-bli_gemm_asm_d6x8.lo `test -f 'src/configs/armv8a/bli_gemm_asm_d6x8.c' || echo '$(srcdir)/'`src/configs/armv8a/bli_gemm_asm_d6x8.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_liba64fx_la_CFLAGS) $(CFLAGS) -c -o src/configs/a64fx/lib_liba64fx_la-bli_dpackm_armsve512_asm_16xk.lo `test -f 'src/configs/a64fx/bli_dpackm_armsve512_asm_16xk.c' || echo '$(srcdir)/'`src/configs/a64fx/bli_dpackm_armsve512_asm_16xk.c
 
-src/configs/armv8a_sve512/lib_libarmv8a_sve256_la-bli_gemm_armsve_asm_2vx10_unindexed.lo: src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv8a_sve256_la_CFLAGS) $(CFLAGS) -MT src/configs/armv8a_sve512/lib_libarmv8a_sve256_la-bli_gemm_armsve_asm_2vx10_unindexed.lo -MD -MP -MF src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve256_la-bli_gemm_armsve_asm_2vx10_unindexed.Tpo -c -o src/configs/armv8a_sve512/lib_libarmv8a_sve256_la-bli_gemm_armsve_asm_2vx10_unindexed.lo `test -f 'src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c' || echo '$(srcdir)/'`src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve256_la-bli_gemm_armsve_asm_2vx10_unindexed.Tpo src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve256_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c' object='src/configs/armv8a_sve512/lib_libarmv8a_sve256_la-bli_gemm_armsve_asm_2vx10_unindexed.lo' libtool=yes @AMDEPBACKSLASH@
+src/configs/a64fx/lib_liba64fx_la-bli_dpackm_armsve512_asm_10xk.lo: src/configs/a64fx/bli_dpackm_armsve512_asm_10xk.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_liba64fx_la_CFLAGS) $(CFLAGS) -MT src/configs/a64fx/lib_liba64fx_la-bli_dpackm_armsve512_asm_10xk.lo -MD -MP -MF src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_dpackm_armsve512_asm_10xk.Tpo -c -o src/configs/a64fx/lib_liba64fx_la-bli_dpackm_armsve512_asm_10xk.lo `test -f 'src/configs/a64fx/bli_dpackm_armsve512_asm_10xk.c' || echo '$(srcdir)/'`src/configs/a64fx/bli_dpackm_armsve512_asm_10xk.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_dpackm_armsve512_asm_10xk.Tpo src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_dpackm_armsve512_asm_10xk.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/a64fx/bli_dpackm_armsve512_asm_10xk.c' object='src/configs/a64fx/lib_liba64fx_la-bli_dpackm_armsve512_asm_10xk.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv8a_sve256_la_CFLAGS) $(CFLAGS) -c -o src/configs/armv8a_sve512/lib_libarmv8a_sve256_la-bli_gemm_armsve_asm_2vx10_unindexed.lo `test -f 'src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c' || echo '$(srcdir)/'`src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_liba64fx_la_CFLAGS) $(CFLAGS) -c -o src/configs/a64fx/lib_liba64fx_la-bli_dpackm_armsve512_asm_10xk.lo `test -f 'src/configs/a64fx/bli_dpackm_armsve512_asm_10xk.c' || echo '$(srcdir)/'`src/configs/a64fx/bli_dpackm_armsve512_asm_10xk.c
 
-src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_gemm_armsve_asm_2vx10_unindexed.lo: src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv8a_sve512_la_CFLAGS) $(CFLAGS) -MT src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_gemm_armsve_asm_2vx10_unindexed.lo -MD -MP -MF src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_gemm_armsve_asm_2vx10_unindexed.Tpo -c -o src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_gemm_armsve_asm_2vx10_unindexed.lo `test -f 'src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c' || echo '$(srcdir)/'`src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_gemm_armsve_asm_2vx10_unindexed.Tpo src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c' object='src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_gemm_armsve_asm_2vx10_unindexed.lo' libtool=yes @AMDEPBACKSLASH@
+src/configs/a64fx/lib_liba64fx_la-bli_vl.lo: src/configs/a64fx/bli_vl.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_liba64fx_la_CFLAGS) $(CFLAGS) -MT src/configs/a64fx/lib_liba64fx_la-bli_vl.lo -MD -MP -MF src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_vl.Tpo -c -o src/configs/a64fx/lib_liba64fx_la-bli_vl.lo `test -f 'src/configs/a64fx/bli_vl.c' || echo '$(srcdir)/'`src/configs/a64fx/bli_vl.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_vl.Tpo src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_vl.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/a64fx/bli_vl.c' object='src/configs/a64fx/lib_liba64fx_la-bli_vl.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv8a_sve512_la_CFLAGS) $(CFLAGS) -c -o src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_gemm_armsve_asm_2vx10_unindexed.lo `test -f 'src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c' || echo '$(srcdir)/'`src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c
-
-src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_16xk.lo: src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_16xk.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv8a_sve512_la_CFLAGS) $(CFLAGS) -MT src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_16xk.lo -MD -MP -MF src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_16xk.Tpo -c -o src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_16xk.lo `test -f 'src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_16xk.c' || echo '$(srcdir)/'`src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_16xk.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_16xk.Tpo src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_16xk.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_16xk.c' object='src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_16xk.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv8a_sve512_la_CFLAGS) $(CFLAGS) -c -o src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_16xk.lo `test -f 'src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_16xk.c' || echo '$(srcdir)/'`src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_16xk.c
-
-src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_10xk.lo: src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_10xk.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv8a_sve512_la_CFLAGS) $(CFLAGS) -MT src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_10xk.lo -MD -MP -MF src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_10xk.Tpo -c -o src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_10xk.lo `test -f 'src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_10xk.c' || echo '$(srcdir)/'`src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_10xk.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_10xk.Tpo src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_10xk.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_10xk.c' object='src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_10xk.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libarmv8a_sve512_la_CFLAGS) $(CFLAGS) -c -o src/configs/armv8a_sve512/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_10xk.lo `test -f 'src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_10xk.c' || echo '$(srcdir)/'`src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_10xk.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_liba64fx_la_CFLAGS) $(CFLAGS) -c -o src/configs/a64fx/lib_liba64fx_la-bli_vl.lo `test -f 'src/configs/a64fx/bli_vl.c' || echo '$(srcdir)/'`src/configs/a64fx/bli_vl.c
 
 src/configs/bulldozer/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.lo: src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libbulldozer_la_CFLAGS) $(CFLAGS) -MT src/configs/bulldozer/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.lo -MD -MP -MF src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.Tpo -c -o src/configs/bulldozer/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.lo `test -f 'src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c' || echo '$(srcdir)/'`src/configs/bulldozer/bli_gemm_asm_d4x6_fma4.c
@@ -2223,6 +2214,20 @@ src/configs/core2/lib_libcore2_la-bli_gemm_asm_d4x4.lo: src/configs/core2/bli_ge
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/core2/bli_gemm_asm_d4x4.c' object='src/configs/core2/lib_libcore2_la-bli_gemm_asm_d4x4.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libcore2_la_CFLAGS) $(CFLAGS) -c -o src/configs/core2/lib_libcore2_la-bli_gemm_asm_d4x4.lo `test -f 'src/configs/core2/bli_gemm_asm_d4x4.c' || echo '$(srcdir)/'`src/configs/core2/bli_gemm_asm_d4x4.c
+
+src/configs/cortexa53/lib_libcortexa53_la-bli_gemm_asm_d6x8.lo: src/configs/cortexa53/bli_gemm_asm_d6x8.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libcortexa53_la_CFLAGS) $(CFLAGS) -MT src/configs/cortexa53/lib_libcortexa53_la-bli_gemm_asm_d6x8.lo -MD -MP -MF src/configs/cortexa53/$(DEPDIR)/lib_libcortexa53_la-bli_gemm_asm_d6x8.Tpo -c -o src/configs/cortexa53/lib_libcortexa53_la-bli_gemm_asm_d6x8.lo `test -f 'src/configs/cortexa53/bli_gemm_asm_d6x8.c' || echo '$(srcdir)/'`src/configs/cortexa53/bli_gemm_asm_d6x8.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/cortexa53/$(DEPDIR)/lib_libcortexa53_la-bli_gemm_asm_d6x8.Tpo src/configs/cortexa53/$(DEPDIR)/lib_libcortexa53_la-bli_gemm_asm_d6x8.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/cortexa53/bli_gemm_asm_d6x8.c' object='src/configs/cortexa53/lib_libcortexa53_la-bli_gemm_asm_d6x8.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libcortexa53_la_CFLAGS) $(CFLAGS) -c -o src/configs/cortexa53/lib_libcortexa53_la-bli_gemm_asm_d6x8.lo `test -f 'src/configs/cortexa53/bli_gemm_asm_d6x8.c' || echo '$(srcdir)/'`src/configs/cortexa53/bli_gemm_asm_d6x8.c
+
+src/configs/cortexa9/lib_libcortexa9_la-bli_gemm_armv7a_int_d4x4.lo: src/configs/cortexa9/bli_gemm_armv7a_int_d4x4.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libcortexa9_la_CFLAGS) $(CFLAGS) -MT src/configs/cortexa9/lib_libcortexa9_la-bli_gemm_armv7a_int_d4x4.lo -MD -MP -MF src/configs/cortexa9/$(DEPDIR)/lib_libcortexa9_la-bli_gemm_armv7a_int_d4x4.Tpo -c -o src/configs/cortexa9/lib_libcortexa9_la-bli_gemm_armv7a_int_d4x4.lo `test -f 'src/configs/cortexa9/bli_gemm_armv7a_int_d4x4.c' || echo '$(srcdir)/'`src/configs/cortexa9/bli_gemm_armv7a_int_d4x4.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/cortexa9/$(DEPDIR)/lib_libcortexa9_la-bli_gemm_armv7a_int_d4x4.Tpo src/configs/cortexa9/$(DEPDIR)/lib_libcortexa9_la-bli_gemm_armv7a_int_d4x4.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/cortexa9/bli_gemm_armv7a_int_d4x4.c' object='src/configs/cortexa9/lib_libcortexa9_la-bli_gemm_armv7a_int_d4x4.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libcortexa9_la_CFLAGS) $(CFLAGS) -c -o src/configs/cortexa9/lib_libcortexa9_la-bli_gemm_armv7a_int_d4x4.lo `test -f 'src/configs/cortexa9/bli_gemm_armv7a_int_d4x4.c' || echo '$(srcdir)/'`src/configs/cortexa9/bli_gemm_armv7a_int_d4x4.c
 
 src/configs/excavator/lib_libexcavator_la-bli_gemm_asm_d8x3.lo: src/configs/excavator/bli_gemm_asm_d8x3.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libexcavator_la_CFLAGS) $(CFLAGS) -MT src/configs/excavator/lib_libexcavator_la-bli_gemm_asm_d8x3.lo -MD -MP -MF src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-bli_gemm_asm_d8x3.Tpo -c -o src/configs/excavator/lib_libexcavator_la-bli_gemm_asm_d8x3.lo `test -f 'src/configs/excavator/bli_gemm_asm_d8x3.c' || echo '$(srcdir)/'`src/configs/excavator/bli_gemm_asm_d8x3.c
@@ -2273,6 +2278,20 @@ src/configs/knl/lib_libknl_la-bli_dgemm_opt_24x8.lo: src/configs/knl/bli_dgemm_o
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libknl_la_CFLAGS) $(CFLAGS) -c -o src/configs/knl/lib_libknl_la-bli_dgemm_opt_24x8.lo `test -f 'src/configs/knl/bli_dgemm_opt_24x8.c' || echo '$(srcdir)/'`src/configs/knl/bli_dgemm_opt_24x8.c
 
+src/configs/a64fx/lib_libneoversev1_la-bli_vl.lo: src/configs/a64fx/bli_vl.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libneoversev1_la_CFLAGS) $(CFLAGS) -MT src/configs/a64fx/lib_libneoversev1_la-bli_vl.lo -MD -MP -MF src/configs/a64fx/$(DEPDIR)/lib_libneoversev1_la-bli_vl.Tpo -c -o src/configs/a64fx/lib_libneoversev1_la-bli_vl.lo `test -f 'src/configs/a64fx/bli_vl.c' || echo '$(srcdir)/'`src/configs/a64fx/bli_vl.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/a64fx/$(DEPDIR)/lib_libneoversev1_la-bli_vl.Tpo src/configs/a64fx/$(DEPDIR)/lib_libneoversev1_la-bli_vl.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/a64fx/bli_vl.c' object='src/configs/a64fx/lib_libneoversev1_la-bli_vl.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libneoversev1_la_CFLAGS) $(CFLAGS) -c -o src/configs/a64fx/lib_libneoversev1_la-bli_vl.lo `test -f 'src/configs/a64fx/bli_vl.c' || echo '$(srcdir)/'`src/configs/a64fx/bli_vl.c
+
+src/configs/a64fx/lib_libneoversev1_la-bli_gemm_armsve_asm_2vx10_unindexed.lo: src/configs/a64fx/bli_gemm_armsve_asm_2vx10_unindexed.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libneoversev1_la_CFLAGS) $(CFLAGS) -MT src/configs/a64fx/lib_libneoversev1_la-bli_gemm_armsve_asm_2vx10_unindexed.lo -MD -MP -MF src/configs/a64fx/$(DEPDIR)/lib_libneoversev1_la-bli_gemm_armsve_asm_2vx10_unindexed.Tpo -c -o src/configs/a64fx/lib_libneoversev1_la-bli_gemm_armsve_asm_2vx10_unindexed.lo `test -f 'src/configs/a64fx/bli_gemm_armsve_asm_2vx10_unindexed.c' || echo '$(srcdir)/'`src/configs/a64fx/bli_gemm_armsve_asm_2vx10_unindexed.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/a64fx/$(DEPDIR)/lib_libneoversev1_la-bli_gemm_armsve_asm_2vx10_unindexed.Tpo src/configs/a64fx/$(DEPDIR)/lib_libneoversev1_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/a64fx/bli_gemm_armsve_asm_2vx10_unindexed.c' object='src/configs/a64fx/lib_libneoversev1_la-bli_gemm_armsve_asm_2vx10_unindexed.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libneoversev1_la_CFLAGS) $(CFLAGS) -c -o src/configs/a64fx/lib_libneoversev1_la-bli_gemm_armsve_asm_2vx10_unindexed.lo `test -f 'src/configs/a64fx/bli_gemm_armsve_asm_2vx10_unindexed.c' || echo '$(srcdir)/'`src/configs/a64fx/bli_gemm_armsve_asm_2vx10_unindexed.c
+
 src/configs/piledriver/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo: src/configs/piledriver/bli_gemm_asm_d8x3.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libpiledriver_la_CFLAGS) $(CFLAGS) -MT src/configs/piledriver/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo -MD -MP -MF src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Tpo -c -o src/configs/piledriver/lib_libpiledriver_la-bli_gemm_asm_d8x3.lo `test -f 'src/configs/piledriver/bli_gemm_asm_d8x3.c' || echo '$(srcdir)/'`src/configs/piledriver/bli_gemm_asm_d8x3.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Tpo src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Plo
@@ -2308,12 +2327,12 @@ src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_12x16_l2.lo: src/configs/skx2/bli_
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libskx2_la_CFLAGS) $(CFLAGS) -c -o src/configs/skx2/lib_libskx2_la-bli_dgemm_opt_12x16_l2.lo `test -f 'src/configs/skx2/bli_dgemm_opt_12x16_l2.c' || echo '$(srcdir)/'`src/configs/skx2/bli_dgemm_opt_12x16_l2.c
 
-src/configs/armv8a/lib_libthunderx2_la-bli_gemm_asm_d6x8.lo: src/configs/armv8a/bli_gemm_asm_d6x8.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libthunderx2_la_CFLAGS) $(CFLAGS) -MT src/configs/armv8a/lib_libthunderx2_la-bli_gemm_asm_d6x8.lo -MD -MP -MF src/configs/armv8a/$(DEPDIR)/lib_libthunderx2_la-bli_gemm_asm_d6x8.Tpo -c -o src/configs/armv8a/lib_libthunderx2_la-bli_gemm_asm_d6x8.lo `test -f 'src/configs/armv8a/bli_gemm_asm_d6x8.c' || echo '$(srcdir)/'`src/configs/armv8a/bli_gemm_asm_d6x8.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/armv8a/$(DEPDIR)/lib_libthunderx2_la-bli_gemm_asm_d6x8.Tpo src/configs/armv8a/$(DEPDIR)/lib_libthunderx2_la-bli_gemm_asm_d6x8.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/armv8a/bli_gemm_asm_d6x8.c' object='src/configs/armv8a/lib_libthunderx2_la-bli_gemm_asm_d6x8.lo' libtool=yes @AMDEPBACKSLASH@
+src/configs/cortexa53/lib_libthunderx2_la-bli_gemm_asm_d6x8.lo: src/configs/cortexa53/bli_gemm_asm_d6x8.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libthunderx2_la_CFLAGS) $(CFLAGS) -MT src/configs/cortexa53/lib_libthunderx2_la-bli_gemm_asm_d6x8.lo -MD -MP -MF src/configs/cortexa53/$(DEPDIR)/lib_libthunderx2_la-bli_gemm_asm_d6x8.Tpo -c -o src/configs/cortexa53/lib_libthunderx2_la-bli_gemm_asm_d6x8.lo `test -f 'src/configs/cortexa53/bli_gemm_asm_d6x8.c' || echo '$(srcdir)/'`src/configs/cortexa53/bli_gemm_asm_d6x8.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/configs/cortexa53/$(DEPDIR)/lib_libthunderx2_la-bli_gemm_asm_d6x8.Tpo src/configs/cortexa53/$(DEPDIR)/lib_libthunderx2_la-bli_gemm_asm_d6x8.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/configs/cortexa53/bli_gemm_asm_d6x8.c' object='src/configs/cortexa53/lib_libthunderx2_la-bli_gemm_asm_d6x8.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libthunderx2_la_CFLAGS) $(CFLAGS) -c -o src/configs/armv8a/lib_libthunderx2_la-bli_gemm_asm_d6x8.lo `test -f 'src/configs/armv8a/bli_gemm_asm_d6x8.c' || echo '$(srcdir)/'`src/configs/armv8a/bli_gemm_asm_d6x8.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libthunderx2_la_CFLAGS) $(CFLAGS) -c -o src/configs/cortexa53/lib_libthunderx2_la-bli_gemm_asm_d6x8.lo `test -f 'src/configs/cortexa53/bli_gemm_asm_d6x8.c' || echo '$(srcdir)/'`src/configs/cortexa53/bli_gemm_asm_d6x8.c
 
 src/configs/haswell/lib_libzen_la-bli_gemm_asm_d6x8.lo: src/configs/haswell/bli_gemm_asm_d6x8.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libzen_la_CFLAGS) $(CFLAGS) -MT src/configs/haswell/lib_libzen_la-bli_gemm_asm_d6x8.lo -MD -MP -MF src/configs/haswell/$(DEPDIR)/lib_libzen_la-bli_gemm_asm_d6x8.Tpo -c -o src/configs/haswell/lib_libzen_la-bli_gemm_asm_d6x8.lo `test -f 'src/configs/haswell/bli_gemm_asm_d6x8.c' || echo '$(srcdir)/'`src/configs/haswell/bli_gemm_asm_d6x8.c
@@ -2431,15 +2450,15 @@ clean-libtool:
 	-rm -rf bin/.libs bin/_libs
 	-rm -rf lib/.libs lib/_libs
 	-rm -rf src/configs/.libs src/configs/_libs
-	-rm -rf src/configs/armv7a/.libs src/configs/armv7a/_libs
-	-rm -rf src/configs/armv8a/.libs src/configs/armv8a/_libs
-	-rm -rf src/configs/armv8a_sve256/.libs src/configs/armv8a_sve256/_libs
-	-rm -rf src/configs/armv8a_sve512/.libs src/configs/armv8a_sve512/_libs
+	-rm -rf src/configs/a64fx/.libs src/configs/a64fx/_libs
 	-rm -rf src/configs/bulldozer/.libs src/configs/bulldozer/_libs
 	-rm -rf src/configs/core2/.libs src/configs/core2/_libs
+	-rm -rf src/configs/cortexa53/.libs src/configs/cortexa53/_libs
+	-rm -rf src/configs/cortexa9/.libs src/configs/cortexa9/_libs
 	-rm -rf src/configs/excavator/.libs src/configs/excavator/_libs
 	-rm -rf src/configs/haswell/.libs src/configs/haswell/_libs
 	-rm -rf src/configs/knl/.libs src/configs/knl/_libs
+	-rm -rf src/configs/neoversev1/.libs src/configs/neoversev1/_libs
 	-rm -rf src/configs/piledriver/.libs src/configs/piledriver/_libs
 	-rm -rf src/configs/reference/.libs src/configs/reference/_libs
 	-rm -rf src/configs/sandybridge/.libs src/configs/sandybridge/_libs
@@ -2951,24 +2970,24 @@ distclean-generic:
 	-rm -f lib/$(am__dirstamp)
 	-rm -f src/configs/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/configs/$(am__dirstamp)
-	-rm -f src/configs/armv7a/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/configs/armv7a/$(am__dirstamp)
-	-rm -f src/configs/armv8a/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/configs/armv8a/$(am__dirstamp)
-	-rm -f src/configs/armv8a_sve256/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/configs/armv8a_sve256/$(am__dirstamp)
-	-rm -f src/configs/armv8a_sve512/$(DEPDIR)/$(am__dirstamp)
-	-rm -f src/configs/armv8a_sve512/$(am__dirstamp)
+	-rm -f src/configs/a64fx/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/configs/a64fx/$(am__dirstamp)
 	-rm -f src/configs/bulldozer/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/configs/bulldozer/$(am__dirstamp)
 	-rm -f src/configs/core2/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/configs/core2/$(am__dirstamp)
+	-rm -f src/configs/cortexa53/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/configs/cortexa53/$(am__dirstamp)
+	-rm -f src/configs/cortexa9/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/configs/cortexa9/$(am__dirstamp)
 	-rm -f src/configs/excavator/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/configs/excavator/$(am__dirstamp)
 	-rm -f src/configs/haswell/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/configs/haswell/$(am__dirstamp)
 	-rm -f src/configs/knl/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/configs/knl/$(am__dirstamp)
+	-rm -f src/configs/neoversev1/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/configs/neoversev1/$(am__dirstamp)
 	-rm -f src/configs/piledriver/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/configs/piledriver/$(am__dirstamp)
 	-rm -f src/configs/reference/$(DEPDIR)/$(am__dirstamp)
@@ -3028,27 +3047,27 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 		-rm -f src/configs/$(DEPDIR)/configs.Plo
-	-rm -f src/configs/armv7a/$(DEPDIR)/config.Plo
-	-rm -f src/configs/armv7a/$(DEPDIR)/config_ker.Plo
-	-rm -f src/configs/armv7a/$(DEPDIR)/lib_libarmv7a_la-bli_gemm_armv7a_int_d4x4.Plo
-	-rm -f src/configs/armv8a/$(DEPDIR)/config.Plo
-	-rm -f src/configs/armv8a/$(DEPDIR)/config_ker.Plo
-	-rm -f src/configs/armv8a/$(DEPDIR)/lib_libarmv8a_la-bli_gemm_asm_d6x8.Plo
-	-rm -f src/configs/armv8a/$(DEPDIR)/lib_libthunderx2_la-bli_gemm_asm_d6x8.Plo
-	-rm -f src/configs/armv8a_sve256/$(DEPDIR)/config.Plo
-	-rm -f src/configs/armv8a_sve256/$(DEPDIR)/config_ker.Plo
-	-rm -f src/configs/armv8a_sve512/$(DEPDIR)/config.Plo
-	-rm -f src/configs/armv8a_sve512/$(DEPDIR)/config_ker.Plo
-	-rm -f src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve256_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo
-	-rm -f src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_10xk.Plo
-	-rm -f src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_16xk.Plo
-	-rm -f src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo
+	-rm -f src/configs/a64fx/$(DEPDIR)/config.Plo
+	-rm -f src/configs/a64fx/$(DEPDIR)/config_ker.Plo
+	-rm -f src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_dpackm_armsve512_asm_10xk.Plo
+	-rm -f src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_dpackm_armsve512_asm_16xk.Plo
+	-rm -f src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo
+	-rm -f src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_vl.Plo
+	-rm -f src/configs/a64fx/$(DEPDIR)/lib_libneoversev1_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo
+	-rm -f src/configs/a64fx/$(DEPDIR)/lib_libneoversev1_la-bli_vl.Plo
 	-rm -f src/configs/bulldozer/$(DEPDIR)/config.Plo
 	-rm -f src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.Plo
 	-rm -f src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config_ker.Plo
 	-rm -f src/configs/core2/$(DEPDIR)/config.Plo
 	-rm -f src/configs/core2/$(DEPDIR)/lib_libcore2_la-bli_gemm_asm_d4x4.Plo
 	-rm -f src/configs/core2/$(DEPDIR)/lib_libcore2_la-config_ker.Plo
+	-rm -f src/configs/cortexa53/$(DEPDIR)/config.Plo
+	-rm -f src/configs/cortexa53/$(DEPDIR)/config_ker.Plo
+	-rm -f src/configs/cortexa53/$(DEPDIR)/lib_libcortexa53_la-bli_gemm_asm_d6x8.Plo
+	-rm -f src/configs/cortexa53/$(DEPDIR)/lib_libthunderx2_la-bli_gemm_asm_d6x8.Plo
+	-rm -f src/configs/cortexa9/$(DEPDIR)/config.Plo
+	-rm -f src/configs/cortexa9/$(DEPDIR)/config_ker.Plo
+	-rm -f src/configs/cortexa9/$(DEPDIR)/lib_libcortexa9_la-bli_gemm_armv7a_int_d4x4.Plo
 	-rm -f src/configs/excavator/$(DEPDIR)/config.Plo
 	-rm -f src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-bli_gemm_asm_d8x3.Plo
 	-rm -f src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config_ker.Plo
@@ -3064,6 +3083,8 @@ distclean: distclean-recursive
 	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_sgemm_opt_24x16.Plo
 	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_spackm_opt_24x16.Plo
 	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-config_ker.Plo
+	-rm -f src/configs/neoversev1/$(DEPDIR)/config.Plo
+	-rm -f src/configs/neoversev1/$(DEPDIR)/config_ker.Plo
 	-rm -f src/configs/piledriver/$(DEPDIR)/config.Plo
 	-rm -f src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Plo
 	-rm -f src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config_ker.Plo
@@ -3196,27 +3217,27 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
 		-rm -f src/configs/$(DEPDIR)/configs.Plo
-	-rm -f src/configs/armv7a/$(DEPDIR)/config.Plo
-	-rm -f src/configs/armv7a/$(DEPDIR)/config_ker.Plo
-	-rm -f src/configs/armv7a/$(DEPDIR)/lib_libarmv7a_la-bli_gemm_armv7a_int_d4x4.Plo
-	-rm -f src/configs/armv8a/$(DEPDIR)/config.Plo
-	-rm -f src/configs/armv8a/$(DEPDIR)/config_ker.Plo
-	-rm -f src/configs/armv8a/$(DEPDIR)/lib_libarmv8a_la-bli_gemm_asm_d6x8.Plo
-	-rm -f src/configs/armv8a/$(DEPDIR)/lib_libthunderx2_la-bli_gemm_asm_d6x8.Plo
-	-rm -f src/configs/armv8a_sve256/$(DEPDIR)/config.Plo
-	-rm -f src/configs/armv8a_sve256/$(DEPDIR)/config_ker.Plo
-	-rm -f src/configs/armv8a_sve512/$(DEPDIR)/config.Plo
-	-rm -f src/configs/armv8a_sve512/$(DEPDIR)/config_ker.Plo
-	-rm -f src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve256_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo
-	-rm -f src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_10xk.Plo
-	-rm -f src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_dpackm_armsve512_asm_16xk.Plo
-	-rm -f src/configs/armv8a_sve512/$(DEPDIR)/lib_libarmv8a_sve512_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo
+	-rm -f src/configs/a64fx/$(DEPDIR)/config.Plo
+	-rm -f src/configs/a64fx/$(DEPDIR)/config_ker.Plo
+	-rm -f src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_dpackm_armsve512_asm_10xk.Plo
+	-rm -f src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_dpackm_armsve512_asm_16xk.Plo
+	-rm -f src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo
+	-rm -f src/configs/a64fx/$(DEPDIR)/lib_liba64fx_la-bli_vl.Plo
+	-rm -f src/configs/a64fx/$(DEPDIR)/lib_libneoversev1_la-bli_gemm_armsve_asm_2vx10_unindexed.Plo
+	-rm -f src/configs/a64fx/$(DEPDIR)/lib_libneoversev1_la-bli_vl.Plo
 	-rm -f src/configs/bulldozer/$(DEPDIR)/config.Plo
 	-rm -f src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.Plo
 	-rm -f src/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config_ker.Plo
 	-rm -f src/configs/core2/$(DEPDIR)/config.Plo
 	-rm -f src/configs/core2/$(DEPDIR)/lib_libcore2_la-bli_gemm_asm_d4x4.Plo
 	-rm -f src/configs/core2/$(DEPDIR)/lib_libcore2_la-config_ker.Plo
+	-rm -f src/configs/cortexa53/$(DEPDIR)/config.Plo
+	-rm -f src/configs/cortexa53/$(DEPDIR)/config_ker.Plo
+	-rm -f src/configs/cortexa53/$(DEPDIR)/lib_libcortexa53_la-bli_gemm_asm_d6x8.Plo
+	-rm -f src/configs/cortexa53/$(DEPDIR)/lib_libthunderx2_la-bli_gemm_asm_d6x8.Plo
+	-rm -f src/configs/cortexa9/$(DEPDIR)/config.Plo
+	-rm -f src/configs/cortexa9/$(DEPDIR)/config_ker.Plo
+	-rm -f src/configs/cortexa9/$(DEPDIR)/lib_libcortexa9_la-bli_gemm_armv7a_int_d4x4.Plo
 	-rm -f src/configs/excavator/$(DEPDIR)/config.Plo
 	-rm -f src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-bli_gemm_asm_d8x3.Plo
 	-rm -f src/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config_ker.Plo
@@ -3232,6 +3253,8 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_sgemm_opt_24x16.Plo
 	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-bli_spackm_opt_24x16.Plo
 	-rm -f src/configs/knl/$(DEPDIR)/lib_libknl_la-config_ker.Plo
+	-rm -f src/configs/neoversev1/$(DEPDIR)/config.Plo
+	-rm -f src/configs/neoversev1/$(DEPDIR)/config_ker.Plo
 	-rm -f src/configs/piledriver/$(DEPDIR)/config.Plo
 	-rm -f src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-bli_gemm_asm_d8x3.Plo
 	-rm -f src/configs/piledriver/$(DEPDIR)/lib_libpiledriver_la-config_ker.Plo

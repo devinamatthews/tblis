@@ -155,11 +155,9 @@ AC_DEFINE_UNQUOTED([LABEL_TYPE], [$label_type], [label_type])
 # reference, auto,
 # core2, sandybridge, haswell, skx1, skx2, knl,
 # bulldozer, piledriver, excavator, zen,
-# armv7a, armv8a, thunderx2, armv8a_sve[256,512]
+# cortexa9(generic arm32), cortexa53(generic arm64),
+# thunderx2, a64fx, neoversev1
 #
-# Note: As TBLIS requires block sizes to be constexpr,
-#  we have to instantiate VL at compile time, currently
-#  256 (Neoverse) and 512 (A64FX).
 #
 # Possible with porting from BLIS:
 #
@@ -175,13 +173,13 @@ AC_ARG_ENABLE([config],
                           reference, auto,
                           core2, sandybridge, haswell, skx1, skx2, knl,
                           bulldozer, piledriver, excavator, zen,
-                          armv7a, armv8a, thunderx2, armv8a_sve256, armv8a_sve512
+                          cortexa9, cortexa53, thunderx2, a64fx, neoversev1
 
                           the following meta-configurations are also available:
  
-                          arm32 = armv7a,
-                          arm64 = armv8a,thunderx2,armv8a_sve256,armv8a_sve512
-                          armsve = armv8a_sve256,armv8a_sve512
+                          armsve = a64fx,neoversev1
+                          arm64 = cortexa53,thunderx2,armsve
+                          arm32 = cortexa9
                           skx = skx1,skx2
                           intel = core2,sandybridge,haswell,skx,knl
                           amd = bulldozer,piledriver,excavator,zen
@@ -219,12 +217,13 @@ configs=`echo $enable_config | sed 's/x86/intel,amd/' \
                              | sed 's/amd/bulldozer,piledriver,excavator,zen/' \
                              | sed 's/skx,/skx1,skx2,/' \
                              | sed 's/skx$/skx1,skx2/' \
-                             | sed 's/arm64/armv8a,thunderx2,armv8a_sve256,armv8a_sve512/' \
-                             | sed 's/arm32/armv7a/' \
+                             | sed 's/arm32/cortexa9/' \
+                             | sed 's/arm64/cortexa53,thunderx2,armsve/' \
+                             | sed 's/armsve/a64fx,neoversev1/' \
                              | sed 's/,/ /g'`
 
 for config in $configs; do
-    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|bulldozer|piledriver|excavator|zen|armv7a|armv8a|thunderx2|armv8a_sve256|armv8a_sve512)$' ); then
+    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|bulldozer|piledriver|excavator|zen|cortexa9|cortexa53|thunderx2|a64fx|neoversev1)$' ); then
         AC_MSG_ERROR([Unknown configuration $config])
     fi
 done
@@ -426,16 +425,14 @@ fi
 AC_MSG_CHECKING([enabled configurations])
 AC_MSG_RESULT([$configs])
 
-AM_CONDITIONAL(ENABLE_ARMV7A, [echo $configs | grep -q armv7a])
-AM_CONDITIONAL(ENABLE_ARMV8A, [echo $configs | grep -q armv8a])
+AM_CONDITIONAL(ENABLE_CORTEXA9, [echo $configs | grep -q cortexa9])
+AM_CONDITIONAL(ENABLE_CORTEXA53, [echo $configs | grep -q cortexa53])
 AM_CONDITIONAL(ENABLE_THUNDERX2, [echo $configs | grep -q thunderx2])
-AM_CONDITIONAL(ENABLE_ARMV8A_SVE256, [echo $configs | grep -q armv8a_sve256])
-AM_CONDITIONAL(ENABLE_ARMV8A_SVE512, [echo $configs | grep -q armv8a_sve512])
+AM_CONDITIONAL(ENABLE_A64FX, [echo $configs | grep -q a64fx])
+AM_CONDITIONAL(ENABLE_NEOVERSEV1, [echo $configs | grep -q neoversev1])
 AM_CONDITIONAL(ENABLE_BGQ, [echo $configs | grep -q bgq])
 AM_CONDITIONAL(ENABLE_BULLDOZER, [echo $configs | grep -q bulldozer])
 AM_CONDITIONAL(ENABLE_EXCAVATOR, [echo $configs | grep -q excavator])
-AM_CONDITIONAL(ENABLE_CORTEX_A15, [echo $configs | grep -q cortex-a15])
-AM_CONDITIONAL(ENABLE_CORTEX_A9, [echo $configs | grep -q cortex-a9])
 AM_CONDITIONAL(ENABLE_CORE2, [echo $configs | grep -q core2])
 AM_CONDITIONAL(ENABLE_HASWELL, [echo $configs | grep -q haswell])
 AM_CONDITIONAL(ENABLE_SKX1, [echo $configs | grep -q skx1])

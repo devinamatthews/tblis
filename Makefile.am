@@ -357,37 +357,23 @@ endif
 # ARM architectures
 # 
     
-if ENABLE_ARMV7A
-noinst_LTLIBRARIES += lib/libarmv7a.la
-lib_libtblis_la_LIBADD += lib/libarmv7a.la
-lib_libtblis_la_SOURCES += src/configs/armv7a/config.cxx
-lib_libarmv7a_la_SOURCES = src/configs/armv7a/config_ker.cxx \
-                           src/configs/armv7a/bli_gemm_armv7a_int_d4x4.c
-lib_libarmv7a_la_CCASFLAGS = -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
-lib_libarmv7a_la_CFLAGS = -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
+if ENABLE_CORTEXA9
+noinst_LTLIBRARIES += lib/libcortexa9.la
+lib_libtblis_la_LIBADD += lib/libcortexa9.la
+lib_libtblis_la_SOURCES += src/configs/cortexa9/config.cxx
+lib_libcortexa9_la_SOURCES = src/configs/cortexa9/config_ker.cxx \
+                           src/configs/cortexa9/bli_gemm_armv7a_int_d4x4.c
+lib_libcortexa9_la_CCASFLAGS = -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
+lib_libcortexa9_la_CFLAGS = -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
 endif
 
-#if ENABLE_CORTEX_A15
-#noinst_LTLIBRARIES += lib/libcortex-a15.la
-#lib_libtblis_la_LIBADD += lib/libcortex-a15.la
-#lib_libcortex_a15_la_SOURCES = src/external/blis/config/cortex-a15/kernels/3/bli_gemm_opt_4x4.c
-#lib_libcortex_a15_la_CFLAGS = -Isrc/external/blis/config/cortex-a15 -mfloat-abi=hard -mfpu=neon -march=armv7-a
-#endif
-#
-#if ENABLE_CORTEX_A9
-#noinst_LTLIBRARIES += lib/libcortex-a9.la
-#lib_libtblis_la_LIBADD += lib/libcortex-a9.la
-#lib_libcortex_a9_la_SOURCES = src/external/blis/config/cortex-a9/kernels/3/bli_gemm_opt_4x4.c
-#lib_libcortex_a9_la_CFLAGS = -Isrc/external/blis/config/cortex-a9 -mfloat-abi=hard -mfpu=neon -march=armv7-a
-#endif
-
-if ENABLE_ARMV8A
-noinst_LTLIBRARIES += lib/libarmv8a.la
-lib_libtblis_la_LIBADD += lib/libarmv8a.la
-lib_libtblis_la_SOURCES += src/configs/armv8a/config.cxx
-lib_libarmv8a_la_SOURCES = src/configs/armv8a/config_ker.cxx \
-                           src/configs/armv8a/bli_gemm_asm_d6x8.c
-lib_libarmv8a_la_CFLAGS = -march=armv8-a+fp+simd
+if ENABLE_CORTEXA53
+noinst_LTLIBRARIES += lib/libcortexa53.la
+lib_libtblis_la_LIBADD += lib/libcortexa53.la
+lib_libtblis_la_SOURCES += src/configs/cortexa53/config.cxx
+lib_libcortexa53_la_SOURCES = src/configs/cortexa53/config_ker.cxx \
+                              src/configs/cortexa53/bli_gemm_asm_d6x8.c
+lib_libcortexa53_la_CFLAGS = -march=armv8-a+fp+simd
 endif
 
 if ENABLE_THUNDERX2
@@ -395,32 +381,34 @@ noinst_LTLIBRARIES += lib/libthunderx2.la
 lib_libtblis_la_LIBADD += lib/libthunderx2.la
 lib_libtblis_la_SOURCES += src/configs/thunderx2/config.cxx
 lib_libthunderx2_la_SOURCES = src/configs/thunderx2/config_ker.cxx
-if !ENABLE_ARMV8A
-lib_libthunderx2_la_SOURCES += src/configs/armv8a/bli_gemm_asm_d6x8.c
+if !ENABLE_CORTEXA53
+lib_libthunderx2_la_SOURCES += src/configs/cortexa53/bli_gemm_asm_d6x8.c
 endif
 lib_libthunderx2_la_CFLAGS = -march=armv8-a+fp+simd -mcpu=thunderx2t99
 endif
 
-if ENABLE_ARMV8A_SVE512
-noinst_LTLIBRARIES += lib/libarmv8a_sve512.la
-lib_libtblis_la_LIBADD += lib/libarmv8a_sve512.la
-lib_libtblis_la_SOURCES += src/configs/armv8a_sve512/config.cxx
-lib_libarmv8a_sve512_la_SOURCES = src/configs/armv8a_sve512/config_ker.cxx \
-                                  src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c \
-                                  src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_16xk.c \
-                                  src/configs/armv8a_sve512/bli_dpackm_armsve512_asm_10xk.c
-lib_libarmv8a_sve512_la_CFLAGS = -march=armv8-a+sve
-CXXFLAGS += -march=armv8-a+sve
+if ENABLE_A64FX
+noinst_LTLIBRARIES += lib/liba64fx.la
+lib_libtblis_la_LIBADD += lib/liba64fx.la
+lib_libtblis_la_SOURCES += src/configs/a64fx/config.cxx
+lib_liba64fx_la_SOURCES = src/configs/a64fx/config_ker.cxx \
+                          src/configs/a64fx/bli_gemm_armsve_asm_2vx10_unindexed.c \
+                          src/configs/a64fx/bli_dpackm_armsve512_asm_16xk.c \
+                          src/configs/a64fx/bli_dpackm_armsve512_asm_10xk.c \
+                          src/configs/a64fx/bli_vl.c
+lib_liba64fx_la_CFLAGS = -march=armv8-a+sve
 endif
 
-if ENABLE_ARMV8A_SVE256
-noinst_LTLIBRARIES += lib/libarmv8a_sve256.la
-lib_libtblis_la_LIBADD += lib/libarmv8a_sve256.la
-lib_libtblis_la_SOURCES += src/configs/armv8a_sve256/config.cxx
-lib_libarmv8a_sve256_la_SOURCES = src/configs/armv8a_sve256/config_ker.cxx \
-                                  src/configs/armv8a_sve512/bli_gemm_armsve_asm_2vx10_unindexed.c
-lib_libarmv8a_sve256_la_CFLAGS = -march=armv8-a+sve
-CXXFLAGS += -march=armv8-a+sve
+if ENABLE_NEOVERSEV1
+noinst_LTLIBRARIES += lib/libneoversev1.la
+lib_libtblis_la_LIBADD += lib/libneoversev1.la
+lib_libtblis_la_SOURCES += src/configs/neoversev1/config.cxx
+lib_libneoversev1_la_SOURCES = src/configs/neoversev1/config_ker.cxx
+if !ENABLE_A64FX
+lib_libneoversev1_la_SOURCES += src/configs/a64fx/bli_vl.c \
+                                src/configs/a64fx/bli_gemm_armsve_asm_2vx10_unindexed.c
+endif
+lib_libneoversev1_la_CFLAGS = -march=armv8-a+sve
 endif
 
 #

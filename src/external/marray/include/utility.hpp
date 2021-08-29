@@ -15,6 +15,8 @@
 #include <string>
 #include <functional>
 #include <ostream>
+#include <stdexcept>
+#include <limits>
 
 #ifdef MARRAY_ENABLE_ASSERTS
 #define MARRAY_ASSERT(e) assert(e)

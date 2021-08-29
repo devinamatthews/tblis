@@ -1,10 +1,5 @@
-#ifndef _TBLIS_CONFIGS_ARMV8A_SVE512_BLI_VL_H_
-#define _TBLIS_CONFIGS_ARMV8A_SVE512_BLI_VL_H_
-#include <stdint.h>
+#include "bli_vl.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 uint64_t bli_vl()
 {
     uint64_t vl_bytes = 0;
@@ -18,7 +13,3 @@ uint64_t bli_vl()
     return vl_bytes;
 }
 
-#ifdef __cplusplus
-}
-#endif
-#endif

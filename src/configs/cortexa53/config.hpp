@@ -1,5 +1,5 @@
-#ifndef _TBLIS_CONFIGS_ARMV8A_CONFIG_HPP_
-#define _TBLIS_CONFIGS_ARMV8A_CONFIG_HPP_
+#ifndef _TBLIS_CONFIGS_CORTEXA53_CONFIG_HPP_
+#define _TBLIS_CONFIGS_CORTEXA53_CONFIG_HPP_
 
 #include "configs/config_builder.hpp"
 
@@ -9,9 +9,9 @@ EXTERN_BLIS_GEMM_UKR(bli_dgemm_armv8a_asm_6x8);
 namespace tblis
 {
 
-extern int armv8a_check();
+extern int cortexa53_check();
 
-TBLIS_BEGIN_CONFIG(armv8a)
+TBLIS_BEGIN_CONFIG(cortexa53)
 
     TBLIS_CONFIG_GEMM_MR(   8,    6, _, _)
     TBLIS_CONFIG_GEMM_NR(  12,    8, _, _)
@@ -33,7 +33,7 @@ TBLIS_BEGIN_CONFIG(armv8a)
     TBLIS_CONFIG_GEMM_ROW_MAJOR(false, false, _, _)
     TBLIS_CONFIG_GEMM_FLIP_UKR(true, true, _, _)
 
-    TBLIS_CONFIG_CHECK(armv8a_check)
+    TBLIS_CONFIG_CHECK(cortexa53_check)
 
 TBLIS_END_CONFIG
 

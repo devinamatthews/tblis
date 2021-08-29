@@ -5,6 +5,6 @@
 namespace tblis
 {
 
-TBLIS_CONFIG_INSTANTIATE(armv7a);
+TBLIS_CONFIG_INSTANTIATE(cortexa9);
 
 }

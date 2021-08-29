@@ -178,7 +178,7 @@ AC_ARG_ENABLE([config],
                           the following meta-configurations are also available:
  
                           armsve = a64fx,neoversev1
-                          arm64 = cortexa53,thunderx2,armsve
+                          arm64 = cortexa53,thunderx2
                           arm32 = cortexa9
                           skx = skx1,skx2
                           intel = core2,sandybridge,haswell,skx,knl
@@ -218,7 +218,7 @@ configs=`echo $enable_config | sed 's/x86/intel,amd/' \
                              | sed 's/skx,/skx1,skx2,/' \
                              | sed 's/skx$/skx1,skx2/' \
                              | sed 's/arm32/cortexa9/' \
-                             | sed 's/arm64/cortexa53,thunderx2,armsve/' \
+                             | sed 's/arm64/cortexa53,thunderx2/' \
                              | sed 's/armsve/a64fx,neoversev1/' \
                              | sed 's/,/ /g'`
 

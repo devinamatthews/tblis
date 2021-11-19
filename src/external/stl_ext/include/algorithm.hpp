@@ -394,8 +394,9 @@ T& intersect(T& v1, T v2)
         }
         else
         {
-            std::iter_swap(i1, i3);
+            *i3 = std::move(*i1);
             ++i1;
+            ++i2;
             ++i3;
         }
     }
@@ -428,29 +429,11 @@ T& unite(T& v1, T v2)
     sort(v1);
     sort(v2);
 
-    auto i1 = v1.begin();
-    auto i2 = v2.begin();
-    auto i3 = std::back_inserter(v3);
-    while (i1 != v1.end() && i2 != v2.end())
-    {
-        if (*i1 < *i2)
-        {
-            *i3 = *i1;
-            ++i1;
-        }
-        else if (*i2 < *i1)
-        {
-            *i3 = *i2;
-            ++i2;
-        }
-        else
-        {
-            *i3 = *i1;
-            ++i1;
-            ++i2;
-        }
-        ++i3;
-    }
+    std::set_union(std::make_move_iterator(v1.begin()),
+                   std::make_move_iterator(v1.end()),
+                   std::make_move_iterator(v2.begin()),
+                   std::make_move_iterator(v2.end()),
+                   std::back_inserter(v3));
     v1.swap(v3);
 
     return v1;
@@ -481,11 +464,11 @@ T& exclude(T& v1, T v2)
     auto i1 = v1.begin();
     auto i2 = v2.begin();
     auto i3 = v1.begin();
-    while (i1 != v1.end())
+    while (i1 != v1.end() && i2 != v2.end())
     {
-        if (i2 == v2.end() || *i1 < *i2)
+        if (*i1 < *i2)
         {
-            std::iter_swap(i1, i3);
+            *i3 = std::move(*i1);
             ++i1;
             ++i3;
         }
@@ -496,8 +479,10 @@ T& exclude(T& v1, T v2)
         else
         {
             ++i1;
+            ++i2;
         }
     }
+    i3 = std::move(i1, v1.end(), i3);
     v1.erase(i3, v1.end());
 
     return v1;

@@ -4,6 +4,7 @@
 #include <array>
 #include <cstdlib>
 #include <memory>
+#include <limits>
 
 #ifndef MARRAY_ASSERT
 #ifdef MARRAY_ENABLE_ASSERTS

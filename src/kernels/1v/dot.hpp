@@ -17,8 +17,10 @@ using dot_ukr_t =
 template <typename Config, typename T>
 void dot_ukr_def(len_type n,
                  bool conj_A, const T* TBLIS_RESTRICT A, stride_type inc_A,
-                 bool conj_B, const T* TBLIS_RESTRICT B, stride_type inc_B, T& value)
+                 bool conj_B, const T* TBLIS_RESTRICT B, stride_type inc_B, T& value_)
 {
+    auto value = value_;
+
     if (conj_A)
     {
         value = conj(value);
@@ -58,6 +60,8 @@ void dot_ukr_def(len_type n,
     {
         value = conj(value);
     }
+
+    value_ = value;
 }
 
 }

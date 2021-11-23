@@ -15,8 +15,11 @@ using reduce_ukr_t =
 
 template <typename Config, typename T>
 void reduce_ukr_def(reduce_t op, len_type n,
-                    const T* A, stride_type inc_A, T& value, len_type& idx)
+                    const T* A, stride_type inc_A, T& value_, len_type& idx_)
 {
+    auto value = value_;
+    auto idx = idx_;
+
     if (op == REDUCE_SUM)
     {
         if (inc_A == 1)
@@ -97,6 +100,9 @@ void reduce_ukr_def(reduce_t op, len_type n,
             for (len_type i = 0;i < n;i++) value += norm2(A[i*inc_A]);
         }
     }
+
+    value_ = value;
+    idx_ = idx;
 }
 
 }

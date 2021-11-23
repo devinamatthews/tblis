@@ -118,24 +118,24 @@ const config& cfg##_config::instance() \
 
 #define TBLIS_CONFIG_UKR(name, type, S,D,C,Z, def_ker) \
     template <typename T> struct name : static_microkernel<T, \
-        type<   float>, TBLIS_GET_VALUE_OR_DEFAULT(S,def_ker<   float>), \
-        type<  double>, TBLIS_GET_VALUE_OR_DEFAULT(D,def_ker<  double>), \
-        type<scomplex>, TBLIS_GET_VALUE_OR_DEFAULT(C,def_ker<scomplex>), \
-        type<dcomplex>, TBLIS_GET_VALUE_OR_DEFAULT(Z,def_ker<dcomplex>)> {};
+        type<   float>, TBLIS_GET_VALUE_OR_DEFAULT(&S,&def_ker<   float>), \
+        type<  double>, TBLIS_GET_VALUE_OR_DEFAULT(&D,&def_ker<  double>), \
+        type<scomplex>, TBLIS_GET_VALUE_OR_DEFAULT(&C,&def_ker<scomplex>), \
+        type<dcomplex>, TBLIS_GET_VALUE_OR_DEFAULT(&Z,&def_ker<dcomplex>)> {};
 
 #define TBLIS_CONFIG_UKR2(config, name, type, S,D,C,Z, def_ker) \
     template <typename T> struct name : static_microkernel<T, \
-        type<   float>, TBLIS_GET_VALUE_OR_DEFAULT(S,(def_ker<config,   float>)), \
-        type<  double>, TBLIS_GET_VALUE_OR_DEFAULT(D,(def_ker<config,  double>)), \
-        type<scomplex>, TBLIS_GET_VALUE_OR_DEFAULT(C,(def_ker<config,scomplex>)), \
-        type<dcomplex>, TBLIS_GET_VALUE_OR_DEFAULT(Z,(def_ker<config,dcomplex>))> {};
+        type<   float>, TBLIS_GET_VALUE_OR_DEFAULT(&S,(&def_ker<config,   float>)), \
+        type<  double>, TBLIS_GET_VALUE_OR_DEFAULT(&D,(&def_ker<config,  double>)), \
+        type<scomplex>, TBLIS_GET_VALUE_OR_DEFAULT(&C,(&def_ker<config,scomplex>)), \
+        type<dcomplex>, TBLIS_GET_VALUE_OR_DEFAULT(&Z,(&def_ker<config,dcomplex>))> {};
 
 #define TBLIS_CONFIG_UKR3(config, mat, name, type, S,D,C,Z, def_ker) \
     template <typename T> struct name : static_microkernel<T, \
-        type<   float>, TBLIS_GET_VALUE_OR_DEFAULT(S,(def_ker<config,   float,mat>)), \
-        type<  double>, TBLIS_GET_VALUE_OR_DEFAULT(D,(def_ker<config,  double,mat>)), \
-        type<scomplex>, TBLIS_GET_VALUE_OR_DEFAULT(C,(def_ker<config,scomplex,mat>)), \
-        type<dcomplex>, TBLIS_GET_VALUE_OR_DEFAULT(Z,(def_ker<config,dcomplex,mat>))> {};
+        type<   float>, TBLIS_GET_VALUE_OR_DEFAULT(&S,(&def_ker<config,   float,mat>)), \
+        type<  double>, TBLIS_GET_VALUE_OR_DEFAULT(&D,(&def_ker<config,  double,mat>)), \
+        type<scomplex>, TBLIS_GET_VALUE_OR_DEFAULT(&C,(&def_ker<config,scomplex,mat>)), \
+        type<dcomplex>, TBLIS_GET_VALUE_OR_DEFAULT(&Z,(&def_ker<config,dcomplex,mat>))> {};
 
 #define TBLIS_CONFIG_TRANS_UKR(S,D,C,Z) \
     TBLIS_CONFIG_UKR2(this_config, trans_ukr, trans_ukr_t, S,D,C,Z, trans_ukr_def)

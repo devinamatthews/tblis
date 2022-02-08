@@ -1,4 +1,5 @@
-AC_INIT([tci],[1.0],[dmatthews@utexas.edu],[tblis],[http://www.github.com/devinamatthews/tci])
+AC_PREREQ([2.70])
+AC_INIT(tci, 1.0, damatthews@smu.edu, tblis, http://www.github.com/devinamatthews/tci)
 AM_INIT_AUTOMAKE([foreign silent-rules subdir-objects])
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE([disable])
@@ -6,7 +7,12 @@ AM_MAINTAINER_MODE([disable])
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_PROG_CC([icc gcc clang])
+if test "x$ac_cv_prog_cc_c11" = "xno" && \
+   test "x$ac_cv_prog_cc_c99" = "xno"; then
+    AC_MSG_ERROR(A C99/C11 compiler is required)
+fi
 AC_PROG_CXX([icpc g++ clang++])
+AX_CXX_COMPILE_STDCXX_14([noext])
 LT_INIT
 
 #
@@ -446,11 +452,6 @@ AC_SUBST([USE_DISPATCH_THREADS])
 
 AM_CONDITIONAL([CPLUSPLUS], [test x$USE_TBB_THREADS = x1 || \
                              test x$USE_PPL_THREADS = x1])
-
-if test x$USE_TBB_THREADS = x1 || \
-   test x$USE_PPL_THREADS = x1; then
-    AX_CXX_COMPILE_STDCXX_11([noext])
-fi
 
 AC_CONFIG_FILES([Makefile tci/tci_config.h])
 AC_OUTPUT

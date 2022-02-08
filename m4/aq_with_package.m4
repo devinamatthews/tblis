@@ -8,7 +8,7 @@
 #
 # LICENSE
 #
-#   Copyright (c) 2015 Devin Matthews <dmatthews@utexas.edu>
+#   Copyright (c) 2015 Devin Matthews <damatthews@smu.edu>
 #
 #   Copying and distribution of this file, with or without modification, are
 #   permitted in any medium without royalty provided the copyright notice

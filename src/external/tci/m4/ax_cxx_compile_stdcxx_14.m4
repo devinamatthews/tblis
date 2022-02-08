@@ -1,10 +1,11 @@
 # ============================================================================
+#  modified from
 #  http://www.gnu.org/software/autoconf-archive/ax_cxx_compile_stdcxx_11.html
 # ============================================================================
 #
 # SYNOPSIS
 #
-#   AX_CXX_COMPILE_STDCXX_11([ext|noext],[mandatory|optional])
+#   AX_CXX_COMPILE_STDCXX_14([ext|noext],[mandatory|optional])
 #
 # DESCRIPTION
 #
@@ -37,10 +38,11 @@
 # CHANGES
 #
 #   The "override" check was removed so that icc 13.0 would be considered. 
+#   Upgraded from C++11 to C++14
 
 #serial 10
 
-m4_define([_AX_CXX_COMPILE_STDCXX_11_testbody], [[
+m4_define([_AX_CXX_COMPILE_STDCXX_14_testbody], [[
   template <typename T>
     struct check
     {
@@ -81,29 +83,40 @@ m4_define([_AX_CXX_COMPILE_STDCXX_11_testbody], [[
             func<foo>(0);
         }
     }
+        
+    auto test_auto() { return 0; }
+    
+    template <typename T> void call_l(T t) { t(0); }
+    
+    struct use_al { use_al() { call_l([](auto){}); } };
+    
+    template<typename T>
+    constexpr T pi = T(3.141592653589793238462643383);
+    
+    int mask = 0b0101'0011'0110'0011;
 ]])
 
-AC_DEFUN([AX_CXX_COMPILE_STDCXX_11], [dnl
+AC_DEFUN([AX_CXX_COMPILE_STDCXX_14], [dnl
   m4_if([$1], [], [],
         [$1], [ext], [],
         [$1], [noext], [],
-        [m4_fatal([invalid argument `$1' to AX_CXX_COMPILE_STDCXX_11])])dnl
-  m4_if([$2], [], [ax_cxx_compile_cxx11_required=true],
-        [$2], [mandatory], [ax_cxx_compile_cxx11_required=true],
-        [$2], [optional], [ax_cxx_compile_cxx11_required=false],
-        [m4_fatal([invalid second argument `$2' to AX_CXX_COMPILE_STDCXX_11])])
+        [m4_fatal([invalid argument `$1' to AX_CXX_COMPILE_STDCXX_14])])dnl
+  m4_if([$2], [], [ax_cxx_compile_cxx14_required=true],
+        [$2], [mandatory], [ax_cxx_compile_cxx14_required=true],
+        [$2], [optional], [ax_cxx_compile_cxx14_required=false],
+        [m4_fatal([invalid second argument `$2' to AX_CXX_COMPILE_STDCXX_14])])
   AC_LANG_PUSH([C++])dnl
   ac_success=no
 
   m4_if([$1], [noext], [], [dnl
   if test x$ac_success = xno; then
-    for switch in -std=gnu++11 -std=gnu++0x; do
-      cachevar=AS_TR_SH([ax_cv_cxx_compile_cxx11_$switch])
-      AC_CACHE_CHECK(whether $CXX supports C++11 features with $switch,
+    for switch in -std=gnu++14 -std=gnu++1y; do
+      cachevar=AS_TR_SH([ax_cv_cxx_compile_cxx14_$switch])
+      AC_CACHE_CHECK(whether $CXX supports C++14 features with $switch,
                      $cachevar,
         [ac_save_CXXFLAGS="$CXXFLAGS"
          CXXFLAGS="$CXXFLAGS $switch"
-         AC_COMPILE_IFELSE([AC_LANG_SOURCE([_AX_CXX_COMPILE_STDCXX_11_testbody])],
+         AC_COMPILE_IFELSE([AC_LANG_SOURCE([_AX_CXX_COMPILE_STDCXX_14_testbody])],
           [eval $cachevar=yes],
           [eval $cachevar=no])
          CXXFLAGS="$ac_save_CXXFLAGS"])
@@ -117,13 +130,13 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX_11], [dnl
 
   m4_if([$1], [ext], [], [dnl
   if test x$ac_success = xno; then
-    for switch in -std=c++11 -std=c++0x; do
-      cachevar=AS_TR_SH([ax_cv_cxx_compile_cxx11_$switch])
-      AC_CACHE_CHECK(whether $CXX supports C++11 features with $switch,
+    for switch in -std=c++14 -std=c++1y; do
+      cachevar=AS_TR_SH([ax_cv_cxx_compile_cxx14_$switch])
+      AC_CACHE_CHECK(whether $CXX supports C++14 features with $switch,
                      $cachevar,
         [ac_save_CXXFLAGS="$CXXFLAGS"
          CXXFLAGS="$CXXFLAGS $switch"
-         AC_COMPILE_IFELSE([AC_LANG_SOURCE([_AX_CXX_COMPILE_STDCXX_11_testbody])],
+         AC_COMPILE_IFELSE([AC_LANG_SOURCE([_AX_CXX_COMPILE_STDCXX_14_testbody])],
           [eval $cachevar=yes],
           [eval $cachevar=no])
          CXXFLAGS="$ac_save_CXXFLAGS"])
@@ -135,20 +148,20 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX_11], [dnl
     done
   fi])
   AC_LANG_POP([C++])
-  if test x$ax_cxx_compile_cxx11_required = xtrue; then
+  if test x$ax_cxx_compile_cxx14_required = xtrue; then
     if test x$ac_success = xno; then
-      AC_MSG_ERROR([*** A compiler with support for C++11 language features is required.])
+      AC_MSG_ERROR([*** A compiler with support for C++14 language features is required.])
     fi
   else
     if test x$ac_success = xno; then
-      HAVE_CXX11=0
-      AC_MSG_NOTICE([No compiler with C++11 support was found])
+      HAVE_CXX14=0
+      AC_MSG_NOTICE([No compiler with C++14 support was found])
     else
-      HAVE_CXX11=1
-      AC_DEFINE(HAVE_CXX11,1,
-                [define if the compiler supports basic C++11 syntax])
+      HAVE_CXX14=1
+      AC_DEFINE(HAVE_CXX14,1,
+                [define if the compiler supports basic C++14 syntax])
     fi
 
-    AC_SUBST(HAVE_CXX11)
+    AC_SUBST(HAVE_CXX14)
   fi
 ])

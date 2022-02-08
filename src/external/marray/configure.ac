@@ -1,4 +1,4 @@
-AC_INIT(marray, 1.0, dmatthews@utexas.edu, aquarius, http://www.github.com/devinamatthews/marray)
+AC_INIT(marray, 1.0, damatthews@smu.edu, aquarius, http://www.github.com/devinamatthews/marray)
 AC_CONFIG_AUX_DIR([.])
 AM_INIT_AUTOMAKE([foreign silent-rules subdir-objects])
 AM_SILENT_RULES([yes])

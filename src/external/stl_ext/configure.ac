@@ -1,4 +1,4 @@
-AC_INIT(stl_ext, 1.0, dmatthews@utexas.edu, aquarius, http://www.github.com/devinamatthews/stl_ext)
+AC_INIT(stl_ext, 1.0, damatthews@smu.edu, aquarius, http://www.github.com/devinamatthews/stl_ext)
 AM_INIT_AUTOMAKE([foreign silent-rules subdir-objects])
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE([disable])

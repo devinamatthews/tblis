@@ -44,13 +44,13 @@ AC_DEFUN([AS_GCC_INLINE_ASSEMBLY],
 [
   AC_MSG_CHECKING([if compiler supports gcc-style inline assembly])
 
-  AC_TRY_COMPILE([], [
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[
 #ifdef __GNUC_MINOR__
 #if (__GNUC__ * 1000 + __GNUC_MINOR__) < 3004
 #error GCC before 3.4 has critical bugs compiling inline assembly
 #endif
 #endif
-__asm__ (""::) ], [flag_ok=yes], [flag_ok=no])
+__asm__ (""::) ]])],[flag_ok=yes],[flag_ok=no])
 
   if test "X$flag_ok" = Xyes ; then
     $1
@@ -74,8 +74,8 @@ if AC_TRY_EVAL(ac_compile); then
   ifelse([$2], , :, [  $2
   rm -rf conftest*])
 else
-  echo "configure: failed program was:" >&AC_FD_CC
-  cat conftest.$ac_ext >&AC_FD_CC
+  echo "configure: failed program was:" >&AS_MESSAGE_LOG_FD
+  cat conftest.$ac_ext >&AS_MESSAGE_LOG_FD
   ac_ext=$ac_c_ext
 ifelse([$3], , , [  rm -rf conftest*
   $3

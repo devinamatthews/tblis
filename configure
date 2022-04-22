@@ -6706,7 +6706,10 @@ if test x"$vendor_string" = x; then
     as_fn_error $? "Unable to determine compiler vendor." "$LINENO" 5
 fi
 
-cc_vendor=`echo $vendor_string | $EGREP -oi 'icc|gcc|clang|emcc|pnacl|IBM' | tr 'A-Z' 'a-z' | { read first rest ; echo $first ; }`
+cc_vendor=`echo $vendor_string | $EGREP -oi 'icc|gcc|clang|emcc|pnacl|IBM|gnu-cc' | tr 'A-Z' 'a-z' | { read first rest ; echo $first ; }`
+if test x"$cc_vendor" = "xgnu-cc"; then
+    cc_vendor=gcc
+fi
 if test x"$cc_vendor" = x; then
     as_fn_error $? "Unable to determine compiler vendor." "$LINENO" 5
 fi

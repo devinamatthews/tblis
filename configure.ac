@@ -225,7 +225,10 @@ if test x"$vendor_string" = x; then
     AC_MSG_ERROR([Unable to determine compiler vendor.])
 fi
 
-cc_vendor=`echo $vendor_string | $EGREP -o 'icc|gcc|clang|emcc|pnacl|IBM' | { read first rest ; echo $first ; }`
+cc_vendor=`echo $vendor_string | $EGREP -oi 'icc|gcc|clang|emcc|pnacl|IBM|gnu-cc' | tr 'A-Z' 'a-z' | { read first rest ; echo $first ; }`
+if test x"$cc_vendor" = "xgnu-cc"; then
+    cc_vendor=gcc
+fi
 if test x"$cc_vendor" = x; then
     AC_MSG_ERROR([Unable to determine compiler vendor.])
 fi

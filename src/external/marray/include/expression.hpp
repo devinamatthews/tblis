@@ -1,8 +1,6 @@
 #ifndef _MARRAY_EXPRESSION_HPP_
 #define _MARRAY_EXPRESSION_HPP_
 
-#include <x86intrin.h>
-
 #include "utility.hpp"
 #include "vector.hpp"
 #include "range.hpp"

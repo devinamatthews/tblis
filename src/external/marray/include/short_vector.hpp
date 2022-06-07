@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cstdlib>
+#include <limits>
 #include <memory>
 #include <limits>
 

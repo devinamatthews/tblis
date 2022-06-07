@@ -7,6 +7,8 @@
 #endif
 #endif
 
+#include <limits>
+
 #include "tci.h"
 #include "basic_types.h"
 

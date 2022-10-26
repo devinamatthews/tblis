@@ -1,4 +1,4 @@
-AC_INIT([tci],[1.0],[dmatthews@utexas.edu],[tblis],[http://www.github.com/devinamatthews/tci])
+AC_INIT([tci],[1.0],[damatthews@smu.edu],[tblis],[http://www.github.com/devinamatthews/tci])
 AM_INIT_AUTOMAKE([foreign silent-rules subdir-objects])
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE([disable])
@@ -449,7 +449,7 @@ AM_CONDITIONAL([CPLUSPLUS], [test x$USE_TBB_THREADS = x1 || \
 
 if test x$USE_TBB_THREADS = x1 || \
    test x$USE_PPL_THREADS = x1; then
-    AX_CXX_COMPILE_STDCXX_11([noext])
+    AX_CXX_COMPILE_STDCXX([17], [noext])
 fi
 
 AC_CONFIG_FILES([Makefile tci/tci_config.h])

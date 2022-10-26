@@ -1,4 +1,5 @@
-AC_INIT([tblis],[1.2.0],[dmatthews@utexas.edu],[tblis],[http://www.github.com/devinamatthews/tblis])
+AC_PREREQ([2.70])
+AC_INIT([tblis],[1.3.0],[damatthews@smu.edu],[tblis],[http://www.github.com/devinamatthews/tblis])
 AM_INIT_AUTOMAKE([foreign silent-rules subdir-objects])
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE([disable])
@@ -11,6 +12,10 @@ AC_CONFIG_HEADERS(config.h)
 : ${CXXFLAGS="-O3"}
 
 AC_PROG_CC([icc gcc clang])
+if test "x$ac_cv_prog_cc_c11" = "xno" && \
+   test "x$ac_cv_prog_cc_c99" = "xno"; then
+    AC_MSG_ERROR(A C99/C11 compiler is required)
+fi
 AM_PROG_AS
 AC_PROG_EGREP
 AC_PROG_AWK
@@ -225,7 +230,10 @@ if test x"$vendor_string" = x; then
     AC_MSG_ERROR([Unable to determine compiler vendor.])
 fi
 
-cc_vendor=`echo $vendor_string | $EGREP -o 'icc|gcc|clang|emcc|pnacl|IBM' | { read first rest ; echo $first ; }`
+cc_vendor=`echo $vendor_string | $EGREP -oi 'icc|gcc|clang|emcc|pnacl|IBM|gnu-cc' | tr 'A-Z' 'a-z' | { read first rest ; echo $first ; }`
+if test x"$cc_vendor" = "xgnu-cc"; then
+    cc_vendor=gcc
+fi
 if test x"$cc_vendor" = x; then
     AC_MSG_ERROR([Unable to determine compiler vendor.])
 fi

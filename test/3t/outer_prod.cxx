@@ -31,7 +31,7 @@ void random_outer_prod(stride_type N, T&& A, label_vector& idx_A,
 
 REPLICATED_TEMPLATED_TEST_CASE(outer_prod, R, T, all_types)
 {
-    varray<T> A, B, C, D, E;
+    marray<T> A, B, C, D, E;
     label_vector idx_A, idx_B, idx_C;
 
     random_outer_prod(N, A, idx_A, B, idx_B, C, idx_C);
@@ -60,7 +60,7 @@ REPLICATED_TEMPLATED_TEST_CASE(outer_prod, R, T, all_types)
 
 REPLICATED_TEMPLATED_TEST_CASE(dpd_outer_prod, R, T, all_types)
 {
-    dpd_varray<T> A, B, C, D, E;
+    dpd_marray<T> A, B, C, D, E;
     label_vector idx_A, idx_B, idx_C;
 
     T scale(10.0*random_unit<T>());
@@ -71,7 +71,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_outer_prod, R, T, all_types)
     DPD_TENSOR_INFO(B);
     DPD_TENSOR_INFO(C);
 
-    auto neps = dpd_varray<T>::size(C.irrep(), C.lengths());
+    auto neps = dpd_marray<T>::size(C.irrep(), C.lengths());
 
     dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
@@ -89,7 +89,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_outer_prod, R, T, all_types)
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_outer_prod, R, T, all_types)
 {
-    indexed_varray<T> A, B, C, D, E;
+    indexed_marray<T> A, B, C, D, E;
     label_vector idx_A, idx_B, idx_C;
 
     T scale(10.0*random_unit<T>());
@@ -110,6 +110,8 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_outer_prod, R, T, all_types)
     E.reset(C);
     mult<T>(scale, A, idx_A, B, idx_B, scale, E, idx_C);
 
+    for (auto& f : E.factors()) f = T(1);
+    for (auto& f : D.factors()) f = T(1);
     add<T>(T(-1), D, idx_C, T(1), E, idx_C);
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C);
 
@@ -118,7 +120,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_outer_prod, R, T, all_types)
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_outer_prod, R, T, all_types)
 {
-    indexed_dpd_varray<T> A, B, C, D, E;
+    indexed_dpd_marray<T> A, B, C, D, E;
     label_vector idx_A, idx_B, idx_C;
 
     T scale(10.0*random_unit<T>());
@@ -129,7 +131,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_outer_prod, R, T, all_types)
     INDEXED_DPD_TENSOR_INFO(B);
     INDEXED_DPD_TENSOR_INFO(C);
 
-    auto neps = dpd_varray<T>::size(C.irrep(), C.lengths());
+    auto neps = dpd_marray<T>::size(C.irrep(), C.lengths());
 
     dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
@@ -139,6 +141,8 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_outer_prod, R, T, all_types)
     E.reset(C);
     mult<T>(scale, A, idx_A, B, idx_B, scale, E, idx_C);
 
+    for (auto& f : E.factors()) f = T(1);
+    for (auto& f : D.factors()) f = T(1);
     add<T>(T(-1), D, idx_C, T(1), E, idx_C);
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C);
 

@@ -148,8 +148,8 @@ dim_vector sort_by_stride(const Strides&... strides)
 }
 
 template <typename T>
-bool are_congruent_along(const varray_view<const T>& A,
-                         const varray_view<const T>& B, int dim)
+bool are_congruent_along(const marray_view<const T>& A,
+                         const marray_view<const T>& B, int dim)
 {
     if (A.dimension() < B.dimension()) swap(A, B);
 
@@ -209,8 +209,8 @@ inline bool are_compatible(const len_vector& len_A,
 }
 
 template <typename T>
-bool are_compatible(const varray_view<const T>& A,
-                    const varray_view<const T>& B)
+bool are_compatible(const marray_view<const T>& A,
+                    const marray_view<const T>& B)
 {
     return A.data() == B.data() &&
         are_compatible(A.lengths(), A.strides(),
@@ -309,7 +309,7 @@ inline void diagonal(int& ndim,
 }
 
 template <typename T>
-matrix_view<T> matricize(const varray_view<T>& A, int split)
+matrix_view<T> matricize(const marray_view<T>& A, int split)
 {
     auto ndim = A.dimension();
     TBLIS_ASSERT(split <= ndim);
@@ -371,13 +371,13 @@ matrix_view<T> matricize(const varray_view<T>& A, int split)
 }
 
 template <typename T>
-matrix_view<T> matricize(varray<T>& A, int split)
+matrix_view<T> matricize(marray<T>& A, int split)
 {
     return matricize(A.view(), split);
 }
 
 template <typename T>
-matrix_view<const T> matricize(const varray<T>& A, int split)
+matrix_view<const T> matricize(const marray<T>& A, int split)
 {
     return matricize(A.view(), split);
 }

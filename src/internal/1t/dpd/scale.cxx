@@ -8,7 +8,7 @@ namespace internal
 {
 
 void scale(type_t type, const communicator& comm, const config& cfg,
-           const scalar& alpha, bool conj_A, const dpd_varray_view<char>& A,
+           const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
            const dim_vector& idx_A)
 {
     const len_type ts = type_size[type];
@@ -27,7 +27,7 @@ void scale(type_t type, const communicator& comm, const config& cfg,
 
         if (is_block_empty(A, irreps)) continue;
 
-        varray_view<char> local_A = A(irreps);
+        marray_view<char> local_A = A(irreps);
 
         scale(type, comm, cfg, local_A.lengths(), alpha, conj_A,
               A.data() + (local_A.data()-A.data())*ts, local_A.strides());

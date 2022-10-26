@@ -62,7 +62,7 @@ void reduce_ref(reduce_t op, len_type n, const T* A, T& value, len_type& idx)
 
 REPLICATED_TEMPLATED_TEST_CASE(reduce, R, T, all_types)
 {
-    varray<T> A;
+    marray<T> A;
 
     random_tensor(100, A);
     label_vector idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
@@ -92,14 +92,14 @@ REPLICATED_TEMPLATED_TEST_CASE(reduce, R, T, all_types)
 
 REPLICATED_TEMPLATED_TEST_CASE(dpd_reduce, R, T, all_types)
 {
-    dpd_varray<T> A;
+    dpd_marray<T> A;
 
     random_tensor(100, A);
     label_vector idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
     DPD_TENSOR_INFO(A);
 
-    auto NA = dpd_varray<T>::size(A.irrep(), A.lengths());
+    auto NA = dpd_marray<T>::size(A.irrep(), A.lengths());
 
     T ref_val, calc_val;
     stride_type ref_idx, calc_idx;
@@ -118,7 +118,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_reduce, R, T, all_types)
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_reduce, R, T, all_types)
 {
-    indexed_varray<T> A;
+    indexed_marray<T> A;
 
     random_tensor(100, A);
     label_vector idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
@@ -144,14 +144,14 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_reduce, R, T, all_types)
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_reduce, R, T, all_types)
 {
-    indexed_dpd_varray<T> A;
+    indexed_dpd_marray<T> A;
 
     random_tensor(100, A);
     label_vector idx_A = range<label_type>('a', static_cast<label_type>('a'+A.dimension()));
 
     INDEXED_DPD_TENSOR_INFO(A);
 
-    auto NA = dpd_varray<T>::size(A.dense_irrep(), A.dense_lengths())*A.num_indices();
+    auto NA = dpd_marray<T>::size(A.dense_irrep(), A.dense_lengths())*A.num_indices();
 
     T ref_val, calc_val;
     stride_type ref_idx, calc_idx;

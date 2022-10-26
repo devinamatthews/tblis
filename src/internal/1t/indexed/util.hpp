@@ -13,7 +13,7 @@ namespace internal
 
 template <typename T>
 void block_to_full(const communicator& comm, const config& cfg,
-                   const indexed_varray_view<T>& A, varray<T>& A2)
+                   const indexed_marray_view<T>& A, marray<T>& A2)
 {
     auto ndim_A = A.dimension();
     auto dense_ndim_A = A.dense_dimension();
@@ -45,7 +45,7 @@ void block_to_full(const communicator& comm, const config& cfg,
 
 template <typename T>
 void full_to_block(const communicator& comm, const config& cfg,
-                   varray<T>& A2, const indexed_varray_view<T>& A)
+                   marray<T>& A2, const indexed_marray_view<T>& A)
 {
     auto ndim_A = A.dimension();
     auto dense_ndim_A = A.dense_dimension();
@@ -88,7 +88,7 @@ void assign_dense_idx_helper(int, index_group<N>&) {}
 
 template <int I, int N, typename T, typename... Args>
 void assign_dense_idx_helper(int i, index_group<N>& group,
-                             const indexed_varray_view<T>& A,
+                             const indexed_marray_view<T>& A,
                              const dim_vector& idx_A, const Args&... args)
 {
     TBLIS_ASSERT(group.dense_len.back() == A.dense_length(idx_A[i]));
@@ -98,7 +98,7 @@ void assign_dense_idx_helper(int i, index_group<N>& group,
 
 template <int N, typename T, typename... Args>
 void assign_dense_idx(int i, index_group<N>& group,
-                      const indexed_varray_view<T>& A,
+                      const indexed_marray_view<T>& A,
                       const dim_vector& idx_A, const Args&... args)
 {
     group.dense_len.push_back(A.dense_length(idx_A[i]));
@@ -112,7 +112,7 @@ void assign_mixed_or_batch_idx_helper(int, int, int,
 template <int N, typename T, typename... Args>
 void assign_mixed_or_batch_idx_helper(int i, int pos, int j,
                                       index_group<N>& group,
-                                      const indexed_varray_view<T>& A,
+                                      const indexed_marray_view<T>& A,
                                       const dim_vector& idx_A, const Args&... args)
 {
     group.batch_len[pos] = A.length(idx_A[i]);
@@ -136,7 +136,7 @@ void assign_mixed_or_batch_idx_helper(int i, int pos, int j,
 template <int N, typename T, typename... Args>
 void assign_mixed_or_batch_idx(int i, int pos,
                                index_group<N>& group,
-                               const indexed_varray_view<T>& A,
+                               const indexed_marray_view<T>& A,
                                const dim_vector& idx_A, const Args&... args)
 {
     assign_mixed_or_batch_idx_helper(i, pos, 0, group,
@@ -161,20 +161,20 @@ struct index_group
     std::array<dim_vector,N> batch_pos;
 
     template <int... I>
-    void fold(detail::integer_sequence<int, I...>)
+    void fold(std::integer_sequence<int, I...>)
     {
         label_vector dense_idx; dense_idx.resize(dense_ndim);
         tblis::fold(dense_len, dense_idx, dense_stride[I]...);
     }
 
     template <int... I>
-    dim_vector sort_by_stride(detail::integer_sequence<int, I...>)
+    dim_vector sort_by_stride(std::integer_sequence<int, I...>)
     {
         return detail::sort_by_stride(dense_stride[I]...);
     }
 
     template <typename T, typename... Args>
-    index_group(const indexed_varray_view<T>& A, const dim_vector& idx_A,
+    index_group(const indexed_marray_view<T>& A, const dim_vector& idx_A,
                 const Args&... args)
     {
         batch_len.resize(idx_A.size());
@@ -201,9 +201,9 @@ struct index_group
         for (auto i : range(1,batch_ndim))
             batch_stride[i] = batch_stride[i-1]*batch_len[i-1];
 
-        //fold(detail::static_range<int, N>{});
+        //fold(std::make_integer_sequence<int, N>{});
 
-        //auto reorder = sort_by_stride(detail::static_range<int, N>{});
+        //auto reorder = sort_by_stride(std::make_integer_sequence<int, N>{});
 
         //stl_ext::permute(dense_len, reorder);
 

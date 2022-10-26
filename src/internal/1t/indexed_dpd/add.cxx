@@ -13,17 +13,17 @@ namespace internal
 
 template <typename T>
 void add_full(const communicator& comm, const config& cfg,
-              T alpha, bool conj_A, const indexed_dpd_varray_view<T>& A,
+              T alpha, bool conj_A, const indexed_dpd_marray_view<T>& A,
               const dim_vector& idx_A_A,
               const dim_vector& idx_A_AB,
-                                    const indexed_dpd_varray_view<T>& B,
+                                    const indexed_dpd_marray_view<T>& B,
               const dim_vector& idx_B_B,
               const dim_vector& idx_B_AB)
 {
-    varray<T> A2, B2;
+    marray<T> A2, B2;
 
     comm.broadcast(
-    [&](varray<T>& A2, varray<T>& B2)
+    [&](marray<T>& A2, marray<T>& B2)
     {
         block_to_full(comm, cfg, A, A2);
         block_to_full(comm, cfg, B, B2);
@@ -46,10 +46,10 @@ void add_full(const communicator& comm, const config& cfg,
 }
 
 void trace_block(type_t type, const communicator& comm, const config& cfg,
-                 const scalar& alpha, bool conj_A, const indexed_dpd_varray_view<char>& A,
+                 const scalar& alpha, bool conj_A, const indexed_dpd_marray_view<char>& A,
                  const dim_vector& idx_A_A,
                  const dim_vector& idx_A_AB,
-                                                   const indexed_dpd_varray_view<char>& B,
+                                                   const indexed_dpd_marray_view<char>& B,
                  const dim_vector& idx_B_AB)
 {
     const len_type ts = type_size[type];
@@ -111,7 +111,7 @@ void trace_block(type_t type, const communicator& comm, const config& cfg,
 
                     if (is_block_empty(dpd_B, local_irreps_B)) return;
 
-                    varray_view<char> local_B = dpd_B(local_irreps_B);
+                    marray_view<char> local_B = dpd_B(local_irreps_B);
 
                     for (stride_type block_A = 0;block_A < group_A.dense_nblock;block_A++)
                     {
@@ -120,7 +120,7 @@ void trace_block(type_t type, const communicator& comm, const config& cfg,
 
                         if (is_block_empty(dpd_A, local_irreps_A)) continue;
 
-                        varray_view<const char> local_A = dpd_A(local_irreps_A);
+                        marray_view<const char> local_A = dpd_A(local_irreps_A);
 
                         len_vector len_AB;
                         stride_vector stride_A_AB, stride_B_AB;
@@ -165,9 +165,9 @@ void trace_block(type_t type, const communicator& comm, const config& cfg,
 }
 
 void replicate_block(type_t type, const communicator& comm, const config& cfg,
-                     const scalar& alpha, bool conj_A, const indexed_dpd_varray_view<char>& A,
+                     const scalar& alpha, bool conj_A, const indexed_dpd_marray_view<char>& A,
                      const dim_vector& idx_A_AB,
-                                                       const indexed_dpd_varray_view<char>& B,
+                                                       const indexed_dpd_marray_view<char>& B,
                      const dim_vector& idx_B_B,
                      const dim_vector& idx_B_AB)
 {
@@ -243,8 +243,8 @@ void replicate_block(type_t type, const communicator& comm, const config& cfg,
                             if (is_block_empty(dpd_A, local_irreps_A)) return;
                             if (is_block_empty(dpd_B, local_irreps_B)) return;
 
-                            varray_view<const char> local_A = dpd_A(local_irreps_A);
-                            varray_view<      char> local_B = dpd_B(local_irreps_B);
+                            marray_view<const char> local_A = dpd_A(local_irreps_A);
+                            marray_view<      char> local_B = dpd_B(local_irreps_B);
 
                             len_vector len_AB;
                             stride_vector stride_A_AB, stride_B_AB;
@@ -281,9 +281,9 @@ void replicate_block(type_t type, const communicator& comm, const config& cfg,
 }
 
 void transpose_block(type_t type, const communicator& comm, const config& cfg,
-                     const scalar& alpha, bool conj_A, const indexed_dpd_varray_view<char>& A,
+                     const scalar& alpha, bool conj_A, const indexed_dpd_marray_view<char>& A,
                      const dim_vector& idx_A_AB,
-                                                       const indexed_dpd_varray_view<char>& B,
+                                                       const indexed_dpd_marray_view<char>& B,
                      const dim_vector& idx_B_AB)
 {
     const len_type ts = type_size[type];
@@ -340,8 +340,8 @@ void transpose_block(type_t type, const communicator& comm, const config& cfg,
 
                     if (is_block_empty(dpd_A, local_irreps_A)) return;
 
-                    varray_view<const char> local_A = dpd_A(local_irreps_A);
-                    varray_view<      char> local_B = dpd_B(local_irreps_B);
+                    marray_view<const char> local_A = dpd_A(local_irreps_A);
+                    marray_view<      char> local_B = dpd_B(local_irreps_B);
 
                     len_vector len_AB;
                     stride_vector stride_A_AB, stride_B_AB;
@@ -368,10 +368,10 @@ void transpose_block(type_t type, const communicator& comm, const config& cfg,
 }
 
 void add(type_t type, const communicator& comm, const config& cfg,
-         const scalar& alpha, bool conj_A, const indexed_dpd_varray_view<char>& A,
+         const scalar& alpha, bool conj_A, const indexed_dpd_marray_view<char>& A,
          const dim_vector& idx_A_A,
          const dim_vector& idx_A_AB,
-         const scalar&  beta, bool conj_B, const indexed_dpd_varray_view<char>& B,
+         const scalar&  beta, bool conj_B, const indexed_dpd_marray_view<char>& B,
          const dim_vector& idx_B_B,
          const dim_vector& idx_B_AB)
 {
@@ -401,26 +401,26 @@ void add(type_t type, const communicator& comm, const config& cfg,
             case TYPE_FLOAT:
                 add_full(comm, cfg,
                          alpha.data.s, conj_A,
-                         reinterpret_cast<const indexed_dpd_varray_view<float>&>(A), idx_A_A, idx_A_AB,
-                         reinterpret_cast<const indexed_dpd_varray_view<float>&>(B), idx_B_B, idx_B_AB);
+                         reinterpret_cast<const indexed_dpd_marray_view<float>&>(A), idx_A_A, idx_A_AB,
+                         reinterpret_cast<const indexed_dpd_marray_view<float>&>(B), idx_B_B, idx_B_AB);
                 break;
             case TYPE_DOUBLE:
                 add_full(comm, cfg,
                          alpha.data.d, conj_A,
-                         reinterpret_cast<const indexed_dpd_varray_view<double>&>(A), idx_A_A, idx_A_AB,
-                         reinterpret_cast<const indexed_dpd_varray_view<double>&>(B), idx_B_B, idx_B_AB);
+                         reinterpret_cast<const indexed_dpd_marray_view<double>&>(A), idx_A_A, idx_A_AB,
+                         reinterpret_cast<const indexed_dpd_marray_view<double>&>(B), idx_B_B, idx_B_AB);
                 break;
             case TYPE_SCOMPLEX:
                 add_full(comm, cfg,
                          alpha.data.c, conj_A,
-                         reinterpret_cast<const indexed_dpd_varray_view<scomplex>&>(A), idx_A_A, idx_A_AB,
-                         reinterpret_cast<const indexed_dpd_varray_view<scomplex>&>(B), idx_B_B, idx_B_AB);
+                         reinterpret_cast<const indexed_dpd_marray_view<scomplex>&>(A), idx_A_A, idx_A_AB,
+                         reinterpret_cast<const indexed_dpd_marray_view<scomplex>&>(B), idx_B_B, idx_B_AB);
                 break;
             case TYPE_DCOMPLEX:
                 add_full(comm, cfg,
                          alpha.data.z, conj_A,
-                         reinterpret_cast<const indexed_dpd_varray_view<dcomplex>&>(A), idx_A_A, idx_A_AB,
-                         reinterpret_cast<const indexed_dpd_varray_view<dcomplex>&>(B), idx_B_B, idx_B_AB);
+                         reinterpret_cast<const indexed_dpd_marray_view<dcomplex>&>(A), idx_A_A, idx_A_AB,
+                         reinterpret_cast<const indexed_dpd_marray_view<dcomplex>&>(B), idx_B_B, idx_B_AB);
                 break;
         }
     }

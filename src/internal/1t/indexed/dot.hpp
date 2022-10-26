@@ -11,9 +11,9 @@ namespace internal
 {
 
 void dot(type_t type, const communicator& comm, const config& cfg,
-         bool conj_A, const indexed_varray_view<char>& A,
+         bool conj_A, const indexed_marray_view<char>& A,
          const dim_vector& idx_A_AB,
-         bool conj_B, const indexed_varray_view<char>& B,
+         bool conj_B, const indexed_marray_view<char>& B,
          const dim_vector& idx_B_AB,
          char* result);
 

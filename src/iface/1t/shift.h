@@ -95,10 +95,10 @@ void shift(const scalar& alpha,
 
 template <typename T>
 void shift(const communicator& comm,
-         T alpha, T beta, dpd_varray_view<T> A, const label_vector& idx_A);
+         T alpha, T beta, dpd_marray_view<T> A, const label_vector& idx_A);
 
 template <typename T>
-void shift(T alpha, T beta, dpd_varray_view<T> A, const label_vector& idx_A)
+void shift(T alpha, T beta, dpd_marray_view<T> A, const label_vector& idx_A)
 {
     parallelize
     (
@@ -112,10 +112,10 @@ void shift(T alpha, T beta, dpd_varray_view<T> A, const label_vector& idx_A)
 
 template <typename T>
 void shift(const communicator& comm,
-         T alpha, T beta, indexed_varray_view<T> A, const label_vector& idx_A);
+         T alpha, T beta, indexed_marray_view<T> A, const label_vector& idx_A);
 
 template <typename T>
-void shift(T alpha, T beta, indexed_varray_view<T> A, const label_vector& idx_A)
+void shift(T alpha, T beta, indexed_marray_view<T> A, const label_vector& idx_A)
 {
     parallelize
     (
@@ -129,10 +129,10 @@ void shift(T alpha, T beta, indexed_varray_view<T> A, const label_vector& idx_A)
 
 template <typename T>
 void shift(const communicator& comm,
-         T alpha, T beta, indexed_dpd_varray_view<T> A, const label_vector& idx_A);
+         T alpha, T beta, indexed_dpd_marray_view<T> A, const label_vector& idx_A);
 
 template <typename T>
-void shift(T alpha, T beta, indexed_dpd_varray_view<T> A, const label_vector& idx_A)
+void shift(T alpha, T beta, indexed_dpd_marray_view<T> A, const label_vector& idx_A)
 {
     parallelize
     (

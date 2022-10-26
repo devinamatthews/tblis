@@ -59,7 +59,7 @@ lib_libtblis_la_SOURCES = \
     src/util/env.cxx \
     src/util/random.cxx \
     src/util/thread.cxx
-    
+
 pkginclude_HEADERS = src/tblis.h src/tblis_config.h
 
 utilincludedir = $(pkgincludedir)/util
@@ -92,39 +92,42 @@ iface3tincludedir = $(pkgincludedir)/iface/3t
 iface3tinclude_HEADERS = \
     \
     src/iface/3t/mult.h
-    
-marrayincludedir = $(pkgincludedir)/external/marray/include
+
+marrayincludedir = $(pkgincludedir)/external/marray/marray
 marrayinclude_HEADERS = \
     \
-    src/external/marray/include/dpd_range.hpp \
-    src/external/marray/include/dpd_varray_base.hpp \
-    src/external/marray/include/dpd_varray_view.hpp \
-    src/external/marray/include/dpd_varray.hpp \
-    src/external/marray/include/expression.hpp \
-    src/external/marray/include/indexed_dpd_varray_base.hpp \
-    src/external/marray/include/indexed_dpd_varray_view.hpp \
-    src/external/marray/include/indexed_dpd_varray.hpp \
-    src/external/marray/include/indexed_varray_base.hpp \
-    src/external/marray/include/indexed_varray_view.hpp \
-    src/external/marray/include/indexed_varray.hpp \
-    src/external/marray/include/marray_base.hpp \
-    src/external/marray/include/marray_slice.hpp \
-    src/external/marray/include/marray_view.hpp \
-    src/external/marray/include/marray.hpp \
-    src/external/marray/include/miterator.hpp \
-    src/external/marray/include/range.hpp \
-    src/external/marray/include/rotate.hpp \
-    src/external/marray/include/short_vector.hpp \
-    src/external/marray/include/utility.hpp \
-    src/external/marray/include/varray_base.hpp \
-    src/external/marray/include/varray_view.hpp \
-    src/external/marray/include/varray.hpp \
-    src/external/marray/include/vector_avx.hpp \
-    src/external/marray/include/vector_avx512.hpp \
-    src/external/marray/include/vector_sse41.hpp \
-    src/external/marray/include/vector.hpp \
-    src/external/marray/include/viterator.hpp
-    
+    src/external/marray/marray/detail/utility.hpp \
+    src/external/marray/marray/detail/vector_avx.hpp \
+    src/external/marray/marray/detail/vector_avx512.hpp \
+    src/external/marray/marray/detail/vector_sse41.hpp \
+    src/external/marray/marray/detail/vector.hpp \
+    src/external/marray/marray/dpd/dpd_range.hpp \
+    src/external/marray/marray/dpd/dpd_marray_base.hpp \
+    src/external/marray/marray/dpd/dpd_marray_view.hpp \
+    src/external/marray/marray/dpd/dpd_marray.hpp \
+    src/external/marray/marray/fwd/expression_fwd.hpp \
+    src/external/marray/marray/fwd/marray_fwd.hpp \
+    src/external/marray/marray/indexed/indexed_marray_base.hpp \
+    src/external/marray/marray/indexed/indexed_marray_view.hpp \
+    src/external/marray/marray/indexed/indexed_marray.hpp \
+    src/external/marray/marray/indexed_dpd/indexed_dpd_marray_base.hpp \
+    src/external/marray/marray/indexed_dpd/indexed_dpd_marray_view.hpp \
+    src/external/marray/marray/indexed_dpd/indexed_dpd_marray.hpp \
+    src/external/marray/marray/array_1d.hpp \
+    src/external/marray/marray/array_2d.hpp \
+    src/external/marray/marray/expression.hpp \
+    src/external/marray/marray/expression.hpp \
+    src/external/marray/marray/index_iterator.hpp \
+    src/external/marray/marray/marray_base.hpp \
+    src/external/marray/marray/marray_iterator.hpp \
+    src/external/marray/marray/marray_slice.hpp \
+    src/external/marray/marray/marray_view.hpp \
+    src/external/marray/marray/marray.hpp \
+    src/external/marray/marray/range.hpp \
+    src/external/marray/marray/rotate.hpp \
+    src/external/marray/marray/short_vector.hpp \
+    src/external/marray/marray/types.hpp
+
 stl_extincludedir = $(pkgincludedir)/external/stl_ext/include
 stl_extinclude_HEADERS = \
     \
@@ -142,7 +145,7 @@ stl_extinclude_HEADERS = \
     src/external/stl_ext/include/type_traits.hpp \
     src/external/stl_ext/include/vector.hpp \
     src/external/stl_ext/include/zip.hpp
-    
+
 noinst_LTLIBRARIES =
 lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la
 
@@ -352,8 +355,8 @@ endif
 
 #
 # ARM architectures
-# 
-    
+#
+
 #if ENABLE_ARMV7A
 #noinst_LTLIBRARIES += lib/libarmv7a.la
 #lib_libtblis_la_LIBADD += lib/libarmv7a.la

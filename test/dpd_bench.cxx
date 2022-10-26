@@ -63,11 +63,11 @@ double run_kernel(len_type R, Kernel&& kernel, Args&&...args)
 }
 
 template <typename T>
-double diff(const dpd_varray_view<T>& A, const dpd_varray_view<T>& B)
+double diff(const dpd_marray_view<T>& A, const dpd_marray_view<T>& B)
 {
     const T* a = A.data();
     const T* b = B.data();
-    stride_type size = dpd_varray<T>::size(A.irrep(), A.lengths());
+    stride_type size = dpd_marray<T>::size(A.irrep(), A.lengths());
 
     double d = 0;
 
@@ -80,10 +80,10 @@ double diff(const dpd_varray_view<T>& A, const dpd_varray_view<T>& B)
 }
 
 template <typename T>
-void randomize(dpd_varray<T>& A)
+void randomize(dpd_marray<T>& A)
 {
     T* a = A.data();
-    stride_type size = dpd_varray<T>::size(A.irrep(), A.lengths());
+    stride_type size = dpd_marray<T>::size(A.irrep(), A.lengths());
 
     for (stride_type i = 0;i < size;i++)
     {
@@ -93,12 +93,12 @@ void randomize(dpd_varray<T>& A)
 
 template <typename T>
 void bench(int R,
-           T alpha, const dpd_varray<T>& A, const std::string& typea,
-                    const dpd_varray<T>& B, const std::string& typeb,
-           T  beta,       dpd_varray<T>& C, const std::string& typec)
+           T alpha, const dpd_marray<T>& A, const std::string& typea,
+                    const dpd_marray<T>& B, const std::string& typeb,
+           T  beta,       dpd_marray<T>& C, const std::string& typec)
 {
-    dpd_varray<T> tmp1_, tmp2_;
-    dpd_varray_view<T> tmp1, tmp2;
+    dpd_marray<T> tmp1_, tmp2_;
+    dpd_marray_view<T> tmp1, tmp2;
 
     if (check)
     {
@@ -251,9 +251,9 @@ int main(int argc, char** argv)
 
     if (test0)
     {
-        dpd_varray<double> A(0, g, {vs,vs});
-        dpd_varray<double> B(0, g, {vs,vs});
-        dpd_varray<double> C(0, g, {vs,vs});
+        dpd_marray<double> A(0, g, {vs,vs});
+        dpd_marray<double> B(0, g, {vs,vs});
+        dpd_marray<double> C(0, g, {vs,vs});
 
         randomize(A);
         randomize(B);
@@ -266,9 +266,9 @@ int main(int argc, char** argv)
 
     if (test1)
     {
-        dpd_varray<double> A(0, g, {vs,vs,os,os});
-        dpd_varray<double> B(0, g, {vs,vs,os,os});
-        dpd_varray<double> C(0, g, {vs,vs,os,os});
+        dpd_marray<double> A(0, g, {vs,vs,os,os});
+        dpd_marray<double> B(0, g, {vs,vs,os,os});
+        dpd_marray<double> C(0, g, {vs,vs,os,os});
 
         randomize(A);
         randomize(B);

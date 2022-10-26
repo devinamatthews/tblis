@@ -1,5 +1,5 @@
-#include "gtest/gtest.h"
 #include "range.hpp"
+#include "gtest/gtest.h"
 
 using namespace std;
 using namespace MArray;

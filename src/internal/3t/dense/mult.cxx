@@ -739,7 +739,7 @@ void mult_blas(const communicator& comm, const config& cfg,
                const stride_vector& stride_C_BC_,
                const stride_vector& stride_C_ABC_)
 {
-    varray<T> ar, br, cr;
+    marray<T> ar, br, cr;
 
     auto len_AB = len_AB_; len_AB.push_back(1);
     auto len_AC = len_AC_; len_AC.push_back(1);
@@ -763,7 +763,7 @@ void mult_blas(const communicator& comm, const config& cfg,
     }
 
     comm.broadcast(
-    [&](varray<T>& ar, varray<T>& br, varray<T>& cr)
+    [&](marray<T>& ar, marray<T>& br, marray<T>& cr)
     {
         auto am = matricize(ar, len_AC.size());
         auto bm = matricize(br, len_AB.size());

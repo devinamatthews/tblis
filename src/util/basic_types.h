@@ -94,11 +94,10 @@ inline void tblis_check_assert(const char*, bool cond, const char* fmt, Args&&..
 #define MARRAY_STRIDE_TYPE TBLIS_STRIDE_TYPE
 #endif
 
-#include "../external/marray/include/varray.hpp"
-#include "../external/marray/include/marray.hpp"
-#include "../external/marray/include/dpd_varray.hpp"
-#include "../external/marray/include/indexed_varray.hpp"
-#include "../external/marray/include/indexed_dpd_varray.hpp"
+#include "../external/marray/marray/marray.hpp"
+#include "../external/marray/marray/dpd/dpd_marray.hpp"
+#include "../external/marray/marray/indexed/indexed_marray.hpp"
+#include "../external/marray/marray/indexed_dpd/indexed_dpd_marray.hpp"
 
 #endif
 
@@ -167,6 +166,10 @@ typedef complex double dcomplex;
 using namespace MArray;
 namespace detail { using namespace MArray::detail; }
 namespace slice { using namespace MArray::slice; }
+using MArray::detail::ipow;
+
+template <int N=1>
+using viterator = index_iterator<DYNAMIC, N>;
 
 #endif
 
@@ -602,8 +605,8 @@ typedef struct tblis_tensor
 #if defined(__cplusplus)
 
     tblis_tensor()
-    : type(TYPE_DOUBLE), conj(false), scalar(1.0), data(0),
-      ndim(0), len(0), stride(0) {}
+    : type(TYPE_DOUBLE), conj(false), scalar(1.0), data(nullptr),
+      ndim(0), len(nullptr), stride(nullptr) {}
 
     template <typename T>
     tblis_tensor(const T* A, int ndim,
@@ -682,14 +685,18 @@ struct tensor : tblis_tensor
     : tblis_tensor(t.data(), t.dimension(),
                    t.lengths().data(), t.strides().data()) {}
 
-    template <typename T, typename D, bool O>
-    tensor(const varray_base<T,D,O>& t)
-    : tblis_tensor(t.data(), t.dimension(),
-                   t.lengths().data(), t.strides().data()) {}
+    template <typename T, int N, typename D, bool O>
+    tensor(marray_base<T,N,D,O>&& t)
+    : tblis_tensor(t.data(), N, nullptr, nullptr)
+    {
+        len_buf.assign(t.lengths().begin(), t.lengths().end());
+        stride_buf.assign(t.strides().begin(), t.strides().end());
+        len = len_buf.data();
+        stride = stride_buf.data();
+    }
 
     template <typename T, int N, int I, typename... D>
-    tensor(const marray_slice<T,N,I,D...>& t)
-    : tensor(t.view()) {}
+    tensor(const marray_slice<T,N,I,D...>& t) : tensor(t.view()) {}
 
 #if defined(EIGEN_CXX11_TENSOR_TENSOR_H)
 
@@ -699,7 +706,7 @@ struct tensor : tblis_tensor
     {
         auto dims = t.dimensions();
         len_buf.assign(dims.begin(), dims.end());
-        stride_buf = varray<T>::strides(len_buf, t.Options&Eigen::RowMajor ? ROW_MAJOR : COLUMN_MAJOR);
+        stride_buf = marray<T>::strides(len_buf, t.Options&Eigen::RowMajor ? ROW_MAJOR : COLUMN_MAJOR);
         len = len_buf.data();
         stride = stride_buf.data();
     }
@@ -714,7 +721,7 @@ struct tensor : tblis_tensor
     {
         auto dims = t.dimensions();
         len_buf.assign(dims.begin(), dims.end());
-        stride_buf = varray<T>::strides(len_buf, t.Options&Eigen::RowMajor ? ROW_MAJOR : COLUMN_MAJOR);
+        stride_buf = marray<T>::strides(len_buf, t.Options&Eigen::RowMajor ? ROW_MAJOR : COLUMN_MAJOR);
         len = len_buf.data();
         stride = stride_buf.data();
     }
@@ -729,7 +736,7 @@ struct tensor : tblis_tensor
     {
         auto dims = t.dimensions();
         len_buf.assign(dims.begin(), dims.end());
-        stride_buf = varray<double>::strides(len_buf, Tensor::Options&Eigen::RowMajor ? ROW_MAJOR : COLUMN_MAJOR);
+        stride_buf = marray<double>::strides(len_buf, Tensor::Options&Eigen::RowMajor ? ROW_MAJOR : COLUMN_MAJOR);
         len = len_buf.data();
         stride = stride_buf.data();
     }

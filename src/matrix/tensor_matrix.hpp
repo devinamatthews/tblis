@@ -32,11 +32,11 @@ struct tensor_matrix_impl
 template <typename T>
 struct is_tensor_helper : std::false_type {};
 
-template <typename T, typename Allocator>
-struct is_tensor_helper<varray<T,Allocator>> : std::true_type {};
+template <typename T, int N, typename Allocator>
+struct is_tensor_helper<marray<T,N,Allocator>> : std::true_type {};
 
-template <typename T>
-struct is_tensor_helper<varray_view<T>> : std::true_type {};
+template <typename T, int N>
+struct is_tensor_helper<marray_view<T,N>> : std::true_type {};
 
 template <typename T>
 struct is_tensor : is_tensor_helper<typename std::decay<T>::type> {};
@@ -298,7 +298,7 @@ class tensor_matrix : public abstract_matrix_adapter<tensor_matrix,tensor_matrix
                 viterator<> it(len, stride);
 
                 len_type off0, p0;
-                divide(off, m0, off0, p0);
+                detail::divide(off, m0, off0, p0);
                 stride_type pos = 0;
                 it.position(off0, pos);
 

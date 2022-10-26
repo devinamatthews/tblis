@@ -1,7 +1,9 @@
 #include "gtest/gtest.h"
 #include "marray.hpp"
+#include "expression.hpp"
 
 #include <typeinfo>
+#include <complex>
 
 using namespace std;
 using namespace MArray;
@@ -78,6 +80,10 @@ TYPED_TEST_CASE(expression_vector, pair_types_all);
 //typedef pair_types<types<double>, types<std::complex<double>>> tmp_types;
 //TYPED_TEST_CASE(expression_vector, tmp_types);
 
+/*
+ * These are handled outside of the expression framework now.
+ *
+
 TYPED_TEST(expression_vector, vector_assign)
 {
     typedef typename TypeParam::first_type T;
@@ -116,6 +122,8 @@ TYPED_TEST(expression_vector, vector_set)
         EXPECT_EQ(U(3), b[i]);
     }
 }
+
+*/
 
 TYPED_TEST(expression_vector, vector_add)
 {
@@ -346,7 +354,7 @@ TEST(expression, assign)
                          6, 5, 4, 3, 2, 1};
     double data3[6] = {-1,-1,-1,-1,-1,-1};
 
-    marray<double,3> v1({2, 3, 2});
+    marray<double,3> v1{2, 3, 2};
     marray_view<double,3> v2({2, 3, 2}, data1);
     marray<double,4> v3({4, 3, 2, 2}, 1.0);
     marray<double,3> v4({2, 3, 2}, 4.0);
@@ -421,7 +429,7 @@ TEST(expression, bcast)
 
     double data[3] = {1, 2, 3};
 
-    marray<double,3> v1({3, 2, 3});
+    marray<double,3> v1{3, 2, 3};
     marray_view<double,1> v2({3}, data);
 
     v1 = v2;
@@ -621,7 +629,7 @@ TEST(expression, mixed_rank)
     double data2[6] = {1, 2, 3, 4, 5, 6};
     double data3[3] = {3, 2, 1};
 
-    marray<double,3> v1({2, 2, 3});
+    marray<double,3> v1{2, 2, 3};
     marray_view<double,3> v2({2, 2, 3}, data1);
     marray_view<double,2> v3({2, 3}, data2);
     marray_view<double,1> v4({3}, data3);

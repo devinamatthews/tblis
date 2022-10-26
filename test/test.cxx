@@ -193,7 +193,7 @@ void random_matrix(stride_type N, len_type m_min, len_type n_min, matrix<T>& t)
     }
 
     T* data = t.data();
-    miterator<2> it(t.lengths(), t.strides());
+    index_iterator<2,1> it(t.lengths(), t.strides());
     while (it.next(data)) *data = random_unit<T>();
 }
 
@@ -258,7 +258,7 @@ matrix<len_type> random_indices(const len_vector& len, double sparsity)
 }
 
 template <typename T>
-void random_tensor(stride_type N, int d, const vector<len_type>& len_min, varray<T>& A)
+void random_tensor(stride_type N, int d, const vector<len_type>& len_min, marray<T>& A)
 {
     len_vector len_A;
     random_lengths(N/sizeof(T), d, len_min, len_A);
@@ -267,11 +267,11 @@ void random_tensor(stride_type N, int d, const vector<len_type>& len_min, varray
 }
 
 #define FOREACH_TYPE(T) \
-template void random_tensor(stride_type N, int d, const vector<len_type>& len_min, varray<T>& A);
+template void random_tensor(stride_type N, int d, const vector<len_type>& len_min, marray<T>& A);
 #include "configs/foreach_type.h"
 
 template <typename T>
-void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, dpd_varray<T>& A)
+void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, dpd_marray<T>& A)
 {
     int irrep_A;
     vector<vector<len_type>> len_A(d);
@@ -286,18 +286,18 @@ void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len
         for (auto i : range(d))
             len_A[i] = random_sum_constrained_sequence<len_type>(nirrep, len_A_[i]);
     }
-    while (dpd_varray<T>::size(irrep_A, len_A) == 0);
+    while (dpd_marray<T>::size(irrep_A, len_A) == 0);
 
     A.reset(irrep_A, nirrep, len_A);
     randomize_tensor(A);
 }
 
 #define FOREACH_TYPE(T) \
-template void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, dpd_varray<T>& A);
+template void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, dpd_marray<T>& A);
 #include "configs/foreach_type.h"
 
 template <typename T>
-void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_varray<T>& A)
+void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_marray<T>& A)
 {
     len_vector len_A;
     random_lengths(N/sizeof(T), d, len_min, len_A);
@@ -312,11 +312,11 @@ void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexe
 }
 
 #define FOREACH_TYPE(T) \
-template void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_varray<T>& A);
+template void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_marray<T>& A);
 #include "configs/foreach_type.h"
 
 template <typename T>
-void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, indexed_dpd_varray<T>& A)
+void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, indexed_dpd_marray<T>& A)
 {
     int irrep_A;
     vector<vector<len_type>> len_A(d);
@@ -333,7 +333,7 @@ void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len
         for (auto i : range(d))
             len_A[i] = random_sum_constrained_sequence<len_type>(nirrep, len_A_[i]);
     }
-    while (dpd_varray<T>::size(irrep_A, len_A) == 0);
+    while (dpd_marray<T>::size(irrep_A, len_A) == 0);
 
     do
     {
@@ -357,27 +357,27 @@ void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len
 }
 
 #define FOREACH_TYPE(T) \
-template void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, indexed_dpd_varray<T>& A);
+template void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, indexed_dpd_marray<T>& A);
 #include "configs/foreach_type.h"
 
 template <typename T>
-void random_tensor(stride_type N, int d, const vector<len_type>& len_min, dpd_varray<T>& A)
+void random_tensor(stride_type N, int d, const vector<len_type>& len_min, dpd_marray<T>& A)
 {
     random_tensor(N, d, 1 << random_number(2), len_min, A);
 }
 
 #define FOREACH_TYPE(T) \
-template void random_tensor(stride_type N, int d, const vector<len_type>& len_min, dpd_varray<T>& A);
+template void random_tensor(stride_type N, int d, const vector<len_type>& len_min, dpd_marray<T>& A);
 #include "configs/foreach_type.h"
 
 template <typename T>
-void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_dpd_varray<T>& A)
+void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_dpd_marray<T>& A)
 {
     random_tensor(N, d, 1 << random_number(2), len_min, A);
 }
 
 #define FOREACH_TYPE(T) \
-template void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_dpd_varray<T>& A);
+template void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_dpd_marray<T>& A);
 #include "configs/foreach_type.h"
 
 /*
@@ -493,8 +493,8 @@ template <typename T>
 void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only,
                     int ndim_AB,
-                    varray<T>& A, label_vector& idx_A,
-                    varray<T>& B, label_vector& idx_B)
+                    marray<T>& A, label_vector& idx_A,
+                    marray<T>& B, label_vector& idx_B)
 {
     len_vector len_A, len_B;
 
@@ -513,15 +513,15 @@ template \
 void random_tensors(stride_type N, \
                     int ndim_A_only, int ndim_B_only, \
                     int ndim_AB, \
-                    varray<T>& A, label_vector& idx_A, \
-                    varray<T>& B, label_vector& idx_B);
+                    marray<T>& A, label_vector& idx_A, \
+                    marray<T>& B, label_vector& idx_B);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_AB,
-                    dpd_varray<T>& A, label_vector& idx_A,
-                    dpd_varray<T>& B, label_vector& idx_B)
+                    dpd_marray<T>& A, label_vector& idx_A,
+                    dpd_marray<T>& B, label_vector& idx_B)
 {
     int nirrep;
     int irrep_A, irrep_B;
@@ -559,8 +559,8 @@ void random_tensors(stride_type N,
                 len_B[i] = random_sum_constrained_sequence<len_type>(nirrep, len_B_[i]);
         }
     }
-    while (dpd_varray<T>::size(irrep_A, len_A) == 0 ||
-           dpd_varray<T>::size(irrep_B, len_B) == 0);
+    while (dpd_marray<T>::size(irrep_A, len_A) == 0 ||
+           dpd_marray<T>::size(irrep_B, len_B) == 0);
 
     A.reset(irrep_A, nirrep, len_A);
     B.reset(irrep_B, nirrep, len_B);
@@ -573,16 +573,16 @@ template \
 void random_tensors(stride_type N, \
                     int ndim_A_only, int ndim_B_only, \
                     int ndim_AB, \
-                    dpd_varray<T>& A, label_vector& idx_A, \
-                    dpd_varray<T>& B, label_vector& idx_B);
+                    dpd_marray<T>& A, label_vector& idx_A, \
+                    dpd_marray<T>& B, label_vector& idx_B);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only,
                     int ndim_AB,
-                    indexed_varray<T>& A, label_vector& idx_A,
-                    indexed_varray<T>& B, label_vector& idx_B)
+                    indexed_marray<T>& A, label_vector& idx_A,
+                    indexed_marray<T>& B, label_vector& idx_B)
 {
     len_vector len_A, len_B;
 
@@ -611,15 +611,15 @@ template \
 void random_tensors(stride_type N, \
                     int ndim_A_only, int ndim_B_only, \
                     int ndim_AB, \
-                    indexed_varray<T>& A, label_vector& idx_A, \
-                    indexed_varray<T>& B, label_vector& idx_B);
+                    indexed_marray<T>& A, label_vector& idx_A, \
+                    indexed_marray<T>& B, label_vector& idx_B);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_AB,
-                    indexed_dpd_varray<T>& A, label_vector& idx_A,
-                    indexed_dpd_varray<T>& B, label_vector& idx_B)
+                    indexed_dpd_marray<T>& A, label_vector& idx_A,
+                    indexed_dpd_marray<T>& B, label_vector& idx_B)
 {
     int nirrep;
     int irrep_A, irrep_B;
@@ -659,8 +659,8 @@ void random_tensors(stride_type N,
                 len_B[i] = random_sum_constrained_sequence<len_type>(nirrep, len_B_[i]);
         }
     }
-    while (dpd_varray<T>::size(irrep_A, len_A) == 0 ||
-           dpd_varray<T>::size(irrep_B, len_B) == 0);
+    while (dpd_marray<T>::size(irrep_A, len_A) == 0 ||
+           dpd_marray<T>::size(irrep_B, len_B) == 0);
 
     do
     {
@@ -715,8 +715,8 @@ template \
 void random_tensors(stride_type N, \
                     int ndim_A_only, int ndim_B_only, \
                     int ndim_AB, \
-                    indexed_dpd_varray<T>& A, label_vector& idx_A, \
-                    indexed_dpd_varray<T>& B, label_vector& idx_B);
+                    indexed_dpd_marray<T>& A, label_vector& idx_A, \
+                    indexed_dpd_marray<T>& B, label_vector& idx_B);
 #include "configs/foreach_type.h"
 
 void random_lengths(stride_type N,
@@ -984,9 +984,9 @@ void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_C_only,
                     int ndim_AB, int ndim_AC, int ndim_BC,
                     int ndim_ABC,
-                    varray<T>& A, label_vector& idx_A,
-                    varray<T>& B, label_vector& idx_B,
-                    varray<T>& C, label_vector& idx_C)
+                    marray<T>& A, label_vector& idx_A,
+                    marray<T>& B, label_vector& idx_B,
+                    marray<T>& C, label_vector& idx_C)
 {
     len_vector len_A, len_B, len_C;
 
@@ -1009,9 +1009,9 @@ void random_tensors(stride_type N, \
                     int ndim_A_only, int ndim_B_only, int ndim_C_only, \
                     int ndim_AB, int ndim_AC, int ndim_BC, \
                     int ndim_ABC, \
-                    varray<T>& A, label_vector& idx_A, \
-                    varray<T>& B, label_vector& idx_B, \
-                    varray<T>& C, label_vector& idx_C);
+                    marray<T>& A, label_vector& idx_A, \
+                    marray<T>& B, label_vector& idx_B, \
+                    marray<T>& C, label_vector& idx_C);
 #include "configs/foreach_type.h"
 
 template <typename T>
@@ -1019,9 +1019,9 @@ void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_C_only,
                     int ndim_AB, int ndim_AC, int ndim_BC,
                     int ndim_ABC,
-                    dpd_varray<T>& A, label_vector& idx_A,
-                    dpd_varray<T>& B, label_vector& idx_B,
-                    dpd_varray<T>& C, label_vector& idx_C)
+                    dpd_marray<T>& A, label_vector& idx_A,
+                    dpd_marray<T>& B, label_vector& idx_B,
+                    dpd_marray<T>& C, label_vector& idx_C)
 {
     int nirrep, irrep_A, irrep_B, irrep_C;
     vector<vector<len_type>> len_A, len_B, len_C;
@@ -1089,9 +1089,9 @@ void random_tensors(stride_type N,
                 len_C[i] = random_sum_constrained_sequence<len_type>(nirrep, len_C_[i]);
         }
     }
-    while (dpd_varray<T>::size(irrep_A, len_A) == 0 ||
-           dpd_varray<T>::size(irrep_B, len_B) == 0 ||
-           dpd_varray<T>::size(irrep_C, len_C) == 0);
+    while (dpd_marray<T>::size(irrep_A, len_A) == 0 ||
+           dpd_marray<T>::size(irrep_B, len_B) == 0 ||
+           dpd_marray<T>::size(irrep_C, len_C) == 0);
 
     A.reset(irrep_A, nirrep, len_A);
     B.reset(irrep_B, nirrep, len_B);
@@ -1108,9 +1108,9 @@ void random_tensors(stride_type N, \
                     int ndim_A_only, int ndim_B_only, int ndim_C_only, \
                     int ndim_AB, int ndim_AC, int ndim_BC, \
                     int ndim_ABC, \
-                    dpd_varray<T>& A, label_vector& idx_A, \
-                    dpd_varray<T>& B, label_vector& idx_B, \
-                    dpd_varray<T>& C, label_vector& idx_C);
+                    dpd_marray<T>& A, label_vector& idx_A, \
+                    dpd_marray<T>& B, label_vector& idx_B, \
+                    dpd_marray<T>& C, label_vector& idx_C);
 #include "configs/foreach_type.h"
 
 template <typename T>
@@ -1118,9 +1118,9 @@ void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_C_only,
                     int ndim_AB, int ndim_AC, int ndim_BC,
                     int ndim_ABC,
-                    indexed_varray<T>& A, label_vector& idx_A,
-                    indexed_varray<T>& B, label_vector& idx_B,
-                    indexed_varray<T>& C, label_vector& idx_C)
+                    indexed_marray<T>& A, label_vector& idx_A,
+                    indexed_marray<T>& B, label_vector& idx_B,
+                    indexed_marray<T>& C, label_vector& idx_C)
 {
     len_vector len_A, len_B, len_C;
 
@@ -1157,9 +1157,9 @@ void random_tensors(stride_type N, \
                     int ndim_A_only, int ndim_B_only, int ndim_C_only, \
                     int ndim_AB, int ndim_AC, int ndim_BC, \
                     int ndim_ABC, \
-                    indexed_varray<T>& A, label_vector& idx_A, \
-                    indexed_varray<T>& B, label_vector& idx_B, \
-                    indexed_varray<T>& C, label_vector& idx_C);
+                    indexed_marray<T>& A, label_vector& idx_A, \
+                    indexed_marray<T>& B, label_vector& idx_B, \
+                    indexed_marray<T>& C, label_vector& idx_C);
 #include "configs/foreach_type.h"
 
 template <typename T>
@@ -1167,9 +1167,9 @@ void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_C_only,
                     int ndim_AB, int ndim_AC, int ndim_BC,
                     int ndim_ABC,
-                    indexed_dpd_varray<T>& A, label_vector& idx_A,
-                    indexed_dpd_varray<T>& B, label_vector& idx_B,
-                    indexed_dpd_varray<T>& C, label_vector& idx_C)
+                    indexed_dpd_marray<T>& A, label_vector& idx_A,
+                    indexed_dpd_marray<T>& B, label_vector& idx_B,
+                    indexed_dpd_marray<T>& C, label_vector& idx_C)
 {
     int nirrep, irrep_A, irrep_B, irrep_C;
     vector<vector<len_type>> len_A, len_B, len_C;
@@ -1239,9 +1239,9 @@ void random_tensors(stride_type N,
                 len_C[i] = random_sum_constrained_sequence<len_type>(nirrep, len_C_[i]);
         }
     }
-    while (dpd_varray<T>::size(irrep_A, len_A) == 0 ||
-           dpd_varray<T>::size(irrep_B, len_B) == 0 ||
-           dpd_varray<T>::size(irrep_C, len_C) == 0);
+    while (dpd_marray<T>::size(irrep_A, len_A) == 0 ||
+           dpd_marray<T>::size(irrep_B, len_B) == 0 ||
+           dpd_marray<T>::size(irrep_C, len_C) == 0);
 
     do
     {
@@ -1332,9 +1332,9 @@ void random_tensors(stride_type N, \
                     int ndim_A_only, int ndim_B_only, int ndim_C_only, \
                     int ndim_AB, int ndim_AC, int ndim_BC, \
                     int ndim_ABC, \
-                    indexed_dpd_varray<T>& A, label_vector& idx_A, \
-                    indexed_dpd_varray<T>& B, label_vector& idx_B, \
-                    indexed_dpd_varray<T>& C, label_vector& idx_C);
+                    indexed_dpd_marray<T>& A, label_vector& idx_A, \
+                    indexed_dpd_marray<T>& B, label_vector& idx_B, \
+                    indexed_dpd_marray<T>& C, label_vector& idx_C);
 #include "configs/foreach_type.h"
 
 int main(int argc, char **argv)

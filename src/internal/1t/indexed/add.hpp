@@ -11,10 +11,10 @@ namespace internal
 {
 
 void add(type_t type, const communicator& comm, const config& cfg,
-         const scalar& alpha, bool conj_A, const indexed_varray_view<char>& A,
+         const scalar& alpha, bool conj_A, const indexed_marray_view<char>& A,
          const dim_vector& idx_A,
          const dim_vector& idx_A_AB,
-         const scalar&  beta, bool conj_B, const indexed_varray_view<char>& B,
+         const scalar&  beta, bool conj_B, const indexed_marray_view<char>& B,
          const dim_vector& idx_B,
          const dim_vector& idx_B_AB);
 

@@ -3,18 +3,18 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: "debian:stretch"
+      - image: 'cimg/base:2021.10'
     steps:
       - checkout
       - run:
           name: Installing Dependencies
-          command: 'apt-get update && apt-get install -y gcc g++ make'
+          command: 'sudo apt-get update && sudo apt-get install -y gcc-10 g++-10 make'
       - run:
           name: Configuring
-          command: './configure'
+          command: './configure CC=gcc-10 CXX=g++-10'
       - run:
           name: Building
-          command: 'make'
+          command: 'make -j2'
       - run:
           name: Unit Testing
           command: './bin/test'

@@ -1,30 +1,30 @@
 #include "gtest/gtest.h"
-#include "dpd_range.hpp"
+#include "dpd/dpd_range.hpp"
 
 using namespace std;
 using namespace MArray;
 
 #define CHECK_DPD_RANGE(r,f,s,d) \
 { \
-    std::vector<len_type> __front f; __front.resize(8); \
-    std::vector<len_type> __size s; __size.resize(8); \
-    std::vector<len_type> __delta d; __delta.resize(8, 1); \
-    for (auto __i : range(8)) \
+    std::vector<len_type> front f; front.resize(8); \
+    std::vector<len_type> size s; size.resize(8); \
+    std::vector<len_type> delta d; delta.resize(8, 1); \
+    for (auto i : range(8)) \
     { \
-        SCOPED_TRACE(__i); \
-        EXPECT_EQ(r[__i].front(), __front[__i]); \
-        EXPECT_EQ(r[__i].size(), __size[__i]); \
-        EXPECT_EQ(r[__i].step(), __delta[__i]); \
+        SCOPED_TRACE(i); \
+        EXPECT_EQ(r[i].front(), front[i]); \
+        EXPECT_EQ(r[i].size(), size[i]); \
+        EXPECT_EQ(r[i].step(), delta[i]); \
     } \
 }
 
 TEST(dpd_range, dpd_range)
 {
     auto r1 = dpd_range({3, 5, 6, 2});
-    CHECK_DPD_RANGE(r1, , ({3, 5, 6, 2}), );
+    CHECK_DPD_RANGE(r1, ({0, 0, 0, 0}), ({3, 5, 6, 2}), ({1, 1, 1, 1}));
 
     auto r2 = dpd_range({1, 0, 2, 1}, {2, 3, 4, 5});
-    CHECK_DPD_RANGE(r2, ({1, 0, 2, 1}), ({1, 3, 2, 4}), );
+    CHECK_DPD_RANGE(r2, ({1, 0, 2, 1}), ({1, 3, 2, 4}), ({1, 1, 1, 1}));
 
     auto r3 = dpd_range({1, 0, 2, 1}, {2, 3, 4, 5}, {1, 1, 2, 4});
     CHECK_DPD_RANGE(r3, ({1, 0, 2, 1}), ({1, 3, 1, 1}), ({1, 1, 2, 4}));

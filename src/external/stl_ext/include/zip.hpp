@@ -2,6 +2,7 @@
 #define _STL_EXT_ZIP_HPP_
 
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "type_traits.hpp"
@@ -231,53 +232,30 @@ void emplace_back(std::tuple<Args...>& t, std::tuple<typename Args::value_type..
     emplace_back_helper<sizeof...(Args), Args...>()(t, std::move(v));
 }
 
-template <typename T, T... S> struct integer_sequence {};
-
 template <typename T, typename U, typename V> struct concat_sequences;
 template <typename T, T... S, T... R>
-struct concat_sequences<T, integer_sequence<T, S...>, integer_sequence<T, R...>>
+struct concat_sequences<T, std::integer_sequence<T, S...>, std::integer_sequence<T, R...>>
 {
-    typedef integer_sequence<T, S..., (R+sizeof...(S))...> type;
+    typedef std::integer_sequence<T, S..., (R+sizeof...(S))...> type;
 };
-
-template <size_t N> struct static_range_helper;
-
-template <> struct static_range_helper<0>
-{
-    typedef integer_sequence<size_t> type;
-};
-
-template <> struct static_range_helper<1>
-{
-    typedef integer_sequence<size_t,0> type;
-};
-
-template <size_t N> struct static_range_helper
-{
-    typedef typename concat_sequences<size_t, typename static_range_helper<(N+1)/2>::type,
-                                              typename static_range_helper<N/2>::type>::type type;
-};
-
-template <size_t N>
-using static_range = typename static_range_helper<N>::type;
 
 template <typename... Args>
 struct call_helper
 {
     template <typename Func, size_t... S>
-    call_helper(Func func, std::tuple<Args...>& args, integer_sequence<size_t, S...>)
+    call_helper(Func func, std::tuple<Args...>& args, std::index_sequence<S...>)
     {
         func(std::get<S>(args)...);
     }
 
     template <typename Func, size_t... S>
-    call_helper(Func func, const std::tuple<Args...>& args, integer_sequence<size_t, S...>)
+    call_helper(Func func, const std::tuple<Args...>& args, std::index_sequence<S...>)
     {
         func(std::get<S>(args)...);
     }
 
     template <typename Func, size_t... S>
-    call_helper(Func func, std::tuple<Args...>&& args, integer_sequence<size_t, S...>)
+    call_helper(Func func, std::tuple<Args...>&& args, std::index_sequence<S...>)
     {
         func(std::get<S>(std::move(args))...);
     }
@@ -288,19 +266,19 @@ struct call_helper
 template <typename Func, typename... Args>
 void call(Func func, std::tuple<Args...>& args)
 {
-    detail::call_helper<Args...>(func, args, detail::static_range<sizeof...(Args)>{});
+    detail::call_helper<Args...>(func, args, std::index_sequence_for<Args...>{});
 }
 
 template <typename Func, typename... Args>
 void call(Func func, const std::tuple<Args...>& args)
 {
-    detail::call_helper<Args...>(func, args, detail::static_range<sizeof...(Args)>{});
+    detail::call_helper<Args...>(func, args,std::index_sequence_for<Args...>{});
 }
 
 template <typename Func, typename... Args>
 void call(Func func, std::tuple<Args...>&& args)
 {
-    detail::call_helper<Args...>(func, std::move(args), detail::static_range<sizeof...(Args)>{});
+    detail::call_helper<Args...>(func, std::move(args), std::index_sequence_for<Args...>{});
 }
 
 template <typename... Args>

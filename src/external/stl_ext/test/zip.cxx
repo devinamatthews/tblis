@@ -1,3 +1,4 @@
+#include <utility>
 #include <vector>
 #include <memory>
 
@@ -95,7 +96,7 @@ struct print_integer_sequence<T, S1, S...>
 };
 
 template <typename T, T... S>
-ostream& operator<<(ostream& os, const detail::integer_sequence<T,S...>& x)
+ostream& operator<<(ostream& os, std::integer_sequence<T, S...>)
 {
     print_integer_sequence<T,S...>{os};
     return os;
@@ -103,48 +104,26 @@ ostream& operator<<(ostream& os, const detail::integer_sequence<T,S...>& x)
 
 TEST(unit_zip, concat_sequences)
 {
-    EXPECT_TRUE((is_same<detail::integer_sequence<size_t>,
+    EXPECT_TRUE((is_same<std::integer_sequence<size_t>,
                          typename detail::concat_sequences<size_t,
-                             detail::integer_sequence<size_t>,
-                             detail::integer_sequence<size_t>>::type>::value));
-    EXPECT_TRUE((is_same<detail::integer_sequence<size_t,0>,
+                             std::integer_sequence<size_t>,
+                             std::integer_sequence<size_t>>::type>::value));
+    EXPECT_TRUE((is_same<std::integer_sequence<size_t,0>,
                          typename detail::concat_sequences<size_t,
-                             detail::integer_sequence<size_t,0>,
-                             detail::integer_sequence<size_t>>::type>::value));
-    EXPECT_TRUE((is_same<detail::integer_sequence<size_t,0>,
+                             std::integer_sequence<size_t,0>,
+                             std::integer_sequence<size_t>>::type>::value));
+    EXPECT_TRUE((is_same<std::integer_sequence<size_t,0>,
                          typename detail::concat_sequences<size_t,
-                             detail::integer_sequence<size_t>,
-                             detail::integer_sequence<size_t,0>>::type>::value));
-    EXPECT_TRUE((is_same<detail::integer_sequence<size_t,0,1>,
+                             std::integer_sequence<size_t>,
+                             std::integer_sequence<size_t,0>>::type>::value));
+    EXPECT_TRUE((is_same<std::integer_sequence<size_t,0,1>,
                          typename detail::concat_sequences<size_t,
-                             detail::integer_sequence<size_t,0>,
-                             detail::integer_sequence<size_t,0>>::type>::value));
-    EXPECT_TRUE((is_same<detail::integer_sequence<size_t,0,1,2,3,4,5>,
+                             std::integer_sequence<size_t,0>,
+                             std::integer_sequence<size_t,0>>::type>::value));
+    EXPECT_TRUE((is_same<std::integer_sequence<size_t,0,1,2,3,4,5>,
                          typename detail::concat_sequences<size_t,
-                             detail::integer_sequence<size_t,0,1,2>,
-                             detail::integer_sequence<size_t,0,1,2>>::type>::value));
-}
-
-TEST(unit_zip, static_range)
-{
-    EXPECT_TRUE((is_same<detail::integer_sequence<size_t>,
-                         detail::static_range<0>>::value));
-    EXPECT_TRUE((is_same<detail::integer_sequence<size_t,0>,
-                         detail::static_range<1>>::value));
-    EXPECT_TRUE((is_same<detail::integer_sequence<size_t,0,1>,
-                         detail::static_range<2>>::value));
-    EXPECT_TRUE((is_same<detail::integer_sequence<size_t,0,1,2>,
-                         detail::static_range<3>>::value));
-    EXPECT_TRUE((is_same<detail::integer_sequence<size_t,0,1,2,3>,
-                         detail::static_range<4>>::value));
-    EXPECT_TRUE((is_same<detail::integer_sequence<size_t,0,1,2,3,4>,
-                         detail::static_range<5>>::value));
-    EXPECT_TRUE((is_same<detail::integer_sequence<size_t,0,1,2,3,4,5>,
-                         detail::static_range<6>>::value));
-    EXPECT_TRUE((is_same<detail::integer_sequence<size_t,0,1,2,3,4,5,6>,
-                         detail::static_range<7>>::value));
-    EXPECT_TRUE((is_same<detail::integer_sequence<size_t,0,1,2,3,4,5,6,7>,
-                         detail::static_range<8>>::value));
+                             std::integer_sequence<size_t,0,1,2>,
+                             std::integer_sequence<size_t,0,1,2>>::type>::value));
 }
 
 TEST(unit_zip, call)

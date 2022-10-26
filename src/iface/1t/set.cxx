@@ -47,7 +47,7 @@ void tblis_tensor_set(const tblis_comm* comm,
 
 template <typename T>
 void set(const communicator& comm,
-         T alpha, dpd_varray_view<T> A, const label_vector& idx_A)
+         T alpha, dpd_marray_view<T> A, const label_vector& idx_A)
 {
     (void)idx_A;
 
@@ -60,17 +60,17 @@ void set(const communicator& comm,
     dim_vector idx_A_A = range(ndim_A);
 
     internal::set(type_tag<T>::value, comm, get_default_config(), alpha,
-                  reinterpret_cast<dpd_varray_view<char>&>(A), idx_A_A);
+                  reinterpret_cast<dpd_marray_view<char>&>(A), idx_A_A);
 }
 
 #define FOREACH_TYPE(T) \
 template void set(const communicator& comm, \
-                   T alpha, dpd_varray_view<T> A, const label_vector& idx_A);
+                   T alpha, dpd_marray_view<T> A, const label_vector& idx_A);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void set(const communicator& comm,
-         T alpha, indexed_varray_view<T> A, const label_vector& idx_A)
+         T alpha, indexed_marray_view<T> A, const label_vector& idx_A)
 {
     (void)idx_A;
 
@@ -83,17 +83,17 @@ void set(const communicator& comm,
     dim_vector idx_A_A = range(ndim_A);
 
     internal::set(type_tag<T>::value, comm, get_default_config(), alpha,
-                  reinterpret_cast<indexed_varray_view<char>&>(A), idx_A_A);
+                  reinterpret_cast<indexed_marray_view<char>&>(A), idx_A_A);
 }
 
 #define FOREACH_TYPE(T) \
 template void set(const communicator& comm, \
-                   T alpha, indexed_varray_view<T> A, const label_vector& idx_A);
+                   T alpha, indexed_marray_view<T> A, const label_vector& idx_A);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void set(const communicator& comm,
-         T alpha, indexed_dpd_varray_view<T> A, const label_vector& idx_A)
+         T alpha, indexed_dpd_marray_view<T> A, const label_vector& idx_A)
 {
     (void)idx_A;
 
@@ -106,12 +106,12 @@ void set(const communicator& comm,
     dim_vector idx_A_A = range(ndim_A);
 
     internal::set(type_tag<T>::value, comm, get_default_config(), alpha,
-                  reinterpret_cast<indexed_dpd_varray_view<char>&>(A), idx_A_A);
+                  reinterpret_cast<indexed_dpd_marray_view<char>&>(A), idx_A_A);
 }
 
 #define FOREACH_TYPE(T) \
 template void set(const communicator& comm, \
-                   T alpha, indexed_dpd_varray_view<T> A, const label_vector& idx_A);
+                   T alpha, indexed_dpd_marray_view<T> A, const label_vector& idx_A);
 #include "configs/foreach_type.h"
 
 }

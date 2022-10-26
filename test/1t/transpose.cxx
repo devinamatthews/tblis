@@ -20,7 +20,7 @@ void random_transpose(stride_type N, T&& A, label_vector& idx_A,
 
 REPLICATED_TEMPLATED_TEST_CASE(transpose, R, T, all_types)
 {
-    varray<T> A, B, C;
+    marray<T> A, B, C;
     label_vector idx_A, idx_B;
 
     random_transpose(1000, A, idx_A, B, idx_B);
@@ -35,6 +35,12 @@ REPLICATED_TEMPLATED_TEST_CASE(transpose, R, T, all_types)
     auto neps = prod(A.lengths());
 
     T scale(10.0*random_unit<T>());
+
+    C.reset(A);
+    add(scale, A, idx_A, 1, C, idx_A);
+    T norm1 = reduce<T>(REDUCE_NORM_2, A, idx_A);
+    T norm2 = reduce<T>(REDUCE_NORM_2, C, idx_A);
+    check("COPY", std::abs(1+scale)*norm1, norm2, std::abs(1+scale)*neps);
 
     C.reset(A);
     add(A, idx_A, B, idx_B);
@@ -72,7 +78,7 @@ REPLICATED_TEMPLATED_TEST_CASE(transpose, R, T, all_types)
 
 REPLICATED_TEMPLATED_TEST_CASE(dpd_transpose, R, T, all_types)
 {
-    dpd_varray<T> A, B, C, D;
+    dpd_marray<T> A, B, C, D;
     label_vector idx_A, idx_B;
 
     random_transpose(1000, A, idx_A, B, idx_B);
@@ -80,7 +86,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_transpose, R, T, all_types)
     DPD_TENSOR_INFO(A);
     DPD_TENSOR_INFO(B);
 
-    auto neps = dpd_varray<T>::size(B.irrep(), B.lengths());
+    auto neps = dpd_marray<T>::size(B.irrep(), B.lengths());
 
     T scale(10.0*random_unit<T>());
 
@@ -100,7 +106,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_transpose, R, T, all_types)
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_transpose, R, T, all_types)
 {
-    indexed_varray<T> A, B, C, D;
+    indexed_marray<T> A, B, C, D;
     label_vector idx_A, idx_B;
 
     random_transpose(1000, A, idx_A, B, idx_B);
@@ -120,6 +126,8 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_transpose, R, T, all_types)
     D.reset(B);
     add<T>(scale, A, idx_A, scale, D, idx_B);
 
+    for (auto& f : C.factors()) f = T(1);
+    for (auto& f : D.factors()) f = T(1);
     add<T>(T(-1), C, idx_B, T(1), D, idx_B);
     T error = reduce<T>(REDUCE_NORM_2, D, idx_B);
 
@@ -128,7 +136,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_transpose, R, T, all_types)
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_transpose, R, T, all_types)
 {
-    indexed_dpd_varray<T> A, B, C, D;
+    indexed_dpd_marray<T> A, B, C, D;
     label_vector idx_A, idx_B;
 
     random_transpose(1000, A, idx_A, B, idx_B);
@@ -136,7 +144,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_transpose, R, T, all_types)
     INDEXED_DPD_TENSOR_INFO(A);
     INDEXED_DPD_TENSOR_INFO(B);
 
-    auto neps = dpd_varray<T>::size(B.irrep(), B.lengths());
+    auto neps = dpd_marray<T>::size(B.irrep(), B.lengths());
 
     T scale(10.0*random_unit<T>());
 
@@ -148,6 +156,8 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_transpose, R, T, all_types)
     D.reset(B);
     add<T>(scale, A, idx_A, scale, D, idx_B);
 
+    for (auto& f : C.factors()) f = T(1);
+    for (auto& f : D.factors()) f = T(1);
     add<T>(T(-1), C, idx_B, T(1), D, idx_B);
     T error = reduce<T>(REDUCE_NORM_2, D, idx_B);
 

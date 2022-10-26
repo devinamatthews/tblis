@@ -4764,7 +4764,9 @@ GTEST_API_ extern const char kStackTraceMarker[];
 // a null pointer literal.  Therefore, we know that x is a null
 // pointer literal if and only if the first version is picked by the
 // compiler.
-char IsNullLiteralHelper(Secret* p);
+template <typename T=void>
+char IsNullLiteralHelper(nullptr_t);
+char (&IsNullLiteralHelper(int))[2];  // NOLINT
 char (&IsNullLiteralHelper(...))[2];  // NOLINT
 
 // A compile-time bool constant that is true if and only if x is a
@@ -5127,7 +5129,7 @@ class TestFactoryBase {
 template <class TestClass>
 class TestFactoryImpl : public TestFactoryBase {
  public:
-  virtual Test* CreateTest() { return new TestClass; }
+  virtual Test* CreateTest() override { return new TestClass; }
 };
 
 #if GTEST_OS_WINDOWS
@@ -5862,7 +5864,7 @@ class GTEST_TEST_CLASS_NAME_(test_case_name, test_name) : public parent_class {\
  public:\
   GTEST_TEST_CLASS_NAME_(test_case_name, test_name)() {}\
  private:\
-  virtual void TestBody();\
+  virtual void TestBody() override;\
   static ::testing::TestInfo* const test_info_ GTEST_ATTRIBUTE_UNUSED_;\
   GTEST_DISALLOW_COPY_AND_ASSIGN_(\
       GTEST_TEST_CLASS_NAME_(test_case_name, test_name));\
@@ -8364,7 +8366,7 @@ class ParameterizedTestFactory : public TestFactoryBase {
   typedef typename TestClass::ParamType ParamType;
   explicit ParameterizedTestFactory(ParamType parameter) :
       parameter_(parameter) {}
-  virtual Test* CreateTest() {
+  virtual Test* CreateTest() override {
     TestClass::SetParam(&parameter_);
     return new TestClass();
   }

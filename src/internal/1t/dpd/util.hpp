@@ -13,13 +13,13 @@ namespace internal
 
 template <typename T>
 void block_to_full(const communicator& comm, const config& cfg,
-                   const dpd_varray_view<T>& A, varray<T>& A2)
+                   const dpd_marray_view<T>& A, marray<T>& A2)
 {
     auto nirrep = A.num_irreps();
     auto ndim_A = A.dimension();
 
     len_vector len_A(ndim_A);
-    matrix<len_type> off_A{{ndim_A, nirrep}};
+    matrix<len_type> off_A{ndim_A, nirrep};
     for (auto i : range(ndim_A))
     {
         for (auto irrep : range(nirrep))
@@ -33,7 +33,7 @@ void block_to_full(const communicator& comm, const config& cfg,
     comm.barrier();
 
     A.for_each_block(
-    [&](const varray_view<T>& local_A, const irrep_vector& irreps_A)
+    [&](const marray_view<T>& local_A, const irrep_vector& irreps_A)
     {
         auto data_A2 = A2.data();
         for (auto i : range(ndim_A))
@@ -47,12 +47,12 @@ void block_to_full(const communicator& comm, const config& cfg,
 
 template <typename T>
 void full_to_block(const communicator& comm, const config& cfg,
-                   varray<T>& A2, const dpd_varray_view<T>& A)
+                   marray<T>& A2, const dpd_marray_view<T>& A)
 {
     auto nirrep = A.num_irreps();
     auto ndim_A = A.dimension();
 
-    matrix<len_type> off_A{{ndim_A, nirrep}};
+    matrix<len_type> off_A{ndim_A, nirrep};
     for (auto i : range(ndim_A))
     {
         len_type off = 0;
@@ -64,7 +64,7 @@ void full_to_block(const communicator& comm, const config& cfg,
     }
 
     A.for_each_block(
-    [&](const varray_view<T>& local_A, const irrep_vector& irreps_A)
+    [&](const marray_view<T>& local_A, const irrep_vector& irreps_A)
     {
         auto data_A2 = A2.data();
         for (auto i : range(ndim_A))
@@ -117,7 +117,7 @@ void dense_total_lengths_and_strides(std::array<len_vector,N>& len,
 }
 
 template <typename T>
-bool is_block_empty(const dpd_varray_view<T>& A, const irrep_vector& irreps)
+bool is_block_empty(const dpd_marray_view<T>& A, const irrep_vector& irreps)
 {
     auto irrep = 0;
 

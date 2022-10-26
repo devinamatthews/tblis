@@ -20,7 +20,7 @@ void random_dot(stride_type N, T&& A, label_vector& idx_A,
 
 REPLICATED_TEMPLATED_TEST_CASE(dot, R, T, all_types)
 {
-    varray<T> A, B;
+    marray<T> A, B;
     label_vector idx_A, idx_B;
 
     random_dot(1000, A, idx_A, B, idx_B);
@@ -48,7 +48,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dot, R, T, all_types)
 
 REPLICATED_TEMPLATED_TEST_CASE(dpd_dot, R, T, all_types)
 {
-    dpd_varray<T> A, B;
+    dpd_marray<T> A, B;
     label_vector idx_A, idx_B;
 
     random_dot(1000, A, idx_A, B, idx_B);
@@ -56,7 +56,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_dot, R, T, all_types)
     DPD_TENSOR_INFO(A);
     DPD_TENSOR_INFO(B);
 
-    auto neps = dpd_varray<T>::size(A.irrep(), A.lengths());
+    auto neps = dpd_marray<T>::size(A.irrep(), A.lengths());
 
     dpd_impl = dpd_impl_t::FULL;
     T ref_val = dot<T>(A, idx_A, B, idx_B);
@@ -69,7 +69,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_dot, R, T, all_types)
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dot, R, T, all_types)
 {
-    indexed_varray<T> A, B;
+    indexed_marray<T> A, B;
     label_vector idx_A, idx_B;
 
     random_dot(1000, A, idx_A, B, idx_B);
@@ -90,7 +90,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dot, R, T, all_types)
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_dot, R, T, all_types)
 {
-    indexed_dpd_varray<T> A, B;
+    indexed_dpd_marray<T> A, B;
     label_vector idx_A, idx_B;
 
     random_dot(1000, A, idx_A, B, idx_B);
@@ -98,7 +98,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_dot, R, T, all_types)
     INDEXED_DPD_TENSOR_INFO(A);
     INDEXED_DPD_TENSOR_INFO(B);
 
-    auto neps = dpd_varray<T>::size(A.irrep(), A.lengths());
+    auto neps = dpd_marray<T>::size(A.irrep(), A.lengths());
 
     dpd_impl = dpd_impl_t::FULL;
     T ref_val = dot<T>(A, idx_A, B, idx_B);

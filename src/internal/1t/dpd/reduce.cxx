@@ -9,7 +9,7 @@ namespace internal
 {
 
 void reduce(type_t type, const communicator& comm, const config& cfg, reduce_t op,
-            const dpd_varray_view<char>& A, const dim_vector& idx_A,
+            const dpd_marray_view<char>& A, const dim_vector& idx_A,
             char* result, len_type& idx)
 {
     const len_type ts = type_size[type];
@@ -32,7 +32,7 @@ void reduce(type_t type, const communicator& comm, const config& cfg, reduce_t o
 
         if (is_block_empty(A, irreps)) continue;
 
-        varray_view<char> local_A = A(irreps);
+        marray_view<char> local_A = A(irreps);
 
         scalar block_result(0, type);
         len_type block_idx;

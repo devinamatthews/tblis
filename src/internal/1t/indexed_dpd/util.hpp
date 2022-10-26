@@ -15,14 +15,14 @@ namespace internal
 
 template <typename T>
 void block_to_full(const communicator& comm, const config& cfg,
-                   const indexed_dpd_varray_view<T>& A, varray<T>& A2)
+                   const indexed_dpd_marray_view<T>& A, marray<T>& A2)
 {
     auto nirrep = A.num_irreps();
     auto ndim_A = A.dimension();
     auto dense_ndim_A = A.dense_dimension();
 
     len_vector len_A(ndim_A);
-    matrix<len_type> off_A{{ndim_A, nirrep}};
+    matrix<len_type> off_A{ndim_A, nirrep};
     for (auto i : range(ndim_A))
     {
         for (auto irrep : range(nirrep))
@@ -39,7 +39,7 @@ void block_to_full(const communicator& comm, const config& cfg,
     dense_stride_A2.resize(dense_ndim_A);
 
     A[0].for_each_block(
-    [&](const varray_view<T>& local_A, const irrep_vector& irreps_A)
+    [&](const marray_view<T>& local_A, const irrep_vector& irreps_A)
     {
         auto& dense_len_A = local_A.lengths();
         auto& dense_stride_A = local_A.strides();
@@ -66,13 +66,13 @@ void block_to_full(const communicator& comm, const config& cfg,
 
 template <typename T>
 void full_to_block(const communicator& comm, const config& cfg,
-                   varray<T>& A2, const indexed_dpd_varray_view<T>& A)
+                   marray<T>& A2, const indexed_dpd_marray_view<T>& A)
 {
     auto nirrep = A.num_irreps();
     auto ndim_A = A.dimension();
     auto dense_ndim_A = A.dense_dimension();
 
-    matrix<len_type> off_A{{ndim_A, nirrep}};
+    matrix<len_type> off_A{ndim_A, nirrep};
     for (auto i : range(ndim_A))
     {
         len_type off = 0;
@@ -87,7 +87,7 @@ void full_to_block(const communicator& comm, const config& cfg,
     dense_stride_A2.resize(dense_ndim_A);
 
     A[0].for_each_block(
-    [&](const varray_view<T>& local_A, const irrep_vector& irreps_A)
+    [&](const marray_view<T>& local_A, const irrep_vector& irreps_A)
     {
         auto& dense_len_A = local_A.lengths();
         auto& dense_stride_A = local_A.strides();
@@ -119,7 +119,7 @@ void assign_dense_idx_helper(int, dpd_index_group<N>&) {}
 
 template <int I, int N, typename T, typename... Args>
 void assign_dense_idx_helper(int i, dpd_index_group<N>& group,
-                             const indexed_dpd_varray_view<T>&,
+                             const indexed_dpd_marray_view<T>&,
                              const dim_vector& idx_A, const Args&... args)
 {
     group.dense_idx[I].push_back(idx_A[i]);
@@ -128,7 +128,7 @@ void assign_dense_idx_helper(int i, dpd_index_group<N>& group,
 
 template <int N, typename T, typename... Args>
 void assign_dense_idx(int i, dpd_index_group<N>& group,
-                      const indexed_dpd_varray_view<T>& A,
+                      const indexed_dpd_marray_view<T>& A,
                       const dim_vector& idx_A, const Args&... args)
 {
     assign_dense_idx_helper<0>(i, group, A, idx_A, args...);
@@ -141,7 +141,7 @@ void assign_mixed_or_batch_idx_helper(int, int,
 template <int I, int N, typename T, typename... Args>
 void assign_mixed_or_batch_idx_helper(int i, int pos,
                                       dpd_index_group<N>& group,
-                                      const indexed_dpd_varray_view<T>& A,
+                                      const indexed_dpd_marray_view<T>& A,
                                       const dim_vector& idx_A, const Args&... args)
 {
 
@@ -171,7 +171,7 @@ void assign_mixed_or_batch_idx_helper(int i, int pos,
 template <int N, typename T, typename... Args>
 void assign_mixed_or_batch_idx(int i, int pos,
                                dpd_index_group<N>& group,
-                               const indexed_dpd_varray_view<T>& A,
+                               const indexed_dpd_marray_view<T>& A,
                                const dim_vector& idx_A, const Args&... args)
 {
     assign_mixed_or_batch_idx_helper<0>(i, pos, group,
@@ -200,13 +200,13 @@ struct dpd_index_group
 
     template <int... I>
     dim_vector sort_by_stride(const std::array<stride_vector,N>& dense_stride,
-                              detail::integer_sequence<int, I...>)
+                              std::integer_sequence<int, I...>)
     {
         return detail::sort_by_stride(dense_stride[I]...);
     }
 
     template <typename T, typename... Args>
-    dpd_index_group(const indexed_dpd_varray_view<T>& A, const dim_vector& idx_A,
+    dpd_index_group(const indexed_dpd_marray_view<T>& A, const dim_vector& idx_A,
                     const Args&... args)
     {
         auto nirrep = A.num_irreps();
@@ -261,7 +261,7 @@ struct dpd_index_group
                                                        dense_idx[i]);
 
         auto reorder = sort_by_stride(dense_stride_sub,
-                                      detail::static_range<int, N>{});
+                                      std::make_integer_sequence<int, N>{});
 
         for (auto i : range(N))
             stl_ext::permute(dense_idx[i], reorder);
@@ -315,7 +315,7 @@ void get_local_geometry_helper(const len_vector&,
 template <int I, int N, typename T, typename... Args>
 void get_local_geometry_helper(const len_vector& idx,
                                const dpd_index_group<N>& group,
-                               len_vector& len,  const varray_view<T>& local_A,
+                               len_vector& len,  const marray_view<T>& local_A,
                                stride_vector& stride,
                                int, Args&&... args)
 {

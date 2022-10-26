@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <iterator>
 #include <vector>
+#include <cstring>
 
 #include "cosort.hpp"
 #include "type_traits.hpp"
@@ -308,6 +309,66 @@ template <typename T, typename Predicate>
 bool matches(const T& v, Predicate&& pred)
 {
     return find_if(v, std::forward<Predicate>(pred)) != v.end();
+}
+
+template <typename T, typename U>
+std::enable_if_t<!std::is_same<U,typename T::value_type>::value,bool>
+start_swith(const T& v1, const U& v2)
+{
+    if (v1.size() < v2.size())
+        return false;
+
+    return std::equal(v2.begin(), v2.end(), v1.begin());
+}
+
+template <typename T>
+bool starts_with(const T& v1, const char* v2)
+{
+    auto len = strlen(v2);
+
+    if (v1.size() < len)
+        return false;
+
+    return std::equal(v2, v2+len, v1.begin());
+}
+
+template <typename T>
+bool starts_with(const T& v, const typename T::value_type& e)
+{
+    if (v.empty())
+        return false;
+
+    return *v.begin() == e;
+}
+
+template <typename T, typename U>
+std::enable_if_t<!std::is_same<U,typename T::value_type>::value,bool>
+ends_with(const T& v1, const U& v2)
+{
+    if (v1.size() < v2.size())
+        return false;
+
+    return std::equal(v2.rbegin(), v2.rend(), v1.rbegin());
+}
+
+template <typename T>
+bool ends_with(const T& v1, const char* v2)
+{
+    auto len = strlen(v2);
+
+    if (v1.size() < len)
+        return false;
+
+    return std::equal(v2, v2+len, std::next(v1.begin(), v1.size()-len));
+}
+
+template <typename T>
+bool ends_with(const T& v, const typename T::value_type& e)
+{
+    if (v.empty())
+        return false;
+
+    return *v.rbegin() == e;
 }
 
 template <typename T, typename Predicate>
@@ -700,7 +761,7 @@ auto map(Functor&& func, const T& v)
 {
     typedef std::decay_t<decltype(*v.begin())> R;
     typedef std::decay_t<decltype(func(*v.begin()))> S;
-    typedef std::conditional_t<std::is_same<R,S>::value,T,std::vector<R>> U;
+    typedef std::conditional_t<std::is_same<R,S>::value,T,std::vector<S>> U;
     U v2; v2.reserve(v.size());
     for (auto& e : v) v2.push_back(func(e));
     return v2;

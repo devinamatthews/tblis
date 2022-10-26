@@ -11,7 +11,7 @@ namespace internal
 {
 
 void scale(type_t type, const communicator& comm, const config& cfg,
-           const scalar& alpha, bool conj_A, const indexed_varray_view<char>& A,
+           const scalar& alpha, bool conj_A, const indexed_marray_view<char>& A,
            const dim_vector&);
 
 }

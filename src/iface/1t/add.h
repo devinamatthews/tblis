@@ -181,12 +181,12 @@ void add(const tensor& A,
 
 template <typename T>
 void add(const communicator& comm,
-         T alpha, dpd_varray_view<const T> A, const label_vector& idx_A,
-         T  beta, dpd_varray_view<      T> B, const label_vector& idx_B);
+         T alpha, dpd_marray_view<const T> A, const label_vector& idx_A,
+         T  beta, dpd_marray_view<      T> B, const label_vector& idx_B);
 
 template <typename T>
-void add(T alpha, dpd_varray_view<const T> A, const label_vector& idx_A,
-         T  beta, dpd_varray_view<      T> B, const label_vector& idx_B)
+void add(T alpha, dpd_marray_view<const T> A, const label_vector& idx_A,
+         T  beta, dpd_marray_view<      T> B, const label_vector& idx_B)
 {
     parallelize
     (
@@ -200,12 +200,12 @@ void add(T alpha, dpd_varray_view<const T> A, const label_vector& idx_A,
 
 template <typename T>
 void add(const communicator& comm,
-         T alpha, indexed_varray_view<const T> A, const label_vector& idx_A,
-         T  beta, indexed_varray_view<      T> B, const label_vector& idx_B);
+         T alpha, indexed_marray_view<const T> A, const label_vector& idx_A,
+         T  beta, indexed_marray_view<      T> B, const label_vector& idx_B);
 
 template <typename T>
-void add(T alpha, indexed_varray_view<const T> A, const label_vector& idx_A,
-         T  beta, indexed_varray_view<      T> B, const label_vector& idx_B)
+void add(T alpha, indexed_marray_view<const T> A, const label_vector& idx_A,
+         T  beta, indexed_marray_view<      T> B, const label_vector& idx_B)
 {
     parallelize
     (
@@ -219,12 +219,12 @@ void add(T alpha, indexed_varray_view<const T> A, const label_vector& idx_A,
 
 template <typename T>
 void add(const communicator& comm,
-         T alpha, indexed_dpd_varray_view<const T> A, const label_vector& idx_A,
-         T  beta, indexed_dpd_varray_view<      T> B, const label_vector& idx_B);
+         T alpha, indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
+         T  beta, indexed_dpd_marray_view<      T> B, const label_vector& idx_B);
 
 template <typename T>
-void add(T alpha, indexed_dpd_varray_view<const T> A, const label_vector& idx_A,
-         T  beta, indexed_dpd_varray_view<      T> B, const label_vector& idx_B)
+void add(T alpha, indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
+         T  beta, indexed_dpd_marray_view<      T> B, const label_vector& idx_B)
 {
     parallelize
     (

@@ -9,16 +9,16 @@ namespace internal
 
 template <typename T>
 void dot_full(const communicator& comm, const config& cfg,
-              bool conj_A, const indexed_dpd_varray_view<T>& A,
+              bool conj_A, const indexed_dpd_marray_view<T>& A,
               const dim_vector& idx_A_AB,
-              bool conj_B, const indexed_dpd_varray_view<T>& B,
+              bool conj_B, const indexed_dpd_marray_view<T>& B,
               const dim_vector& idx_B_AB,
               char* result)
 {
-    varray<T> A2, B2;
+    marray<T> A2, B2;
 
     comm.broadcast(
-    [&](varray<T>& A2, varray<T>& B2)
+    [&](marray<T>& A2, marray<T>& B2)
     {
         block_to_full(comm, cfg, A, A2);
         block_to_full(comm, cfg, B, B2);
@@ -36,9 +36,9 @@ void dot_full(const communicator& comm, const config& cfg,
 }
 
 void dot_block(type_t type, const communicator& comm, const config& cfg,
-               bool conj_A, const indexed_dpd_varray_view<char>& A,
+               bool conj_A, const indexed_dpd_marray_view<char>& A,
                const dim_vector& idx_A_AB,
-               bool conj_B, const indexed_dpd_varray_view<char>& B,
+               bool conj_B, const indexed_dpd_marray_view<char>& B,
                const dim_vector& idx_B_AB,
                char* result)
 {
@@ -100,8 +100,8 @@ void dot_block(type_t type, const communicator& comm, const config& cfg,
 
                     if (is_block_empty(dpd_A, local_irreps_A)) return;
 
-                    varray_view<char> local_A = dpd_A(local_irreps_A);
-                    varray_view<char> local_B = dpd_B(local_irreps_B);
+                    marray_view<char> local_A = dpd_A(local_irreps_A);
+                    marray_view<char> local_B = dpd_B(local_irreps_B);
 
                     len_vector len_AB;
                     stride_vector stride_A_AB, stride_B_AB;
@@ -136,9 +136,9 @@ void dot_block(type_t type, const communicator& comm, const config& cfg,
 }
 
 void dot(type_t type, const communicator& comm, const config& cfg,
-         bool conj_A, const indexed_dpd_varray_view<char>& A,
+         bool conj_A, const indexed_dpd_marray_view<char>& A,
          const dim_vector& idx_A_AB,
-         bool conj_B, const indexed_dpd_varray_view<char>& B,
+         bool conj_B, const indexed_dpd_marray_view<char>& B,
          const dim_vector& idx_B_AB,
          char* result)
 {
@@ -170,26 +170,26 @@ void dot(type_t type, const communicator& comm, const config& cfg,
         {
             case TYPE_FLOAT:
                 dot_full(comm, cfg,
-                         conj_A, reinterpret_cast<const indexed_dpd_varray_view<float>&>(A), idx_A_AB,
-                         conj_B, reinterpret_cast<const indexed_dpd_varray_view<float>&>(B), idx_B_AB,
+                         conj_A, reinterpret_cast<const indexed_dpd_marray_view<float>&>(A), idx_A_AB,
+                         conj_B, reinterpret_cast<const indexed_dpd_marray_view<float>&>(B), idx_B_AB,
                          result);
                 break;
             case TYPE_DOUBLE:
                 dot_full(comm, cfg,
-                         conj_A, reinterpret_cast<const indexed_dpd_varray_view<double>&>(A), idx_A_AB,
-                         conj_B, reinterpret_cast<const indexed_dpd_varray_view<double>&>(B), idx_B_AB,
+                         conj_A, reinterpret_cast<const indexed_dpd_marray_view<double>&>(A), idx_A_AB,
+                         conj_B, reinterpret_cast<const indexed_dpd_marray_view<double>&>(B), idx_B_AB,
                          result);
                 break;
             case TYPE_SCOMPLEX:
                 dot_full(comm, cfg,
-                         conj_A, reinterpret_cast<const indexed_dpd_varray_view<scomplex>&>(A), idx_A_AB,
-                         conj_B, reinterpret_cast<const indexed_dpd_varray_view<scomplex>&>(B), idx_B_AB,
+                         conj_A, reinterpret_cast<const indexed_dpd_marray_view<scomplex>&>(A), idx_A_AB,
+                         conj_B, reinterpret_cast<const indexed_dpd_marray_view<scomplex>&>(B), idx_B_AB,
                          result);
                 break;
             case TYPE_DCOMPLEX:
                 dot_full(comm, cfg,
-                         conj_A, reinterpret_cast<const indexed_dpd_varray_view<dcomplex>&>(A), idx_A_AB,
-                         conj_B, reinterpret_cast<const indexed_dpd_varray_view<dcomplex>&>(B), idx_B_AB,
+                         conj_A, reinterpret_cast<const indexed_dpd_marray_view<dcomplex>&>(A), idx_A_AB,
+                         conj_B, reinterpret_cast<const indexed_dpd_marray_view<dcomplex>&>(B), idx_B_AB,
                          result);
                 break;
         }

@@ -28,7 +28,7 @@ void random_trace(stride_type N, T&& A, label_vector& idx_A,
 
 REPLICATED_TEMPLATED_TEST_CASE(trace, R, T, all_types)
 {
-    varray<T> A, B;
+    marray<T> A, B;
     label_vector idx_A, idx_B;
 
     random_trace(1000, A, idx_A, B, idx_B);
@@ -49,7 +49,7 @@ REPLICATED_TEMPLATED_TEST_CASE(trace, R, T, all_types)
 
 REPLICATED_TEMPLATED_TEST_CASE(dpd_trace, R, T, all_types)
 {
-    dpd_varray<T> A, B, C, D;
+    dpd_marray<T> A, B, C, D;
     label_vector idx_A, idx_B;
 
     random_trace(1000, A, idx_A, B, idx_B);
@@ -77,7 +77,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_trace, R, T, all_types)
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_trace, R, T, all_types)
 {
-    indexed_varray<T> A, B, C, D;
+    indexed_marray<T> A, B, C, D;
     label_vector idx_A, idx_B;
 
     random_trace(1000, A, idx_A, B, idx_B);
@@ -98,6 +98,8 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_trace, R, T, all_types)
     D.reset(B);
     add<T>(scale, A, idx_A, scale, D, idx_B);
 
+    for (auto& f : C.factors()) f = T(1);
+    for (auto& f : D.factors()) f = T(1);
     add<T>(T(-1), C, idx_B, T(1), D, idx_B);
     T error = reduce<T>(REDUCE_NORM_2, D, idx_B);
 
@@ -106,7 +108,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_trace, R, T, all_types)
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_trace, R, T, all_types)
 {
-    indexed_dpd_varray<T> A, B, C, D;
+    indexed_dpd_marray<T> A, B, C, D;
     label_vector idx_A, idx_B;
 
     random_trace(1000, A, idx_A, B, idx_B);
@@ -126,6 +128,8 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_trace, R, T, all_types)
     D.reset(B);
     add<T>(scale, A, idx_A, scale, D, idx_B);
 
+    for (auto& f : C.factors()) f = T(1);
+    for (auto& f : D.factors()) f = T(1);
     add<T>(T(-1), C, idx_B, T(1), D, idx_B);
     T error = reduce<T>(REDUCE_NORM_2, D, idx_B);
 

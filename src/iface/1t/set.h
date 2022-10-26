@@ -58,10 +58,10 @@ void set(const scalar& alpha,
 
 template <typename T>
 void set(const communicator& comm,
-         T alpha, dpd_varray_view<T> A, const label_vector& idx_A);
+         T alpha, dpd_marray_view<T> A, const label_vector& idx_A);
 
 template <typename T>
-void set(T alpha, dpd_varray_view<T> A, const label_vector& idx_A)
+void set(T alpha, dpd_marray_view<T> A, const label_vector& idx_A)
 {
     parallelize
     (
@@ -75,10 +75,10 @@ void set(T alpha, dpd_varray_view<T> A, const label_vector& idx_A)
 
 template <typename T>
 void set(const communicator& comm,
-         T alpha, indexed_varray_view<T> A, const label_vector& idx_A);
+         T alpha, indexed_marray_view<T> A, const label_vector& idx_A);
 
 template <typename T>
-void set(T alpha, indexed_varray_view<T> A, const label_vector& idx_A)
+void set(T alpha, indexed_marray_view<T> A, const label_vector& idx_A)
 {
     parallelize
     (
@@ -92,10 +92,10 @@ void set(T alpha, indexed_varray_view<T> A, const label_vector& idx_A)
 
 template <typename T>
 void set(const communicator& comm,
-         T alpha, indexed_dpd_varray_view<T> A, const label_vector& idx_A);
+         T alpha, indexed_dpd_marray_view<T> A, const label_vector& idx_A);
 
 template <typename T>
-void set(T alpha, indexed_dpd_varray_view<T> A, const label_vector& idx_A)
+void set(T alpha, indexed_dpd_marray_view<T> A, const label_vector& idx_A)
 {
     parallelize
     (

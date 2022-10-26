@@ -1,7 +1,8 @@
-#include "gtest/gtest.h"
 #include "short_vector.hpp"
+#include "gtest/gtest.h"
 
 #include <list>
+#include <vector>
 
 using namespace std;
 using namespace MArray;

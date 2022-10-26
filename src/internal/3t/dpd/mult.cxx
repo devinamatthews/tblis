@@ -30,23 +30,23 @@ dpd_impl_t dpd_impl = BLIS;
 
 template <typename T>
 void mult_full(const communicator& comm, const config& cfg,
-               T alpha, bool conj_A, const dpd_varray_view<T>& A,
+               T alpha, bool conj_A, const dpd_marray_view<T>& A,
                const dim_vector& idx_A_AB,
                const dim_vector& idx_A_AC,
                const dim_vector& idx_A_ABC,
-                        bool conj_B, const dpd_varray_view<T>& B,
+                        bool conj_B, const dpd_marray_view<T>& B,
                const dim_vector& idx_B_AB,
                const dim_vector& idx_B_BC,
                const dim_vector& idx_B_ABC,
-               T  beta, bool conj_C, const dpd_varray_view<T>& C,
+               T  beta, bool conj_C, const dpd_marray_view<T>& C,
                const dim_vector& idx_C_AC,
                const dim_vector& idx_C_BC,
                const dim_vector& idx_C_ABC)
 {
-    varray<T> A2, B2, C2;
+    marray<T> A2, B2, C2;
 
     comm.broadcast(
-    [&](varray<T>& A2, varray<T>& B2, varray<T>& C2)
+    [&](marray<T>& A2, marray<T>& B2, marray<T>& C2)
     {
         block_to_full(comm, cfg, A, A2);
         block_to_full(comm, cfg, B, B2);
@@ -77,12 +77,12 @@ void mult_full(const communicator& comm, const config& cfg,
 }
 
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
-               const scalar& alpha, bool conj_A, const dpd_varray_view<char>& A,
+               const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
                dim_vector idx_A_AB,
                dim_vector idx_A_AC,
-                                          bool conj_B, const dpd_varray_view<char>& B,
+                                          bool conj_B, const dpd_marray_view<char>& B,
                dim_vector idx_B_AB,
-               const scalar& beta,  bool conj_C, const dpd_varray_view<char>& C,
+               const scalar& beta,  bool conj_C, const dpd_marray_view<char>& C,
                dim_vector idx_C_AC)
 {
     const len_type ts = type_size[type];
@@ -107,7 +107,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
             irreps_C[idx_C_AC[i]] = irrep_it_AC.irrep(i);
         }
 
-        varray_view<char> local_C = C(irreps_C);
+        marray_view<char> local_C = C(irreps_C);
 
         auto len_AC = stl_ext::select_from(local_C.lengths(), idx_C_AC);
         auto stride_C_AC = stl_ext::select_from(local_C.strides(), idx_C_AC);
@@ -125,8 +125,8 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
                     irreps_B[idx_B_AB[i]] = irrep_it_AB.irrep(i);
                 }
 
-                varray_view<char> local_A = A(irreps_A);
-                varray_view<char> local_B = B(irreps_B);
+                marray_view<char> local_A = A(irreps_A);
+                marray_view<char> local_B = B(irreps_B);
 
                 auto len_AB = stl_ext::select_from(local_A.lengths(), idx_A_AB);
                 auto stride_A_AC = stl_ext::select_from(local_A.strides(), idx_A_AC);
@@ -155,11 +155,11 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 }
 
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
-               const scalar& alpha, bool conj_A, const dpd_varray_view<char>& A,
+               const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
                dim_vector idx_A_AC,
-                                          bool conj_B, const dpd_varray_view<char>& B,
+                                          bool conj_B, const dpd_marray_view<char>& B,
                dim_vector idx_B_BC,
-               const scalar& beta,  bool conj_C, const dpd_varray_view<char>& C,
+               const scalar& beta,  bool conj_C, const dpd_marray_view<char>& C,
                dim_vector idx_C_AC,
                dim_vector idx_C_BC)
 {
@@ -193,7 +193,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
                 irreps_C[idx_C_BC[i]] = irrep_it_BC.irrep(i);
             }
 
-            varray_view<char> local_C = C(irreps_C);
+            marray_view<char> local_C = C(irreps_C);
 
             auto len_AC = stl_ext::select_from(local_C.lengths(), idx_C_AC);
             auto len_BC = stl_ext::select_from(local_C.lengths(), idx_C_BC);
@@ -202,8 +202,8 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 
             if (irrep_AC == A.irrep() && irrep_BC == B.irrep())
             {
-                varray_view<char> local_A = A(irreps_A);
-                varray_view<char> local_B = B(irreps_B);
+                marray_view<char> local_A = A(irreps_A);
+                marray_view<char> local_B = B(irreps_B);
 
                 auto stride_A_AC = stl_ext::select_from(local_A.strides(), idx_A_AC);
                 auto stride_B_BC = stl_ext::select_from(local_B.strides(), idx_B_BC);
@@ -226,13 +226,13 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 }
 
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
-               const scalar& alpha, bool conj_A, const dpd_varray_view<char>& A,
+               const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
                dim_vector idx_A_AB,
                dim_vector idx_A_AC,
-                                          bool conj_B, const dpd_varray_view<char>& B,
+                                          bool conj_B, const dpd_marray_view<char>& B,
                dim_vector idx_B_AB,
                dim_vector idx_B_BC,
-               const scalar& beta,  bool conj_C, const dpd_varray_view<char>& C,
+               const scalar& beta,  bool conj_C, const dpd_marray_view<char>& C,
                dim_vector idx_C_AC,
                dim_vector idx_C_BC)
 {
@@ -343,7 +343,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
                     for (auto i : range(idx_C_BC.size()))
                         irreps[idx_C_BC[i]] = col_it.irrep(i);
 
-                    varray_view<char> local_C = C(irreps);
+                    marray_view<char> local_C = C(irreps);
 
                     if (beta.is_zero())
                     {
@@ -362,14 +362,14 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 }
 
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
-               const scalar& alpha, bool conj_A, const dpd_varray_view<char>& A,
+               const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
                dim_vector idx_A_AB,
                dim_vector idx_A_AC,
                dim_vector idx_A_ABC,
-                                          bool conj_B, const dpd_varray_view<char>& B,
+                                          bool conj_B, const dpd_marray_view<char>& B,
                dim_vector idx_B_AB,
                dim_vector idx_B_ABC,
-               const scalar&  beta, bool conj_C, const dpd_varray_view<char>& C,
+               const scalar&  beta, bool conj_C, const dpd_marray_view<char>& C,
                dim_vector idx_C_AC,
                dim_vector idx_C_ABC)
 {
@@ -405,7 +405,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
             irreps_C[idx_C_AC[i]] = irrep_it_AC.irrep(i);
         }
 
-        varray_view<char> local_C = C(irreps_C);
+        marray_view<char> local_C = C(irreps_C);
 
         auto len_ABC = stl_ext::select_from(local_C.lengths(), idx_C_ABC);
         auto len_AC = stl_ext::select_from(local_C.lengths(), idx_C_AC);
@@ -423,8 +423,8 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
                 irreps_B[idx_B_AB[i]] = irrep_it_AB.irrep(i);
             }
 
-            varray_view<char> local_A = A(irreps_A);
-            varray_view<char> local_B = B(irreps_B);
+            marray_view<char> local_A = A(irreps_A);
+            marray_view<char> local_B = B(irreps_B);
 
             auto len_AB = stl_ext::select_from(local_A.lengths(), idx_A_AB);
             auto stride_A_ABC = stl_ext::select_from(local_A.strides(), idx_A_ABC);
@@ -445,13 +445,13 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 }
 
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
-               const scalar& alpha, bool conj_A, const dpd_varray_view<char>& A,
+               const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
                dim_vector idx_A_AC,
                dim_vector idx_A_ABC,
-                                          bool conj_B, const dpd_varray_view<char>& B,
+                                          bool conj_B, const dpd_marray_view<char>& B,
                dim_vector idx_B_BC,
                dim_vector idx_B_ABC,
-               const scalar&  beta, bool conj_C, const dpd_varray_view<char>& C,
+               const scalar&  beta, bool conj_C, const dpd_marray_view<char>& C,
                dim_vector idx_C_AC,
                dim_vector idx_C_BC,
                dim_vector idx_C_ABC)
@@ -498,9 +498,9 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
             irreps_C[idx_C_BC[i]] = irrep_it_BC.irrep(i);
         }
 
-        varray_view<char> local_A = A(irreps_A);
-        varray_view<char> local_B = B(irreps_B);
-        varray_view<char> local_C = C(irreps_C);
+        marray_view<char> local_A = A(irreps_A);
+        marray_view<char> local_B = B(irreps_B);
+        marray_view<char> local_C = C(irreps_C);
 
         auto len_ABC = stl_ext::select_from(local_C.lengths(), idx_C_ABC);
         auto len_AC = stl_ext::select_from(local_C.lengths(), idx_C_AC);
@@ -521,15 +521,15 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 }
 
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
-               const scalar& alpha, bool conj_A, const dpd_varray_view<char>& A,
+               const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
                dim_vector idx_A_AB,
                dim_vector idx_A_AC,
                dim_vector idx_A_ABC,
-                                          bool conj_B, const dpd_varray_view<char>& B,
+                                          bool conj_B, const dpd_marray_view<char>& B,
                dim_vector idx_B_AB,
                dim_vector idx_B_BC,
                dim_vector idx_B_ABC,
-               const scalar& beta,  bool conj_C, const dpd_varray_view<char>& C,
+               const scalar& beta,  bool conj_C, const dpd_marray_view<char>& C,
                dim_vector idx_C_AC,
                dim_vector idx_C_BC,
                dim_vector idx_C_ABC)
@@ -654,7 +654,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
                             for (auto i : range(idx_C_BC.size()))
                                 irreps[idx_C_BC[i]] = col_it.irrep(i);
 
-                            varray_view<char> local_C = C(irreps);
+                            marray_view<char> local_C = C(irreps);
 
                             if (beta.is_zero())
                             {
@@ -675,15 +675,15 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 }
 
 void mult_block(type_t type, const communicator& comm, const config& cfg,
-                const scalar& alpha, bool conj_A, const dpd_varray_view<char>& A,
+                const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
                 dim_vector idx_A_AB,
                 dim_vector idx_A_AC,
                 dim_vector idx_A_ABC,
-                               bool conj_B, const dpd_varray_view<char>& B,
+                               bool conj_B, const dpd_marray_view<char>& B,
                 dim_vector idx_B_AB,
                 dim_vector idx_B_BC,
                 dim_vector idx_B_ABC,
-                const scalar&  beta, bool conj_C, const dpd_varray_view<char>& C,
+                const scalar&  beta, bool conj_C, const dpd_marray_view<char>& C,
                 dim_vector idx_C_AC,
                 dim_vector idx_C_BC,
                 dim_vector idx_C_ABC)
@@ -758,7 +758,7 @@ void mult_block(type_t type, const communicator& comm, const config& cfg,
 
                         if (is_block_empty(C, irreps_C)) continue;
 
-                        varray_view<char> local_C = C(irreps_C);
+                        marray_view<char> local_C = C(irreps_C);
 
                         auto len_ABC = stl_ext::select_from(local_C.lengths(), idx_C_ABC);
                         auto len_AC = stl_ext::select_from(local_C.lengths(), idx_C_AC);
@@ -780,8 +780,8 @@ void mult_block(type_t type, const communicator& comm, const config& cfg,
 
                                 if (is_block_empty(A, irreps_A)) continue;
 
-                                varray_view<char> local_A = A(irreps_A);
-                                varray_view<char> local_B = B(irreps_B);
+                                marray_view<char> local_A = A(irreps_A);
+                                marray_view<char> local_B = B(irreps_B);
 
                                 auto len_AB = stl_ext::select_from(local_A.lengths(), idx_A_AB);
                                 auto stride_A_ABC = stl_ext::select_from(local_A.strides(), idx_A_ABC);
@@ -819,11 +819,11 @@ void mult_block(type_t type, const communicator& comm, const config& cfg,
 }
 
 void mult_vec(type_t type, const communicator& comm, const config& cfg,
-              const scalar& alpha, bool conj_A, const dpd_varray_view<char>& A,
+              const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
               dim_vector idx_A_ABC,
-                                   bool conj_B, const dpd_varray_view<char>& B,
+                                   bool conj_B, const dpd_marray_view<char>& B,
               dim_vector idx_B_ABC,
-              const scalar&  beta, bool conj_C, const dpd_varray_view<char>& C,
+              const scalar&  beta, bool conj_C, const dpd_marray_view<char>& C,
               dim_vector idx_C_ABC)
 {
     if (A.irrep() != B.irrep() || A.irrep() != C.irrep())
@@ -863,9 +863,9 @@ void mult_vec(type_t type, const communicator& comm, const config& cfg,
 
         if (is_block_empty(C, irreps_C)) continue;
 
-        varray_view<char> local_A = A(irreps_A);
-        varray_view<char> local_B = B(irreps_B);
-        varray_view<char> local_C = C(irreps_C);
+        marray_view<char> local_A = A(irreps_A);
+        marray_view<char> local_B = B(irreps_B);
+        marray_view<char> local_C = C(irreps_C);
 
         auto len_ABC = stl_ext::select_from(local_C.lengths(), idx_C_ABC);
         auto stride_A_ABC = stl_ext::select_from(local_A.strides(), idx_A_ABC);
@@ -880,13 +880,13 @@ void mult_vec(type_t type, const communicator& comm, const config& cfg,
 }
 
 void mult_vec(type_t type, const communicator& comm, const config& cfg,
-              const scalar& alpha, bool conj_A, const dpd_varray_view<char>& A,
+              const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
               dim_vector idx_A_AB,
               dim_vector idx_A_ABC,
-                                   bool conj_B, const dpd_varray_view<char>& B,
+                                   bool conj_B, const dpd_marray_view<char>& B,
               dim_vector idx_B_AB,
               dim_vector idx_B_ABC,
-              const scalar&  beta, bool conj_C, const dpd_varray_view<char>& C,
+              const scalar&  beta, bool conj_C, const dpd_marray_view<char>& C,
               dim_vector idx_C_ABC)
 {
     if (A.irrep() != B.irrep())
@@ -928,7 +928,7 @@ void mult_vec(type_t type, const communicator& comm, const config& cfg,
 
         if (is_block_empty(C, irreps_C)) continue;
 
-        varray_view<char> local_C = C(irreps_C);
+        marray_view<char> local_C = C(irreps_C);
 
         auto len_ABC = stl_ext::select_from(local_C.lengths(), idx_C_ABC);
         auto stride_C_ABC = stl_ext::select_from(local_C.strides(), idx_C_ABC);
@@ -944,8 +944,8 @@ void mult_vec(type_t type, const communicator& comm, const config& cfg,
                 irreps_B[idx_B_AB[i]] = it_AB.irrep(i);
             }
 
-            varray_view<char> local_A = A(irreps_A);
-            varray_view<char> local_B = B(irreps_B);
+            marray_view<char> local_A = A(irreps_A);
+            marray_view<char> local_B = B(irreps_B);
 
             auto len_AB = stl_ext::select_from(local_A.lengths(), idx_A_AB);
             auto stride_A_ABC = stl_ext::select_from(local_A.strides(), idx_A_ABC);
@@ -965,12 +965,12 @@ void mult_vec(type_t type, const communicator& comm, const config& cfg,
 }
 
 void mult_vec(type_t type, const communicator& comm, const config& cfg,
-              const scalar& alpha, bool conj_A, const dpd_varray_view<char>& A,
+              const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
               dim_vector idx_A_AC,
               dim_vector idx_A_ABC,
-                                   bool conj_B, const dpd_varray_view<char>& B,
+                                   bool conj_B, const dpd_marray_view<char>& B,
               dim_vector idx_B_ABC,
-              const scalar& beta,  bool conj_C, const dpd_varray_view<char>& C,
+              const scalar& beta,  bool conj_C, const dpd_marray_view<char>& C,
               dim_vector idx_C_AC,
               dim_vector idx_C_ABC)
 {
@@ -1020,9 +1020,9 @@ void mult_vec(type_t type, const communicator& comm, const config& cfg,
 
         if (is_block_empty(C, irreps_C)) continue;
 
-        varray_view<char> local_A = A(irreps_A);
-        varray_view<char> local_B = B(irreps_B);
-        varray_view<char> local_C = C(irreps_C);
+        marray_view<char> local_A = A(irreps_A);
+        marray_view<char> local_B = B(irreps_B);
+        marray_view<char> local_C = C(irreps_C);
 
         auto len_ABC = stl_ext::select_from(local_C.lengths(), idx_C_ABC);
         auto len_AC = stl_ext::select_from(local_A.lengths(), idx_A_AC);
@@ -1041,16 +1041,16 @@ void mult_vec(type_t type, const communicator& comm, const config& cfg,
 
 void mult(type_t type, const communicator& comm, const config& cfg,
           const scalar& alpha,
-          bool conj_A, const dpd_varray_view<char>& A,
+          bool conj_A, const dpd_marray_view<char>& A,
           const dim_vector& idx_A_AB,
           const dim_vector& idx_A_AC,
           const dim_vector& idx_A_ABC,
-          bool conj_B, const dpd_varray_view<char>& B,
+          bool conj_B, const dpd_marray_view<char>& B,
           const dim_vector& idx_B_AB,
           const dim_vector& idx_B_BC,
           const dim_vector& idx_B_ABC,
           const scalar&  beta,
-          bool conj_C, const dpd_varray_view<char>& C,
+          bool conj_C, const dpd_marray_view<char>& C,
           const dim_vector& idx_C_AC,
           const dim_vector& idx_C_BC,
           const dim_vector& idx_C_ABC)
@@ -1061,27 +1061,27 @@ void mult(type_t type, const communicator& comm, const config& cfg,
         {
             case TYPE_FLOAT:
                 mult_full(comm, cfg,
-                          alpha.get<float>(), conj_A, reinterpret_cast<const dpd_varray_view<float>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
-                                              conj_B, reinterpret_cast<const dpd_varray_view<float>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
-                           beta.get<float>(), conj_C, reinterpret_cast<const dpd_varray_view<float>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
+                          alpha.get<float>(), conj_A, reinterpret_cast<const dpd_marray_view<float>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
+                                              conj_B, reinterpret_cast<const dpd_marray_view<float>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
+                           beta.get<float>(), conj_C, reinterpret_cast<const dpd_marray_view<float>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
                 break;
             case TYPE_DOUBLE:
                 mult_full(comm, cfg,
-                          alpha.get<double>(), conj_A, reinterpret_cast<const dpd_varray_view<double>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
-                                               conj_B, reinterpret_cast<const dpd_varray_view<double>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
-                           beta.get<double>(), conj_C, reinterpret_cast<const dpd_varray_view<double>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
+                          alpha.get<double>(), conj_A, reinterpret_cast<const dpd_marray_view<double>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
+                                               conj_B, reinterpret_cast<const dpd_marray_view<double>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
+                           beta.get<double>(), conj_C, reinterpret_cast<const dpd_marray_view<double>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
                 break;
             case TYPE_SCOMPLEX:
                 mult_full(comm, cfg,
-                          alpha.get<scomplex>(), conj_A, reinterpret_cast<const dpd_varray_view<scomplex>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
-                                                 conj_B, reinterpret_cast<const dpd_varray_view<scomplex>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
-                           beta.get<scomplex>(), conj_C, reinterpret_cast<const dpd_varray_view<scomplex>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
+                          alpha.get<scomplex>(), conj_A, reinterpret_cast<const dpd_marray_view<scomplex>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
+                                                 conj_B, reinterpret_cast<const dpd_marray_view<scomplex>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
+                           beta.get<scomplex>(), conj_C, reinterpret_cast<const dpd_marray_view<scomplex>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
                 break;
             case TYPE_DCOMPLEX:
                 mult_full(comm, cfg,
-                          alpha.get<dcomplex>(), conj_A, reinterpret_cast<const dpd_varray_view<dcomplex>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
-                                                 conj_B, reinterpret_cast<const dpd_varray_view<dcomplex>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
-                           beta.get<dcomplex>(), conj_C, reinterpret_cast<const dpd_varray_view<dcomplex>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
+                          alpha.get<dcomplex>(), conj_A, reinterpret_cast<const dpd_marray_view<dcomplex>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
+                                                 conj_B, reinterpret_cast<const dpd_marray_view<dcomplex>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
+                           beta.get<dcomplex>(), conj_C, reinterpret_cast<const dpd_marray_view<dcomplex>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
                 break;
         }
 

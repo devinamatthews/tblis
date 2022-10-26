@@ -221,14 +221,14 @@ void mult(const tensor& A,
 
 template <typename T>
 void mult(const communicator& comm,
-          T alpha, const dpd_varray_view<const T>& A, const label_vector& idx_A,
-                   const dpd_varray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const dpd_varray_view<      T>& C, const label_vector& idx_C);
+          T alpha, const dpd_marray_view<const T>& A, const label_vector& idx_A,
+                   const dpd_marray_view<const T>& B, const label_vector& idx_B,
+          T  beta, const dpd_marray_view<      T>& C, const label_vector& idx_C);
 
 template <typename T>
-void mult(T alpha, const dpd_varray_view<const T>& A, const label_vector& idx_A,
-                   const dpd_varray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const dpd_varray_view<      T>& C, const label_vector& idx_C)
+void mult(T alpha, const dpd_marray_view<const T>& A, const label_vector& idx_A,
+                   const dpd_marray_view<const T>& B, const label_vector& idx_B,
+          T  beta, const dpd_marray_view<      T>& C, const label_vector& idx_C)
 {
     parallelize
     (
@@ -242,14 +242,14 @@ void mult(T alpha, const dpd_varray_view<const T>& A, const label_vector& idx_A,
 
 template <typename T>
 void mult(const communicator& comm,
-          T alpha, const indexed_varray_view<const T>& A, const label_vector& idx_A,
-                   const indexed_varray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const indexed_varray_view<      T>& C, const label_vector& idx_C);
+          T alpha, const indexed_marray_view<const T>& A, const label_vector& idx_A,
+                   const indexed_marray_view<const T>& B, const label_vector& idx_B,
+          T  beta, const indexed_marray_view<      T>& C, const label_vector& idx_C);
 
 template <typename T>
-void mult(T alpha, const indexed_varray_view<const T>& A, const label_vector& idx_A,
-                   const indexed_varray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const indexed_varray_view<      T>& C, const label_vector& idx_C)
+void mult(T alpha, const indexed_marray_view<const T>& A, const label_vector& idx_A,
+                   const indexed_marray_view<const T>& B, const label_vector& idx_B,
+          T  beta, const indexed_marray_view<      T>& C, const label_vector& idx_C)
 {
     parallelize
     (
@@ -263,14 +263,14 @@ void mult(T alpha, const indexed_varray_view<const T>& A, const label_vector& id
 
 template <typename T>
 void mult(const communicator& comm,
-          T alpha, const indexed_dpd_varray_view<const T>& A, const label_vector& idx_A,
-                   const indexed_dpd_varray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const indexed_dpd_varray_view<      T>& C, const label_vector& idx_C);
+          T alpha, const indexed_dpd_marray_view<const T>& A, const label_vector& idx_A,
+                   const indexed_dpd_marray_view<const T>& B, const label_vector& idx_B,
+          T  beta, const indexed_dpd_marray_view<      T>& C, const label_vector& idx_C);
 
 template <typename T>
-void mult(T alpha, const indexed_dpd_varray_view<const T>& A, const label_vector& idx_A,
-                   const indexed_dpd_varray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const indexed_dpd_varray_view<      T>& C, const label_vector& idx_C)
+void mult(T alpha, const indexed_dpd_marray_view<const T>& A, const label_vector& idx_A,
+                   const indexed_dpd_marray_view<const T>& B, const label_vector& idx_B,
+          T  beta, const indexed_dpd_marray_view<      T>& C, const label_vector& idx_C)
 {
     parallelize
     (

@@ -195,12 +195,12 @@ T dot(const tensor& A,
 
 template <typename T>
 void dot(const communicator& comm,
-         dpd_varray_view<const T> A, const label_vector& idx_A,
-         dpd_varray_view<const T> B, const label_vector& idx_B, T& result);
+         dpd_marray_view<const T> A, const label_vector& idx_A,
+         dpd_marray_view<const T> B, const label_vector& idx_B, T& result);
 
 template <typename T>
-void dot(dpd_varray_view<const T> A, const label_vector& idx_A,
-         dpd_varray_view<const T> B, const label_vector& idx_B, T& result)
+void dot(dpd_marray_view<const T> A, const label_vector& idx_A,
+         dpd_marray_view<const T> B, const label_vector& idx_B, T& result)
 {
     parallelize
     (
@@ -213,8 +213,8 @@ void dot(dpd_varray_view<const T> A, const label_vector& idx_A,
 }
 
 template <typename T>
-T dot(dpd_varray_view<const T> A, const label_vector& idx_A,
-      dpd_varray_view<const T> B, const label_vector& idx_B)
+T dot(dpd_marray_view<const T> A, const label_vector& idx_A,
+      dpd_marray_view<const T> B, const label_vector& idx_B)
 {
     T result;
     dot(A, idx_A, B, idx_B, result);
@@ -223,8 +223,8 @@ T dot(dpd_varray_view<const T> A, const label_vector& idx_A,
 
 template <typename T>
 T dot(const communicator& comm,
-      dpd_varray_view<const T> A, const label_vector& idx_A,
-      dpd_varray_view<const T> B, const label_vector& idx_B)
+      dpd_marray_view<const T> A, const label_vector& idx_A,
+      dpd_marray_view<const T> B, const label_vector& idx_B)
 {
     T result;
     dot(comm, A, idx_A, B, idx_B, result);
@@ -233,12 +233,12 @@ T dot(const communicator& comm,
 
 template <typename T>
 void dot(const communicator& comm,
-         indexed_varray_view<const T> A, const label_vector& idx_A,
-         indexed_varray_view<const T> B, const label_vector& idx_B, T& result);
+         indexed_marray_view<const T> A, const label_vector& idx_A,
+         indexed_marray_view<const T> B, const label_vector& idx_B, T& result);
 
 template <typename T>
-void dot(indexed_varray_view<const T> A, const label_vector& idx_A,
-         indexed_varray_view<const T> B, const label_vector& idx_B, T& result)
+void dot(indexed_marray_view<const T> A, const label_vector& idx_A,
+         indexed_marray_view<const T> B, const label_vector& idx_B, T& result)
 {
     parallelize
     (
@@ -251,8 +251,8 @@ void dot(indexed_varray_view<const T> A, const label_vector& idx_A,
 }
 
 template <typename T>
-T dot(indexed_varray_view<const T> A, const label_vector& idx_A,
-      indexed_varray_view<const T> B, const label_vector& idx_B)
+T dot(indexed_marray_view<const T> A, const label_vector& idx_A,
+      indexed_marray_view<const T> B, const label_vector& idx_B)
 {
     T result;
     dot(A, idx_A, B, idx_B, result);
@@ -261,8 +261,8 @@ T dot(indexed_varray_view<const T> A, const label_vector& idx_A,
 
 template <typename T>
 T dot(const communicator& comm,
-      indexed_varray_view<const T> A, const label_vector& idx_A,
-      indexed_varray_view<const T> B, const label_vector& idx_B)
+      indexed_marray_view<const T> A, const label_vector& idx_A,
+      indexed_marray_view<const T> B, const label_vector& idx_B)
 {
     T result;
     dot(comm, A, idx_A, B, idx_B, result);
@@ -271,12 +271,12 @@ T dot(const communicator& comm,
 
 template <typename T>
 void dot(const communicator& comm,
-         indexed_dpd_varray_view<const T> A, const label_vector& idx_A,
-         indexed_dpd_varray_view<const T> B, const label_vector& idx_B, T& result);
+         indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
+         indexed_dpd_marray_view<const T> B, const label_vector& idx_B, T& result);
 
 template <typename T>
-void dot(indexed_dpd_varray_view<const T> A, const label_vector& idx_A,
-         indexed_dpd_varray_view<const T> B, const label_vector& idx_B, T& result)
+void dot(indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
+         indexed_dpd_marray_view<const T> B, const label_vector& idx_B, T& result)
 {
     parallelize
     (
@@ -289,8 +289,8 @@ void dot(indexed_dpd_varray_view<const T> A, const label_vector& idx_A,
 }
 
 template <typename T>
-T dot(indexed_dpd_varray_view<const T> A, const label_vector& idx_A,
-      indexed_dpd_varray_view<const T> B, const label_vector& idx_B)
+T dot(indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
+      indexed_dpd_marray_view<const T> B, const label_vector& idx_B)
 {
     T result;
     dot(A, idx_A, B, idx_B, result);
@@ -299,8 +299,8 @@ T dot(indexed_dpd_varray_view<const T> A, const label_vector& idx_A,
 
 template <typename T>
 T dot(const communicator& comm,
-      indexed_dpd_varray_view<const T> A, const label_vector& idx_A,
-      indexed_dpd_varray_view<const T> B, const label_vector& idx_B)
+      indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
+      indexed_dpd_marray_view<const T> B, const label_vector& idx_B)
 {
     T result;
     dot(comm, A, idx_A, B, idx_B, result);

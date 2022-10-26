@@ -167,9 +167,9 @@ void tblis_tensor_mult(const tblis_comm* comm,
 
 template <typename T>
 void mult(const communicator& comm,
-          T alpha, const dpd_varray_view<const T>& A, const label_vector& idx_A,
-                   const dpd_varray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const dpd_varray_view<      T>& C, const label_vector& idx_C)
+          T alpha, const dpd_marray_view<const T>& A, const label_vector& idx_A,
+                   const dpd_marray_view<const T>& B, const label_vector& idx_B,
+          T  beta, const dpd_marray_view<      T>& C, const label_vector& idx_C)
 {
     auto nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
@@ -259,35 +259,35 @@ void mult(const communicator& comm,
         if (beta == T(0))
         {
             internal::set(type_tag<T>::value, comm, get_default_config(),
-                          beta, reinterpret_cast<const dpd_varray_view<char>&>(C), range_C);
+                          beta, reinterpret_cast<const dpd_marray_view<char>&>(C), range_C);
         }
         else if (beta != T(1))
         {
             internal::scale(type_tag<T>::value, comm, get_default_config(),
-                            beta, false, reinterpret_cast<const dpd_varray_view<char>&>(C), range_C);
+                            beta, false, reinterpret_cast<const dpd_marray_view<char>&>(C), range_C);
         }
     }
     else
     {
         internal::mult(type_tag<T>::value, comm, get_default_config(),
-                       alpha, false, reinterpret_cast<const dpd_varray_view<char>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
-                              false, reinterpret_cast<const dpd_varray_view<char>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
-                        beta, false, reinterpret_cast<const dpd_varray_view<char>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
+                       alpha, false, reinterpret_cast<const dpd_marray_view<char>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
+                              false, reinterpret_cast<const dpd_marray_view<char>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
+                        beta, false, reinterpret_cast<const dpd_marray_view<char>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
     }
 }
 
 #define FOREACH_TYPE(T) \
 template void mult(const communicator& comm, \
-                   T alpha, const dpd_varray_view<const T>& A, const label_vector& idx_A, \
-                            const dpd_varray_view<const T>& B, const label_vector& idx_B, \
-                   T  beta, const dpd_varray_view<      T>& C, const label_vector& idx_C);
+                   T alpha, const dpd_marray_view<const T>& A, const label_vector& idx_A, \
+                            const dpd_marray_view<const T>& B, const label_vector& idx_B, \
+                   T  beta, const dpd_marray_view<      T>& C, const label_vector& idx_C);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void mult(const communicator& comm,
-          T alpha, const indexed_varray_view<const T>& A, const label_vector& idx_A,
-                   const indexed_varray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const indexed_varray_view<      T>& C, const label_vector& idx_C)
+          T alpha, const indexed_marray_view<const T>& A, const label_vector& idx_A,
+                   const indexed_marray_view<const T>& B, const label_vector& idx_B,
+          T  beta, const indexed_marray_view<      T>& C, const label_vector& idx_C)
 {
     auto ndim_A = A.dimension();
     auto ndim_B = B.dimension();
@@ -369,35 +369,35 @@ void mult(const communicator& comm,
         if (beta == T(0))
         {
             internal::set(type_tag<T>::value, comm, get_default_config(),
-                          beta, reinterpret_cast<const indexed_varray_view<char>&>(C), range_C);
+                          beta, reinterpret_cast<const indexed_marray_view<char>&>(C), range_C);
         }
         else if (beta != T(1))
         {
             internal::scale(type_tag<T>::value, comm, get_default_config(),
-                            beta, false, reinterpret_cast<const indexed_varray_view<char>&>(C), range_C);
+                            beta, false, reinterpret_cast<const indexed_marray_view<char>&>(C), range_C);
         }
     }
     else
     {
         internal::mult(type_tag<T>::value, comm, get_default_config(),
-                       alpha, false, reinterpret_cast<const indexed_varray_view<char>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
-                              false, reinterpret_cast<const indexed_varray_view<char>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
-                        beta, false, reinterpret_cast<const indexed_varray_view<char>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
+                       alpha, false, reinterpret_cast<const indexed_marray_view<char>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
+                              false, reinterpret_cast<const indexed_marray_view<char>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
+                        beta, false, reinterpret_cast<const indexed_marray_view<char>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
     }
 }
 
 #define FOREACH_TYPE(T) \
 template void mult(const communicator& comm, \
-                   T alpha, const indexed_varray_view<const T>& A, const label_vector& idx_A, \
-                            const indexed_varray_view<const T>& B, const label_vector& idx_B, \
-                   T  beta, const indexed_varray_view<      T>& C, const label_vector& idx_C);
+                   T alpha, const indexed_marray_view<const T>& A, const label_vector& idx_A, \
+                            const indexed_marray_view<const T>& B, const label_vector& idx_B, \
+                   T  beta, const indexed_marray_view<      T>& C, const label_vector& idx_C);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void mult(const communicator& comm,
-          T alpha, const indexed_dpd_varray_view<const T>& A, const label_vector& idx_A,
-                   const indexed_dpd_varray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const indexed_dpd_varray_view<      T>& C, const label_vector& idx_C)
+          T alpha, const indexed_dpd_marray_view<const T>& A, const label_vector& idx_A,
+                   const indexed_dpd_marray_view<const T>& B, const label_vector& idx_B,
+          T  beta, const indexed_dpd_marray_view<      T>& C, const label_vector& idx_C)
 {
     auto nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
@@ -487,28 +487,28 @@ void mult(const communicator& comm,
         if (beta == T(0))
         {
             internal::set(type_tag<T>::value, comm, get_default_config(),
-                          beta, reinterpret_cast<const indexed_dpd_varray_view<char>&>(C), range_C);
+                          beta, reinterpret_cast<const indexed_dpd_marray_view<char>&>(C), range_C);
         }
         else if (beta != T(1))
         {
             internal::scale(type_tag<T>::value, comm, get_default_config(),
-                            beta, false, reinterpret_cast<const indexed_dpd_varray_view<char>&>(C), range_C);
+                            beta, false, reinterpret_cast<const indexed_dpd_marray_view<char>&>(C), range_C);
         }
     }
     else
     {
         internal::mult(type_tag<T>::value, comm, get_default_config(),
-                       alpha, false, reinterpret_cast<const indexed_dpd_varray_view<char>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
-                              false, reinterpret_cast<const indexed_dpd_varray_view<char>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
-                        beta, false, reinterpret_cast<const indexed_dpd_varray_view<char>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
+                       alpha, false, reinterpret_cast<const indexed_dpd_marray_view<char>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
+                              false, reinterpret_cast<const indexed_dpd_marray_view<char>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
+                        beta, false, reinterpret_cast<const indexed_dpd_marray_view<char>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
     }
 }
 
 #define FOREACH_TYPE(T) \
 template void mult(const communicator& comm, \
-                   T alpha, const indexed_dpd_varray_view<const T>& A, const label_vector& idx_A, \
-                            const indexed_dpd_varray_view<const T>& B, const label_vector& idx_B, \
-                   T  beta, const indexed_dpd_varray_view<      T>& C, const label_vector& idx_C);
+                   T alpha, const indexed_dpd_marray_view<const T>& A, const label_vector& idx_A, \
+                            const indexed_dpd_marray_view<const T>& B, const label_vector& idx_B, \
+                   T  beta, const indexed_dpd_marray_view<      T>& C, const label_vector& idx_C);
 #include "configs/foreach_type.h"
 
 }

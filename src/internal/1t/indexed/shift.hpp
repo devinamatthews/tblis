@@ -12,7 +12,7 @@ namespace internal
 
 void shift(type_t type, const communicator& comm, const config& cfg,
            const scalar& alpha, const scalar& beta, bool conj_A,
-           const indexed_varray_view<char>& A, const dim_vector&);
+           const indexed_marray_view<char>& A, const dim_vector&);
 
 }
 }

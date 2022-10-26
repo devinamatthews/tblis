@@ -73,8 +73,8 @@ void tblis_tensor_dot(const tblis_comm* comm,
 
 template <typename T>
 void dot(const communicator& comm,
-         dpd_varray_view<const T> A, const label_vector& idx_A,
-         dpd_varray_view<const T> B, const label_vector& idx_B, T& result)
+         dpd_marray_view<const T> A, const label_vector& idx_A,
+         dpd_marray_view<const T> B, const label_vector& idx_B, T& result)
 {
     auto nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
@@ -111,21 +111,21 @@ void dot(const communicator& comm,
     }
 
     internal::dot(type_tag<T>::value, comm, get_default_config(),
-                  false, reinterpret_cast<const dpd_varray_view<char>&>(A), idx_A_AB,
-                  false, reinterpret_cast<const dpd_varray_view<char>&>(B), idx_B_AB,
+                  false, reinterpret_cast<const dpd_marray_view<char>&>(A), idx_A_AB,
+                  false, reinterpret_cast<const dpd_marray_view<char>&>(B), idx_B_AB,
                   reinterpret_cast<char*>(&result));
 }
 
 #define FOREACH_TYPE(T) \
 template void dot(const communicator& comm, \
-                  dpd_varray_view<const T> A, const label_vector& idx_A, \
-                  dpd_varray_view<const T> B, const label_vector& idx_B, T& result);
+                  dpd_marray_view<const T> A, const label_vector& idx_A, \
+                  dpd_marray_view<const T> B, const label_vector& idx_B, T& result);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void dot(const communicator& comm,
-         indexed_varray_view<const T> A, const label_vector& idx_A,
-         indexed_varray_view<const T> B, const label_vector& idx_B, T& result)
+         indexed_marray_view<const T> A, const label_vector& idx_A,
+         indexed_marray_view<const T> B, const label_vector& idx_B, T& result)
 {
     auto ndim_A = A.dimension();
     auto ndim_B = B.dimension();
@@ -158,21 +158,21 @@ void dot(const communicator& comm,
     }
 
     internal::dot(type_tag<T>::value, comm, get_default_config(),
-                  false, reinterpret_cast<const indexed_varray_view<char>&>(A), idx_A_AB,
-                  false, reinterpret_cast<const indexed_varray_view<char>&>(B), idx_B_AB,
+                  false, reinterpret_cast<const indexed_marray_view<char>&>(A), idx_A_AB,
+                  false, reinterpret_cast<const indexed_marray_view<char>&>(B), idx_B_AB,
                   reinterpret_cast<char*>(&result));
 }
 
 #define FOREACH_TYPE(T) \
 template void dot(const communicator& comm, \
-                  indexed_varray_view<const T> A, const label_vector& idx_A, \
-                  indexed_varray_view<const T> B, const label_vector& idx_B, T& result);
+                  indexed_marray_view<const T> A, const label_vector& idx_A, \
+                  indexed_marray_view<const T> B, const label_vector& idx_B, T& result);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void dot(const communicator& comm,
-         indexed_dpd_varray_view<const T> A, const label_vector& idx_A,
-         indexed_dpd_varray_view<const T> B, const label_vector& idx_B, T& result)
+         indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
+         indexed_dpd_marray_view<const T> B, const label_vector& idx_B, T& result)
 {
     auto nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
@@ -209,15 +209,15 @@ void dot(const communicator& comm,
     }
 
     internal::dot(type_tag<T>::value, comm, get_default_config(),
-                  false, reinterpret_cast<const indexed_dpd_varray_view<char>&>(A), idx_A_AB,
-                  false, reinterpret_cast<const indexed_dpd_varray_view<char>&>(B), idx_B_AB,
+                  false, reinterpret_cast<const indexed_dpd_marray_view<char>&>(A), idx_A_AB,
+                  false, reinterpret_cast<const indexed_dpd_marray_view<char>&>(B), idx_B_AB,
                   reinterpret_cast<char*>(&result));
 }
 
 #define FOREACH_TYPE(T) \
 template void dot(const communicator& comm, \
-                  indexed_dpd_varray_view<const T> A, const label_vector& idx_A, \
-                  indexed_dpd_varray_view<const T> B, const label_vector& idx_B, T& result);
+                  indexed_dpd_marray_view<const T> A, const label_vector& idx_A, \
+                  indexed_dpd_marray_view<const T> B, const label_vector& idx_B, T& result);
 #include "configs/foreach_type.h"
 
 }

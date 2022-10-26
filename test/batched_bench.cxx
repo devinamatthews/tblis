@@ -54,7 +54,7 @@ double run_kernel(len_type R, Kernel&& kernel, Args&&...args)
 }
 
 template <typename T>
-void init(indexed_varray<T>& A, const string& dense, const string& batch)
+void init(indexed_marray<T>& A, const string& dense, const string& batch)
 {
     auto n = dense.size();
     auto m = batch.size();
@@ -172,8 +172,8 @@ void init(indexed_varray<T>& A, const string& dense, const string& batch)
 }
 
 template <typename T>
-double diff(const indexed_varray_view<T>& A,
-            const indexed_varray_view<T>& B)
+double diff(const indexed_marray_view<T>& A,
+            const indexed_marray_view<T>& B)
 {
     double d = 0.0;
 
@@ -193,9 +193,9 @@ double diff(const indexed_varray_view<T>& A,
 
 template <typename T>
 void bench(int R,
-           T alpha, indexed_varray_view<const T> A, const std::string& typea,
-                    indexed_varray_view<const T> B, const std::string& typeb,
-           T  beta, indexed_varray_view<      T> C, const std::string& typec)
+           T alpha, indexed_marray_view<const T> A, const std::string& typea,
+                    indexed_marray_view<const T> B, const std::string& typeb,
+           T  beta, indexed_marray_view<      T> C, const std::string& typec)
 {
     flops = 0;
 
@@ -275,9 +275,9 @@ int main(int argc, char** argv)
 
     if (test0)
     {
-        indexed_varray<double> T4;
-        indexed_varray<double> T3;
-        indexed_varray<double> Wa;
+        indexed_marray<double> T4;
+        indexed_marray<double> T3;
+        indexed_marray<double> Wa;
 
         init(T4, "ABCD", "I===");
         init(T3,  "ABC",  "I==");
@@ -290,9 +290,9 @@ int main(int argc, char** argv)
 
     if (test1)
     {
-        indexed_varray<double> T2;
-        indexed_varray<double> W;
-        indexed_varray<double> T3;
+        indexed_marray<double> T2;
+        indexed_marray<double> W;
+        indexed_marray<double> T3;
 
         init(T2, "ABIJ", "");
         init(W, "IJKA", "");
@@ -305,9 +305,9 @@ int main(int argc, char** argv)
 
     if (test2)
     {
-        indexed_varray<double> T2;
-        indexed_varray<double> W;
-        indexed_varray<double> T3;
+        indexed_marray<double> T2;
+        indexed_marray<double> W;
+        indexed_marray<double> T3;
 
         init(T2, "ABIJ", "");
         init(W, "ABCI", "");
@@ -320,9 +320,9 @@ int main(int argc, char** argv)
 
     if (test3)
     {
-        indexed_varray<double> T4;
-        indexed_varray<double> Z4;
-        indexed_varray<double> Wa;
+        indexed_marray<double> T4;
+        indexed_marray<double> Z4;
+        indexed_marray<double> Wa;
 
         init(T4, "ABCD", "I===");
         init(Z4, "ABCD", "I===");
@@ -335,9 +335,9 @@ int main(int argc, char** argv)
 
     if (test4)
     {
-        indexed_varray<double> T4;
-        indexed_varray<double> T3;
-        indexed_varray<double> W;
+        indexed_marray<double> T4;
+        indexed_marray<double> T3;
+        indexed_marray<double> W;
 
         init(T4, "ABCD", "I===");
         init(T3,  "ABC",  "I==");
@@ -350,9 +350,9 @@ int main(int argc, char** argv)
 
     if (test5)
     {
-        indexed_varray<double> T3;
-        indexed_varray<double> Z4;
-        indexed_varray<double> W;
+        indexed_marray<double> T3;
+        indexed_marray<double> Z4;
+        indexed_marray<double> W;
 
         init(T3, "ABC", "I==");
         init(Z4, "ABCD", "I===");

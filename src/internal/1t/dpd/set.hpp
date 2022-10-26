@@ -11,7 +11,7 @@ namespace internal
 {
 
 void set(type_t type, const communicator& comm, const config& cfg,
-         const scalar& alpha, const dpd_varray_view<char>& A, const dim_vector& idx_A);
+         const scalar& alpha, const dpd_marray_view<char>& A, const dim_vector& idx_A);
 
 }
 }

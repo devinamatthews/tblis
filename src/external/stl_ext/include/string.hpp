@@ -145,8 +145,8 @@ inline std::vector<std::string> split(const std::string& s,
             }
             else
             {
-                tokens.push_back(s.substr(begin, end-begin+1));
-                begin = end+1;
+                tokens.push_back(s.substr(begin, end-begin));
+                begin = end+sep.size();
             }
         }
 

@@ -60,7 +60,7 @@ void tblis_tensor_reduce(const tblis_comm* comm,
 
 template <typename T>
 void reduce(const communicator& comm, reduce_t op,
-            dpd_varray_view<const T> A, const label_vector& idx_A,
+            dpd_marray_view<const T> A, const label_vector& idx_A,
             T& result, len_type& idx)
 {
     (void)idx_A;
@@ -74,19 +74,19 @@ void reduce(const communicator& comm, reduce_t op,
     dim_vector idx_A_A = range(ndim_A);
 
     internal::reduce(type_tag<T>::value, comm, get_default_config(), op,
-                     reinterpret_cast<dpd_varray_view<char>&>(A), idx_A_A,
+                     reinterpret_cast<dpd_marray_view<char>&>(A), idx_A_A,
                      reinterpret_cast<char*>(&result), idx);
 }
 
 #define FOREACH_TYPE(T) \
 template void reduce(const communicator& comm, reduce_t op, \
-                     dpd_varray_view<const T> A, const label_vector& idx_A, \
+                     dpd_marray_view<const T> A, const label_vector& idx_A, \
                      T& result, len_type& idx);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void reduce(const communicator& comm, reduce_t op,
-            indexed_varray_view<const T> A, const label_vector& idx_A,
+            indexed_marray_view<const T> A, const label_vector& idx_A,
             T& result, len_type& idx)
 {
     (void)idx_A;
@@ -100,19 +100,19 @@ void reduce(const communicator& comm, reduce_t op,
     dim_vector idx_A_A = range(ndim_A);
 
     internal::reduce(type_tag<T>::value, comm, get_default_config(), op,
-                     reinterpret_cast<indexed_varray_view<char>&>(A), idx_A_A,
+                     reinterpret_cast<indexed_marray_view<char>&>(A), idx_A_A,
                      reinterpret_cast<char*>(&result), idx);
 }
 
 #define FOREACH_TYPE(T) \
 template void reduce(const communicator& comm, reduce_t op, \
-                     indexed_varray_view<const T> A, const label_vector& idx_A, \
+                     indexed_marray_view<const T> A, const label_vector& idx_A, \
                      T& result, len_type& idx);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void reduce(const communicator& comm, reduce_t op,
-            indexed_dpd_varray_view<const T> A, const label_vector& idx_A,
+            indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
             T& result, len_type& idx)
 {
     (void)idx_A;
@@ -126,13 +126,13 @@ void reduce(const communicator& comm, reduce_t op,
     dim_vector idx_A_A = range(ndim_A);
 
     internal::reduce(type_tag<T>::value, comm, get_default_config(), op,
-                     reinterpret_cast<indexed_dpd_varray_view<char>&>(A), idx_A_A,
+                     reinterpret_cast<indexed_dpd_marray_view<char>&>(A), idx_A_A,
                      reinterpret_cast<char*>(&result), idx);
 }
 
 #define FOREACH_TYPE(T) \
 template void reduce(const communicator& comm, reduce_t op, \
-                     indexed_dpd_varray_view<const T> A, const label_vector& idx_A, \
+                     indexed_dpd_marray_view<const T> A, const label_vector& idx_A, \
                      T& result, len_type& idx);
 #include "configs/foreach_type.h"
 

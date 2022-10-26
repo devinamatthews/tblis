@@ -86,10 +86,10 @@ void scale(      tensor&& A)
 
 template <typename T>
 void scale(const communicator& comm,
-           T alpha, dpd_varray_view<T> A, const label_vector& idx_A);
+           T alpha, dpd_marray_view<T> A, const label_vector& idx_A);
 
 template <typename T>
-void scale(T alpha, dpd_varray_view<T> A, const label_vector& idx_A)
+void scale(T alpha, dpd_marray_view<T> A, const label_vector& idx_A)
 {
     parallelize
     (
@@ -103,10 +103,10 @@ void scale(T alpha, dpd_varray_view<T> A, const label_vector& idx_A)
 
 template <typename T>
 void scale(const communicator& comm,
-           T alpha, indexed_varray_view<T> A, const label_vector& idx_A);
+           T alpha, indexed_marray_view<T> A, const label_vector& idx_A);
 
 template <typename T>
-void scale(T alpha, indexed_varray_view<T> A, const label_vector& idx_A)
+void scale(T alpha, indexed_marray_view<T> A, const label_vector& idx_A)
 {
     parallelize
     (
@@ -120,10 +120,10 @@ void scale(T alpha, indexed_varray_view<T> A, const label_vector& idx_A)
 
 template <typename T>
 void scale(const communicator& comm,
-           T alpha, indexed_dpd_varray_view<T> A, const label_vector& idx_A);
+           T alpha, indexed_dpd_marray_view<T> A, const label_vector& idx_A);
 
 template <typename T>
-void scale(T alpha, indexed_dpd_varray_view<T> A, const label_vector& idx_A)
+void scale(T alpha, indexed_dpd_marray_view<T> A, const label_vector& idx_A)
 {
     parallelize
     (

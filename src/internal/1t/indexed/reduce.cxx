@@ -10,7 +10,7 @@ namespace internal
 {
 
 void reduce(type_t type, const communicator& comm, const config& cfg, reduce_t op,
-            const indexed_varray_view<char>& A, const dim_vector&,
+            const indexed_marray_view<char>& A, const dim_vector&,
             char* result, len_type& idx)
 {
     const len_type ts = type_size[type];
@@ -31,10 +31,10 @@ void reduce(type_t type, const communicator& comm, const config& cfg, reduce_t o
 
         switch (type)
         {
-            case TYPE_FLOAT:    block_result.data.s *= reinterpret_cast<const indexed_varray_view<   float>&>(A).factor(i); break;
-            case TYPE_DOUBLE:   block_result.data.d *= reinterpret_cast<const indexed_varray_view<  double>&>(A).factor(i); break;
-            case TYPE_SCOMPLEX: block_result.data.c *= reinterpret_cast<const indexed_varray_view<scomplex>&>(A).factor(i); break;
-            case TYPE_DCOMPLEX: block_result.data.z *= reinterpret_cast<const indexed_varray_view<dcomplex>&>(A).factor(i); break;
+            case TYPE_FLOAT:    block_result.data.s *= reinterpret_cast<const indexed_marray_view<   float>&>(A).factor(i); break;
+            case TYPE_DOUBLE:   block_result.data.d *= reinterpret_cast<const indexed_marray_view<  double>&>(A).factor(i); break;
+            case TYPE_SCOMPLEX: block_result.data.c *= reinterpret_cast<const indexed_marray_view<scomplex>&>(A).factor(i); break;
+            case TYPE_DCOMPLEX: block_result.data.z *= reinterpret_cast<const indexed_marray_view<dcomplex>&>(A).factor(i); break;
         }
 
         reduce(type, op, block_result.raw(), block_idx, local_result.raw(), local_idx);

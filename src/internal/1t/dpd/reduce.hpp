@@ -11,7 +11,7 @@ namespace internal
 {
 
 void reduce(type_t type, const communicator& comm, const config& cfg, reduce_t op,
-            const dpd_varray_view<char>& A, const dim_vector& idx_A,
+            const dpd_marray_view<char>& A, const dim_vector& idx_A,
             char* result, len_type& idx);
 
 }

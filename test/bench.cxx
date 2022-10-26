@@ -350,9 +350,9 @@ struct random_contraction
             permute(idx_C, reorder_C);
             permute(len_C, reorder_C);
 
-            varray<T> A(len_A);
-            varray<T> B(len_B);
-            varray<T> C(len_C);
+            marray<T> A(len_A);
+            marray<T> B(len_B);
+            marray<T> C(len_C);
 
             double gflops = 2*tm*tn*tk*1e-9;
             tblis::internal::impl = (Implementation == BLAS ? tblis::internal::BLAS_BASED
@@ -414,9 +414,9 @@ struct regular_contraction
             len_C.push_back(lengths.at(c));
         }
 
-        varray<T> A(len_A);
-        varray<T> B(len_B);
-        varray<T> C(len_C);
+        marray<T> A(len_A);
+        marray<T> B(len_B);
+        marray<T> C(len_C);
 
         double gflops = 2*ntot*1e-9;
         tblis::internal::impl = (Implementation == BLAS ? tblis::internal::BLAS_BASED

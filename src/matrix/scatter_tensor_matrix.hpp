@@ -8,8 +8,8 @@ namespace tblis
 
 struct scatter_tensor_matrix_impl
 {
-    typedef MArray::detail::array_1d<len_type> len_array;
-    typedef MArray::detail::array_1d<stride_type> stride_array;
+    typedef array_1d<len_type> len_array;
+    typedef array_1d<stride_type> stride_array;
 
     char* data_ = nullptr;
     std::array<len_vector, 2> lens_ = {};
@@ -43,9 +43,9 @@ struct scatter_tensor_matrix_impl
 class scatter_tensor_matrix : public abstract_matrix_adapter<scatter_tensor_matrix,scatter_tensor_matrix_impl>
 {
     protected:
-        typedef MArray::detail::array_1d<int> idx_array;
-        typedef MArray::detail::array_1d<len_type> len_array;
-        typedef MArray::detail::array_1d<stride_type> stride_array;
+        typedef array_1d<int> idx_array;
+        typedef array_1d<len_type> len_array;
+        typedef array_1d<stride_type> stride_array;
 
         static abstract_matrix do_pack(abstract_matrix& A_,
                                        const communicator& comm, const config& cfg,
@@ -164,7 +164,7 @@ class scatter_tensor_matrix : public abstract_matrix_adapter<scatter_tensor_matr
                 {
                     len_type inner_len = inner_length(dim);
                     len_type idx, off = offset(dim);
-                    divide(off, inner_len, idx, off);
+                    detail::divide(off, inner_len, idx, off);
                     len_type len = length(dim);
                     const stride_type* outer_scat = scatter(dim);
                     auto& lens = lengths(dim);

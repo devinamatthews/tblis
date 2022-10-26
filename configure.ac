@@ -16,7 +16,7 @@ AC_PROG_EGREP
 AC_PROG_AWK
 AX_BLAS([blas_found=yes])
 AC_PROG_CXX([icpc g++ clang++])
-AX_CXX_COMPILE_STDCXX_14([noext])
+AX_CXX_COMPILE_STDCXX([17], [noext])
 
 #
 # Apple's sys/cdefs.h redefines __restrict to null in C++ mode (!!!!!!)
@@ -63,7 +63,7 @@ fi
 
 AC_ARG_WITH([memkind], AS_HELP_STRING([--without-memkind],
     [do not attempt to link with the memkind library]))
-    
+
 if test "x$with_memkind" != "xno"; then
     AC_CHECK_HEADERS([hbwmalloc.h memkind.h])
     AC_SEARCH_LIBS([hbw_malloc], [memkind])
@@ -75,7 +75,7 @@ fi
 
 AC_ARG_WITH([hwloc], AS_HELP_STRING([--without-hwloc],
     [do not attempt to link with the hwloc library]))
-    
+
 if test "x$with_hwloc" != "xno"; then
     AC_CHECK_HEADERS([hwloc.h])
     AC_SEARCH_LIBS([hwloc_topology_init], [hwloc])
@@ -162,14 +162,14 @@ AC_DEFINE_UNQUOTED([LABEL_TYPE], [$label_type], [label_type])
 AC_ARG_ENABLE([config],
 [  --enable-config=...    a comma-separated list of configurations
                           @<:@default=auto@:>@
-  
+
                           possible values are:
-                          
+
                           reference, bulldozer, piledriver, excavator, zen,
                           core2, sandybridge, haswell, skx1, skx2, knl, auto
 
                           the following meta-configurations are also available:
- 
+
                           skx = skx1,skx2
                           intel = core2,sandybridge,haswell,skx,knl
                           amd = bulldozer,piledriver,excavator,zen
@@ -197,7 +197,7 @@ if echo $enable_config | grep -q auto; then
 #    AC_CHECK_DEFINE([__mips], [enable_config=loongson3a])
     AC_CHECK_DEFINE([__INTEL_COMPILER], [enable_config=intel])
 fi
-                             
+
 if ( echo $enable_config | grep -qv reference ) && test x$using_default_configs = xyes; then
     enable_config="${enable_config},reference"
 fi
@@ -475,7 +475,7 @@ LT_INIT
 
 mkdir -p bin
 
-AC_CONFIG_FILES([Makefile 
+AC_CONFIG_FILES([Makefile
                  src/configs/foreach_type.h
                  src/configs/foreach_config.h
                  src/configs/foreach_config_and_type.h

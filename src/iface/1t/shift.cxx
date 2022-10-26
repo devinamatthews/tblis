@@ -74,7 +74,7 @@ void tblis_tensor_shift(const tblis_comm* comm,
 
 template <typename T>
 void shift(const communicator& comm,
-           T alpha, T beta, dpd_varray_view<T> A, const label_vector& idx_A)
+           T alpha, T beta, dpd_marray_view<T> A, const label_vector& idx_A)
 {
     (void)idx_A;
 
@@ -89,31 +89,31 @@ void shift(const communicator& comm,
     if (beta == T(0))
     {
         internal::set(type_tag<T>::value, comm, get_default_config(), alpha,
-                      reinterpret_cast<dpd_varray_view<char>&>(A), idx_A_A);
+                      reinterpret_cast<dpd_marray_view<char>&>(A), idx_A_A);
     }
     else if (alpha == T(0))
     {
         if (beta != T(1))
         {
             internal::scale(type_tag<T>::value, comm, get_default_config(), beta, false,
-                            reinterpret_cast<dpd_varray_view<char>&>(A), idx_A_A);
+                            reinterpret_cast<dpd_marray_view<char>&>(A), idx_A_A);
         }
     }
     else
     {
         internal::shift(type_tag<T>::value, comm, get_default_config(), alpha, beta, false,
-                        reinterpret_cast<dpd_varray_view<char>&>(A), idx_A_A);
+                        reinterpret_cast<dpd_marray_view<char>&>(A), idx_A_A);
     }
 }
 
 #define FOREACH_TYPE(T) \
 template void shift(const communicator& comm, \
-                    T alpha, T beta, dpd_varray_view<T> A, const label_vector& idx_A);
+                    T alpha, T beta, dpd_marray_view<T> A, const label_vector& idx_A);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void shift(const communicator& comm,
-           T alpha, T beta, indexed_varray_view<T> A, const label_vector& idx_A)
+           T alpha, T beta, indexed_marray_view<T> A, const label_vector& idx_A)
 {
     (void)idx_A;
 
@@ -128,31 +128,31 @@ void shift(const communicator& comm,
     if (beta == T(0))
     {
         internal::set(type_tag<T>::value, comm, get_default_config(), alpha,
-                      reinterpret_cast<indexed_varray_view<char>&>(A), idx_A_A);
+                      reinterpret_cast<indexed_marray_view<char>&>(A), idx_A_A);
     }
     else if (alpha == T(0))
     {
         if (beta != T(1))
         {
             internal::scale(type_tag<T>::value, comm, get_default_config(), beta, false,
-                            reinterpret_cast<indexed_varray_view<char>&>(A), idx_A_A);
+                            reinterpret_cast<indexed_marray_view<char>&>(A), idx_A_A);
         }
     }
     else
     {
         internal::shift(type_tag<T>::value, comm, get_default_config(), alpha, beta, false,
-                        reinterpret_cast<indexed_varray_view<char>&>(A), idx_A_A);
+                        reinterpret_cast<indexed_marray_view<char>&>(A), idx_A_A);
     }
 }
 
 #define FOREACH_TYPE(T) \
 template void shift(const communicator& comm, \
-                    T alpha, T beta, indexed_varray_view<T> A, const label_vector& idx_A);
+                    T alpha, T beta, indexed_marray_view<T> A, const label_vector& idx_A);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void shift(const communicator& comm,
-           T alpha, T beta, indexed_dpd_varray_view<T> A, const label_vector& idx_A)
+           T alpha, T beta, indexed_dpd_marray_view<T> A, const label_vector& idx_A)
 {
     (void)idx_A;
 
@@ -167,26 +167,26 @@ void shift(const communicator& comm,
     if (beta == T(0))
     {
         internal::set(type_tag<T>::value, comm, get_default_config(), alpha,
-                      reinterpret_cast<indexed_dpd_varray_view<char>&>(A), idx_A_A);
+                      reinterpret_cast<indexed_dpd_marray_view<char>&>(A), idx_A_A);
     }
     else if (alpha == T(0))
     {
         if (beta != T(1))
         {
             internal::scale(type_tag<T>::value, comm, get_default_config(), beta, false,
-                            reinterpret_cast<indexed_dpd_varray_view<char>&>(A), idx_A_A);
+                            reinterpret_cast<indexed_dpd_marray_view<char>&>(A), idx_A_A);
         }
     }
     else
     {
         internal::shift(type_tag<T>::value, comm, get_default_config(), alpha, beta, false,
-                        reinterpret_cast<indexed_dpd_varray_view<char>&>(A), idx_A_A);
+                        reinterpret_cast<indexed_dpd_marray_view<char>&>(A), idx_A_A);
     }
 }
 
 #define FOREACH_TYPE(T) \
 template void shift(const communicator& comm, \
-                    T alpha, T beta, indexed_dpd_varray_view<T> A, const label_vector& idx_A);
+                    T alpha, T beta, indexed_dpd_marray_view<T> A, const label_vector& idx_A);
 #include "configs/foreach_type.h"
 
 }

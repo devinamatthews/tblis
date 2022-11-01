@@ -6,8 +6,8 @@
  * uniformly.
  */
 template <typename T>
-void random_dot(stride_type N, T&& A, label_vector& idx_A,
-                               T&& B, label_vector& idx_B)
+void random_dot(stride_type N, T&& A, string& idx_A,
+                               T&& B, string& idx_B)
 {
     auto ndim_A = random_number(1,8);
 
@@ -21,7 +21,7 @@ void random_dot(stride_type N, T&& A, label_vector& idx_A,
 REPLICATED_TEMPLATED_TEST_CASE(dot, R, T, all_types)
 {
     marray<T> A, B;
-    label_vector idx_A, idx_B;
+    string idx_A, idx_B;
 
     random_dot(1000, A, idx_A, B, idx_B);
 
@@ -49,7 +49,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dot, R, T, all_types)
 REPLICATED_TEMPLATED_TEST_CASE(dpd_dot, R, T, all_types)
 {
     dpd_marray<T> A, B;
-    label_vector idx_A, idx_B;
+    string idx_A, idx_B;
 
     random_dot(1000, A, idx_A, B, idx_B);
 
@@ -70,7 +70,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_dot, R, T, all_types)
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dot, R, T, all_types)
 {
     indexed_marray<T> A, B;
-    label_vector idx_A, idx_B;
+    string idx_A, idx_B;
 
     random_dot(1000, A, idx_A, B, idx_B);
 
@@ -91,7 +91,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dot, R, T, all_types)
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_dot, R, T, all_types)
 {
     indexed_dpd_marray<T> A, B;
-    label_vector idx_A, idx_B;
+    string idx_A, idx_B;
 
     random_dot(1000, A, idx_A, B, idx_B);
 

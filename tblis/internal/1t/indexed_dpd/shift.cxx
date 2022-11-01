@@ -1,9 +1,4 @@
-#include "shift.hpp"
-#include "internal/1t/dpd/scale.hpp"
-#include "internal/1t/dpd/set.hpp"
-#include "internal/1t/dpd/shift.hpp"
-
-#include "util/tensor.hpp"
+#include <tblis/internal/indexed_dpd.hpp>
 
 namespace tblis
 {
@@ -22,10 +17,10 @@ void shift(type_t type, const communicator& comm, const config& cfg,
 
         switch (type)
         {
-            case TYPE_FLOAT:    alpha_fac.data.s *= reinterpret_cast<const indexed_dpd_marray_view<   float>&>(A).factor(i); break;
-            case TYPE_DOUBLE:   alpha_fac.data.d *= reinterpret_cast<const indexed_dpd_marray_view<  double>&>(A).factor(i); break;
-            case TYPE_SCOMPLEX: alpha_fac.data.c *= reinterpret_cast<const indexed_dpd_marray_view<scomplex>&>(A).factor(i); break;
-            case TYPE_DCOMPLEX: alpha_fac.data.z *= reinterpret_cast<const indexed_dpd_marray_view<dcomplex>&>(A).factor(i); break;
+            case FLOAT:    alpha_fac.data.s *= reinterpret_cast<const indexed_dpd_marray_view<   float>&>(A).factor(i); break;
+            case DOUBLE:   alpha_fac.data.d *= reinterpret_cast<const indexed_dpd_marray_view<  double>&>(A).factor(i); break;
+            case SCOMPLEX: alpha_fac.data.c *= reinterpret_cast<const indexed_dpd_marray_view<scomplex>&>(A).factor(i); break;
+            case DCOMPLEX: alpha_fac.data.z *= reinterpret_cast<const indexed_dpd_marray_view<dcomplex>&>(A).factor(i); break;
         }
 
         local_A.data(A.data(i));

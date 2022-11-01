@@ -1,24 +1,10 @@
-#include "mult.hpp"
+#include <tblis/internal/indexed_dpd.hpp>
 
-#include "internal/1t/dense/add.hpp"
-#include "internal/1t/indexed_dpd/util.hpp"
-#include "internal/1t/indexed_dpd/set.hpp"
-#include "internal/1t/indexed_dpd/scale.hpp"
-#include "internal/3t/dense/mult.hpp"
+#include <tblis/matrix/tensor_matrix.hpp>
+#include <tblis/matrix/dpd_tensor_matrix.hpp>
+#include <tblis/matrix/scatter_tensor_matrix.hpp>
 
-#include "util/gemm_thread.hpp"
-#include "util/tensor.hpp"
-
-#include "matrix/tensor_matrix.hpp"
-#include "matrix/dpd_tensor_matrix.hpp"
-#include "matrix/scatter_matrix.hpp"
-#include "matrix/scatter_tensor_matrix.hpp"
-
-#include "nodes/gemm.hpp"
-
-#include "external/stl_ext/include/iostream.hpp"
-
-#include <memory>
+#include <tblis/nodes/gemm.hpp>
 
 namespace MArray
 {
@@ -289,23 +275,23 @@ void mult_block_fuse_AB(type_t type, const communicator& comm, const config& cfg
 
                                     switch (type)
                                     {
-                                        case TYPE_FLOAT:
+                                        case FLOAT:
                                             scat_AB.emplace_back(factor.template get<float>(), 0.0,
                                                                  indices_A[local_idx_A].offset + off_A_AB,
                                                                  indices_B[local_idx_B].offset + off_B_AB);
                                             break;
-                                        case TYPE_DOUBLE:
+                                        case DOUBLE:
                                             scat_AB.emplace_back(factor.template get<double>(), 0.0,
                                                                  indices_A[local_idx_A].offset + off_A_AB,
                                                                  indices_B[local_idx_B].offset + off_B_AB);
                                             break;
-                                        case TYPE_SCOMPLEX:
+                                        case SCOMPLEX:
                                             scat_AB.emplace_back(factor.template get<scomplex>().real(),
                                                                  factor.template get<scomplex>().imag(),
                                                                  indices_A[local_idx_A].offset + off_A_AB,
                                                                  indices_B[local_idx_B].offset + off_B_AB);
                                             break;
-                                        case TYPE_DCOMPLEX:
+                                        case DCOMPLEX:
                                             scat_AB.emplace_back(factor.template get<dcomplex>().real(),
                                                                  factor.template get<dcomplex>().imag(),
                                                                  indices_A[local_idx_A].offset + off_A_AB,
@@ -521,23 +507,23 @@ void mult_block_fuse_BC(type_t type, const communicator& comm, const config& cfg
 
                                     switch (type)
                                     {
-                                        case TYPE_FLOAT:
+                                        case FLOAT:
                                             scat_BC.emplace_back(factor.template get<float>(), 0.0,
                                                                  indices_B[local_idx_B].offset + off_B_BC,
                                                                  indices_C[local_idx_C].offset + off_C_BC);
                                             break;
-                                        case TYPE_DOUBLE:
+                                        case DOUBLE:
                                             scat_BC.emplace_back(factor.template get<double>(), 0.0,
                                                                  indices_B[local_idx_B].offset + off_B_BC,
                                                                  indices_C[local_idx_C].offset + off_C_BC);
                                             break;
-                                        case TYPE_SCOMPLEX:
+                                        case SCOMPLEX:
                                             scat_BC.emplace_back(factor.template get<scomplex>().real(),
                                                                  factor.template get<scomplex>().imag(),
                                                                  indices_B[local_idx_B].offset + off_B_BC,
                                                                  indices_C[local_idx_C].offset + off_C_BC);
                                             break;
-                                        case TYPE_DCOMPLEX:
+                                        case DCOMPLEX:
                                             scat_BC.emplace_back(factor.template get<dcomplex>().real(),
                                                                  factor.template get<dcomplex>().imag(),
                                                                  indices_B[local_idx_B].offset + off_B_BC,
@@ -741,23 +727,23 @@ void mult_block_fuse_AB_BC(type_t type, const communicator& comm, const config& 
 
                                 switch (type)
                                 {
-                                    case TYPE_FLOAT:
+                                    case FLOAT:
                                         scat_AB.emplace_back(factor.template get<float>(), 0.0,
                                                              off_A_AB + indices_A[local_idx_A].offset,
                                                              off_B_AB);
                                         break;
-                                    case TYPE_DOUBLE:
+                                    case DOUBLE:
                                         scat_AB.emplace_back(factor.template get<double>(), 0.0,
                                                              off_A_AB + indices_A[local_idx_A].offset,
                                                              off_B_AB);
                                         break;
-                                    case TYPE_SCOMPLEX:
+                                    case SCOMPLEX:
                                         scat_AB.emplace_back(factor.template get<scomplex>().real(),
                                                              factor.template get<scomplex>().imag(),
                                                              off_A_AB + indices_A[local_idx_A].offset,
                                                              off_B_AB);
                                         break;
-                                    case TYPE_DCOMPLEX:
+                                    case DCOMPLEX:
                                         scat_AB.emplace_back(factor.template get<dcomplex>().real(),
                                                              factor.template get<dcomplex>().imag(),
                                                              off_A_AB + indices_A[local_idx_A].offset,
@@ -780,23 +766,23 @@ void mult_block_fuse_AB_BC(type_t type, const communicator& comm, const config& 
 
                                 switch (type)
                                 {
-                                    case TYPE_FLOAT:
+                                    case FLOAT:
                                         scat_BC.emplace_back(factor.get<float>(), 0.0,
                                                              off_B_BC,
                                                              off_C_BC + indices_C[local_idx_C].offset);
                                         break;
-                                    case TYPE_DOUBLE:
+                                    case DOUBLE:
                                         scat_BC.emplace_back(factor.get<double>(), 0.0,
                                                              off_B_BC,
                                                              off_C_BC + indices_C[local_idx_C].offset);
                                         break;
-                                    case TYPE_SCOMPLEX:
+                                    case SCOMPLEX:
                                         scat_BC.emplace_back(factor.get<scomplex>().real(),
                                                              factor.get<scomplex>().imag(),
                                                              off_B_BC,
                                                              off_C_BC + indices_C[local_idx_C].offset);
                                         break;
-                                    case TYPE_DCOMPLEX:
+                                    case DCOMPLEX:
                                         scat_BC.emplace_back(factor.get<dcomplex>().real(),
                                                              factor.get<dcomplex>().imag(),
                                                              off_B_BC,
@@ -1399,25 +1385,25 @@ void mult(type_t type, const communicator& comm, const config& cfg,
     {
         switch (type)
         {
-            case TYPE_FLOAT:
+            case FLOAT:
                 mult_full(comm, cfg, alpha.get<float>(),
                           conj_A, reinterpret_cast<const indexed_dpd_marray_view<float>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
                           conj_B, reinterpret_cast<const indexed_dpd_marray_view<float>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
                                   reinterpret_cast<const indexed_dpd_marray_view<float>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
                 break;
-            case TYPE_DOUBLE:
+            case DOUBLE:
                 mult_full(comm, cfg, alpha.get<double>(),
                           conj_A, reinterpret_cast<const indexed_dpd_marray_view<double>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
                           conj_B, reinterpret_cast<const indexed_dpd_marray_view<double>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
                                   reinterpret_cast<const indexed_dpd_marray_view<double>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
                 break;
-            case TYPE_SCOMPLEX:
+            case SCOMPLEX:
                 mult_full(comm, cfg, alpha.get<scomplex>(),
                           conj_A, reinterpret_cast<const indexed_dpd_marray_view<scomplex>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
                           conj_B, reinterpret_cast<const indexed_dpd_marray_view<scomplex>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
                                   reinterpret_cast<const indexed_dpd_marray_view<scomplex>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
                 break;
-            case TYPE_DCOMPLEX:
+            case DCOMPLEX:
                 mult_full(comm, cfg, alpha.get<dcomplex>(),
                           conj_A, reinterpret_cast<const indexed_dpd_marray_view<dcomplex>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
                           conj_B, reinterpret_cast<const indexed_dpd_marray_view<dcomplex>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,

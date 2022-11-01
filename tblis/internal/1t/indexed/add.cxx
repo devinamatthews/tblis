@@ -1,8 +1,6 @@
-#include "util.hpp"
-#include "add.hpp"
-#include "scale.hpp"
-#include "set.hpp"
-#include "internal/1t/dense/add.hpp"
+#include <tblis/internal/indexed.hpp>
+#include <tblis/internal/dpd.hpp>
+#include <tblis/internal/thread.hpp>
 
 namespace tblis
 {
@@ -126,8 +124,10 @@ void replicate_block(type_t type, const communicator& comm, const config& cfg,
     stride_type idx_A = 0;
     stride_type idx_B = 0;
 
-    len_vector dense_len_B = group_AB.dense_len + group_B.dense_len;
-    stride_vector dense_stride_B = group_AB.dense_stride[1] + group_B.dense_stride[0];
+    auto dense_len_B(group_AB.dense_len);
+    dense_len_B.insert(dense_len_B.end(), group_B.dense_len.begin(), group_B.dense_len.end());
+    auto dense_stride_B(group_AB.dense_stride[1]);
+    dense_stride_B.insert(dense_stride_B.end(), group_B.dense_stride[0].begin(), group_B.dense_stride[0].end());
 
     scalar one(1.0, type);
 
@@ -238,25 +238,25 @@ void add(type_t type, const communicator& comm, const config& cfg,
     {
         switch (type)
         {
-            case TYPE_FLOAT:
+            case FLOAT:
                 add_full(comm, cfg,
                          alpha.data.s, conj_A,
                          reinterpret_cast<const indexed_marray_view<float>&>(A), idx_A_A, idx_A_AB,
                          reinterpret_cast<const indexed_marray_view<float>&>(B), idx_B_B, idx_B_AB);
                 break;
-            case TYPE_DOUBLE:
+            case DOUBLE:
                 add_full(comm, cfg,
                          alpha.data.d, conj_A,
                          reinterpret_cast<const indexed_marray_view<double>&>(A), idx_A_A, idx_A_AB,
                          reinterpret_cast<const indexed_marray_view<double>&>(B), idx_B_B, idx_B_AB);
                 break;
-            case TYPE_SCOMPLEX:
+            case SCOMPLEX:
                 add_full(comm, cfg,
                          alpha.data.c, conj_A,
                          reinterpret_cast<const indexed_marray_view<scomplex>&>(A), idx_A_A, idx_A_AB,
                          reinterpret_cast<const indexed_marray_view<scomplex>&>(B), idx_B_B, idx_B_AB);
                 break;
-            case TYPE_DCOMPLEX:
+            case DCOMPLEX:
                 add_full(comm, cfg,
                          alpha.data.z, conj_A,
                          reinterpret_cast<const indexed_marray_view<dcomplex>&>(A), idx_A_A, idx_A_AB,

@@ -2,6 +2,7 @@
 #define _TBLIS_SCATTER_TENSOR_MATRIX_HPP_
 
 #include "tensor_matrix.hpp"
+#include "scatter_matrix.hpp"
 
 namespace tblis
 {

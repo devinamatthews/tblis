@@ -1,16 +1,10 @@
-#ifndef _TBLIS_KERNELS_1V_SHIFT_HPP_
-#define _TBLIS_KERNELS_1V_SHIFT_HPP_
+#ifndef TBLIS_KERNELS_1V_SHIFT_HPP
+#define TBLIS_KERNELS_1V_SHIFT_HPP 1
 
-#include "util/thread.h"
-#include "util/basic_types.h"
-#include "util/macros.h"
+#include <tblis/internal/types.hpp>
 
 namespace tblis
 {
-
-using shift_ukr_t =
-    void (*)(len_type n,
-             const void* alpha, const void* beta, bool conj_A, void* A, stride_type inc_A);
 
 template <typename Config, typename T>
 void shift_ukr_def(len_type n,
@@ -67,4 +61,4 @@ void shift_ukr_def(len_type n,
 
 }
 
-#endif
+#endif //TBLIS_KERNELS_1V_SHIFT_HPP

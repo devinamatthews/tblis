@@ -1,8 +1,8 @@
-#ifndef _TBLIS_KERNELS_3M_PACKM_HPP_
-#define _TBLIS_KERNELS_3M_PACKM_HPP_
+#ifndef TBLIS_KERNELS_3M_PACKM_HPP
+#define TBLIS_KERNELS_3M_PACKM_HPP 1
 
-#include "util/basic_types.h"
-#include "memory/alignment.hpp"
+#include <tblis/internal/types.hpp>
+#include <tblis/internal/alignment.hpp>
 
 namespace tblis
 {
@@ -16,24 +16,12 @@ extern void name(tblis::len_type m, tblis::len_type k, \
                  const void* p_e, tblis::stride_type inc_e, \
                  void* p_ap)
 
-using pack_nn_ukr_t =
-void (*)(len_type m, len_type k, const void* alpha, bool conj,
-         const void* p_a, stride_type rs_a, stride_type cs_a,
-         const void* p_d, stride_type inc_d,
-         const void* p_e, stride_type inc_e,
-         void* p_ap);
-
 #define EXTERN_PACK_SS_UKR(T, name) \
 extern void name(tblis::len_type m, tblis::len_type k, \
                  const void* alpha, bool conj, \
                  const void* p_a, const tblis::stride_type* rscat_a, \
                                   const tblis::stride_type* cscat_a, \
                  void* p_ap)
-
-using pack_ss_ukr_t =
-void (*)(len_type m, len_type k, const void* alpha, bool conj,
-         const void* p_a, const stride_type* rscat_a, const stride_type* cscat_a,
-         void* p_ap);
 
 #define EXTERN_PACK_NB_UKR(T, name) \
 extern void name(tblis::len_type m, tblis::len_type k, \
@@ -43,12 +31,6 @@ extern void name(tblis::len_type m, tblis::len_type k, \
                                   const tblis::stride_type* cbs_a, \
                  void* p_ap)
 
-using pack_nb_ukr_t =
-void (*)(len_type m, len_type k, const void* alpha, bool conj,
-         const void* p_a, stride_type rs_a, const stride_type* cscat_a,
-         const stride_type* cbs_a,
-         void* p_ap);
-
 #define EXTERN_PACK_SS_SCAL_UKR(T, name) \
 extern void name(tblis::len_type m, tblis::len_type k, \
                  const void* alpha, bool conj, \
@@ -57,11 +39,6 @@ extern void name(tblis::len_type m, tblis::len_type k, \
                                   const tblis::stride_type* cscat_a, \
                                   const void* cscale_a, \
                  void* p_ap)
-
-using pack_ss_scal_ukr_t =
-void (*)(len_type m, len_type k, const void* alpha, bool conj,
-         const void* p_a, const stride_type* rscat_a, const void* rscale_a,
-         const stride_type* cscat_a, const void* cscale_a, void* p_ap);
 
 template <typename Config, typename T, int Mat>
 void pack_nn_ukr_def(len_type m, len_type k, const void* alpha_, bool conj,
@@ -641,4 +618,4 @@ void pack_ss_scal_ukr_def(len_type m, len_type k, const void* alpha_, bool conj,
 
 }
 
-#endif
+#endif //TBLIS_KERNELS_3M_PACKM_HPP

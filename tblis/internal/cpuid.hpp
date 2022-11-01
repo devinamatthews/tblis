@@ -1,19 +1,19 @@
-#ifndef _TBLIS_CPUID_HPP_
-#define _TBLIS_CPUID_HPP_
+#ifndef TBLIS_BASE_CPUID_HPP
+#define TBLIS_BASE_CPUID_HPP
 
-#include <cstring>
-#include <cstdio>
-
-#include "basic_types.h"
+namespace tblis
+{
 
 inline bool check_features(unsigned long have, unsigned long want)
 {
     return (have&want) == want;
 }
 
+}
+
 #if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86)
 
-#include <cpuid.h>
+#include <string>
 
 namespace tblis
 {
@@ -34,6 +34,10 @@ enum : unsigned long {FEATURE_SSE3     = 0x0001u,
                       FEATURE_AVX512VL = 0x1000u};
 
 int get_cpu_type(int& family, int& model, int& features);
+
+static std::string get_cpu_name();
+
+int vpu_count();
 
 }
 

@@ -1,11 +1,4 @@
-#include "reduce.h"
-
-#include "util/macros.h"
-#include "util/tensor.hpp"
-#include "internal/1t/dense/reduce.hpp"
-#include "internal/1t/dpd/reduce.hpp"
-#include "internal/1t/indexed/reduce.hpp"
-#include "internal/1t/indexed_dpd/reduce.hpp"
+#include <tblis/internal/indexed_dpd.hpp>
 
 namespace tblis
 {
@@ -21,20 +14,12 @@ void tblis_tensor_reduce(const tblis_comm* comm,
 {
     TBLIS_ASSERT(A->type == result->type);
 
-    auto ndim_A = A->ndim;
-    len_vector len_A;
-    stride_vector stride_A;
-    label_vector idx_A;
-    diagonal(ndim_A, A->len, A->stride, idx_A_, len_A, stride_A, idx_A);
+    len_vector len_A(A->len, A->len+A->ndim);
+    stride_vector stride_A(A->stride, A->stride+A->ndim);
+    label_vector idx_A(idx_A_, idx_A_+A->ndim);
+    internal::canonicalize(len_A, stride_A, idx_A);
 
-    if (idx_A.empty())
-    {
-        len_A.push_back(1);
-        stride_A.push_back(0);
-        idx_A.push_back(0);
-    }
-
-    fold(len_A, idx_A, stride_A);
+    internal::fold(len_A, stride_A, idx_A);
 
     if (A->scalar.is_negative())
     {
@@ -60,7 +45,7 @@ void tblis_tensor_reduce(const tblis_comm* comm,
 
 template <typename T>
 void reduce(const communicator& comm, reduce_t op,
-            dpd_marray_view<const T> A, const label_vector& idx_A,
+            dpd_marray_view<const T> A, const label_string& idx_A,
             T& result, len_type& idx)
 {
     (void)idx_A;
@@ -69,7 +54,7 @@ void reduce(const communicator& comm, reduce_t op,
 
     for (auto i : range(1,ndim_A))
     for (auto j : range(i))
-        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+        TBLIS_ASSERT(idx_A.idx[i] != idx_A.idx[j]);
 
     dim_vector idx_A_A = range(ndim_A);
 
@@ -80,13 +65,13 @@ void reduce(const communicator& comm, reduce_t op,
 
 #define FOREACH_TYPE(T) \
 template void reduce(const communicator& comm, reduce_t op, \
-                     dpd_marray_view<const T> A, const label_vector& idx_A, \
+                     dpd_marray_view<const T> A, const label_string& idx_A, \
                      T& result, len_type& idx);
-#include "configs/foreach_type.h"
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void reduce(const communicator& comm, reduce_t op,
-            indexed_marray_view<const T> A, const label_vector& idx_A,
+            indexed_marray_view<const T> A, const label_string& idx_A,
             T& result, len_type& idx)
 {
     (void)idx_A;
@@ -95,7 +80,7 @@ void reduce(const communicator& comm, reduce_t op,
 
     for (auto i : range(1,ndim_A))
     for (auto j : range(i))
-        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+        TBLIS_ASSERT(idx_A.idx[i] != idx_A.idx[j]);
 
     dim_vector idx_A_A = range(ndim_A);
 
@@ -106,13 +91,13 @@ void reduce(const communicator& comm, reduce_t op,
 
 #define FOREACH_TYPE(T) \
 template void reduce(const communicator& comm, reduce_t op, \
-                     indexed_marray_view<const T> A, const label_vector& idx_A, \
+                     indexed_marray_view<const T> A, const label_string& idx_A, \
                      T& result, len_type& idx);
-#include "configs/foreach_type.h"
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void reduce(const communicator& comm, reduce_t op,
-            indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
+            indexed_dpd_marray_view<const T> A, const label_string& idx_A,
             T& result, len_type& idx)
 {
     (void)idx_A;
@@ -121,7 +106,7 @@ void reduce(const communicator& comm, reduce_t op,
 
     for (auto i : range(1,ndim_A))
     for (auto j : range(i))
-        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+        TBLIS_ASSERT(idx_A.idx[i] != idx_A.idx[j]);
 
     dim_vector idx_A_A = range(ndim_A);
 
@@ -132,8 +117,8 @@ void reduce(const communicator& comm, reduce_t op,
 
 #define FOREACH_TYPE(T) \
 template void reduce(const communicator& comm, reduce_t op, \
-                     indexed_dpd_marray_view<const T> A, const label_vector& idx_A, \
+                     indexed_dpd_marray_view<const T> A, const label_string& idx_A, \
                      T& result, len_type& idx);
-#include "configs/foreach_type.h"
+#include <tblis/internal/foreach_type.h>
 
 }

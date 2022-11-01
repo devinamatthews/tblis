@@ -1,10 +1,7 @@
-#ifndef _TBLIS_KERNELS_3M_GEMM_HPP_
-#define _TBLIS_KERNELS_3M_GEMM_HPP_
+#ifndef TBLIS_KERNELS_3M_GEMM_HPP
+#define TBLIS_KERNELS_3M_GEMM_HPP 1
 
-#include "util/basic_types.h"
-#include "blis.h"
-
-#include <type_traits>
+#include <tblis/internal/types.hpp>
 
 namespace tblis
 {
@@ -19,14 +16,6 @@ extern void name(tblis::stride_type m, \
                  void* c, tblis::stride_type rs_c, \
                           tblis::stride_type cs_c);
 
-using update_nn_ukr_t =
-void (*)(stride_type m, stride_type n,
-         const void* ab,
-         const void* d, stride_type inc_d,
-         const void* e, stride_type inc_e,
-         const void* beta,
-         void* c, stride_type rs_c, stride_type cs_c);
-
 #define EXTERN_UPDATE_SS_UKR(name) \
 extern void name(tblis::stride_type m, \
                  tblis::stride_type n, \
@@ -34,12 +23,6 @@ extern void name(tblis::stride_type m, \
                  const void* beta, \
                  void* c, const tblis::stride_type* rscat_c, \
                           const tblis::stride_type* cscat_c);
-
-using update_ss_ukr_t =
-void (*)(stride_type m, stride_type n,
-         const void* ab,
-         const void* beta,
-         void* c, const stride_type* rscat_c, const stride_type* cscat_c);
 
 #define EXTERN_GEMM_UKR(name) \
 extern void name(tblis::stride_type m, \
@@ -50,13 +33,6 @@ extern void name(tblis::stride_type m, \
                  void* c, tblis::stride_type rs_c, \
                           tblis::stride_type cs_c, \
                           auxinfo_t* aux);
-
-using gemm_ukr_t =
-void (*)(stride_type m, stride_type n, stride_type k,
-         const void* a, const void* b,
-         const void* beta,
-         void* c, stride_type rs_c, stride_type cs_c,
-         auxinfo_t* aux);
 
 template <typename Config, typename T>
 void update_nn_ukr_def(stride_type m, stride_type n,
@@ -504,4 +480,4 @@ void gemm_ukr_def(stride_type m, stride_type n, stride_type k,
 
 }
 
-#endif
+#endif //TBLIS_KERNELS_3M_GEMM_HPP

@@ -1,14 +1,13 @@
-#ifndef _TBLIS_HPP_
-#define _TBLIS_HPP_
+#ifndef TBLIS_HPP
+#define TBLIS_HPP
 
-#include "util/configs.h"
+#include <tblis/iface/1t/add.h>
+#include <tblis/iface/1t/dot.h>
+#include <tblis/iface/1t/reduce.h>
+#include <tblis/iface/1t/scale.h>
+#include <tblis/iface/1t/set.h>
+#include <tblis/iface/1t/shift.h>
 
-#include "iface/1t/add.h"
-#include "iface/1t/dot.h"
-#include "iface/1t/reduce.h"
-#include "iface/1t/scale.h"
-#include "iface/1t/set.h"
+#include <tblis/iface/3t/mult.h>
 
-#include "iface/3t/mult.h"
-
-#endif
+#endif //TBLIS_HPP

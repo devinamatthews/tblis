@@ -1,8 +1,5 @@
-#include "reduce.hpp"
-#include "internal/0/reduce.hpp"
-#include "internal/1t/dpd/reduce.hpp"
-
-#include "util/tensor.hpp"
+#include <tblis/internal/indexed_dpd.hpp>
+#include <tblis/internal/thread.hpp>
 
 namespace tblis
 {
@@ -34,10 +31,10 @@ void reduce(type_t type, const communicator& comm, const config& cfg, reduce_t o
 
         switch (type)
         {
-            case TYPE_FLOAT:    block_result.data.s *= reinterpret_cast<const indexed_dpd_marray_view<   float>&>(A).factor(i); break;
-            case TYPE_DOUBLE:   block_result.data.d *= reinterpret_cast<const indexed_dpd_marray_view<  double>&>(A).factor(i); break;
-            case TYPE_SCOMPLEX: block_result.data.c *= reinterpret_cast<const indexed_dpd_marray_view<scomplex>&>(A).factor(i); break;
-            case TYPE_DCOMPLEX: block_result.data.z *= reinterpret_cast<const indexed_dpd_marray_view<dcomplex>&>(A).factor(i); break;
+            case FLOAT:    block_result.data.s *= reinterpret_cast<const indexed_dpd_marray_view<   float>&>(A).factor(i); break;
+            case DOUBLE:   block_result.data.d *= reinterpret_cast<const indexed_dpd_marray_view<  double>&>(A).factor(i); break;
+            case SCOMPLEX: block_result.data.c *= reinterpret_cast<const indexed_dpd_marray_view<scomplex>&>(A).factor(i); break;
+            case DCOMPLEX: block_result.data.z *= reinterpret_cast<const indexed_dpd_marray_view<dcomplex>&>(A).factor(i); break;
         }
 
         reduce(type, op, block_result.raw(), block_idx, local_result.raw(), local_idx);

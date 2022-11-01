@@ -1,16 +1,14 @@
-#ifndef _TBLIS_IFACE_1T_SCALE_H_
-#define _TBLIS_IFACE_1T_SCALE_H_
+#ifndef TBLIS_IFACE_1T_SCALE_H
+#define TBLIS_IFACE_1T_SCALE_H
 
-#include "../../util/thread.h"
-#include "../../util/basic_types.h"
+#include <tblis/base/types.h>
+#include <tblis/base/thread.h>
+#include <tblis/base/configs.h>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnull-dereference"
 
-#ifdef __cplusplus
-namespace tblis
-{
-#endif
+TBLIS_BEGIN_NAMESPACE
 
 TBLIS_EXPORT
 
@@ -19,77 +17,72 @@ void tblis_tensor_scale(const tblis_comm* comm,
                               tblis_tensor* A,
                         const label_type* idx_A);
 
-#if defined(__cplusplus)
+#if TBLIS_ENABLE_CXX
 
-inline
 void scale(const communicator& comm,
            const scalar& alpha,
-                 tensor&& A,
-           const label_vector& idx_A)
-{
-    A.scalar *= alpha.convert(A.type);
-    tblis_tensor_scale(comm, nullptr, &A, idx_A.data());
-}
+           const tensor& A_,
+           const label_string& idx_A);
 
 inline
 void scale(const communicator& comm,
-                 tensor&& A,
-           const label_vector& idx_A)
+           const tensor& A,
+           const label_string& idx_A)
 {
-    scale(comm, {1.0, A.type}, std::move(A), idx_A);
+    scale(comm, {1.0, A.type}, A, idx_A);
 }
 
 inline
 void scale(const communicator& comm,
            const scalar& alpha,
-                 tensor&& A)
+           const tensor& A)
 {
-    scale(comm, alpha, std::move(A), idx(A));
+    scale(comm, alpha, A, idx(A));
 }
 
 inline
 void scale(const communicator& comm,
-                 tensor&& A)
+           const tensor& A)
 {
-    scale(comm, {1.0, A.type}, std::move(A));
+    scale(comm, {1.0, A.type}, A);
 }
 
 inline
 void scale(const scalar& alpha,
-                 tensor&& A,
-           const label_vector& idx_A)
+           const tensor& A,
+           const label_string& idx_A)
 {
-    scale(*(communicator*)nullptr, alpha, std::move(A), idx_A);
+    scale(*(communicator*)nullptr, alpha, A, idx_A);
 }
 
 inline
-void scale(      tensor&& A,
-           const label_vector& idx_A)
+void scale(const tensor& A,
+           const label_string& idx_A)
 {
-    scale({1.0, A.type}, std::move(A), idx_A);
+    scale({1.0, A.type}, A, idx_A);
 }
 
 inline
 void scale(const scalar& alpha,
-                 tensor&& A)
+           const tensor& A)
 {
-    scale(alpha, std::move(A), idx(A));
+    scale(alpha, A, idx(A));
 }
 
 inline
-void scale(      tensor&& A)
+void scale(const tensor& A)
 {
-    scale({1.0, A.type}, std::move(A));
+    scale({1.0, A.type}, A);
 }
 
-#if !defined(TBLIS_DONT_USE_CXX11)
+#ifdef MARRAY_DPD_MARRAY_VIEW_HPP
 
 template <typename T>
 void scale(const communicator& comm,
-           T alpha, dpd_marray_view<T> A, const label_vector& idx_A);
+           T alpha, MArray::dpd_marray_view<T> A, const label_string& idx_A);
 
 template <typename T>
-void scale(T alpha, dpd_marray_view<T> A, const label_vector& idx_A)
+void scale(T alpha, MArray::dpd_marray_view<T> A, const label_string& idx_A)
 {
     parallelize
     (
@@ -101,12 +94,16 @@ void scale(T alpha, dpd_marray_view<T> A, const label_vector& idx_A)
     );
 }
 
-template <typename T>
-void scale(const communicator& comm,
-           T alpha, indexed_marray_view<T> A, const label_vector& idx_A);
+#endif //MARRAY_DPD_MARRAY_VIEW_HPP
+
+#ifdef MARRAY_INDEXED_MARRAY_VIEW_HPP
 
 template <typename T>
-void scale(T alpha, indexed_marray_view<T> A, const label_vector& idx_A)
+void scale(const communicator& comm,
+           T alpha, MArray::indexed_marray_view<T> A, const label_string& idx_A);
+
+template <typename T>
+void scale(T alpha, MArray::indexed_marray_view<T> A, const label_string& idx_A)
 {
     parallelize
     (
@@ -118,12 +115,16 @@ void scale(T alpha, indexed_marray_view<T> A, const label_vector& idx_A)
     );
 }
 
-template <typename T>
-void scale(const communicator& comm,
-           T alpha, indexed_dpd_marray_view<T> A, const label_vector& idx_A);
+#endif //MARRAY_INDEXED_MARRAY_VIEW_HPP
+
+#ifdef MARRAY_INDEXED_DPD_MARRAY_VIEW_HPP
 
 template <typename T>
-void scale(T alpha, indexed_dpd_marray_view<T> A, const label_vector& idx_A)
+void scale(const communicator& comm,
+           T alpha, MArray::indexed_dpd_marray_view<T> A, const label_string& idx_A);
+
+template <typename T>
+void scale(T alpha, MArray::indexed_dpd_marray_view<T> A, const label_string& idx_A)
 {
     parallelize
     (
@@ -135,12 +136,12 @@ void scale(T alpha, indexed_dpd_marray_view<T> A, const label_vector& idx_A)
     );
 }
 
-#endif
+#endif //MARRAY_INDEXED_DPD_MARRAY_VIEW_HPP
 
-}
+#endif //TBLIS_ENABLE_CXX
 
-#endif
+TBLIS_END_NAMESPACE
 
 #pragma GCC diagnostic pop
 
-#endif
+#endif //TBLIS_IFACE_1T_SCALE_H

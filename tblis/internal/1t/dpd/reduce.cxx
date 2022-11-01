@@ -1,7 +1,5 @@
-#include "util.hpp"
-#include "reduce.hpp"
-#include "internal/0/reduce.hpp"
-#include "internal/1t/dense/reduce.hpp"
+#include <tblis/internal/dpd.hpp>
+#include <tblis/internal/thread.hpp>
 
 namespace tblis
 {

@@ -1,7 +1,9 @@
 #ifndef _TBLIS_DPD_TENSOR_MATRIX_HPP_
 #define _TBLIS_DPD_TENSOR_MATRIX_HPP_
 
-#include "internal/1t/dpd/util.hpp"
+#include <marray/dpd_varray.hpp>
+
+#include <tblis/internal/dpd.hpp>
 
 #include "tensor_matrix.hpp"
 
@@ -10,7 +12,7 @@ namespace tblis
 
 struct dpd_tensor_matrix_impl
 {
-    const dpd_marray_view<char>& tensor_;
+    const MArray::dpd_marray_view<char>& tensor_;
     std::array<dim_vector, 2> dims_ = {};
     dim_vector extra_dims_ = {};
     irrep_vector extra_irreps_ = {};
@@ -20,7 +22,7 @@ struct dpd_tensor_matrix_impl
     std::array<len_vector, 2> block_idx_ = {};
     std::array<bool, 2> pack_3d_ = {};
 
-    dpd_tensor_matrix_impl(const dpd_marray_view<char>& other,
+    dpd_tensor_matrix_impl(const MArray::dpd_marray_view<char>& other,
                            const dim_vector& row_inds,
                            const dim_vector& col_inds,
                            int col_irrep,
@@ -91,10 +93,10 @@ template <typename T>
 struct is_dpd_tensor_helper : std::false_type {};
 
 template <typename T, typename Allocator>
-struct is_dpd_tensor_helper<dpd_marray<T,Allocator>> : std::true_type {};
+struct is_dpd_tensor_helper<MArray::dpd_marray<T,Allocator>> : std::true_type {};
 
 template <typename T>
-struct is_dpd_tensor_helper<dpd_marray_view<T>> : std::true_type {};
+struct is_dpd_tensor_helper<MArray::dpd_marray_view<T>> : std::true_type {};
 
 template <typename T>
 struct is_dpd_tensor : is_dpd_tensor_helper<typename std::decay<T>::type> {};
@@ -237,7 +239,7 @@ class dpd_tensor_matrix : public abstract_matrix_adapter<dpd_tensor_matrix,dpd_t
 
     public:
         dpd_tensor_matrix(const tblis_scalar& alpha, bool conj,
-                          const dpd_marray_view<char>& other,
+                          const MArray::dpd_marray_view<char>& other,
                           const dim_vector& row_inds,
                           const dim_vector& col_inds,
                           int col_irrep,
@@ -407,7 +409,7 @@ class dpd_tensor_matrix : public abstract_matrix_adapter<dpd_tensor_matrix,dpd_t
             return impl().extra_idx_;
         }
 
-        const dpd_marray_view<char>& tensor() const
+        const MArray::dpd_marray_view<char>& tensor() const
         {
             return impl().tensor_;
         }

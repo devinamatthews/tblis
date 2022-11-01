@@ -1,16 +1,14 @@
-#ifndef _TBLIS_IFACE_1T_SET_H_
-#define _TBLIS_IFACE_1T_SET_H_
+#ifndef TBLIS_IFACE_1T_SET_H
+#define TBLIS_IFACE_1T_SET_H
 
-#include "../../util/thread.h"
-#include "../../util/basic_types.h"
+#include <tblis/base/types.h>
+#include <tblis/base/thread.h>
+#include <tblis/base/configs.h>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnull-dereference"
 
-#ifdef __cplusplus
-namespace tblis
-{
-#endif
+TBLIS_BEGIN_NAMESPACE
 
 TBLIS_EXPORT
 void tblis_tensor_set(const tblis_comm* comm,
@@ -19,49 +17,49 @@ void tblis_tensor_set(const tblis_comm* comm,
                             tblis_tensor* A,
                       const label_type* idx_A);
 
-#if defined(__cplusplus)
+#if TBLIS_ENABLE_CXX
 
 inline
 void set(const communicator& comm,
          const scalar& alpha_,
-               tensor&& A,
-         const label_vector& idx_A)
+         const tensor& A,
+         const label_string& idx_A)
 {
     auto alpha = alpha_.convert(A.type);
-    tblis_tensor_set(comm, nullptr, &alpha, &A, idx_A.data());
+    tblis_tensor_set(comm, nullptr, &alpha, const_cast<tensor*>(&A), idx_A.idx);
 }
 
 inline
 void set(const communicator& comm,
          const scalar& alpha,
-               tensor&& A)
+         const tensor& A)
 {
     set(comm, alpha, std::move(A), idx(A));
 }
 
 inline
 void set(const scalar& alpha,
-               tensor&& A,
-         const label_vector& idx_A)
+         const tensor& A,
+         const label_string& idx_A)
 {
     set(*(communicator*)nullptr, alpha, std::move(A), idx_A);
 }
 
 inline
 void set(const scalar& alpha,
-               tensor&& A)
+         const tensor& A)
 {
     set(alpha, std::move(A), idx(A));
 }
 
-#if !defined(TBLIS_DONT_USE_CXX11)
+#ifdef MARRAY_DPD_MARRAY_VIEW_HPP
 
 template <typename T>
 void set(const communicator& comm,
-         T alpha, dpd_marray_view<T> A, const label_vector& idx_A);
+         T alpha, MArray::dpd_marray_view<T> A, const label_string& idx_A);
 
 template <typename T>
-void set(T alpha, dpd_marray_view<T> A, const label_vector& idx_A)
+void set(T alpha, MArray::dpd_marray_view<T> A, const label_string& idx_A)
 {
     parallelize
     (
@@ -73,12 +71,16 @@ void set(T alpha, dpd_marray_view<T> A, const label_vector& idx_A)
     );
 }
 
-template <typename T>
-void set(const communicator& comm,
-         T alpha, indexed_marray_view<T> A, const label_vector& idx_A);
+#endif //MARRAY_DPD_MARRAY_VIEW_HPP
+
+#ifdef MARRAY_INDEXED_MARRAY_VIEW_HPP
 
 template <typename T>
-void set(T alpha, indexed_marray_view<T> A, const label_vector& idx_A)
+void set(const communicator& comm,
+         T alpha, MArray::indexed_marray_view<T> A, const label_string& idx_A);
+
+template <typename T>
+void set(T alpha, MArray::indexed_marray_view<T> A, const label_string& idx_A)
 {
     parallelize
     (
@@ -90,12 +92,16 @@ void set(T alpha, indexed_marray_view<T> A, const label_vector& idx_A)
     );
 }
 
-template <typename T>
-void set(const communicator& comm,
-         T alpha, indexed_dpd_marray_view<T> A, const label_vector& idx_A);
+#endif //MARRAY_INDEXED_MARRAY_VIEW_HPP
+
+#ifdef MARRAY_INDEXED_DPD_MARRAY_VIEW_HPP
 
 template <typename T>
-void set(T alpha, indexed_dpd_marray_view<T> A, const label_vector& idx_A)
+void set(const communicator& comm,
+         T alpha, MArray::indexed_dpd_marray_view<T> A, const label_string& idx_A);
+
+template <typename T>
+void set(T alpha, MArray::indexed_dpd_marray_view<T> A, const label_string& idx_A)
 {
     parallelize
     (
@@ -107,12 +113,12 @@ void set(T alpha, indexed_dpd_marray_view<T> A, const label_vector& idx_A)
     );
 }
 
-#endif
+#endif //MARRAY_INDEXED_DPD_MARRAY_VIEW_HPP
 
-}
+#endif //TBLIS_ENABLE_CXX
 
-#endif
+TBLIS_END_NAMESPACE
 
 #pragma GCC diagnostic pop
 
-#endif
+#endif //TBLIS_IFACE_1T_SET_H

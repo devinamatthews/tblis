@@ -3,7 +3,7 @@
 
 #include <random>
 
-#include "basic_types.h"
+#include <tblis/internal/types.hpp>
 
 namespace tblis
 {
@@ -14,7 +14,7 @@ extern std::mt19937 rand_engine;
  * Returns a pseudo-random number uniformly distributed in the range [mn,mx).
  */
 template <typename T>
-enable_if_floating_point_t<real_type_t<T>,T> random_number(T mn, T mx)
+std::enable_if_t<std::is_floating_point<real_type_t<T>>::value,T> random_number(T mn, T mx)
 {
     std::uniform_real_distribution<real_type_t<T>> d(mn, mx);
     return d(rand_engine);
@@ -24,7 +24,7 @@ enable_if_floating_point_t<real_type_t<T>,T> random_number(T mn, T mx)
  * Returns a pseudo-random number uniformly distributed in the range [0,mx).
  */
 template <typename T>
-enable_if_floating_point_t<real_type_t<T>,T> random_number(T mx)
+std::enable_if_t<std::is_floating_point<real_type_t<T>>::value,T> random_number(T mx)
 {
     return random_number<T>(0, mx);
 }
@@ -33,7 +33,7 @@ enable_if_floating_point_t<real_type_t<T>,T> random_number(T mx)
  * Returns a pseudo-random number uniformly distributed in the range [0,1).
  */
 template <typename T>
-enable_if_floating_point_t<real_type_t<T>,T> random_number()
+std::enable_if_t<std::is_floating_point<real_type_t<T>>::value,T> random_number()
 {
     return random_number<T>(0, 1);
 }
@@ -42,7 +42,7 @@ enable_if_floating_point_t<real_type_t<T>,T> random_number()
  * Returns a random integer uniformly distributed in the range [mn,mx]
  */
 template <typename T>
-enable_if_integral_t<T,T> random_number(T mn, T mx)
+std::enable_if_t<std::is_integral<T>::value,T> random_number(T mn, T mx)
 {
     std::uniform_int_distribution<T> d(mn, mx);
     return d(rand_engine);
@@ -52,7 +52,7 @@ enable_if_integral_t<T,T> random_number(T mn, T mx)
  * Returns a random integer uniformly distributed in the range [0,mx]
  */
 template <typename T>
-enable_if_integral_t<T,T> random_number(T mx)
+std::enable_if_t<std::is_integral<T>::value,T> random_number(T mx)
 {
     return random_number<T>(0, mx);
 }
@@ -61,7 +61,7 @@ enable_if_integral_t<T,T> random_number(T mx)
  * Returns a pseudo-random number uniformly distributed in the range (-1,1).
  */
 template <typename T>
-enable_if_floating_point_t<T,T> random_unit()
+std::enable_if_t<std::is_floating_point<T>::value,T> random_unit()
 {
     T val;
     do
@@ -76,7 +76,7 @@ enable_if_floating_point_t<T,T> random_unit()
  * interior of the unit circle.
  */
 template <typename T>
-enable_if_complex_t<T,T> random_unit()
+std::enable_if_t<is_complex<T>::value,T> random_unit()
 {
     using R = real_type_t<T>;
 
@@ -186,7 +186,7 @@ std::vector<T> random_sum_constrained_sequence(int n, T s)
  * where n_i and p are >= 1 and with uniform distribution.
  */
 template <typename T>
-enable_if_floating_point_t<T,std::vector<T>>
+std::enable_if_t<std::is_floating_point<T>::value,std::vector<T>>
 random_product_constrained_sequence(int n, T p, const std::vector<T>& mn)
 {
     TBLIS_ASSERT(n >  0);
@@ -213,7 +213,7 @@ random_product_constrained_sequence(int n, T p, const std::vector<T>& mn)
  * p are >= 1 and with uniform distribution.
  */
 template <typename T>
-enable_if_floating_point_t<T,std::vector<T>>
+std::enable_if_t<std::is_floating_point<T>::value,std::vector<T>>
 random_product_constrained_sequence(int n, T p)
 {
     TBLIS_ASSERT(n > 0);
@@ -227,7 +227,7 @@ enum rounding_mode {ROUND_UP, ROUND_DOWN, ROUND_NEAREST};
  * n_i >= mn_i, where n_i and p are >= 1 and with uniform distribution.
  */
 template <typename T, rounding_mode Mode=ROUND_DOWN>
-enable_if_integral_t<T,std::vector<T>>
+std::enable_if_t<std::is_integral<T>::value,std::vector<T>>
 random_product_constrained_sequence(int n, T p, const std::vector<T>& mn)
 {
     TBLIS_ASSERT(n >  0);
@@ -262,7 +262,7 @@ random_product_constrained_sequence(int n, T p, const std::vector<T>& mn)
  * n_i and p are >= 1 and with uniform distribution.
  */
 template <typename T, rounding_mode Mode=ROUND_DOWN>
-enable_if_integral_t<T,std::vector<T>>
+std::enable_if_t<std::is_integral<T>::value,std::vector<T>>
 random_product_constrained_sequence(int n, T p)
 {
     TBLIS_ASSERT(n > 0);

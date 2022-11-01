@@ -1,32 +1,13 @@
-#include "mult.hpp"
+#include <tblis/internal/dpd.hpp>
 
-#include "internal/0/add.hpp"
-#include "internal/0/mult.hpp"
-#include "internal/1t/dense/scale.hpp"
-#include "internal/1t/dense/set.hpp"
-#include "internal/1t/dpd/util.hpp"
-#include "internal/1t/dpd/add.hpp"
-#include "internal/1t/dpd/dot.hpp"
-#include "internal/1t/dpd/scale.hpp"
-#include "internal/1t/dpd/set.hpp"
-#include "internal/3t/dense/mult.hpp"
+#include <tblis/matrix/dpd_tensor_matrix.hpp>
 
-#include "util/gemm_thread.hpp"
-#include "util/tensor.hpp"
-
-#include "matrix/dpd_tensor_matrix.hpp"
-
-#include "nodes/gemm.hpp"
-
-#include <atomic>
+#include <tblis/nodes/gemm.hpp>
 
 namespace tblis
 {
 namespace internal
 {
-
-std::atomic<long> flops;
-dpd_impl_t dpd_impl = BLIS;
 
 template <typename T>
 void mult_full(const communicator& comm, const config& cfg,
@@ -80,7 +61,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
                const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
                dim_vector idx_A_AB,
                dim_vector idx_A_AC,
-                                          bool conj_B, const dpd_marray_view<char>& B,
+                                    bool conj_B, const dpd_marray_view<char>& B,
                dim_vector idx_B_AB,
                const scalar& beta,  bool conj_C, const dpd_marray_view<char>& C,
                dim_vector idx_C_AC)
@@ -157,7 +138,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
                const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
                dim_vector idx_A_AC,
-                                          bool conj_B, const dpd_marray_view<char>& B,
+                                    bool conj_B, const dpd_marray_view<char>& B,
                dim_vector idx_B_BC,
                const scalar& beta,  bool conj_C, const dpd_marray_view<char>& C,
                dim_vector idx_C_AC,
@@ -229,7 +210,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
                const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
                dim_vector idx_A_AB,
                dim_vector idx_A_AC,
-                                          bool conj_B, const dpd_marray_view<char>& B,
+                                    bool conj_B, const dpd_marray_view<char>& B,
                dim_vector idx_B_AB,
                dim_vector idx_B_BC,
                const scalar& beta,  bool conj_C, const dpd_marray_view<char>& C,
@@ -258,20 +239,6 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     std::array<stride_vector,3> stride;
     dense_total_lengths_and_strides(len, stride, A, idx_A_AB, B, idx_B_AB, C, idx_C_AC);
 
-    auto perm_AC = detail::sort_by_stride(stl_ext::select_from(stride[2], idx_C_AC),
-                                          stl_ext::select_from(stride[0], idx_A_AC));
-    auto perm_BC = detail::sort_by_stride(stl_ext::select_from(stride[2], idx_C_BC),
-                                          stl_ext::select_from(stride[1], idx_B_BC));
-    auto perm_AB = detail::sort_by_stride(stl_ext::select_from(stride[0], idx_A_AB),
-                                          stl_ext::select_from(stride[1], idx_B_AB));
-
-    stl_ext::permute(idx_A_AC, perm_AC);
-    stl_ext::permute(idx_A_AB, perm_AB);
-    stl_ext::permute(idx_B_AB, perm_AB);
-    stl_ext::permute(idx_B_BC, perm_BC);
-    stl_ext::permute(idx_C_AC, perm_AC);
-    stl_ext::permute(idx_C_BC, perm_BC);
-
     auto unit_A_AC = unit_dim(stride[0], idx_A_AC);
     auto unit_C_AC = unit_dim(stride[2], idx_C_AC);
     auto unit_B_BC = unit_dim(stride[1], idx_B_BC);
@@ -279,16 +246,14 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     auto unit_A_AB = unit_dim(stride[0], idx_A_AB);
     auto unit_B_AB = unit_dim(stride[1], idx_B_AB);
 
-    TBLIS_ASSERT(unit_C_AC == 0 || unit_C_AC == (int)perm_AC.size());
-    TBLIS_ASSERT(unit_C_BC == 0 || unit_C_BC == (int)perm_BC.size());
+    TBLIS_ASSERT(unit_C_AC == 0 || unit_C_AC == -1);
+    TBLIS_ASSERT(unit_C_BC == 0 || unit_C_BC == -1);
     TBLIS_ASSERT(unit_A_AB == 0 || unit_B_AB == 0 ||
-                 (unit_A_AB == (int)perm_AB.size() &&
-                  unit_B_AB == (int)perm_AB.size()));
+                 (unit_A_AB == -1 && unit_B_AB == -1));
 
-    bool pack_M_3d = unit_A_AC > 0 && unit_A_AC < (int)perm_AC.size();
-    bool pack_N_3d = unit_B_BC > 0 && unit_B_BC < (int)perm_BC.size();
-    bool pack_K_3d = (unit_A_AB > 0 && unit_A_AB < (int)perm_AB.size()) ||
-                     (unit_B_AB > 0 && unit_B_AB < (int)perm_AB.size());
+    bool pack_M_3d = unit_A_AC > 0;
+    bool pack_N_3d = unit_B_BC > 0;
+    bool pack_K_3d = unit_A_AB > 0 || unit_B_AB > 0;
 
     if (pack_M_3d)
     {
@@ -366,7 +331,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
                dim_vector idx_A_AB,
                dim_vector idx_A_AC,
                dim_vector idx_A_ABC,
-                                          bool conj_B, const dpd_marray_view<char>& B,
+                                    bool conj_B, const dpd_marray_view<char>& B,
                dim_vector idx_B_AB,
                dim_vector idx_B_ABC,
                const scalar&  beta, bool conj_C, const dpd_marray_view<char>& C,
@@ -448,7 +413,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
                const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
                dim_vector idx_A_AC,
                dim_vector idx_A_ABC,
-                                          bool conj_B, const dpd_marray_view<char>& B,
+                                    bool conj_B, const dpd_marray_view<char>& B,
                dim_vector idx_B_BC,
                dim_vector idx_B_ABC,
                const scalar&  beta, bool conj_C, const dpd_marray_view<char>& C,
@@ -525,7 +490,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
                dim_vector idx_A_AB,
                dim_vector idx_A_AC,
                dim_vector idx_A_ABC,
-                                          bool conj_B, const dpd_marray_view<char>& B,
+                                    bool conj_B, const dpd_marray_view<char>& B,
                dim_vector idx_B_AB,
                dim_vector idx_B_BC,
                dim_vector idx_B_ABC,
@@ -542,26 +507,6 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     std::array<stride_vector,3> stride;
     dense_total_lengths_and_strides(len, stride, A, idx_A_AB, B, idx_B_AB, C, idx_C_AC);
 
-    auto perm_AC = detail::sort_by_stride(stl_ext::select_from(stride[2], idx_C_AC),
-                                          stl_ext::select_from(stride[0], idx_A_AC));
-    auto perm_BC = detail::sort_by_stride(stl_ext::select_from(stride[2], idx_C_BC),
-                                          stl_ext::select_from(stride[1], idx_B_BC));
-    auto perm_AB = detail::sort_by_stride(stl_ext::select_from(stride[0], idx_A_AB),
-                                          stl_ext::select_from(stride[1], idx_B_AB));
-    auto perm_ABC = detail::sort_by_stride(stl_ext::select_from(stride[2], idx_A_ABC),
-                                           stl_ext::select_from(stride[0], idx_B_ABC),
-                                           stl_ext::select_from(stride[1], idx_C_ABC));
-
-    stl_ext::permute(idx_A_AC, perm_AC);
-    stl_ext::permute(idx_A_AB, perm_AB);
-    stl_ext::permute(idx_B_AB, perm_AB);
-    stl_ext::permute(idx_B_BC, perm_BC);
-    stl_ext::permute(idx_C_AC, perm_AC);
-    stl_ext::permute(idx_C_BC, perm_BC);
-    stl_ext::permute(idx_A_ABC, perm_ABC);
-    stl_ext::permute(idx_B_ABC, perm_ABC);
-    stl_ext::permute(idx_C_ABC, perm_ABC);
-
     auto unit_A_AC = unit_dim(stride[0], idx_A_AC);
     auto unit_C_AC = unit_dim(stride[2], idx_C_AC);
     auto unit_B_BC = unit_dim(stride[1], idx_B_BC);
@@ -569,16 +514,14 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     auto unit_A_AB = unit_dim(stride[0], idx_A_AB);
     auto unit_B_AB = unit_dim(stride[1], idx_B_AB);
 
-    TBLIS_ASSERT(unit_C_AC == 0 || unit_C_AC == (int)perm_AC.size());
-    TBLIS_ASSERT(unit_C_BC == 0 || unit_C_BC == (int)perm_BC.size());
+    TBLIS_ASSERT(unit_C_AC == 0 || -1);
+    TBLIS_ASSERT(unit_C_BC == 0 || -1);
     TBLIS_ASSERT(unit_A_AB == 0 || unit_B_AB == 0 ||
-                 (unit_A_AB == (int)perm_AB.size() &&
-                  unit_B_AB == (int)perm_AB.size()));
+                 (unit_A_AB == -1 && unit_B_AB == -1));
 
-    bool pack_M_3d = unit_A_AC > 0 && unit_A_AC < (int)perm_AC.size();
-    bool pack_N_3d = unit_B_BC > 0 && unit_B_BC < (int)perm_BC.size();
-    bool pack_K_3d = (unit_A_AB > 0 && unit_A_AB < (int)perm_AB.size()) ||
-                     (unit_B_AB > 0 && unit_B_AB < (int)perm_AB.size());
+    bool pack_M_3d = unit_A_AC > 0;
+    bool pack_N_3d = unit_B_BC > 0;
+    bool pack_K_3d = unit_A_AB > 0 || unit_B_AB > 0;
 
     if (pack_M_3d)
     {
@@ -679,7 +622,7 @@ void mult_block(type_t type, const communicator& comm, const config& cfg,
                 dim_vector idx_A_AB,
                 dim_vector idx_A_AC,
                 dim_vector idx_A_ABC,
-                               bool conj_B, const dpd_marray_view<char>& B,
+                                     bool conj_B, const dpd_marray_view<char>& B,
                 dim_vector idx_B_AB,
                 dim_vector idx_B_BC,
                 dim_vector idx_B_ABC,
@@ -705,20 +648,6 @@ void mult_block(type_t type, const communicator& comm, const config& cfg,
     std::array<stride_vector,3> stride;
     dense_total_lengths_and_strides(len, stride, A, idx_A_AB, B, idx_B_AB,
                                     C, idx_C_AC);
-
-    auto perm_AC = detail::sort_by_stride(stl_ext::select_from(stride[2], idx_C_AC),
-                                          stl_ext::select_from(stride[0], idx_A_AC));
-    auto perm_BC = detail::sort_by_stride(stl_ext::select_from(stride[2], idx_C_BC),
-                                          stl_ext::select_from(stride[1], idx_B_BC));
-    auto perm_AB = detail::sort_by_stride(stl_ext::select_from(stride[0], idx_A_AB),
-                                          stl_ext::select_from(stride[1], idx_B_AB));
-
-    stl_ext::permute(idx_A_AC, perm_AC);
-    stl_ext::permute(idx_A_AB, perm_AB);
-    stl_ext::permute(idx_B_AB, perm_AB);
-    stl_ext::permute(idx_B_BC, perm_BC);
-    stl_ext::permute(idx_C_AC, perm_AC);
-    stl_ext::permute(idx_C_BC, perm_BC);
 
     stride_type nblock_AB = ipow(nirrep, ndim_AB-1);
     stride_type nblock_AC = ipow(nirrep, ndim_AC-1);
@@ -1059,25 +988,25 @@ void mult(type_t type, const communicator& comm, const config& cfg,
     {
         switch (type)
         {
-            case TYPE_FLOAT:
+            case FLOAT:
                 mult_full(comm, cfg,
                           alpha.get<float>(), conj_A, reinterpret_cast<const dpd_marray_view<float>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
                                               conj_B, reinterpret_cast<const dpd_marray_view<float>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
                            beta.get<float>(), conj_C, reinterpret_cast<const dpd_marray_view<float>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
                 break;
-            case TYPE_DOUBLE:
+            case DOUBLE:
                 mult_full(comm, cfg,
                           alpha.get<double>(), conj_A, reinterpret_cast<const dpd_marray_view<double>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
                                                conj_B, reinterpret_cast<const dpd_marray_view<double>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
                            beta.get<double>(), conj_C, reinterpret_cast<const dpd_marray_view<double>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
                 break;
-            case TYPE_SCOMPLEX:
+            case SCOMPLEX:
                 mult_full(comm, cfg,
                           alpha.get<scomplex>(), conj_A, reinterpret_cast<const dpd_marray_view<scomplex>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
                                                  conj_B, reinterpret_cast<const dpd_marray_view<scomplex>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
                            beta.get<scomplex>(), conj_C, reinterpret_cast<const dpd_marray_view<scomplex>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
                 break;
-            case TYPE_DCOMPLEX:
+            case DCOMPLEX:
                 mult_full(comm, cfg,
                           alpha.get<dcomplex>(), conj_A, reinterpret_cast<const dpd_marray_view<dcomplex>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
                                                  conj_B, reinterpret_cast<const dpd_marray_view<dcomplex>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,

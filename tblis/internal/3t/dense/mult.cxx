@@ -1,19 +1,11 @@
-#include "mult.hpp"
+#include <tblis/internal/dense.hpp>
+#include <tblis/internal/memory_pool.hpp>
+#include <tblis/internal/thread.hpp>
 
-#include "util/gemm_thread.hpp"
-#include "util/tensor.hpp"
+#include <tblis/matrix/normal_matrix.hpp>
+#include <tblis/matrix/tensor_matrix.hpp>
 
-#include "nodes/gemm.hpp"
-
-#include "internal/0/add.hpp"
-#include "internal/0/mult.hpp"
-#include "internal/1t/dense/add.hpp"
-#include "internal/1t/dense/dot.hpp"
-#include "internal/1t/dense/scale.hpp"
-#include "internal/1t/dense/set.hpp"
-
-#include "matrix/normal_matrix.hpp"
-#include "matrix/tensor_matrix.hpp"
+#include <tblis/nodes/gemm.hpp>
 
 namespace tblis
 {
@@ -23,11 +15,9 @@ MemoryPool BuffersForA, BuffersForB, BuffersForC;
 namespace internal
 {
 
-impl_t impl = BLIS_BASED;
-
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
-               const len_vector& len_AB,
-               const len_vector& len_AC,
+               const len_vector& len_AB_,
+               const len_vector& len_AC_,
                const scalar& alpha, bool conj_A, char* A,
                const stride_vector& stride_A_AB_,
                const stride_vector& stride_A_AC_,
@@ -38,23 +28,19 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    auto stride_A_AB = stride_A_AB_;
-    auto stride_A_AC = stride_A_AC_;
-    auto stride_B_AB = stride_B_AB_;
-    auto stride_C_AC = stride_C_AC_;
+    len_vector len_AB(len_AB_.begin()+1, len_AB_.end());
+    len_vector len_AC(len_AC_.begin()+1, len_AC_.end());
+    stride_vector stride_A_AB(stride_A_AB_.begin()+1, stride_A_AB_.end());
+    stride_vector stride_B_AB(stride_B_AB_.begin()+1, stride_B_AB_.end());
+    stride_vector stride_A_AC(stride_A_AC_.begin()+1, stride_A_AC_.end());
+    stride_vector stride_C_AC(stride_C_AC_.begin()+1, stride_C_AC_.end());
 
-    auto reorder_AC = detail::sort_by_stride(stride_A_AC, stride_C_AC);
-    auto reorder_AB = detail::sort_by_stride(stride_A_AB, stride_B_AB);
-
-    auto m = len_AC[reorder_AC[0]];
-    auto n = len_AB[reorder_AB[0]];
-    auto rs_A = stride_A_AC[reorder_AC[0]];
-    auto cs_A = stride_A_AB[reorder_AB[0]];
-    auto inc_B = stride_B_AB[reorder_AB[0]];
-    auto inc_C = stride_C_AC[reorder_AC[0]];
-
-    reorder_AC.erase(reorder_AC.begin());
-    reorder_AB.erase(reorder_AB.begin());
+    auto m = len_AC_[0];
+    auto n = len_AB_[0];
+    auto rs_A = stride_A_AC_[0];
+    auto cs_A = stride_A_AB_[0];
+    auto inc_B = stride_B_AB_[0];
+    auto inc_C = stride_C_AC_[0];
 
     for (auto& s : stride_A_AC) s *= ts;
     for (auto& s : stride_A_AB) s *= ts;
@@ -74,13 +60,8 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     subcomm.distribute_over_gangs(m2,
     [&](len_type l_min, len_type l_max)
     {
-        viterator<2> iter_AB(stl_ext::permuted(len_AB, reorder_AB),
-                             stl_ext::permuted(stride_A_AB, reorder_AB),
-                             stl_ext::permuted(stride_B_AB, reorder_AB));
-
-        viterator<2> iter_AC(stl_ext::permuted(len_AC, reorder_AC),
-                             stl_ext::permuted(stride_A_AC, reorder_AC),
-                             stl_ext::permuted(stride_C_AC, reorder_AC));
+        viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
+        viterator<2> iter_AC(len_AC, stride_A_AC, stride_C_AC);
 
         auto A1 = A;
         auto B1 = B;
@@ -150,8 +131,8 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 }
 
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
-               const len_vector& len_AC,
-               const len_vector& len_BC,
+               const len_vector& len_AC_,
+               const len_vector& len_BC_,
                const scalar& alpha, bool conj_A, char* A,
                const stride_vector& stride_A_AC_,
                                     bool conj_B, char* B,
@@ -162,23 +143,19 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    auto stride_A_AC = stride_A_AC_;
-    auto stride_B_BC = stride_B_BC_;
-    auto stride_C_AC = stride_C_AC_;
-    auto stride_C_BC = stride_C_BC_;
+    len_vector len_AC(len_AC_.begin()+1, len_AC_.end());
+    len_vector len_BC(len_BC_.begin()+1, len_BC_.end());
+    stride_vector stride_A_AC(stride_A_AC_.begin()+1, stride_A_AC_.end());
+    stride_vector stride_C_AC(stride_C_AC_.begin()+1, stride_C_AC_.end());
+    stride_vector stride_B_BC(stride_B_BC_.begin()+1, stride_B_BC_.end());
+    stride_vector stride_C_BC(stride_C_BC_.begin()+1, stride_C_BC_.end());
 
-    auto reorder_AC = detail::sort_by_stride(stride_C_AC, stride_A_AC);
-    auto reorder_BC = detail::sort_by_stride(stride_C_BC, stride_B_BC);
-
-    auto m = len_AC[reorder_AC[0]];
-    auto n = len_BC[reorder_BC[0]];
-    auto rs_C = stride_C_AC[reorder_AC[0]];
-    auto cs_C = stride_C_BC[reorder_BC[0]];
-    auto inc_A = stride_A_AC[reorder_AC[0]];
-    auto inc_B = stride_B_BC[reorder_BC[0]];
-
-    reorder_AC.erase(reorder_AC.begin());
-    reorder_BC.erase(reorder_BC.begin());
+    auto m = len_AC_[0];
+    auto n = len_BC_[0];
+    auto rs_C = stride_C_AC_[0];
+    auto cs_C = stride_C_BC_[0];
+    auto inc_A = stride_A_AC_[0];
+    auto inc_B = stride_B_BC_[0];
 
     for (auto& s : stride_A_AC) s *= ts;
     for (auto& s : stride_B_BC) s *= ts;
@@ -198,14 +175,37 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     subcomm.distribute_over_gangs(m2*n2,
     [&](len_type l_min, len_type l_max)
     {
-        viterator<3> iter_ABC(stl_ext::appended(stl_ext::permuted(len_AC, reorder_AC),
-                                                stl_ext::permuted(len_BC, reorder_BC)),
-                              stl_ext::appended(stl_ext::permuted(stride_A_AC, reorder_AC),
-                                                stride_vector(reorder_BC.size())),
-                              stl_ext::appended(stride_vector(reorder_AC.size()),
-                                                stl_ext::permuted(stride_B_BC, reorder_BC)),
-                              stl_ext::appended(stl_ext::permuted(stride_C_AC, reorder_AC),
-                                                stl_ext::permuted(stride_C_BC, reorder_BC)));
+        len_vector len_ABC;
+        stride_vector stride_A_ABC;
+        stride_vector stride_B_ABC;
+        stride_vector stride_C_ABC;
+
+        if (rs_C <= cs_C)
+        {
+            len_ABC.insert(len_ABC.end(), len_AC.begin(), len_AC.end());
+            stride_A_ABC.insert(stride_A_ABC.end(), stride_A_AC.begin(), stride_A_AC.end());
+            stride_B_ABC.insert(stride_B_ABC.end(), len_AC.size(), 0);
+            stride_C_ABC.insert(stride_C_ABC.end(), stride_C_AC.begin(), stride_C_AC.end());
+
+            len_ABC.insert(len_ABC.end(), len_BC.begin(), len_BC.end());
+            stride_A_ABC.insert(stride_A_ABC.end(), len_BC.size(), 0);
+            stride_B_ABC.insert(stride_B_ABC.end(), stride_B_BC.begin(), stride_B_BC.end());
+            stride_C_ABC.insert(stride_C_ABC.end(), stride_C_BC.begin(), stride_C_BC.end());
+        }
+        else
+        {
+            len_ABC.insert(len_ABC.end(), len_BC.begin(), len_BC.end());
+            stride_A_ABC.insert(stride_A_ABC.end(), len_BC.size(), 0);
+            stride_B_ABC.insert(stride_B_ABC.end(), stride_B_BC.begin(), stride_B_BC.end());
+            stride_C_ABC.insert(stride_C_ABC.end(), stride_C_BC.begin(), stride_C_BC.end());
+
+            len_ABC.insert(len_ABC.end(), len_AC.begin(), len_AC.end());
+            stride_A_ABC.insert(stride_A_ABC.end(), stride_A_AC.begin(), stride_A_AC.end());
+            stride_B_ABC.insert(stride_B_ABC.end(), len_AC.size(), 0);
+            stride_C_ABC.insert(stride_C_ABC.end(), stride_C_AC.begin(), stride_C_AC.end());
+        }
+
+        viterator<3> iter_ABC(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
 
         auto A1 = A;
         auto B1 = B;
@@ -262,81 +262,98 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 }
 
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
-                   const len_vector& len_AB,
-                   const len_vector& len_AC,
-                   const len_vector& len_BC,
+                   const len_vector& len_AB_,
+                   const len_vector& len_AC_,
+                   const len_vector& len_BC_,
                    const scalar& alpha, bool conj_A, char* A,
-                   const stride_vector& stride_A_AB,
-                   const stride_vector& stride_A_AC,
+                   const stride_vector& stride_A_AB_,
+                   const stride_vector& stride_A_AC_,
                                         bool conj_B, char* B,
-                   const stride_vector& stride_B_AB,
-                   const stride_vector& stride_B_BC,
+                   const stride_vector& stride_B_AB_,
+                   const stride_vector& stride_B_BC_,
                    const scalar&  beta, bool conj_C, char* C,
-                   const stride_vector& stride_C_AC,
-                   const stride_vector& stride_C_BC)
+                   const stride_vector& stride_C_AC_,
+                   const stride_vector& stride_C_BC_)
 {
-    auto reorder_AC = detail::sort_by_stride(stride_C_AC, stride_A_AC);
-    auto reorder_BC = detail::sort_by_stride(stride_C_BC, stride_B_BC);
-    auto reorder_AB = detail::sort_by_stride(stride_A_AB, stride_B_AB);
+    auto len_AB = len_AB_;
+    auto len_AC = len_AC_;
+    auto len_BC = len_BC_;
+    auto stride_A_AB = stride_A_AB_;
+    auto stride_B_AB = stride_B_AB_;
+    auto stride_A_AC = stride_A_AC_;
+    auto stride_C_AC = stride_C_AC_;
+    auto stride_B_BC = stride_B_BC_;
+    auto stride_C_BC = stride_C_BC_;
 
-    auto unit_A_AC = unit_dim(stride_A_AC, reorder_AC);
-    auto unit_C_AC = unit_dim(stride_C_AC, reorder_AC);
-    auto unit_B_BC = unit_dim(stride_B_BC, reorder_BC);
-    auto unit_C_BC = unit_dim(stride_C_BC, reorder_BC);
-    auto unit_A_AB = unit_dim(stride_A_AB, reorder_AB);
-    auto unit_B_AB = unit_dim(stride_B_AB, reorder_AB);
+    auto unit_A_AC = unit_dim(stride_A_AC);
+    auto unit_C_AC = unit_dim(stride_C_AC);
+    auto unit_B_BC = unit_dim(stride_B_BC);
+    auto unit_C_BC = unit_dim(stride_C_BC);
+    auto unit_A_AB = unit_dim(stride_A_AB);
+    auto unit_B_AB = unit_dim(stride_B_AB);
 
-    TBLIS_ASSERT(unit_C_AC == 0 || unit_C_AC == (int)len_AC.size());
-    TBLIS_ASSERT(unit_C_BC == 0 || unit_C_BC == (int)len_BC.size());
+    TBLIS_ASSERT(unit_C_AC == 0 || unit_C_AC == -1);
+    TBLIS_ASSERT(unit_C_BC == 0 || unit_C_BC == -1);
     TBLIS_ASSERT(unit_A_AB == 0 || unit_B_AB == 0 ||
-                 (unit_A_AB == (int)len_AB.size() &&
-                  unit_B_AB == (int)len_AB.size()));
+                 (unit_A_AB == -1 && unit_B_AB == -1));
 
-    bool pack_M_3d = unit_A_AC > 0 && unit_A_AC < (int)len_AC.size();
-    bool pack_N_3d = unit_B_BC > 0 && unit_B_BC < (int)len_BC.size();
-    bool pack_K_3d = (unit_A_AB > 0 && unit_A_AB < (int)len_AB.size()) ||
-                     (unit_B_AB > 0 && unit_B_AB < (int)len_AB.size());
+    bool pack_M_3d = unit_A_AC > 0;
+    bool pack_N_3d = unit_B_BC > 0;
+    bool pack_K_3d = unit_A_AB > 0 || unit_B_AB > 0;
 
     if (pack_M_3d)
-        std::rotate(reorder_AC.begin()+1, reorder_AC.begin()+unit_A_AC, reorder_AC.end());
+    {
+        std::rotate(     len_AC.begin()+1,      len_AC.begin()+unit_A_AC,      len_AC.end());
+        std::rotate(stride_A_AC.begin()+1, stride_A_AC.begin()+unit_A_AC, stride_A_AC.end());
+        std::rotate(stride_C_AC.begin()+1, stride_C_AC.begin()+unit_A_AC, stride_C_AC.end());
+    }
 
     if (pack_N_3d)
-        std::rotate(reorder_BC.begin()+1, reorder_BC.begin()+unit_B_BC, reorder_BC.end());
+    {
+        std::rotate(     len_BC.begin()+1,      len_BC.begin()+unit_B_BC,      len_BC.end());
+        std::rotate(stride_B_BC.begin()+1, stride_B_BC.begin()+unit_B_BC, stride_B_BC.end());
+        std::rotate(stride_C_BC.begin()+1, stride_C_BC.begin()+unit_B_BC, stride_C_BC.end());
+    }
 
     if (pack_K_3d)
-        std::rotate(reorder_AB.begin()+1, reorder_AB.begin()+std::max(unit_A_AB, unit_B_AB), reorder_AB.end());
+    {
+        auto dim = std::max(unit_A_AB, unit_B_AB);
+        std::rotate(     len_AB.begin()+1,      len_AB.begin()+dim,      len_AB.end());
+        std::rotate(stride_A_AB.begin()+1, stride_A_AB.begin()+dim, stride_A_AB.end());
+        std::rotate(stride_B_AB.begin()+1, stride_B_AB.begin()+dim, stride_B_AB.end());
+    }
 
     tensor_matrix at(alpha, conj_A,
-                     stl_ext::permuted(len_AC, reorder_AC),
-                     stl_ext::permuted(len_AB, reorder_AB),
+                     len_AC,
+                     len_AB,
                      A,
-                     stl_ext::permuted(stride_A_AC, reorder_AC),
-                     stl_ext::permuted(stride_A_AB, reorder_AB),
+                     stride_A_AC,
+                     stride_A_AB,
                      pack_M_3d, pack_K_3d);
 
     tensor_matrix bt({1, type}, conj_B,
-                     stl_ext::permuted(len_AB, reorder_AB),
-                     stl_ext::permuted(len_BC, reorder_BC),
+                     len_AB,
+                     len_BC,
                      B,
-                     stl_ext::permuted(stride_B_AB, reorder_AB),
-                     stl_ext::permuted(stride_B_BC, reorder_BC),
+                     stride_B_AB,
+                     stride_B_BC,
                      pack_K_3d, pack_N_3d);
 
     tensor_matrix ct(beta, conj_C,
-                     stl_ext::permuted(len_AC, reorder_AC),
-                     stl_ext::permuted(len_BC, reorder_BC),
+                     len_AC,
+                     len_BC,
                      C,
-                     stl_ext::permuted(stride_C_AC, reorder_AC),
-                     stl_ext::permuted(stride_C_BC, reorder_BC),
+                     stride_C_AC,
+                     stride_C_BC,
                      pack_M_3d, pack_N_3d);
 
     GotoGEMM{}(comm, cfg, at, bt, ct);
 }
 
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
-               const len_vector& len_AB,
-               const len_vector& len_AC,
-               const len_vector& len_ABC,
+               const len_vector& len_AB_,
+               const len_vector& len_AC_,
+               const len_vector& len_ABC_,
                const scalar& alpha, bool conj_A, char* A,
                const stride_vector& stride_A_AB_,
                const stride_vector& stride_A_AC_,
@@ -350,37 +367,26 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    auto stride_A_AB = stride_A_AB_;
-    auto stride_A_AC = stride_A_AC_;
-    auto stride_A_ABC = stride_A_ABC_;
-    auto stride_B_AB = stride_B_AB_;
-    auto stride_B_ABC = stride_B_ABC_;
-    auto stride_C_AC = stride_C_AC_;
-    auto stride_C_ABC = stride_C_ABC_;
+    len_vector len_AB(len_AB_.begin()+1, len_AB_.end());
+    len_vector len_AC(len_AC_.begin()+1, len_AC_.end());
+    stride_vector stride_A_AB(stride_A_AB_.begin()+1, stride_A_AB_.end());
+    stride_vector stride_B_AB(stride_B_AB_.begin()+1, stride_B_AB_.end());
+    stride_vector stride_A_AC(stride_A_AC_.begin()+1, stride_A_AC_.end());
+    stride_vector stride_C_AC(stride_C_AC_.begin()+1, stride_C_AC_.end());
 
-    auto reorder_AC = detail::sort_by_stride(stride_A_AC, stride_C_AC);
-    auto reorder_AB = detail::sort_by_stride(stride_A_AB, stride_B_AB);
-    auto reorder_ABC = detail::sort_by_stride(stride_C_ABC, stride_A_ABC, stride_B_ABC);
-
-    auto m = len_AC[reorder_AC[0]];
-    auto n = len_AB[reorder_AB[0]];
-    auto rs_A = stride_A_AC[reorder_AC[0]];
-    auto cs_A = stride_A_AB[reorder_AB[0]];
-    auto inc_B = stride_B_AB[reorder_AB[0]];
-    auto inc_C = stride_C_AC[reorder_AC[0]];
-
-    reorder_AC.erase(reorder_AC.begin());
-    reorder_AB.erase(reorder_AB.begin());
+    auto m = len_AC[0];
+    auto n = len_AB[0];
+    auto rs_A = stride_A_AC[0];
+    auto cs_A = stride_A_AB[0];
+    auto inc_B = stride_B_AB[0];
+    auto inc_C = stride_C_AC[0];
 
     for (auto& s : stride_A_AC) s *= ts;
     for (auto& s : stride_A_AB) s *= ts;
     for (auto& s : stride_B_AB) s *= ts;
     for (auto& s : stride_C_AC) s *= ts;
-    for (auto& s : stride_A_ABC) s *= ts;
-    for (auto& s : stride_B_ABC) s *= ts;
-    for (auto& s : stride_C_ABC) s *= ts;
 
-    len_type l = stl_ext::prod(len_ABC);
+    len_type l = stl_ext::prod(len_ABC_);
     len_type m2 = stl_ext::prod(len_AC)/m;
     len_type n2 = stl_ext::prod(len_AB)/n;
 
@@ -394,18 +400,22 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     subcomm.distribute_over_gangs(l*m2,
     [&](len_type l_min, len_type l_max)
     {
-        viterator<2> iter_AB(stl_ext::permuted(len_AB, reorder_AB),
-                             stl_ext::permuted(stride_A_AB, reorder_AB),
-                             stl_ext::permuted(stride_B_AB, reorder_AB));
+        len_vector len_ABC = len_ABC_;
+        stride_vector stride_A_ABC = stride_A_ABC_;
+        stride_vector stride_B_ABC = stride_B_ABC_;
+        stride_vector stride_C_ABC = stride_C_ABC_;
 
-        viterator<3> iter_ABC(stl_ext::appended(stl_ext::permuted(len_ABC, reorder_ABC),
-                                                stl_ext::permuted(len_AC, reorder_AC)),
-                              stl_ext::appended(stl_ext::permuted(stride_A_ABC, reorder_ABC),
-                                                stl_ext::permuted(stride_A_AC, reorder_AC)),
-                              stl_ext::appended(stl_ext::permuted(stride_B_ABC, reorder_ABC),
-                                                stride_vector(reorder_AC.size())),
-                              stl_ext::appended(stl_ext::permuted(stride_C_ABC, reorder_ABC),
-                                                stl_ext::permuted(stride_C_AC, reorder_AC)));
+        for (auto& s : stride_A_ABC) s *= ts;
+        for (auto& s : stride_B_ABC) s *= ts;
+        for (auto& s : stride_C_ABC) s *= ts;
+
+        len_ABC.insert(len_ABC.end(), len_AC.begin(), len_AC.end());
+        stride_A_ABC.insert(stride_A_ABC.end(), stride_A_AC.begin(), stride_A_AC.end());
+        stride_B_ABC.insert(stride_B_ABC.end(), len_AC.size(), 0);
+        stride_C_ABC.insert(stride_C_ABC.end(), stride_C_AC.begin(), stride_C_AC.end());
+
+        viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
+        viterator<3> iter_ABC(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
 
         auto A1 = A;
         auto B1 = B;
@@ -475,9 +485,9 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 }
 
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
-               const len_vector& len_AC,
-               const len_vector& len_BC,
-               const len_vector& len_ABC,
+               const len_vector& len_AC_,
+               const len_vector& len_BC_,
+               const len_vector& len_ABC_,
                const scalar& alpha,
                bool conj_A, char* A,
                const stride_vector& stride_A_AC_,
@@ -493,37 +503,26 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 {
     const len_type ts = type_size[type];
 
-    auto stride_A_AC = stride_A_AC_;
-    auto stride_A_ABC = stride_A_ABC_;
-    auto stride_B_BC = stride_B_BC_;
-    auto stride_B_ABC = stride_B_ABC_;
-    auto stride_C_AC = stride_C_AC_;
-    auto stride_C_BC = stride_C_BC_;
-    auto stride_C_ABC = stride_C_ABC_;
+    len_vector len_AC(len_AC_.begin()+1, len_AC_.end());
+    len_vector len_BC(len_BC_.begin()+1, len_BC_.end());
+    stride_vector stride_A_AC(stride_A_AC_.begin()+1, stride_A_AC_.end());
+    stride_vector stride_C_AC(stride_C_AC_.begin()+1, stride_C_AC_.end());
+    stride_vector stride_B_BC(stride_B_BC_.begin()+1, stride_B_BC_.end());
+    stride_vector stride_C_BC(stride_C_BC_.begin()+1, stride_C_BC_.end());
 
-    auto reorder_AC = detail::sort_by_stride(stride_C_AC, stride_A_AC);
-    auto reorder_BC = detail::sort_by_stride(stride_C_BC, stride_B_BC);
-    auto reorder_ABC = detail::sort_by_stride(stride_C_ABC, stride_A_ABC, stride_B_ABC);
-
-    auto m = len_AC[reorder_AC[0]];
-    auto n = len_BC[reorder_BC[0]];
-    auto rs_C = stride_C_AC[reorder_AC[0]];
-    auto cs_C = stride_C_BC[reorder_BC[0]];
-    auto inc_A = stride_A_AC[reorder_AC[0]];
-    auto inc_B = stride_B_BC[reorder_BC[0]];
-
-    reorder_AC.erase(reorder_AC.begin());
-    reorder_BC.erase(reorder_BC.begin());
+    auto m = len_AC[0];
+    auto n = len_BC[0];
+    auto rs_C = stride_C_AC[0];
+    auto cs_C = stride_C_BC[0];
+    auto inc_A = stride_A_AC[0];
+    auto inc_B = stride_B_BC[0];
 
     for (auto& s : stride_A_AC) s *= ts;
     for (auto& s : stride_B_BC) s *= ts;
     for (auto& s : stride_C_AC) s *= ts;
     for (auto& s : stride_C_BC) s *= ts;
-    for (auto& s : stride_A_ABC) s *= ts;
-    for (auto& s : stride_B_ABC) s *= ts;
-    for (auto& s : stride_C_ABC) s *= ts;
 
-    len_type l = stl_ext::prod(len_ABC);
+    len_type l = stl_ext::prod(len_ABC_);
     len_type m2 = stl_ext::prod(len_AC)/m;
     len_type n2 = stl_ext::prod(len_BC)/n;
 
@@ -537,18 +536,41 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     subcomm.distribute_over_gangs(l*m2*n2,
     [&](len_type l_min, len_type l_max)
     {
-        viterator<3> iter_ABC(stl_ext::appended(stl_ext::permuted(len_ABC, reorder_ABC),
-                                                stl_ext::permuted(len_AC, reorder_AC),
-                                                stl_ext::permuted(len_BC, reorder_BC)),
-                              stl_ext::appended(stl_ext::permuted(stride_A_ABC, reorder_ABC),
-                                                stl_ext::permuted(stride_A_AC, reorder_AC),
-                                                stride_vector(reorder_BC.size())),
-                              stl_ext::appended(stl_ext::permuted(stride_B_ABC, reorder_ABC),
-                                                stride_vector(reorder_AC.size()),
-                                                stl_ext::permuted(stride_B_BC, reorder_BC)),
-                              stl_ext::appended(stl_ext::permuted(stride_C_ABC, reorder_ABC),
-                                                stl_ext::permuted(stride_C_AC, reorder_AC),
-                                                stl_ext::permuted(stride_C_BC, reorder_BC)));
+        len_vector len_ABC = len_ABC_;
+        stride_vector stride_A_ABC = stride_A_ABC_;
+        stride_vector stride_B_ABC = stride_B_ABC_;
+        stride_vector stride_C_ABC = stride_C_ABC_;
+
+        for (auto& s : stride_A_ABC) s *= ts;
+        for (auto& s : stride_B_ABC) s *= ts;
+        for (auto& s : stride_C_ABC) s *= ts;
+
+        if (rs_C <= cs_C)
+        {
+            len_ABC.insert(len_ABC.end(), len_AC.begin(), len_AC.end());
+            stride_A_ABC.insert(stride_A_ABC.end(), stride_A_AC.begin(), stride_A_AC.end());
+            stride_B_ABC.insert(stride_B_ABC.end(), len_AC.size(), 0);
+            stride_C_ABC.insert(stride_C_ABC.end(), stride_C_AC.begin(), stride_C_AC.end());
+
+            len_ABC.insert(len_ABC.end(), len_BC.begin(), len_BC.end());
+            stride_A_ABC.insert(stride_A_ABC.end(), len_BC.size(), 0);
+            stride_B_ABC.insert(stride_B_ABC.end(), stride_B_BC.begin(), stride_B_BC.end());
+            stride_C_ABC.insert(stride_C_ABC.end(), stride_C_BC.begin(), stride_C_BC.end());
+        }
+        else
+        {
+            len_ABC.insert(len_ABC.end(), len_BC.begin(), len_BC.end());
+            stride_A_ABC.insert(stride_A_ABC.end(), len_BC.size(), 0);
+            stride_B_ABC.insert(stride_B_ABC.end(), stride_B_BC.begin(), stride_B_BC.end());
+            stride_C_ABC.insert(stride_C_ABC.end(), stride_C_BC.begin(), stride_C_BC.end());
+
+            len_ABC.insert(len_ABC.end(), len_AC.begin(), len_AC.end());
+            stride_A_ABC.insert(stride_A_ABC.end(), stride_A_AC.begin(), stride_A_AC.end());
+            stride_B_ABC.insert(stride_B_ABC.end(), len_AC.size(), 0);
+            stride_C_ABC.insert(stride_C_ABC.end(), stride_C_AC.begin(), stride_C_AC.end());
+        }
+
+        viterator<3> iter_ABC(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
 
         auto A1 = A;
         auto B1 = B;
@@ -605,58 +627,78 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 }
 
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
-               const len_vector& len_AB,
-               const len_vector& len_AC,
-               const len_vector& len_BC,
-               const len_vector& len_ABC,
+               const len_vector& len_AB_,
+               const len_vector& len_AC_,
+               const len_vector& len_BC_,
+               const len_vector& len_ABC_,
                const scalar& alpha,
                bool conj_A, char* A,
-               const stride_vector& stride_A_AB,
-               const stride_vector& stride_A_AC,
-               const stride_vector& stride_A_ABC,
+               const stride_vector& stride_A_AB_,
+               const stride_vector& stride_A_AC_,
+               const stride_vector& stride_A_ABC_,
                bool conj_B, char* B,
-               const stride_vector& stride_B_AB,
-               const stride_vector& stride_B_BC,
-               const stride_vector& stride_B_ABC,
+               const stride_vector& stride_B_AB_,
+               const stride_vector& stride_B_BC_,
+               const stride_vector& stride_B_ABC_,
                const scalar& beta,
                bool conj_C, char* C,
-               const stride_vector& stride_C_AC,
-               const stride_vector& stride_C_BC,
-               const stride_vector& stride_C_ABC)
+               const stride_vector& stride_C_AC_,
+               const stride_vector& stride_C_BC_,
+               const stride_vector& stride_C_ABC_)
 {
     const len_type ts = type_size[type];
 
-    auto reorder_AC = detail::sort_by_stride(stride_C_AC, stride_A_AC);
-    auto reorder_BC = detail::sort_by_stride(stride_C_BC, stride_B_BC);
-    auto reorder_AB = detail::sort_by_stride(stride_A_AB, stride_B_AB);
-    auto reorder_ABC = detail::sort_by_stride(stride_C_ABC, stride_A_ABC, stride_B_ABC);
+    auto len_AB = len_AB_;
+    auto len_AC = len_AC_;
+    auto len_BC = len_BC_;
+    auto len_ABC = len_ABC_;
+    auto stride_A_AB = stride_A_AB_;
+    auto stride_B_AB = stride_B_AB_;
+    auto stride_A_AC = stride_A_AC_;
+    auto stride_C_AC = stride_C_AC_;
+    auto stride_B_BC = stride_B_BC_;
+    auto stride_C_BC = stride_C_BC_;
+    auto stride_A_ABC = stride_A_ABC_;
+    auto stride_B_ABC = stride_B_ABC_;
+    auto stride_C_ABC = stride_C_ABC_;
 
-    auto unit_A_AC = unit_dim(stride_A_AC, reorder_AC);
-    auto unit_C_AC = unit_dim(stride_C_AC, reorder_AC);
-    auto unit_B_BC = unit_dim(stride_B_BC, reorder_BC);
-    auto unit_C_BC = unit_dim(stride_C_BC, reorder_BC);
-    auto unit_A_AB = unit_dim(stride_A_AB, reorder_AB);
-    auto unit_B_AB = unit_dim(stride_B_AB, reorder_AB);
+    auto unit_A_AC = unit_dim(stride_A_AC);
+    auto unit_C_AC = unit_dim(stride_C_AC);
+    auto unit_B_BC = unit_dim(stride_B_BC);
+    auto unit_C_BC = unit_dim(stride_C_BC);
+    auto unit_A_AB = unit_dim(stride_A_AB);
+    auto unit_B_AB = unit_dim(stride_B_AB);
 
-    TBLIS_ASSERT(unit_C_AC == 0 || unit_C_AC == (int)len_AC.size());
-    TBLIS_ASSERT(unit_C_BC == 0 || unit_C_BC == (int)len_BC.size());
+    TBLIS_ASSERT(unit_C_AC == 0 || unit_C_AC == -1);
+    TBLIS_ASSERT(unit_C_BC == 0 || unit_C_BC == -1);
     TBLIS_ASSERT(unit_A_AB == 0 || unit_B_AB == 0 ||
-                 (unit_A_AB == (int)len_AB.size() &&
-                  unit_B_AB == (int)len_AB.size()));
+                 (unit_A_AB == -1 && unit_B_AB == -1));
 
-    bool pack_M_3d = unit_A_AC > 0 && unit_A_AC < (int)len_AC.size();
-    bool pack_N_3d = unit_B_BC > 0 && unit_B_BC < (int)len_BC.size();
-    bool pack_K_3d = (unit_A_AB > 0 && unit_A_AB < (int)len_AB.size()) ||
-                     (unit_B_AB > 0 && unit_B_AB < (int)len_AB.size());
+    bool pack_M_3d = unit_A_AC > 0;
+    bool pack_N_3d = unit_B_BC > 0;
+    bool pack_K_3d = unit_A_AB > 0 || unit_B_AB > 0;
 
     if (pack_M_3d)
-        std::rotate(reorder_AC.begin()+1, reorder_AC.begin()+unit_A_AC, reorder_AC.end());
+    {
+        std::rotate(     len_AC.begin()+1,      len_AC.begin()+unit_A_AC,      len_AC.end());
+        std::rotate(stride_A_AC.begin()+1, stride_A_AC.begin()+unit_A_AC, stride_A_AC.end());
+        std::rotate(stride_C_AC.begin()+1, stride_C_AC.begin()+unit_A_AC, stride_C_AC.end());
+    }
 
     if (pack_N_3d)
-        std::rotate(reorder_BC.begin()+1, reorder_BC.begin()+unit_B_BC, reorder_BC.end());
+    {
+        std::rotate(     len_BC.begin()+1,      len_BC.begin()+unit_B_BC,      len_BC.end());
+        std::rotate(stride_B_BC.begin()+1, stride_B_BC.begin()+unit_B_BC, stride_B_BC.end());
+        std::rotate(stride_C_BC.begin()+1, stride_C_BC.begin()+unit_B_BC, stride_C_BC.end());
+    }
 
     if (pack_K_3d)
-        std::rotate(reorder_AB.begin()+1, reorder_AB.begin()+std::max(unit_A_AB, unit_B_AB), reorder_AB.end());
+    {
+        auto dim = std::max(unit_A_AB, unit_B_AB);
+        std::rotate(     len_AB.begin()+1,      len_AB.begin()+dim,      len_AB.end());
+        std::rotate(stride_A_AB.begin()+1, stride_A_AB.begin()+dim, stride_A_AB.end());
+        std::rotate(stride_B_AB.begin()+1, stride_B_AB.begin()+dim, stride_B_AB.end());
+    }
 
     scalar one(1.0, type);
 
@@ -673,28 +715,14 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
 
     auto subcomm = comm.gang(TCI_EVENLY, nt_l);
 
-    auto len_AB_r = stl_ext::permuted(len_AB, reorder_AB);
-    auto len_AC_r = stl_ext::permuted(len_AC, reorder_AC);
-    auto len_BC_r = stl_ext::permuted(len_BC, reorder_BC);
-    auto stride_A_AB_r = stl_ext::permuted(stride_A_AB, reorder_AB);
-    auto stride_B_AB_r = stl_ext::permuted(stride_B_AB, reorder_AB);
-    auto stride_A_AC_r = stl_ext::permuted(stride_A_AC, reorder_AC);
-    auto stride_C_AC_r = stl_ext::permuted(stride_C_AC, reorder_AC);
-    auto stride_B_BC_r = stl_ext::permuted(stride_B_BC, reorder_BC);
-    auto stride_C_BC_r = stl_ext::permuted(stride_C_BC, reorder_BC);
-    auto stride_A_ABC_r = stl_ext::permuted(stride_A_ABC, reorder_ABC);
-    auto stride_B_ABC_r = stl_ext::permuted(stride_B_ABC, reorder_ABC);
-    auto stride_C_ABC_r = stl_ext::permuted(stride_C_ABC, reorder_ABC);
-
-    for (auto& s : stride_A_ABC_r) s *= ts;
-    for (auto& s : stride_B_ABC_r) s *= ts;
-    for (auto& s : stride_C_ABC_r) s *= ts;
+    for (auto& s : stride_A_ABC) s *= ts;
+    for (auto& s : stride_B_ABC) s *= ts;
+    for (auto& s : stride_C_ABC) s *= ts;
 
     subcomm.distribute_over_gangs(l,
     [&](len_type l_min, len_type l_max)
     {
-        viterator<3> iter_ABC(stl_ext::permuted(len_ABC, reorder_ABC),
-                              stride_A_ABC_r, stride_B_ABC_r, stride_C_ABC_r);
+        viterator<3> iter_ABC(len_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
 
         auto A1 = A;
         auto B1 = B;
@@ -706,14 +734,14 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
         {
             iter_ABC.next(A1, B1, C1);
 
-            tensor_matrix at(alpha, conj_A, len_AC_r, len_AB_r, A1,
-                             stride_A_AC_r, stride_A_AB_r, pack_M_3d, pack_K_3d);
+            tensor_matrix at(alpha, conj_A, len_AC, len_AB, A1,
+                             stride_A_AC, stride_A_AB, pack_M_3d, pack_K_3d);
 
-            tensor_matrix bt(  one, conj_B, len_AB_r, len_BC_r, B1,
-                             stride_B_AB_r, stride_B_BC_r, pack_K_3d, pack_N_3d);
+            tensor_matrix bt(  one, conj_B, len_AB, len_BC, B1,
+                             stride_B_AB, stride_B_BC, pack_K_3d, pack_N_3d);
 
-            tensor_matrix ct( beta, conj_C, len_AC_r, len_BC_r, C1,
-                             stride_C_AC_r, stride_C_BC_r, pack_M_3d, pack_N_3d);
+            tensor_matrix ct( beta, conj_C, len_AC, len_BC, C1,
+                             stride_C_AC, stride_C_BC, pack_M_3d, pack_N_3d);
 
             GotoGEMM{}(subcomm, cfg, at, bt, ct);
         }
@@ -959,15 +987,21 @@ void mult(type_t type, const communicator& comm, const config& cfg,
 
     if (n_AB == 0)
     {
+        auto len_C = len_ABC;
+        auto stride_C = stride_C_ABC;
+
+        len_C.insert(len_C.end(), len_AC.begin(), len_AC.end());
+        len_C.insert(len_C.end(), len_BC.begin(), len_BC.end());
+        stride_C.insert(stride_C.end(), stride_C_AC.begin(), stride_C_AC.end());
+        stride_C.insert(stride_C.end(), stride_C_BC.begin(), stride_C_BC.end());
+
         if (beta.is_zero())
         {
-            set(type, comm, cfg, len_AC+len_BC+len_ABC, beta, C,
-                stride_C_AC+stride_C_BC+stride_C_ABC);
+            set(type, comm, cfg, len_C, beta, C, stride_C);
         }
         else if (!beta.is_one() || (beta.is_complex() && conj_C))
         {
-            scale(type, comm, cfg, len_AC+len_BC+len_ABC, beta, conj_C, C,
-                  stride_C_AC+stride_C_BC+stride_C_ABC);
+            scale(type, comm, cfg, len_C, beta, conj_C, C, stride_C);
         }
 
         return;
@@ -987,7 +1021,7 @@ void mult(type_t type, const communicator& comm, const config& cfg,
     {
         switch (type)
         {
-            case TYPE_FLOAT:
+            case FLOAT:
                 mult_blas(comm, cfg,
                           len_AB, len_AC, len_BC, len_ABC,
                           alpha.get<float>(), conj_A, reinterpret_cast<float*>(A),
@@ -997,7 +1031,7 @@ void mult(type_t type, const communicator& comm, const config& cfg,
                            beta.get<float>(), conj_C, reinterpret_cast<float*>(C),
                                               stride_C_AC, stride_C_BC, stride_C_ABC);
                 break;
-            case TYPE_DOUBLE:
+            case DOUBLE:
                 mult_blas(comm, cfg,
                           len_AB, len_AC, len_BC, len_ABC,
                           alpha.get<double>(), conj_A, reinterpret_cast<double*>(A),
@@ -1007,7 +1041,7 @@ void mult(type_t type, const communicator& comm, const config& cfg,
                            beta.get<double>(), conj_C, reinterpret_cast<double*>(C),
                                                stride_C_AC, stride_C_BC, stride_C_ABC);
                 break;
-            case TYPE_SCOMPLEX:
+            case SCOMPLEX:
                 mult_blas(comm, cfg,
                           len_AB, len_AC, len_BC, len_ABC,
                           alpha.get<scomplex>(), conj_A, reinterpret_cast<scomplex*>(A),
@@ -1017,7 +1051,7 @@ void mult(type_t type, const communicator& comm, const config& cfg,
                            beta.get<scomplex>(), conj_C, reinterpret_cast<scomplex*>(C),
                                                  stride_C_AC, stride_C_BC, stride_C_ABC);
                 break;
-            case TYPE_DCOMPLEX:
+            case DCOMPLEX:
                 mult_blas(comm, cfg,
                           len_AB, len_AC, len_BC, len_ABC,
                           alpha.get<dcomplex>(), conj_A, reinterpret_cast<dcomplex*>(A),

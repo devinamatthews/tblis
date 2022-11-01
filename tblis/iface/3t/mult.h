@@ -1,16 +1,14 @@
-#ifndef _TBLIS_IFACE_3T_MULT_H_
-#define _TBLIS_IFACE_3T_MULT_H_
+#ifndef TBLIS_IFACE_3T_MULT_H
+#define TBLIS_IFACE_3T_MULT_H
 
-#include "../../util/thread.h"
-#include "../../util/basic_types.h"
+#include <tblis/base/types.h>
+#include <tblis/base/thread.h>
+#include <tblis/base/configs.h>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnull-dereference"
 
-#ifdef __cplusplus
-namespace tblis
-{
-#endif
+TBLIS_BEGIN_NAMESPACE
 
 TBLIS_EXPORT
 void tblis_tensor_mult(const tblis_comm* comm, const tblis_config* cfg,
@@ -18,37 +16,27 @@ void tblis_tensor_mult(const tblis_comm* comm, const tblis_config* cfg,
                        const tblis_tensor* B, const label_type* idx_B,
                              tblis_tensor* C, const label_type* idx_C);
 
-#if defined(__cplusplus)
+#if TBLIS_ENABLE_CXX
 
-inline
 void mult(const communicator& comm,
           const scalar& alpha,
-          const tensor& A,
-          const label_vector& idx_A,
-          const tensor& B,
-          const label_vector& idx_B,
+          const const_tensor& A,
+          const label_string& idx_A,
+          const const_tensor& B,
+          const label_string& idx_B,
           const scalar& beta,
           const tensor& C,
-          const label_vector& idx_C)
-{
-    auto A_(A);
-    A_.scalar *= alpha;
-
-    auto C_(C);
-    C_.scalar *= beta;
-
-    tblis_tensor_mult(comm, nullptr, &A_, idx_A.data(), &B, idx_B.data(), &C_, idx_C.data());
-}
+          const label_string& idx_C);
 
 inline
 void mult(const communicator& comm,
-          const tensor& A,
-          const label_vector& idx_A,
-          const tensor& B,
-          const label_vector& idx_B,
+          const const_tensor& A,
+          const label_string& idx_A,
+          const const_tensor& B,
+          const label_string& idx_B,
           const scalar& beta,
           const tensor& C,
-          const label_vector& idx_C)
+          const label_string& idx_C)
 {
     mult(comm, {1.0, A.type}, A, idx_A, B, idx_B, beta, C, idx_C);
 }
@@ -56,58 +44,39 @@ void mult(const communicator& comm,
 inline
 void mult(const communicator& comm,
           const scalar& alpha,
-          const tensor& A,
-          const label_vector& idx_A,
-          const tensor& B,
-          const label_vector& idx_B,
+          const const_tensor& A,
+          const label_string& idx_A,
+          const const_tensor& B,
+          const label_string& idx_B,
           const tensor& C,
-          const label_vector& idx_C)
+          const label_string& idx_C)
 {
     mult(comm, alpha, A, idx_A, B, idx_B, {0.0, A.type}, C, idx_C);
 }
 
 inline
 void mult(const communicator& comm,
-          const tensor& A,
-          const label_vector& idx_A,
-          const tensor& B,
-          const label_vector& idx_B,
+          const const_tensor& A,
+          const label_string& idx_A,
+          const const_tensor& B,
+          const label_string& idx_B,
           const tensor& C,
-          const label_vector& idx_C)
+          const label_string& idx_C)
 {
     mult(comm, {1.0, A.type}, A, idx_A, B, idx_B, {0.0, A.type}, C, idx_C);
 }
 
-inline
 void mult(const communicator& comm,
           const scalar& alpha,
-          const tensor& A,
-          const tensor& B,
+          const const_tensor& A,
+          const const_tensor& B,
           const scalar& beta,
-          const tensor& C)
-{
-    label_vector idx_A, idx_B, idx_C;
-
-    TBLIS_ASSERT((A.ndim+B.ndim+C.ndim)%2 == 0);
-
-    auto nAB = (A.ndim+B.ndim-C.ndim)/2;
-    auto nAC = (A.ndim+C.ndim-B.ndim)/2;
-    auto nBC = (B.ndim+C.ndim-A.ndim)/2;
-
-    for (auto i : range(nAC)) idx_A.push_back(i);
-    for (auto i : range(nAC)) idx_C.push_back(i);
-    for (auto i : range(nAB)) idx_A.push_back(nAC+i);
-    for (auto i : range(nAB)) idx_B.push_back(nAC+i);
-    for (auto i : range(nBC)) idx_B.push_back(nAC+nAB+i);
-    for (auto i : range(nBC)) idx_C.push_back(nAC+nAB+i);
-
-    mult(comm, alpha, A, idx_A, B, idx_B, beta, C, idx_C);
-}
+          const tensor& C);
 
 inline
 void mult(const communicator& comm,
-          const tensor& A,
-          const tensor& B,
+          const const_tensor& A,
+          const const_tensor& B,
           const scalar& beta,
           const tensor& C)
 {
@@ -117,8 +86,8 @@ void mult(const communicator& comm,
 inline
 void mult(const communicator& comm,
           const scalar& alpha,
-          const tensor& A,
-          const tensor& B,
+          const const_tensor& A,
+          const const_tensor& B,
           const tensor& C)
 {
     mult(comm, alpha, A, B, {0.0, A.type}, C);
@@ -126,8 +95,8 @@ void mult(const communicator& comm,
 
 inline
 void mult(const communicator& comm,
-          const tensor& A,
-          const tensor& B,
+          const const_tensor& A,
+          const const_tensor& B,
           const tensor& C)
 {
     mult(comm, {1.0, A.type}, A, B, {0.0, A.type}, C);
@@ -135,56 +104,56 @@ void mult(const communicator& comm,
 
 inline
 void mult(const scalar& alpha,
-          const tensor& A,
-          const label_vector& idx_A,
-          const tensor& B,
-          const label_vector& idx_B,
+          const const_tensor& A,
+          const label_string& idx_A,
+          const const_tensor& B,
+          const label_string& idx_B,
           const scalar& beta,
           const tensor& C,
-          const label_vector& idx_C)
+          const label_string& idx_C)
 {
     mult(*(communicator*)nullptr, alpha, A, idx_A, B, idx_B, beta, C, idx_C);
 }
 
 inline
-void mult(const tensor& A,
-          const label_vector& idx_A,
-          const tensor& B,
-          const label_vector& idx_B,
+void mult(const const_tensor& A,
+          const label_string& idx_A,
+          const const_tensor& B,
+          const label_string& idx_B,
           const scalar& beta,
           const tensor& C,
-          const label_vector& idx_C)
+          const label_string& idx_C)
 {
     mult({1.0, A.type}, A, idx_A, B, idx_B, beta, C, idx_C);
 }
 
 inline
 void mult(const scalar& alpha,
-          const tensor& A,
-          const label_vector& idx_A,
-          const tensor& B,
-          const label_vector& idx_B,
+          const const_tensor& A,
+          const label_string& idx_A,
+          const const_tensor& B,
+          const label_string& idx_B,
           const tensor& C,
-          const label_vector& idx_C)
+          const label_string& idx_C)
 {
     mult(alpha, A, idx_A, B, idx_B, {0.0, A.type}, C, idx_C);
 }
 
 inline
-void mult(const tensor& A,
-          const label_vector& idx_A,
-          const tensor& B,
-          const label_vector& idx_B,
+void mult(const const_tensor& A,
+          const label_string& idx_A,
+          const const_tensor& B,
+          const label_string& idx_B,
           const tensor& C,
-          const label_vector& idx_C)
+          const label_string& idx_C)
 {
     mult({1.0, A.type}, A, idx_A, B, idx_B, {0.0, A.type}, C, idx_C);
 }
 
 inline
 void mult(const scalar& alpha,
-          const tensor& A,
-          const tensor& B,
+          const const_tensor& A,
+          const const_tensor& B,
           const scalar& beta,
           const tensor& C)
 {
@@ -192,8 +161,8 @@ void mult(const scalar& alpha,
 }
 
 inline
-void mult(const tensor& A,
-          const tensor& B,
+void mult(const const_tensor& A,
+          const const_tensor& B,
           const scalar& beta,
           const tensor& C)
 {
@@ -202,33 +171,33 @@ void mult(const tensor& A,
 
 inline
 void mult(const scalar& alpha,
-          const tensor& A,
-          const tensor& B,
+          const const_tensor& A,
+          const const_tensor& B,
           const tensor& C)
 {
     mult(alpha, A, B, {0.0, A.type}, C);
 }
 
 inline
-void mult(const tensor& A,
-          const tensor& B,
+void mult(const const_tensor& A,
+          const const_tensor& B,
           const tensor& C)
 {
     mult({1.0, A.type}, A, B, {0.0, A.type}, C);
 }
 
-#if !defined(TBLIS_DONT_USE_CXX11)
+#ifdef MARRAY_DPD_MARRAY_VIEW_HPP
 
 template <typename T>
 void mult(const communicator& comm,
-          T alpha, const dpd_marray_view<const T>& A, const label_vector& idx_A,
-                   const dpd_marray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const dpd_marray_view<      T>& C, const label_vector& idx_C);
+          T alpha, const MArray::dpd_marray_view<const T>& A, const label_string& idx_A,
+                   const MArray::dpd_marray_view<const T>& B, const label_string& idx_B,
+          T  beta, const MArray::dpd_marray_view<      T>& C, const label_string& idx_C);
 
 template <typename T>
-void mult(T alpha, const dpd_marray_view<const T>& A, const label_vector& idx_A,
-                   const dpd_marray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const dpd_marray_view<      T>& C, const label_vector& idx_C)
+void mult(T alpha, const MArray::dpd_marray_view<const T>& A, const label_string& idx_A,
+                   const MArray::dpd_marray_view<const T>& B, const label_string& idx_B,
+          T  beta, const MArray::dpd_marray_view<      T>& C, const label_string& idx_C)
 {
     parallelize
     (
@@ -240,16 +209,20 @@ void mult(T alpha, const dpd_marray_view<const T>& A, const label_vector& idx_A,
     );
 }
 
-template <typename T>
-void mult(const communicator& comm,
-          T alpha, const indexed_marray_view<const T>& A, const label_vector& idx_A,
-                   const indexed_marray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const indexed_marray_view<      T>& C, const label_vector& idx_C);
+#endif //MARRAY_DPD_MARRAY_VIEW_HPP
+
+#ifdef MARRAY_INDEXED_MARRAY_VIEW_HPP
 
 template <typename T>
-void mult(T alpha, const indexed_marray_view<const T>& A, const label_vector& idx_A,
-                   const indexed_marray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const indexed_marray_view<      T>& C, const label_vector& idx_C)
+void mult(const communicator& comm,
+          T alpha, const MArray::indexed_marray_view<const T>& A, const label_string& idx_A,
+                   const MArray::indexed_marray_view<const T>& B, const label_string& idx_B,
+          T  beta, const MArray::indexed_marray_view<      T>& C, const label_string& idx_C);
+
+template <typename T>
+void mult(T alpha, const MArray::indexed_marray_view<const T>& A, const label_string& idx_A,
+                   const MArray::indexed_marray_view<const T>& B, const label_string& idx_B,
+          T  beta, const MArray::indexed_marray_view<      T>& C, const label_string& idx_C)
 {
     parallelize
     (
@@ -261,16 +234,20 @@ void mult(T alpha, const indexed_marray_view<const T>& A, const label_vector& id
     );
 }
 
-template <typename T>
-void mult(const communicator& comm,
-          T alpha, const indexed_dpd_marray_view<const T>& A, const label_vector& idx_A,
-                   const indexed_dpd_marray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const indexed_dpd_marray_view<      T>& C, const label_vector& idx_C);
+#endif //MARRAY_INDEXED_MARRAY_VIEW_HPP
+
+#ifdef MARRAY_INDEXED_DPD_MARRAY_VIEW_HPP
 
 template <typename T>
-void mult(T alpha, const indexed_dpd_marray_view<const T>& A, const label_vector& idx_A,
-                   const indexed_dpd_marray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const indexed_dpd_marray_view<      T>& C, const label_vector& idx_C)
+void mult(const communicator& comm,
+          T alpha, const MArray::indexed_dpd_marray_view<const T>& A, const label_string& idx_A,
+                   const MArray::indexed_dpd_marray_view<const T>& B, const label_string& idx_B,
+          T  beta, const MArray::indexed_dpd_marray_view<      T>& C, const label_string& idx_C);
+
+template <typename T>
+void mult(T alpha, const MArray::indexed_dpd_marray_view<const T>& A, const label_string& idx_A,
+                   const MArray::indexed_dpd_marray_view<const T>& B, const label_string& idx_B,
+          T  beta, const MArray::indexed_dpd_marray_view<      T>& C, const label_string& idx_C)
 {
     parallelize
     (
@@ -282,12 +259,12 @@ void mult(T alpha, const indexed_dpd_marray_view<const T>& A, const label_vector
     );
 }
 
-#endif
+#endif //MARRAY_INDEXED_DPD_MARRAY_VIEW_HPP
 
-}
+#endif //TBLIS_ENABLE_CXX
 
-#endif
+TBLIS_END_NAMESPACE
 
 #pragma GCC diagnostic pop
 
-#endif
+#endif //TBLIS_IFACE_3T_MULT_H

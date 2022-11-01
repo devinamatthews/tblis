@@ -13,13 +13,12 @@ lib
 /.ptp-sync/
 .ptp-sync-folder
 autom4te.cache
-/config.h
+config.h
 tci_config.h
-/tblis_config.hpp
-/src/configs/include_configs.hpp
-/src/configs/foreach_config.h
-/src/configs/foreach_type.h
-/src/configs/foreach_config_and_type.h
+include_configs.hpp
+foreach_config.h
+foreach_type.h
+foreach_config_and_type.h
 *~
 config.log
 config.status
@@ -28,7 +27,5 @@ stamp-h1
 libtool
 Makefile
 tblis_config.h
-external/tci/.git/
-external/marray/.git/
-external/stl_ext/.git/
+external/*/.git/
 *.clangd

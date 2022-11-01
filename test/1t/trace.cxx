@@ -6,8 +6,8 @@
  * uniformly.
  */
 template <typename T>
-void random_trace(stride_type N, T&& A, label_vector& idx_A,
-                                 T&& B, label_vector& idx_B)
+void random_trace(stride_type N, T&& A, string& idx_A,
+                                 T&& B, string& idx_B)
 {
     int ndim_A, ndim_B;
 
@@ -29,7 +29,7 @@ void random_trace(stride_type N, T&& A, label_vector& idx_A,
 REPLICATED_TEMPLATED_TEST_CASE(trace, R, T, all_types)
 {
     marray<T> A, B;
-    label_vector idx_A, idx_B;
+    string idx_A, idx_B;
 
     random_trace(1000, A, idx_A, B, idx_B);
 
@@ -50,7 +50,7 @@ REPLICATED_TEMPLATED_TEST_CASE(trace, R, T, all_types)
 REPLICATED_TEMPLATED_TEST_CASE(dpd_trace, R, T, all_types)
 {
     dpd_marray<T> A, B, C, D;
-    label_vector idx_A, idx_B;
+    string idx_A, idx_B;
 
     random_trace(1000, A, idx_A, B, idx_B);
 
@@ -78,7 +78,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_trace, R, T, all_types)
 REPLICATED_TEMPLATED_TEST_CASE(indexed_trace, R, T, all_types)
 {
     indexed_marray<T> A, B, C, D;
-    label_vector idx_A, idx_B;
+    string idx_A, idx_B;
 
     random_trace(1000, A, idx_A, B, idx_B);
 
@@ -109,7 +109,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_trace, R, T, all_types)
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_trace, R, T, all_types)
 {
     indexed_dpd_marray<T> A, B, C, D;
-    label_vector idx_A, idx_B;
+    string idx_A, idx_B;
 
     random_trace(1000, A, idx_A, B, idx_B);
 

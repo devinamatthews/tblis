@@ -1,5 +1,5 @@
-#ifndef _TBLIS_ALIGNMENT_HPP_
-#define _TBLIS_ALIGNMENT_HPP_
+#ifndef TBLIS_ALIGNMENT_HPP
+#define TBLIS_ALIGNMENT_HPP
 
 #include <cstddef>
 #include <cstdint>
@@ -89,4 +89,4 @@ constexpr size_t size_as_type(size_t n, type_t type)
 
 }
 
-#endif
+#endif //TBLIS_ALIGNMENT_HPP

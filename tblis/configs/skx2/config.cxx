@@ -2,8 +2,6 @@
 
 #include "util/cpuid.hpp"
 
-extern int vpu_count();
-
 namespace tblis
 {
 

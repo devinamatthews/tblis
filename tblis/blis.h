@@ -1,14 +1,9 @@
-#ifndef _TBLIS_BLIS_H_
-#define _TBLIS_BLIS_H_
+#ifndef TBLIS_BLIS_H
+#define TBLIS_BLIS_H
 
-#include <stdint.h>
+#include <tblis/base/types.h>
 
-#include "tblis_config.h"
-#include "util/basic_types.h"
-
-#ifdef __cplusplus
-using namespace tblis;
-#endif
+TBLIS_BEGIN_NAMESPACE
 
 typedef len_type dim_t;
 typedef stride_type inc_t;
@@ -38,7 +33,7 @@ extern "C" void name \
   cntx_t*    cntx \
 )
 
-#ifdef __cplusplus
+#if TBLIS_ENABLE_CXX
 
 using blis_gemm_ukr_t =
 void (*)(dim_t      k,
@@ -81,6 +76,8 @@ void blis_wrap_gemm_ukr(stride_type m, stride_type n, stride_type k,
     }
 }
 
-#endif
+#endif //TBLIS_ENABLE_CXX
 
-#endif
+TBLIS_END_NAMESPACE
+
+#endif //TBLIS_BLIS_H

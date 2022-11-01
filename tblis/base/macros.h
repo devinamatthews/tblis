@@ -1,26 +1,46 @@
-#ifndef _TBLIS_MACROS_H_
-#define _TBLIS_MACROS_H_
+#ifndef TBLIS_BASE_MACROS_H
+#define TBLIS_BASE_MACROS_H
 
-#define TBLIS_PASTE_(x,y) x##y
+#define TBLIS_ENABLE_CXX (__cplusplus >= 201100l)
+
+#ifdef __cplusplus
+#define TBLIS_EXPORT extern "C"
+#else
+#define TBLIS_EXPORT
+#endif
+
+#define TBLIS_LIKELY(cond) __builtin_expect(cond,1)
+#define TBLIS_UNLIKELY(cond) __builtin_expect(cond,0)
+
+#define TBLIS_STRINGIZE_(...) #__VA_ARGS__
+#define TBLIS_STRINGIZE(...) TBLIS_STRINGIZE_(__VA_ARGS__)
+
+#define TBLIS_CONCAT_(x,y) x##y
+#define TBLIS_CONCAT(x,y) TBLIS_CONCAT_(x,y)
+
+#define TBLIS_FIRST_ARG(arg,...) arg
+
+#define TBLIS_PASTE__(x,y) x##y
+#define TBLIS_PASTE_(x,y) TBLIS_PASTE__(x,y)
 #define TBLIS_PASTE(x,y) TBLIS_PASTE_(x,y)
 
 #define TBLIS_WITH_TYPE_AS(type, T, ...) \
-if ((type) == TYPE_FLOAT) \
+if ((type) == TBLIS_FLOAT) \
 { \
     typedef float T; \
     __VA_ARGS__ \
 } \
-else if ((type) == TYPE_DOUBLE) \
+else if ((type) == TBLIS_DOUBLE) \
 { \
     typedef double T; \
     __VA_ARGS__ \
 } \
-else if ((type) == TYPE_SCOMPLEX) \
+else if ((type) == TBLIS_SCOMPLEX) \
 { \
     typedef scomplex T; \
     __VA_ARGS__ \
 } \
-else if ((type) == TYPE_DCOMPLEX) \
+else if ((type) == TBLIS_DCOMPLEX) \
 { \
     typedef dcomplex T; \
     __VA_ARGS__ \
@@ -34,4 +54,69 @@ else \
 if (condition) { __VA_ARGS__ } \
 else           { __VA_ARGS__ }
 
+#if TBLIS_ENABLE_CXX
+#define TBLIS_BEGIN_NAMESPACE namespace tblis {
+#define TBLIS_END_NAMESPACE }
+#else
+#define TBLIS_BEGIN_NAMESPACE
+#define TBLIS_END_NAMESPACE
 #endif
+
+#define TBLIS_COUNT_ARGS_(arg1,arg2,arg3,arg4,arg5,arg6,num,...) num
+#define TBLIS_COUNT_ARGS(...) TBLIS_COUNT_ARGS_(__VA_ARGS__,6,5,4,3,2,1,0)
+
+#define TBLIS_INC_20 21
+#define TBLIS_INC_19 20
+#define TBLIS_INC_18 19
+#define TBLIS_INC_17 18
+#define TBLIS_INC_16 17
+#define TBLIS_INC_15 16
+#define TBLIS_INC_14 15
+#define TBLIS_INC_13 14
+#define TBLIS_INC_12 13
+#define TBLIS_INC_11 12
+#define TBLIS_INC_10 11
+#define TBLIS_INC_9 11
+#define TBLIS_INC_8 9
+#define TBLIS_INC_7 8
+#define TBLIS_INC_6 7
+#define TBLIS_INC_5 6
+#define TBLIS_INC_4 5
+#define TBLIS_INC_3 4
+#define TBLIS_INC_2 3
+#define TBLIS_INC_1 2
+#define TBLIS_INC_0 1
+#define TBLIS_INC(N) TBLIS_PASTE(TBLIS_INC_,N)
+
+#if TBLIS_ENABLE_CXX
+#define TBLIS_DEFINE_ENUM__1(N,name) } TBLIS_PASTE(tblis_,name); using name = TBLIS_PASTE(tblis_,name);
+#define TBLIS_DEFINE_ENUM__2(N,name,val) TBLIS_PASTE(TBLIS_,name) = val, name = val, TBLIS_PASTE(TBLIS_DEFINE_ENUM_,TBLIS_INC(N))
+#else
+#define TBLIS_DEFINE_ENUM__1(N,name) } TBLIS_PASTE(tblis_,name);
+#define TBLIS_DEFINE_ENUM__2(N,name,val) TBLIS_PASTE(TBLIS_,name) = val, TBLIS_PASTE(TBLIS_DEFINE_ENUM_,TBLIS_INC(N))
+#endif
+
+#define TBLIS_DEFINE_ENUM_20(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(20,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_19(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(19,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_18(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(18,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_17(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(17,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_16(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(16,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_15(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(15,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_14(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(14,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_13(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(13,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_12(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(12,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_11(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(11,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_10(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(10,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_9(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(9,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_8(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(8,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_7(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(7,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_6(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(6,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_5(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(5,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_4(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(4,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_3(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(3,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_2(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(2,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_1(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(1,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM_0(...) TBLIS_PASTE(TBLIS_DEFINE_ENUM__,TBLIS_COUNT_ARGS(__VA_ARGS__))(0,__VA_ARGS__)
+#define TBLIS_DEFINE_ENUM(...) typedef enum { TBLIS_DEFINE_ENUM_0(__VA_ARGS__)
+
+#endif //TBLIS_BASE_MACROS_H

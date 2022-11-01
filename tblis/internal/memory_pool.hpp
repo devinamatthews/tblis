@@ -1,5 +1,5 @@
-#ifndef _TBLIS_MEMORY_POOL_HPP_
-#define _TBLIS_MEMORY_POOL_HPP_
+#ifndef TBLIS_MEMORY_POOL_HPP
+#define TBLIS_MEMORY_POOL_HPP
 
 #include <mutex>
 #include <list>
@@ -10,7 +10,7 @@
 #include <hbwmalloc.h>
 #endif
 
-#include "util/thread.h"
+#include <tblis/base/thread.h>
 
 namespace tblis
 {
@@ -170,4 +170,4 @@ class MemoryPool
 
 }
 
-#endif
+#endif //TBLIS_MEMORY_POOL_HPP

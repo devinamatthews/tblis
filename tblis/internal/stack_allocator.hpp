@@ -1,10 +1,11 @@
-#ifndef _TBLIS_STACK_ALLOCATOR_HPP_
-#define _TBLIS_STACK_ALLOCATOR_HPP_
+#ifndef TBLIS_STACK_ALLOCATOR_HPP
+#define TBLIS_STACK_ALLOCATOR_HPP
 
 #include <stdexcept>
 #include <cstddef>
 #include <vector>
 #include <memory>
+#include <new>
 
 template <typename T>
 class stack_allocator
@@ -129,7 +130,7 @@ class stack_allocator
         T* allocate(size_t size)
         {
             if (size*sizeof(T) > _stack_size)
-                throw std::bad_alloc("stack is not large enough");
+                throw std::bad_alloc();
 
             T* ptr = _stacks->at(_stack).template allocate<T>(size, _align);
 
@@ -138,13 +139,13 @@ class stack_allocator
                 if (++_stack >= _stacks->size())
                 {
                     if (!_expandable)
-                        throw std::bad_alloc("stack space exhausted");
+                        throw std::bad_alloc();
                     _stacks->emplace_back(_stack_size);
                 }
 
                 ptr = _stacks->at(_stack).template allocate<T>(size, _align);
                 if (!ptr)
-                    throw std::bad_alloc("error allocating on new stack");
+                    throw std::bad_alloc();
             }
 
             return ptr;
@@ -166,4 +167,4 @@ class stack_allocator
         int _stack;
 };
 
-#endif
+#endif //TBLIS_STACK_ALLOCATOR_HPP

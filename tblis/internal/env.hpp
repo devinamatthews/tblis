@@ -1,23 +1,19 @@
-#ifndef _TBLIS_ENV_HPP_
-#define _TBLIS_ENV_HPP_
+#ifndef TBLIS_INTERNAL_ENV_HPP
+#define TBLIS_BASE_ENV_H
 
-#include <string>
+#include <tblis/base/env.h>
+
 #include <cstdlib>
 
 namespace tblis
 {
 
-inline long envtol(const std::string& env, long fallback=0)
+inline long envtol(const char* name, long def)
 {
-    char* str = getenv(env.c_str());
-    if (str) return strtol(str, nullptr, 10);
-    return fallback;
+    auto env = getenv(name);
+    return env ? strtol(env, NULL, 0) : def;
 }
-
-int get_verbose();
-
-void set_verbose(int);
 
 }
 
-#endif
+#endif //TBLIS_INTERNAL_ENV_HPP

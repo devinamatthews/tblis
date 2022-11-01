@@ -1,23 +1,14 @@
-#ifndef _TBLIS_ENV_HPP_
-#define _TBLIS_ENV_HPP_
+#ifndef TBLIS_BASE_ENV_H
+#define TBLIS_BASE_ENV_H
 
-#include <string>
-#include <cstdlib>
+#include <tblis/base/macros.h>
 
-namespace tblis
-{
+TBLIS_EXPORT int tblis_get_verbosity();
 
-inline long envtol(const std::string& env, long fallback=0)
-{
-    char* str = getenv(env.c_str());
-    if (str) return strtol(str, nullptr, 10);
-    return fallback;
-}
+TBLIS_EXPORT void tblis_set_verbosity(int level);
 
-int get_verbose();
+TBLIS_EXPORT int tblis_get_num_threads();
 
-void set_verbose(int);
+TBLIS_EXPORT void tblis_set_num_threads(int num_threads);
 
-}
-
-#endif
+#endif //TBLIS_BASE_ENV_H

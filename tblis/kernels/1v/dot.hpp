@@ -1,17 +1,10 @@
-#ifndef _TBLIS_KERNELS_1V_DOT_HPP_
-#define _TBLIS_KERNELS_1V_DOT_HPP_
+#ifndef TBLIS_KERNELS_1V_DOT_HPP
+#define TBLIS_KERNELS_1V_DOT_HPP 1
 
-#include "util/thread.h"
-#include "util/basic_types.h"
-#include "util/macros.h"
+#include <tblis/internal/types.hpp>
 
 namespace tblis
 {
-
-using dot_ukr_t =
-    void (*)(len_type n,
-             bool conj_A, const void* A, stride_type inc_A,
-             bool conj_B, const void* B, stride_type inc_B, void* value);
 
 template <typename Config, typename T>
 void dot_ukr_def(len_type n,
@@ -68,4 +61,4 @@ void dot_ukr_def(len_type n,
 
 }
 
-#endif
+#endif //TBLIS_KERNELS_1V_DOT_HPP

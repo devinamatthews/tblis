@@ -1,6 +1,4 @@
-#include "set.hpp"
-
-#include "util/tensor.hpp"
+#include <tblis/internal/dense.hpp>
 
 namespace tblis
 {

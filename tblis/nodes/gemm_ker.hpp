@@ -1,12 +1,12 @@
 #ifndef _TBLIS_NODES_GEMM_MKR_HPP_
 #define _TBLIS_NODES_GEMM_MKR_HPP_
 
-#include "util/basic_types.h"
-#include "util/thread.h"
+#include <tblis/base/thread.h>
+#include <tblis/base/configs.h>
 
-#include "configs/configs.hpp"
+#include <tblis/internal/types.hpp>
 
-#include "matrix/packed_matrix.hpp"
+#include <tblis/matrix/packed_matrix.hpp>
 
 namespace tblis
 {

@@ -1,16 +1,14 @@
-#ifndef _TBLIS_IFACE_1T_ADD_H_
-#define _TBLIS_IFACE_1T_ADD_H_
+#ifndef TBLIS_IFACE_1T_ADD_H
+#define TBLIS_IFACE_1T_ADD_H
 
-#include "../../util/thread.h"
-#include "../../util/basic_types.h"
+#include <tblis/base/types.h>
+#include <tblis/base/thread.h>
+#include <tblis/base/configs.h>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnull-dereference"
 
-#ifdef __cplusplus
-namespace tblis
-{
-#endif
+TBLIS_BEGIN_NAMESPACE
 
 TBLIS_EXPORT
 void tblis_tensor_add(const tblis_comm* comm,
@@ -20,173 +18,166 @@ void tblis_tensor_add(const tblis_comm* comm,
                             tblis_tensor* B,
                       const label_type* idx_B);
 
-#if defined(__cplusplus)
+#if TBLIS_ENABLE_CXX
+
+void add(const communicator& comm,
+         const scalar& alpha,
+         const const_tensor& A_,
+         const label_string& idx_A,
+         const scalar& beta,
+         const tensor& B_,
+         const label_string& idx_B);
 
 inline
 void add(const communicator& comm,
          const scalar& alpha,
-         const tensor& A_,
-         const label_vector& idx_A,
+         const const_tensor& A,
+         const label_string& idx_A,
+         const tensor& B,
+         const label_string& idx_B)
+{
+    add(comm, alpha, A, idx_A, {0.0, A.type}, B, idx_B);
+}
+
+inline
+void add(const communicator& comm,
+         const const_tensor& A,
+         const label_string& idx_A,
          const scalar& beta,
-               tensor&& B,
-         const label_vector& idx_B)
+         const tensor& B,
+         const label_string& idx_B)
 {
-    auto A(A_);
-    A.scalar *= alpha.convert(A.type);
-    B.scalar *= beta.convert(B.type);
-    tblis_tensor_add(comm, nullptr, &A, idx_A.data(), &B, idx_B.data());
+    add(comm, {1.0, A.type}, A, idx_A, beta, B, idx_B);
 }
 
 inline
 void add(const communicator& comm,
-         const scalar& alpha,
-         const tensor& A,
-         const label_vector& idx_A,
-               tensor&& B,
-         const label_vector& idx_B)
+         const const_tensor& A,
+         const label_string& idx_A,
+         const tensor& B,
+         const label_string& idx_B)
 {
-    add(comm, alpha, A, idx_A, {0.0, A.type}, std::move(B), idx_B);
-}
-
-inline
-void add(const communicator& comm,
-         const tensor& A,
-         const label_vector& idx_A,
-         const scalar& beta,
-               tensor&& B,
-         const label_vector& idx_B)
-{
-    add(comm, {1.0, A.type}, A, idx_A, beta, std::move(B), idx_B);
-}
-
-inline
-void add(const communicator& comm,
-         const tensor& A,
-         const label_vector& idx_A,
-               tensor&& B,
-         const label_vector& idx_B)
-{
-    add(comm, {1.0, A.type}, A, idx_A, {0.0, A.type}, std::move(B), idx_B);
+    add(comm, {1.0, A.type}, A, idx_A, {0.0, A.type}, B, idx_B);
 }
 
 inline
 void add(const communicator& comm,
          const scalar& alpha,
-         const tensor& A,
+         const const_tensor& A,
          const scalar& beta,
-               tensor&& B)
+         const tensor& B)
 {
-    add(comm, alpha, A, idx(A), beta, std::move(B), idx(B));
+    add(comm, alpha, A, idx(A), beta, B, idx(B));
 }
 
 inline
 void add(const communicator& comm,
          const scalar& alpha,
-         const tensor& A,
-               tensor&& B)
+         const const_tensor& A,
+         const tensor& B)
 {
-    add(comm, alpha, A, {0.0, A.type}, std::move(B));
+    add(comm, alpha, A, {0.0, A.type}, B);
 }
 
 inline
 void add(const communicator& comm,
-         const tensor& A,
+         const const_tensor& A,
          const scalar& beta,
-               tensor&& B)
+         const tensor& B)
 {
-    add(comm, {1.0, A.type}, A, beta, std::move(B));
+    add(comm, {1.0, A.type}, A, beta, B);
 }
 
 inline
 void add(const communicator& comm,
-         const tensor& A,
-               tensor&& B)
+         const const_tensor& A,
+         const tensor& B)
 {
-    add(comm, {1.0, A.type}, A, {0.0, A.type}, std::move(B));
+    add(comm, {1.0, A.type}, A, {0.0, A.type}, B);
 }
 
 inline
 void add(const scalar& alpha,
-         const tensor& A,
-         const label_vector& idx_A,
+         const const_tensor& A,
+         const label_string& idx_A,
          const scalar& beta,
-               tensor&& B,
-         const label_vector& idx_B)
+         const tensor& B,
+         const label_string& idx_B)
 {
-    add(*(communicator*)nullptr, alpha, A, idx_A, beta, std::move(B), idx_B);
+    add(*(communicator*)nullptr, alpha, A, idx_A, beta, B, idx_B);
 }
 
 inline
 void add(const scalar& alpha,
-         const tensor& A,
-         const label_vector& idx_A,
-               tensor&& B,
-         const label_vector& idx_B)
+         const const_tensor& A,
+         const label_string& idx_A,
+         const tensor& B,
+         const label_string& idx_B)
 {
-    add(alpha, A, idx_A, {0.0, A.type}, std::move(B), idx_B);
+    add(alpha, A, idx_A, {0.0, A.type}, B, idx_B);
 }
 
 inline
-void add(const tensor& A,
-         const label_vector& idx_A,
+void add(const const_tensor& A,
+         const label_string& idx_A,
          const scalar& beta,
-               tensor&& B,
-         const label_vector& idx_B)
+         const tensor& B,
+         const label_string& idx_B)
 {
-    add({1.0, A.type}, A, idx_A, beta, std::move(B), idx_B);
+    add({1.0, A.type}, A, idx_A, beta, B, idx_B);
 }
 
 inline
-void add(const tensor& A,
-         const label_vector& idx_A,
-               tensor&& B,
-         const label_vector& idx_B)
+void add(const const_tensor& A,
+         const label_string& idx_A,
+         const tensor& B,
+         const label_string& idx_B)
 {
-    add({1.0, A.type}, A, idx_A, {0.0, A.type}, std::move(B), idx_B);
+    add({1.0, A.type}, A, idx_A, {0.0, A.type}, B, idx_B);
 }
 
 inline
 void add(const scalar& alpha,
-         const tensor& A,
+         const const_tensor& A,
          const scalar& beta,
-               tensor&& B)
+         const tensor& B)
 {
-    add(alpha, A, idx(A), beta, std::move(B), idx(B));
+    add(alpha, A, idx(A), beta, B, idx(B));
 }
 
 inline
 void add(const scalar& alpha,
-         const tensor& A,
-               tensor&& B)
+         const const_tensor& A,
+         const tensor& B)
 {
-    add(alpha, A, {0.0, A.type}, std::move(B));
+    add(alpha, A, {0.0, A.type}, B);
 }
 
 inline
-void add(const tensor& A,
+void add(const const_tensor& A,
          const scalar& beta,
-               tensor&& B)
+         const tensor& B)
 {
-    add({1.0, A.type}, A, beta, std::move(B));
+    add({1.0, A.type}, A, beta, B);
 }
 
 inline
-void add(const tensor& A,
-               tensor&& B)
+void add(const const_tensor& A,
+         const tensor& B)
 {
-    add({1.0, A.type}, A, {0.0, A.type}, std::move(B));
+    add({1.0, A.type}, A, {0.0, A.type}, B);
 }
 
-#if !defined(TBLIS_DONT_USE_CXX11)
+#ifdef MARRAY_DPD_MARRAY_VIEW_HPP
 
 template <typename T>
 void add(const communicator& comm,
-         T alpha, dpd_marray_view<const T> A, const label_vector& idx_A,
-         T  beta, dpd_marray_view<      T> B, const label_vector& idx_B);
+         T alpha, MArray::dpd_marray_view<const T> A, const label_string& idx_A,
+         T  beta, MArray::dpd_marray_view<      T> B, const label_string& idx_B);
 
 template <typename T>
-void add(T alpha, dpd_marray_view<const T> A, const label_vector& idx_A,
-         T  beta, dpd_marray_view<      T> B, const label_vector& idx_B)
+void add(T alpha, MArray::dpd_marray_view<const T> A, const label_string& idx_A,
+         T  beta, MArray::dpd_marray_view<      T> B, const label_string& idx_B)
 {
     parallelize
     (
@@ -198,14 +189,18 @@ void add(T alpha, dpd_marray_view<const T> A, const label_vector& idx_A,
     );
 }
 
-template <typename T>
-void add(const communicator& comm,
-         T alpha, indexed_marray_view<const T> A, const label_vector& idx_A,
-         T  beta, indexed_marray_view<      T> B, const label_vector& idx_B);
+#endif //MARRAY_DPD_MARRAY_VIEW_HPP
+
+#ifdef MARRAY_INDEXED_MARRAY_VIEW_HPP
 
 template <typename T>
-void add(T alpha, indexed_marray_view<const T> A, const label_vector& idx_A,
-         T  beta, indexed_marray_view<      T> B, const label_vector& idx_B)
+void add(const communicator& comm,
+         T alpha, MArray::indexed_marray_view<const T> A, const label_string& idx_A,
+         T  beta, MArray::indexed_marray_view<      T> B, const label_string& idx_B);
+
+template <typename T>
+void add(T alpha, MArray::indexed_marray_view<const T> A, const label_string& idx_A,
+         T  beta, MArray::indexed_marray_view<      T> B, const label_string& idx_B)
 {
     parallelize
     (
@@ -217,14 +212,18 @@ void add(T alpha, indexed_marray_view<const T> A, const label_vector& idx_A,
     );
 }
 
-template <typename T>
-void add(const communicator& comm,
-         T alpha, indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
-         T  beta, indexed_dpd_marray_view<      T> B, const label_vector& idx_B);
+#endif //MARRAY_INDEXED_MARRAY_VIEW_HPP
+
+#ifdef MARRAY_INDEXED_DPD_MARRAY_VIEW_HPP
 
 template <typename T>
-void add(T alpha, indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
-         T  beta, indexed_dpd_marray_view<      T> B, const label_vector& idx_B)
+void add(const communicator& comm,
+         T alpha, MArray::indexed_dpd_marray_view<const T> A, const label_string& idx_A,
+         T  beta, MArray::indexed_dpd_marray_view<      T> B, const label_string& idx_B);
+
+template <typename T>
+void add(T alpha, MArray::indexed_dpd_marray_view<const T> A, const label_string& idx_A,
+         T  beta, MArray::indexed_dpd_marray_view<      T> B, const label_string& idx_B)
 {
     parallelize
     (
@@ -236,12 +235,12 @@ void add(T alpha, indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
     );
 }
 
-#endif
+#endif //MARRAY_INDEXED_DPD_MARRAY_VIEW_HPP
 
-}
+#endif //TBLIS_ENABLE_CXX
 
-#endif
+TBLIS_END_NAMESPACE
 
 #pragma GCC diagnostic pop
 
-#endif
+#endif //TBLIS_IFACE_1T_ADD_H

@@ -1,17 +1,10 @@
-#ifndef _TBLIS_KERNELS_1M_TRANS_HPP_
-#define _TBLIS_KERNELS_1M_TRANS_HPP_
+#ifndef TBLIS_KERNELS_1M_TRANS_HPP
+#define TBLIS_KERNELS_1M_TRANS_HPP 1
 
-#include "util/thread.h"
-#include "util/basic_types.h"
-#include "util/macros.h"
+#include <tblis/internal/types.hpp>
 
 namespace tblis
 {
-
-using trans_ukr_t =
-    void (*)(len_type m, len_type n,
-             const void* alpha, bool conj_A, const void* A, stride_type rs_A, stride_type cs_A,
-             const void*  beta, bool conj_B,       void* B, stride_type rs_B, stride_type cs_B);
 
 template <typename Config, typename T>
 void trans_ukr_def(len_type m, len_type n,
@@ -194,4 +187,4 @@ void trans_ukr_def(len_type m, len_type n,
 
 }
 
-#endif
+#endif //TBLIS_KERNELS_1M_TRANS_HPP

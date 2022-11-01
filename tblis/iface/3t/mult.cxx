@@ -1,19 +1,4 @@
-#include "mult.h"
-
-#include "util/macros.h"
-#include "util/tensor.hpp"
-#include "internal/1t/dense/scale.hpp"
-#include "internal/1t/dense/set.hpp"
-#include "internal/3t/dense/mult.hpp"
-#include "internal/1t/dpd/scale.hpp"
-#include "internal/1t/dpd/set.hpp"
-#include "internal/3t/dpd/mult.hpp"
-#include "internal/1t/indexed/scale.hpp"
-#include "internal/1t/indexed/set.hpp"
-#include "internal/3t/indexed/mult.hpp"
-#include "internal/1t/indexed_dpd/scale.hpp"
-#include "internal/1t/indexed_dpd/set.hpp"
-#include "internal/3t/indexed_dpd/mult.hpp"
+#include <tblis/internal/indexed_dpd.hpp>
 
 namespace tblis
 {
@@ -31,47 +16,20 @@ void tblis_tensor_mult(const tblis_comm* comm,
     TBLIS_ASSERT(A->type == B->type);
     TBLIS_ASSERT(A->type == C->type);
 
-    auto ndim_A = A->ndim;
-    len_vector len_A;
-    stride_vector stride_A;
-    label_vector idx_A;
-    diagonal(ndim_A, A->len, A->stride, idx_A_, len_A, stride_A, idx_A);
+    len_vector len_A(A->len, A->len+A->ndim);
+    stride_vector stride_A(A->stride, A->stride+A->ndim);
+    label_vector idx_A(idx_A_, idx_A_+A->ndim);
+    internal::canonicalize(len_A, stride_A, idx_A);
 
-    auto ndim_B = B->ndim;
-    len_vector len_B;
-    stride_vector stride_B;
-    label_vector idx_B;
-    diagonal(ndim_B, B->len, B->stride, idx_B_, len_B, stride_B, idx_B);
+    len_vector len_B(B->len, B->len+B->ndim);
+    stride_vector stride_B(B->stride, B->stride+B->ndim);
+    label_vector idx_B(idx_B_, idx_B_+B->ndim);
+    internal::canonicalize(len_B, stride_B, idx_B);
 
-    auto ndim_C = C->ndim;
-    len_vector len_C;
-    stride_vector stride_C;
-    label_vector idx_C;
-    diagonal(ndim_C, C->len, C->stride, idx_C_, len_C, stride_C, idx_C);
-
-    /*
-    auto ndim_ABC = stl_ext::intersection(idx_A, idx_B, idx_C).size();
-
-    if (idx_A.size() == ndim_ABC ||
-        idx_B.size() == ndim_ABC ||
-        idx_C.size() == ndim_ABC)
-    {
-        len_A.push_back(1);
-        len_B.push_back(1);
-        len_C.push_back(1);
-        len_C.push_back(1);
-        stride_A.push_back(0);
-        stride_B.push_back(0);
-        stride_C.push_back(0);
-        stride_C.push_back(0);
-        label_type idx = detail::free_idx(idx_A, idx_B, idx_C);
-        idx_A.push_back(idx);
-        idx_C.push_back(idx);
-        idx = detail::free_idx(idx_A, idx_B, idx_C);
-        idx_B.push_back(idx);
-        idx_C.push_back(idx);
-    }
-    */
+    len_vector len_C(C->len, C->len+C->ndim);
+    stride_vector stride_C(C->stride, C->stride+C->ndim);
+    label_vector idx_C(idx_C_, idx_C_+C->ndim);
+    internal::canonicalize(len_C, stride_C, idx_C);
 
     auto idx_ABC = stl_ext::intersection(idx_A, idx_B, idx_C);
     auto len_ABC = stl_ext::select_from(len_A, idx_A, idx_ABC);
@@ -114,10 +72,10 @@ void tblis_tensor_mult(const tblis_comm* comm,
     TBLIS_ASSERT(stl_ext::intersection(idx_AC, idx_ABC).empty());
     TBLIS_ASSERT(stl_ext::intersection(idx_BC, idx_ABC).empty());
 
-    fold(len_ABC, idx_ABC, stride_A_ABC, stride_B_ABC, stride_C_ABC);
-    fold(len_AB, idx_AB, stride_A_AB, stride_B_AB);
-    fold(len_AC, idx_AC, stride_A_AC, stride_C_AC);
-    fold(len_BC, idx_BC, stride_B_BC, stride_C_BC);
+    internal::fold(len_ABC, stride_C_ABC, stride_A_ABC, stride_B_ABC, idx_ABC);
+    internal::fold(len_AB, stride_A_AB, stride_B_AB, idx_AB);
+    internal::fold(len_AC, stride_C_AC, stride_A_AC, idx_AC);
+    internal::fold(len_BC, stride_C_BC, stride_B_BC, idx_BC);
 
     len_vector nolen;
     stride_vector nostride;
@@ -134,18 +92,22 @@ void tblis_tensor_mult(const tblis_comm* comm,
     {
         if (alpha.is_zero())
         {
+            len_ABC.insert(len_ABC.end(), len_AC.begin(), len_AC.end());
+            len_ABC.insert(len_ABC.end(), len_BC.begin(), len_BC.end());
+            stride_C_ABC.insert(stride_C_ABC.end(), stride_C_AC.begin(), stride_C_AC.end());
+            stride_C_ABC.insert(stride_C_ABC.end(), stride_C_BC.begin(), stride_C_BC.end());
+
             if (beta.is_zero())
             {
                 internal::set(A->type, comm, get_config(cfg),
-                              len_AC+len_BC+len_ABC, beta, data_C,
-                              stride_C_AC+stride_C_BC+stride_C_ABC);
+                              len_ABC, beta, data_C,
+                              stride_C_ABC);
             }
             else if (!beta.is_one() || (beta.is_complex() && C->conj))
             {
                 internal::scale(A->type, comm, get_config(cfg),
-                                len_AC+len_BC+len_ABC,
-                                beta, C->conj, data_C,
-                                stride_C_AC+stride_C_BC+stride_C_ABC);
+                                len_ABC, beta, C->conj, data_C,
+                                stride_C_ABC);
             }
         }
         else
@@ -167,9 +129,9 @@ void tblis_tensor_mult(const tblis_comm* comm,
 
 template <typename T>
 void mult(const communicator& comm,
-          T alpha, const dpd_marray_view<const T>& A, const label_vector& idx_A,
-                   const dpd_marray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const dpd_marray_view<      T>& C, const label_vector& idx_C)
+          T alpha, const dpd_marray_view<const T>& A, const label_string& idx_A_,
+                   const dpd_marray_view<const T>& B, const label_string& idx_B_,
+          T  beta, const dpd_marray_view<      T>& C, const label_string& idx_C_)
 {
     auto nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
@@ -178,6 +140,10 @@ void mult(const communicator& comm,
     auto ndim_A = A.dimension();
     auto ndim_B = B.dimension();
     auto ndim_C = C.dimension();
+
+    label_vector idx_A(idx_A_.idx, idx_A_.idx+ndim_A);
+    label_vector idx_B(idx_B_.idx, idx_B_.idx+ndim_B);
+    label_vector idx_C(idx_C_.idx, idx_C_.idx+ndim_C);
 
     for (auto i : range(1,ndim_A))
     for (auto j : range(i))
@@ -278,20 +244,24 @@ void mult(const communicator& comm,
 
 #define FOREACH_TYPE(T) \
 template void mult(const communicator& comm, \
-                   T alpha, const dpd_marray_view<const T>& A, const label_vector& idx_A, \
-                            const dpd_marray_view<const T>& B, const label_vector& idx_B, \
-                   T  beta, const dpd_marray_view<      T>& C, const label_vector& idx_C);
-#include "configs/foreach_type.h"
+                   T alpha, const dpd_marray_view<const T>& A, const label_string& idx_A, \
+                            const dpd_marray_view<const T>& B, const label_string& idx_B, \
+                   T  beta, const dpd_marray_view<      T>& C, const label_string& idx_C);
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void mult(const communicator& comm,
-          T alpha, const indexed_marray_view<const T>& A, const label_vector& idx_A,
-                   const indexed_marray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const indexed_marray_view<      T>& C, const label_vector& idx_C)
+          T alpha, const indexed_marray_view<const T>& A, const label_string& idx_A_,
+                   const indexed_marray_view<const T>& B, const label_string& idx_B_,
+          T  beta, const indexed_marray_view<      T>& C, const label_string& idx_C_)
 {
     auto ndim_A = A.dimension();
     auto ndim_B = B.dimension();
     auto ndim_C = C.dimension();
+
+    label_vector idx_A(idx_A_.idx, idx_A_.idx+ndim_A);
+    label_vector idx_B(idx_B_.idx, idx_B_.idx+ndim_B);
+    label_vector idx_C(idx_C_.idx, idx_C_.idx+ndim_C);
 
     for (auto i : range(1,ndim_A))
     for (auto j : range(i))
@@ -388,16 +358,16 @@ void mult(const communicator& comm,
 
 #define FOREACH_TYPE(T) \
 template void mult(const communicator& comm, \
-                   T alpha, const indexed_marray_view<const T>& A, const label_vector& idx_A, \
-                            const indexed_marray_view<const T>& B, const label_vector& idx_B, \
-                   T  beta, const indexed_marray_view<      T>& C, const label_vector& idx_C);
-#include "configs/foreach_type.h"
+                   T alpha, const indexed_marray_view<const T>& A, const label_string& idx_A, \
+                            const indexed_marray_view<const T>& B, const label_string& idx_B, \
+                   T  beta, const indexed_marray_view<      T>& C, const label_string& idx_C);
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void mult(const communicator& comm,
-          T alpha, const indexed_dpd_marray_view<const T>& A, const label_vector& idx_A,
-                   const indexed_dpd_marray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const indexed_dpd_marray_view<      T>& C, const label_vector& idx_C)
+          T alpha, const indexed_dpd_marray_view<const T>& A, const label_string& idx_A_,
+                   const indexed_dpd_marray_view<const T>& B, const label_string& idx_B_,
+          T  beta, const indexed_dpd_marray_view<      T>& C, const label_string& idx_C_)
 {
     auto nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
@@ -406,6 +376,10 @@ void mult(const communicator& comm,
     auto ndim_A = A.dimension();
     auto ndim_B = B.dimension();
     auto ndim_C = C.dimension();
+
+    label_vector idx_A(idx_A_.idx, idx_A_.idx+ndim_A);
+    label_vector idx_B(idx_B_.idx, idx_B_.idx+ndim_B);
+    label_vector idx_C(idx_C_.idx, idx_C_.idx+ndim_C);
 
     for (auto i : range(1,ndim_A))
     for (auto j : range(i))
@@ -506,9 +480,53 @@ void mult(const communicator& comm,
 
 #define FOREACH_TYPE(T) \
 template void mult(const communicator& comm, \
-                   T alpha, const indexed_dpd_marray_view<const T>& A, const label_vector& idx_A, \
-                            const indexed_dpd_marray_view<const T>& B, const label_vector& idx_B, \
-                   T  beta, const indexed_dpd_marray_view<      T>& C, const label_vector& idx_C);
-#include "configs/foreach_type.h"
+                   T alpha, const indexed_dpd_marray_view<const T>& A, const label_string& idx_A, \
+                            const indexed_dpd_marray_view<const T>& B, const label_string& idx_B, \
+                   T  beta, const indexed_dpd_marray_view<      T>& C, const label_string& idx_C);
+#include <tblis/internal/foreach_type.h>
+
+void mult(const communicator& comm,
+          const scalar& alpha,
+          const const_tensor& A_,
+          const label_string& idx_A,
+          const const_tensor& B,
+          const label_string& idx_B,
+          const scalar& beta,
+          const tensor& C_,
+          const label_string& idx_C)
+{
+    tensor A(A_.tensor_);
+    A.scalar *= alpha;
+
+    tensor C(C_);
+    C.scalar *= beta;
+
+    tblis_tensor_mult(comm, nullptr, &A, idx_A.idx, &B.tensor_, idx_B.idx, &C, idx_C.idx);
+}
+
+void mult(const communicator& comm,
+          const scalar& alpha,
+          const const_tensor& A,
+          const const_tensor& B,
+          const scalar& beta,
+          const tensor& C)
+{
+    label_vector idx_A, idx_B, idx_C;
+
+    TBLIS_ASSERT((A.tensor_.ndim+B.tensor_.ndim+C.ndim)%2 == 0);
+
+    auto nAB = (A.tensor_.ndim+B.tensor_.ndim-C.ndim)/2;
+    auto nAC = (A.tensor_.ndim+C.ndim-B.tensor_.ndim)/2;
+    auto nBC = (B.tensor_.ndim+C.ndim-A.tensor_.ndim)/2;
+
+    for (auto i : range(nAC)) idx_A.push_back(i);
+    for (auto i : range(nAC)) idx_C.push_back(i);
+    for (auto i : range(nAB)) idx_A.push_back(nAC+i);
+    for (auto i : range(nAB)) idx_B.push_back(nAC+i);
+    for (auto i : range(nBC)) idx_B.push_back(nAC+nAB+i);
+    for (auto i : range(nBC)) idx_C.push_back(nAC+nAB+i);
+
+    mult(comm, alpha, A, idx_A, B, idx_B, beta, C, idx_C);
+}
 
 }

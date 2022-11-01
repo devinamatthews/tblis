@@ -1,19 +1,4 @@
-#include "add.h"
-
-#include "util/macros.h"
-#include "util/tensor.hpp"
-#include "internal/1t/dense/add.hpp"
-#include "internal/1t/dense/scale.hpp"
-#include "internal/1t/dense/set.hpp"
-#include "internal/1t/dpd/add.hpp"
-#include "internal/1t/dpd/scale.hpp"
-#include "internal/1t/dpd/set.hpp"
-#include "internal/1t/indexed/add.hpp"
-#include "internal/1t/indexed/scale.hpp"
-#include "internal/1t/indexed/set.hpp"
-#include "internal/1t/indexed_dpd/add.hpp"
-#include "internal/1t/indexed_dpd/scale.hpp"
-#include "internal/1t/indexed_dpd/set.hpp"
+#include <tblis/internal/indexed_dpd.hpp>
 
 namespace tblis
 {
@@ -28,28 +13,15 @@ void tblis_tensor_add(const tblis_comm* comm,
 {
     TBLIS_ASSERT(A->type == B->type);
 
-    auto ndim_A = A->ndim;
-    len_vector len_A;
-    stride_vector stride_A;
-    label_vector idx_A;
-    diagonal(ndim_A, A->len, A->stride, idx_A_, len_A, stride_A, idx_A);
+    len_vector len_A(A->len, A->len+A->ndim);
+    stride_vector stride_A(A->stride, A->stride+A->ndim);
+    label_vector idx_A(idx_A_, idx_A_+A->ndim);
+    internal::canonicalize(len_A, stride_A, idx_A);
 
-    auto ndim_B = B->ndim;
-    len_vector len_B;
-    stride_vector stride_B;
-    label_vector idx_B;
-    diagonal(ndim_B, B->len, B->stride, idx_B_, len_B, stride_B, idx_B);
-
-    if (idx_A.empty() || idx_B.empty())
-    {
-        len_A.push_back(1);
-        len_B.push_back(1);
-        stride_A.push_back(0);
-        stride_B.push_back(0);
-        label_type idx = detail::free_idx(idx_A, idx_B);
-        idx_A.push_back(idx);
-        idx_B.push_back(idx);
-    }
+    len_vector len_B(B->len, B->len+B->ndim);
+    stride_vector stride_B(B->stride, B->stride+B->ndim);
+    label_vector idx_B(idx_B_, idx_B_+B->ndim);
+    internal::canonicalize(len_B, stride_B, idx_B);
 
     auto idx_AB = stl_ext::intersection(idx_A, idx_B);
     auto len_AB = stl_ext::select_from(len_A, idx_A, idx_AB);
@@ -67,28 +39,31 @@ void tblis_tensor_add(const tblis_comm* comm,
 
     TBLIS_ASSERT(idx_A_only.empty() || idx_B_only.empty());
 
-    fold(len_AB, idx_AB, stride_A_AB, stride_B_AB);
-    fold(len_A_only, idx_A_only, stride_A_only);
-    fold(len_B_only, idx_B_only, stride_B_only);
+    internal::fold(len_AB, stride_B_AB, stride_A_AB, idx_AB);
+    internal::fold(len_A_only, stride_A_only, idx_A_only);
+    internal::fold(len_B_only, stride_B_only, idx_B_only);
 
     parallelize_if(
     [&](const communicator& comm)
     {
         if (A->scalar.is_zero())
         {
+            len_B_only.insert(len_B_only.end(), len_AB.begin(), len_AB.end());
+            stride_B_only.insert(stride_B_only.end(), stride_B_AB.begin(), stride_B_AB.end());
+
             if (B->scalar.is_zero())
             {
                 internal::set(A->type, comm, get_config(cfg),
-                              len_B_only+len_AB, B->scalar,
+                              len_B_only, B->scalar,
                               reinterpret_cast<char*>(B->data),
-                              stride_B_only+stride_B_AB);
+                              stride_B_only);
             }
             else if (!B->scalar.is_one() || (B->scalar.is_complex() && B->conj))
             {
                 internal::scale(A->type, comm, get_config(cfg),
-                                len_B_only+len_AB, B->scalar, B->conj,
+                                len_B_only, B->scalar, B->conj,
                                 reinterpret_cast<char*>(B->data),
-                                stride_B_only+stride_B_AB);
+                                stride_B_only);
             }
         }
         else
@@ -108,14 +83,17 @@ void tblis_tensor_add(const tblis_comm* comm,
 
 template <typename T>
 void add(const communicator& comm,
-         T alpha, dpd_marray_view<const T> A, const label_vector& idx_A,
-         T  beta, dpd_marray_view<      T> B, const label_vector& idx_B)
+         T alpha, dpd_marray_view<const T> A, const label_string& idx_A_,
+         T  beta, dpd_marray_view<      T> B, const label_string& idx_B_)
 {
     auto nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
 
     auto ndim_A = A.dimension();
     auto ndim_B = B.dimension();
+
+    label_vector idx_A(idx_A_.idx, idx_A_.idx+ndim_A);
+    label_vector idx_B(idx_B_.idx, idx_B_.idx+ndim_B);
 
     for (auto i : range(1,ndim_A))
     for (auto j : range(i))
@@ -153,15 +131,17 @@ void add(const communicator& comm,
 
     if (alpha == T(0) || (idx_A_only.empty() && idx_B_only.empty() && A.irrep() != B.irrep()))
     {
+        idx_B_B.insert(idx_B_B.end(), idx_B_AB.begin(), idx_B_AB.end());
+
         if (beta == T(0))
         {
             internal::set(type_tag<T>::value, comm, get_default_config(),
-                          beta, reinterpret_cast<dpd_marray_view<char>&>(B), idx_B_B+idx_B_AB);
+                          beta, reinterpret_cast<dpd_marray_view<char>&>(B), idx_B_B);
         }
         else
         {
             internal::scale(type_tag<T>::value, comm, get_default_config(),
-                            beta, false, reinterpret_cast<dpd_marray_view<char>&>(B), idx_B_B+idx_B_AB);
+                            beta, false, reinterpret_cast<dpd_marray_view<char>&>(B), idx_B_B);
         }
     }
     else
@@ -174,17 +154,20 @@ void add(const communicator& comm,
 
 #define FOREACH_TYPE(T) \
 template void add(const communicator& comm, \
-                   T alpha, dpd_marray_view<const T> A, const label_vector& idx_A, \
-                   T  beta, dpd_marray_view<      T> B, const label_vector& idx_B);
-#include "configs/foreach_type.h"
+                   T alpha, dpd_marray_view<const T> A, const label_string& idx_A, \
+                   T  beta, dpd_marray_view<      T> B, const label_string& idx_B);
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void add(const communicator& comm,
-         T alpha, indexed_marray_view<const T> A, const label_vector& idx_A,
-         T  beta, indexed_marray_view<      T> B, const label_vector& idx_B)
+         T alpha, indexed_marray_view<const T> A, const label_string& idx_A_,
+         T  beta, indexed_marray_view<      T> B, const label_string& idx_B_)
 {
     auto ndim_A = A.dimension();
     auto ndim_B = B.dimension();
+
+    label_vector idx_A(idx_A_.idx, idx_A_.idx+ndim_A);
+    label_vector idx_B(idx_B_.idx, idx_B_.idx+ndim_B);
 
     for (auto i : range(1,ndim_A))
     for (auto j : range(i))
@@ -221,15 +204,17 @@ void add(const communicator& comm,
 
     if (alpha == T(0))
     {
+        idx_B_B.insert(idx_B_B.end(), idx_B_AB.begin(), idx_B_AB.end());
+
         if (beta == T(0))
         {
             internal::set(type_tag<T>::value, comm, get_default_config(),
-                          beta, reinterpret_cast<indexed_marray_view<char>&>(B), idx_B_B+idx_B_AB);
+                          beta, reinterpret_cast<indexed_marray_view<char>&>(B), idx_B_B);
         }
         else
         {
             internal::scale(type_tag<T>::value, comm, get_default_config(),
-                            beta, false, reinterpret_cast<indexed_marray_view<char>&>(B), idx_B_B+idx_B_AB);
+                            beta, false, reinterpret_cast<indexed_marray_view<char>&>(B), idx_B_B);
         }
     }
     else
@@ -242,20 +227,23 @@ void add(const communicator& comm,
 
 #define FOREACH_TYPE(T) \
 template void add(const communicator& comm, \
-                   T alpha, indexed_marray_view<const T> A, const label_vector& idx_A, \
-                   T  beta, indexed_marray_view<      T> B, const label_vector& idx_B);
-#include "configs/foreach_type.h"
+                   T alpha, indexed_marray_view<const T> A, const label_string& idx_A, \
+                   T  beta, indexed_marray_view<      T> B, const label_string& idx_B);
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void add(const communicator& comm,
-         T alpha, indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
-         T  beta, indexed_dpd_marray_view<      T> B, const label_vector& idx_B)
+         T alpha, indexed_dpd_marray_view<const T> A, const label_string& idx_A_,
+         T  beta, indexed_dpd_marray_view<      T> B, const label_string& idx_B_)
 {
     auto nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
 
     auto ndim_A = A.dimension();
     auto ndim_B = B.dimension();
+
+    label_vector idx_A(idx_A_.idx, idx_A_.idx+ndim_A);
+    label_vector idx_B(idx_B_.idx, idx_B_.idx+ndim_B);
 
     for (auto i : range(1,ndim_A))
     for (auto j : range(i))
@@ -293,15 +281,17 @@ void add(const communicator& comm,
 
     if (alpha == T(0) || (idx_A_only.empty() && idx_B_only.empty() && A.irrep() != B.irrep()))
     {
+        idx_B_B.insert(idx_B_B.end(), idx_B_AB.begin(), idx_B_AB.end());
+
         if (beta == T(0))
         {
             internal::set(type_tag<T>::value, comm, get_default_config(),
-                          beta, reinterpret_cast<indexed_dpd_marray_view<char>&>(B), idx_B_B+idx_B_AB);
+                          beta, reinterpret_cast<indexed_dpd_marray_view<char>&>(B), idx_B_B);
         }
         else
         {
             internal::scale(type_tag<T>::value, comm, get_default_config(),
-                            beta, false, reinterpret_cast<indexed_dpd_marray_view<char>&>(B), idx_B_B+idx_B_AB);
+                            beta, false, reinterpret_cast<indexed_dpd_marray_view<char>&>(B), idx_B_B);
         }
     }
     else
@@ -314,8 +304,23 @@ void add(const communicator& comm,
 
 #define FOREACH_TYPE(T) \
 template void add(const communicator& comm, \
-                   T alpha, indexed_dpd_marray_view<const T> A, const label_vector& idx_A, \
-                   T  beta, indexed_dpd_marray_view<      T> B, const label_vector& idx_B);
-#include "configs/foreach_type.h"
+                   T alpha, indexed_dpd_marray_view<const T> A, const label_string& idx_A, \
+                   T  beta, indexed_dpd_marray_view<      T> B, const label_string& idx_B);
+#include <tblis/internal/foreach_type.h>
+
+void add(const communicator& comm,
+         const scalar& alpha,
+         const const_tensor& A_,
+         const label_string& idx_A,
+         const scalar& beta,
+         const tensor& B_,
+         const label_string& idx_B)
+{
+    tensor A(A_.tensor_);
+    tensor B(B_);
+    A.scalar *= alpha.convert(A.type);
+    B.scalar *= beta.convert(B.type);
+    tblis_tensor_add(comm, nullptr, &A, idx_A.idx, &B, idx_B.idx);
+}
 
 }

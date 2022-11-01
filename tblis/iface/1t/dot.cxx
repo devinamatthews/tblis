@@ -1,11 +1,4 @@
-#include "dot.h"
-
-#include "util/macros.h"
-#include "util/tensor.hpp"
-#include "internal/1t/dense/dot.hpp"
-#include "internal/1t/dpd/dot.hpp"
-#include "internal/1t/indexed/dot.hpp"
-#include "internal/1t/indexed_dpd/dot.hpp"
+#include <tblis/internal/indexed_dpd.hpp>
 
 namespace tblis
 {
@@ -22,28 +15,15 @@ void tblis_tensor_dot(const tblis_comm* comm,
     TBLIS_ASSERT(A->type == B->type);
     TBLIS_ASSERT(A->type == result->type);
 
-    auto ndim_A = A->ndim;
-    len_vector len_A;
-    stride_vector stride_A;
-    label_vector idx_A;
-    diagonal(ndim_A, A->len, A->stride, idx_A_, len_A, stride_A, idx_A);
+    len_vector len_A(A->len, A->len+A->ndim);
+    stride_vector stride_A(A->stride, A->stride+A->ndim);
+    label_vector idx_A(idx_A_, idx_A_+A->ndim);
+    internal::canonicalize(len_A, stride_A, idx_A);
 
-    auto ndim_B = B->ndim;
-    len_vector len_B;
-    stride_vector stride_B;
-    label_vector idx_B;
-    diagonal(ndim_B, B->len, B->stride, idx_B_, len_B, stride_B, idx_B);
-
-    if (idx_A.empty() || idx_B.empty())
-    {
-        len_A.push_back(1);
-        len_B.push_back(1);
-        stride_A.push_back(0);
-        stride_B.push_back(0);
-        label_type idx = detail::free_idx(idx_A, idx_B);
-        idx_A.push_back(idx);
-        idx_B.push_back(idx);
-    }
+    len_vector len_B(B->len, B->len+B->ndim);
+    stride_vector stride_B(B->stride, B->stride+B->ndim);
+    label_vector idx_B(idx_B_, idx_B_+B->ndim);
+    internal::canonicalize(len_B, stride_B, idx_B);
 
     auto idx_AB = stl_ext::intersection(idx_A, idx_B);
     auto len_AB = stl_ext::select_from(len_A, idx_A, idx_AB);
@@ -57,7 +37,7 @@ void tblis_tensor_dot(const tblis_comm* comm,
     TBLIS_ASSERT(idx_A_only.empty());
     TBLIS_ASSERT(idx_B_only.empty());
 
-    fold(len_AB, idx_AB, stride_A_AB, stride_B_AB);
+    internal::fold(len_AB, stride_A_AB, stride_B_AB, idx_AB);
 
     parallelize_if(
     [&](const communicator& comm)
@@ -73,14 +53,17 @@ void tblis_tensor_dot(const tblis_comm* comm,
 
 template <typename T>
 void dot(const communicator& comm,
-         dpd_marray_view<const T> A, const label_vector& idx_A,
-         dpd_marray_view<const T> B, const label_vector& idx_B, T& result)
+         dpd_marray_view<const T> A, const label_string& idx_A_,
+         dpd_marray_view<const T> B, const label_string& idx_B_, T& result)
 {
     auto nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
 
     auto ndim_A = A.dimension();
     auto ndim_B = B.dimension();
+
+    label_vector idx_A(idx_A_.idx, idx_A_.idx+ndim_A);
+    label_vector idx_B(idx_B_.idx, idx_B_.idx+ndim_B);
 
     for (auto i : range(1,ndim_A))
     for (auto j : range(i))
@@ -118,17 +101,20 @@ void dot(const communicator& comm,
 
 #define FOREACH_TYPE(T) \
 template void dot(const communicator& comm, \
-                  dpd_marray_view<const T> A, const label_vector& idx_A, \
-                  dpd_marray_view<const T> B, const label_vector& idx_B, T& result);
-#include "configs/foreach_type.h"
+                  dpd_marray_view<const T> A, const label_string& idx_A, \
+                  dpd_marray_view<const T> B, const label_string& idx_B, T& result);
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void dot(const communicator& comm,
-         indexed_marray_view<const T> A, const label_vector& idx_A,
-         indexed_marray_view<const T> B, const label_vector& idx_B, T& result)
+         indexed_marray_view<const T> A, const label_string& idx_A_,
+         indexed_marray_view<const T> B, const label_string& idx_B_, T& result)
 {
     auto ndim_A = A.dimension();
     auto ndim_B = B.dimension();
+
+    label_vector idx_A(idx_A_.idx, idx_A_.idx+ndim_A);
+    label_vector idx_B(idx_B_.idx, idx_B_.idx+ndim_B);
 
     for (auto i : range(1,ndim_A))
     for (auto j : range(i))
@@ -165,20 +151,23 @@ void dot(const communicator& comm,
 
 #define FOREACH_TYPE(T) \
 template void dot(const communicator& comm, \
-                  indexed_marray_view<const T> A, const label_vector& idx_A, \
-                  indexed_marray_view<const T> B, const label_vector& idx_B, T& result);
-#include "configs/foreach_type.h"
+                  indexed_marray_view<const T> A, const label_string& idx_A, \
+                  indexed_marray_view<const T> B, const label_string& idx_B, T& result);
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void dot(const communicator& comm,
-         indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
-         indexed_dpd_marray_view<const T> B, const label_vector& idx_B, T& result)
+         indexed_dpd_marray_view<const T> A, const label_string& idx_A_,
+         indexed_dpd_marray_view<const T> B, const label_string& idx_B_, T& result)
 {
     auto nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
 
     auto ndim_A = A.dimension();
     auto ndim_B = B.dimension();
+
+    label_vector idx_A(idx_A_.idx, idx_A_.idx+ndim_A);
+    label_vector idx_B(idx_B_.idx, idx_B_.idx+ndim_B);
 
     for (auto i : range(1,ndim_A))
     for (auto j : range(i))
@@ -216,8 +205,8 @@ void dot(const communicator& comm,
 
 #define FOREACH_TYPE(T) \
 template void dot(const communicator& comm, \
-                  indexed_dpd_marray_view<const T> A, const label_vector& idx_A, \
-                  indexed_dpd_marray_view<const T> B, const label_vector& idx_B, T& result);
-#include "configs/foreach_type.h"
+                  indexed_dpd_marray_view<const T> A, const label_string& idx_A, \
+                  indexed_dpd_marray_view<const T> B, const label_string& idx_B, T& result);
+#include <tblis/internal/foreach_type.h>
 
 }

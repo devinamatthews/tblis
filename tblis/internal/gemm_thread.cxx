@@ -1,5 +1,8 @@
 #include "gemm_thread.hpp"
-#include "env.hpp"
+
+#include <tblis/base/thread.h>
+
+#include <tblis/internal/env.hpp>
 
 namespace tblis
 {

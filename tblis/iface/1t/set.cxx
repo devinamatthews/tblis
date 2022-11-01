@@ -1,11 +1,4 @@
-#include "set.h"
-
-#include "util/macros.h"
-#include "util/tensor.hpp"
-#include "internal/1t/dense/set.hpp"
-#include "internal/1t/dpd/set.hpp"
-#include "internal/1t/indexed/set.hpp"
-#include "internal/1t/indexed_dpd/set.hpp"
+#include <tblis/internal/indexed_dpd.hpp>
 
 namespace tblis
 {
@@ -19,20 +12,12 @@ void tblis_tensor_set(const tblis_comm* comm,
 {
     TBLIS_ASSERT(alpha->type == A->type);
 
-    auto ndim_A = A->ndim;
-    len_vector len_A;
-    stride_vector stride_A;
-    label_vector idx_A;
-    diagonal(ndim_A, A->len, A->stride, idx_A_, len_A, stride_A, idx_A);
+    len_vector len_A(A->len, A->len+A->ndim);
+    stride_vector stride_A(A->stride, A->stride+A->ndim);
+    label_vector idx_A(idx_A_, idx_A_+A->ndim);
+    internal::canonicalize(len_A, stride_A, idx_A);
 
-    if (idx_A.empty())
-    {
-        len_A.push_back(1);
-        stride_A.push_back(0);
-        idx_A.push_back(0);
-    }
-
-    fold(len_A, idx_A, stride_A);
+    internal::fold(len_A, stride_A, idx_A);
 
     parallelize_if(
     [&](const communicator& comm)
@@ -47,7 +32,7 @@ void tblis_tensor_set(const tblis_comm* comm,
 
 template <typename T>
 void set(const communicator& comm,
-         T alpha, dpd_marray_view<T> A, const label_vector& idx_A)
+         T alpha, dpd_marray_view<T> A, const label_string& idx_A)
 {
     (void)idx_A;
 
@@ -55,7 +40,7 @@ void set(const communicator& comm,
 
     for (auto i : range(1,ndim_A))
     for (auto j : range(i))
-        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+        TBLIS_ASSERT(idx_A.idx[i] != idx_A.idx[j]);
 
     dim_vector idx_A_A = range(ndim_A);
 
@@ -65,12 +50,12 @@ void set(const communicator& comm,
 
 #define FOREACH_TYPE(T) \
 template void set(const communicator& comm, \
-                   T alpha, dpd_marray_view<T> A, const label_vector& idx_A);
-#include "configs/foreach_type.h"
+                   T alpha, dpd_marray_view<T> A, const label_string& idx_A);
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void set(const communicator& comm,
-         T alpha, indexed_marray_view<T> A, const label_vector& idx_A)
+         T alpha, indexed_marray_view<T> A, const label_string& idx_A)
 {
     (void)idx_A;
 
@@ -78,7 +63,7 @@ void set(const communicator& comm,
 
     for (auto i : range(1,ndim_A))
     for (auto j : range(i))
-        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+        TBLIS_ASSERT(idx_A.idx[i] != idx_A.idx[j]);
 
     dim_vector idx_A_A = range(ndim_A);
 
@@ -88,12 +73,12 @@ void set(const communicator& comm,
 
 #define FOREACH_TYPE(T) \
 template void set(const communicator& comm, \
-                   T alpha, indexed_marray_view<T> A, const label_vector& idx_A);
-#include "configs/foreach_type.h"
+                   T alpha, indexed_marray_view<T> A, const label_string& idx_A);
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void set(const communicator& comm,
-         T alpha, indexed_dpd_marray_view<T> A, const label_vector& idx_A)
+         T alpha, indexed_dpd_marray_view<T> A, const label_string& idx_A)
 {
     (void)idx_A;
 
@@ -101,7 +86,7 @@ void set(const communicator& comm,
 
     for (auto i : range(1,ndim_A))
     for (auto j : range(i))
-        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+        TBLIS_ASSERT(idx_A.idx[i] != idx_A.idx[j]);
 
     dim_vector idx_A_A = range(ndim_A);
 
@@ -111,7 +96,7 @@ void set(const communicator& comm,
 
 #define FOREACH_TYPE(T) \
 template void set(const communicator& comm, \
-                   T alpha, indexed_dpd_marray_view<T> A, const label_vector& idx_A);
-#include "configs/foreach_type.h"
+                   T alpha, indexed_dpd_marray_view<T> A, const label_string& idx_A);
+#include <tblis/internal/foreach_type.h>
 
 }

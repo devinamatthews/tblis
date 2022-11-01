@@ -1,16 +1,10 @@
-#ifndef _TBLIS_KERNELS_1V_SCALE_HPP_
-#define _TBLIS_KERNELS_1V_SCALE_HPP_
+#ifndef TBLIS_KERNELS_1V_SCALE_HPP
+#define TBLIS_KERNELS_1V_SCALE_HPP 1
 
-#include "util/thread.h"
-#include "util/basic_types.h"
-#include "util/macros.h"
+#include <tblis/internal/types.hpp>
 
 namespace tblis
 {
-
-using scale_ukr_t =
-    void (*)(len_type n,
-             const void* alpha, bool conj_A, void* A, stride_type inc_A);
 
 template <typename Config, typename T>
 void scale_ukr_def(len_type n,
@@ -66,4 +60,4 @@ void scale_ukr_def(len_type n,
 
 }
 
-#endif
+#endif //TBLIS_KERNELS_1V_SCALE_HPP

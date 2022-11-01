@@ -1,16 +1,14 @@
-#ifndef _TBLIS_IFACE_1T_REDUCE_H_
-#define _TBLIS_IFACE_1T_REDUCE_H_
+#ifndef TBLIS_IFACE_1T_REDUCE_H
+#define TBLIS_IFACE_1T_REDUCE_H
 
-#include "../../util/thread.h"
-#include "../../util/basic_types.h"
+#include <tblis/base/types.h>
+#include <tblis/base/thread.h>
+#include <tblis/base/configs.h>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnull-dereference"
 
-#if defined(__cplusplus)
-namespace tblis
-{
-#endif //defined(__cplusplus)
+TBLIS_BEGIN_NAMESPACE
 
 TBLIS_EXPORT
 
@@ -22,7 +20,7 @@ void tblis_tensor_reduce(const tblis_comm* comm,
                          tblis_scalar* result,
                          len_type* idx);
 
-#if defined(__cplusplus)
+#if TBLIS_ENABLE_CXX
 
 template <typename T=scalar>
 struct reduce_result
@@ -51,19 +49,19 @@ struct reduce_result<scalar>
 inline
 void reduce(const communicator& comm,
             reduce_t op,
-            const tensor& A,
-            const label_vector& idx_A,
+            const const_tensor& A,
+            const label_string& idx_A,
             scalar& result,
             len_type& idx)
 {
-    tblis_tensor_reduce(comm, nullptr, op, &A, idx_A.data(), &result, &idx);
+    tblis_tensor_reduce(comm, nullptr, op, &A.tensor_, idx_A.idx, &result, &idx);
 }
 
 template <typename T>
 void reduce(const communicator& comm,
             reduce_t op,
-            const tensor& A,
-            const label_vector& idx_A,
+            const const_tensor& A,
+            const label_string& idx_A,
             T& result,
             len_type& idx)
 {
@@ -75,8 +73,8 @@ void reduce(const communicator& comm,
 template <typename T=scalar>
 reduce_result<T> reduce(const communicator& comm,
                         reduce_t op,
-                        const tensor& A,
-                        const label_vector& idx_A)
+                        const const_tensor& A,
+                        const label_string& idx_A)
 {
     reduce_result<T> result(A.type);
     reduce(comm, op, A, idx_A, result.value, result.idx);
@@ -86,7 +84,7 @@ reduce_result<T> reduce(const communicator& comm,
 inline
 void reduce(const communicator& comm,
             reduce_t op,
-            const tensor& A,
+            const const_tensor& A,
             scalar& result,
             len_type& idx)
 {
@@ -96,7 +94,7 @@ void reduce(const communicator& comm,
 template <typename T>
 void reduce(const communicator& comm,
             reduce_t op,
-            const tensor& A,
+            const const_tensor& A,
             T& result,
             len_type& idx)
 {
@@ -108,7 +106,7 @@ void reduce(const communicator& comm,
 template <typename T=scalar>
 reduce_result<T> reduce(const communicator& comm,
                         reduce_t op,
-                        const tensor& A)
+                        const const_tensor& A)
 {
     reduce_result<T> result(A.type);
     reduce(comm, op, A, result.value, result.idx);
@@ -117,8 +115,8 @@ reduce_result<T> reduce(const communicator& comm,
 
 inline
 void reduce(reduce_t op,
-            const tensor& A,
-            const label_vector& idx_A,
+            const const_tensor& A,
+            const label_string& idx_A,
             scalar& result,
             len_type& idx)
 {
@@ -127,8 +125,8 @@ void reduce(reduce_t op,
 
 template <typename T>
 void reduce(reduce_t op,
-            const tensor& A,
-            const label_vector& idx_A,
+            const const_tensor& A,
+            const label_string& idx_A,
             T& result,
             len_type& idx)
 {
@@ -139,8 +137,8 @@ void reduce(reduce_t op,
 
 template <typename T=scalar>
 reduce_result<T> reduce(reduce_t op,
-                        const tensor& A,
-                        const label_vector& idx_A)
+                        const const_tensor& A,
+                        const label_string& idx_A)
 {
     reduce_result<T> result(A.type);
     reduce(op, A, idx_A, result.value, result.idx);
@@ -149,7 +147,7 @@ reduce_result<T> reduce(reduce_t op,
 
 inline
 void reduce(reduce_t op,
-            const tensor& A,
+            const const_tensor& A,
             scalar& result,
             len_type& idx)
 {
@@ -158,7 +156,7 @@ void reduce(reduce_t op,
 
 template <typename T>
 void reduce(reduce_t op,
-            const tensor& A,
+            const const_tensor& A,
             T& result,
             len_type& idx)
 {
@@ -168,21 +166,21 @@ void reduce(reduce_t op,
 }
 
 template <typename T=scalar>
-reduce_result<T> reduce(reduce_t op, const tensor& A)
+reduce_result<T> reduce(reduce_t op, const const_tensor& A)
 {
     reduce_result<T> result(A.type);
     reduce(op, A, result.value, result.idx);
     return result;
 }
 
-#if !defined(TBLIS_DONT_USE_CXX11)
+#ifdef MARRAY_DPD_VARRAY_VIEW_HPP
 
 template <typename T>
-void reduce(const communicator& comm, reduce_t op, dpd_marray_view<const T> A,
-            const label_vector& idx_A, T& result, len_type& idx);
+void reduce(const communicator& comm, reduce_t op, MArray::dpd_marray_view<const T> A,
+            const label_string& idx_A, T& result, len_type& idx);
 
 template <typename T>
-void reduce(reduce_t op, dpd_marray_view<const T> A, const label_vector& idx_A,
+void reduce(reduce_t op, MArray::dpd_marray_view<const T> A, const label_string& idx_A,
             T& result, len_type& idx)
 {
     parallelize
@@ -196,7 +194,7 @@ void reduce(reduce_t op, dpd_marray_view<const T> A, const label_vector& idx_A,
 }
 
 template <typename T>
-reduce_result<T> reduce(reduce_t op, dpd_marray_view<const T> A, const label_vector& idx_A)
+reduce_result<T> reduce(reduce_t op, MArray::dpd_marray_view<const T> A, const label_string& idx_A)
 {
     reduce_result<T> result(type_tag<T>::value);
     reduce(op, A, idx_A, result.value, result.idx);
@@ -205,19 +203,23 @@ reduce_result<T> reduce(reduce_t op, dpd_marray_view<const T> A, const label_vec
 
 template <typename T>
 reduce_result<T> reduce(const communicator& comm, reduce_t op,
-                             dpd_marray_view<const T> A, const label_vector& idx_A)
+                        MArray::dpd_marray_view<const T> A, const label_string& idx_A)
 {
     reduce_result<T> result;
     reduce(comm, op, A, idx_A, result.value, result.idx);
     return result;
 }
 
-template <typename T>
-void reduce(const communicator& comm, reduce_t op, indexed_marray_view<const T> A,
-            const label_vector& idx_A, T& result, len_type& idx);
+#endif //MARRAY_DPD_VARRAY_VIEW_HPP
+
+#ifdef MARRAY_INDEXED_VARRAY_VIEW_HPP
 
 template <typename T>
-void reduce(reduce_t op, indexed_marray_view<const T> A, const label_vector& idx_A,
+void reduce(const communicator& comm, reduce_t op, MArray::indexed_marray_view<const T> A,
+            const label_string& idx_A, T& result, len_type& idx);
+
+template <typename T>
+void reduce(reduce_t op, MArray::indexed_marray_view<const T> A, const label_string& idx_A,
             T& result, len_type& idx)
 {
     parallelize
@@ -231,7 +233,7 @@ void reduce(reduce_t op, indexed_marray_view<const T> A, const label_vector& idx
 }
 
 template <typename T>
-reduce_result<T> reduce(reduce_t op, indexed_marray_view<const T> A, const label_vector& idx_A)
+reduce_result<T> reduce(reduce_t op, MArray::indexed_marray_view<const T> A, const label_string& idx_A)
 {
     reduce_result<T> result(type_tag<T>::value);
     reduce(op, A, idx_A, result.value, result.idx);
@@ -240,19 +242,23 @@ reduce_result<T> reduce(reduce_t op, indexed_marray_view<const T> A, const label
 
 template <typename T>
 reduce_result<T> reduce(const communicator& comm, reduce_t op,
-                             indexed_marray_view<const T> A, const label_vector& idx_A)
+                        MArray::indexed_marray_view<const T> A, const label_string& idx_A)
 {
     reduce_result<T> result;
     reduce(comm, op, A, idx_A, result.value, result.idx);
     return result;
 }
 
-template <typename T>
-void reduce(const communicator& comm, reduce_t op, indexed_dpd_marray_view<const T> A,
-            const label_vector& idx_A, T& result, len_type& idx);
+#endif //MARRAY_INDEXED_VARRAY_VIEW_HPP
+
+#ifdef MARRAY_INDEXED_DPD_VARRAY_VIEW_HPP
 
 template <typename T>
-void reduce(reduce_t op, indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
+void reduce(const communicator& comm, reduce_t op, MArray::indexed_dpd_vmarray_view<const T> A,
+            const label_string& idx_A, T& result, len_type& idx);
+
+template <typename T>
+void reduce(reduce_t op, MArray::indexed_dpd_marray_view<const T> A, const label_string& idx_A,
             T& result, len_type& idx)
 {
     parallelize
@@ -266,7 +272,7 @@ void reduce(reduce_t op, indexed_dpd_marray_view<const T> A, const label_vector&
 }
 
 template <typename T>
-reduce_result<T> reduce(reduce_t op, indexed_dpd_marray_view<const T> A, const label_vector& idx_A)
+reduce_result<T> reduce(reduce_t op, MArray::indexed_dpd_marray_view<const T> A, const label_string& idx_A)
 {
     reduce_result<T> result(type_tag<T>::value);
     reduce(op, A, idx_A, result.value, result.idx);
@@ -275,12 +281,14 @@ reduce_result<T> reduce(reduce_t op, indexed_dpd_marray_view<const T> A, const l
 
 template <typename T>
 reduce_result<T> reduce(const communicator& comm, reduce_t op,
-                             indexed_dpd_marray_view<const T> A, const label_vector& idx_A)
+                        MArray::indexed_dpd_marray_view<const T> A, const label_string& idx_A)
 {
     reduce_result<T> result;
     reduce(comm, op, A, idx_A, result.value, result.idx);
     return result;
 }
+
+#endif //MARRAY_INDEXED_DPD_VARRAY_VIEW_HPP
 
 namespace internal
 {
@@ -292,27 +300,50 @@ struct data_type_helper
 
     static scalar check(scalar&);
 
+    #ifdef MARRAY_MARRAY_BASE_HPP
+
     template <typename T, int N, typename D, bool O>
     static std::decay_t<T> check(MArray::marray_base<T,N,D,O>&);
 
     template <typename T, int N, int I, typename... D>
     static std::decay_t<T> check(MArray::marray_slice<T,N,I,D...>&);
 
+    #endif //MARRAY_MARRAY_BASE_HPP
+
+    #ifdef MARRAY_DPD_MARRAY_BASE_HPP
+
+    template <typename T, int N, typename D, bool O>
+    static std::decay_t<T> check(MArray::dpd_marray_base<T,N,D,O>&);
+
+    #endif //MARRAY_DPD_MARRAY_BASE_HPP
+
+    #ifdef MARRAY_DPD_MARRAY_BASE_HPP
+
     template <typename T, typename D, bool O>
     static std::decay_t<T> check(MArray::dpd_marray_base<T,D,O>&);
+
+    #endif //MARRAY_DPD_MARRAY_BASE_HPP
+
+    #ifdef MARRAY_INDEXED_MARRAY_BASE_HPP
 
     template <typename T, typename D, bool O>
     static std::decay_t<T> check(MArray::indexed_marray_base<T,D,O>&);
 
+    #endif //MARRAY_INDEXED_MARRAY_BASE_HPP
+
+    #ifdef MARRAY_INDEXED_DPD_MARRAY_BASE_HPP
+
     template <typename T, typename D, bool O>
     static std::decay_t<T> check(MArray::indexed_dpd_marray_base<T,D,O>&);
 
-    #if defined(EIGEN_CXX11_TENSOR_TENSOR_FORWARD_DECLARATIONS_H)
+    #endif //MARRAY_INDEXED_DPD_MARRAY_BASE_HPP
+
+    #ifdef EIGEN_CXX11_TENSOR_TENSOR_FORWARD_DECLARATIONS_H
 
     template <typename D, int A>
     static std::decay_t<Eigen::TensorBase<D,A>::Scalar> check(Eigen::TensorBase<D,A>&);
 
-    #endif
+    #endif //EIGEN_CXX11_TENSOR_TENSOR_FORWARD_DECLARATIONS_H
 
     typedef decltype(check(std::declval<Tensor&>())) type;
 };
@@ -366,12 +397,10 @@ TBLIS_ALIAS_REDUCTION(amax, REDUCE_MAX_ABS, )
 
 #undef TBLIS_ALIAS_REDUCTION
 
-#endif //!defined(TBLIS_DONT_USE_CXX11)
+#endif //TBLIS_ENABLE_CXX
 
-}
-
-#endif //defined(__cplusplus)
+TBLIS_END_NAMESPACE
 
 #pragma GCC diagnostic pop
 
-#endif
+#endif //TBLIS_IFACE_1T_REDUCE_H

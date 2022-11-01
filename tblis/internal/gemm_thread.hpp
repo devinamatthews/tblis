@@ -1,8 +1,8 @@
 #ifndef _TBLIS_GEMM_THREAD_HPP_
 #define _TBLIS_GEMM_THREAD_HPP_
 
-#include "basic_types.h"
-#include "configs/configs.hpp"
+#include <tblis/internal/configs.hpp>
+#include <tblis/internal/types.hpp>
 
 namespace tblis
 {

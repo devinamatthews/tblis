@@ -1,7 +1,7 @@
 #ifndef _TBLIS_CONFIGS_SKX2_CONFIG_HPP_
 #define _TBLIS_CONFIGS_SKX2_CONFIG_HPP_
 
-#include "configs/config_builder.hpp"
+#include <tblis/internal/configs.hpp>
 
 EXTERN_BLIS_GEMM_UKR(bli_sgemm_opt_12x32_l2);
 EXTERN_BLIS_GEMM_UKR(bli_dgemm_opt_12x16_l2);

@@ -1,7 +1,7 @@
 #ifndef _TBLIS_CONFIGS_PILEDRIVER_CONFIG_HPP_
 #define _TBLIS_CONFIGS_PILEDRIVER_CONFIG_HPP_
 
-#include "configs/config_builder.hpp"
+#include <tblis/internal/configs.hpp>
 
 EXTERN_BLIS_GEMM_UKR(bli_sgemm_asm_16x3);
 EXTERN_BLIS_GEMM_UKR(bli_dgemm_asm_8x3);

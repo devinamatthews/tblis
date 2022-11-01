@@ -1,11 +1,13 @@
-#ifndef _TBLIS_NODES_PACKM_HPP_
-#define _TBLIS_NODES_PACKM_HPP_
+#ifndef TBLIS_NODES_PACKM_HPP
+#define TBLIS_NODES_PACKM_HPP 1
 
-#include "util/thread.h"
-#include "util/basic_types.h"
-#include "memory/memory_pool.hpp"
-#include "matrix/abstract_matrix.hpp"
-#include "configs/configs.hpp"
+#include <tblis/base/thread.h>
+#include <tblis/base/configs.h>
+
+#include <tblis/internal/types.hpp>
+#include <tblis/internal/memory_pool.hpp>
+
+#include <tblis/matrix/abstract_matrix.hpp>
 
 namespace tblis
 {
@@ -43,4 +45,4 @@ using pack_b = pack<matrix_constants::MAT_B, Pool, Child>;
 
 }
 
-#endif
+#endif //TBLIS_NODES_PACKM_HPP

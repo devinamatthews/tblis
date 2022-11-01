@@ -1,17 +1,10 @@
-#ifndef _TBLIS_KERNELS_1V_ADD_HPP_
-#define _TBLIS_KERNELS_1V_ADD_HPP_
+#ifndef TBLIS_KERNELS_1V_ADD_HPP
+#define TBLIS_KERNELS_1V_ADD_HPP 1
 
-#include "util/thread.h"
-#include "util/basic_types.h"
-#include "util/macros.h"
+#include <tblis/internal/types.hpp>
 
 namespace tblis
 {
-
-using add_ukr_t =
-    void (*)(len_type n,
-             const void* alpha, bool conj_A, const void* A, stride_type inc_A,
-             const void*  beta, bool conj_B,       void* B, stride_type inc_B);
 
 template <typename Config, typename T>
 void add_ukr_def(len_type n,
@@ -118,4 +111,4 @@ void add_ukr_def(len_type n,
 
 }
 
-#endif
+#endif //TBLIS_KERNELS_1V_ADD_HPP

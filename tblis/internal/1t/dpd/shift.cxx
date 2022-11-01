@@ -1,6 +1,4 @@
-#include "util.hpp"
-#include "shift.hpp"
-#include "internal/1t/dense/shift.hpp"
+#include <tblis/internal/dpd.hpp>
 
 namespace tblis
 {

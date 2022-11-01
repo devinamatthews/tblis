@@ -1,4 +1,5 @@
-#include "reduce.hpp"
+#include <tblis/internal/scalar.hpp>
+#include <tblis/internal/thread.hpp>
 
 namespace tblis
 {
@@ -19,7 +20,7 @@ void reduce(reduce_t op, T  A, len_type  idx_A,
     }
     else if (op == REDUCE_MAX)
     {
-        if (A > B)
+        if (B < A)
         {
             B = A;
             idx_B = idx_A;
@@ -61,19 +62,19 @@ void reduce(type_t type, reduce_t op,
 {
     switch (type)
     {
-        case TYPE_FLOAT:
+        case FLOAT:
             reduce(op, *reinterpret_cast<float*>(A), idx_A,
                        *reinterpret_cast<float*>(B), idx_B);
             break;
-        case TYPE_DOUBLE:
+        case DOUBLE:
             reduce(op, *reinterpret_cast<double*>(A), idx_A,
                        *reinterpret_cast<double*>(B), idx_B);
             break;
-        case TYPE_SCOMPLEX:
+        case SCOMPLEX:
             reduce(op, *reinterpret_cast<scomplex*>(A), idx_A,
                        *reinterpret_cast<scomplex*>(B), idx_B);
             break;
-        case TYPE_DCOMPLEX:
+        case DCOMPLEX:
             reduce(op, *reinterpret_cast<dcomplex*>(A), idx_A,
                        *reinterpret_cast<dcomplex*>(B), idx_B);
             break;

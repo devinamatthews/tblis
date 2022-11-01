@@ -1,4 +1,4 @@
-#include "mult.hpp"
+#include <tblis/internal/scalar.hpp>
 
 namespace tblis
 {
@@ -13,25 +13,25 @@ void mult(type_t type, const scalar& alpha, bool conj_A, char* A,
     {
         switch (type)
         {
-            case TYPE_FLOAT:
+            case FLOAT:
                 *reinterpret_cast<float*>(C) =
                     alpha.data.s*(*reinterpret_cast<float*>(A)) *
                                  (*reinterpret_cast<float*>(B));
                 break;
-            case TYPE_DOUBLE:
+            case DOUBLE:
                 *reinterpret_cast<double*>(C) =
                     alpha.data.d*(*reinterpret_cast<double*>(A)) *
                                  (*reinterpret_cast<double*>(B));
                 break;
-            case TYPE_SCOMPLEX:
+            case SCOMPLEX:
                 *reinterpret_cast<scomplex*>(C) =
                     alpha.data.c*conj(conj_A, *reinterpret_cast<scomplex*>(A)) *
                                  conj(conj_B, *reinterpret_cast<scomplex*>(B));
                 break;
-            case TYPE_DCOMPLEX:
+            case DCOMPLEX:
                 *reinterpret_cast<dcomplex*>(C) =
                     alpha.data.z*conj(conj_A, *reinterpret_cast<dcomplex*>(A)) *
-                                 conj(conj_B, *reinterpret_cast<scomplex*>(B));
+                                 conj(conj_B, *reinterpret_cast<dcomplex*>(B));
                 break;
         }
     }
@@ -39,25 +39,25 @@ void mult(type_t type, const scalar& alpha, bool conj_A, char* A,
     {
         switch (type)
         {
-            case TYPE_FLOAT:
+            case FLOAT:
                 *reinterpret_cast<float*>(C) =
                     alpha.data.s*(*reinterpret_cast<float*>(A)) *
                                  (*reinterpret_cast<float*>(B)) +
                      beta.data.s*(*reinterpret_cast<float*>(C));
                 break;
-            case TYPE_DOUBLE:
+            case DOUBLE:
                 *reinterpret_cast<double*>(C) =
                     alpha.data.d*(*reinterpret_cast<double*>(A)) *
                                  (*reinterpret_cast<double*>(B)) +
                      beta.data.d*(*reinterpret_cast<double*>(C));
                 break;
-            case TYPE_SCOMPLEX:
+            case SCOMPLEX:
                 *reinterpret_cast<scomplex*>(C) =
                     alpha.data.c*conj(conj_A, *reinterpret_cast<scomplex*>(A)) *
                                  conj(conj_B, *reinterpret_cast<scomplex*>(B)) +
                      beta.data.c*conj(conj_C, *reinterpret_cast<scomplex*>(C));
                 break;
-            case TYPE_DCOMPLEX:
+            case DCOMPLEX:
                 *reinterpret_cast<dcomplex*>(C) =
                     alpha.data.z*conj(conj_A, *reinterpret_cast<dcomplex*>(A)) *
                                  conj(conj_B, *reinterpret_cast<dcomplex*>(B)) +

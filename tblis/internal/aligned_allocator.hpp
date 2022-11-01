@@ -1,5 +1,5 @@
-#ifndef _TBLIS_ALIGNED_ALLOCATOR_HPP_
-#define _TBLIS_ALIGNED_ALLOCATOR_HPP_
+#ifndef TBLIS_ALIGNED_ALLOCATOR_HPP
+#define TBLIS_ALIGNED_ALLOCATOR_HPP
 
 #include <cstdlib>
 #include <new>
@@ -62,4 +62,4 @@ bool operator!=(const aligned_allocator<T, N>&, const aligned_allocator<U, M>&) 
 
 }
 
-#endif
+#endif //TBLIS_ALIGNED_ALLOCATOR_HPP

@@ -1,6 +1,4 @@
-#include "util.hpp"
-#include "set.hpp"
-#include "internal/1t/dense/set.hpp"
+#include <tblis/internal/dpd.hpp>
 
 namespace tblis
 {

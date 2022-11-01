@@ -1,16 +1,14 @@
-#ifndef _TBLIS_IFACE_1T_DOT_H_
-#define _TBLIS_IFACE_1T_DOT_H_
+#ifndef TBLIS_IFACE_1T_DOT_H
+#define TBLIS_IFACE_1T_DOT_H
 
-#include "../../util/thread.h"
-#include "../../util/basic_types.h"
+#include <tblis/base/types.h>
+#include <tblis/base/thread.h>
+#include <tblis/base/configs.h>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnull-dereference"
 
-#ifdef __cplusplus
-namespace tblis
-{
-#endif
+TBLIS_BEGIN_NAMESPACE
 
 TBLIS_EXPORT
 void tblis_tensor_dot(const tblis_comm* comm,
@@ -21,25 +19,25 @@ void tblis_tensor_dot(const tblis_comm* comm,
                       const label_type* idx_B,
                       tblis_scalar* result);
 
-#if defined(__cplusplus)
+#if TBLIS_ENABLE_CXX
 
 inline
 void dot(const communicator& comm,
-         const tensor& A,
-         const label_vector& idx_A,
-         const tensor& B,
-         const label_vector& idx_B,
+         const const_tensor& A,
+         const label_string& idx_A,
+         const const_tensor& B,
+         const label_string& idx_B,
          tblis_scalar& result)
 {
-    tblis_tensor_dot(comm, nullptr, &A, idx_A.data(), &B, idx_B.data(), &result);
+    tblis_tensor_dot(comm, nullptr, &A.tensor_, idx_A.idx, &B.tensor_, idx_B.idx, &result);
 }
 
 template <typename T>
 void dot(const communicator& comm,
-         const tensor& A,
-         const label_vector& idx_A,
-         const tensor& B,
-         const label_vector& idx_B,
+         const const_tensor& A,
+         const label_string& idx_A,
+         const const_tensor& B,
+         const label_string& idx_B,
          T& result)
 {
     tblis_scalar result_(0.0, A.type);
@@ -49,10 +47,10 @@ void dot(const communicator& comm,
 
 inline
 tblis_scalar dot(const communicator& comm,
-                 const tensor& A,
-                 const label_vector& idx_A,
-                 const tensor& B,
-                 const label_vector& idx_B)
+                 const const_tensor& A,
+                 const label_string& idx_A,
+                 const const_tensor& B,
+                 const label_string& idx_B)
 {
     tblis_scalar result(0.0, A.type);
     dot(comm, A, idx_A, B, idx_B, result);
@@ -61,10 +59,10 @@ tblis_scalar dot(const communicator& comm,
 
 template <typename T>
 T dot(const communicator& comm,
-      const tensor& A,
-      const label_vector& idx_A,
-      const tensor& B,
-      const label_vector& idx_B)
+      const const_tensor& A,
+      const label_string& idx_A,
+      const const_tensor& B,
+      const label_string& idx_B)
 {
     T result;
     dot(comm, A, idx_A, B, idx_B, result);
@@ -73,8 +71,8 @@ T dot(const communicator& comm,
 
 inline
 void dot(const communicator& comm,
-         const tensor& A,
-         const tensor& B,
+         const const_tensor& A,
+         const const_tensor& B,
          tblis_scalar& result)
 {
     dot(comm, A, idx(A), B, idx(B), result);
@@ -82,8 +80,8 @@ void dot(const communicator& comm,
 
 template <typename T>
 void dot(const communicator& comm,
-         const tensor& A,
-         const tensor& B,
+         const const_tensor& A,
+         const const_tensor& B,
          T& result)
 {
     tblis_scalar result_(0.0, A.type);
@@ -93,8 +91,8 @@ void dot(const communicator& comm,
 
 inline
 tblis_scalar dot(const communicator& comm,
-                 const tensor& A,
-                 const tensor& B)
+                 const const_tensor& A,
+                 const const_tensor& B)
 {
     tblis_scalar result(0.0, A.type);
     dot(comm, A, B, result);
@@ -103,8 +101,8 @@ tblis_scalar dot(const communicator& comm,
 
 template <typename T>
 T dot(const communicator& comm,
-      const tensor& A,
-      const tensor& B)
+      const const_tensor& A,
+      const const_tensor& B)
 {
     T result;
     dot(comm, A, B, result);
@@ -112,20 +110,20 @@ T dot(const communicator& comm,
 }
 
 inline
-void dot(const tensor& A,
-         const label_vector& idx_A,
-         const tensor& B,
-         const label_vector& idx_B,
+void dot(const const_tensor& A,
+         const label_string& idx_A,
+         const const_tensor& B,
+         const label_string& idx_B,
          tblis_scalar& result)
 {
     dot(*(communicator*)nullptr, A, idx_A, B, idx_B, result);
 }
 
 template <typename T>
-void dot(const tensor& A,
-         const label_vector& idx_A,
-         const tensor& B,
-         const label_vector& idx_B,
+void dot(const const_tensor& A,
+         const label_string& idx_A,
+         const const_tensor& B,
+         const label_string& idx_B,
          T& result)
 {
     tblis_scalar result_(0.0, A.type);
@@ -134,10 +132,10 @@ void dot(const tensor& A,
 }
 
 inline
-tblis_scalar dot(const tensor& A,
-                 const label_vector& idx_A,
-                 const tensor& B,
-                 const label_vector& idx_B)
+tblis_scalar dot(const const_tensor& A,
+                 const label_string& idx_A,
+                 const const_tensor& B,
+                 const label_string& idx_B)
 {
     tblis_scalar result(0.0, A.type);
     dot(A, idx_A, B, idx_B, result);
@@ -145,10 +143,10 @@ tblis_scalar dot(const tensor& A,
 }
 
 template <typename T>
-T dot(const tensor& A,
-      const label_vector& idx_A,
-      const tensor& B,
-      const label_vector& idx_B)
+T dot(const const_tensor& A,
+      const label_string& idx_A,
+      const const_tensor& B,
+      const label_string& idx_B)
 {
     T result;
     dot(A, idx_A, B, idx_B, result);
@@ -156,16 +154,16 @@ T dot(const tensor& A,
 }
 
 inline
-void dot(const tensor& A,
-         const tensor& B,
+void dot(const const_tensor& A,
+         const const_tensor& B,
          tblis_scalar& result)
 {
     dot(A, idx(A), B, idx(B), result);
 }
 
 template <typename T>
-void dot(const tensor& A,
-         const tensor& B,
+void dot(const const_tensor& A,
+         const const_tensor& B,
          T& result)
 {
     tblis_scalar result_(0.0, A.type);
@@ -174,8 +172,8 @@ void dot(const tensor& A,
 }
 
 inline
-tblis_scalar dot(const tensor& A,
-                 const tensor& B)
+tblis_scalar dot(const const_tensor& A,
+                 const const_tensor& B)
 {
     tblis_scalar result(0.0, A.type);
     dot(A, B, result);
@@ -183,24 +181,24 @@ tblis_scalar dot(const tensor& A,
 }
 
 template <typename T>
-T dot(const tensor& A,
-      const tensor& B)
+T dot(const const_tensor& A,
+      const const_tensor& B)
 {
     T result;
     dot(A, B, result);
     return result;
 }
 
-#if !defined(TBLIS_DONT_USE_CXX11)
+#ifdef MARRAY_DPD_MARRAY_VIEW_HPP
 
 template <typename T>
 void dot(const communicator& comm,
-         dpd_marray_view<const T> A, const label_vector& idx_A,
-         dpd_marray_view<const T> B, const label_vector& idx_B, T& result);
+         MArray::dpd_marray_view<const T> A, const label_string& idx_A,
+         MArray::dpd_marray_view<const T> B, const label_string& idx_B, T& result);
 
 template <typename T>
-void dot(dpd_marray_view<const T> A, const label_vector& idx_A,
-         dpd_marray_view<const T> B, const label_vector& idx_B, T& result)
+void dot(MArray::dpd_marray_view<const T> A, const label_string& idx_A,
+         MArray::dpd_marray_view<const T> B, const label_string& idx_B, T& result)
 {
     parallelize
     (
@@ -213,8 +211,8 @@ void dot(dpd_marray_view<const T> A, const label_vector& idx_A,
 }
 
 template <typename T>
-T dot(dpd_marray_view<const T> A, const label_vector& idx_A,
-      dpd_marray_view<const T> B, const label_vector& idx_B)
+T dot(MArray::dpd_marray_view<const T> A, const label_string& idx_A,
+      MArray::dpd_marray_view<const T> B, const label_string& idx_B)
 {
     T result;
     dot(A, idx_A, B, idx_B, result);
@@ -223,22 +221,26 @@ T dot(dpd_marray_view<const T> A, const label_vector& idx_A,
 
 template <typename T>
 T dot(const communicator& comm,
-      dpd_marray_view<const T> A, const label_vector& idx_A,
-      dpd_marray_view<const T> B, const label_vector& idx_B)
+      MArray::dpd_marray_view<const T> A, const label_string& idx_A,
+      MArray::dpd_marray_view<const T> B, const label_string& idx_B)
 {
     T result;
     dot(comm, A, idx_A, B, idx_B, result);
     return result;
 }
 
-template <typename T>
-void dot(const communicator& comm,
-         indexed_marray_view<const T> A, const label_vector& idx_A,
-         indexed_marray_view<const T> B, const label_vector& idx_B, T& result);
+#endif //MARRAY_DPD_MARRAY_VIEW_HPP
+
+#ifdef MARRAY_INDEXED_MARRAY_VIEW_HPP
 
 template <typename T>
-void dot(indexed_marray_view<const T> A, const label_vector& idx_A,
-         indexed_marray_view<const T> B, const label_vector& idx_B, T& result)
+void dot(const communicator& comm,
+         MArray::indexed_marray_view<const T> A, const label_string& idx_A,
+         MArray::indexed_marray_view<const T> B, const label_string& idx_B, T& result);
+
+template <typename T>
+void dot(MArray::indexed_marray_view<const T> A, const label_string& idx_A,
+         MArray::indexed_marray_view<const T> B, const label_string& idx_B, T& result)
 {
     parallelize
     (
@@ -251,8 +253,8 @@ void dot(indexed_marray_view<const T> A, const label_vector& idx_A,
 }
 
 template <typename T>
-T dot(indexed_marray_view<const T> A, const label_vector& idx_A,
-      indexed_marray_view<const T> B, const label_vector& idx_B)
+T dot(MArray::indexed_marray_view<const T> A, const label_string& idx_A,
+      MArray::indexed_marray_view<const T> B, const label_string& idx_B)
 {
     T result;
     dot(A, idx_A, B, idx_B, result);
@@ -261,22 +263,26 @@ T dot(indexed_marray_view<const T> A, const label_vector& idx_A,
 
 template <typename T>
 T dot(const communicator& comm,
-      indexed_marray_view<const T> A, const label_vector& idx_A,
-      indexed_marray_view<const T> B, const label_vector& idx_B)
+      MArray::indexed_marray_view<const T> A, const label_string& idx_A,
+      MArray::indexed_marray_view<const T> B, const label_string& idx_B)
 {
     T result;
     dot(comm, A, idx_A, B, idx_B, result);
     return result;
 }
 
-template <typename T>
-void dot(const communicator& comm,
-         indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
-         indexed_dpd_marray_view<const T> B, const label_vector& idx_B, T& result);
+#endif //MARRAY_INDEXED_MARRAY_VIEW_HPP
+
+#ifdef MARRAY_INDEXED_DPD_MARRAY_VIEW_HPP
 
 template <typename T>
-void dot(indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
-         indexed_dpd_marray_view<const T> B, const label_vector& idx_B, T& result)
+void dot(const communicator& comm,
+         MArray::indexed_dpd_marray_view<const T> A, const label_string& idx_A,
+         MArray::indexed_dpd_marray_view<const T> B, const label_string& idx_B, T& result);
+
+template <typename T>
+void dot(MArray::indexed_dpd_marray_view<const T> A, const label_string& idx_A,
+         MArray::indexed_dpd_marray_view<const T> B, const label_string& idx_B, T& result)
 {
     parallelize
     (
@@ -289,8 +295,8 @@ void dot(indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
 }
 
 template <typename T>
-T dot(indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
-      indexed_dpd_marray_view<const T> B, const label_vector& idx_B)
+T dot(MArray::indexed_dpd_marray_view<const T> A, const label_string& idx_A,
+      MArray::indexed_dpd_marray_view<const T> B, const label_string& idx_B)
 {
     T result;
     dot(A, idx_A, B, idx_B, result);
@@ -299,20 +305,20 @@ T dot(indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
 
 template <typename T>
 T dot(const communicator& comm,
-      indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
-      indexed_dpd_marray_view<const T> B, const label_vector& idx_B)
+      MArray::indexed_dpd_marray_view<const T> A, const label_string& idx_A,
+      MArray::indexed_dpd_marray_view<const T> B, const label_string& idx_B)
 {
     T result;
     dot(comm, A, idx_A, B, idx_B, result);
     return result;
 }
 
-#endif
+#endif //MARRAY_INDEXED_DPD_MARRAY_VIEW_HPP
 
-}
+#endif //TBLIS_ENABLE_CXX
 
-#endif
+TBLIS_END_NAMESPACE
 
 #pragma GCC diagnostic pop
 
-#endif
+#endif //TBLIS_IFACE_1T_DOT_H

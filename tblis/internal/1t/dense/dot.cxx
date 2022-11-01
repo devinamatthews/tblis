@@ -1,6 +1,5 @@
-#include "dot.hpp"
-
-#include "util/tensor.hpp"
+#include <tblis/internal/dense.hpp>
+#include <tblis/internal/thread.hpp>
 
 namespace tblis
 {

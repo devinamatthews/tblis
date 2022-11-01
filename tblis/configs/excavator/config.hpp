@@ -1,7 +1,7 @@
 #ifndef _TBLIS_CONFIGS_EXCAVATOR_CONFIG_HPP_
 #define _TBLIS_CONFIGS_EXCAVATOR_CONFIG_HPP_
 
-#include "configs/config_builder.hpp"
+#include <tblis/internal/configs.hpp>
 
 /*
  * These are actually the same kernels as Piledriver.

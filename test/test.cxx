@@ -25,12 +25,6 @@ template <> const string& type_name<dcomplex>()
     return name;
 }
 
-template <typename Iter>
-void shuffle(Iter begin, Iter end)
-{
-    std::shuffle(begin, end, rand_engine);
-}
-
 stride_type N = 10*1024*1024;
 int R = 50;
 
@@ -96,7 +90,7 @@ template \
 void gemm_ref(T alpha, matrix_view<const T> A, \
                        matrix_view<const T> B, \
               T  beta,       matrix_view<T> C);
-#include "configs/foreach_type.h"
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void gemm_ref(T alpha, matrix_view<const T> A,
@@ -166,7 +160,7 @@ void gemm_ref(T alpha, matrix_view<const T> A, \
                           row_view<const T> D, \
                        matrix_view<const T> B, \
               T  beta,       matrix_view<T> C);
-#include "configs/foreach_type.h"
+#include <tblis/internal/foreach_type.h>
 
 /*
  * Creates a matrix whose total storage size is between N/4
@@ -199,7 +193,7 @@ void random_matrix(stride_type N, len_type m_min, len_type n_min, matrix<T>& t)
 
 #define FOREACH_TYPE(T) \
 template void random_matrix(stride_type N, len_type m_min, len_type n_min, matrix<T>& t);
-#include "configs/foreach_type.h"
+#include <tblis/internal/foreach_type.h>
 
 /*
  * Creates a matrix, whose total storage size is between N/4
@@ -216,7 +210,7 @@ void random_matrix(stride_type N, matrix<T>& t)
 
 #define FOREACH_TYPE(T) \
 template void random_matrix(stride_type N, matrix<T>& t);
-#include "configs/foreach_type.h"
+#include <tblis/internal/foreach_type.h>
 
 /*
  * Creates a tensor of d dimensions, whose total storage size is between N/2^d
@@ -268,7 +262,7 @@ void random_tensor(stride_type N, int d, const vector<len_type>& len_min, marray
 
 #define FOREACH_TYPE(T) \
 template void random_tensor(stride_type N, int d, const vector<len_type>& len_min, marray<T>& A);
-#include "configs/foreach_type.h"
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, dpd_marray<T>& A)
@@ -294,7 +288,7 @@ void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len
 
 #define FOREACH_TYPE(T) \
 template void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, dpd_marray<T>& A);
-#include "configs/foreach_type.h"
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_marray<T>& A)
@@ -313,7 +307,7 @@ void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexe
 
 #define FOREACH_TYPE(T) \
 template void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_marray<T>& A);
-#include "configs/foreach_type.h"
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, indexed_dpd_marray<T>& A)
@@ -358,7 +352,7 @@ void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len
 
 #define FOREACH_TYPE(T) \
 template void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, indexed_dpd_marray<T>& A);
-#include "configs/foreach_type.h"
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void random_tensor(stride_type N, int d, const vector<len_type>& len_min, dpd_marray<T>& A)
@@ -368,7 +362,7 @@ void random_tensor(stride_type N, int d, const vector<len_type>& len_min, dpd_ma
 
 #define FOREACH_TYPE(T) \
 template void random_tensor(stride_type N, int d, const vector<len_type>& len_min, dpd_marray<T>& A);
-#include "configs/foreach_type.h"
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_dpd_marray<T>& A)
@@ -378,7 +372,7 @@ void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexe
 
 #define FOREACH_TYPE(T) \
 template void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_dpd_marray<T>& A);
-#include "configs/foreach_type.h"
+#include <tblis/internal/foreach_type.h>
 
 /*
  * Creates a tensor of d dimensions, whose total storage size is between N/2
@@ -403,8 +397,8 @@ void random_lengths(stride_type N, len_vector& len)
 void random_lengths(stride_type N,
                     int ndim_A_only, int ndim_B_only,
                     int ndim_AB,
-                    len_vector& len_A, label_vector& idx_A,
-                    len_vector& len_B, label_vector& idx_B)
+                    len_vector& len_A, string& idx_A,
+                    len_vector& len_B, string& idx_B)
 {
     auto ndim_A = ndim_A_only+ndim_AB;
     auto ndim_B = ndim_B_only+ndim_AB;
@@ -415,7 +409,7 @@ void random_lengths(stride_type N,
         for (auto j : range(ndim_A_only)) types_A[i++] = {TYPE_A, j};
         for (auto j : range(ndim_AB    )) types_A[i++] = {TYPE_AB, j};
     }
-    shuffle(types_A.begin(), types_A.end());
+    shuffle(types_A.begin(), types_A.end(), rand_engine);
 
     vector<pair<index_type,int>> types_B(ndim_B);
     {
@@ -423,19 +417,19 @@ void random_lengths(stride_type N,
         for (auto j : range(ndim_B_only)) types_B[i++] = {TYPE_B, j};
         for (auto j : range(ndim_AB    )) types_B[i++] = {TYPE_AB, j};
     }
-    shuffle(types_B.begin(), types_B.end());
+    shuffle(types_B.begin(), types_B.end(), rand_engine);
 
     label_vector idx = range<label_type>('a', static_cast<char>('a'+ndim_A+ndim_B-ndim_AB));
-    shuffle(idx.begin(), idx.end());
+    shuffle(idx.begin(), idx.end(), rand_engine);
 
     auto c = 0;
-    label_vector idx_A_only(ndim_A_only, 0);
+    string idx_A_only(ndim_A_only, 0);
     for (auto i : range(ndim_A_only)) idx_A_only[i] = idx[c++];
 
-    label_vector idx_B_only(ndim_B_only, 0);
+    string idx_B_only(ndim_B_only, 0);
     for (auto i : range(ndim_B_only)) idx_B_only[i] = idx[c++];
 
-    label_vector idx_AB(ndim_AB, 0);
+    string idx_AB(ndim_AB, 0);
     for (auto i : range(ndim_AB)) idx_AB[i] = idx[c++];
 
     idx_A.resize(ndim_A);
@@ -493,8 +487,8 @@ template <typename T>
 void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only,
                     int ndim_AB,
-                    marray<T>& A, label_vector& idx_A,
-                    marray<T>& B, label_vector& idx_B)
+                    marray<T>& A, string& idx_A,
+                    marray<T>& B, string& idx_B)
 {
     len_vector len_A, len_B;
 
@@ -513,15 +507,15 @@ template \
 void random_tensors(stride_type N, \
                     int ndim_A_only, int ndim_B_only, \
                     int ndim_AB, \
-                    marray<T>& A, label_vector& idx_A, \
-                    marray<T>& B, label_vector& idx_B);
-#include "configs/foreach_type.h"
+                    marray<T>& A, string& idx_A, \
+                    marray<T>& B, string& idx_B);
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_AB,
-                    dpd_marray<T>& A, label_vector& idx_A,
-                    dpd_marray<T>& B, label_vector& idx_B)
+                    dpd_marray<T>& A, string& idx_A,
+                    dpd_marray<T>& B, string& idx_B)
 {
     int nirrep;
     int irrep_A, irrep_B;
@@ -573,16 +567,16 @@ template \
 void random_tensors(stride_type N, \
                     int ndim_A_only, int ndim_B_only, \
                     int ndim_AB, \
-                    dpd_marray<T>& A, label_vector& idx_A, \
-                    dpd_marray<T>& B, label_vector& idx_B);
-#include "configs/foreach_type.h"
+                    dpd_marray<T>& A, string& idx_A, \
+                    dpd_marray<T>& B, string& idx_B);
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only,
                     int ndim_AB,
-                    indexed_marray<T>& A, label_vector& idx_A,
-                    indexed_marray<T>& B, label_vector& idx_B)
+                    indexed_marray<T>& A, string& idx_A,
+                    indexed_marray<T>& B, string& idx_B)
 {
     len_vector len_A, len_B;
 
@@ -611,15 +605,15 @@ template \
 void random_tensors(stride_type N, \
                     int ndim_A_only, int ndim_B_only, \
                     int ndim_AB, \
-                    indexed_marray<T>& A, label_vector& idx_A, \
-                    indexed_marray<T>& B, label_vector& idx_B);
-#include "configs/foreach_type.h"
+                    indexed_marray<T>& A, string& idx_A, \
+                    indexed_marray<T>& B, string& idx_B);
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_AB,
-                    indexed_dpd_marray<T>& A, label_vector& idx_A,
-                    indexed_dpd_marray<T>& B, label_vector& idx_B)
+                    indexed_dpd_marray<T>& A, string& idx_A,
+                    indexed_dpd_marray<T>& B, string& idx_B)
 {
     int nirrep;
     int irrep_A, irrep_B;
@@ -715,17 +709,17 @@ template \
 void random_tensors(stride_type N, \
                     int ndim_A_only, int ndim_B_only, \
                     int ndim_AB, \
-                    indexed_dpd_marray<T>& A, label_vector& idx_A, \
-                    indexed_dpd_marray<T>& B, label_vector& idx_B);
-#include "configs/foreach_type.h"
+                    indexed_dpd_marray<T>& A, string& idx_A, \
+                    indexed_dpd_marray<T>& B, string& idx_B);
+#include <tblis/internal/foreach_type.h>
 
 void random_lengths(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_C_only,
                     int ndim_AB, int ndim_AC, int ndim_BC,
                     int ndim_ABC,
-                    len_vector& len_A, label_vector& idx_A,
-                    len_vector& len_B, label_vector& idx_B,
-                    len_vector& len_C, label_vector& idx_C)
+                    len_vector& len_A, string& idx_A,
+                    len_vector& len_B, string& idx_B,
+                    len_vector& len_C, string& idx_C)
 {
     auto ndim_A = ndim_A_only+ndim_AB+ndim_AC+ndim_ABC;
     auto ndim_B = ndim_B_only+ndim_AB+ndim_BC+ndim_ABC;
@@ -739,7 +733,7 @@ void random_lengths(stride_type N,
         for (auto j : range(ndim_AC    )) types_A[i++] = {TYPE_AC, j};
         for (auto j : range(ndim_ABC   )) types_A[i++] = {TYPE_ABC, j};
     }
-    shuffle(types_A.begin(), types_A.end());
+    shuffle(types_A.begin(), types_A.end(), rand_engine);
 
     vector<pair<index_type,int>> types_B(ndim_B);
     {
@@ -749,7 +743,7 @@ void random_lengths(stride_type N,
         for (auto j : range(ndim_BC    )) types_B[i++] = {TYPE_BC, j};
         for (auto j : range(ndim_ABC   )) types_B[i++] = {TYPE_ABC, j};
     }
-    shuffle(types_B.begin(), types_B.end());
+    shuffle(types_B.begin(), types_B.end(), rand_engine);
 
     vector<pair<index_type,int>> types_C(ndim_C);
     {
@@ -759,33 +753,33 @@ void random_lengths(stride_type N,
         for (auto j : range(ndim_BC    )) types_C[i++] = {TYPE_BC, j};
         for (auto j : range(ndim_ABC   )) types_C[i++] = {TYPE_ABC, j};
     }
-    shuffle(types_C.begin(), types_C.end());
+    shuffle(types_C.begin(), types_C.end(), rand_engine);
 
-    label_vector idx =
+    string idx =
         range<label_type>('a', static_cast<char>('a'+ndim_A_only+ndim_B_only+ndim_C_only+
                       ndim_AB+ndim_AC+ndim_BC+ndim_ABC));
-    shuffle(idx.begin(), idx.end());
+    shuffle(idx.begin(), idx.end(), rand_engine);
 
     auto c = 0;
-    label_vector idx_A_only(ndim_A_only, 0);
+    string idx_A_only(ndim_A_only, 0);
     for (auto i : range(ndim_A_only)) idx_A_only[i] = idx[c++];
 
-    label_vector idx_B_only(ndim_B_only, 0);
+    string idx_B_only(ndim_B_only, 0);
     for (auto i : range(ndim_B_only)) idx_B_only[i] = idx[c++];
 
-    label_vector idx_C_only(ndim_C_only, 0);
+    string idx_C_only(ndim_C_only, 0);
     for (auto i : range(ndim_C_only)) idx_C_only[i] = idx[c++];
 
-    label_vector idx_AB(ndim_AB, 0);
+    string idx_AB(ndim_AB, 0);
     for (auto i : range(ndim_AB)) idx_AB[i] = idx[c++];
 
-    label_vector idx_AC(ndim_AC, 0);
+    string idx_AC(ndim_AC, 0);
     for (auto i : range(ndim_AC)) idx_AC[i] = idx[c++];
 
-    label_vector idx_BC(ndim_BC, 0);
+    string idx_BC(ndim_BC, 0);
     for (auto i : range(ndim_BC)) idx_BC[i] = idx[c++];
 
-    label_vector idx_ABC(ndim_ABC, 0);
+    string idx_ABC(ndim_ABC, 0);
     for (auto i : range(ndim_ABC)) idx_ABC[i] = idx[c++];
 
     idx_A.resize(ndim_A);
@@ -984,9 +978,9 @@ void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_C_only,
                     int ndim_AB, int ndim_AC, int ndim_BC,
                     int ndim_ABC,
-                    marray<T>& A, label_vector& idx_A,
-                    marray<T>& B, label_vector& idx_B,
-                    marray<T>& C, label_vector& idx_C)
+                    marray<T>& A, string& idx_A,
+                    marray<T>& B, string& idx_B,
+                    marray<T>& C, string& idx_C)
 {
     len_vector len_A, len_B, len_C;
 
@@ -1009,19 +1003,19 @@ void random_tensors(stride_type N, \
                     int ndim_A_only, int ndim_B_only, int ndim_C_only, \
                     int ndim_AB, int ndim_AC, int ndim_BC, \
                     int ndim_ABC, \
-                    marray<T>& A, label_vector& idx_A, \
-                    marray<T>& B, label_vector& idx_B, \
-                    marray<T>& C, label_vector& idx_C);
-#include "configs/foreach_type.h"
+                    marray<T>& A, string& idx_A, \
+                    marray<T>& B, string& idx_B, \
+                    marray<T>& C, string& idx_C);
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_C_only,
                     int ndim_AB, int ndim_AC, int ndim_BC,
                     int ndim_ABC,
-                    dpd_marray<T>& A, label_vector& idx_A,
-                    dpd_marray<T>& B, label_vector& idx_B,
-                    dpd_marray<T>& C, label_vector& idx_C)
+                    dpd_marray<T>& A, string& idx_A,
+                    dpd_marray<T>& B, string& idx_B,
+                    dpd_marray<T>& C, string& idx_C)
 {
     int nirrep, irrep_A, irrep_B, irrep_C;
     vector<vector<len_type>> len_A, len_B, len_C;
@@ -1108,19 +1102,19 @@ void random_tensors(stride_type N, \
                     int ndim_A_only, int ndim_B_only, int ndim_C_only, \
                     int ndim_AB, int ndim_AC, int ndim_BC, \
                     int ndim_ABC, \
-                    dpd_marray<T>& A, label_vector& idx_A, \
-                    dpd_marray<T>& B, label_vector& idx_B, \
-                    dpd_marray<T>& C, label_vector& idx_C);
-#include "configs/foreach_type.h"
+                    dpd_marray<T>& A, string& idx_A, \
+                    dpd_marray<T>& B, string& idx_B, \
+                    dpd_marray<T>& C, string& idx_C);
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_C_only,
                     int ndim_AB, int ndim_AC, int ndim_BC,
                     int ndim_ABC,
-                    indexed_marray<T>& A, label_vector& idx_A,
-                    indexed_marray<T>& B, label_vector& idx_B,
-                    indexed_marray<T>& C, label_vector& idx_C)
+                    indexed_marray<T>& A, string& idx_A,
+                    indexed_marray<T>& B, string& idx_B,
+                    indexed_marray<T>& C, string& idx_C)
 {
     len_vector len_A, len_B, len_C;
 
@@ -1157,19 +1151,19 @@ void random_tensors(stride_type N, \
                     int ndim_A_only, int ndim_B_only, int ndim_C_only, \
                     int ndim_AB, int ndim_AC, int ndim_BC, \
                     int ndim_ABC, \
-                    indexed_marray<T>& A, label_vector& idx_A, \
-                    indexed_marray<T>& B, label_vector& idx_B, \
-                    indexed_marray<T>& C, label_vector& idx_C);
-#include "configs/foreach_type.h"
+                    indexed_marray<T>& A, string& idx_A, \
+                    indexed_marray<T>& B, string& idx_B, \
+                    indexed_marray<T>& C, string& idx_C);
+#include <tblis/internal/foreach_type.h>
 
 template <typename T>
 void random_tensors(stride_type N,
                     int ndim_A_only, int ndim_B_only, int ndim_C_only,
                     int ndim_AB, int ndim_AC, int ndim_BC,
                     int ndim_ABC,
-                    indexed_dpd_marray<T>& A, label_vector& idx_A,
-                    indexed_dpd_marray<T>& B, label_vector& idx_B,
-                    indexed_dpd_marray<T>& C, label_vector& idx_C)
+                    indexed_dpd_marray<T>& A, string& idx_A,
+                    indexed_dpd_marray<T>& B, string& idx_B,
+                    indexed_dpd_marray<T>& C, string& idx_C)
 {
     int nirrep, irrep_A, irrep_B, irrep_C;
     vector<vector<len_type>> len_A, len_B, len_C;
@@ -1332,10 +1326,10 @@ void random_tensors(stride_type N, \
                     int ndim_A_only, int ndim_B_only, int ndim_C_only, \
                     int ndim_AB, int ndim_AC, int ndim_BC, \
                     int ndim_ABC, \
-                    indexed_dpd_marray<T>& A, label_vector& idx_A, \
-                    indexed_dpd_marray<T>& B, label_vector& idx_B, \
-                    indexed_dpd_marray<T>& C, label_vector& idx_C);
-#include "configs/foreach_type.h"
+                    indexed_dpd_marray<T>& A, string& idx_A, \
+                    indexed_dpd_marray<T>& B, string& idx_B, \
+                    indexed_dpd_marray<T>& C, string& idx_C);
+#include <tblis/internal/foreach_type.h>
 
 int main(int argc, char **argv)
 {

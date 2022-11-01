@@ -1,5 +1,5 @@
-#ifndef _TBLIS_TIME_HPP_
-#define _TBLIS_TIME_HPP_
+#ifndef TBLIS_BASE_TIME_HPP
+#define TBLIS_BASE_TIME_HPP
 
 #ifdef __MACH__
 #include <mach/mach_time.h>
@@ -31,4 +31,4 @@ inline double tic()
 
 }
 
-#endif
+#endif //TBLIS_BASE_TIME_HPP

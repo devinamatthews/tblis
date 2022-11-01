@@ -1,7 +1,5 @@
-#include "set.hpp"
-#include "internal/1t/dense/set.hpp"
-
-#include "util/tensor.hpp"
+#include <tblis/internal/indexed.hpp>
+#include <tblis/internal/dpd.hpp>
 
 namespace tblis
 {
@@ -17,10 +15,10 @@ void set(type_t type, const communicator& comm, const config& cfg,
 
         switch (type)
         {
-            case TYPE_FLOAT:    alpha_fac.data.s *= reinterpret_cast<const indexed_marray_view<   float>&>(A).factor(i); break;
-            case TYPE_DOUBLE:   alpha_fac.data.d *= reinterpret_cast<const indexed_marray_view<  double>&>(A).factor(i); break;
-            case TYPE_SCOMPLEX: alpha_fac.data.c *= reinterpret_cast<const indexed_marray_view<scomplex>&>(A).factor(i); break;
-            case TYPE_DCOMPLEX: alpha_fac.data.z *= reinterpret_cast<const indexed_marray_view<dcomplex>&>(A).factor(i); break;
+            case FLOAT:    alpha_fac.data.s *= reinterpret_cast<const indexed_marray_view<   float>&>(A).factor(i); break;
+            case DOUBLE:   alpha_fac.data.d *= reinterpret_cast<const indexed_marray_view<  double>&>(A).factor(i); break;
+            case SCOMPLEX: alpha_fac.data.c *= reinterpret_cast<const indexed_marray_view<scomplex>&>(A).factor(i); break;
+            case DCOMPLEX: alpha_fac.data.z *= reinterpret_cast<const indexed_marray_view<dcomplex>&>(A).factor(i); break;
         }
 
         set(type, comm, cfg, A.dense_lengths(), alpha_fac, A.data(i),

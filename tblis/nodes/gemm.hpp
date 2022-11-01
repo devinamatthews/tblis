@@ -1,10 +1,16 @@
 #ifndef _TBLIS_NODES_GEMM_HPP_
 #define _TBLIS_NODES_GEMM_HPP_
 
-#include "util/gemm_thread.hpp"
-#include "gemm_ker.hpp"
-#include "partm.hpp"
-#include "packm.hpp"
+#include <tblis/base/thread.h>
+#include <tblis/base/configs.h>
+
+#include <tblis/internal/types.hpp>
+#include <tblis/internal/thread.hpp>
+#include <tblis/internal/gemm_thread.hpp>
+
+#include <tblis/nodes/gemm_ker.hpp>
+#include <tblis/nodes/partm.hpp>
+#include <tblis/nodes/packm.hpp>
 
 namespace tblis
 {

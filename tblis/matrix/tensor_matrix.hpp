@@ -1,10 +1,6 @@
 #ifndef _TBLIS_TENSOR_MATRIX_HPP_
 #define _TBLIS_TENSOR_MATRIX_HPP_
 
-#include "util/basic_types.h"
-
-#include "external/stl_ext/include/algorithm.hpp"
-
 #include "abstract_matrix.hpp"
 #include "packed_matrix.hpp"
 

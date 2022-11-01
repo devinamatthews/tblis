@@ -1,16 +1,14 @@
-#ifndef _TBLIS_IFACE_1T_SHIFT_H_
-#define _TBLIS_IFACE_1T_SHIFT_H_
+#ifndef TBLIS_IFACE_1T_SHIFT_H
+#define TBLIS_IFACE_1T_SHIFT_H
 
-#include "../../util/thread.h"
-#include "../../util/basic_types.h"
+#include <tblis/base/types.h>
+#include <tblis/base/thread.h>
+#include <tblis/base/configs.h>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnull-dereference"
 
-#ifdef __cplusplus
-namespace tblis
-{
-#endif
+TBLIS_BEGIN_NAMESPACE
 
 TBLIS_EXPORT
 void tblis_tensor_shift(const tblis_comm* comm,
@@ -19,25 +17,19 @@ void tblis_tensor_shift(const tblis_comm* comm,
                               tblis_tensor* A,
                         const label_type* idx_A);
 
-#if defined(__cplusplus)
+#if TBLIS_ENABLE_CXX
 
-inline
 void shift(const communicator& comm,
            const scalar& alpha_,
            const scalar& beta,
-                 tensor&& A,
-           const label_vector& idx_A)
-{
-    auto alpha = alpha_.convert(A.type);
-    A.scalar *= beta.convert(A.type);
-    tblis_tensor_shift(comm, nullptr, &alpha, &A, idx_A.data());
-}
+           const tensor& A_,
+           const label_string& idx_A);
 
 inline
 void shift(const communicator& comm,
            const scalar& alpha,
-                 tensor&& A,
-           const label_vector& idx_A)
+           const tensor& A,
+           const label_string& idx_A)
 {
     shift(comm, alpha, {1.0, A.type}, std::move(A), idx_A);
 }
@@ -46,7 +38,7 @@ inline
 void shift(const communicator& comm,
            const scalar& alpha,
            const scalar& beta,
-                 tensor&& A)
+           const tensor& A)
 {
     shift(comm, alpha, beta, std::move(A), idx(A));
 }
@@ -54,7 +46,7 @@ void shift(const communicator& comm,
 inline
 void shift(const communicator& comm,
            const scalar& alpha,
-                 tensor&& A)
+           const tensor& A)
 {
     shift(comm, alpha, {1.0, A.type}, std::move(A));
 }
@@ -62,16 +54,16 @@ void shift(const communicator& comm,
 inline
 void shift(const scalar& alpha,
            const scalar& beta,
-                 tensor&& A,
-           const label_vector& idx_A)
+           const tensor& A,
+           const label_string& idx_A)
 {
     shift(*(communicator*)nullptr, alpha, beta, std::move(A), idx_A);
 }
 
 inline
 void shift(const scalar& alpha,
-                 tensor&& A,
-           const label_vector& idx_A)
+           const tensor& A,
+           const label_string& idx_A)
 {
     shift(alpha, {1.0, A.type}, std::move(A), idx_A);
 }
@@ -79,26 +71,26 @@ void shift(const scalar& alpha,
 inline
 void shift(const scalar& alpha,
            const scalar& beta,
-                 tensor&& A)
+           const tensor& A)
 {
     shift(alpha, beta, std::move(A), idx(A));
 }
 
 inline
 void shift(const scalar& alpha,
-                 tensor&& A)
+           const tensor& A)
 {
     shift(alpha, {1.0, A.type}, std::move(A));
 }
 
-#if !defined(TBLIS_DONT_USE_CXX11)
+#ifdef MARRAY_DPD_MARRAY_VIEW_HPP
 
 template <typename T>
 void shift(const communicator& comm,
-         T alpha, T beta, dpd_marray_view<T> A, const label_vector& idx_A);
+         T alpha, T beta, MArray::dpd_marray_view<T> A, const label_string& idx_A);
 
 template <typename T>
-void shift(T alpha, T beta, dpd_marray_view<T> A, const label_vector& idx_A)
+void shift(T alpha, T beta, MArray::dpd_marray_view<T> A, const label_string& idx_A)
 {
     parallelize
     (
@@ -110,12 +102,16 @@ void shift(T alpha, T beta, dpd_marray_view<T> A, const label_vector& idx_A)
     );
 }
 
-template <typename T>
-void shift(const communicator& comm,
-         T alpha, T beta, indexed_marray_view<T> A, const label_vector& idx_A);
+#endif //MARRAY_DPD_MARRAY_VIEW_HPP
+
+#ifdef MARRAY_INDEXED_MARRAY_VIEW_HPP
 
 template <typename T>
-void shift(T alpha, T beta, indexed_marray_view<T> A, const label_vector& idx_A)
+void shift(const communicator& comm,
+         T alpha, T beta, MArray::indexed_marray_view<T> A, const label_string& idx_A);
+
+template <typename T>
+void shift(T alpha, T beta, MArray::indexed_marray_view<T> A, const label_string& idx_A)
 {
     parallelize
     (
@@ -127,12 +123,16 @@ void shift(T alpha, T beta, indexed_marray_view<T> A, const label_vector& idx_A)
     );
 }
 
-template <typename T>
-void shift(const communicator& comm,
-         T alpha, T beta, indexed_dpd_marray_view<T> A, const label_vector& idx_A);
+#endif //MARRAY_INDEXED_MARRAY_VIEW_HPP
+
+#ifdef MARRAY_INDEXED_DPD_MARRAY_VIEW_HPP
 
 template <typename T>
-void shift(T alpha, T beta, indexed_dpd_marray_view<T> A, const label_vector& idx_A)
+void shift(const communicator& comm,
+         T alpha, T beta, MArray::indexed_dpd_marray_view<T> A, const label_string& idx_A);
+
+template <typename T>
+void shift(T alpha, T beta, MArray::indexed_dpd_marray_view<T> A, const label_string& idx_A)
 {
     parallelize
     (
@@ -144,12 +144,12 @@ void shift(T alpha, T beta, indexed_dpd_marray_view<T> A, const label_vector& id
     );
 }
 
-#endif
+#endif //MARRAY_INDEXED_DPD_MARRAY_VIEW_HPP
 
-}
+#endif //TBLIS_ENABLE_CXX
 
-#endif
+TBLIS_END_NAMESPACE
 
 #pragma GCC diagnostic pop
 
-#endif
+#endif //TBLIS_IFACE_1T_SHIFT_H

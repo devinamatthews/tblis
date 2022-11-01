@@ -1,16 +1,15 @@
 #ifndef _TBLIS_SCATTER_MATRIX_HPP_
 #define _TBLIS_SCATTER_MATRIX_HPP_
 
-#include "util/basic_types.h"
-#include "util/macros.h"
-#include "util/thread.h"
-
-#include "memory/alignment.hpp"
-
 #include "abstract_matrix.hpp"
+
+#include <marray/marray_view.hpp>
 
 namespace tblis
 {
+
+using MArray::row_view;
+using MArray::marray_view;
 
 struct scatter_matrix_impl
 {

@@ -1,28 +1,28 @@
 #include "../test.hpp"
 
-#include "configs/include_configs.hpp"
+#include <tblis/internal/include_configs.hpp>
 
-#include "matrix/normal_matrix.hpp"
+#include <tblis/matrix/normal_matrix.hpp>
 
 using instance_fn_t = const config& (*)(void);
 
 enum config_t
 {
 #define FOREACH_CONFIG(config) config##_value,
-#include "configs/foreach_config.h"
+#include <tblis/internal/foreach_config.h>
     num_configs
 };
 
 const check_fn_t checks[] =
 {
 #define FOREACH_CONFIG(config) config::check,
-#include "configs/foreach_config.h"
+#include <tblis/internal/foreach_config.h>
 };
 
 const instance_fn_t instance[] =
 {
 #define FOREACH_CONFIG(config) &config::instance,
-#include "configs/foreach_config.h"
+#include <tblis/internal/foreach_config.h>
 };
 
 /*

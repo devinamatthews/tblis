@@ -1,8 +1,5 @@
-#include "reduce.hpp"
-
-#include "util/tensor.hpp"
-
-#include "external/stl_ext/include/iostream.hpp"
+#include <tblis/internal/dense.hpp>
+#include <tblis/internal/thread.hpp>
 
 namespace tblis
 {

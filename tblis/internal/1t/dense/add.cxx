@@ -1,11 +1,4 @@
-#include "add.hpp"
-#include "reduce.hpp"
-#include "scale.hpp"
-#include "shift.hpp"
-
-#include "internal/0/add.hpp"
-
-#include "util/tensor.hpp"
+#include <tblis/internal/dense.hpp>
 
 namespace tblis
 {
@@ -261,40 +254,27 @@ void add(type_t type, const communicator& comm, const config& cfg,
 }
 
 void add(type_t type, const communicator& comm, const config& cfg,
-         const len_vector& len_A_,
-         const len_vector& len_B_,
-         const len_vector& len_AB_,
+         const len_vector& len_A,
+         const len_vector& len_B,
+         const len_vector& len_AB,
          const scalar& alpha, bool conj_A, char* A,
-         const stride_vector& stride_A_,
-         const stride_vector& stride_A_AB_,
+         const stride_vector& stride_A,
+         const stride_vector& stride_A_AB,
          const scalar&  beta, bool conj_B, char* B,
-         const stride_vector& stride_B_,
-         const stride_vector& stride_B_AB_)
+         const stride_vector& stride_B,
+         const stride_vector& stride_B_AB)
 {
-    len_type n_AB = stl_ext::prod(len_AB_);
-    len_type n_A = stl_ext::prod(len_A_);
-    len_type n_B = stl_ext::prod(len_B_);
+    len_type n_AB = stl_ext::prod(len_AB);
+    len_type n_A = stl_ext::prod(len_A);
+    len_type n_B = stl_ext::prod(len_B);
 
     if (n_AB == 0 || n_B == 0) return;
 
     if (n_A == 0)
     {
-        scale(type, comm, cfg, len_B_, beta, conj_B, B, stride_B_);
+        scale(type, comm, cfg, len_B, beta, conj_B, B, stride_B);
         return;
     }
-
-    auto perm_A = detail::sort_by_stride(stride_A_);
-    auto perm_B = detail::sort_by_stride(stride_B_);
-    auto perm_AB = detail::sort_by_stride(stride_B_AB_, stride_A_AB_);
-
-    auto len_A = stl_ext::permuted(len_A_, perm_A);
-    auto len_B = stl_ext::permuted(len_B_, perm_B);
-    auto len_AB = stl_ext::permuted(len_AB_, perm_AB);
-
-    auto stride_A = stl_ext::permuted(stride_A_, perm_A);
-    auto stride_B = stl_ext::permuted(stride_B_, perm_B);
-    auto stride_A_AB = stl_ext::permuted(stride_A_AB_, perm_AB);
-    auto stride_B_AB = stl_ext::permuted(stride_B_AB_, perm_AB);
 
     if (n_AB == 1)
     {

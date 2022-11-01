@@ -1,183 +1,86 @@
-#ifndef _TBLIS_BASIC_TYPES_H_
-#define _TBLIS_BASIC_TYPES_H_
+#ifndef TBLIS_BASE_TYPES_H
+#define TBLIS_BASE_TYPES_H 1
 
-#include <unistd.h>
-#include <string.h>
-#include <stdint.h>
 #include <stddef.h>
-#include <sys/types.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <stdio.h>
+#include <stdint.h>
 #include <string.h>
-#include <assert.h>
 
-#include "../tblis_config.h"
+#include <tblis/config.h>
+#include <tblis/base/macros.h>
 
 #ifdef __cplusplus
 #include <complex>
-#elif __STDC_VERSION__ >= 199901l
+#else
 #include <complex.h>
 #endif
 
-#define TBLIS_STRINGIZE_(...) #__VA_ARGS__
-#define TBLIS_STRINGIZE(...) TBLIS_STRINGIZE_(__VA_ARGS__)
-#define TBLIS_CONCAT_(x,y) x##y
-#define TBLIS_CONCAT(x,y) TBLIS_CONCAT_(x,y)
-#define TBLIS_FIRST_ARG(arg,...) arg
-
-#ifdef __cplusplus
-
-#include <type_traits>
-
-inline void __attribute__((format(printf, 1, 2),noreturn))
-tblis_abort_with_message(const char* fmt, ...)
-{
-    va_list args;
-    va_start(args, fmt);
-    vfprintf(stderr, fmt, args);
-    va_end(args);
-    fprintf(stderr, "\n");
-    abort();
-}
-
-inline void tblis_check_assert(const char* cond_str, bool cond)
-{
-    if (__builtin_expect(!cond,0))
-        tblis_abort_with_message("%s", cond_str);
-}
-
-template <typename... Args>
-inline void tblis_check_assert(const char*, bool cond, const char* fmt, Args&&... args)
-{
-    if (__builtin_expect(!cond,0))
-        tblis_abort_with_message(fmt, std::forward<Args>(args)...);
-}
-
-#ifdef TBLIS_DEBUG
-
-#define TBLIS_ASSERT(...) \
-    tblis_check_assert(TBLIS_STRINGIZE(TBLIS_FIRST_ARG(__VA_ARGS__,0)), __VA_ARGS__)
-
-#else
-
-#define TBLIS_ASSERT(...) ((void)0)
-
+#if TBLIS_ENABLE_CXX
+#include <array>
+#include <vector>
 #endif
 
-#endif
+TBLIS_BEGIN_NAMESPACE
 
-#ifdef __cplusplus
-#define TBLIS_EXPORT extern "C"
-#else
-#define TBLIS_EXPORT
-#endif
+TBLIS_DEFINE_ENUM
+    (REDUCE_SUM     , 0)
+    (REDUCE_SUM_ABS , 1)
+    (REDUCE_NORM_1  , 1)
+    (REDUCE_MAX     , 2)
+    (REDUCE_MAX_ABS , 3)
+    (REDUCE_NORM_INF, 3)
+    (REDUCE_MIN     , 4)
+    (REDUCE_MIN_ABS , 5)
+    (REDUCE_NORM_2  , 6)
+(reduce_t)
 
-#if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
+TBLIS_DEFINE_ENUM
+    (SINGLE  , 0)
+    (FLOAT   , 0)
+    (DOUBLE  , 1)
+    (SCOMPLEX, 2)
+    (COMPLEX , 2)
+    (DCOMPLEX, 3)
+(type_t)
 
-#include <string>
-#include <type_traits>
-#include <memory>
-
-#include "../memory/aligned_allocator.hpp"
-#include "../external/stl_ext/include/complex.hpp"
-
-#if defined(TBLIS_DEBUG) && !defined(MARRAY_ENABLE_ASSERTS)
-#define MARRAY_ENABLE_ASSERTS
-#endif
-
-#ifndef MARRAY_LEN_TYPE
-#define MARRAY_LEN_TYPE TBLIS_LEN_TYPE
-#endif
-
-#ifndef MARRAY_STRIDE_TYPE
-#define MARRAY_STRIDE_TYPE TBLIS_STRIDE_TYPE
-#endif
-
-#include "../external/marray/marray/marray.hpp"
-#include "../external/marray/marray/dpd/dpd_marray.hpp"
-#include "../external/marray/marray/indexed/indexed_marray.hpp"
-#include "../external/marray/marray/indexed_dpd/indexed_dpd_marray.hpp"
-
-#endif
-
-#ifdef __cplusplus
-namespace tblis {
-#endif
-
-typedef struct tblis_config_s tblis_config;
-
-typedef enum
-{
-    REDUCE_SUM      = 0,
-    REDUCE_SUM_ABS  = 1,
-    REDUCE_MAX      = 2,
-    REDUCE_MAX_ABS  = 3,
-    REDUCE_MIN      = 4,
-    REDUCE_MIN_ABS  = 5,
-    REDUCE_NORM_1   = REDUCE_SUM_ABS,
-    REDUCE_NORM_2   = 6,
-    REDUCE_NORM_INF = REDUCE_MAX_ABS
-} reduce_t;
-
-typedef enum
-{
-    TYPE_SINGLE   = 0,
-    TYPE_FLOAT    = TYPE_SINGLE,
-    TYPE_DOUBLE   = 1,
-    TYPE_SCOMPLEX = 2,
-    TYPE_DCOMPLEX = 3
-} type_t;
-
-typedef TBLIS_LEN_TYPE len_type;
-typedef TBLIS_STRIDE_TYPE stride_type;
-typedef TBLIS_LABEL_TYPE label_type;
+typedef TBLIS_LEN_TYPE tblis_len_type;
+typedef TBLIS_STRIDE_TYPE tblis_stride_type;
+typedef TBLIS_LABEL_TYPE tblis_label_type;
 #define TBLIS_MAX_UNROLL 8
 
+#if TBLIS_ENABLE_CXX
+using len_type = tblis_len_type;
+using stride_type = tblis_stride_type;
+using label_type = tblis_label_type;
+#endif
+
+#ifndef TBLIS_OPT_NDIM
+#define TBLIS_OPT_NDIM 8
+#endif
+
 #ifdef __cplusplus
 
-namespace detail
-{
+typedef std::complex<float> tblis_scomplex;
+typedef std::complex<double> tblis_dcomplex;
 
-template <typename T> struct label_vector_helper
-{ typedef MArray::short_vector<T,MARRAY_OPT_NDIM> type; };
-
-template <> struct label_vector_helper<char>
-{ typedef std::string type; };
-
-}
-
-typedef typename detail::label_vector_helper<label_type>::type label_vector;
-
-typedef std::complex<float> scomplex;
-typedef std::complex<double> dcomplex;
+#if TBLIS_ENABLE_CXX
+using scomplex = tblis_scomplex;
+using dcomplex = tblis_dcomplex;
+#endif
 
 #else
 
-typedef complex float scomplex;
-typedef complex double dcomplex;
+typedef complex float tblis_scomplex;
+typedef complex double tblis_dcomplex;
 
-#endif
+#endif //__cplusplus
 
-#if defined(__cplusplus)
+#if TBLIS_ENABLE_CXX
 
-#if !defined(TBLIS_DONT_USE_CXX11)
-
-using namespace MArray;
-namespace detail { using namespace MArray::detail; }
-namespace slice { using namespace MArray::slice; }
-using MArray::detail::ipow;
-
-template <int N=1>
-using viterator = index_iterator<DYNAMIC, N>;
-
-#endif
-
-template <typename T> struct type_tag { static constexpr type_t value =   TYPE_DOUBLE; };
-template <> struct type_tag<   float> { static constexpr type_t value =    TYPE_FLOAT; };
-template <> struct type_tag<  double> { static constexpr type_t value =   TYPE_DOUBLE; };
-template <> struct type_tag<scomplex> { static constexpr type_t value = TYPE_SCOMPLEX; };
-template <> struct type_tag<dcomplex> { static constexpr type_t value = TYPE_DCOMPLEX; };
+template <typename T> struct type_tag { static constexpr type_t value =   DOUBLE; };
+template <> struct type_tag<   float> { static constexpr type_t value =    FLOAT; };
+template <> struct type_tag<  double> { static constexpr type_t value =   DOUBLE; };
+template <> struct type_tag<scomplex> { static constexpr type_t value = SCOMPLEX; };
+template <> struct type_tag<dcomplex> { static constexpr type_t value = DCOMPLEX; };
 
 constexpr std::array<size_t,4> type_size =
 {
@@ -195,32 +98,7 @@ constexpr std::array<size_t,4> type_alignment =
     alignof(dcomplex),
 };
 
-using stl_ext::enable_if_t;
-using stl_ext::enable_if_integral_t;
-using stl_ext::enable_if_floating_point_t;
-
-using stl_ext::real;
-using stl_ext::imag;
-using stl_ext::conj;
-using stl_ext::real_type_t;
-using stl_ext::complex_type_t;
-using stl_ext::enable_if_complex_t;
-using stl_ext::norm2;
-using stl_ext::is_complex;
-
-template <typename T>
-T conj(bool conjugate, T val)
-{
-    return (conjugate ? conj(val) : val);
-}
-
-namespace matrix_constants
-{
-    enum {MAT_A, MAT_B, MAT_C};
-    enum {DIM_M, DIM_N, DIM_K};
-}
-
-#endif
+#endif //TBLIS_ENABLE_CXX
 
 typedef struct tblis_scalar
 {
@@ -228,24 +106,23 @@ typedef struct tblis_scalar
     {
         float s;
         double d;
-        scomplex c;
-        dcomplex z;
-
-#if defined(__cplusplus)
-        scalar() : z(0.0, 0.0) {}
+        tblis_scomplex c;
+        tblis_dcomplex z;
+#ifdef __cplusplus
+        scalar() : z{} {}
 #endif
     } data;
-    type_t type;
+    tblis_type_t type;
 
-#if defined(__cplusplus)
+#if TBLIS_ENABLE_CXX
 
-    /*
-    tblis_scalar()
-    : type(TYPE_DOUBLE)
-    {
-        data.d = 1.0;
-    }
-    */
+    template <typename T> struct is_scalar : std::is_arithmetic<T> {};
+
+    template <typename T> struct is_scalar<std::complex<T>> : std::is_arithmetic<T> {};
+
+    template <> struct is_scalar<scomplex> : std::true_type {};
+
+    template <> struct is_scalar<dcomplex> : std::true_type {};
 
     tblis_scalar(const tblis_scalar& other)
     : type(other.type)
@@ -253,20 +130,21 @@ typedef struct tblis_scalar
         memcpy(&data, &other.data, sizeof(data));
     }
 
-    template <typename T>
+    template <typename T, typename=std::enable_if_t<is_scalar<T>::value>>
     tblis_scalar(T value, type_t type = type_tag<T>::value)
     : type(type)
     {
         *this = value;
     }
 
-    template <typename T>
-    T& get();
+    template <typename T, typename=std::enable_if_t<is_scalar<T>::value>>
+    T get() const;
 
-    template <typename T>
-    const T& get() const
+    template <typename T, typename=std::enable_if_t<is_scalar<T>::value>>
+    void set(T val)
     {
-        return const_cast<tblis_scalar&>(*this).get<T>();
+        if (type & DOUBLE) data.z = val;
+        else               data.c = val;
     }
 
     void reset(const tblis_scalar& other)
@@ -275,7 +153,7 @@ typedef struct tblis_scalar
         memcpy(&data, &other.data, sizeof(data));
     }
 
-    template <typename T>
+    template <typename T, typename=std::enable_if_t<is_scalar<T>::value>>
     void reset(T value, type_t type = type_tag<T>::value)
     {
         this->type = type;
@@ -284,46 +162,26 @@ typedef struct tblis_scalar
 
     tblis_scalar& operator=(const tblis_scalar& other)
     {
-        switch (type)
+        if (TBLIS_LIKELY((type & DOUBLE) == (other.type & DOUBLE)))
         {
-            case TYPE_FLOAT:
-                switch (other.type)
-                {
-                    case TYPE_FLOAT:    data.s = float(     other.data.s ); break;
-                    case TYPE_DOUBLE:   data.s = float(     other.data.d ); break;
-                    case TYPE_SCOMPLEX: data.s = float(real(other.data.c)); break;
-                    case TYPE_DCOMPLEX: data.s = float(real(other.data.z)); break;
-                }
-                break;
-            case TYPE_DOUBLE:
-                switch (other.type)
-                {
-                    case TYPE_FLOAT:    data.d = double(     other.data.s ); break;
-                    case TYPE_DOUBLE:   data.d = double(     other.data.d ); break;
-                    case TYPE_SCOMPLEX: data.d = double(real(other.data.c)); break;
-                    case TYPE_DCOMPLEX: data.d = double(real(other.data.z)); break;
-                }
-                break;
-            case TYPE_SCOMPLEX:
-                switch (other.type)
-                {
-                    case TYPE_FLOAT:    data.c = scomplex(other.data.s); break;
-                    case TYPE_DOUBLE:   data.c = scomplex(other.data.d); break;
-                    case TYPE_SCOMPLEX: data.c = scomplex(other.data.c); break;
-                    case TYPE_DCOMPLEX: data.c = scomplex(other.data.z); break;
-                }
-                break;
-            case TYPE_DCOMPLEX:
-                switch (other.type)
-                {
-                    case TYPE_FLOAT:    data.z = dcomplex(other.data.s); break;
-                    case TYPE_DOUBLE:   data.z = dcomplex(other.data.d); break;
-                    case TYPE_SCOMPLEX: data.z = dcomplex(other.data.c); break;
-                    case TYPE_DCOMPLEX: data.z = dcomplex(other.data.z); break;
-                }
-                break;
+            memcpy(&data, &other.data, sizeof(data));
+        }
+        else if (type & DOUBLE)
+        {
+            data.z = other.data.c;
+        }
+        else
+        {
+            data.c = other.data.z;
         }
 
+        return *this;
+    }
+
+    template <typename T, typename=std::enable_if_t<is_scalar<T>::value>>
+    tblis_scalar& operator=(T other)
+    {
+        set(other);
         return *this;
     }
 
@@ -348,28 +206,14 @@ typedef struct tblis_scalar
         memcpy(raw(), buf, type_size[type]);
     }
 
-    template <typename T>
-    tblis_scalar& operator=(T value)
-    {
-        switch (type)
-        {
-            case TYPE_FLOAT:    data.s = float   (real(value)); break;
-            case TYPE_DOUBLE:   data.d = double  (real(value)); break;
-            case TYPE_SCOMPLEX: data.c = scomplex(     value ); break;
-            case TYPE_DCOMPLEX: data.z = dcomplex(     value ); break;
-        }
-
-        return *this;
-    }
-
     bool is_zero() const
     {
         switch (type)
         {
-            case TYPE_FLOAT:    return data.s == 0.0f;
-            case TYPE_DOUBLE:   return data.d == 0.0;
-            case TYPE_SCOMPLEX: return data.c == 0.0f;
-            case TYPE_DCOMPLEX: return data.z == 0.0;
+            case FLOAT:    return data.s == 0.0f;
+            case DOUBLE:   return data.d == 0.0;
+            case SCOMPLEX: return data.c == 0.0f;
+            case DCOMPLEX: return data.z == 0.0;
         }
 
         return false;
@@ -379,11 +223,11 @@ typedef struct tblis_scalar
     {
         switch (type)
         {
-            case TYPE_FLOAT:    return data.s < 0.0f;
-            case TYPE_DOUBLE:   return data.d < 0.0;
-            case TYPE_SCOMPLEX: return data.c.real() < 0.0f ||
+            case FLOAT:    return data.s < 0.0f;
+            case DOUBLE:   return data.d < 0.0;
+            case SCOMPLEX: return data.c.real() < 0.0f ||
                 (data.c.real() == 0.0f && data.c.imag() < 0.0f);
-            case TYPE_DCOMPLEX: return data.z.real() < 0.0 ||
+            case DCOMPLEX: return data.z.real() < 0.0 ||
                 (data.z.real() == 0.0 && data.z.imag() < 0.0);
         }
 
@@ -394,10 +238,10 @@ typedef struct tblis_scalar
     {
         switch (type)
         {
-            case TYPE_FLOAT:    return data.s == 1.0f;
-            case TYPE_DOUBLE:   return data.d == 1.0;
-            case TYPE_SCOMPLEX: return data.c == 1.0f;
-            case TYPE_DCOMPLEX: return data.z == 1.0;
+            case FLOAT:    return data.s == 1.0f;
+            case DOUBLE:   return data.d == 1.0;
+            case SCOMPLEX: return data.c == 1.0f;
+            case DCOMPLEX: return data.z == 1.0;
         }
 
         return false;
@@ -407,55 +251,119 @@ typedef struct tblis_scalar
     {
         switch (type)
         {
-            case TYPE_FLOAT:    return false;
-            case TYPE_DOUBLE:   return false;
-            case TYPE_SCOMPLEX: return true;
-            case TYPE_DCOMPLEX: return true;
+            case FLOAT:    return false;
+            case DOUBLE:   return false;
+            case SCOMPLEX: return true;
+            case DCOMPLEX: return true;
         }
 
         return false;
     }
 
-    tblis_scalar& operator+=(const tblis_scalar& other)
+    template <typename T>
+    std::enable_if_t<type_tag<T>::value >= 0,tblis_scalar&>
+    operator+=(T other)
     {
-        TBLIS_ASSERT(type == other.type);
+        if (type & DOUBLE) data.z += other;
+        else               data.c += other;
 
+        return *this;
+    }
+
+    template <typename T>
+    std::enable_if_t<type_tag<T>::value >= 0,tblis_scalar&>
+    operator-=(T other)
+    {
+        if (type & DOUBLE) data.z -= other;
+        else               data.c -= other;
+
+        return *this;
+    }
+
+    template <typename T>
+    std::enable_if_t<!!(type_tag<T>::value & SCOMPLEX), tblis_scalar&>
+    operator*=(T other)
+    {
         switch (type)
         {
-            case TYPE_FLOAT:    data.s += other.data.s; break;
-            case TYPE_DOUBLE:   data.d += other.data.d; break;
-            case TYPE_SCOMPLEX: data.c += other.data.c; break;
-            case TYPE_DCOMPLEX: data.z += other.data.z; break;
+            case    FLOAT: data.s *= std::real(other); break;
+            case   DOUBLE: data.d *= std::real(other); break;
+            case SCOMPLEX: data.c = T(data.c) *          other ; break;
+            case DCOMPLEX: data.z =   data.z  * dcomplex(other); break;
         }
+
+        return *this;
+    }
+
+    template <typename T>
+    std::enable_if_t<!(type_tag<T>::value & SCOMPLEX), tblis_scalar&>
+    operator*=(T other)
+    {
+        switch (type)
+        {
+            case    FLOAT: data.s *= other; break;
+            case   DOUBLE: data.d *= other; break;
+            case SCOMPLEX: data.c = std::complex<T>(data.c) *        other ; break;
+            case DCOMPLEX: data.z =                 data.z  * double(other); break;
+        }
+
+        return *this;
+    }
+
+    template <typename T>
+    std::enable_if_t<!!(type_tag<T>::value & SCOMPLEX), tblis_scalar&>
+    operator/=(T other)
+    {
+        switch (type)
+        {
+            case    FLOAT: data.s = std::real(T(data.s) /          other ); break;
+            case   DOUBLE: data.d = std::real(  data.d  / dcomplex(other)); break;
+            case SCOMPLEX: data.c =           T(data.c) /          other  ; break;
+            case DCOMPLEX: data.z =             data.z  / dcomplex(other) ; break;
+        }
+
+        return *this;
+    }
+
+    template <typename T>
+    std::enable_if_t<!(type_tag<T>::value & SCOMPLEX), tblis_scalar&>
+    operator/=(T other)
+    {
+        switch (type)
+        {
+            case    FLOAT: data.s /= other; break;
+            case   DOUBLE: data.d /= other; break;
+            case SCOMPLEX: data.c = std::complex<T>(data.c) /        other ; break;
+            case DCOMPLEX: data.z =                 data.z  / double(other); break;
+        }
+
+        return *this;
+    }
+
+    tblis_scalar& operator+=(const tblis_scalar& other)
+    {
+        if (other.type & DOUBLE) *this += other.data.z;
+        else                     *this += other.data.c;
 
         return *this;
     }
 
     tblis_scalar& operator-=(const tblis_scalar& other)
     {
-        TBLIS_ASSERT(type == other.type);
-
-        switch (type)
-        {
-            case TYPE_FLOAT:    data.s -= other.data.s; break;
-            case TYPE_DOUBLE:   data.d -= other.data.d; break;
-            case TYPE_SCOMPLEX: data.c -= other.data.c; break;
-            case TYPE_DCOMPLEX: data.z -= other.data.z; break;
-        }
+        if (other.type & DOUBLE) *this -= other.data.z;
+        else                     *this -= other.data.c;
 
         return *this;
     }
 
     tblis_scalar& operator*=(const tblis_scalar& other)
     {
-        TBLIS_ASSERT(type == other.type);
-
-        switch (type)
+        switch (other.type)
         {
-            case TYPE_FLOAT:    data.s *= other.data.s; break;
-            case TYPE_DOUBLE:   data.d *= other.data.d; break;
-            case TYPE_SCOMPLEX: data.c *= other.data.c; break;
-            case TYPE_DCOMPLEX: data.z *= other.data.z; break;
+            case FLOAT:    *this *= other.data.s; break;
+            case DOUBLE:   *this *= other.data.d; break;
+            case SCOMPLEX: *this *= other.data.c; break;
+            case DCOMPLEX: *this *= other.data.z; break;
         }
 
         return *this;
@@ -463,17 +371,61 @@ typedef struct tblis_scalar
 
     tblis_scalar& operator/=(const tblis_scalar& other)
     {
-        TBLIS_ASSERT(type == other.type);
-
-        switch (type)
+        switch (other.type)
         {
-            case TYPE_FLOAT:    data.s /= other.data.s; break;
-            case TYPE_DOUBLE:   data.d /= other.data.d; break;
-            case TYPE_SCOMPLEX: data.c /= other.data.c; break;
-            case TYPE_DCOMPLEX: data.z /= other.data.z; break;
+            case FLOAT:    *this /= other.data.s; break;
+            case DOUBLE:   *this /= other.data.d; break;
+            case SCOMPLEX: *this /= other.data.c; break;
+            case DCOMPLEX: *this /= other.data.z; break;
         }
 
         return *this;
+    }
+
+    template <typename T, typename=std::enable_if_t<is_scalar<T>::value>>
+    tblis_scalar operator+(T other) const
+    {
+        tblis_scalar ret(*this);
+        ret += other;
+        return ret;
+    }
+
+    template <typename T, typename=std::enable_if_t<is_scalar<T>::value>>
+    friend tblis_scalar operator+(T lhs, const tblis_scalar& rhs)
+    {
+        return rhs + lhs;
+    }
+
+    template <typename T, typename=std::enable_if_t<is_scalar<T>::value>>
+    tblis_scalar operator-(T other) const
+    {
+        tblis_scalar ret(*this);
+        ret -= other;
+        return ret;
+    }
+
+    template <typename T, typename=std::enable_if_t<is_scalar<T>::value>>
+    friend tblis_scalar operator-(T lhs, const tblis_scalar& rhs)
+    {
+        tblis_scalar ret(rhs);
+        ret.negate();
+        ret += lhs;
+        return ret;
+    }
+
+    template <typename T, typename=std::enable_if_t<is_scalar<T>::value>>
+    tblis_scalar operator*(T other) const
+    {
+        tblis_scalar ret(*this);
+        ret *= other;
+        return ret;
+    }
+
+
+    template <typename T, typename=std::enable_if_t<is_scalar<T>::value>>
+    friend tblis_scalar operator*(T lhs, const tblis_scalar& rhs)
+    {
+        return rhs * lhs;
     }
 
     tblis_scalar operator+(const tblis_scalar& other) const
@@ -504,14 +456,28 @@ typedef struct tblis_scalar
         return ret;
     }
 
+    tblis_scalar& negate()
+    {
+        if (type & DOUBLE) data.z = -data.z;
+        else               data.c = -data.c;
+        return *this;
+    }
+
+    tblis_scalar operator-() const
+    {
+        tblis_scalar ret(*this);
+        ret.negate();
+        return ret;
+    }
+
     tblis_scalar& conj()
     {
         switch (type)
         {
-            case TYPE_FLOAT:    break;
-            case TYPE_DOUBLE:   break;
-            case TYPE_SCOMPLEX: data.c = std::conj(data.c); break;
-            case TYPE_DCOMPLEX: data.z = std::conj(data.z); break;
+            case FLOAT:    break;
+            case DOUBLE:   break;
+            case SCOMPLEX: data.c = std::conj(data.c); break;
+            case DCOMPLEX: data.z = std::conj(data.z); break;
         }
 
         return *this;
@@ -528,10 +494,10 @@ typedef struct tblis_scalar
     {
         switch (type)
         {
-            case TYPE_FLOAT:    data.s = std::abs(data.s); break;
-            case TYPE_DOUBLE:   data.d = std::abs(data.d); break;
-            case TYPE_SCOMPLEX: data.c = std::abs(data.c); break;
-            case TYPE_DCOMPLEX: data.z = std::abs(data.z); break;
+            case FLOAT:    data.s = std::abs(data.s); break;
+            case DOUBLE:   data.d = std::abs(data.d); break;
+            case SCOMPLEX: data.c = std::abs(data.c); break;
+            case DCOMPLEX: data.z = std::abs(data.z); break;
         }
 
         return *this;
@@ -548,10 +514,10 @@ typedef struct tblis_scalar
     {
         switch (type)
         {
-            case TYPE_FLOAT:    data.s = std::sqrt(data.s); break;
-            case TYPE_DOUBLE:   data.d = std::sqrt(data.d); break;
-            case TYPE_SCOMPLEX: data.c = std::sqrt(data.c); break;
-            case TYPE_DCOMPLEX: data.z = std::sqrt(data.z); break;
+            case FLOAT:    data.s = std::sqrt(data.s); break;
+            case DOUBLE:   data.d = std::sqrt(data.d); break;
+            case SCOMPLEX: data.c = std::sqrt(data.c); break;
+            case DCOMPLEX: data.z = std::sqrt(data.z); break;
         }
 
         return *this;
@@ -564,25 +530,43 @@ typedef struct tblis_scalar
         return other;
     }
 
-#endif
+#endif //TBLIS_ENABLE_CXX
 
 } tblis_scalar;
 
-#if defined(__cplusplus)
+#if TBLIS_ENABLE_CXX
+
+using scalar = tblis_scalar;
 
 template <> inline
-float& tblis_scalar::get<float>() { return data.s; }
+float tblis_scalar::get<float>() const
+{
+    if (type & DOUBLE) return data.d;
+    else               return data.s;
+}
 
 template <> inline
-double& tblis_scalar::get<double>() { return data.d; }
+double tblis_scalar::get<double>() const
+{
+    if (type & DOUBLE) return data.d;
+    else               return data.s;
+}
 
 template <> inline
-scomplex& tblis_scalar::get<scomplex>() { return data.c; }
+scomplex tblis_scalar::get<scomplex>() const
+{
+    if (type & DOUBLE) return scomplex(data.z);
+    else               return          data.c;
+}
 
 template <> inline
-dcomplex& tblis_scalar::get<dcomplex>() { return data.z; }
+dcomplex tblis_scalar::get<dcomplex>() const
+{
+    if (type & DOUBLE) return          data.z;
+    else               return dcomplex(data.c);
+}
 
-#endif
+#endif //TBLIS_ENABLE_CXX
 
 TBLIS_EXPORT void tblis_init_scalar_s(tblis_scalar* s, float value);
 
@@ -592,169 +576,628 @@ TBLIS_EXPORT void tblis_init_scalar_c(tblis_scalar* s, scomplex value);
 
 TBLIS_EXPORT void tblis_init_scalar_z(tblis_scalar* s, dcomplex value);
 
+namespace detail
+{
+
+template <typename T>
+struct buffer
+{
+    std::array<T,TBLIS_OPT_NDIM> static_buf;
+    std::vector<T> dyn_buf;
+
+    template <typename U>
+    buffer& operator=(const U& other)
+    {
+        auto it = other.begin();
+        auto end = other.end();
+
+        for (int i = 0;it != end && i < static_buf.size();++i, ++it)
+            static_buf[i] = *it;
+
+        if (it != end)
+        {
+            dyn_buf.assign(static_buf.begin(), static_buf.end());
+            dyn_buf.insert(dyn_buf.end(), it, end);
+        }
+
+        return *this;
+    }
+
+    void resize(size_t size)
+    {
+        if (size <= static_buf.size())
+            dyn_buf.clear();
+        else
+            dyn_buf.resize(size);
+    }
+
+    T* data() const
+    {
+        return const_cast<T*>(dyn_buf.empty() ? static_buf.data() : dyn_buf.data());
+    }
+};
+
+}
+
+#if TBLIS_ENABLE_CXX
+struct const_tensor;
+#endif
+
 typedef struct tblis_tensor
 {
-    type_t type;
-    int conj;
     tblis_scalar scalar;
+    int conj;
     void* data;
     int ndim;
     len_type* len;
     stride_type* stride;
 
-#if defined(__cplusplus)
+#if TBLIS_ENABLE_CXX
+
+    const type_t& type = scalar.type;
+    detail::buffer<len_type> len_buf;
+    detail::buffer<stride_type> stride_buf;
+
+    template <typename T, typename=void> struct convert {};
+
+    template <typename T, typename=void> struct convertible_helper {};
+
+    template <typename T, bool Mutable> struct convertible_helper2
+    {
+        typedef T const_type;
+    };
+
+    template <typename T> struct convertible_helper2<T, true>
+    {
+        typedef T const_type;
+        typedef T type;
+    };
+
+    template <typename T>
+    struct convertible_helper<T,
+        decltype(std::declval<convert<T>>()(std::declval<tblis_tensor&>(),
+                                            std::declval<std::remove_const_t<T>&>()))>
+    : convertible_helper2<T, convert<T>::is_mutable> {};
+
+    template <typename T> using const_convertible =
+        typename convertible_helper<std::remove_reference_t<T>>::const_type;
+
+    template <typename T> using convertible =
+        typename convertible_helper<std::remove_reference_t<T>>::type;
+
+    template <typename T, typename=convertible<T>>
+    tblis_tensor(T&& other)
+    : tblis_tensor()
+    {
+        convert<std::remove_reference_t<T>>{}(*this, other);
+    }
+
+    //tblis_tensor(const const_tensor& other);
+
+    //tblis_tensor(const_tensor&& other);
+
+    tblis_tensor(const tblis_tensor& other)
+    : scalar(other.scalar),
+      conj(other.conj),
+      data(other.data),
+      ndim(other.ndim)
+    {
+        if (other.len == other.len_buf.data())
+        {
+            len_buf = other.len_buf;
+            stride_buf = other.stride_buf;
+            len = len_buf.data();
+            stride = stride_buf.data();
+        }
+        else
+        {
+            len = other.len;
+            stride = other.stride;
+        }
+    }
+
+    tblis_tensor(tblis_tensor&& other)
+    : scalar(other.scalar),
+      conj(other.conj),
+      data(other.data),
+      ndim(other.ndim)
+    {
+        if (other.len == other.len_buf.data())
+        {
+            len_buf = std::move(other.len_buf);
+            stride_buf = std::move(other.stride_buf);
+            len = len_buf.data();
+            stride = stride_buf.data();
+        }
+        else
+        {
+            len = other.len;
+            stride = other.stride;
+        }
+    }
 
     tblis_tensor()
-    : type(TYPE_DOUBLE), conj(false), scalar(1.0), data(nullptr),
-      ndim(0), len(nullptr), stride(nullptr) {}
+    : scalar(1.0),
+      conj(false),
+      data(0),
+      ndim(0),
+      len(0),
+      stride(0)
+    {}
 
     template <typename T>
-    tblis_tensor(const T* A, int ndim,
+    tblis_tensor(T* A, int ndim,
                  const len_type* len, const stride_type* stride)
-    : type(type_tag<T>::value), conj(false), scalar(T(1)),
-      data(const_cast<T*>(A)), ndim(ndim), len(const_cast<len_type*>(len)),
-      stride(const_cast<stride_type*>(stride)) {}
+    : scalar(T(1)),
+      conj(false),
+      data(A),
+      ndim(ndim),
+      len(const_cast<len_type*>(len)),
+      stride(const_cast<stride_type*>(stride))
+    {}
 
     template <typename T>
-    tblis_tensor(T alpha, const T* A, int ndim,
+    tblis_tensor(T alpha, T* A, int ndim,
                  const len_type* len, const stride_type* stride)
-    : type(type_tag<T>::value), conj(false), scalar(alpha),
-      data(const_cast<T*>(A)), ndim(ndim), len(const_cast<len_type*>(len)),
-      stride(const_cast<stride_type*>(stride)) {}
+    : scalar(alpha),
+      conj(false),
+      data(A),
+      ndim(ndim),
+      len(const_cast<len_type*>(len)),
+      stride(const_cast<stride_type*>(stride))
+    {}
 
     template <typename T>
-    tblis_tensor(T alpha, bool conj, const T* A, int ndim,
+    tblis_tensor(T alpha, bool conj, T* A, int ndim,
                  const len_type* len, const stride_type* stride)
-    : type(type_tag<T>::value), conj(conj), scalar(alpha),
-      data(const_cast<T*>(A)), ndim(ndim), len(const_cast<len_type*>(len)),
-      stride(const_cast<stride_type*>(stride)) {}
+    : scalar(alpha),
+      conj(conj),
+      data(A),
+      ndim(ndim),
+      len(const_cast<len_type*>(len)),
+      stride(const_cast<stride_type*>(stride))
+    {}
 
-#endif
+    tblis_tensor& operator=(const tblis_tensor&) = delete;
+
+    tblis_tensor& operator=(tblis_tensor&&) = delete;
+
+#endif //TBLIS_ENABLE_CXX
 
 } tblis_tensor;
 
-TBLIS_EXPORT void tblis_init_tensor_scaled_s(tblis_tensor* t, float scalar,
-                                             int ndim, len_type* len, float* data,
-                                             stride_type* stride);
-
-TBLIS_EXPORT void tblis_init_tensor_scaled_d(tblis_tensor* t, double scalar,
-                                             int ndim, len_type* len, double* data,
-                                             stride_type* stride);
-
-TBLIS_EXPORT void tblis_init_tensor_scaled_c(tblis_tensor* t, scomplex scalar,
-                                             int ndim, len_type* len, scomplex* data,
-                                             stride_type* stride);
-
-TBLIS_EXPORT void tblis_init_tensor_scaled_z(tblis_tensor* t, dcomplex scalar,
-                                             int ndim, len_type* len, dcomplex* data,
-                                             stride_type* stride);
-
-TBLIS_EXPORT void tblis_init_tensor_s(tblis_tensor* t,
-                                      int ndim, len_type* len, float* data,
-                                      stride_type* stride);
-
-TBLIS_EXPORT void tblis_init_tensor_d(tblis_tensor* t,
-                                      int ndim, len_type* len, double* data,
-                                      stride_type* stride);
-
-TBLIS_EXPORT void tblis_init_tensor_c(tblis_tensor* t,
-                                      int ndim, len_type* len, scomplex* data,
-                                      stride_type* stride);
-
-TBLIS_EXPORT void tblis_init_tensor_z(tblis_tensor* t,
-                                      int ndim, len_type* len, dcomplex* data,
-                                      stride_type* stride);
-
-#ifdef __cplusplus
-
-using scalar = tblis_scalar;
-
-#if defined(TBLIS_DONT_USE_CXX11)
+#if TBLIS_ENABLE_CXX
 
 using tensor = tblis_tensor;
 
-#else
-
-struct tensor : tblis_tensor
+struct const_tensor
 {
-    len_vector len_buf;
-    stride_vector stride_buf;
+    tensor tensor_;
+    const type_t& type = tensor_.type;
 
-    template <typename T, int N, typename D, bool O>
-    tensor(const marray_base<T,N,D,O>& t)
-    : tblis_tensor(t.data(), t.dimension(),
-                   t.lengths().data(), t.strides().data()) {}
-
-    template <typename T, int N, typename D, bool O>
-    tensor(marray_base<T,N,D,O>&& t)
-    : tblis_tensor(t.data(), N, nullptr, nullptr)
+    template <typename T, typename=tensor::const_convertible<const T>>
+    const_tensor(const T& other)
     {
-        len_buf.assign(t.lengths().begin(), t.lengths().end());
-        stride_buf.assign(t.strides().begin(), t.strides().end());
-        len = len_buf.data();
-        stride = stride_buf.data();
+        tensor::convert<T>{}(tensor_, const_cast<T&>(other));
     }
 
-    template <typename T, int N, int I, typename... D>
-    tensor(const marray_slice<T,N,I,D...>& t) : tensor(t.view()) {}
+    const_tensor()
+    : tensor_()
+    {}
 
-#if defined(EIGEN_CXX11_TENSOR_TENSOR_H)
+    const_tensor(const tensor& other)
+    : tensor_(other)
+    {}
 
-    template <typename T, int N, int O, typename I>
-    tensor(const Eigen::Tensor<T,N,O,I>& t)
-    : tblis_tensor(t.data(), N, nullptr, nullptr)
-    {
-        auto dims = t.dimensions();
-        len_buf.assign(dims.begin(), dims.end());
-        stride_buf = marray<T>::strides(len_buf, t.Options&Eigen::RowMajor ? ROW_MAJOR : COLUMN_MAJOR);
-        len = len_buf.data();
-        stride = stride_buf.data();
-    }
+    const_tensor(tensor&& other)
+    : tensor_(std::move(other))
+    {}
 
-#endif
+    template <typename T>
+    const_tensor(const T* A, int ndim,
+                 const len_type* len, const stride_type* stride)
+    : tensor_(const_cast<T*>(A), ndim, len, stride)
+    {}
 
-#if defined(EIGEN_CXX11_TENSOR_TENSOR_FIXED_SIZE_H)
+    template <typename T>
+    const_tensor(T alpha, const T* A, int ndim,
+                 const len_type* len, const stride_type* stride)
+    : tensor_(alpha, const_cast<T*>(A), ndim, len, stride)
+    {}
 
-    template <typename T, typename D, int O, typename I>
-    tensor(const Eigen::TensorFixedSize<T,D,O,I>& t)
-    : tblis_tensor(t.data(), t.NumIndices, nullptr, nullptr)
-    {
-        auto dims = t.dimensions();
-        len_buf.assign(dims.begin(), dims.end());
-        stride_buf = marray<T>::strides(len_buf, t.Options&Eigen::RowMajor ? ROW_MAJOR : COLUMN_MAJOR);
-        len = len_buf.data();
-        stride = stride_buf.data();
-    }
-
-#endif
-
-#if defined(EIGEN_CXX11_TENSOR_TENSOR_MAP_H)
-
-    template <typename Tensor, int O, template <class> class MP>
-    tensor(const Eigen::TensorMap<Tensor,O,MP>& t)
-    : tblis_tensor(t.data(), t.NumIndices, nullptr, nullptr)
-    {
-        auto dims = t.dimensions();
-        len_buf.assign(dims.begin(), dims.end());
-        stride_buf = marray<double>::strides(len_buf, Tensor::Options&Eigen::RowMajor ? ROW_MAJOR : COLUMN_MAJOR);
-        len = len_buf.data();
-        stride = stride_buf.data();
-    }
-
-#endif
-
+    template <typename T>
+    const_tensor(T alpha, bool conj, const T* A, int ndim,
+                 const len_type* len, const stride_type* stride)
+    : tensor_(alpha, conj, const_cast<T*>(A), ndim, len, stride)
+    {}
 };
 
-inline label_vector idx(const tblis_tensor& A, label_vector&& = label_vector())
+//inline tblis_tensor::tblis_tensor(const const_tensor& other)
+//: tblis_tensor(other.tensor_) {}
+
+//inline tblis_tensor::tblis_tensor(const_tensor&& other)
+//: tblis_tensor(std::move(other.tensor_)) {}
+
+#endif //TBLIS_ENABLE_CXX
+
+TBLIS_EXPORT void tblis_init_tensor_scaled_s(tblis_tensor* type_t, float scalar,
+                                             int ndim, len_type* len, float* data,
+                                             stride_type* stride);
+
+TBLIS_EXPORT void tblis_init_tensor_scaled_d(tblis_tensor* type_t, double scalar,
+                                             int ndim, len_type* len, double* data,
+                                             stride_type* stride);
+
+TBLIS_EXPORT void tblis_init_tensor_scaled_c(tblis_tensor* type_t, scomplex scalar,
+                                             int ndim, len_type* len, scomplex* data,
+                                             stride_type* stride);
+
+TBLIS_EXPORT void tblis_init_tensor_scaled_z(tblis_tensor* type_t, dcomplex scalar,
+                                             int ndim, len_type* len, dcomplex* data,
+                                             stride_type* stride);
+
+TBLIS_EXPORT void tblis_init_tensor_s(tblis_tensor* type_t,
+                                      int ndim, len_type* len, float* data,
+                                      stride_type* stride);
+
+TBLIS_EXPORT void tblis_init_tensor_d(tblis_tensor* type_t,
+                                      int ndim, len_type* len, double* data,
+                                      stride_type* stride);
+
+TBLIS_EXPORT void tblis_init_tensor_c(tblis_tensor* type_t,
+                                      int ndim, len_type* len, scomplex* data,
+                                      stride_type* stride);
+
+TBLIS_EXPORT void tblis_init_tensor_z(tblis_tensor* type_t,
+                                      int ndim, len_type* len, dcomplex* data,
+                                      stride_type* stride);
+
+#if TBLIS_ENABLE_CXX
+
+namespace detail
 {
-    return range(A.ndim);
+
+template <typename T, typename=void>
+struct has_label_data : std::false_type {};
+
+template <typename T>
+struct has_label_data<T,
+    std::enable_if_t<
+        std::is_same<decltype(std::declval<std::add_const_t<T>>().data()),
+                     const label_type*>::value>>
+: std::true_type {};
+
 }
 
-label_vector idx(const std::string& from, label_vector&& to = label_vector());
+struct label_string
+{
+    detail::buffer<label_type> idx_buf;
+    label_type* idx;
 
-#endif
+    label_string() : idx(nullptr) {}
+
+    label_string(const label_string& other)
+    {
+        if (other.idx == other.idx_buf.data())
+        {
+            idx_buf = other.idx_buf;
+            idx = idx_buf.data();
+        }
+        else
+        {
+            idx = other.idx;
+        }
+    }
+
+    label_string(label_string&& other)
+    {
+        if (other.idx == other.idx_buf.data())
+        {
+            idx_buf = std::move(other.idx_buf);
+            idx = idx_buf.data();
+        }
+        else
+        {
+            idx = other.idx;
+        }
+    }
+
+    label_string(std::initializer_list<label_type> ilist)
+    {
+        idx = const_cast<label_type*>(ilist.begin());
+    }
+
+    label_string(const label_type* s)
+    {
+        idx = const_cast<label_type*>(s);
+    }
+
+    template <typename T>
+    label_string(const T& s, std::enable_if_t<detail::has_label_data<T>::value>* = 0)
+    {
+        idx = const_cast<label_type*>(s.data());
+    }
+
+    template <typename T>
+    label_string(const T& s, std::enable_if_t<!detail::has_label_data<T>::value>* = 0)
+    {
+        idx_buf = s;
+        idx = idx_buf.data();
+    }
+
+    label_string& operator=(const label_string&) = delete;
+
+    label_string& operator=(label_string&&) = delete;
+};
+
+label_string idx(const const_tensor& t)
+{
+    label_string s;
+
+    if (t.tensor_.ndim >= TBLIS_OPT_NDIM)
+        s.idx_buf.resize(t.tensor_.ndim);
+    s.idx = s.idx_buf.data();
+
+    for (int i = 0;i < t.tensor_.ndim;i++)
+        s.idx[i] = i;
+
+    return s;
+}
+
+#ifdef MARRAY_MARRAY_BASE_HPP
+
+template <typename T, int N, int I, typename... D>
+struct tensor::convert<MArray::marray_slice<T,N,I,D...>>
+{
+    constexpr static bool is_mutable = !std::is_const<T>::value;
+
+    void operator()(tensor& t, const MArray::marray_slice<T,N,I,D...>& other) const
+    {
+        auto other_view = other.view();
+        tensor::convert<decltype(other_view)>(t, other_view);
+    }
+};
+
+template <typename T, int N, typename D, bool O>
+struct tensor::convert<MArray::marray_base<T,N,D,O>>
+{
+    constexpr static bool is_mutable = O || !std::is_const<T>::value;
+
+    void operator()(tensor& t, MArray::marray_base<T,N,D,O>& other) const
+    {
+        t.scalar.reset(T(1));
+        t.data = const_cast<void*>(static_cast<const void*>(other.data()));
+        t.ndim = other.dimension();
+        t.len_buf = other.lengths();
+        t.stride_buf = other.strides();
+        t.len = t.len_buf.data();
+        t.stride = t.stride_buf.data();
+    }
+};
+
+
+template <typename T, int N, typename D, bool O>
+struct tensor::convert<const MArray::marray_base<T,N,D,O>> : tensor::convert<MArray::marray_base<T,N,D,O>>
+{
+    constexpr static bool is_mutable = !O && !std::is_const<T>::value;
+};
+#endif //MARRAY_MARRAY_BASE_HPP
+
+#ifdef EIGEN_CXX11_TENSOR_TENSOR_H
+
+namespace detail
+{
+
+template <typename T>
+struct is_eigen_tensor : std::false_type {};
+
+template <typename T, int N, int O, typename I>
+struct is_eigen_tensor<Eigen::Tensor<T,N,O,I>> : std::true_type {};
+
+template <typename T, typename D, int O, typename I>
+struct is_eigen_tensor<Eigen::TensorFixedSize<T,D,O,I>> : std::true_type {};
+
+template <typename Tensor, int O, template <class> class MP>
+struct is_eigen_tensor<Eigen::TensorMap<Tensor,O,MP>> : std::true_type {};
+
+template <typename T, typename=void>
+struct eigen_expr_parser;
+
+template <typename T>
+struct eigen_expr_parser<T, std::enable_if_t<is_eigen_tensor<T>::value>>
+{
+    eigen_expr_parser(tensor& t, T& other)
+    {
+        using U = typename T::Scalar;
+
+        t.scalar.reset(T(1));
+        t.data = other.data();
+        t.ndim = other.NumDimensions;
+        t.len_buf = other.dimensions().begin(), other.dimensions().end();
+        t.stride_buf.resize(t.ndim);
+        t.len = t.len_buf.data();
+        t.stride = t.stride_buf.data();
+
+        if (other.Options & Eigen::RowMajor)
+        {
+            stride_type stride = 1;
+            for (int i = t.ndim-1;i >= 0;i--)
+            {
+                t.stride[i] = stride;
+                stride *= t.len[i];
+            }
+        }
+        else
+        {
+            stride_type stride = 1;
+            for (int i = 0;i < t.ndim;i++)
+            {
+                t.stride[i] = stride;
+                stride *= t.len[i];
+            }
+        }
+    }
+};
+
+template <typename I, typename S, typename X>
+struct eigen_expr_parser<Eigen::TensorSlicingOp<I,S,X>> : eigen_expr_parser<X>
+{
+    eigen_expr_parser(tensor& t, Eigen::TensorSlicingOp<I,S,X>& other)
+    : eigen_expr_parser<X>(t, other.expression())
+    {
+        for (int i = 0;i < t.ndim;i++)
+        {
+            t.data += t.stride[i] * other.startIndices()[i];
+            t.len[i] = other.sizes()[i];
+        }
+    }
+};
+
+template <Eigen::DenseIndex D, typename X>
+struct eigen_expr_parser<Eigen::TensorChippingOp<D,X>> : eigen_expr_parser<X>
+{
+    eigen_expr_parser(tensor& t, Eigen::TensorChippingOp<D,X>& other)
+    : eigen_expr_parser<X>(t, other.expression())
+    {
+        t.data += t.stride[other.dim()] * other.offset();
+
+        for (int i = other.dim()+1;i < t.ndim;i++)
+        {
+            t.len[i] = t.len[i+1];
+            t.stride[i] = t.stride[i+1];
+        }
+
+        t.ndim--;
+    }
+};
+
+template <typename S, typename X>
+struct eigen_expr_parser<Eigen::TensorShufflingOp<S,X>> : eigen_expr_parser<X>
+{
+    eigen_expr_parser(tensor& t, Eigen::TensorShufflingOp<S,X>& other)
+    : eigen_expr_parser<X>(t, other.expression())
+    {
+        auto len_buf2(t.len_buf);
+        auto stride_buf2(t.stride_buf);
+        auto len2 = len_buf2.data();
+        auto stride2 = stride_buf2.data();
+
+        for (int i = 0;i < t.ndim;i++)
+        {
+            auto perm = other.shufflePermutation()[i];
+            len2[i] = t.len[perm];
+            stride2[i] = t.stride[perm];
+        }
+
+        t.len_buf = len2;
+        t.stride_buf = stride2;
+        t.len = t.len_buf.data();
+        t.stride = t.stride_buf.data();
+    }
+};
+
+template <typename S, typename X>
+struct eigen_expr_parser<Eigen::TensorStridingOp<S,X>> : eigen_expr_parser<X>
+{
+    eigen_expr_parser(tensor& t, Eigen::TensorStridingOp<S,X>& other)
+    : eigen_expr_parser<X>(t, other.expression())
+    {
+        for (int i = 0;i < t.ndim;i++)
+        {
+            auto stride = other.strides()[i];
+            t.stride[i] *= stride;
+            t.len[i] = (t.len[i] + stride - 1) / stride;
+        }
+    }
+};
+
+/*
+template <typename Start, typename Stop, typename Stride, typename X>
+struct eigen_expr_parser<Eigen::TensorStridingSlicingOp<Start,Stop,Stride,X>> : eigen_expr_parser<X>
+{
+    eigen_expr_parser(tensor& t, Eigen::TensorStridingSlicingOp<Start,Stop,Stride,X>& other)
+    : eigen_expr_parser<X>(t, other.expression())
+    {
+        //TODO
+    }
+};
+*/
+
+template <typename R, typename X>
+struct eigen_expr_parser<Eigen::TensorReverseOp<R,X>> : eigen_expr_parser<X>
+{
+    eigen_expr_parser(tensor& t, Eigen::TensorReverseOp<R,X>& other)
+    : eigen_expr_parser<X>(t, other.expression())
+    {
+        for (int i = 0;i < t.ndim;i++)
+        {
+            if (other.reverse()[i])
+            {
+                t.data += (t.len[i] - 1) * t.stride[i];
+                t.stride[i] = -t.stride[i];
+            }
+        }
+    }
+};
+
+template <typename T, typename X>
+struct eigen_expr_parser<Eigen::TensorCwiseUnaryOp<Eigen::internal::scalar_opposite_op<T>,X>> : eigen_expr_parser<X>
+{
+    eigen_expr_parser(tensor& t, Eigen::TensorCwiseUnaryOp<Eigen::internal::scalar_opposite_op<T>,X>& other)
+    : eigen_expr_parser<X>(t, other.expression())
+    {
+        t.scalar.negate();
+    }
+};
+
+template <typename T, typename X>
+struct eigen_expr_parser<Eigen::TensorCwiseUnaryOp<Eigen::internal::scalar_conjugate_op<T>,X>> : eigen_expr_parser<X>
+{
+    eigen_expr_parser(tensor& t, Eigen::TensorCwiseUnaryOp<Eigen::internal::scalar_opposite_op<T>,X>& other)
+    : eigen_expr_parser<X>(t, other.expression())
+    {
+        t.scalar.conj();
+        t.conj = !t.conj;
+    }
+};
+
+template <typename T, typename X>
+struct eigen_expr_parser<Eigen::TensorCwiseUnaryOp<Eigen::internal::bind1st_op<Eigen::internal::scalar_product_op<T,T>>,X>> : eigen_expr_parser<X>
+{
+    eigen_expr_parser(tensor& t, Eigen::TensorCwiseUnaryOp<Eigen::internal::bind1st_op<Eigen::internal::scalar_product_op<T,T>>,X>& other)
+    : eigen_expr_parser<X>(t, other.expression())
+    {
+        t.scalar *= other.functor().m_value;
+    }
+};
+
+template <typename T, typename X>
+struct eigen_expr_parser<Eigen::TensorCwiseUnaryOp<Eigen::internal::bind2nd_op<Eigen::internal::scalar_product_op<T,T>>,X>> : eigen_expr_parser<X>
+{
+    eigen_expr_parser(tensor& t, Eigen::TensorCwiseUnaryOp<Eigen::internal::bind2nd_op<Eigen::internal::scalar_product_op<T,T>>,X>& other)
+    : eigen_expr_parser<X>(t, other.expression())
+    {
+        t.scalar *= other.functor().m_value;
+    }
+};
 
 }
-#endif
 
-#endif
+template <typename D>
+struct tensor::convert<D, std::enable_if_t<std::is_base_of<Eigen::TensorBase<D,Eigen::ReadOnlyAccessors>,D>::value>>
+{
+    constexpr static bool is_mutable = false;
+
+    void operator()(tensor& t, Eigen::TensorBase<D,Eigen::ReadOnlyAccessors>& other) const
+    {
+        detail::eigen_expr_parser<D>{}(static_cast<D&>(t), other);
+    }
+};
+
+#endif //EIGEN_CXX11_TENSOR_TENSOR_MAP_H
+
+#endif //TBLIS_ENABLE_CXX
+
+TBLIS_END_NAMESPACE
+
+#endif //TBLIS_BASE_TYPES_H

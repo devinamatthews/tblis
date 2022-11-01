@@ -1,12 +1,12 @@
-#ifndef _TBLIS_NODES_PARTM_HPP_
-#define _TBLIS_NODES_PARTM_HPP_
+#ifndef TBLIS_NODES_PARTM_HPP
+#define TBLIS_NODES_PARTM_HPP 1
 
-#include "util/basic_types.h"
-#include "util/thread.h"
+#include <tblis/base/thread.h>
+#include <tblis/base/configs.h>
 
-#include "configs/configs.hpp"
+#include <tblis/internal/types.hpp>
 
-#include "matrix/abstract_matrix.hpp"
+#include <tblis/matrix/abstract_matrix.hpp>
 
 namespace tblis
 {
@@ -102,4 +102,4 @@ using partition_gemm_kc = partition<matrix_constants::DIM_K, &config::gemm_kc, C
 
 }
 
-#endif
+#endif //TBLIS_NODES_PARTM_HPP

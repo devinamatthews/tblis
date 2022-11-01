@@ -3,11 +3,12 @@
 
 #include <memory>
 
-#include "util/basic_types.h"
-#include "util/thread.h"
-#include "configs/configs.hpp"
-#include "memory/alignment.hpp"
-#include "memory/memory_pool.hpp"
+#include <tblis/base/types.h>
+#include <tblis/base/thread.h>
+
+#include <tblis/internal/configs.hpp>
+#include <tblis/internal/alignment.hpp>
+#include <tblis/internal/memory_pool.hpp>
 
 namespace tblis
 {
@@ -183,14 +184,7 @@ class abstract_matrix
 
         void set_scaled()
         {
-            switch (type())
-            {
-                case TYPE_FLOAT: scale_.get<float>() = 1.0f; break;
-                case TYPE_DOUBLE: scale_.get<double>() = 1.0; break;
-                case TYPE_SCOMPLEX: scale_.get<scomplex>() = 1.0f; break;
-                case TYPE_DCOMPLEX: scale_.get<dcomplex>() = 1.0; break;
-            }
-
+            scale_.set(1.0);
             conj_ = false;
         }
 

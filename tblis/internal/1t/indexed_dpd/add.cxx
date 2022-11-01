@@ -1,10 +1,5 @@
-#include "util.hpp"
-#include "add.hpp"
-#include "set.hpp"
-#include "scale.hpp"
-#include "internal/1t/dense/add.hpp"
-
-#include "external/stl_ext/include/iostream.hpp"
+#include <tblis/internal/indexed_dpd.hpp>
+#include <tblis/internal/thread.hpp>
 
 namespace tblis
 {
@@ -398,25 +393,25 @@ void add(type_t type, const communicator& comm, const config& cfg,
     {
         switch (type)
         {
-            case TYPE_FLOAT:
+            case FLOAT:
                 add_full(comm, cfg,
                          alpha.data.s, conj_A,
                          reinterpret_cast<const indexed_dpd_marray_view<float>&>(A), idx_A_A, idx_A_AB,
                          reinterpret_cast<const indexed_dpd_marray_view<float>&>(B), idx_B_B, idx_B_AB);
                 break;
-            case TYPE_DOUBLE:
+            case DOUBLE:
                 add_full(comm, cfg,
                          alpha.data.d, conj_A,
                          reinterpret_cast<const indexed_dpd_marray_view<double>&>(A), idx_A_A, idx_A_AB,
                          reinterpret_cast<const indexed_dpd_marray_view<double>&>(B), idx_B_B, idx_B_AB);
                 break;
-            case TYPE_SCOMPLEX:
+            case SCOMPLEX:
                 add_full(comm, cfg,
                          alpha.data.c, conj_A,
                          reinterpret_cast<const indexed_dpd_marray_view<scomplex>&>(A), idx_A_A, idx_A_AB,
                          reinterpret_cast<const indexed_dpd_marray_view<scomplex>&>(B), idx_B_B, idx_B_AB);
                 break;
-            case TYPE_DCOMPLEX:
+            case DCOMPLEX:
                 add_full(comm, cfg,
                          alpha.data.z, conj_A,
                          reinterpret_cast<const indexed_dpd_marray_view<dcomplex>&>(A), idx_A_A, idx_A_AB,

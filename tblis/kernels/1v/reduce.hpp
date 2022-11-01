@@ -1,16 +1,10 @@
-#ifndef _TBLIS_KERNELS_1V_REDUCE_HPP_
-#define _TBLIS_KERNELS_1V_REDUCE_HPP_
+#ifndef TBLIS_KERNELS_1V_REDUCE_HPP
+#define TBLIS_KERNELS_1V_REDUCE_HPP 1
 
-#include "util/thread.h"
-#include "util/basic_types.h"
-#include "util/macros.h"
+#include <tblis/internal/types.hpp>
 
 namespace tblis
 {
-
-using reduce_ukr_t =
-    void (*)(reduce_t op, len_type n,
-             const void* A, stride_type inc_A, void* value, len_type& idx);
 
 template <typename Config, typename T>
 void reduce_ukr_def(reduce_t op, len_type n,
@@ -108,4 +102,4 @@ void reduce_ukr_def(reduce_t op, len_type n,
 
 }
 
-#endif
+#endif //TBLIS_KERNELS_1V_REDUCE_HPP

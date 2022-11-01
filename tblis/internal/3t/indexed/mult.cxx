@@ -1,11 +1,6 @@
-#include "mult.hpp"
-#include "internal/1t/indexed/scale.hpp"
-#include "internal/1t/indexed/set.hpp"
-#include "internal/1t/indexed/util.hpp"
-#include "internal/3t/dense/mult.hpp"
-
-#include "util/gemm_thread.hpp"
-#include "util/tensor.hpp"
+#include <tblis/internal/indexed.hpp>
+#include <tblis/internal/dpd.hpp>
+#include <tblis/internal/thread.hpp>
 
 namespace tblis
 {
@@ -303,25 +298,25 @@ void mult(type_t type, const communicator& comm, const config& cfg,
     {
         switch (type)
         {
-            case TYPE_FLOAT:
+            case FLOAT:
                 mult_full(comm, cfg, alpha.get<float>(),
                           conj_A, reinterpret_cast<const indexed_marray_view<float>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
                           conj_B, reinterpret_cast<const indexed_marray_view<float>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
                                   reinterpret_cast<const indexed_marray_view<float>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
                 break;
-            case TYPE_DOUBLE:
+            case DOUBLE:
                 mult_full(comm, cfg, alpha.get<double>(),
                           conj_A, reinterpret_cast<const indexed_marray_view<double>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
                           conj_B, reinterpret_cast<const indexed_marray_view<double>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
                                   reinterpret_cast<const indexed_marray_view<double>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
                 break;
-            case TYPE_SCOMPLEX:
+            case SCOMPLEX:
                 mult_full(comm, cfg, alpha.get<scomplex>(),
                           conj_A, reinterpret_cast<const indexed_marray_view<scomplex>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
                           conj_B, reinterpret_cast<const indexed_marray_view<scomplex>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
                                   reinterpret_cast<const indexed_marray_view<scomplex>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
                 break;
-            case TYPE_DCOMPLEX:
+            case DCOMPLEX:
                 mult_full(comm, cfg, alpha.get<dcomplex>(),
                           conj_A, reinterpret_cast<const indexed_marray_view<dcomplex>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
                           conj_B, reinterpret_cast<const indexed_marray_view<dcomplex>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,

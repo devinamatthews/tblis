@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include <stl_ext/iostream.hpp>
+
 namespace tblis
 {
 namespace internal
@@ -18,27 +20,28 @@ void canonicalize(len_vector& len,
     /*
      * Remove singleton dimensions (but leave one if all are singleton)
      */
-
+#if 0
     int k = 0;
     for (int i = 0;i < ndim;i++)
     {
-        if (len[i] != 0)
+        if (len[i] != 1)
         {
             len[k] = len[i];
             stride[k] = stride[i];
+            idx[k] = idx[i];
             k++;
         }
     }
-    ndim = k+1;
+    ndim = k;
+#endif
 
     /*
      * Accumulate strides for repeated indices
      */
-
     for (int i = 0;i < ndim;i++)
     {
         int k = i+1;
-        for (int j = i+1;j < ndim;j++)
+        for (int j = k;j < ndim;j++)
         {
             if (idx[i] == idx[j])
             {
@@ -51,7 +54,7 @@ void canonicalize(len_vector& len,
                 k++;
             }
         }
-        ndim = k+1;
+        ndim = k;
     }
 
     len.resize(ndim);
@@ -59,52 +62,63 @@ void canonicalize(len_vector& len,
     idx.resize(ndim);
 }
 
-void fold(len_vector& len,
-          stride_vector& stride,
-          label_vector& idx)
+inline bool are_ordered()
 {
+    return true;
+}
+
+template <typename... Strides>
+bool are_ordered(std::pair<stride_type,stride_type> s1, Strides... s2)
+{
+    return s1.first < s1.second || (s1.first == s1.second && are_ordered(s2...));
+}
+
+template <typename... Strides, size_t... I>
+void fold(len_vector& len,
+          label_vector& idx,
+          std::tuple<Strides...> stride,
+          std::index_sequence<I...>)
+{
+#if 0
     int ndim = len.size();
 
     /*
      * Sort indices by increasing stride
      */
-
-    auto needs_swap = [&](int i)
-    {
-        return stride[i-1] > stride[i];
-    };
-
-    for (int i = 0;i < ndim;i++)
-    for (int j = i;j > 0 && needs_swap(j);j--)
+    for (int i = 1; i < ndim; i++)
+    for (int j = i; j > 0 && are_ordered(std::make_pair(std::get<I>(stride)[j-1], std::get<I>(stride)[j])...);j--)
     {
         std::swap(len[j-1], len[j]);
-        std::swap(stride[j-1], stride[j]);
         std::swap(idx[j-1], idx[j]);
+        (..., std::swap(std::get<I>(stride)[j-1], std::get<I>(stride)[j]));
     }
 
     /*
      * Find contiguous runs and replace with a single index
      */
-
-    for (int i = 0;i < ndim;)
+    auto j = 0;
+    for (int i = 0;i < ndim;j++)
     {
-        int j = i+1;
-        while (j < ndim && stride[j] == stride[j-1]*len[j-1])
-        {
-            len[i] *= len[j];
-            j++;
-        }
+        len[j] = len[i];
+        idx[j] = idx[i];
+        (..., (std::get<I>(stride)[j] = std::get<I>(stride)[i]));
 
-        std::copy(   len.data()+j,    len.data()+ndim,    len.data()+i+1);
-        std::copy(stride.data()+j, stride.data()+ndim, stride.data()+i+1);
-        std::copy(   idx.data()+j,    idx.data()+ndim,    idx.data()+i+1);
-
-        ndim -= j-i-1;
+        while (((++i < ndim) && ... && (std::get<I>(stride)[i] == std::get<I>(stride)[i-1]*len[i-1])))
+            len[j] *= len[i];
     }
+    ndim = j;
 
     len.resize(ndim);
-    stride.resize(ndim);
     idx.resize(ndim);
+    (..., std::get<I>(stride).resize(ndim));
+#endif
+}
+
+void fold(len_vector& len,
+          stride_vector& stride,
+          label_vector& idx)
+{
+    fold(len, idx, std::forward_as_tuple(stride), std::make_index_sequence<1>{});
 }
 
 void fold(len_vector& len,
@@ -112,53 +126,7 @@ void fold(len_vector& len,
           stride_vector& stride2,
           label_vector& idx)
 {
-    int ndim = len.size();
-
-    /*
-     * Sort indices by increasing stride
-     */
-
-    auto needs_swap = [&](int i)
-    {
-        return stride1[i-1] > stride1[i] ||
-            (stride1[i-1] == stride1[i] && stride2[i-1] > stride2[i]);
-    };
-
-    for (int i = 0;i < ndim;i++)
-    for (int j = i;j > 0 && needs_swap(j);j--)
-    {
-        std::swap(len[j-1], len[j]);
-        std::swap(stride1[j-1], stride1[j]);
-        std::swap(stride2[j-1], stride2[j]);
-        std::swap(idx[j-1], idx[j]);
-    }
-
-    /*
-     * Find contiguous runs and replace with a single index
-     */
-
-    for (int i = 0;i < ndim;)
-    {
-        int j = i+1;
-        while (j < ndim && stride1[j] == stride1[j-1]*len[j-1]
-                        && stride2[j] == stride2[j-1]*len[j-1])
-        {
-            len[i] *= len[j];
-            j++;
-        }
-
-        std::copy(    len.data()+j,     len.data()+ndim,     len.data()+i+1);
-        std::copy(stride1.data()+j, stride1.data()+ndim, stride1.data()+i+1);
-        std::copy(stride2.data()+j, stride2.data()+ndim, stride2.data()+i+1);
-        std::copy(    idx.data()+j,     idx.data()+ndim,     idx.data()+i+1);
-
-        ndim -= j-i-1;
-    }
-
-    len.resize(ndim);
-    stride1.resize(ndim);
-    stride2.resize(ndim);
-    idx.resize(ndim);
+    fold(len, idx, std::forward_as_tuple(stride1, stride2), std::make_index_sequence<2>{});
 }
 
 void fold(len_vector& len,
@@ -167,58 +135,7 @@ void fold(len_vector& len,
           stride_vector& stride3,
           label_vector& idx)
 {
-    int ndim = len.size();
-
-    /*
-     * Sort indices by increasing stride
-     */
-
-    auto needs_swap = [&](int i)
-    {
-        return stride1[i-1] > stride1[i] ||
-            (stride1[i-1] == stride1[i] && stride2[i-1] > stride2[i]) ||
-            (stride1[i-1] == stride1[i] && stride2[i-1] == stride2[i] && stride3[i-1] > stride3[i]);
-    };
-
-    for (int i = 0;i < ndim;i++)
-    for (int j = i;j > 0 && needs_swap(j);j--)
-    {
-        std::swap(len[j-1], len[j]);
-        std::swap(stride1[j-1], stride1[j]);
-        std::swap(stride2[j-1], stride2[j]);
-        std::swap(stride3[j-1], stride3[j]);
-        std::swap(idx[j-1], idx[j]);
-    }
-
-    /*
-     * Find contiguous runs and replace with a single index
-     */
-
-    for (int i = 0;i < ndim;)
-    {
-        int j = i+1;
-        while (j < ndim && stride1[j] == stride1[j-1]*len[j-1]
-                        && stride2[j] == stride2[j-1]*len[j-1]
-                        && stride3[j] == stride3[j-1]*len[j-1])
-        {
-            len[i] *= len[j];
-            j++;
-        }
-
-        std::copy(    len.data()+j,     len.data()+ndim,     len.data()+i+1);
-        std::copy(stride1.data()+j, stride1.data()+ndim, stride1.data()+i+1);
-        std::copy(stride2.data()+j, stride2.data()+ndim, stride2.data()+i+1);
-        std::copy(stride3.data()+j, stride3.data()+ndim, stride3.data()+i+1);
-        std::copy(    idx.data()+j,     idx.data()+ndim,     idx.data()+i+1);
-
-        ndim -= j-i-1;
-    }
-
-    len.resize(ndim);
-    stride1.resize(ndim);
-    stride2.resize(ndim);
-    stride3.resize(ndim);
-    idx.resize(ndim);
+    fold(len, idx, std::forward_as_tuple(stride1, stride2, stride3), std::make_index_sequence<3>{});
 }
 
 }

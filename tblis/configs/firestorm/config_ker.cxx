@@ -5,6 +5,6 @@
 namespace tblis
 {
 
-TBLIS_CONFIG_INSTANTIATE(piledriver);
+TBLIS_CONFIG_INSTANTIATE(firestorm);
 
 }

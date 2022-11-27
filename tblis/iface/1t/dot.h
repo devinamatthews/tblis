@@ -116,7 +116,7 @@ void dot(const const_tensor& A,
          const label_string& idx_B,
          tblis_scalar& result)
 {
-    dot(*(communicator*)nullptr, A, idx_A, B, idx_B, result);
+    dot(parallel, A, idx_A, B, idx_B, result);
 }
 
 template <typename T>

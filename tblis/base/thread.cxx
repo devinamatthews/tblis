@@ -6,5 +6,6 @@ namespace tblis
 {
 
 communicator single;
+communicator parallel;
 
 }

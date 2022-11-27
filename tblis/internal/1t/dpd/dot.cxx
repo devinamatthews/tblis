@@ -34,6 +34,7 @@ void dot_full(const communicator& comm, const config& cfg,
     A2, B2);
 }
 
+static
 void dot_block(type_t type, const communicator& comm, const config& cfg,
                bool conj_A, const dpd_marray_view<char>& A,
                const dim_vector& idx_A_AB,

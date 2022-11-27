@@ -1,5 +1,5 @@
-#ifndef _TBLIS_TEST_HPP_
-#define _TBLIS_TEST_HPP_
+#ifndef TBLIS_TEST_HPP
+#define TBLIS_TEST_HPP
 
 #include <algorithm>
 #include <limits>
@@ -49,7 +49,7 @@ using namespace tblis::detail;
 using namespace MArray::slice;
 using namespace MArray;
 
-#define INFO_OR_PRINT(...) INFO(__VA_ARGS__); //cout << __VA_ARGS__ << endl;
+#define INFO_OR_PRINT(...) INFO(__VA_ARGS__) //cout << __VA_ARGS__ << endl;
 
 #define TENSOR_INFO(t) \
 INFO_OR_PRINT("len_" #t "    = " << t.lengths()); \
@@ -262,7 +262,7 @@ len_vector group_size(const matrix<len_type>& len, const T& idx, const T& choose
 template <typename T>
 double ceil2(T x)
 {
-    return nearbyint(pow(2.0, max(0.0, ceil(log2((double)std::abs(x))))));
+    return nearbyint(pow(2.0, max<double>(0.0, ceil(log2(std::abs(x))))));
 }
 
 template <typename T, typename U>

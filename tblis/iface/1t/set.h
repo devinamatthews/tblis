@@ -42,7 +42,7 @@ void set(const scalar& alpha,
          const tensor& A,
          const label_string& idx_A)
 {
-    set(*(communicator*)nullptr, alpha, std::move(A), idx_A);
+    set(parallel, alpha, std::move(A), idx_A);
 }
 
 inline

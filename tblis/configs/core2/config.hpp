@@ -1,13 +1,13 @@
-#ifndef _TBLIS_CONFIGS_CORE2_CONFIG_HPP_
-#define _TBLIS_CONFIGS_CORE2_CONFIG_HPP_
+#ifndef TBLIS_CONFIGS_CORE2_CONFIG_HPP
+#define TBLIS_CONFIGS_CORE2_CONFIG_HPP
 
 #include <tblis/internal/configs.hpp>
 
-EXTERN_BLIS_GEMM_UKR(bli_sgemm_asm_8x4);
-EXTERN_BLIS_GEMM_UKR(bli_dgemm_asm_4x4);
-
 namespace tblis
 {
+
+EXTERN_BLIS_GEMM_UKR(bli_sgemm_asm_8x4);
+EXTERN_BLIS_GEMM_UKR(bli_dgemm_asm_4x4);
 
 extern int core2_check();
 

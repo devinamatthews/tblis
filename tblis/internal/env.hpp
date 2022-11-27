@@ -1,5 +1,5 @@
 #ifndef TBLIS_INTERNAL_ENV_HPP
-#define TBLIS_BASE_ENV_H
+#define TBLIS_INTERNAL_ENV_HPP
 
 #include <tblis/base/env.h>
 
@@ -11,7 +11,7 @@ namespace tblis
 inline long envtol(const char* name, long def)
 {
     auto env = getenv(name);
-    return env ? strtol(env, NULL, 0) : def;
+    return env ? strtol(env, nullptr, 0) : def;
 }
 
 }

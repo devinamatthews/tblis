@@ -4,70 +4,70 @@
 #include <tblis/internal/dpd.hpp>
 #include <tblis/internal/indexed.hpp>
 
-#include <marray/indexed_dpd_varray_view.hpp>
+#include <marray/indexed_dpd/indexed_dpd_marray_view.hpp>
 
 namespace tblis
 {
 
-using MArray::indexed_dpd_varray_view;
+using MArray::indexed_dpd_marray_view;
 
 namespace internal
 {
 
 void add(type_t type, const communicator& comm, const config& cfg,
-         const scalar& alpha, bool conj_A, const indexed_dpd_varray_view<char>& A,
+         const scalar& alpha, bool conj_A, const indexed_dpd_marray_view<char>& A,
          const dim_vector& idx_A,
          const dim_vector& idx_A_AB,
-         const scalar&  beta, bool conj_B, const indexed_dpd_varray_view<char>& B,
+         const scalar&  beta, bool conj_B, const indexed_dpd_marray_view<char>& B,
          const dim_vector& idx_B,
          const dim_vector& idx_B_AB);
 
 void dot(type_t type, const communicator& comm, const config& cfg,
-         bool conj_A, const indexed_dpd_varray_view<char>& A,
+         bool conj_A, const indexed_dpd_marray_view<char>& A,
          const dim_vector& idx_A_AB,
-         bool conj_B, const indexed_dpd_varray_view<char>& B,
+         bool conj_B, const indexed_dpd_marray_view<char>& B,
          const dim_vector& idx_B_AB,
          char* result);
 
 void reduce(type_t type, const communicator& comm, const config& cfg, reduce_t op,
-            const indexed_dpd_varray_view<char>& A, const dim_vector& idx_A_A,
+            const indexed_dpd_marray_view<char>& A, const dim_vector& idx_A_A,
             char* result, len_type& idx);
 
 void scale(type_t type, const communicator& comm, const config& cfg,
-           const scalar& alpha, bool conj_A, const indexed_dpd_varray_view<char>& A,
+           const scalar& alpha, bool conj_A, const indexed_dpd_marray_view<char>& A,
            const dim_vector& idx_A_A);
 
 void set(type_t type, const communicator& comm, const config& cfg,
-         const scalar& alpha, const indexed_dpd_varray_view<char>& A, const dim_vector& idx_A);
+         const scalar& alpha, const indexed_dpd_marray_view<char>& A, const dim_vector& idx_A);
 
 void shift(type_t type, const communicator& comm, const config& cfg,
            const scalar& alpha, const scalar& beta, bool conj_A,
-           const indexed_dpd_varray_view<char>& A, const dim_vector& idx_A_A);
+           const indexed_dpd_marray_view<char>& A, const dim_vector& idx_A_A);
 
 void mult(type_t type, const communicator& comm, const config& cfg,
-          const scalar& alpha, bool conj_A, const indexed_dpd_varray_view<char>& A,
+          const scalar& alpha, bool conj_A, const indexed_dpd_marray_view<char>& A,
           const dim_vector& idx_A_AB,
           const dim_vector& idx_A_AC,
           const dim_vector& idx_A_ABC,
-                               bool conj_B, const indexed_dpd_varray_view<char>& B,
+                               bool conj_B, const indexed_dpd_marray_view<char>& B,
           const dim_vector& idx_B_AB,
           const dim_vector& idx_B_BC,
           const dim_vector& idx_B_ABC,
-          const scalar&  beta, bool conj_C, const indexed_dpd_varray_view<char>& C,
+          const scalar&  beta, bool conj_C, const indexed_dpd_marray_view<char>& C,
           const dim_vector& idx_C_AC,
           const dim_vector& idx_C_BC,
           const dim_vector& idx_C_ABC);
 
 template <typename T>
 void block_to_full(const communicator& comm, const config& cfg,
-                   const indexed_dpd_varray_view<T>& A, varray<T>& A2)
+                   const indexed_dpd_marray_view<T>& A, marray<T>& A2)
 {
     auto nirrep = A.num_irreps();
     auto ndim_A = A.dimension();
     auto dense_ndim_A = A.dense_dimension();
 
     len_vector len_A(ndim_A);
-    matrix<len_type> off_A{{ndim_A, nirrep}};
+    matrix<len_type> off_A{ndim_A, nirrep};
     for (auto i : range(ndim_A))
     {
         for (auto irrep : range(nirrep))
@@ -84,7 +84,7 @@ void block_to_full(const communicator& comm, const config& cfg,
     dense_stride_A2.resize(dense_ndim_A);
 
     A[0].for_each_block(
-    [&](const varray_view<T>& local_A, const irrep_vector& irreps_A)
+    [&](const marray_view<T>& local_A, const irrep_vector& irreps_A)
     {
         auto& dense_len_A = local_A.lengths();
         auto& dense_stride_A = local_A.strides();
@@ -111,13 +111,13 @@ void block_to_full(const communicator& comm, const config& cfg,
 
 template <typename T>
 void full_to_block(const communicator& comm, const config& cfg,
-                   varray<T>& A2, const indexed_dpd_varray_view<T>& A)
+                   marray<T>& A2, const indexed_dpd_marray_view<T>& A)
 {
     auto nirrep = A.num_irreps();
     auto ndim_A = A.dimension();
     auto dense_ndim_A = A.dense_dimension();
 
-    matrix<len_type> off_A{{ndim_A, nirrep}};
+    matrix<len_type> off_A{ndim_A, nirrep};
     for (auto i : range(ndim_A))
     {
         len_type off = 0;
@@ -132,7 +132,7 @@ void full_to_block(const communicator& comm, const config& cfg,
     dense_stride_A2.resize(dense_ndim_A);
 
     A[0].for_each_block(
-    [&](const varray_view<T>& local_A, const irrep_vector& irreps_A)
+    [&](const marray_view<T>& local_A, const irrep_vector& irreps_A)
     {
         auto& dense_len_A = local_A.lengths();
         auto& dense_stride_A = local_A.strides();
@@ -164,7 +164,7 @@ void assign_dense_idx_helper(int, dpd_index_group<N>&) {}
 
 template <int I, int N, typename T, typename... Args>
 void assign_dense_idx_helper(int i, dpd_index_group<N>& group,
-                             const indexed_dpd_varray_view<T>&,
+                             const indexed_dpd_marray_view<T>&,
                              const dim_vector& idx_A, const Args&... args)
 {
     group.dense_idx[I].push_back(idx_A[i]);
@@ -173,7 +173,7 @@ void assign_dense_idx_helper(int i, dpd_index_group<N>& group,
 
 template <int N, typename T, typename... Args>
 void assign_dense_idx(int i, dpd_index_group<N>& group,
-                      const indexed_dpd_varray_view<T>& A,
+                      const indexed_dpd_marray_view<T>& A,
                       const dim_vector& idx_A, const Args&... args)
 {
     assign_dense_idx_helper<0>(i, group, A, idx_A, args...);
@@ -186,7 +186,7 @@ void assign_mixed_or_batch_idx_helper(int, int,
 template <int I, int N, typename T, typename... Args>
 void assign_mixed_or_batch_idx_helper(int i, int pos,
                                       dpd_index_group<N>& group,
-                                      const indexed_dpd_varray_view<T>& A,
+                                      const indexed_dpd_marray_view<T>& A,
                                       const dim_vector& idx_A, const Args&... args)
 {
 
@@ -216,7 +216,7 @@ void assign_mixed_or_batch_idx_helper(int i, int pos,
 template <int N, typename T, typename... Args>
 void assign_mixed_or_batch_idx(int i, int pos,
                                dpd_index_group<N>& group,
-                               const indexed_dpd_varray_view<T>& A,
+                               const indexed_dpd_marray_view<T>& A,
                                const dim_vector& idx_A, const Args&... args)
 {
     assign_mixed_or_batch_idx_helper<0>(i, pos, group,
@@ -244,7 +244,7 @@ struct dpd_index_group
     std::array<dim_vector,N> batch_pos;
 
     template <typename T, typename... Args>
-    dpd_index_group(const indexed_dpd_varray_view<T>& A, const dim_vector& idx_A,
+    dpd_index_group(const indexed_dpd_marray_view<T>& A, const dim_vector& idx_A,
                     const Args&... args)
     {
         auto nirrep = A.num_irreps();
@@ -342,7 +342,7 @@ void get_local_geometry_helper(const len_vector&,
 template <int I, int N, typename T, typename... Args>
 void get_local_geometry_helper(const len_vector& idx,
                                const dpd_index_group<N>& group,
-                               len_vector& len,  const varray_view<T>& local_A,
+                               len_vector& len,  const marray_view<T>& local_A,
                                stride_vector& stride,
                                int, Args&&... args)
 {

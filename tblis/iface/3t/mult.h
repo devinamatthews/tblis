@@ -112,7 +112,7 @@ void mult(const scalar& alpha,
           const tensor& C,
           const label_string& idx_C)
 {
-    mult(*(communicator*)nullptr, alpha, A, idx_A, B, idx_B, beta, C, idx_C);
+    mult(parallel, alpha, A, idx_A, B, idx_B, beta, C, idx_C);
 }
 
 inline
@@ -157,7 +157,7 @@ void mult(const scalar& alpha,
           const scalar& beta,
           const tensor& C)
 {
-    mult(*(communicator*)nullptr, alpha, A, B, beta, C);
+    mult(parallel, alpha, A, B, beta, C);
 }
 
 inline

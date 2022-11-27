@@ -1,5 +1,5 @@
-#ifndef _TBLIS_NORMAL_MATRIX_HPP_
-#define _TBLIS_NORMAL_MATRIX_HPP_
+#ifndef TBLIS_NORMAL_MATRIX_HPP
+#define TBLIS_NORMAL_MATRIX_HPP
 
 #include "abstract_matrix.hpp"
 #include "packed_matrix.hpp"

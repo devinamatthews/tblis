@@ -60,6 +60,7 @@ static thread_local std::aligned_storage_t<sizeof(stride_vector_fuse)> scat_C_BC
 static thread_local std::aligned_storage_t<sizeof(tuple_vector_fuse)> scat_AB_;
 static thread_local std::aligned_storage_t<sizeof(tuple_vector_fuse)> scat_BC_;
 
+static
 double relative_perf(double m, double n, double k)
 {
     // e.g. 200GFLOPs (double) and 80GB/s memory BW
@@ -115,6 +116,7 @@ void mult_full(const communicator& comm, const config& cfg,
     A2, B2, C2);
 }
 
+static
 void mult_block_fuse_AB(type_t type, const communicator& comm, const config& cfg,
                         const scalar& alpha,
                         bool conj_A, const indexed_dpd_marray_view<char>& A,
@@ -346,6 +348,7 @@ void mult_block_fuse_AB(type_t type, const communicator& comm, const config& cfg
     });
 }
 
+static
 void mult_block_fuse_BC(type_t type, const communicator& comm, const config& cfg,
                         const scalar& alpha,
                         bool conj_A, const indexed_dpd_marray_view<char>& A,
@@ -578,6 +581,7 @@ void mult_block_fuse_BC(type_t type, const communicator& comm, const config& cfg
     });
 }
 
+static
 void mult_block_fuse_AB_BC(type_t type, const communicator& comm, const config& cfg,
                            const scalar& alpha,
                            bool conj_A, const indexed_dpd_marray_view<char>& A,
@@ -871,6 +875,7 @@ void mult_block_fuse_AB_BC(type_t type, const communicator& comm, const config& 
     });
 }
 
+static
 void mult_block(type_t type, const communicator& comm, const config& cfg,
                 const scalar& alpha,
                 bool conj_A, const indexed_dpd_marray_view<char>& A,
@@ -1094,6 +1099,7 @@ void mult_block(type_t type, const communicator& comm, const config& cfg,
     }
 }
 
+static
 void mult_block(type_t type, const communicator& comm, const config& cfg,
                 const scalar& alpha,
                 bool conj_A, const indexed_dpd_marray_view<char>& A,

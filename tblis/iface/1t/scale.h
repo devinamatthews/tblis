@@ -52,7 +52,7 @@ void scale(const scalar& alpha,
            const tensor& A,
            const label_string& idx_A)
 {
-    scale(*(communicator*)nullptr, alpha, A, idx_A);
+    scale(parallel, alpha, A, idx_A);
 }
 
 inline

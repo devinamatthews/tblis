@@ -1,15 +1,15 @@
-#ifndef _TBLIS_CONFIGS_SANDYBRIDGE_CONFIG_HPP_
-#define _TBLIS_CONFIGS_SANDYBRIDGE_CONFIG_HPP_
+#ifndef TBLIS_CONFIGS_SANDYBRIDGE_CONFIG_HPP
+#define TBLIS_CONFIGS_SANDYBRIDGE_CONFIG_HPP
 
 #include <tblis/internal/configs.hpp>
+
+namespace tblis
+{
 
 EXTERN_BLIS_GEMM_UKR(bli_sgemm_asm_8x8);
 EXTERN_BLIS_GEMM_UKR(bli_dgemm_asm_8x4);
 EXTERN_BLIS_GEMM_UKR(bli_cgemm_asm_8x4);
 EXTERN_BLIS_GEMM_UKR(bli_zgemm_asm_4x4);
-
-namespace tblis
-{
 
 extern int sandybridge_check();
 

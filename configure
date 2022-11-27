@@ -694,14 +694,8 @@ ENABLE_SANDYBRIDGE_FALSE
 ENABLE_SANDYBRIDGE_TRUE
 ENABLE_REFERENCE_FALSE
 ENABLE_REFERENCE_TRUE
-ENABLE_POWER7_FALSE
-ENABLE_POWER7_TRUE
 ENABLE_PILEDRIVER_FALSE
 ENABLE_PILEDRIVER_TRUE
-ENABLE_MIC_FALSE
-ENABLE_MIC_TRUE
-ENABLE_LOONGSON3A_FALSE
-ENABLE_LOONGSON3A_TRUE
 ENABLE_KNL_FALSE
 ENABLE_KNL_TRUE
 ENABLE_SKX2_FALSE
@@ -712,20 +706,12 @@ ENABLE_HASWELL_FALSE
 ENABLE_HASWELL_TRUE
 ENABLE_CORE2_FALSE
 ENABLE_CORE2_TRUE
-ENABLE_CORTEX_A9_FALSE
-ENABLE_CORTEX_A9_TRUE
-ENABLE_CORTEX_A15_FALSE
-ENABLE_CORTEX_A15_TRUE
 ENABLE_EXCAVATOR_FALSE
 ENABLE_EXCAVATOR_TRUE
 ENABLE_BULLDOZER_FALSE
 ENABLE_BULLDOZER_TRUE
-ENABLE_BGQ_FALSE
-ENABLE_BGQ_TRUE
-ENABLE_ARMV8A_FALSE
-ENABLE_ARMV8A_TRUE
-ENABLE_ARMV7A_FALSE
-ENABLE_ARMV7A_TRUE
+ENABLE_FIRESTORM_FALSE
+ENABLE_FIRESTORM_TRUE
 IS_OSX_FALSE
 IS_OSX_TRUE
 ENABLE_INTEL_COMPILER_FALSE
@@ -1526,7 +1512,8 @@ Optional Features:
                           possible values are:
 
                           reference, bulldozer, piledriver, excavator, zen,
-                          core2, sandybridge, haswell, skx1, skx2, knl, auto
+                          core2, sandybridge, haswell, skx1, skx2, knl,
+                          firestorm, auto
 
                           the following meta-configurations are also available:
 
@@ -1534,6 +1521,7 @@ Optional Features:
                           intel = core2,sandybridge,haswell,skx,knl
                           amd = bulldozer,piledriver,excavator,zen
                           x86 = intel,amd
+                          arm64 = firestorm
   --enable-shared[=PKGS]  build shared libraries [default=yes]
   --enable-static[=PKGS]  build static libraries [default=yes]
   --enable-fast-install[=PKGS]
@@ -6578,6 +6566,12 @@ fi
 # Check for openmp simd flag
 #
 
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for OpenMP SIMD pragma" >&5
 printf %s "checking for OpenMP SIMD pragma... " >&6; }
 omp_simd_flag="not supported"
@@ -6601,7 +6595,7 @@ main (void)
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_compile "$LINENO"
+if ac_fn_cxx_try_compile "$LINENO"
 then :
   omp_simd_flag="$flag"
 fi
@@ -6613,6 +6607,12 @@ printf "%s\n" "$omp_simd_flag" >&6; }
 if test "x$omp_simd_flag" != "xnot supported"; then
     CXXFLAGS="$CXXFLAGS $omp_simd_flag"
 fi
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
 
 #
 # Check for memkind
@@ -7320,7 +7320,44 @@ if test $ac_cv_defined__M_IX86 != "no"
 then :
   enable_config=x86
 fi
-#    AC_CHECK_DEFINE([__aarch64__], [enable_config=arm])
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for __aarch64__ defined" >&5
+printf %s "checking for __aarch64__ defined... " >&6; }
+if test ${ac_cv_defined___aarch64__+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main (void)
+{
+
+  #ifdef __aarch64__
+  int ok;
+  #else
+  choke me
+  #endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  ac_cv_defined___aarch64__=yes
+else $as_nop
+  ac_cv_defined___aarch64__=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined___aarch64__" >&5
+printf "%s\n" "$ac_cv_defined___aarch64__" >&6; }
+if test $ac_cv_defined___aarch64__ != "no"
+then :
+  enable_config=arm64
+fi
 #    AC_CHECK_DEFINE([__arm__], [enable_config=arm])
 #    AC_CHECK_DEFINE([_M_ARM], [enable_config=arm])
 #    AC_CHECK_DEFINE([__powerpc64__], [enable_config=power7])
@@ -7380,10 +7417,11 @@ configs=`echo $enable_config | sed 's/x86/intel,amd/' \
                              | sed 's/amd/bulldozer,piledriver,excavator,zen/' \
                              | sed 's/skx,/skx1,skx2,/' \
                              | sed 's/skx$/skx1,skx2/' \
+                             | sed 's/arm64/firestorm/' \
                              | sed 's/,/ /g'`
 
 for config in $configs; do
-    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|bulldozer|piledriver|excavator|zen)$' ); then
+    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|bulldozer|piledriver|excavator|zen|firestorm)$' ); then
         as_fn_error $? "Unknown configuration $config" "$LINENO" 5
     fi
 done
@@ -7729,28 +7767,12 @@ printf %s "checking enabled configurations... " >&6; }
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $configs" >&5
 printf "%s\n" "$configs" >&6; }
 
- if echo $configs | grep -q armv7a; then
-  ENABLE_ARMV7A_TRUE=
-  ENABLE_ARMV7A_FALSE='#'
+ if echo $configs | grep -q firestorm; then
+  ENABLE_FIRESTORM_TRUE=
+  ENABLE_FIRESTORM_FALSE='#'
 else
-  ENABLE_ARMV7A_TRUE='#'
-  ENABLE_ARMV7A_FALSE=
-fi
-
- if echo $configs | grep -q armv8a; then
-  ENABLE_ARMV8A_TRUE=
-  ENABLE_ARMV8A_FALSE='#'
-else
-  ENABLE_ARMV8A_TRUE='#'
-  ENABLE_ARMV8A_FALSE=
-fi
-
- if echo $configs | grep -q bgq; then
-  ENABLE_BGQ_TRUE=
-  ENABLE_BGQ_FALSE='#'
-else
-  ENABLE_BGQ_TRUE='#'
-  ENABLE_BGQ_FALSE=
+  ENABLE_FIRESTORM_TRUE='#'
+  ENABLE_FIRESTORM_FALSE=
 fi
 
  if echo $configs | grep -q bulldozer; then
@@ -7767,22 +7789,6 @@ fi
 else
   ENABLE_EXCAVATOR_TRUE='#'
   ENABLE_EXCAVATOR_FALSE=
-fi
-
- if echo $configs | grep -q cortex-a15; then
-  ENABLE_CORTEX_A15_TRUE=
-  ENABLE_CORTEX_A15_FALSE='#'
-else
-  ENABLE_CORTEX_A15_TRUE='#'
-  ENABLE_CORTEX_A15_FALSE=
-fi
-
- if echo $configs | grep -q cortex-a9; then
-  ENABLE_CORTEX_A9_TRUE=
-  ENABLE_CORTEX_A9_FALSE='#'
-else
-  ENABLE_CORTEX_A9_TRUE='#'
-  ENABLE_CORTEX_A9_FALSE=
 fi
 
  if echo $configs | grep -q core2; then
@@ -7825,36 +7831,12 @@ else
   ENABLE_KNL_FALSE=
 fi
 
- if echo $configs | grep -q loongson3a; then
-  ENABLE_LOONGSON3A_TRUE=
-  ENABLE_LOONGSON3A_FALSE='#'
-else
-  ENABLE_LOONGSON3A_TRUE='#'
-  ENABLE_LOONGSON3A_FALSE=
-fi
-
- if echo $configs | grep -q mic; then
-  ENABLE_MIC_TRUE=
-  ENABLE_MIC_FALSE='#'
-else
-  ENABLE_MIC_TRUE='#'
-  ENABLE_MIC_FALSE=
-fi
-
  if echo $configs | grep -q piledriver; then
   ENABLE_PILEDRIVER_TRUE=
   ENABLE_PILEDRIVER_FALSE='#'
 else
   ENABLE_PILEDRIVER_TRUE='#'
   ENABLE_PILEDRIVER_FALSE=
-fi
-
- if echo $configs | grep -q power7; then
-  ENABLE_POWER7_TRUE=
-  ENABLE_POWER7_FALSE='#'
-else
-  ENABLE_POWER7_TRUE='#'
-  ENABLE_POWER7_FALSE=
 fi
 
  if echo $configs | grep -q reference; then
@@ -19338,16 +19320,8 @@ if test -z "${IS_OSX_TRUE}" && test -z "${IS_OSX_FALSE}"; then
   as_fn_error $? "conditional \"IS_OSX\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${ENABLE_ARMV7A_TRUE}" && test -z "${ENABLE_ARMV7A_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_ARMV7A\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${ENABLE_ARMV8A_TRUE}" && test -z "${ENABLE_ARMV8A_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_ARMV8A\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${ENABLE_BGQ_TRUE}" && test -z "${ENABLE_BGQ_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_BGQ\" was never defined.
+if test -z "${ENABLE_FIRESTORM_TRUE}" && test -z "${ENABLE_FIRESTORM_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_FIRESTORM\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_BULLDOZER_TRUE}" && test -z "${ENABLE_BULLDOZER_FALSE}"; then
@@ -19356,14 +19330,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_EXCAVATOR_TRUE}" && test -z "${ENABLE_EXCAVATOR_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_EXCAVATOR\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${ENABLE_CORTEX_A15_TRUE}" && test -z "${ENABLE_CORTEX_A15_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_CORTEX_A15\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${ENABLE_CORTEX_A9_TRUE}" && test -z "${ENABLE_CORTEX_A9_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_CORTEX_A9\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_CORE2_TRUE}" && test -z "${ENABLE_CORE2_FALSE}"; then
@@ -19386,20 +19352,8 @@ if test -z "${ENABLE_KNL_TRUE}" && test -z "${ENABLE_KNL_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_KNL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${ENABLE_LOONGSON3A_TRUE}" && test -z "${ENABLE_LOONGSON3A_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_LOONGSON3A\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${ENABLE_MIC_TRUE}" && test -z "${ENABLE_MIC_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_MIC\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${ENABLE_PILEDRIVER_TRUE}" && test -z "${ENABLE_PILEDRIVER_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_PILEDRIVER\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${ENABLE_POWER7_TRUE}" && test -z "${ENABLE_POWER7_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_POWER7\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_REFERENCE_TRUE}" && test -z "${ENABLE_REFERENCE_FALSE}"; then

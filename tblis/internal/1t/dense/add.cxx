@@ -5,6 +5,7 @@ namespace tblis
 namespace internal
 {
 
+static
 void add(type_t type, const communicator& comm, const config& cfg,
          const len_vector& len_A,
          const scalar& alpha, bool conj_A, char* A,
@@ -19,6 +20,7 @@ void add(type_t type, const communicator& comm, const config& cfg,
         add(type, alpha, conj_A, sum.raw(), beta, conj_B, B);
 }
 
+static
 void add(type_t type, const communicator& comm, const config& cfg,
          const len_vector& len_B,
          const scalar& alpha, bool conj_A, char* A,
@@ -34,6 +36,7 @@ void add(type_t type, const communicator& comm, const config& cfg,
           beta, conj_B, B, stride_B);
 }
 
+static
 void add(type_t type, const communicator& comm, const config& cfg,
          const len_vector& len_A,
          const len_vector& len_AB,
@@ -83,6 +86,7 @@ void add(type_t type, const communicator& comm, const config& cfg,
     });
 }
 
+static
 void add(type_t type, const communicator& comm, const config& cfg,
          const len_vector& len_B,
          const len_vector& len_AB,
@@ -133,6 +137,7 @@ void add(type_t type, const communicator& comm, const config& cfg,
     });
 }
 
+static
 void add(type_t type, const communicator& comm, const config& cfg,
          const len_vector& len_AB,
          const scalar& alpha, bool conj_A, char* A,

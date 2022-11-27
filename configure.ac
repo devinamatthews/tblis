@@ -42,6 +42,7 @@ AM_CONDITIONAL(IS_CLANG, [$CXX --version 2>/dev/null | grep -q clang])
 # Check for openmp simd flag
 #
 
+AC_LANG_PUSH([C++])
 AC_MSG_CHECKING([for OpenMP SIMD pragma])
 omp_simd_flag="not supported"
 for flag in -fopenmp-simd -qopenmp-simd; do
@@ -60,6 +61,7 @@ AC_MSG_RESULT([$omp_simd_flag])
 if test "x$omp_simd_flag" != "xnot supported"; then
     CXXFLAGS="$CXXFLAGS $omp_simd_flag"
 fi
+AC_LANG_POP()
 
 #
 # Check for memkind
@@ -170,14 +172,16 @@ AC_ARG_ENABLE([config],
                           possible values are:
 
                           reference, bulldozer, piledriver, excavator, zen,
-                          core2, sandybridge, haswell, skx1, skx2, knl, auto
+                          core2, sandybridge, haswell, skx1, skx2, knl,
+                          firestorm, auto
 
                           the following meta-configurations are also available:
 
                           skx = skx1,skx2
                           intel = core2,sandybridge,haswell,skx,knl
                           amd = bulldozer,piledriver,excavator,zen
-                          x86 = intel,amd],
+                          x86 = intel,amd
+                          arm64 = firestorm],
               [], [enable_config=auto])
 
 if echo $enable_config | grep -q auto; then
@@ -188,7 +192,7 @@ if echo $enable_config | grep -q auto; then
     AC_CHECK_DEFINE([_M_X64], [enable_config=x86])
     AC_CHECK_DEFINE([__i386], [enable_config=x86])
     AC_CHECK_DEFINE([_M_IX86], [enable_config=x86])
-#    AC_CHECK_DEFINE([__aarch64__], [enable_config=arm])
+    AC_CHECK_DEFINE([__aarch64__], [enable_config=arm64])
 #    AC_CHECK_DEFINE([__arm__], [enable_config=arm])
 #    AC_CHECK_DEFINE([_M_ARM], [enable_config=arm])
 #    AC_CHECK_DEFINE([__powerpc64__], [enable_config=power7])
@@ -211,10 +215,11 @@ configs=`echo $enable_config | sed 's/x86/intel,amd/' \
                              | sed 's/amd/bulldozer,piledriver,excavator,zen/' \
                              | sed 's/skx,/skx1,skx2,/' \
                              | sed 's/skx$/skx1,skx2/' \
+                             | sed 's/arm64/firestorm/' \
                              | sed 's/,/ /g'`
 
 for config in $configs; do
-    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|bulldozer|piledriver|excavator|zen)$' ); then
+    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|bulldozer|piledriver|excavator|zen|firestorm)$' ); then
         AC_MSG_ERROR([Unknown configuration $config])
     fi
 done
@@ -419,22 +424,15 @@ fi
 AC_MSG_CHECKING([enabled configurations])
 AC_MSG_RESULT([$configs])
 
-AM_CONDITIONAL(ENABLE_ARMV7A, [echo $configs | grep -q armv7a])
-AM_CONDITIONAL(ENABLE_ARMV8A, [echo $configs | grep -q armv8a])
-AM_CONDITIONAL(ENABLE_BGQ, [echo $configs | grep -q bgq])
+AM_CONDITIONAL(ENABLE_FIRESTORM, [echo $configs | grep -q firestorm])
 AM_CONDITIONAL(ENABLE_BULLDOZER, [echo $configs | grep -q bulldozer])
 AM_CONDITIONAL(ENABLE_EXCAVATOR, [echo $configs | grep -q excavator])
-AM_CONDITIONAL(ENABLE_CORTEX_A15, [echo $configs | grep -q cortex-a15])
-AM_CONDITIONAL(ENABLE_CORTEX_A9, [echo $configs | grep -q cortex-a9])
 AM_CONDITIONAL(ENABLE_CORE2, [echo $configs | grep -q core2])
 AM_CONDITIONAL(ENABLE_HASWELL, [echo $configs | grep -q haswell])
 AM_CONDITIONAL(ENABLE_SKX1, [echo $configs | grep -q skx1])
 AM_CONDITIONAL(ENABLE_SKX2, [echo $configs | grep -q skx2])
 AM_CONDITIONAL(ENABLE_KNL, [echo $configs | grep -q knl])
-AM_CONDITIONAL(ENABLE_LOONGSON3A, [echo $configs | grep -q loongson3a])
-AM_CONDITIONAL(ENABLE_MIC, [echo $configs | grep -q mic])
 AM_CONDITIONAL(ENABLE_PILEDRIVER, [echo $configs | grep -q piledriver])
-AM_CONDITIONAL(ENABLE_POWER7, [echo $configs | grep -q power7])
 AM_CONDITIONAL(ENABLE_REFERENCE, [echo $configs | grep -q reference])
 AM_CONDITIONAL(ENABLE_SANDYBRIDGE, [echo $configs | grep -q sandybridge])
 AM_CONDITIONAL(ENABLE_ZEN, [echo $configs | grep -q zen])
@@ -482,7 +480,7 @@ LT_INIT
 
 mkdir -p bin
 
-AC_CONFIG_FILES([Makefile 
+AC_CONFIG_FILES([Makefile
                  tblis/internal/foreach_type.h
                  tblis/internal/foreach_config.h
                  tblis/internal/foreach_config_and_type.h

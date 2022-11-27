@@ -1,15 +1,15 @@
-#ifndef _TBLIS_CONFIGS_HASWELL_CONFIG_HPP_
-#define _TBLIS_CONFIGS_HASWELL_CONFIG_HPP_
+#ifndef TBLIS_CONFIGS_HASWELL_CONFIG_HPP
+#define TBLIS_CONFIGS_HASWELL_CONFIG_HPP
 
 #include <tblis/internal/configs.hpp>
+
+namespace tblis
+{
 
 EXTERN_BLIS_GEMM_UKR(bli_sgemm_haswell_asm_6x16);
 EXTERN_BLIS_GEMM_UKR(bli_dgemm_haswell_asm_6x8);
 EXTERN_BLIS_GEMM_UKR(bli_cgemm_haswell_asm_3x8);
 EXTERN_BLIS_GEMM_UKR(bli_zgemm_haswell_asm_3x4);
-
-namespace tblis
-{
 
 extern int haswell_check();
 

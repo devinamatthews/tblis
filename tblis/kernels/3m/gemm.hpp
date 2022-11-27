@@ -2,6 +2,7 @@
 #define TBLIS_KERNELS_3M_GEMM_HPP 1
 
 #include <tblis/internal/types.hpp>
+#include <tblis/blis.h>
 
 namespace tblis
 {

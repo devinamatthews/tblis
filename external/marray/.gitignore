@@ -29,3 +29,4 @@ _build
 _static
 _templates
 docs/sphinx
+.clangd

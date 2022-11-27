@@ -1,6 +1,6 @@
 #include "config.hpp"
 
-#include "util/cpuid.hpp"
+#include <tblis/internal/cpuid.hpp>
 
 namespace tblis
 {
@@ -12,31 +12,31 @@ int zen_check()
 
     if (vendor != VENDOR_AMD)
     {
-        if (get_verbose() >= 1) printf("tblis: zen: Wrong vendor.\n");
+        if (tblis_get_verbosity() >= 1) printf("tblis: zen: Wrong vendor.\n");
         return -1;
     }
 
     if (!check_features(features, FEATURE_AVX))
     {
-        if (get_verbose() >= 1) printf("tblis: zen: Doesn't support AVX.\n");
+        if (tblis_get_verbosity() >= 1) printf("tblis: zen: Doesn't support AVX.\n");
         return -1;
     }
 
     if (!check_features(features, FEATURE_FMA3))
     {
-        if (get_verbose() >= 1) printf("tblis: zen: Doesn't support FMA3.\n");
+        if (tblis_get_verbosity() >= 1) printf("tblis: zen: Doesn't support FMA3.\n");
         return -1;
     }
 
     if (!check_features(features, FEATURE_AVX2))
     {
-        if (get_verbose() >= 1) printf("tblis: zen: Doesn't support AVX2.\n");
+        if (tblis_get_verbosity() >= 1) printf("tblis: zen: Doesn't support AVX2.\n");
         return -1;
     }
 
     if (family != 0x17)
     {
-        if (get_verbose() >= 1) printf("tblis: zen: Wrong family (%xh).\n", family);
+        if (tblis_get_verbosity() >= 1) printf("tblis: zen: Wrong family (%xh).\n", family);
         return -1;
     }
 

@@ -1,7 +1,9 @@
-#ifndef _TBLIS_SCATTER_MATRIX_HPP_
-#define _TBLIS_SCATTER_MATRIX_HPP_
+#ifndef TBLIS_SCATTER_MATRIX_HPP
+#define TBLIS_SCATTER_MATRIX_HPP
 
 #include "abstract_matrix.hpp"
+#include "packed_matrix.hpp"
+#include "tensor_matrix.hpp"
 
 #include <marray/marray_view.hpp>
 

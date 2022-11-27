@@ -133,11 +133,18 @@ host_triplet = @host@
 @ENABLE_SKX2_TRUE@am__append_34 = lib/libskx2.la
 @ENABLE_SKX2_TRUE@am__append_35 = lib/libskx2.la
 @ENABLE_SKX2_TRUE@am__append_36 = tblis/configs/skx2/config.cxx
+
+#
+# ARM architectures
+#
+@ENABLE_FIRESTORM_TRUE@am__append_37 = lib/libfirestorm.la
+@ENABLE_FIRESTORM_TRUE@am__append_38 = lib/libfirestorm.la
+@ENABLE_FIRESTORM_TRUE@am__append_39 = tblis/configs/firestorm/config.cxx
 noinst_PROGRAMS = bin/test$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
 	$(am__EXEEXT_3)
-@ENABLE_BLAS_TRUE@am__append_37 = bin/bench bin/batched_bench #bin/dpd_bench
-@ENABLE_BLAS_TRUE@@ENABLE_SKX1_TRUE@am__append_38 = bin/skx_bench
-@ENABLE_BLAS_TRUE@@ENABLE_SKX1_FALSE@@ENABLE_SKX2_TRUE@am__append_39 = bin/skx_bench
+@ENABLE_BLAS_TRUE@am__append_40 = bin/bench bin/batched_bench #bin/dpd_bench
+@ENABLE_BLAS_TRUE@@ENABLE_SKX1_TRUE@am__append_41 = bin/skx_bench
+@ENABLE_BLAS_TRUE@@ENABLE_SKX1_FALSE@@ENABLE_SKX2_TRUE@am__append_42 = bin/skx_bench
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/as-gcc-inline-assembly.m4 \
@@ -245,6 +252,18 @@ lib_libexcavator_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(lib_libexcavator_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 @ENABLE_EXCAVATOR_TRUE@am_lib_libexcavator_la_rpath =
+lib_libfirestorm_la_LIBADD =
+am__lib_libfirestorm_la_SOURCES_DIST =  \
+	tblis/configs/firestorm/bli_gemm_armv8a_asm_d8x6r.c \
+	tblis/configs/firestorm/config_ker.cxx
+@ENABLE_FIRESTORM_TRUE@am_lib_libfirestorm_la_OBJECTS = tblis/configs/firestorm/lib_libfirestorm_la-bli_gemm_armv8a_asm_d8x6r.lo \
+@ENABLE_FIRESTORM_TRUE@	tblis/configs/firestorm/lib_libfirestorm_la-config_ker.lo
+lib_libfirestorm_la_OBJECTS = $(am_lib_libfirestorm_la_OBJECTS)
+lib_libfirestorm_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(lib_libfirestorm_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
+@ENABLE_FIRESTORM_TRUE@am_lib_libfirestorm_la_rpath =
 lib_libhaswell_la_LIBADD =
 am__lib_libhaswell_la_SOURCES_DIST =  \
 	tblis/configs/haswell/bli_gemm_asm_d6x8.c \
@@ -341,7 +360,7 @@ lib_libtblis_la_DEPENDENCIES = external/tci/lib/libtci.la \
 	$(am__append_3) $(am__append_5) $(am__append_8) \
 	$(am__append_11) $(am__append_15) $(am__append_19) \
 	$(am__append_22) $(am__append_25) $(am__append_28) \
-	$(am__append_31) $(am__append_35)
+	$(am__append_31) $(am__append_35) $(am__append_38)
 am__lib_libtblis_la_SOURCES_DIST = tblis/iface/1t/add.cxx \
 	tblis/iface/1t/dot.cxx tblis/iface/1t/reduce.cxx \
 	tblis/iface/1t/scale.cxx tblis/iface/1t/set.cxx \
@@ -375,15 +394,16 @@ am__lib_libtblis_la_SOURCES_DIST = tblis/iface/1t/add.cxx \
 	tblis/internal/3t/indexed_dpd/mult.cxx \
 	tblis/internal/dense.cxx tblis/internal/dpd.cxx \
 	tblis/internal/cpuid.cxx tblis/internal/gemm_thread.cxx \
-	tblis/internal/thread.cxx tblis/base/types.cxx \
-	tblis/base/configs.cxx tblis/base/env.cxx \
+	tblis/internal/thread.cxx tblis/base/check.cxx \
+	tblis/base/types.cxx tblis/base/configs.cxx tblis/base/env.cxx \
 	tblis/base/thread.cxx tblis/configs/bulldozer/config.cxx \
 	tblis/configs/piledriver/config.cxx \
 	tblis/configs/excavator/config.cxx \
 	tblis/configs/zen/config.cxx tblis/configs/core2/config.cxx \
 	tblis/configs/sandybridge/config.cxx \
 	tblis/configs/haswell/config.cxx tblis/configs/knl/config.cxx \
-	tblis/configs/skx1/config.cxx tblis/configs/skx2/config.cxx
+	tblis/configs/skx1/config.cxx tblis/configs/skx2/config.cxx \
+	tblis/configs/firestorm/config.cxx
 @ENABLE_BULLDOZER_TRUE@am__objects_3 =  \
 @ENABLE_BULLDOZER_TRUE@	tblis/configs/bulldozer/config.lo
 @ENABLE_PILEDRIVER_TRUE@am__objects_4 =  \
@@ -398,6 +418,8 @@ am__lib_libtblis_la_SOURCES_DIST = tblis/iface/1t/add.cxx \
 @ENABLE_KNL_TRUE@am__objects_10 = tblis/configs/knl/config.lo
 @ENABLE_SKX1_TRUE@am__objects_11 = tblis/configs/skx1/config.lo
 @ENABLE_SKX2_TRUE@am__objects_12 = tblis/configs/skx2/config.lo
+@ENABLE_FIRESTORM_TRUE@am__objects_13 =  \
+@ENABLE_FIRESTORM_TRUE@	tblis/configs/firestorm/config.lo
 am_lib_libtblis_la_OBJECTS = tblis/iface/1t/add.lo \
 	tblis/iface/1t/dot.lo tblis/iface/1t/reduce.lo \
 	tblis/iface/1t/scale.lo tblis/iface/1t/set.lo \
@@ -429,18 +451,19 @@ am_lib_libtblis_la_OBJECTS = tblis/iface/1t/add.lo \
 	tblis/internal/3t/indexed_dpd/mult.lo tblis/internal/dense.lo \
 	tblis/internal/dpd.lo tblis/internal/cpuid.lo \
 	tblis/internal/gemm_thread.lo tblis/internal/thread.lo \
-	tblis/base/types.lo tblis/base/configs.lo tblis/base/env.lo \
-	tblis/base/thread.lo $(am__objects_3) $(am__objects_4) \
-	$(am__objects_5) $(am__objects_6) $(am__objects_7) \
-	$(am__objects_8) $(am__objects_9) $(am__objects_10) \
-	$(am__objects_11) $(am__objects_12)
+	tblis/base/check.lo tblis/base/types.lo tblis/base/configs.lo \
+	tblis/base/env.lo tblis/base/thread.lo $(am__objects_3) \
+	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
+	$(am__objects_7) $(am__objects_8) $(am__objects_9) \
+	$(am__objects_10) $(am__objects_11) $(am__objects_12) \
+	$(am__objects_13)
 lib_libtblis_la_OBJECTS = $(am_lib_libtblis_la_OBJECTS)
 lib_libzen_la_LIBADD =
 am__lib_libzen_la_SOURCES_DIST = tblis/configs/zen/config_ker.cxx \
 	tblis/configs/haswell/bli_gemm_asm_d6x8.c
-@ENABLE_HASWELL_FALSE@@ENABLE_ZEN_TRUE@am__objects_13 = tblis/configs/haswell/lib_libzen_la-bli_gemm_asm_d6x8.lo
+@ENABLE_HASWELL_FALSE@@ENABLE_ZEN_TRUE@am__objects_14 = tblis/configs/haswell/lib_libzen_la-bli_gemm_asm_d6x8.lo
 @ENABLE_ZEN_TRUE@am_lib_libzen_la_OBJECTS = tblis/configs/zen/lib_libzen_la-config_ker.lo \
-@ENABLE_ZEN_TRUE@	$(am__objects_13)
+@ENABLE_ZEN_TRUE@	$(am__objects_14)
 lib_libzen_la_OBJECTS = $(am_lib_libzen_la_OBJECTS)
 lib_libzen_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -482,9 +505,9 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = tblis/base/$(DEPDIR)/configs.Plo \
-	tblis/base/$(DEPDIR)/env.Plo tblis/base/$(DEPDIR)/thread.Plo \
-	tblis/base/$(DEPDIR)/types.Plo \
+am__depfiles_remade = tblis/base/$(DEPDIR)/check.Plo \
+	tblis/base/$(DEPDIR)/configs.Plo tblis/base/$(DEPDIR)/env.Plo \
+	tblis/base/$(DEPDIR)/thread.Plo tblis/base/$(DEPDIR)/types.Plo \
 	tblis/configs/bulldozer/$(DEPDIR)/config.Plo \
 	tblis/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-bli_gemm_asm_d4x6_fma4.Plo \
 	tblis/configs/bulldozer/$(DEPDIR)/lib_libbulldozer_la-config_ker.Plo \
@@ -494,6 +517,9 @@ am__depfiles_remade = tblis/base/$(DEPDIR)/configs.Plo \
 	tblis/configs/excavator/$(DEPDIR)/config.Plo \
 	tblis/configs/excavator/$(DEPDIR)/lib_libexcavator_la-bli_gemm_asm_d8x3.Plo \
 	tblis/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config_ker.Plo \
+	tblis/configs/firestorm/$(DEPDIR)/config.Plo \
+	tblis/configs/firestorm/$(DEPDIR)/lib_libfirestorm_la-bli_gemm_armv8a_asm_d8x6r.Plo \
+	tblis/configs/firestorm/$(DEPDIR)/lib_libfirestorm_la-config_ker.Plo \
 	tblis/configs/haswell/$(DEPDIR)/config.Plo \
 	tblis/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Plo \
 	tblis/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config_ker.Plo \
@@ -612,9 +638,9 @@ am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(lib_libbulldozer_la_SOURCES) $(lib_libcore2_la_SOURCES) \
-	$(lib_libexcavator_la_SOURCES) $(lib_libhaswell_la_SOURCES) \
-	$(lib_libknl_la_SOURCES) $(lib_libpiledriver_la_SOURCES) \
-	$(lib_libreference_la_SOURCES) \
+	$(lib_libexcavator_la_SOURCES) $(lib_libfirestorm_la_SOURCES) \
+	$(lib_libhaswell_la_SOURCES) $(lib_libknl_la_SOURCES) \
+	$(lib_libpiledriver_la_SOURCES) $(lib_libreference_la_SOURCES) \
 	$(lib_libsandybridge_la_SOURCES) $(lib_libskx1_la_SOURCES) \
 	$(lib_libskx2_la_SOURCES) $(lib_libtblis_la_SOURCES) \
 	$(lib_libzen_la_SOURCES) $(bin_batched_bench_SOURCES) \
@@ -623,6 +649,7 @@ SOURCES = $(lib_libbulldozer_la_SOURCES) $(lib_libcore2_la_SOURCES) \
 DIST_SOURCES = $(am__lib_libbulldozer_la_SOURCES_DIST) \
 	$(am__lib_libcore2_la_SOURCES_DIST) \
 	$(am__lib_libexcavator_la_SOURCES_DIST) \
+	$(am__lib_libfirestorm_la_SOURCES_DIST) \
 	$(am__lib_libhaswell_la_SOURCES_DIST) \
 	$(am__lib_libknl_la_SOURCES_DIST) \
 	$(am__lib_libpiledriver_la_SOURCES_DIST) \
@@ -893,12 +920,12 @@ lib_libtblis_la_SOURCES = tblis/iface/1t/add.cxx \
 	tblis/internal/3t/indexed_dpd/mult.cxx \
 	tblis/internal/dense.cxx tblis/internal/dpd.cxx \
 	tblis/internal/cpuid.cxx tblis/internal/gemm_thread.cxx \
-	tblis/internal/thread.cxx tblis/base/types.cxx \
-	tblis/base/configs.cxx tblis/base/env.cxx \
+	tblis/internal/thread.cxx tblis/base/check.cxx \
+	tblis/base/types.cxx tblis/base/configs.cxx tblis/base/env.cxx \
 	tblis/base/thread.cxx $(am__append_6) $(am__append_9) \
 	$(am__append_12) $(am__append_16) $(am__append_20) \
 	$(am__append_23) $(am__append_26) $(am__append_29) \
-	$(am__append_32) $(am__append_36)
+	$(am__append_32) $(am__append_36) $(am__append_39)
 pkginclude_HEADERS = tblis/tblis.h tblis/config.h
 baseincludedir = $(pkgincludedir)/base
 baseinclude_HEADERS = \
@@ -929,12 +956,12 @@ iface3tinclude_HEADERS = \
 noinst_LTLIBRARIES = $(am__append_2) $(am__append_4) $(am__append_7) \
 	$(am__append_10) $(am__append_14) $(am__append_18) \
 	$(am__append_21) $(am__append_24) $(am__append_27) \
-	$(am__append_30) $(am__append_34)
+	$(am__append_30) $(am__append_34) $(am__append_37)
 lib_libtblis_la_LIBADD = external/tci/lib/libtci.la $(am__append_3) \
 	$(am__append_5) $(am__append_8) $(am__append_11) \
 	$(am__append_15) $(am__append_19) $(am__append_22) \
 	$(am__append_25) $(am__append_28) $(am__append_31) \
-	$(am__append_35)
+	$(am__append_35) $(am__append_38)
 @ENABLE_REFERENCE_TRUE@lib_libreference_la_SOURCES = tblis/configs/reference/config.cxx
 @ENABLE_REFERENCE_TRUE@lib_libreference_la_CFLAGS = -O3
 @ENABLE_REFERENCE_TRUE@lib_libreference_la_CXXFLAGS = -O3
@@ -1027,6 +1054,11 @@ lib_libtblis_la_LIBADD = external/tci/lib/libtci.la $(am__append_3) \
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SKX2_TRUE@@IS_OSX_FALSE@lib_libskx2_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse
 @ENABLE_INTEL_COMPILER_FALSE@@ENABLE_SKX2_TRUE@@IS_OSX_TRUE@lib_libskx2_la_CXXFLAGS = -O3 -mavx512f -mavx512dq -mavx512bw -mavx512vl -march=skylake-avx512 -mfpmath=sse -Wa,-march=skylake-avx512
 @ENABLE_INTEL_COMPILER_TRUE@@ENABLE_SKX2_TRUE@lib_libskx2_la_CXXFLAGS = -O3 -xCORE-AVX512
+@ENABLE_FIRESTORM_TRUE@lib_libfirestorm_la_SOURCES = tblis/configs/firestorm/bli_gemm_armv8a_asm_d8x6r.c \
+@ENABLE_FIRESTORM_TRUE@                              tblis/configs/firestorm/config_ker.cxx
+
+@ENABLE_FIRESTORM_TRUE@lib_libfirestorm_la_CFLAGS = -O3 -march=armv8-a
+@ENABLE_FIRESTORM_TRUE@lib_libfirestorm_la_CXXFLAGS = -O3 -march=armv8-a
 bin_test_SOURCES = test/test.cxx \
                    test/random.cxx \
                    \
@@ -1053,7 +1085,7 @@ bin_batched_bench_SOURCES = test/batched_bench.cxx
 bin_dpd_bench_SOURCES = test/dpd_bench.cxx
 SUBDIRS = external/tci
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/tblis -I. -I$(srcdir)/external/tci -Iexternal/tci -I$(srcdir)/external/stl_ext -I$(srcdir)/external/marray -I$(srcdir)/external/catch 
+AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/tblis -I. -I$(srcdir)/external/tci -Iexternal/tci -I$(srcdir)/external/stl_ext -I$(srcdir)/external/marray -I$(srcdir)/external/catch
 AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la
 bin_skx_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
@@ -1225,6 +1257,21 @@ tblis/configs/excavator/lib_libexcavator_la-bli_gemm_asm_d8x3.lo:  \
 
 lib/libexcavator.la: $(lib_libexcavator_la_OBJECTS) $(lib_libexcavator_la_DEPENDENCIES) $(EXTRA_lib_libexcavator_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CXXLD)$(lib_libexcavator_la_LINK) $(am_lib_libexcavator_la_rpath) $(lib_libexcavator_la_OBJECTS) $(lib_libexcavator_la_LIBADD) $(LIBS)
+tblis/configs/firestorm/$(am__dirstamp):
+	@$(MKDIR_P) tblis/configs/firestorm
+	@: > tblis/configs/firestorm/$(am__dirstamp)
+tblis/configs/firestorm/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tblis/configs/firestorm/$(DEPDIR)
+	@: > tblis/configs/firestorm/$(DEPDIR)/$(am__dirstamp)
+tblis/configs/firestorm/lib_libfirestorm_la-bli_gemm_armv8a_asm_d8x6r.lo:  \
+	tblis/configs/firestorm/$(am__dirstamp) \
+	tblis/configs/firestorm/$(DEPDIR)/$(am__dirstamp)
+tblis/configs/firestorm/lib_libfirestorm_la-config_ker.lo:  \
+	tblis/configs/firestorm/$(am__dirstamp) \
+	tblis/configs/firestorm/$(DEPDIR)/$(am__dirstamp)
+
+lib/libfirestorm.la: $(lib_libfirestorm_la_OBJECTS) $(lib_libfirestorm_la_DEPENDENCIES) $(EXTRA_lib_libfirestorm_la_DEPENDENCIES) lib/$(am__dirstamp)
+	$(AM_V_CXXLD)$(lib_libfirestorm_la_LINK) $(am_lib_libfirestorm_la_rpath) $(lib_libfirestorm_la_OBJECTS) $(lib_libfirestorm_la_LIBADD) $(LIBS)
 tblis/configs/haswell/$(am__dirstamp):
 	@$(MKDIR_P) tblis/configs/haswell
 	@: > tblis/configs/haswell/$(am__dirstamp)
@@ -1528,6 +1575,8 @@ tblis/base/$(am__dirstamp):
 tblis/base/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) tblis/base/$(DEPDIR)
 	@: > tblis/base/$(DEPDIR)/$(am__dirstamp)
+tblis/base/check.lo: tblis/base/$(am__dirstamp) \
+	tblis/base/$(DEPDIR)/$(am__dirstamp)
 tblis/base/types.lo: tblis/base/$(am__dirstamp) \
 	tblis/base/$(DEPDIR)/$(am__dirstamp)
 tblis/base/configs.lo: tblis/base/$(am__dirstamp) \
@@ -1567,6 +1616,9 @@ tblis/configs/skx1/config.lo: tblis/configs/skx1/$(am__dirstamp) \
 	tblis/configs/skx1/$(DEPDIR)/$(am__dirstamp)
 tblis/configs/skx2/config.lo: tblis/configs/skx2/$(am__dirstamp) \
 	tblis/configs/skx2/$(DEPDIR)/$(am__dirstamp)
+tblis/configs/firestorm/config.lo:  \
+	tblis/configs/firestorm/$(am__dirstamp) \
+	tblis/configs/firestorm/$(DEPDIR)/$(am__dirstamp)
 
 lib/libtblis.la: $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_DEPENDENCIES) $(EXTRA_lib_libtblis_la_DEPENDENCIES) lib/$(am__dirstamp)
 	$(AM_V_CXXLD)$(CXXLINK) -rpath $(libdir) $(lib_libtblis_la_OBJECTS) $(lib_libtblis_la_LIBADD) $(LIBS)
@@ -1671,6 +1723,8 @@ mostlyclean-compile:
 	-rm -f tblis/configs/core2/*.lo
 	-rm -f tblis/configs/excavator/*.$(OBJEXT)
 	-rm -f tblis/configs/excavator/*.lo
+	-rm -f tblis/configs/firestorm/*.$(OBJEXT)
+	-rm -f tblis/configs/firestorm/*.lo
 	-rm -f tblis/configs/haswell/*.$(OBJEXT)
 	-rm -f tblis/configs/haswell/*.lo
 	-rm -f tblis/configs/knl/*.$(OBJEXT)
@@ -1719,6 +1773,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@tblis/base/$(DEPDIR)/check.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tblis/base/$(DEPDIR)/configs.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tblis/base/$(DEPDIR)/env.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tblis/base/$(DEPDIR)/thread.Plo@am__quote@ # am--include-marker
@@ -1732,6 +1787,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tblis/configs/excavator/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tblis/configs/excavator/$(DEPDIR)/lib_libexcavator_la-bli_gemm_asm_d8x3.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tblis/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config_ker.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@tblis/configs/firestorm/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@tblis/configs/firestorm/$(DEPDIR)/lib_libfirestorm_la-bli_gemm_armv8a_asm_d8x6r.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@tblis/configs/firestorm/$(DEPDIR)/lib_libfirestorm_la-config_ker.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tblis/configs/haswell/$(DEPDIR)/config.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tblis/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tblis/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config_ker.Plo@am__quote@ # am--include-marker
@@ -1873,6 +1931,13 @@ tblis/configs/excavator/lib_libexcavator_la-bli_gemm_asm_d8x3.lo: tblis/configs/
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libexcavator_la_CFLAGS) $(CFLAGS) -c -o tblis/configs/excavator/lib_libexcavator_la-bli_gemm_asm_d8x3.lo `test -f 'tblis/configs/excavator/bli_gemm_asm_d8x3.c' || echo '$(srcdir)/'`tblis/configs/excavator/bli_gemm_asm_d8x3.c
 
+tblis/configs/firestorm/lib_libfirestorm_la-bli_gemm_armv8a_asm_d8x6r.lo: tblis/configs/firestorm/bli_gemm_armv8a_asm_d8x6r.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libfirestorm_la_CFLAGS) $(CFLAGS) -MT tblis/configs/firestorm/lib_libfirestorm_la-bli_gemm_armv8a_asm_d8x6r.lo -MD -MP -MF tblis/configs/firestorm/$(DEPDIR)/lib_libfirestorm_la-bli_gemm_armv8a_asm_d8x6r.Tpo -c -o tblis/configs/firestorm/lib_libfirestorm_la-bli_gemm_armv8a_asm_d8x6r.lo `test -f 'tblis/configs/firestorm/bli_gemm_armv8a_asm_d8x6r.c' || echo '$(srcdir)/'`tblis/configs/firestorm/bli_gemm_armv8a_asm_d8x6r.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tblis/configs/firestorm/$(DEPDIR)/lib_libfirestorm_la-bli_gemm_armv8a_asm_d8x6r.Tpo tblis/configs/firestorm/$(DEPDIR)/lib_libfirestorm_la-bli_gemm_armv8a_asm_d8x6r.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tblis/configs/firestorm/bli_gemm_armv8a_asm_d8x6r.c' object='tblis/configs/firestorm/lib_libfirestorm_la-bli_gemm_armv8a_asm_d8x6r.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libfirestorm_la_CFLAGS) $(CFLAGS) -c -o tblis/configs/firestorm/lib_libfirestorm_la-bli_gemm_armv8a_asm_d8x6r.lo `test -f 'tblis/configs/firestorm/bli_gemm_armv8a_asm_d8x6r.c' || echo '$(srcdir)/'`tblis/configs/firestorm/bli_gemm_armv8a_asm_d8x6r.c
+
 tblis/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d6x8.lo: tblis/configs/haswell/bli_gemm_asm_d6x8.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CFLAGS) $(CFLAGS) -MT tblis/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d6x8.lo -MD -MP -MF tblis/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Tpo -c -o tblis/configs/haswell/lib_libhaswell_la-bli_gemm_asm_d6x8.lo `test -f 'tblis/configs/haswell/bli_gemm_asm_d6x8.c' || echo '$(srcdir)/'`tblis/configs/haswell/bli_gemm_asm_d6x8.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tblis/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Tpo tblis/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Plo
@@ -2002,6 +2067,13 @@ tblis/configs/excavator/lib_libexcavator_la-config_ker.lo: tblis/configs/excavat
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libexcavator_la_CXXFLAGS) $(CXXFLAGS) -c -o tblis/configs/excavator/lib_libexcavator_la-config_ker.lo `test -f 'tblis/configs/excavator/config_ker.cxx' || echo '$(srcdir)/'`tblis/configs/excavator/config_ker.cxx
 
+tblis/configs/firestorm/lib_libfirestorm_la-config_ker.lo: tblis/configs/firestorm/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libfirestorm_la_CXXFLAGS) $(CXXFLAGS) -MT tblis/configs/firestorm/lib_libfirestorm_la-config_ker.lo -MD -MP -MF tblis/configs/firestorm/$(DEPDIR)/lib_libfirestorm_la-config_ker.Tpo -c -o tblis/configs/firestorm/lib_libfirestorm_la-config_ker.lo `test -f 'tblis/configs/firestorm/config_ker.cxx' || echo '$(srcdir)/'`tblis/configs/firestorm/config_ker.cxx
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tblis/configs/firestorm/$(DEPDIR)/lib_libfirestorm_la-config_ker.Tpo tblis/configs/firestorm/$(DEPDIR)/lib_libfirestorm_la-config_ker.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tblis/configs/firestorm/config_ker.cxx' object='tblis/configs/firestorm/lib_libfirestorm_la-config_ker.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libfirestorm_la_CXXFLAGS) $(CXXFLAGS) -c -o tblis/configs/firestorm/lib_libfirestorm_la-config_ker.lo `test -f 'tblis/configs/firestorm/config_ker.cxx' || echo '$(srcdir)/'`tblis/configs/firestorm/config_ker.cxx
+
 tblis/configs/haswell/lib_libhaswell_la-config_ker.lo: tblis/configs/haswell/config_ker.cxx
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lib_libhaswell_la_CXXFLAGS) $(CXXFLAGS) -MT tblis/configs/haswell/lib_libhaswell_la-config_ker.lo -MD -MP -MF tblis/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config_ker.Tpo -c -o tblis/configs/haswell/lib_libhaswell_la-config_ker.lo `test -f 'tblis/configs/haswell/config_ker.cxx' || echo '$(srcdir)/'`tblis/configs/haswell/config_ker.cxx
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tblis/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config_ker.Tpo tblis/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config_ker.Plo
@@ -2069,6 +2141,7 @@ clean-libtool:
 	-rm -rf tblis/configs/bulldozer/.libs tblis/configs/bulldozer/_libs
 	-rm -rf tblis/configs/core2/.libs tblis/configs/core2/_libs
 	-rm -rf tblis/configs/excavator/.libs tblis/configs/excavator/_libs
+	-rm -rf tblis/configs/firestorm/.libs tblis/configs/firestorm/_libs
 	-rm -rf tblis/configs/haswell/.libs tblis/configs/haswell/_libs
 	-rm -rf tblis/configs/knl/.libs tblis/configs/knl/_libs
 	-rm -rf tblis/configs/piledriver/.libs tblis/configs/piledriver/_libs
@@ -2523,6 +2596,8 @@ distclean-generic:
 	-rm -f tblis/configs/core2/$(am__dirstamp)
 	-rm -f tblis/configs/excavator/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tblis/configs/excavator/$(am__dirstamp)
+	-rm -f tblis/configs/firestorm/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tblis/configs/firestorm/$(am__dirstamp)
 	-rm -f tblis/configs/haswell/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tblis/configs/haswell/$(am__dirstamp)
 	-rm -f tblis/configs/knl/$(DEPDIR)/$(am__dirstamp)
@@ -2583,7 +2658,8 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-		-rm -f tblis/base/$(DEPDIR)/configs.Plo
+		-rm -f tblis/base/$(DEPDIR)/check.Plo
+	-rm -f tblis/base/$(DEPDIR)/configs.Plo
 	-rm -f tblis/base/$(DEPDIR)/env.Plo
 	-rm -f tblis/base/$(DEPDIR)/thread.Plo
 	-rm -f tblis/base/$(DEPDIR)/types.Plo
@@ -2596,6 +2672,9 @@ distclean: distclean-recursive
 	-rm -f tblis/configs/excavator/$(DEPDIR)/config.Plo
 	-rm -f tblis/configs/excavator/$(DEPDIR)/lib_libexcavator_la-bli_gemm_asm_d8x3.Plo
 	-rm -f tblis/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config_ker.Plo
+	-rm -f tblis/configs/firestorm/$(DEPDIR)/config.Plo
+	-rm -f tblis/configs/firestorm/$(DEPDIR)/lib_libfirestorm_la-bli_gemm_armv8a_asm_d8x6r.Plo
+	-rm -f tblis/configs/firestorm/$(DEPDIR)/lib_libfirestorm_la-config_ker.Plo
 	-rm -f tblis/configs/haswell/$(DEPDIR)/config.Plo
 	-rm -f tblis/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Plo
 	-rm -f tblis/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config_ker.Plo
@@ -2734,7 +2813,8 @@ installcheck-am:
 maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-		-rm -f tblis/base/$(DEPDIR)/configs.Plo
+		-rm -f tblis/base/$(DEPDIR)/check.Plo
+	-rm -f tblis/base/$(DEPDIR)/configs.Plo
 	-rm -f tblis/base/$(DEPDIR)/env.Plo
 	-rm -f tblis/base/$(DEPDIR)/thread.Plo
 	-rm -f tblis/base/$(DEPDIR)/types.Plo
@@ -2747,6 +2827,9 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f tblis/configs/excavator/$(DEPDIR)/config.Plo
 	-rm -f tblis/configs/excavator/$(DEPDIR)/lib_libexcavator_la-bli_gemm_asm_d8x3.Plo
 	-rm -f tblis/configs/excavator/$(DEPDIR)/lib_libexcavator_la-config_ker.Plo
+	-rm -f tblis/configs/firestorm/$(DEPDIR)/config.Plo
+	-rm -f tblis/configs/firestorm/$(DEPDIR)/lib_libfirestorm_la-bli_gemm_armv8a_asm_d8x6r.Plo
+	-rm -f tblis/configs/firestorm/$(DEPDIR)/lib_libfirestorm_la-config_ker.Plo
 	-rm -f tblis/configs/haswell/$(DEPDIR)/config.Plo
 	-rm -f tblis/configs/haswell/$(DEPDIR)/lib_libhaswell_la-bli_gemm_asm_d6x8.Plo
 	-rm -f tblis/configs/haswell/$(DEPDIR)/lib_libhaswell_la-config_ker.Plo

@@ -120,7 +120,7 @@ void reduce(reduce_t op,
             scalar& result,
             len_type& idx)
 {
-    reduce(*(communicator*)nullptr, op, A, idx_A, result, idx);
+    reduce(parallel, op, A, idx_A, result, idx);
 }
 
 template <typename T>
@@ -173,7 +173,7 @@ reduce_result<T> reduce(reduce_t op, const const_tensor& A)
     return result;
 }
 
-#ifdef MARRAY_DPD_VARRAY_VIEW_HPP
+#ifdef MARRAY_DPD_MARRAY_VIEW_HPP
 
 template <typename T>
 void reduce(const communicator& comm, reduce_t op, MArray::dpd_marray_view<const T> A,
@@ -210,9 +210,9 @@ reduce_result<T> reduce(const communicator& comm, reduce_t op,
     return result;
 }
 
-#endif //MARRAY_DPD_VARRAY_VIEW_HPP
+#endif //MARRAY_DPD_MARRAY_VIEW_HPP
 
-#ifdef MARRAY_INDEXED_VARRAY_VIEW_HPP
+#ifdef MARRAY_INDEXED_MARRAY_VIEW_HPP
 
 template <typename T>
 void reduce(const communicator& comm, reduce_t op, MArray::indexed_marray_view<const T> A,
@@ -249,12 +249,12 @@ reduce_result<T> reduce(const communicator& comm, reduce_t op,
     return result;
 }
 
-#endif //MARRAY_INDEXED_VARRAY_VIEW_HPP
+#endif //MARRAY_INDEXED_MARRAY_VIEW_HPP
 
-#ifdef MARRAY_INDEXED_DPD_VARRAY_VIEW_HPP
+#ifdef MARRAY_INDEXED_DPD_MARRAY_VIEW_HPP
 
 template <typename T>
-void reduce(const communicator& comm, reduce_t op, MArray::indexed_dpd_vmarray_view<const T> A,
+void reduce(const communicator& comm, reduce_t op, MArray::indexed_dpd_marray_view<const T> A,
             const label_string& idx_A, T& result, len_type& idx);
 
 template <typename T>
@@ -288,7 +288,7 @@ reduce_result<T> reduce(const communicator& comm, reduce_t op,
     return result;
 }
 
-#endif //MARRAY_INDEXED_DPD_VARRAY_VIEW_HPP
+#endif //MARRAY_INDEXED_DPD_MARRAY_VIEW_HPP
 
 namespace internal
 {
@@ -313,7 +313,7 @@ struct data_type_helper
     #ifdef MARRAY_DPD_MARRAY_BASE_HPP
 
     template <typename T, int N, typename D, bool O>
-    static std::decay_t<T> check(MArray::dpd_marray_base<T,N,D,O>&);
+    static std::decay_t<T> check(MArray::dpd_marray_base<T,D,O>&);
 
     #endif //MARRAY_DPD_MARRAY_BASE_HPP
 
@@ -341,7 +341,7 @@ struct data_type_helper
     #ifdef EIGEN_CXX11_TENSOR_TENSOR_FORWARD_DECLARATIONS_H
 
     template <typename D, int A>
-    static std::decay_t<Eigen::TensorBase<D,A>::Scalar> check(Eigen::TensorBase<D,A>&);
+    static std::decay_t<typename Eigen::TensorBase<D,A>::Scalar> check(Eigen::TensorBase<D,A>&);
 
     #endif //EIGEN_CXX11_TENSOR_TENSOR_FORWARD_DECLARATIONS_H
 

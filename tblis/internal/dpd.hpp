@@ -3,14 +3,14 @@
 
 #include <tblis/internal/dense.hpp>
 
-#include <marray/dpd_varray_view.hpp>
+#include <marray/dpd/dpd_marray_view.hpp>
 
 namespace tblis
 {
 
 using MArray::matrix;
 using MArray::irrep_iterator;
-using MArray::dpd_varray_view;
+using MArray::dpd_marray_view;
 
 using irrep_vector = dim_vector;
 
@@ -21,71 +21,71 @@ enum dpd_impl_t {BLIS, BLOCKED, FULL};
 extern dpd_impl_t dpd_impl;
 
 void add(type_t type, const communicator& comm, const config& cfg,
-         const scalar& alpha, bool conj_A, const dpd_varray_view<char>& A,
+         const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
          const dim_vector& idx_A,
          const dim_vector& idx_A_AB,
-         const scalar&  beta, bool conj_B, const dpd_varray_view<char>& B,
+         const scalar&  beta, bool conj_B, const dpd_marray_view<char>& B,
          const dim_vector& idx_B,
          const dim_vector& idx_B_AB);
 
 void dot(type_t type, const communicator& comm, const config& cfg,
-         bool conj_A, const dpd_varray_view<char>& A,
+         bool conj_A, const dpd_marray_view<char>& A,
          const dim_vector& idx_A_AB,
-         bool conj_B, const dpd_varray_view<char>& B,
+         bool conj_B, const dpd_marray_view<char>& B,
          const dim_vector& idx_B_AB,
          char* result);
 
 void reduce(type_t type, const communicator& comm, const config& cfg, reduce_t op,
-            const dpd_varray_view<char>& A, const dim_vector& idx_A_A,
+            const dpd_marray_view<char>& A, const dim_vector& idx_A_A,
             char* result, len_type& idx);
 
 void scale(type_t type, const communicator& comm, const config& cfg,
-           const scalar& alpha, bool conj_A, const dpd_varray_view<char>& A,
+           const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
            const dim_vector& idx_A_A);
 
 void set(type_t type, const communicator& comm, const config& cfg,
-         const scalar& alpha, const dpd_varray_view<char>& A, const dim_vector& idx_A);
+         const scalar& alpha, const dpd_marray_view<char>& A, const dim_vector& idx_A);
 
 void shift(type_t type, const communicator& comm, const config& cfg,
            const scalar& alpha, const scalar& beta, bool conj_A,
-           const dpd_varray_view<char>& A, const dim_vector& idx_A_A);
+           const dpd_marray_view<char>& A, const dim_vector& idx_A_A);
 
 void mult(type_t type, const communicator& comm, const config& cfg,
           const scalar& alpha,
-          bool conj_A, const dpd_varray_view<char>& A,
+          bool conj_A, const dpd_marray_view<char>& A,
           const dim_vector& idx_A_AB,
           const dim_vector& idx_A_AC,
           const dim_vector& idx_A_ABC,
-          bool conj_B, const dpd_varray_view<char>& B,
+          bool conj_B, const dpd_marray_view<char>& B,
           const dim_vector& idx_B_AB,
           const dim_vector& idx_B_BC,
           const dim_vector& idx_B_ABC,
           const scalar&  beta,
-          bool conj_C, const dpd_varray_view<char>& C,
+          bool conj_C, const dpd_marray_view<char>& C,
           const dim_vector& idx_C_AC,
           const dim_vector& idx_C_BC,
           const dim_vector& idx_C_ABC);
 
-void canonicalize(dpd_varray_view<char>& A, label_vector& idx);
+void canonicalize(dpd_marray_view<char>& A, label_vector& idx);
 
-void fold(dpd_varray_view<char>& A, dim_vector& idx);
+void fold(dpd_marray_view<char>& A, dim_vector& idx);
 
-void fold(dpd_varray_view<char>& A, dim_vector& idx1,
-          dpd_varray_view<char>& B, dim_vector& idx2);
+void fold(dpd_marray_view<char>& A, dim_vector& idx1,
+          dpd_marray_view<char>& B, dim_vector& idx2);
 
-void fold(dpd_varray_view<char>& A, dim_vector& idx1,
-          dpd_varray_view<char>& B, dim_vector& idx2,
-          dpd_varray_view<char>& C, dim_vector& idx3);
+void fold(dpd_marray_view<char>& A, dim_vector& idx1,
+          dpd_marray_view<char>& B, dim_vector& idx2,
+          dpd_marray_view<char>& C, dim_vector& idx3);
 
 template <typename T>
 void block_to_full(const communicator& comm, const config& cfg,
-                   const dpd_varray_view<T>& A, varray<T>& A2)
+                   const dpd_marray_view<T>& A, marray<T>& A2)
 {
     auto nirrep = A.num_irreps();
     auto ndim_A = A.dimension();
 
     len_vector len_A(ndim_A);
-    matrix<len_type> off_A{{ndim_A, nirrep}};
+    matrix<len_type> off_A{ndim_A, nirrep};
     for (auto i : range(ndim_A))
     {
         for (auto irrep : range(nirrep))
@@ -99,7 +99,7 @@ void block_to_full(const communicator& comm, const config& cfg,
     comm.barrier();
 
     A.for_each_block(
-    [&](const varray_view<T>& local_A, const irrep_vector& irreps_A)
+    [&](const marray_view<T>& local_A, const irrep_vector& irreps_A)
     {
         auto data_A2 = A2.data();
         for (auto i : range(ndim_A))
@@ -113,12 +113,12 @@ void block_to_full(const communicator& comm, const config& cfg,
 
 template <typename T>
 void full_to_block(const communicator& comm, const config& cfg,
-                   varray<T>& A2, const dpd_varray_view<T>& A)
+                   marray<T>& A2, const dpd_marray_view<T>& A)
 {
     auto nirrep = A.num_irreps();
     auto ndim_A = A.dimension();
 
-    matrix<len_type> off_A{{ndim_A, nirrep}};
+    matrix<len_type> off_A{ndim_A, nirrep};
     for (auto i : range(ndim_A))
     {
         len_type off = 0;
@@ -130,7 +130,7 @@ void full_to_block(const communicator& comm, const config& cfg,
     }
 
     A.for_each_block(
-    [&](const varray_view<T>& local_A, const irrep_vector& irreps_A)
+    [&](const marray_view<T>& local_A, const irrep_vector& irreps_A)
     {
         auto data_A2 = A2.data();
         for (auto i : range(ndim_A))
@@ -183,7 +183,7 @@ void dense_total_lengths_and_strides(std::array<len_vector,N>& len,
 }
 
 template <typename T>
-bool is_block_empty(const dpd_varray_view<T>& A, const irrep_vector& irreps)
+bool is_block_empty(const dpd_marray_view<T>& A, const irrep_vector& irreps)
 {
     auto irrep = 0;
 

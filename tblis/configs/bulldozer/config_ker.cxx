@@ -1,5 +1,5 @@
 #include "config.hpp"
-#include "util/cpuid.hpp"
+#include <tblis/base/env.h>\n#include <tblis/internal/cpuid.hpp>
 
 namespace tblis
 {

@@ -1,5 +1,5 @@
-#ifndef _TBLIS_DIAG_SCALED_MATRIX_HPP_
-#define _TBLIS_DIAG_SCALED_MATRIX_HPP_
+#ifndef TBLIS_DIAG_SCALED_MATRIX_HPP
+#define TBLIS_DIAG_SCALED_MATRIX_HPP
 
 #include "abstract_matrix.hpp"
 #include "packed_matrix.hpp"
@@ -24,10 +24,11 @@ struct diag_scaled_matrix_impl
 class diag_scaled_matrix : public abstract_matrix_adapter<diag_scaled_matrix,diag_scaled_matrix_impl>
 {
     protected:
-        static abstract_matrix do_pack(diag_scaled_matrix& A,
+        static abstract_matrix do_pack(abstract_matrix& A_,
                                        const communicator& comm, const config& cfg,
                                        int mat, MemoryPool& pool)
         {
+            auto A = static_cast<diag_scaled_matrix&>(A_);
             const type_t type = A.type();
             const bool trans = mat == matrix_constants::MAT_B;
             const len_type MR = (!trans ? cfg.gemm_mr.def(type)
@@ -83,9 +84,12 @@ class diag_scaled_matrix : public abstract_matrix_adapter<diag_scaled_matrix,dia
             return P;
         }
 
-        static void do_gemm(diag_scaled_matrix& C, const communicator& comm, const config& cfg,
-                            MemoryPool&, const packed_matrix& A, const packed_matrix& B)
+        static void do_gemm(abstract_matrix& C_, const communicator& comm, const config& cfg,
+                            MemoryPool&, const abstract_matrix& A_, const abstract_matrix& B_)
         {
+            auto A = static_cast<const packed_matrix&>(A_);
+            auto B = static_cast<const packed_matrix&>(B_);
+            auto C = static_cast<diag_scaled_matrix&>(C_);
             const type_t type = C.type();
             const len_type MR = cfg.gemm_mr.def(type);
             const len_type NR = cfg.gemm_nr.def(type);
@@ -158,7 +162,7 @@ class diag_scaled_matrix : public abstract_matrix_adapter<diag_scaled_matrix,dia
         stride_type stride(int dim) const
         {
             TBLIS_ASSERT(dim >= 0 && dim < 2);
-            return impl().stride_[dim^transposed_];
+            return impl().stride_[dim^transposed()];
         }
 
         char* data() const
@@ -169,13 +173,13 @@ class diag_scaled_matrix : public abstract_matrix_adapter<diag_scaled_matrix,dia
         stride_type diag_stride(int dim) const
         {
             TBLIS_ASSERT(dim >= 0 && dim < 2);
-            return impl().diag_stride_[dim^transposed_];
+            return impl().diag_stride_[dim^transposed()];
         }
 
         char* diag(int dim) const
         {
             TBLIS_ASSERT(dim >= 0 && dim < 2);
-            auto diag = impl().diag_[dim^transposed_];
+            auto diag = impl().diag_[dim^transposed()];
             return diag ? diag + diag_stride(dim)*offset(dim)*type_size[type()] : nullptr;
         }
 };

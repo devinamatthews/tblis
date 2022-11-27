@@ -1336,11 +1336,11 @@ int main(int argc, char **argv)
     time_t seed = duration_cast<nanoseconds>(
         high_resolution_clock::now().time_since_epoch()).count();
 
-    struct option opts[] = {{"size", required_argument, NULL, 'n'},
-                            {"rep",  required_argument, NULL, 'r'},
-                            {"seed", required_argument, NULL, 's'},
-                            {"filter", required_argument, NULL, 'f'},
-                            {0, 0, 0, 0}};
+    struct option opts[] = {{"size", required_argument, nullptr, 'n'},
+                            {"rep",  required_argument, nullptr, 'r'},
+                            {"seed", required_argument, nullptr, 's'},
+                            {"filter", required_argument, nullptr, 'f'},
+                            {nullptr, 0, nullptr, 0}};
 
     vector<const char*> catch_argv = {"tblis::test", "-d", "yes", "-a"};
     string extra_args;

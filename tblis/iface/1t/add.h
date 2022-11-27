@@ -104,7 +104,7 @@ void add(const scalar& alpha,
          const tensor& B,
          const label_string& idx_B)
 {
-    add(*(communicator*)nullptr, alpha, A, idx_A, beta, B, idx_B);
+    add(parallel, alpha, A, idx_A, beta, B, idx_B);
 }
 
 inline

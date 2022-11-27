@@ -18,10 +18,10 @@ inline double tic()
     {
         mach_timebase_info_data_t timebase;
         mach_timebase_info(&timebase);
-        conv = (double)timebase.numer / (double)timebase.denom;
+        conv = static_cast<double>(timebase.numer) / timebase.denom;
     }
     uint64_t nsec = mach_absolute_time();
-    return conv*(double)nsec/1e9;
+    return conv*nsec/1e9;
     #else
     timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);

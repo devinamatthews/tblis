@@ -24,8 +24,8 @@
 #define TBLIS_HAS_COMMA_HELPER(_0,_1,_2,_3,_4,_5,_6,...) _6
 #define TBLIS_HAS_COMMA(...) TBLIS_HAS_COMMA_HELPER(__VA_ARGS__,1,1,1,1,1,0,barf)
 #define TBLIS_COMMA_IF_EMPTY() ,,,,,
-#define _TBLIS_COMMA_IF_EMPTY() ,,,,,
-#define TBLIS_IS_EMPTY(x) TBLIS_HAS_COMMA(TBLIS_PASTE(x,TBLIS_COMMA_IF_EMPTY)())
+#define TBLIS_COMMA_IF_EMPTY_() ,,,,,
+#define TBLIS_IS_EMPTY(x) TBLIS_HAS_COMMA(TBLIS_PASTE(TBLIS_COMMA_IF_EMPTY,x)())
 #define TBLIS_GET_VALUE_IF_CASE_0(test,yes,no) yes
 #define TBLIS_GET_VALUE_IF_CASE_1(test,yes,no) no
 #define TBLIS_GET_VALUE_IF_CASE(test,yes,no,case) \

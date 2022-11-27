@@ -1,5 +1,6 @@
 #include "config.hpp"
-#include "util/cpuid.hpp"
+#include <tblis/base/env.h>
+#include <tblis/internal/cpuid.hpp>
 
 namespace tblis
 {
@@ -11,19 +12,19 @@ int core2_check()
 
     if (vendor != VENDOR_INTEL)
     {
-        if (get_verbose() >= 1) printf("tblis: core2: Wrong vendor.\n");
+        if (tblis_get_verbosity() >= 1) printf("tblis: core2: Wrong vendor.\n");
         return -1;
     }
 
     if (!check_features(features, FEATURE_SSE3))
     {
-        if (get_verbose() >= 1) printf("tblis: core2: Doesn't support SSE3.\n");
+        if (tblis_get_verbosity() >= 1) printf("tblis: core2: Doesn't support SSE3.\n");
         return -1;
     }
 
     if (!check_features(features, FEATURE_SSSE3))
     {
-        if (get_verbose() >= 1) printf("tblis: core2: Doesn't support SSSE3.\n");
+        if (tblis_get_verbosity() >= 1) printf("tblis: core2: Doesn't support SSSE3.\n");
         return -1;
     }
 

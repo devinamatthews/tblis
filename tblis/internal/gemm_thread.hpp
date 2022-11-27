@@ -1,5 +1,5 @@
-#ifndef _TBLIS_GEMM_THREAD_HPP_
-#define _TBLIS_GEMM_THREAD_HPP_
+#ifndef TBLIS_GEMM_THREAD_HPP
+#define TBLIS_GEMM_THREAD_HPP
 
 #include <tblis/internal/configs.hpp>
 #include <tblis/internal/types.hpp>

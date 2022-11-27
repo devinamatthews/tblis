@@ -23,7 +23,7 @@ class stack_allocator
                 stack& operator=(stack&&) = default;
 
                 stack(size_t size)
-                : _mem(::operator new(size)), _size(size), _pos(0) {}
+                : _mem(static_cast<char*>(::operator new(size))), _size(size), _pos(0) {}
 
                 ~stack()
                 {
@@ -36,8 +36,8 @@ class stack_allocator
                 {
                     align = std::min(align, alignof(size_t));
 
-                    size_t size_bytes = size*sizeof(U);
-                    char* ptr = align_to(_mem+_pos+2*sizeof(size_t), align);
+                    auto size_bytes = size*sizeof(U);
+                    auto ptr = align_to(_mem+_pos+2*sizeof(size_t), align);
 
                     if (ptr+size_bytes > _mem+_size)
                         return nullptr;
@@ -46,14 +46,14 @@ class stack_allocator
                     ptr_size(ptr) = size;
 
                     _pos = size_t(ptr-_mem)+size_bytes;
-                    return (U*)ptr;
+                    return static_cast<U*>(ptr);
                 }
 
                 template <typename U>
                 bool deallocate(U* t_ptr, size_t size)
                 {
-                    size_t size_bytes = size*sizeof(U);
-                    char *ptr = (char*)t_ptr;
+                    auto size_bytes = size*sizeof(U);
+                    auto ptr = static_cast<char*>(t_ptr);
 
                     if (_pos != size_t(ptr-_mem)+size_bytes)
                         throw std::runtime_error("attempting to free memory which is not at the top of the stack");
@@ -74,12 +74,12 @@ class stack_allocator
 
                 size_t& prev_pos(char* ptr)
                 {
-                    return *(size_t*)(ptr-2*sizeof(size_t));
+                    return *reinterpret_cast<size_t*>(ptr-2*sizeof(size_t));
                 }
 
                 size_t& ptr_size(char* ptr)
                 {
-                    return *(size_t*)(ptr-sizeof(size_t));
+                    return *reinterpret_cast<size_t*>(ptr-sizeof(size_t));
                 }
 
                 char* _mem;

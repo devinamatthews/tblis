@@ -1,15 +1,15 @@
-#ifndef _TBLIS_CONFIGS_PILEDRIVER_CONFIG_HPP_
-#define _TBLIS_CONFIGS_PILEDRIVER_CONFIG_HPP_
+#ifndef TBLIS_CONFIGS_PILEDRIVER_CONFIG_HPP
+#define TBLIS_CONFIGS_PILEDRIVER_CONFIG_HPP
 
 #include <tblis/internal/configs.hpp>
+
+namespace tblis
+{
 
 EXTERN_BLIS_GEMM_UKR(bli_sgemm_asm_16x3);
 EXTERN_BLIS_GEMM_UKR(bli_dgemm_asm_8x3);
 EXTERN_BLIS_GEMM_UKR(bli_cgemm_asm_4x2);
 EXTERN_BLIS_GEMM_UKR(bli_zgemm_asm_2x2);
-
-namespace tblis
-{
 
 extern int piledriver_check();
 

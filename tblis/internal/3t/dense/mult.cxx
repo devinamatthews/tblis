@@ -15,6 +15,7 @@ MemoryPool BuffersForA, BuffersForB, BuffersForC;
 namespace internal
 {
 
+static
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
                const len_vector& len_AB_,
                const len_vector& len_AC_,
@@ -130,6 +131,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     });
 }
 
+static
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
                const len_vector& len_AC_,
                const len_vector& len_BC_,
@@ -261,6 +263,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     });
 }
 
+static
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
                    const len_vector& len_AB_,
                    const len_vector& len_AC_,
@@ -350,6 +353,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     GotoGEMM{}(comm, cfg, at, bt, ct);
 }
 
+static
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
                const len_vector& len_AB_,
                const len_vector& len_AC_,
@@ -484,6 +488,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     });
 }
 
+static
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
                const len_vector& len_AC_,
                const len_vector& len_BC_,
@@ -626,6 +631,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     });
 }
 
+static
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
                const len_vector& len_AB_,
                const len_vector& len_AC_,
@@ -783,11 +789,18 @@ void mult_blas(const communicator& comm, const config& cfg,
     auto stride_B_ABC = stride_B_ABC_; stride_B_ABC.push_back(1);
     auto stride_C_ABC = stride_C_ABC_; stride_C_ABC.push_back(1);
 
+    auto len_a = len_AC; len_a.insert(len_a.end(), len_AB.begin(), len_AB.end());
+    auto len_b = len_AB; len_b.insert(len_a.end(), len_BC.begin(), len_BC.end());
+    auto len_c = len_AC; len_c.insert(len_a.end(), len_BC.begin(), len_BC.end());
+    auto stride_a = stride_A_AC; stride_a.insert(len_a.end(), stride_A_AB.begin(), stride_A_AB.end());
+    auto stride_b = stride_B_AB; stride_b.insert(len_a.end(), stride_B_BC.begin(), stride_B_BC.end());
+    auto stride_c = stride_C_AC; stride_c.insert(len_a.end(), stride_C_BC.begin(), stride_C_BC.end());
+
     if (comm.master())
     {
-        ar.reset(len_AC+len_AB);
-        br.reset(len_AB+len_BC);
-        cr.reset(len_AC+len_BC);
+        ar.reset(len_a);
+        br.reset(len_b);
+        cr.reset(len_c);
     }
 
     comm.broadcast(
@@ -806,12 +819,12 @@ void mult_blas(const communicator& comm, const config& cfg,
         while (it.next(A1, B1, C1))
         {
             add(type_tag<T>::value, comm, cfg, {}, {}, ar.lengths(),
-                alpha, conj_A, reinterpret_cast<char*>(       A1), {}, stride_A_AC+stride_A_AB,
-                 T(0),  false, reinterpret_cast<char*>(ar.data()), {},            ar.strides());
+                alpha, conj_A, reinterpret_cast<char*>(       A1), {},     stride_a,
+                 T(0),  false, reinterpret_cast<char*>(ar.data()), {}, ar.strides());
 
             add(type_tag<T>::value, comm, cfg, {}, {}, br.lengths(),
-                T(1), conj_B, reinterpret_cast<char*>(       B1), {}, stride_B_AB+stride_B_BC,
-                T(0),  false, reinterpret_cast<char*>(br.data()), {},            br.strides());
+                T(1), conj_B, reinterpret_cast<char*>(       B1), {},     stride_b,
+                T(0),  false, reinterpret_cast<char*>(br.data()), {}, br.strides());
 
             normal_matrix at(T(1), false, am.length(0), am.length(1),
                              reinterpret_cast<char*>(am.data()), am.stride(0), am.stride(1));
@@ -825,13 +838,14 @@ void mult_blas(const communicator& comm, const config& cfg,
             GotoGEMM{}(comm, cfg, at, bt, ct);
 
             add(type_tag<T>::value, comm, cfg, {}, {}, cr.lengths(),
-                T(1),  false, reinterpret_cast<char*>(cr.data()), {},             cr.strides(),
-                beta, conj_C, reinterpret_cast<char*>(       C1), {}, stride_C_AC+stride_C_BC);
+                T(1),  false, reinterpret_cast<char*>(cr.data()), {}, cr.strides(),
+                beta, conj_C, reinterpret_cast<char*>(       C1), {},     stride_c);
         }
     },
     ar, br, cr);
 }
 
+static
 void mult_ref(type_t type, const communicator& comm, const config& cfg,
               const len_vector& len_AB,
               const len_vector& len_AC,
@@ -909,6 +923,7 @@ void mult_ref(type_t type, const communicator& comm, const config& cfg,
     });
 }
 
+static
 void mult_vec(type_t type, const communicator& comm, const config& cfg,
               const len_vector& len_ABC,
               const scalar& alpha, bool conj_A, char* A,

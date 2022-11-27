@@ -1,7 +1,5 @@
-#ifndef _TBLIS_DPD_TENSOR_MATRIX_HPP_
-#define _TBLIS_DPD_TENSOR_MATRIX_HPP_
-
-#include <marray/dpd_varray.hpp>
+#ifndef TBLIS_DPD_TENSOR_MATRIX_HPP
+#define TBLIS_DPD_TENSOR_MATRIX_HPP
 
 #include <tblis/internal/dpd.hpp>
 
@@ -38,7 +36,7 @@ struct dpd_tensor_matrix_impl
         for (auto irrep : extra_irreps_)
             irrep_[0] ^= irrep;
 
-        TBLIS_ASSERT((int)(dims_[0].size() + dims_[1].size() + extra_dims_.size()) == other.dimension());
+        TBLIS_ASSERT(dims_[0].size() + dims_[1].size() + extra_dims_.size() == other.dimension());
         TBLIS_ASSERT(extra_dims_.size() == extra_irreps_.size());
         TBLIS_ASSERT(extra_dims_.size() == extra_idx_.size());
 

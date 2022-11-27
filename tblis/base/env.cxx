@@ -52,7 +52,7 @@ struct env
 
         if (str)
         {
-            num_threads = strtol(str, NULL, 10);
+            num_threads = strtol(str, nullptr, 10);
             if (num_threads > 0 && verbosity > 0)
                 printf("tblis: using environment to determine number of threads\n");
         }
@@ -90,7 +90,7 @@ struct env
 
             pclose(fd);
 
-            num_threads = strtol(s.c_str(), NULL, 10);
+            num_threads = strtol(s.c_str(), nullptr, 10);
             if (num_threads > 0 && verbosity > 0)
                 printf("tblis: using lscpu to determine number of threads\n");
         }
@@ -102,7 +102,7 @@ struct env
         if (num_threads < 1)
         {
             size_t len = sizeof(num_threads);
-            sysctlbyname("hw.physicalcpu", &num_threads, &len, NULL, 0);
+            sysctlbyname("hw.physicalcpu", &num_threads, &len, nullptr, 0);
             if (num_threads > 0 && verbosity > 0)
                 printf("tblis: using sysctlbyname(\"hw.physicalcpu\") to determine the number of threads\n");
         }

@@ -3,63 +3,63 @@
 
 #include <tblis/internal/dense.hpp>
 
-#include <marray/indexed_varray_view.hpp>
+#include <marray/indexed/indexed_marray_view.hpp>
 
 namespace tblis
 {
 
-using MArray::indexed_varray_view;
+using MArray::indexed_marray_view;
 
 namespace internal
 {
 
 void add(type_t type, const communicator& comm, const config& cfg,
-         const scalar& alpha, bool conj_A, const indexed_varray_view<char>& A,
+         const scalar& alpha, bool conj_A, const indexed_marray_view<char>& A,
          const dim_vector& idx_A,
          const dim_vector& idx_A_AB,
-         const scalar&  beta, bool conj_B, const indexed_varray_view<char>& B,
+         const scalar&  beta, bool conj_B, const indexed_marray_view<char>& B,
          const dim_vector& idx_B,
          const dim_vector& idx_B_AB);
 
 void dot(type_t type, const communicator& comm, const config& cfg,
-         bool conj_A, const indexed_varray_view<char>& A,
+         bool conj_A, const indexed_marray_view<char>& A,
          const dim_vector& idx_A_AB,
-         bool conj_B, const indexed_varray_view<char>& B,
+         bool conj_B, const indexed_marray_view<char>& B,
          const dim_vector& idx_B_AB,
          char* result);
 
 void reduce(type_t type, const communicator& comm, const config& cfg, reduce_t op,
-            const indexed_varray_view<char>& A, const dim_vector& idx_A_A,
+            const indexed_marray_view<char>& A, const dim_vector& idx_A_A,
             char* result, len_type& idx);
 
 void scale(type_t type, const communicator& comm, const config& cfg,
-           const scalar& alpha, bool conj_A, const indexed_varray_view<char>& A,
+           const scalar& alpha, bool conj_A, const indexed_marray_view<char>& A,
            const dim_vector& idx_A_A);
 
 void set(type_t type, const communicator& comm, const config& cfg,
-         const scalar& alpha, const indexed_varray_view<char>& A, const dim_vector& idx_A);
+         const scalar& alpha, const indexed_marray_view<char>& A, const dim_vector& idx_A);
 
 void shift(type_t type, const communicator& comm, const config& cfg,
            const scalar& alpha, const scalar& beta, bool conj_A,
-           const indexed_varray_view<char>& A, const dim_vector& idx_A_A);
+           const indexed_marray_view<char>& A, const dim_vector& idx_A_A);
 
 void mult(type_t type, const communicator& comm, const config& cfg,
-          const scalar& alpha, bool conj_A, const indexed_varray_view<char>& A,
+          const scalar& alpha, bool conj_A, const indexed_marray_view<char>& A,
           const dim_vector& idx_A_AB,
           const dim_vector& idx_A_AC,
           const dim_vector& idx_A_ABC,
-                               bool conj_B, const indexed_varray_view<char>& B,
+                               bool conj_B, const indexed_marray_view<char>& B,
           const dim_vector& idx_B_AB,
           const dim_vector& idx_B_BC,
           const dim_vector& idx_B_ABC,
-          const scalar&  beta, bool conj_C, const indexed_varray_view<char>& C,
+          const scalar&  beta, bool conj_C, const indexed_marray_view<char>& C,
           const dim_vector& idx_C_AC,
           const dim_vector& idx_C_BC,
           const dim_vector& idx_C_ABC);
 
 template <typename T>
 void block_to_full(const communicator& comm, const config& cfg,
-                   const indexed_varray_view<T>& A, varray<T>& A2)
+                   const indexed_marray_view<T>& A, marray<T>& A2)
 {
     auto ndim_A = A.dimension();
     auto dense_ndim_A = A.dense_dimension();
@@ -91,7 +91,7 @@ void block_to_full(const communicator& comm, const config& cfg,
 
 template <typename T>
 void full_to_block(const communicator& comm, const config& cfg,
-                   varray<T>& A2, const indexed_varray_view<T>& A)
+                   marray<T>& A2, const indexed_marray_view<T>& A)
 {
     auto ndim_A = A.dimension();
     auto dense_ndim_A = A.dense_dimension();
@@ -134,7 +134,7 @@ void assign_dense_idx_helper(int, index_group<N>&) {}
 
 template <int I, int N, typename T, typename... Args>
 void assign_dense_idx_helper(int i, index_group<N>& group,
-                             const indexed_varray_view<T>& A,
+                             const indexed_marray_view<T>& A,
                              const dim_vector& idx_A, const Args&... args)
 {
     TBLIS_ASSERT(group.dense_len.back() == A.dense_length(idx_A[i]));
@@ -144,7 +144,7 @@ void assign_dense_idx_helper(int i, index_group<N>& group,
 
 template <int N, typename T, typename... Args>
 void assign_dense_idx(int i, index_group<N>& group,
-                      const indexed_varray_view<T>& A,
+                      const indexed_marray_view<T>& A,
                       const dim_vector& idx_A, const Args&... args)
 {
     group.dense_len.push_back(A.dense_length(idx_A[i]));
@@ -158,7 +158,7 @@ void assign_mixed_or_batch_idx_helper(int, int, int,
 template <int N, typename T, typename... Args>
 void assign_mixed_or_batch_idx_helper(int i, int pos, int j,
                                       index_group<N>& group,
-                                      const indexed_varray_view<T>& A,
+                                      const indexed_marray_view<T>& A,
                                       const dim_vector& idx_A, const Args&... args)
 {
     group.batch_len[pos] = A.length(idx_A[i]);
@@ -182,7 +182,7 @@ void assign_mixed_or_batch_idx_helper(int i, int pos, int j,
 template <int N, typename T, typename... Args>
 void assign_mixed_or_batch_idx(int i, int pos,
                                index_group<N>& group,
-                               const indexed_varray_view<T>& A,
+                               const indexed_marray_view<T>& A,
                                const dim_vector& idx_A, const Args&... args)
 {
     assign_mixed_or_batch_idx_helper(i, pos, 0, group,
@@ -207,7 +207,7 @@ struct index_group
     std::array<dim_vector,N> batch_pos;
 
     template <typename T, typename... Args>
-    index_group(const indexed_varray_view<T>& A, const dim_vector& idx_A,
+    index_group(const indexed_marray_view<T>& A, const dim_vector& idx_A,
                 const Args&... args)
     {
         batch_len.resize(idx_A.size());
@@ -391,15 +391,15 @@ void get_local_offset_helper(const len_vector& idx, const index_group<N>& group,
     off = 0;
 
     TBLIS_ASSERT(i >= 0);
-    TBLIS_ASSERT(i < (int)group.mixed_pos.size());
-    TBLIS_ASSERT(i < (int)group.mixed_stride.size());
+    TBLIS_ASSERT(i < group.mixed_pos.size());
+    TBLIS_ASSERT(i < group.mixed_stride.size());
     TBLIS_ASSERT(group.mixed_pos[i].size() ==
                  group.mixed_stride[i].size());
 
     for (auto j : range(group.mixed_pos[i].size()))
     {
         TBLIS_ASSERT(group.mixed_pos[i][j] >= 0);
-        TBLIS_ASSERT(group.mixed_pos[i][j] < (int)idx.size());
+        TBLIS_ASSERT(group.mixed_pos[i][j] < idx.size());
         off += idx[group.mixed_pos[i][j]]*group.mixed_stride[i][j];
     }
 

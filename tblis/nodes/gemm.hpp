@@ -1,5 +1,5 @@
-#ifndef _TBLIS_NODES_GEMM_HPP_
-#define _TBLIS_NODES_GEMM_HPP_
+#ifndef TBLIS_NODES_GEMM_HPP
+#define TBLIS_NODES_GEMM_HPP
 
 #include <tblis/base/thread.h>
 #include <tblis/base/configs.h>

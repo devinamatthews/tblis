@@ -57,6 +57,7 @@ void mult_full(const communicator& comm, const config& cfg,
     A2, B2, C2);
 }
 
+static
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
                const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
                dim_vector idx_A_AB,
@@ -135,6 +136,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     }
 }
 
+static
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
                const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
                dim_vector idx_A_AC,
@@ -206,6 +208,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     }
 }
 
+static
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
                const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
                dim_vector idx_A_AB,
@@ -326,6 +329,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     }
 }
 
+static
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
                const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
                dim_vector idx_A_AB,
@@ -409,6 +413,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     }
 }
 
+static
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
                const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
                dim_vector idx_A_AC,
@@ -485,6 +490,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     }
 }
 
+static
 void mult_blis(type_t type, const communicator& comm, const config& cfg,
                const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
                dim_vector idx_A_AB,
@@ -617,6 +623,7 @@ void mult_blis(type_t type, const communicator& comm, const config& cfg,
     }
 }
 
+static
 void mult_block(type_t type, const communicator& comm, const config& cfg,
                 const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
                 dim_vector idx_A_AB,
@@ -747,6 +754,7 @@ void mult_block(type_t type, const communicator& comm, const config& cfg,
     }
 }
 
+static
 void mult_vec(type_t type, const communicator& comm, const config& cfg,
               const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
               dim_vector idx_A_ABC,
@@ -808,6 +816,7 @@ void mult_vec(type_t type, const communicator& comm, const config& cfg,
     }
 }
 
+static
 void mult_vec(type_t type, const communicator& comm, const config& cfg,
               const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
               dim_vector idx_A_AB,
@@ -893,6 +902,7 @@ void mult_vec(type_t type, const communicator& comm, const config& cfg,
     }
 }
 
+static
 void mult_vec(type_t type, const communicator& comm, const config& cfg,
               const scalar& alpha, bool conj_A, const dpd_marray_view<char>& A,
               dim_vector idx_A_AC,

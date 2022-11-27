@@ -1,13 +1,13 @@
-#ifndef _TBLIS_CONFIGS_KNL_CONFIG_HPP_
-#define _TBLIS_CONFIGS_KNL_CONFIG_HPP_
+#ifndef TBLIS_CONFIGS_KNL_CONFIG_HPP
+#define TBLIS_CONFIGS_KNL_CONFIG_HPP
 
 #include <tblis/internal/configs.hpp>
 
-EXTERN_BLIS_GEMM_UKR(bli_sgemm_opt_24x16);
-EXTERN_BLIS_GEMM_UKR(bli_dgemm_opt_24x8);
-
 namespace tblis
 {
+
+EXTERN_BLIS_GEMM_UKR(bli_sgemm_opt_24x16);
+EXTERN_BLIS_GEMM_UKR(bli_dgemm_opt_24x8);
 
 EXTERN_PACK_NN_UKR( float, knl_spackm_24xk);
 EXTERN_PACK_NN_UKR(double, knl_dpackm_24xk);

@@ -6,6 +6,8 @@
 #include <type_traits>
 #include <cmath>
 
+#include <tblis/base/types.h>
+
 namespace tblis
 {
 

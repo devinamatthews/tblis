@@ -11,6 +11,7 @@
 #endif
 
 #include <tblis/base/thread.h>
+#include <tblis/internal/error.hpp>
 
 namespace tblis
 {
@@ -30,7 +31,7 @@ class MemoryPool
                 Block(Block&& other)
                 : _pool(other._pool), _size(other._size), _ptr(other._ptr)
                 {
-                    other._ptr = NULL;
+                    other._ptr = nullptr;
                 }
 
                 ~Block()
@@ -110,7 +111,7 @@ class MemoryPool
             std::lock_guard<tci::mutex> guard(_lock);
 
             alignment = std::max(alignment, _align);
-            void* ptr = NULL;
+            void* ptr = nullptr;
 
             if (!_free_list.empty())
             {
@@ -138,7 +139,7 @@ class MemoryPool
                 }
             }
 
-            if (ptr == NULL)
+            if (!ptr)
             {
                 #if TBLIS_HAVE_HBWMALLOC_H
                 int ret = hbw_posix_memalign(&ptr, alignment, size);

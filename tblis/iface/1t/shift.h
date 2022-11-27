@@ -57,7 +57,7 @@ void shift(const scalar& alpha,
            const tensor& A,
            const label_string& idx_A)
 {
-    shift(*(communicator*)nullptr, alpha, beta, std::move(A), idx_A);
+    shift(parallel, alpha, beta, std::move(A), idx_A);
 }
 
 inline

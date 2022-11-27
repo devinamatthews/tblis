@@ -44,12 +44,12 @@ struct default_config
 
     default_config()
     {
-        int priority = -1;
+        auto priority = -1;
 
-        for (int cfg = 0;cfg < num_configs;cfg++)
+        for (auto cfg = 0;cfg < num_configs;cfg++)
         {
             TBLIS_ASSERT(check[cfg]);
-            int cur_prio = check[cfg]();
+            auto cur_prio = check[cfg]();
             if (cur_prio > priority)
             {
                 priority = cur_prio;
@@ -82,5 +82,40 @@ struct default_config
 
 }
 
+TBLIS_EXPORT const tblis_config* tblis_get_config(const char* name)
+{
+    return get_config(name);
 }
+
+const config& get_default_config()
+{
+    static default_config config_;
+    return *config_.value;
+}
+
+const config& get_config(const tblis_config* cfg)
+{
+    return cfg ? *reinterpret_cast<const config*>(cfg) : get_default_config();
+}
+
+const config& get_config(const std::string& name)
+{
+    for (int cfg = 0;cfg < num_configs;cfg++)
+    {
+        TBLIS_ASSERT(check[cfg]);
+
+        if (names[cfg] == name)
+        {
+            if (check[cfg]() < 0)
+                tblis_abort_with_message(
+                    "tblis: Configuration %s found but not usable!", name.c_str());
+
+            return instance[cfg]();
+        }
+    }
+
+    tblis_abort_with_message(
+        "tblis: Configuration %s not found!", name.c_str());
+}
+
 }

@@ -1,13 +1,13 @@
-#ifndef _TBLIS_CONFIGS_SKX2_CONFIG_HPP_
-#define _TBLIS_CONFIGS_SKX2_CONFIG_HPP_
+#ifndef TBLIS_CONFIGS_SKX2_CONFIG_HPP
+#define TBLIS_CONFIGS_SKX2_CONFIG_HPP
 
 #include <tblis/internal/configs.hpp>
 
-EXTERN_BLIS_GEMM_UKR(bli_sgemm_opt_12x32_l2);
-EXTERN_BLIS_GEMM_UKR(bli_dgemm_opt_12x16_l2);
-
 namespace tblis
 {
+
+EXTERN_BLIS_GEMM_UKR(bli_sgemm_opt_12x32_l2);
+EXTERN_BLIS_GEMM_UKR(bli_dgemm_opt_12x16_l2);
 
 extern int skx2_check();
 

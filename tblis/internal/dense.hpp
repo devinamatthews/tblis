@@ -6,16 +6,16 @@
 
 #include <tblis/internal/scalar.hpp>
 
-#include <marray/varray.hpp>
+#include <marray/marray.hpp>
 
 #include <stl_ext/algorithm.hpp>
 
 namespace tblis
 {
 
-using MArray::viterator;
-using MArray::varray;
-using MArray::varray_view;
+template <int N=1> using viterator = MArray::index_iterator<MArray::DYNAMIC, N>;
+using MArray::marray;
+using MArray::marray_view;
 
 namespace internal
 {
@@ -140,10 +140,8 @@ inline int unit_dim(const stride_vector& stride, const dim_vector& idx)
     return -1;
 }
 
-#if 0
-
 template <typename T>
-matrix_view<T> matricize(const varray_view<T>& A, int split)
+marray_view<T> matricize(marray<T>& A, int split)
 {
     auto ndim = A.dimension();
     TBLIS_ASSERT(split <= ndim);
@@ -201,22 +199,8 @@ matrix_view<T> matricize(const varray_view<T>& A, int split)
         cs = (split == ndim ? 1 : A.stride( ndim-1));
     }
 
-    return matrix_view<T>{{m, n}, A.data(), {rs, cs}};
+    return {{m, n}, A.data(), {rs, cs}};
 }
-
-template <typename T>
-matrix_view<T> matricize(varray<T>& A, int split)
-{
-    return matricize(A.view(), split);
-}
-
-template <typename T>
-matrix_view<const T> matricize(const varray<T>& A, int split)
-{
-    return matricize(A.view(), split);
-}
-
-#endif
 
 }
 }

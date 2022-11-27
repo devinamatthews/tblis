@@ -27,16 +27,16 @@ const instance_fn_t instance[] =
 
 /*
  * Assume:
- *  k_c <= 1024
+ *  k_c <= 4096
  *  m_e/n_e <= 64
  *  alignment <= 64
  *  sizeof(T) <= 16
  *  general stride = 2
  */
-char A_buf[64*1024*16] __attribute__((aligned(64)));
-char B_buf[64*1024*16] __attribute__((aligned(64)));
-char C_buf[64*64*16*2] __attribute__((aligned(64)));
-char D_buf[64*64*16*2] __attribute__((aligned(64)));
+static char A_buf[64*4096*16] __attribute__((aligned(64)));
+static char B_buf[64*4096*16] __attribute__((aligned(64)));
+static char C_buf[64*64*16*2] __attribute__((aligned(64)));
+static char D_buf[64*64*16*2] __attribute__((aligned(64)));
 
 TEMPLATED_TEST_CASE(gemm_ukr, T, all_types)
 {

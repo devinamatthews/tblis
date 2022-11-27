@@ -56,11 +56,12 @@ lib_libtblis_la_SOURCES = \
     tblis/internal/gemm_thread.cxx \
     tblis/internal/thread.cxx \
     \
+    tblis/base/check.cxx \
     tblis/base/types.cxx \
     tblis/base/configs.cxx \
     tblis/base/env.cxx \
     tblis/base/thread.cxx
-    
+
 pkginclude_HEADERS = tblis/tblis.h tblis/config.h
 
 baseincludedir = $(pkgincludedir)/base
@@ -88,7 +89,7 @@ iface3tincludedir = $(pkgincludedir)/iface/3t
 iface3tinclude_HEADERS = \
     \
     tblis/iface/3t/mult.h
-    
+
 noinst_LTLIBRARIES =
 lib_libtblis_la_LIBADD = external/tci/lib/libtci.la
 
@@ -284,79 +285,19 @@ endif
 endif
 endif
 
-#if ENABLE_MIC
-#noinst_LTLIBRARIES += lib/libmic.la
-#lib_libtblis_la_LIBADD += lib/libmic.la
-#lib_libmic_la_SOURCES = src/external/blis/config/mic/kernels/3/bli_dgemm_opt_30x8.c \
-#                         src/external/blis/config/mic/kernels/3/bli_sgemm_opt_30x16.c
-#lib_libmic_la_CFLAGS = -Isrc/external/blis/config/mic -fasm-blocks
-#endif
-
 #
 # ARM architectures
 #
 
-#if ENABLE_ARMV7A
-#noinst_LTLIBRARIES += lib/libarmv7a.la
-#lib_libtblis_la_LIBADD += lib/libarmv7a.la
-#lib_libarmv7a_la_SOURCES = src/external/blis/config/armv7a/kernels/3/bli_cgemm_kernel_2x2.S \
-#                           src/external/blis/config/armv7a/kernels/3/bli_dgemm_kernel_4x4.S \
-#                           src/external/blis/config/armv7a/kernels/3/bli_sgemm_kernel_4x4.S \
-#                           src/external/blis/config/armv7a/kernels/3/bli_zgemm_kernel_2x2.S \
-#                           src/external/blis/config/armv7a/kernels/3/bli_gemm_opt_4x4.c
-#lib_libarmv7a_la_CCASFLAGS = -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
-#lib_libarmv7a_la_CFLAGS = -Isrc/external/blis/config/armv7a -mfloat-abi=hard -mfpu=vfpv3 -marm -march=armv7-a
-#endif
-#
-#if ENABLE_ARMV8A
-#noinst_LTLIBRARIES += lib/libarmv8a.la
-#lib_libtblis_la_LIBADD += lib/libarmv8a.la
-#lib_libarmv8a_la_SOURCES = src/external/blis/config/armv8a/kernels/3/bli_gemm_opt_4x4.c
-#lib_libarmv8a_la_CFLAGS = -Isrc/external/blis/config/armv8a -march=armv8-a+fp+simd -mcpu=cortex-a57.cortex-a53
-#endif
-#
-#if ENABLE_CORTEX_A15
-#noinst_LTLIBRARIES += lib/libcortex-a15.la
-#lib_libtblis_la_LIBADD += lib/libcortex-a15.la
-#lib_libcortex_a15_la_SOURCES = src/external/blis/config/cortex-a15/kernels/3/bli_gemm_opt_4x4.c
-#lib_libcortex_a15_la_CFLAGS = -Isrc/external/blis/config/cortex-a15 -mfloat-abi=hard -mfpu=neon -march=armv7-a
-#endif
-#
-#if ENABLE_CORTEX_A9
-#noinst_LTLIBRARIES += lib/libcortex-a9.la
-#lib_libtblis_la_LIBADD += lib/libcortex-a9.la
-#lib_libcortex_a9_la_SOURCES = src/external/blis/config/cortex-a9/kernels/3/bli_gemm_opt_4x4.c
-#lib_libcortex_a9_la_CFLAGS = -Isrc/external/blis/config/cortex-a9 -mfloat-abi=hard -mfpu=neon -march=armv7-a
-#endif
-
-#
-# IBM architectures
-#
-
-#if ENABLE_POWER7
-#noinst_LTLIBRARIES += lib/libpower7.la
-#lib_libtblis_la_LIBADD += lib/libpower7.la
-#lib_libpower7_la_SOURCES = src/external/blis/config/power7/kernels/3/bli_gemm_opt_8x4.c
-#lib_libpower7_la_CFLAGS = -Isrc/external/blis/config/power7 -mcpu=power7 -mtune=power7 -mvsx
-#endif
-#
-#if ENABLE_BGQ
-#noinst_LTLIBRARIES += lib/libbgq.la
-#lib_libtblis_la_LIBADD += lib/libbgq.la
-#lib_libbgq_la_SOURCES = src/external/blis/config/bgq/kernels/3/bli_gemm_int_8x8.c
-#lib_libbgq_la_CFLAGS = -Isrc/external/blis/config/bgq -qasm=gcc -qkeyword=asm -qprefetch -qunroll=yes
-#endif
-
-#
-# MIPS architectures
-#
-
-#if ENABLE_LOONGSON3A
-#noinst_LTLIBRARIES += lib/libloongson3a.la
-#lib_libtblis_la_LIBADD += lib/libloongson3a.la
-#lib_libloongson3a_la_SOURCES = src/external/blis/config/loongson3a/kernels/3/bli_gemm_opt_d4x4.c
-#lib_libloongson3a_la_CFLAGS = -Isrc/external/blis/config/loongson3a -march=loongson3a -mtune=loongson3a
-#endif
+if ENABLE_FIRESTORM
+noinst_LTLIBRARIES += lib/libfirestorm.la
+lib_libtblis_la_LIBADD += lib/libfirestorm.la
+lib_libtblis_la_SOURCES += tblis/configs/firestorm/config.cxx
+lib_libfirestorm_la_SOURCES = tblis/configs/firestorm/bli_gemm_armv8a_asm_d8x6r.c \
+                              tblis/configs/firestorm/config_ker.cxx
+lib_libfirestorm_la_CFLAGS = -O3 -march=armv8-a
+lib_libfirestorm_la_CXXFLAGS = -O3 -march=armv8-a
+endif
 
 noinst_PROGRAMS = bin/test
 if ENABLE_BLAS
@@ -398,7 +339,7 @@ VPATH += $(srcdir)
 
 SUBDIRS = external/tci
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/tblis -I. -I$(srcdir)/external/tci -Iexternal/tci -I$(srcdir)/external/stl_ext -I$(srcdir)/external/marray -I$(srcdir)/external/catch 
+AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/tblis -I. -I$(srcdir)/external/tci -Iexternal/tci -I$(srcdir)/external/stl_ext -I$(srcdir)/external/marray -I$(srcdir)/external/catch
 AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la
 bin_skx_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)

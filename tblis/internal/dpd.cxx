@@ -7,10 +7,9 @@ namespace tblis
 namespace internal
 {
 
-std::atomic<long> flops;
 dpd_impl_t dpd_impl = BLIS;
 
-void canonicalize(dpd_varray_view<char>& A, label_vector& idx)
+void canonicalize(dpd_marray_view<char>& A, label_vector& idx)
 {
     (void)A;
     (void)idx;
@@ -28,7 +27,7 @@ void canonicalize(dpd_varray_view<char>& A, label_vector& idx)
     //TODO
 }
 
-void fold(dpd_varray_view<char>& A, dim_vector& idx)
+void fold(dpd_marray_view<char>& A, dim_vector& idx)
 {
     int ndim = idx.size();
 
@@ -60,8 +59,8 @@ void fold(dpd_varray_view<char>& A, dim_vector& idx)
     //TODO
 }
 
-void fold(dpd_varray_view<char>& A, dim_vector& idx1,
-          dpd_varray_view<char>& B, dim_vector& idx2)
+void fold(dpd_marray_view<char>& A, dim_vector& idx1,
+          dpd_marray_view<char>& B, dim_vector& idx2)
 {
     int ndim = idx1.size();
 
@@ -98,9 +97,9 @@ void fold(dpd_varray_view<char>& A, dim_vector& idx1,
     //TODO
 }
 
-void fold(dpd_varray_view<char>& A, dim_vector& idx1,
-          dpd_varray_view<char>& B, dim_vector& idx2,
-          dpd_varray_view<char>& C, dim_vector& idx3)
+void fold(dpd_marray_view<char>& A, dim_vector& idx1,
+          dpd_marray_view<char>& B, dim_vector& idx2,
+          dpd_marray_view<char>& C, dim_vector& idx3)
 {
     int ndim = idx1.size();
 

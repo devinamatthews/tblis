@@ -9,8 +9,10 @@
 #include <tblis/base/macros.h>
 
 #ifdef __cplusplus
+#include <cmath>
 #include <complex>
 #else
+#include <math.h>
 #include <complex.h>
 #endif
 
@@ -494,8 +496,8 @@ typedef struct tblis_scalar
     {
         switch (type)
         {
-            case FLOAT:    data.s = std::abs(data.s); break;
-            case DOUBLE:   data.d = std::abs(data.d); break;
+            case FLOAT:    data.s = std::fabsf(data.s); break;
+            case DOUBLE:   data.d = std::fabs(data.d); break;
             case SCOMPLEX: data.c = std::abs(data.c); break;
             case DCOMPLEX: data.z = std::abs(data.z); break;
         }
@@ -514,7 +516,7 @@ typedef struct tblis_scalar
     {
         switch (type)
         {
-            case FLOAT:    data.s = std::sqrt(data.s); break;
+            case FLOAT:    data.s = std::sqrtf(data.s); break;
             case DOUBLE:   data.d = std::sqrt(data.d); break;
             case SCOMPLEX: data.c = std::sqrt(data.c); break;
             case DCOMPLEX: data.z = std::sqrt(data.z); break;
@@ -572,9 +574,11 @@ TBLIS_EXPORT void tblis_init_scalar_s(tblis_scalar* s, float value);
 
 TBLIS_EXPORT void tblis_init_scalar_d(tblis_scalar* s, double value);
 
-TBLIS_EXPORT void tblis_init_scalar_c(tblis_scalar* s, scomplex value);
+TBLIS_EXPORT void tblis_init_scalar_c(tblis_scalar* s, tblis_scomplex value);
 
-TBLIS_EXPORT void tblis_init_scalar_z(tblis_scalar* s, dcomplex value);
+TBLIS_EXPORT void tblis_init_scalar_z(tblis_scalar* s, tblis_dcomplex value);
+
+#if TBLIS_ENABLE_CXX
 
 namespace detail
 {
@@ -619,9 +623,9 @@ struct buffer
 
 }
 
-#if TBLIS_ENABLE_CXX
 struct const_tensor;
-#endif
+
+#endif //TBLIS_ENABLE_CXX
 
 typedef struct tblis_tensor
 {
@@ -629,8 +633,8 @@ typedef struct tblis_tensor
     int conj;
     void* data;
     int ndim;
-    len_type* len;
-    stride_type* stride;
+    tblis_len_type* len;
+    tblis_stride_type* stride;
 
 #if TBLIS_ENABLE_CXX
 
@@ -719,10 +723,10 @@ typedef struct tblis_tensor
     tblis_tensor()
     : scalar(1.0),
       conj(false),
-      data(0),
+      data(nullptr),
       ndim(0),
-      len(0),
-      stride(0)
+      len(nullptr),
+      stride(nullptr)
     {}
 
     template <typename T>
@@ -775,10 +779,10 @@ struct const_tensor
     tensor tensor_;
     const type_t& type = tensor_.type;
 
-    template <typename T, typename=tensor::const_convertible<const T>>
-    const_tensor(const T& other)
+    template <typename T, typename=tensor::const_convertible<T>>
+    const_tensor(T&& other)
     {
-        tensor::convert<T>{}(tensor_, const_cast<T&>(other));
+        tensor::convert<std::remove_reference_t<T>>{}(tensor_, other);
     }
 
     const_tensor()
@@ -821,36 +825,36 @@ struct const_tensor
 #endif //TBLIS_ENABLE_CXX
 
 TBLIS_EXPORT void tblis_init_tensor_scaled_s(tblis_tensor* type_t, float scalar,
-                                             int ndim, len_type* len, float* data,
-                                             stride_type* stride);
+                                             int ndim, tblis_len_type* len, float* data,
+                                             tblis_stride_type* stride);
 
 TBLIS_EXPORT void tblis_init_tensor_scaled_d(tblis_tensor* type_t, double scalar,
-                                             int ndim, len_type* len, double* data,
-                                             stride_type* stride);
+                                             int ndim, tblis_len_type* len, double* data,
+                                             tblis_stride_type* stride);
 
-TBLIS_EXPORT void tblis_init_tensor_scaled_c(tblis_tensor* type_t, scomplex scalar,
-                                             int ndim, len_type* len, scomplex* data,
-                                             stride_type* stride);
+TBLIS_EXPORT void tblis_init_tensor_scaled_c(tblis_tensor* type_t, tblis_scomplex scalar,
+                                             int ndim, tblis_len_type* len, tblis_scomplex* data,
+                                             tblis_stride_type* stride);
 
-TBLIS_EXPORT void tblis_init_tensor_scaled_z(tblis_tensor* type_t, dcomplex scalar,
-                                             int ndim, len_type* len, dcomplex* data,
-                                             stride_type* stride);
+TBLIS_EXPORT void tblis_init_tensor_scaled_z(tblis_tensor* type_t, tblis_dcomplex scalar,
+                                             int ndim, tblis_len_type* len, tblis_dcomplex* data,
+                                             tblis_stride_type* stride);
 
 TBLIS_EXPORT void tblis_init_tensor_s(tblis_tensor* type_t,
-                                      int ndim, len_type* len, float* data,
-                                      stride_type* stride);
+                                      int ndim, tblis_len_type* len, float* data,
+                                      tblis_stride_type* stride);
 
 TBLIS_EXPORT void tblis_init_tensor_d(tblis_tensor* type_t,
-                                      int ndim, len_type* len, double* data,
-                                      stride_type* stride);
+                                      int ndim, tblis_len_type* len, double* data,
+                                      tblis_stride_type* stride);
 
 TBLIS_EXPORT void tblis_init_tensor_c(tblis_tensor* type_t,
-                                      int ndim, len_type* len, scomplex* data,
-                                      stride_type* stride);
+                                      int ndim, tblis_len_type* len, tblis_scomplex* data,
+                                      tblis_stride_type* stride);
 
 TBLIS_EXPORT void tblis_init_tensor_z(tblis_tensor* type_t,
-                                      int ndim, len_type* len, dcomplex* data,
-                                      stride_type* stride);
+                                      int ndim, tblis_len_type* len, tblis_dcomplex* data,
+                                      tblis_stride_type* stride);
 
 #if TBLIS_ENABLE_CXX
 
@@ -913,13 +917,13 @@ struct label_string
     }
 
     template <typename T>
-    label_string(const T& s, std::enable_if_t<detail::has_label_data<T>::value>* = 0)
+    label_string(const T& s, std::enable_if_t<detail::has_label_data<T>::value>* = nullptr)
     {
         idx = const_cast<label_type*>(s.data());
     }
 
     template <typename T>
-    label_string(const T& s, std::enable_if_t<!detail::has_label_data<T>::value>* = 0)
+    label_string(const T& s, std::enable_if_t<!detail::has_label_data<T>::value>* = nullptr)
     {
         idx_buf = s;
         idx = idx_buf.data();
@@ -930,7 +934,7 @@ struct label_string
     label_string& operator=(label_string&&) = delete;
 };
 
-label_string idx(const const_tensor& t)
+inline label_string idx(const const_tensor& t)
 {
     label_string s;
 
@@ -938,7 +942,7 @@ label_string idx(const const_tensor& t)
         s.idx_buf.resize(t.tensor_.ndim);
     s.idx = s.idx_buf.data();
 
-    for (int i = 0;i < t.tensor_.ndim;i++)
+    for (label_type i = 0;i < t.tensor_.ndim;i++)
         s.idx[i] = i;
 
     return s;
@@ -963,7 +967,7 @@ struct tensor::convert<MArray::marray_base<T,N,D,O>>
 {
     constexpr static bool is_mutable = O || !std::is_const<T>::value;
 
-    void operator()(tensor& t, MArray::marray_base<T,N,D,O>& other) const
+    void operator()(tensor& t, const MArray::marray_base<T,N,D,O>& other) const
     {
         t.scalar.reset(T(1));
         t.data = const_cast<void*>(static_cast<const void*>(other.data()));
@@ -975,12 +979,24 @@ struct tensor::convert<MArray::marray_base<T,N,D,O>>
     }
 };
 
-
 template <typename T, int N, typename D, bool O>
 struct tensor::convert<const MArray::marray_base<T,N,D,O>> : tensor::convert<MArray::marray_base<T,N,D,O>>
 {
     constexpr static bool is_mutable = !O && !std::is_const<T>::value;
 };
+
+template <typename T, int N>
+struct tensor::convert<MArray::marray<T,N>> : tensor::convert<MArray::marray_base<T,N,MArray::marray<T,N>,true>> {};
+
+template <typename T, int N>
+struct tensor::convert<const MArray::marray<T,N>> : tensor::convert<const MArray::marray_base<T,N,MArray::marray<T,N>,true>> {};
+
+template <typename T, int N>
+struct tensor::convert<MArray::marray_view<T,N>> : tensor::convert<MArray::marray_base<T,N,MArray::marray_view<T,N>,false>> {};
+
+template <typename T, int N>
+struct tensor::convert<const MArray::marray_view<T,N>> : tensor::convert<const MArray::marray_base<T,N,MArray::marray_view<T,N>,false>> {};
+
 #endif //MARRAY_MARRAY_BASE_HPP
 
 #ifdef EIGEN_CXX11_TENSOR_TENSOR_H
@@ -1006,11 +1022,11 @@ struct eigen_expr_parser;
 template <typename T>
 struct eigen_expr_parser<T, std::enable_if_t<is_eigen_tensor<T>::value>>
 {
+    using type = typename T::Scalar;
+
     eigen_expr_parser(tensor& t, T& other)
     {
-        using U = typename T::Scalar;
-
-        t.scalar.reset(T(1));
+        t.scalar.reset(type(1));
         t.data = other.data();
         t.ndim = other.NumDimensions;
         t.len_buf = other.dimensions().begin(), other.dimensions().end();
@@ -1056,10 +1072,12 @@ struct eigen_expr_parser<Eigen::TensorSlicingOp<I,S,X>> : eigen_expr_parser<X>
 template <Eigen::DenseIndex D, typename X>
 struct eigen_expr_parser<Eigen::TensorChippingOp<D,X>> : eigen_expr_parser<X>
 {
+    using typename eigen_expr_parser<X>::type;
+
     eigen_expr_parser(tensor& t, Eigen::TensorChippingOp<D,X>& other)
     : eigen_expr_parser<X>(t, other.expression())
     {
-        t.data += t.stride[other.dim()] * other.offset();
+        t.data = static_cast<type*>(t.data) + t.stride[other.dim()] * other.offset();
 
         for (int i = other.dim()+1;i < t.ndim;i++)
         {
@@ -1126,6 +1144,8 @@ struct eigen_expr_parser<Eigen::TensorStridingSlicingOp<Start,Stop,Stride,X>> : 
 template <typename R, typename X>
 struct eigen_expr_parser<Eigen::TensorReverseOp<R,X>> : eigen_expr_parser<X>
 {
+    using typename eigen_expr_parser<X>::type;
+
     eigen_expr_parser(tensor& t, Eigen::TensorReverseOp<R,X>& other)
     : eigen_expr_parser<X>(t, other.expression())
     {
@@ -1133,7 +1153,7 @@ struct eigen_expr_parser<Eigen::TensorReverseOp<R,X>> : eigen_expr_parser<X>
         {
             if (other.reverse()[i])
             {
-                t.data += (t.len[i] - 1) * t.stride[i];
+                t.data = static_cast<type*>(t.data) + (t.len[i] - 1) * t.stride[i];
                 t.stride[i] = -t.stride[i];
             }
         }

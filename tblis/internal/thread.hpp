@@ -12,30 +12,6 @@
 
 TBLIS_BEGIN_NAMESPACE
 
-template <typename T>
-bool operator<(const std::complex<T>& lhs, T rhs)
-{
-    return lhs.real() < rhs ? true :
-           lhs.real() > rhs ? false :
-           lhs.imag() < T();
-}
-
-template <typename T>
-bool operator<(T lhs, const std::complex<T>& rhs)
-{
-    return lhs < rhs.real() ? true :
-           lhs > rhs.real() ? false :
-           T() < rhs.imag();
-}
-
-template <typename T>
-bool operator<(const std::complex<T>& lhs, const std::complex<T>& rhs)
-{
-    return lhs.real() < rhs.real() ? true :
-           lhs.real() > rhs.real() ? false :
-           lhs.imag() < rhs.imag();
-}
-
 extern std::atomic<long> flops;
 extern len_type inout_ratio;
 extern int outer_threading;

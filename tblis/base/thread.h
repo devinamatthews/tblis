@@ -19,11 +19,12 @@ using tci::parallelize;
 using tci::partition_2x2;
 
 extern communicator single;
+extern communicator parallel;
 
 template <typename Func, typename... Args>
 void parallelize_if(const Func& f, const tblis_comm* _comm, Args&&... args)
 {
-    if (_comm)
+    if (_comm && _comm != parallel)
     {
         f(*reinterpret_cast<const communicator*>(_comm), args...);
     }

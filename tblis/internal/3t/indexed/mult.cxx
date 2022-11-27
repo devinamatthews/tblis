@@ -55,6 +55,7 @@ void mult_full(const communicator& comm, const config& cfg,
     A2, B2, C2);
 }
 
+static
 void contract_block(type_t type, const communicator& comm, const config& cfg,
                     const scalar& alpha,
                     bool conj_A, const indexed_marray_view<char>& A,
@@ -153,6 +154,7 @@ void contract_block(type_t type, const communicator& comm, const config& cfg,
     });
 }
 
+static
 void mult_block(type_t type, const communicator& comm, const config& cfg,
                 const scalar& alpha,
                 bool conj_A, const indexed_marray_view<char>& A,

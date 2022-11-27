@@ -14,17 +14,50 @@
 #include <marray/range.hpp>
 #include <marray/short_vector.hpp>
 
-TBLIS_BEGIN_NAMESPACE
+namespace tblis
+{
 
 using MArray::short_vector;
 using MArray::range;
-using MArray::ipow;
-using MArray::divide;
+using MArray::detail::ipow;
+using MArray::detail::divide;
 
 using len_vector = short_vector<len_type,TBLIS_OPT_NDIM>;
 using stride_vector = short_vector<stride_type,TBLIS_OPT_NDIM>;
 using label_vector = short_vector<label_type,TBLIS_OPT_NDIM>;
 using dim_vector = short_vector<int,TBLIS_OPT_NDIM>;
+
+inline float norm2(float x) { return x*x; }
+
+inline double norm2(double x) { return x*x; }
+
+inline float norm2(const scomplex& x) { return std::norm(x); }
+
+inline double norm2(const dcomplex& x) { return std::norm(x); }
+
+template <typename T>
+bool operator<(const std::complex<T>& lhs, const std::complex<T>& rhs)
+{
+    return lhs.real() < rhs.real() ? true :
+           lhs.real() > rhs.real() ? false :
+           lhs.imag() < rhs.imag();
+}
+
+template <typename T>
+bool operator<(const std::complex<T>& lhs, T rhs)
+{
+    return lhs.real() < rhs ? true :
+           lhs.real() > rhs ? false :
+           lhs.imag() < T();
+}
+
+template <typename T>
+bool operator<(T lhs, const std::complex<T>& rhs)
+{
+    return lhs < rhs.real() ? true :
+           lhs > rhs.real() ? false :
+           T() < rhs.imag();
+}
 
 template <typename T>
 struct real_type { typedef T type; };
@@ -75,6 +108,6 @@ namespace matrix_constants
     enum {DIM_M, DIM_N, DIM_K};
 }
 
-TBLIS_END_NAMESPACE
+}
 
 #endif //TBLIS_INTERNAL_TYPES_HPP

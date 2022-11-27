@@ -43,7 +43,7 @@ void reduce_ukr_def(reduce_t op, len_type n,
     {
         for (len_type i = 0;i < n;i++)
         {
-            if (A[i*inc_A] > value)
+            if (value < A[i*inc_A])
             {
                 value = A[i*inc_A];
                 idx = i*inc_A;
@@ -54,7 +54,7 @@ void reduce_ukr_def(reduce_t op, len_type n,
     {
         for (len_type i = 0;i < n;i++)
         {
-            if (std::abs(A[i*inc_A]) > value)
+            if (value < std::abs(A[i*inc_A]))
             {
                 value = std::abs(A[i*inc_A]);
                 idx = i*inc_A;

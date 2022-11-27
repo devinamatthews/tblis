@@ -276,56 +276,14 @@ int vpu_count()
 
 #elif defined(__aarch64__) || defined(__arm__) || defined(_M_ARM)
 
-#include <cstring>
-#include <cstdio>
-
 namespace tblis
 {
 
 int get_cpu_type(int& model, int& part, int& features)
 {
-    model = MODEL_UNKNOWN;
+    model = 0;
+    part = 0;
     features = 0;
-
-    FILE *fd1 = popen("grep -m 1 Processor /proc/cpuinfo", "r");
-    if (!fd1) return VENDOR_ARM;
-    FILE *fd2 = popen("grep -m 1 'CPU part' /proc/cpuinfo", "r");
-    if (!fd2)
-    {
-        pclose(fd1);
-        return VENDOR_ARM;
-    }
-    FILE *fd3 = popen("grep -m 1 Features /proc/cpuinfo", "r");
-    if (!fd3)
-    {
-        pclose(fd1);
-        pclose(fd2);
-        return VENDOR_ARM;
-    }
-
-    char c;
-    std::string proc, ptno, feat;
-    while ((c = fgetc(fd1)) != EOF) proc.push_back(c);
-    while ((c = fgetc(fd2)) != EOF) ptno.push_back(c);
-    while ((c = fgetc(fd3)) != EOF) feat.push_back(c);
-
-    pclose(fd1);
-    pclose(fd2);
-    pclose(fd3);
-
-    if (feat.find("neon") != std::string::npos ||
-        feat.find("asimd") != std::string::npos)
-        features |= FEATURE_NEON;
-
-    if (proc.find("ARMv7") != std::string::npos)
-        model = MODEL_ARMV7;
-    else if (proc.find("AArch64") != std::string::npos)
-        model = MODEL_ARMV8;
-
-    auto pos = ptno.find("0x");
-    TBLIS_ASSERT(pos != std::string::npos);
-    part = strtoi(ptno, pos, 16);
-
     return VENDOR_ARM;
 }
 

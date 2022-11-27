@@ -1,5 +1,5 @@
-#ifndef _TBLIS_RANDOM_HPP_
-#define _TBLIS_RANDOM_HPP_
+#ifndef TBLIS_RANDOM_HPP
+#define TBLIS_RANDOM_HPP
 
 #include <random>
 

@@ -42,9 +42,7 @@ int get_cpu_type(int& family, int& model, int& features);
 namespace tblis
 {
 
-enum {VENDOR_ARM, VENDOR_UNKNOWN}
-enum {MODEL_ARMV7, MODEL_ARMV8, MODEL_UNKNOWN}
-enum {FEATURE_NEON = 0x1};
+enum {VENDOR_ARM, VENDOR_UNKNOWN};
 
 int get_cpu_type(int& model, int& part, int& features);
 

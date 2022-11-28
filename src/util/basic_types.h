@@ -15,8 +15,10 @@
 #include "../tblis_config.h"
 
 #ifdef __cplusplus
+#include <cmath>
 #include <complex>
 #elif __STDC_VERSION__ >= 199901l
+#include <math.h>
 #include <complex.h>
 #endif
 

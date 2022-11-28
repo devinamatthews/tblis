@@ -345,6 +345,18 @@ endif
 endif
 endif
 
+if ENABLE_FIRESTORM
+noinst_LTLIBRARIES += lib/libfirestorm.la
+lib_libtblis_la_LIBADD += lib/libfirestorm.la
+lib_libtblis_la_SOURCES += src/configs/firestorm/config.cxx
+lib_libfirestorm_la_SOURCES = src/configs/firestorm/bli_gemm_armv8a_asm_d8x6r.c \
+                              src/configs/firestorm/config_ker.cxx
+if ENABLE_INTEL_COMPILER
+lib_libfirestorm_la_CFLAGS = -O3 -march=armv8-a
+lib_libfirestorm_la_CXXFLAGS = -O3 -march=armv8-a
+endif
+endif
+
 #if ENABLE_MIC
 #noinst_LTLIBRARIES += lib/libmic.la
 #lib_libtblis_la_LIBADD += lib/libmic.la

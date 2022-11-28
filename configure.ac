@@ -171,14 +171,16 @@ AC_ARG_ENABLE([config],
                           possible values are:
 
                           reference, bulldozer, piledriver, excavator, zen,
-                          core2, sandybridge, haswell, skx1, skx2, knl, auto
+                          core2, sandybridge, haswell, skx1, skx2, knl,
+                          firestorm, auto
 
                           the following meta-configurations are also available:
 
                           skx = skx1,skx2
                           intel = core2,sandybridge,haswell,skx,knl
                           amd = bulldozer,piledriver,excavator,zen
-                          x86 = intel,amd],
+                          x86 = intel,amd
+                          arm64 = firestorm],
               [], [enable_config=auto])
 
 if echo $enable_config | grep -q auto; then
@@ -189,7 +191,7 @@ if echo $enable_config | grep -q auto; then
     AC_CHECK_DEFINE([_M_X64], [enable_config=x86])
     AC_CHECK_DEFINE([__i386], [enable_config=x86])
     AC_CHECK_DEFINE([_M_IX86], [enable_config=x86])
-#    AC_CHECK_DEFINE([__aarch64__], [enable_config=arm])
+    AC_CHECK_DEFINE([__aarch64__], [enable_config=arm64])
 #    AC_CHECK_DEFINE([__arm__], [enable_config=arm])
 #    AC_CHECK_DEFINE([_M_ARM], [enable_config=arm])
 #    AC_CHECK_DEFINE([__powerpc64__], [enable_config=power7])
@@ -212,10 +214,11 @@ configs=`echo $enable_config | sed 's/x86/intel,amd/' \
                              | sed 's/amd/bulldozer,piledriver,excavator,zen/' \
                              | sed 's/skx,/skx1,skx2,/' \
                              | sed 's/skx$/skx1,skx2/' \
+                             | sed 's/arm64/firestorm/' \
                              | sed 's/,/ /g'`
 
 for config in $configs; do
-    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|bulldozer|piledriver|excavator|zen)$' ); then
+    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|bulldozer|piledriver|excavator|zen|firestorm)$' ); then
         AC_MSG_ERROR([Unknown configuration $config])
     fi
 done
@@ -439,6 +442,7 @@ AM_CONDITIONAL(ENABLE_POWER7, [echo $configs | grep -q power7])
 AM_CONDITIONAL(ENABLE_REFERENCE, [echo $configs | grep -q reference])
 AM_CONDITIONAL(ENABLE_SANDYBRIDGE, [echo $configs | grep -q sandybridge])
 AM_CONDITIONAL(ENABLE_ZEN, [echo $configs | grep -q zen])
+AM_CONDITIONAL(ENABLE_FIRESTORM, [echo $configs | grep -q firestorm])
 
 include_configs=""
 for config in $configs; do

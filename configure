@@ -688,6 +688,8 @@ FOREACH_TYPE
 FOREACH_CONFIG_AND_TYPE
 FOREACH_CONFIG
 INCLUDE_CONFIGS
+ENABLE_FIRESTORM_FALSE
+ENABLE_FIRESTORM_TRUE
 ENABLE_ZEN_FALSE
 ENABLE_ZEN_TRUE
 ENABLE_SANDYBRIDGE_FALSE
@@ -1526,7 +1528,8 @@ Optional Features:
                           possible values are:
 
                           reference, bulldozer, piledriver, excavator, zen,
-                          core2, sandybridge, haswell, skx1, skx2, knl, auto
+                          core2, sandybridge, haswell, skx1, skx2, knl,
+                          firestorm, auto
 
                           the following meta-configurations are also available:
 
@@ -1534,6 +1537,7 @@ Optional Features:
                           intel = core2,sandybridge,haswell,skx,knl
                           amd = bulldozer,piledriver,excavator,zen
                           x86 = intel,amd
+                          arm64 = firestorm
   --enable-shared[=PKGS]  build shared libraries [default=yes]
   --enable-static[=PKGS]  build static libraries [default=yes]
   --enable-fast-install[=PKGS]
@@ -7320,7 +7324,44 @@ if test $ac_cv_defined__M_IX86 != "no"
 then :
   enable_config=x86
 fi
-#    AC_CHECK_DEFINE([__aarch64__], [enable_config=arm])
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for __aarch64__ defined" >&5
+printf %s "checking for __aarch64__ defined... " >&6; }
+if test ${ac_cv_defined___aarch64__+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main (void)
+{
+
+  #ifdef __aarch64__
+  int ok;
+  #else
+  choke me
+  #endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  ac_cv_defined___aarch64__=yes
+else $as_nop
+  ac_cv_defined___aarch64__=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined___aarch64__" >&5
+printf "%s\n" "$ac_cv_defined___aarch64__" >&6; }
+if test $ac_cv_defined___aarch64__ != "no"
+then :
+  enable_config=arm64
+fi
 #    AC_CHECK_DEFINE([__arm__], [enable_config=arm])
 #    AC_CHECK_DEFINE([_M_ARM], [enable_config=arm])
 #    AC_CHECK_DEFINE([__powerpc64__], [enable_config=power7])
@@ -7380,10 +7421,11 @@ configs=`echo $enable_config | sed 's/x86/intel,amd/' \
                              | sed 's/amd/bulldozer,piledriver,excavator,zen/' \
                              | sed 's/skx,/skx1,skx2,/' \
                              | sed 's/skx$/skx1,skx2/' \
+                             | sed 's/arm64/firestorm/' \
                              | sed 's/,/ /g'`
 
 for config in $configs; do
-    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|bulldozer|piledriver|excavator|zen)$' ); then
+    if ( echo $config | $EGREP -qv '^(reference|core2|sandybridge|haswell|skx1|skx2|knl|bulldozer|piledriver|excavator|zen|firestorm)$' ); then
         as_fn_error $? "Unknown configuration $config" "$LINENO" 5
     fi
 done
@@ -7879,6 +7921,14 @@ fi
 else
   ENABLE_ZEN_TRUE='#'
   ENABLE_ZEN_FALSE=
+fi
+
+ if echo $configs | grep -q firestorm; then
+  ENABLE_FIRESTORM_TRUE=
+  ENABLE_FIRESTORM_FALSE='#'
+else
+  ENABLE_FIRESTORM_TRUE='#'
+  ENABLE_FIRESTORM_FALSE=
 fi
 
 
@@ -19412,6 +19462,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_ZEN_TRUE}" && test -z "${ENABLE_ZEN_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_ZEN\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_FIRESTORM_TRUE}" && test -z "${ENABLE_FIRESTORM_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_FIRESTORM\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

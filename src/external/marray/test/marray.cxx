@@ -616,7 +616,7 @@ TEST(marray, permuted)
     EXPECT_EQ((array<stride_type,3>{1, 10, 5}), v3.strides());
     EXPECT_EQ(v1.data(), v3.data());
 
-    auto v4 = const_cast<const marray<double,3>&>(v1).permuted{1, 0, 2};
+    auto v4 = const_cast<const marray<double,3>&>(v1).permuted(1, 0, 2);
     EXPECT_EQ((array<len_type,3>{2, 4, 5}), v4.lengths());
     EXPECT_EQ((array<stride_type,3>{5, 10, 1}), v4.strides());
     EXPECT_EQ(v1.data(), v4.data());
@@ -641,7 +641,7 @@ TEST(varray, permuted)
     EXPECT_EQ((stride_vector{1, 10, 5}), v3.strides());
     EXPECT_EQ(v1.data(), v3.data());
 
-    auto v4 = const_cast<const marray<double>&>(v1).permuted{1, 0, 2};
+    auto v4 = const_cast<const marray<double>&>(v1).permuted(1, 0, 2);
     EXPECT_EQ((len_vector{2, 4, 5}), v4.lengths());
     EXPECT_EQ((stride_vector{5, 10, 1}), v4.strides());
     EXPECT_EQ(v1.data(), v4.data());
@@ -691,7 +691,7 @@ TEST(marray, lowered)
     EXPECT_EQ((array<stride_type,1>{1}), v4.strides());
     EXPECT_EQ(v1.data(), v4.data());
 
-    auto v5 = const_cast<const marray<double,3>&>(v1).lowered<3>{1, 2};
+    auto v5 = const_cast<const marray<double,3>&>(v1).lowered(1, 2);
     EXPECT_EQ((array<len_type,3>{4, 2, 5}), v5.lengths());
     EXPECT_EQ((array<stride_type,3>{10, 5, 1}), v5.strides());
     EXPECT_EQ(v1.data(), v2.data());
@@ -711,14 +711,19 @@ TEST(varray, lowered)
     EXPECT_EQ((stride_vector{10, 1}), v3.strides());
     EXPECT_EQ(v1.data(), v3.data());
 
-    auto v4 = v1.lowered({});
-    EXPECT_EQ((len_vector{40}), v4.lengths());
-    EXPECT_EQ((stride_vector{1}), v4.strides());
+    auto v3b = v1.lowered(1);
+    EXPECT_EQ((array<len_type,2>{4, 10}), v3b.lengths());
+    EXPECT_EQ((array<stride_type,2>{10, 1}), v3b.strides());
+    EXPECT_EQ(v1.data(), v3b.data());
+
+    auto v4 = v1.lowered();
+    EXPECT_EQ((array<len_type,1>{40}), v4.lengths());
+    EXPECT_EQ((array<stride_type,1>{1}), v4.strides());
     EXPECT_EQ(v1.data(), v4.data());
 
-    auto v5 = const_cast<const marray<double>&>(v1).lowered{1, 2};
-    EXPECT_EQ((len_vector{4, 2, 5}), v5.lengths());
-    EXPECT_EQ((stride_vector{10, 5, 1}), v5.strides());
+    auto v5 = const_cast<const marray<double>&>(v1).lowered(1, 2);
+    EXPECT_EQ((array<len_type,3>{4, 2, 5}), v5.lengths());
+    EXPECT_EQ((array<stride_type,3>{10, 5, 1}), v5.strides());
     EXPECT_EQ(v1.data(), v2.data());
 }
 

@@ -27,11 +27,28 @@ class marray_base
     template <typename, int, int, typename...> friend class marray_slice;
 
     public:
+        /***********************************************************************
+         *
+         * @name Typedefs
+         *
+         **********************************************************************/
+        /** @{ */
+
+        /** The type of tensor elements. */
         typedef Type value_type;
+        /** The type of a pointer to a tensor element. Maybe mutable or immutable depending
+         *  on the const-qualification of `Type`. */
         typedef Type* pointer;
+        /** The type of an immutable pointer to a tensor element. */
         typedef const Type* const_pointer;
+        /** The type of a reference to a tensor element. Maybe mutable or immutable depending
+         *  on the const-qualification of `Type`. */
         typedef Type& reference;
+        /** The type of an immutable reference to a tensor element. */
         typedef const Type& const_reference;
+
+        /** @} */
+
         typedef typename detail::initializer_type<Type, NDim>::type
             initializer_type;
         typedef std::conditional_t<NDim == DYNAMIC,void,
@@ -225,88 +242,64 @@ class marray_base
          *
          * @param len   The lengths of the tensor dimensions. May be any one-
          *              dimensional container whose elements are convertible to
-         *              tensor lengths, including initializer lists.
+         *              [len_type](@ref MArray::len_type), including initializer lists.
          *
          * @param ptr   A pointer to the tensor element with all zero inidices.
          *              If this is a mutable view, then the pointer may not be
          *              const-qualified.
+         *
+         * @param layout_and_indexing
+         *              Information specifying the memory layout and indexing for this view. May be one of
+         *              the following:
+         *                -# Nothing. The default layout and indexing are used.
+         *                -# A pre-defined index base, layout, or combined base/layout specifier: one of
+         *                   [BASE_ZERO](@ref MArray::BASE_ZERO), [BASE_ONE](@ref MArray::BASE_ONE),
+         *                   [ROW_MAJOR](@ref MArray::ROW_MAJOR), [COLUMN_MAJOR](@ref MArray::COLUMN_MAJOR),
+         *                   [C](@ref MArray::C), [CXX](@ref MArray::CXX), [FORTRAN](@ref MArray::FORTRAN),
+         *                   or [MATLAB](@ref MArray::MATLAB).
+         *                -# The strides of the tensor dimensions. May be any one-dimensional container type whose elements
+         *                   are convertible to [stride_type](@ref MArray::stride_type), including initializer lists.
+         *                -# The index base for each tensor dimension, followed by the strides of each dimension. May be any
+         *                   combination of either pre-defined index bases (e.g. [BASE_ZERO](@ref MArray::BASE_ZERO)), pre-defined
+         *                   layout (e.g. [ROW_MAJOR](@ref MArray::ROW_MAJOR)), combined base/layout specifier
+         *                   (e.g. [FORTRAN](@ref MArray::FORTRAN)), or one-dimensional containers whose elements are
+         *                   convertible to [len_type](@ref MArray::len_type) (index bases) or
+         *                   [stride_type](@ref MArray::stride_type) (strides), including initializer lists.
+         *
+         *              Examples:
+         *                    - `1: view.reset(len, ptr) #all defaults are used`
+         *                    - `2: view.reset(len, ptr, BASE_ONE) #default layout`
+         *                    - `2: view.reset(len, ptr, COLUMN_MAJOR) #default index base`
+         *                    - `2: view.reset(len, ptr, FORTRAN)`
+         *                    - `3: view.reset(len, ptr, {12, 1, 6}) #strides are specified explicitly, default base`
+         *                    - `4: view.reset(len, ptr, BASE_ONE, ROW_MAJOR)`
+         *                    - `4: view.reset(len, ptr, BASE_ZERO, {1, 120, 40, 10})`
+         *                    - `4: view.reset(len, ptr, {0, 0, 10}, COLUMN_MAJOR)`
+         *                    - `4: view.reset(len, ptr, {-1, 0, 2}, {144, 12, 1})`
+         *                    - `4: view.reset(len, ptr, FORTRAN, std_vector_of_strides)`
+         *                    - `4: view.reset(len, ptr, std_list_of_bases, CXX)`
          */
+ #if MARRAY_DOXYGEN
+        void reset(shape len, pointer ptr, base_and_or_layout layout_and_indexing);
+ #else
         void reset(const array_1d<len_type>& len, pointer ptr)
         {
             reset(len, ptr, DEFAULT_BASE, DEFAULT_LAYOUT);
         }
 
-        /**
-         * Reset to a view that wraps a raw data pointer, using the provided shape and base, and the default layout.
-         *
-         * @param len   The lengths of the tensor dimensions. May be any one-
-         *              dimensional container whose elements are convertible to
-         *              tensor lengths, including initializer lists.
-         *
-         * @param ptr   A pointer to the tensor element with all zero inidices.
-         *              If this is a mutable view, then the pointer may not be
-         *              const-qualified.
-         *
-         * @param base  One of [BASE_ZERO](@ref MArray::BASE_ZERO), [BASE_ONE](@ref MArray::BASE_ONE), [FORTRAN](@ref MArray::FORTRAN), or [MATLAB](@ref MArray::MATLAB).
-         */
+        /* Inherit docs */
         void reset(const array_1d<len_type>& len, pointer ptr, const index_base& base)
         {
             reset(len, ptr, base, DEFAULT_LAYOUT);
         }
 
-        /**
-         * Reset to a view that wraps a raw data pointer, using the provided shape and layout, and the default base.
-         *
-         * @param len   The lengths of the tensor dimensions. May be any one-
-         *              dimensional container whose elements are convertible to
-         *              tensor lengths, including initializer lists.
-         *
-         * @param ptr   A pointer to the tensor element with all zero inidices.
-         *              If this is a mutable view, then the pointer may not be
-         *              const-qualified.
-         *
-         * @param stride    The strides along each dimension, or a layout (one of [ROW_MAJOR](@ref MArray::ROW_MAJOR), [COLUMN_MAJOR](@ref MArray::COLUMN_MAJOR),
-         *                  [FORTRAN](@ref MArray::FORTRAN), [MATLAB](@ref MArray::MATLAB)). The stride is the distance
-         *                  in memory (in units of the value type) between successive
-         *                  elements along this direction. In general, the strides need
-         *                  not be defined such that elements have unique locations,
-         *                  although such a view should not be written into. Strides may
-         *                  also be negative. In this case, `ptr` still refers to the
-         *                  location of the "first" element (`index == base`), although this
-         *                  is not the lowest address of any tensor element.
-         */
+        /* Inherit docs */
         void reset(const array_1d<len_type>& len, pointer ptr, const layout_like& stride)
         {
             reset(len, ptr, DEFAULT_BASE, stride);
         }
 
-        /**
-         * Reset to a view that wraps a raw data pointer, using the provided
-         * shape, base, and layout.
-         *
-         * @param len   The lengths of the tensor dimensions. May be any one-
-         *              dimensional container whose elements are convertible to
-         *              tensor lengths, including initializer lists.
-         *
-         * @param ptr   A pointer to the tensor element with all zero inidices.
-         *              If this is a mutable view, then the pointer may not be
-         *              const-qualified.
-         *
-         * @param base  The base for each index, or a standard base (one of [BASE_ZERO](@ref MArray::BASE_ZERO), [BASE_ONE](@ref MArray::BASE_ONE),
-         *              [FORTRAN](@ref MArray::FORTRAN), [MATLAB](@ref MArray::MATLAB)). The base is the minimum value of the index. For example,
-         *              a tensor with lengths (2,3,4) and base (1,6,0) can have valid indices along the three
-         *              dimensions in the ranges [1,3), [6,9), and [0,4), respectively.
-         *
-         * @param stride    The strides along each dimension, or a layout (one of [ROW_MAJOR](@ref MArray::ROW_MAJOR), [COLUMN_MAJOR](@ref MArray::COLUMN_MAJOR),
-         *                  [FORTRAN](@ref MArray::FORTRAN), [MATLAB](@ref MArray::MATLAB)). The stride is the distance
-         *                  in memory (in units of the value type) between successive
-         *                  elements along this direction. In general, the strides need
-         *                  not be defined such that elements have unique locations,
-         *                  although such a view should not be written into. Strides may
-         *                  also be negative. In this case, `ptr` still refers to the
-         *                  location of the "first" element (`index == base`), although this
-         *                  is not the lowest address of any tensor element.
-         */
+        /* Inherit docs */
         void reset(const array_1d<len_type>& len, pointer ptr, const base_like& base,
                    const layout_like& stride)
         {
@@ -326,30 +319,21 @@ class marray_base
             set_bbox_(*this);
         }
 
-        /**
-         * Reset to a view that wraps a raw data pointer, using the provided shape and standard FORTRAN/MATLAB indexing.
-         *
-         * @param len   The lengths of the tensor dimensions. May be any one-
-         *              dimensional container whose elements are convertible to
-         *              tensor lengths, including initializer lists.
-         *
-         * @param ptr   A pointer to the tensor element with all zero inidices.
-         *              If this is a mutable view, then the pointer may not be
-         *              const-qualified.
-         *
-         * @param fortran   Either the token [FORTRAN](@ref MArray::FORTRAN) or [MATLAB](@ref MArray::MATLAB).
-         */
- #if MARRAY_DOXYGEN
-        void reset(const array_1d<len_type>& len, pointer ptr, fortran_t fortran)
-#else
+        /* Inherit docs */
+        void reset(const array_1d<len_type>& len, pointer ptr, c_cxx_t)
+        {
+            reset(len, ptr, CXX, CXX);
+        }
+
+        /* Inherit docs */
         void reset(const array_1d<len_type>& len, pointer ptr, fortran_t)
-#endif
         {
             reset(len, ptr, FORTRAN, FORTRAN);
         }
+#endif
 
         /**
-         * Reset to a view that wraps a raw data pointer, using the provided extents and the default layout.
+         * Reset to a view that wraps a raw data pointer, using the provided extents and the specified layout.
          *
          * @note This overload provides functionality similar to the multidimensional array declarations in
          *       FORTRAN, e.g. `real, dimension(begin1:end1, begin2:end2, ...) :: array`, except that the upper
@@ -369,44 +353,21 @@ class marray_base
          * @param ptr   A pointer to the tensor element with all zero inidices.
          *              If this is a mutable view, then the pointer may not be
          *              const-qualified.
+         *
+         * @param stride    The strides along each dimension, or one of [ROW_MAJOR](@ref MArray::ROW_MAJOR),
+         *                  [COLUMN_MAJOR](@ref MArray::COLUMN_MAJOR), [C](@ref MArray::C), [CXX](@ref MArray::CXX),
+         *                  [FORTRAN](@ref MArray::FORTRAN), [MATLAB](@ref MArray::MATLAB). If not specified,
+         *                  the default layout is used.
          */
+#if MARRAY_DOXYGEN
+        void reset(indices begin, indices end, pointer ptr, layout_or_strides stride = DEFAULT_LAYOUT);
+#else
         void reset(const array_1d<len_type>& begin, const array_1d<len_type>& end, pointer ptr)
         {
             reset(begin, end, ptr, DEFAULT_LAYOUT);
         }
 
-        /**
-         * Reset to a view that wraps a raw data pointer, using the provided extents and layout.
-         *
-         * @note This overload provides functionality similar to the multidimensional array declarations in
-         *       FORTRAN, e.g. `real, dimension(begin1:end1, begin2:end2, ...) :: array`, except that the upper
-         *       bounds (`end`) are one greater than in the corresponding FORTRAN statement. This is by design such
-         *       that the basic overloads with only `len` are equivalent to `begin = [0,...]` and `end = len`.
-         *
-         * @param begin   The smallest values of each index. May be any one-
-         *                dimensional container whose elements are convertible to
-         *                tensor lengths, including initializer lists. These values are the same
-         *                as the tensor @ref base().
-         *
-         * @param end   One plus the largest values of each index. May be any one-
-         *              dimensional container whose elements are convertible to
-         *              tensor lengths, including initializer lists. The length of index `i` is
-         *              equal to `end[i]-begin[i]`.
-         *
-         * @param ptr   A pointer to the tensor element with all zero inidices.
-         *              If this is a mutable view, then the pointer may not be
-         *              const-qualified.
-         *
-         * @param stride    The strides along each dimension, or a layout (one of [ROW_MAJOR](@ref MArray::ROW_MAJOR), [COLUMN_MAJOR](@ref MArray::COLUMN_MAJOR),
-         *                  [FORTRAN](@ref MArray::FORTRAN), [MATLAB](@ref MArray::MATLAB)). The stride is the distance
-         *                  in memory (in units of the value type) between successive
-         *                  elements along this direction. In general, the strides need
-         *                  not be defined such that elements have unique locations,
-         *                  although such a view should not be written into. Strides may
-         *                  also be negative. In this case, `ptr` still refers to the
-         *                  location of the "first" element (`index == begin`), although this
-         *                  is not the lowest address of any tensor element.
-         */
+        /* Inherit docs */
         void reset(const array_1d<len_type>& begin, const array_1d<len_type>& end, pointer ptr, const layout_like& stride)
         {
             MARRAY_ASSERT(begin.size() == end.size());
@@ -420,6 +381,7 @@ class marray_base
 
             reset(len, ptr, base, stride);
         }
+#endif
 
         /** @} */
         /* *********************************************************************
@@ -1693,6 +1655,8 @@ class marray_base
          * with smallest stride.
          *
          * @tparam NewNDim  The number of dimensions in the lowered view or [DYNAMIC](@ref MArray::DYNAMIC).
+         *                  If `split` is a comma-separated list of split points (e.g. `t.split(1, 3, 4)`),
+         *                  then `NewNDim` is deduced as the number of split points plus one.
          *
          * @param split The "split" or "pivot" vector. The number of split points/pivots
          *              must be equal to the number of dimensions in the lowered view
@@ -1705,7 +1669,9 @@ class marray_base
          *              lower-dimensional view. The split points must be
          *              in increasing order and in the range `[1,N)`. May be any
          *              one-dimensional container type whose elements are convertible
-         *              to `int`, including initializer lists.
+         *              to `int`, including initializer lists, or a comma-separated list of
+         *              split points (i.e. multiple arguments of any integral type, one
+         *              for each split point).
          *
          * @return      A possibly-mutable tensor view. For a tensor
          *              ([marray](@ref MArray::marray)), the returned view is
@@ -1780,9 +1746,25 @@ class marray_base
 
         /* Inherit docs */
         template <int NewNDim=DYNAMIC>
-        marray_view<ctype, NewNDim> lowered(const array_1d<int>& split) const
+        auto lowered(const array_1d<int>& split) const
         {
             return const_cast<marray_base&>(*this).lowered<NewNDim>(split);
+        }
+
+        /* Inherit docs */
+        template <typename... Splits>
+        std::enable_if_t<detail::are_convertible<int,Splits...>::value,marray_view<Type,sizeof...(Splits)+1>>
+        lowered(const Splits... splits)
+        {
+            return lowered<sizeof...(Splits)+1>({(int)splits...});
+        }
+
+        /* Inherit docs */
+        template <typename... Splits>
+        std::enable_if_t<detail::are_convertible<int,Splits...>::value,marray_view<ctype,sizeof...(Splits)+1>>
+        lowered(const Splits... splits) const
+        {
+            return lowered<sizeof...(Splits)+1>({(int)splits...});
         }
 #endif
 
@@ -2145,7 +2127,7 @@ class marray_base
          * For a tensor view ([marray_view](@ref MArray::marray_view)), the final
          * view or reference is mutable if the value type is not const-qualified.
          *
-         * @note Only available when `NDim != ` [DYNAMIC](@ref MArray::DYNAMIC). Otherwise, use @ref operator()().
+         * @note Only available when `NDim != ` [DYNAMIC](@ref MArray::DYNAMIC). Otherwise, use [operator()](@ref operator()(const array_1d<len_type>&)).
          *
          * @param i     The specified index. The dimension to which this index
          *              refers depends on how many [] operators have been applied.

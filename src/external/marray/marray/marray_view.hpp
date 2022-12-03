@@ -290,6 +290,17 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
             return base_class::operator=(other);
         }
 
+        /***********************************************************************
+         *
+         * @name Reset
+         *
+         **********************************************************************/
+        /** @{ */
+
+        using base_class::reset;
+
+        /** @} */
+
 #if !MARRAY_DOXYGEN
         using base_class::operator=;
         using base_class::operator+=;
@@ -298,7 +309,6 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
         using base_class::operator/=;
         using base_class::operator==;
         using base_class::operator!=;
-        using base_class::reset;
         using base_class::size;
         using base_class::is_contiguous;
         using base_class::cview;

@@ -8,7 +8,7 @@ using namespace MArray;
     EXPECT_EQ(0u, v.dimension()); \
     EXPECT_EQ(0u, v.dense_dimension()); \
     EXPECT_EQ(0u, v.indexed_dimension()); \
-    EXPECT_EQ(0u, v.num_indices()); \
+    EXPECT_EQ(1u, v.num_indices()); \
     EXPECT_EQ(0u, v.data().size());
 
 #define CHECK_INDEXED_VARRAY(v,value,...) \

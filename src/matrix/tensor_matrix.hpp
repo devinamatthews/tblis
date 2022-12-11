@@ -3,7 +3,7 @@
 
 #include "util/basic_types.h"
 
-#include "external/stl_ext/include/algorithm.hpp"
+#include "external/stl_ext/stl_ext/algorithm.hpp"
 
 #include "abstract_matrix.hpp"
 #include "packed_matrix.hpp"

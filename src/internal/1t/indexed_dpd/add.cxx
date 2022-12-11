@@ -4,8 +4,6 @@
 #include "scale.hpp"
 #include "internal/1t/dense/add.hpp"
 
-#include "external/stl_ext/include/iostream.hpp"
-
 namespace tblis
 {
 namespace internal

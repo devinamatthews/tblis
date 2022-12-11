@@ -84,7 +84,7 @@ inline string toupper(string&& s)
 
 inline string tolower(string&& S)
 {
-    string s(move(S));
+    string s(std::move(S));
     for (auto& c : s) c = std::tolower(c);
     return s;
 }

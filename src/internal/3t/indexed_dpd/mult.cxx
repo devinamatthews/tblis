@@ -16,8 +16,6 @@
 
 #include "nodes/gemm.hpp"
 
-#include "external/stl_ext/include/iostream.hpp"
-
 #include <memory>
 
 namespace MArray

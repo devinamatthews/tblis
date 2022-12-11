@@ -5,6 +5,7 @@
 #include <iterator>
 #include <vector>
 #include <cstring>
+#include <string>
 
 #include "cosort.hpp"
 #include "type_traits.hpp"
@@ -313,7 +314,7 @@ bool matches(const T& v, Predicate&& pred)
 
 template <typename T, typename U>
 std::enable_if_t<!std::is_same<U,typename T::value_type>::value,bool>
-start_swith(const T& v1, const U& v2)
+starts_with(const T& v1, const U& v2)
 {
     if (v1.size() < v2.size())
         return false;

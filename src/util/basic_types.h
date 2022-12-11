@@ -82,7 +82,7 @@ inline void tblis_check_assert(const char*, bool cond, const char* fmt, Args&&..
 #include <memory>
 
 #include "../memory/aligned_allocator.hpp"
-#include "../external/stl_ext/include/complex.hpp"
+#include "../external/stl_ext/stl_ext/complex.hpp"
 
 #if defined(TBLIS_DEBUG) && !defined(MARRAY_ENABLE_ASSERTS)
 #define MARRAY_ENABLE_ASSERTS

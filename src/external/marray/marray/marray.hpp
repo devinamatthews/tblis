@@ -262,9 +262,9 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
          * @param uninitialized   The token @ref uninitialized.
          */
 #if MARRAY_DOXYGEN
-        marray(const array_1d<len_type>& len, uninitialized_t uninitialized)
+        explicit marray(const array_1d<len_type>& len, uninitialized_t uninitialized)
 #else
-        marray(const array_1d<len_type>& len, uninitialized_t)
+        explicit marray(const array_1d<len_type>& len, uninitialized_t)
 #endif
         {
             reset(len, uninitialized);
@@ -279,7 +279,7 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
          *
          * @param layout    The layout to use, either [ROW_MAJOR](@ref MArray::ROW_MAJOR) or [COLUMN_MAJOR](@ref MArray::COLUMN_MAJOR).
          */
-        marray(const array_1d<len_type>& len, layout layout)
+        explicit marray(const array_1d<len_type>& len, layout layout)
         {
             reset(len, layout);
         }
@@ -295,7 +295,7 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
          *
          * @param layout    The layout to use, either [ROW_MAJOR](@ref MArray::ROW_MAJOR) or [COLUMN_MAJOR](@ref MArray::COLUMN_MAJOR).
          */
-        marray(const array_1d<len_type>& len, const Type& val, layout layout)
+        explicit marray(const array_1d<len_type>& len, const Type& val, layout layout)
         {
             reset(len, val, layout);
         }
@@ -313,9 +313,9 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
          * @param layout    The layout to use, either [ROW_MAJOR](@ref MArray::ROW_MAJOR) or [COLUMN_MAJOR](@ref MArray::COLUMN_MAJOR).
          */
 #if MARRAY_DOXYGEN
-        marray(const array_1d<len_type>& len, uninitialized_t uninitialized, layout layout)
+        explicit marray(const array_1d<len_type>& len, uninitialized_t uninitialized, layout layout)
 #else
-        marray(const array_1d<len_type>& len, uninitialized_t, layout layout)
+        explicit marray(const array_1d<len_type>& len, uninitialized_t, layout layout)
 #endif
         {
             reset(len, uninitialized, layout);
@@ -331,7 +331,7 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
          * @param base    The base to use, either [BASE_ZERO](@ref MArray::BASE_ZERO) or [BASE_ONE](@ref MArray::BASE_ONE) (a.k.a. [FORTRAN](@ref MArray::FORTRAN) or
          *                [MATLAB](@ref MArray::MATLAB)).
          */
-        marray(const array_1d<len_type>& len, index_base base)
+        explicit marray(const array_1d<len_type>& len, index_base base)
         {
             reset(len, base);
         }
@@ -348,7 +348,7 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
          * @param base    The base to use, either [BASE_ZERO](@ref MArray::BASE_ZERO) or [BASE_ONE](@ref MArray::BASE_ONE) (a.k.a. [FORTRAN](@ref MArray::FORTRAN) or
          *                [MATLAB](@ref MArray::MATLAB)).
          */
-        marray(const array_1d<len_type>& len, const Type& val, index_base base)
+        explicit marray(const array_1d<len_type>& len, const Type& val, index_base base)
         {
             reset(len, val, base);
         }
@@ -367,9 +367,9 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
          *                [MATLAB](@ref MArray::MATLAB)).
          */
 #if MARRAY_DOXYGEN
-        marray(const array_1d<len_type>& len, uninitialized_t uninitialized, base base)
+        explicit marray(const array_1d<len_type>& len, uninitialized_t uninitialized, base base)
 #else
-        marray(const array_1d<len_type>& len, uninitialized_t, index_base base)
+        explicit marray(const array_1d<len_type>& len, uninitialized_t, index_base base)
 #endif
         {
             reset(len, uninitialized, base);
@@ -387,7 +387,7 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
          *
          * @param layout    The layout to use, either [ROW_MAJOR](@ref MArray::ROW_MAJOR) or [COLUMN_MAJOR](@ref MArray::COLUMN_MAJOR).
          */
-        marray(const array_1d<len_type>& len, index_base base, layout layout)
+        explicit marray(const array_1d<len_type>& len, index_base base, layout layout)
         {
             reset(len, base, layout);
         }
@@ -406,7 +406,7 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
          *
          * @param layout    The layout to use, either [ROW_MAJOR](@ref MArray::ROW_MAJOR) or [COLUMN_MAJOR](@ref MArray::COLUMN_MAJOR).
          */
-        marray(const array_1d<len_type>& len, const Type& val, index_base base, layout layout)
+        explicit marray(const array_1d<len_type>& len, const Type& val, index_base base, layout layout)
         {
             reset(len, val, base, layout);
         }
@@ -427,9 +427,9 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
          * @param layout    The layout to use, either [ROW_MAJOR](@ref MArray::ROW_MAJOR) or [COLUMN_MAJOR](@ref MArray::COLUMN_MAJOR).
          */
 #if MARRAY_DOXYGEN
-        marray(const array_1d<len_type>& len, uninitialized_t uninitialized, base base, layout layout)
+        explicit marray(const array_1d<len_type>& len, uninitialized_t uninitialized, base base, layout layout)
 #else
-        marray(const array_1d<len_type>& len, uninitialized_t, index_base base, layout layout)
+        explicit marray(const array_1d<len_type>& len, uninitialized_t, index_base base, layout layout)
 #endif
         {
             reset(len, uninitialized, base, layout);
@@ -445,9 +445,9 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
          * @param fortran    The token [FORTRAN](@ref MArray::FORTRAN).
          */
 #if MARRAY_DOXYGEN
-        marray(const array_1d<len_type>& len, fortran_t fortran)
+        explicit marray(const array_1d<len_type>& len, fortran_t fortran)
 #else
-        marray(const array_1d<len_type>& len, fortran_t)
+        explicit marray(const array_1d<len_type>& len, fortran_t)
 #endif
         {
             reset(len, FORTRAN);
@@ -465,9 +465,9 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
          * @param fortran    The token [FORTRAN](@ref MArray::FORTRAN).
          */
 #if MARRAY_DOXYGEN
-        marray(const array_1d<len_type>& len, const Type& val, fortran_t fortran)
+        explicit marray(const array_1d<len_type>& len, const Type& val, fortran_t fortran)
 #else
-        marray(const array_1d<len_type>& len, const Type& val, fortran_t)
+        explicit marray(const array_1d<len_type>& len, const Type& val, fortran_t)
 #endif
         {
             reset(len, val, FORTRAN);
@@ -486,9 +486,9 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
          * @param fortran    The token [FORTRAN](@ref MArray::FORTRAN).
          */
 #if MARRAY_DOXYGEN
-        marray(const array_1d<len_type>& len, uninitialized_t uninitialized, fortran_t fortran)
+        explicit marray(const array_1d<len_type>& len, uninitialized_t uninitialized, fortran_t fortran)
 #else
-        marray(const array_1d<len_type>& len, uninitialized_t, fortran_t)
+        explicit marray(const array_1d<len_type>& len, uninitialized_t, fortran_t)
 #endif
         {
             reset(len, uninitialized, FORTRAN);

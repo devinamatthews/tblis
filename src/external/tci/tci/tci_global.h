@@ -45,6 +45,7 @@
 
 #include <stdint.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 #define TCI_INLINE inline

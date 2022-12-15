@@ -228,7 +228,7 @@ struct vector_traits<double>
     std::enable_if_t<std::is_same_v<T,uint8_t>, uint8x16_t>
     convert(float64x2_t v)
     {
-        int8x8_t i8 = vmovn_u16(convert<uint16_t>(v));
+        uint8x8_t i8 = vmovn_u16(convert<uint16_t>(v));
         return vcombine_u8(i8, i8);
     }
 
@@ -584,7 +584,12 @@ struct vector_traits<U, std::enable_if_t<std::is_same_v<U,int8_t> ||
                      std::is_same_v<T,uint8_t>, std::conditional_t<std::is_signed_v<T>,int8x16_t,uint8x16_t>>
     convert(vector_type v)
     {
-        return v;
+        if constexpr (std::is_signed_v<T> && !std::is_signed_v<U>)
+            return vreinterpretq_s8_u8(v);
+        else if constexpr (!std::is_signed_v<T> && std::is_signed_v<U>)
+            return vreinterpretq_u8_s8(v);
+        else
+            return v;
     }
 
     template <typename T> static
@@ -593,9 +598,21 @@ struct vector_traits<U, std::enable_if_t<std::is_same_v<U,int8_t> ||
     convert(vector_type v)
     {
         if constexpr (std::is_signed_v<U>)
-            return vmovl_s8(vget_low_s8(v));
+        {
+            auto ret = vmovl_s8(vget_low_s8(v));
+            if constexpr (std::is_signed_v<T>)
+                return ret;
+            else
+                return vreinterpretq_u16_s16(ret);
+        }
         else
-            return vmovl_u8(vget_low_u8(v));
+        {
+            auto ret = vmovl_u8(vget_low_u8(v));
+            if constexpr (std::is_signed_v<T>)
+                return vreinterpretq_s16_u16(ret);
+            else
+                return ret;
+        }
     }
 
     template <typename T> static
@@ -604,9 +621,21 @@ struct vector_traits<U, std::enable_if_t<std::is_same_v<U,int8_t> ||
     convert(vector_type v)
     {
         if constexpr (std::is_signed_v<U>)
-            return vmovl_s16(vget_low_s16(convert<int16_t>(v)));
+        {
+            auto ret = vmovl_s16(vget_low_s16(convert<int16_t>(v)));
+            if constexpr (std::is_signed_v<T>)
+                return ret;
+            else
+                return vreinterpretq_u32_s32(ret);
+        }
         else
-            return vmovl_u16(vget_low_u16(convert<uint16_t>(v)));
+        {
+            auto ret = vmovl_u16(vget_low_u16(convert<uint16_t>(v)));
+            if constexpr (std::is_signed_v<T>)
+                return vreinterpretq_s32_u32(ret);
+            else
+                return ret;
+        }
     }
 
     template <typename T> static
@@ -615,9 +644,21 @@ struct vector_traits<U, std::enable_if_t<std::is_same_v<U,int8_t> ||
     convert(vector_type v)
     {
         if constexpr (std::is_signed_v<U>)
-            return vmovl_s32(vget_low_s32(convert<int32_t>(v)));
+        {
+            auto ret = vmovl_s32(vget_low_s32(convert<int32_t>(v)));
+            if constexpr (std::is_signed_v<T>)
+                return ret;
+            else
+                return vreinterpretq_u64_s64(ret);
+        }
         else
-            return vmovl_u32(vget_low_u32(convert<uint32_t>(v)));
+        {
+            auto ret = vmovl_u32(vget_low_u32(convert<uint32_t>(v)));
+            if constexpr (std::is_signed_v<T>)
+                return vreinterpretq_s64_u64(ret);
+            else
+                return ret;
+        }
     }
 
     template <int Width, bool Aligned> static
@@ -974,8 +1015,12 @@ struct vector_traits<U, std::enable_if_t<std::is_same_v<U,int16_t> ||
         if constexpr (std::is_signed_v<U>)
             i8 = vmovn_s16(v);
         else
-            i8 = vmovn_u16(v);
-        return vcombine_s8(i8, i8);
+            i8 = vreinterpret_s8_u8(vmovn_u16(v));
+        auto ret = vcombine_s8(i8, i8);
+        if constexpr (std::is_signed_v<T>)
+            return ret;
+        else
+            return vreinterpretq_u8_s8(ret);
     }
 
     template <typename T> static
@@ -983,7 +1028,12 @@ struct vector_traits<U, std::enable_if_t<std::is_same_v<U,int16_t> ||
                      std::is_same_v<T,uint16_t>, std::conditional_t<std::is_signed_v<T>,int16x8_t,uint16x8_t>>
     convert(vector_type v)
     {
-        return v;
+        if constexpr (std::is_signed_v<T> && !std::is_signed_v<U>)
+            return vreinterpretq_s16_u16(v);
+        else if constexpr (!std::is_signed_v<T> && std::is_signed_v<U>)
+            return vreinterpretq_u16_s16(v);
+        else
+            return v;
     }
 
     template <typename T> static
@@ -992,9 +1042,21 @@ struct vector_traits<U, std::enable_if_t<std::is_same_v<U,int16_t> ||
     convert(vector_type v)
     {
         if constexpr (std::is_signed_v<U>)
-            return vmovl_s16(vget_low_s16(v));
+        {
+            auto ret = vmovl_s16(vget_low_s16(v));
+            if constexpr (std::is_signed_v<T>)
+                return ret;
+            else
+                return vreinterpretq_u32_s32(ret);
+        }
         else
-            return vmovl_u16(vget_low_u16(v));
+        {
+            auto ret = vmovl_u16(vget_low_u16(v));
+            if constexpr (std::is_signed_v<T>)
+                return vreinterpretq_s32_u32(ret);
+            else
+                return ret;
+        }
     }
 
     template <typename T> static
@@ -1003,9 +1065,21 @@ struct vector_traits<U, std::enable_if_t<std::is_same_v<U,int16_t> ||
     convert(vector_type v)
     {
         if constexpr (std::is_signed_v<U>)
-            return vmovl_s32(vget_low_s32(convert<int32_t>(v)));
+        {
+            auto ret = vmovl_s32(vget_low_s32(convert<int32_t>(v)));
+            if constexpr (std::is_signed_v<T>)
+                return ret;
+            else
+                return vreinterpretq_u64_s64(ret);
+        }
         else
-            return vmovl_u32(vget_low_u32(convert<uint32_t>(v)));
+        {
+            auto ret = vmovl_u32(vget_low_u32(convert<uint32_t>(v)));
+            if constexpr (std::is_signed_v<T>)
+                return vreinterpretq_s64_u64(ret);
+            else
+                return ret;
+        }
     }
 
     template <int Width, bool Aligned> static
@@ -1282,8 +1356,12 @@ struct vector_traits<U, std::enable_if_t<std::is_same_v<U,int32_t> ||
         if constexpr (std::is_signed_v<U>)
             i8 = vmovn_s16(convert<int16_t>(v));
         else
-            i8 = vmovn_u16(convert<uint16_t>(v));
-        return vcombine_s8(i8, i8);
+            i8 = vreinterpret_s8_u8(vmovn_u16(convert<uint16_t>(v)));
+        auto ret = vcombine_s8(i8, i8);
+        if constexpr (std::is_signed_v<T>)
+            return ret;
+        else
+            return vreinterpretq_u8_s8(ret);
     }
 
     template <typename T> static
@@ -1295,8 +1373,12 @@ struct vector_traits<U, std::enable_if_t<std::is_same_v<U,int32_t> ||
         if constexpr (std::is_signed_v<U>)
             i16 = vmovn_s32(v);
         else
-            i16 = vmovn_u32(v);
-        return vcombine_s16(i16, i16);
+            i16 = vreinterpret_s16_u16(vmovn_u32(v));
+        auto ret = vcombine_s16(i16, i16);
+        if constexpr (std::is_signed_v<T>)
+            return ret;
+        else
+            return vreinterpretq_u16_s16(ret);
     }
 
     template <typename T> static
@@ -1304,7 +1386,12 @@ struct vector_traits<U, std::enable_if_t<std::is_same_v<U,int32_t> ||
                      std::is_same_v<T,uint32_t>, std::conditional_t<std::is_signed_v<T>,int32x4_t,uint32x4_t>>
     convert(vector_type v)
     {
-        return v;
+        if constexpr (std::is_signed_v<T> && !std::is_signed_v<U>)
+            return vreinterpretq_s32_u32(v);
+        else if constexpr (!std::is_signed_v<T> && std::is_signed_v<U>)
+            return vreinterpretq_u32_s32(v);
+        else
+            return v;
     }
 
     template <typename T> static
@@ -1313,9 +1400,21 @@ struct vector_traits<U, std::enable_if_t<std::is_same_v<U,int32_t> ||
     convert(vector_type v)
     {
         if constexpr (std::is_signed_v<U>)
-            return vmovl_s32(vget_low_s32(v));
+        {
+            auto ret = vmovl_s32(vget_low_s32(v));
+            if constexpr (std::is_signed_v<T>)
+                return ret;
+            else
+                return vreinterpretq_u64_s64(ret);
+        }
         else
-            return vmovl_u32(vget_low_u32(v));
+        {
+            auto ret = vmovl_u32(vget_low_u32(v));
+            if constexpr (std::is_signed_v<T>)
+                return vreinterpretq_s64_u64(ret);
+            else
+                return ret;
+        }
     }
 
     template <int Width, bool Aligned> static
@@ -1539,8 +1638,12 @@ struct vector_traits<U, std::enable_if_t<std::is_same_v<U,int64_t> ||
         if constexpr (std::is_signed_v<U>)
             i8 = vmovn_s16(convert<int16_t>(v));
         else
-            i8 = vmovn_u16(convert<uint16_t>(v));
-        return vcombine_s8(i8, i8);
+            i8 = vreinterpret_s8_u8(vmovn_u16(convert<uint16_t>(v)));
+        auto ret = vcombine_s8(i8, i8);
+        if constexpr (std::is_signed_v<T>)
+            return ret;
+        else
+            return vreinterpretq_u8_s8(ret);
     }
 
     template <typename T> static
@@ -1552,8 +1655,12 @@ struct vector_traits<U, std::enable_if_t<std::is_same_v<U,int64_t> ||
         if constexpr (std::is_signed_v<U>)
             i16 = vmovn_s32(convert<int32_t>(v));
         else
-            i16 = vmovn_u32(convert<uint32_t>(v));
-        return vcombine_s16(i16, i16);
+            i16 = vreinterpret_s16_u16(vmovn_u32(convert<uint32_t>(v)));
+        auto ret = vcombine_s16(i16, i16);
+        if constexpr (std::is_signed_v<T>)
+            return ret;
+        else
+            return vreinterpretq_u16_s16(ret);
     }
 
     template <typename T> static
@@ -1565,8 +1672,12 @@ struct vector_traits<U, std::enable_if_t<std::is_same_v<U,int64_t> ||
         if constexpr (std::is_signed_v<U>)
             i32 = vmovn_s64(v);
         else
-            i32 = vmovn_u64(v);
-        return vcombine_s32(i32, i32);
+            i32 = vreinterpret_s32_u32(vmovn_u64(v));
+        auto ret = vcombine_s32(i32, i32);
+        if constexpr (std::is_signed_v<T>)
+            return ret;
+        else
+            return vreinterpretq_u32_s32(ret);
     }
 
     template <typename T> static
@@ -1574,7 +1685,12 @@ struct vector_traits<U, std::enable_if_t<std::is_same_v<U,int64_t> ||
                      std::is_same_v<T,uint64_t>, std::conditional_t<std::is_signed_v<T>,int64x2_t,uint64x2_t>>
     convert(vector_type v)
     {
-        return v;
+        if constexpr (std::is_signed_v<T> && !std::is_signed_v<U>)
+            return vreinterpretq_s64_u64(v);
+        else if constexpr (!std::is_signed_v<T> && std::is_signed_v<U>)
+            return vreinterpretq_u64_s64(v);
+        else
+            return v;
     }
 
     template <int Width, bool Aligned> static

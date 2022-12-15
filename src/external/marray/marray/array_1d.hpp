@@ -97,6 +97,21 @@ template <typename T>
 class array_1d
 {
     protected:
+        struct len_wrapper
+        {
+            T len;
+
+            template <typename U, typename=std::enable_if_t<std::is_convertible_v<U,T>>>
+            len_wrapper(const U& len) : len{(T)len} {}
+
+            static auto extract(std::initializer_list<len_wrapper> il)
+            {
+                short_vector<T,MARRAY_OPT_NDIM> v;
+                for (auto& lw : il) v.push_back(lw.len);
+                return v;
+            }
+        };
+
         struct adaptor_base
         {
             len_type len;
@@ -160,10 +175,8 @@ class array_1d
         array_1d(array_1d&& other)
         : adaptor_(other.adaptor_.move(reinterpret_cast<adaptor_base&>(raw_adaptor_))) {}
 
-        template <typename... Args, typename =
-            std::enable_if_t<detail::are_convertible<T,Args...>::value>>
-        array_1d(Args&&... args)
-        : adaptor_(adapt(short_vector<T,MARRAY_OPT_NDIM>{(T)args...})) {}
+        array_1d(std::initializer_list<len_wrapper> il)
+        : adaptor_(adapt(len_wrapper::extract(il))) {}
 
         template <typename U, typename=detail::enable_if_1d_container_of_t<U,T>>
         array_1d(const U& data)

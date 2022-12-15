@@ -256,26 +256,21 @@ struct doublet<T&,U&>
 };
 
 template <class T, class U>
-class coiterator : public std::iterator<std::random_access_iterator_tag,
-//tuple<typename iterator_traits<T>::value_type,
-//      typename iterator_traits<U>::value_type>,
-//ptrdiff_t,
-//tuple<typename iterator_traits<T>::pointer,
-//      typename iterator_traits<U>::pointer>,
-//tuple<typename iterator_traits<T>::reference,
-//      typename iterator_traits<U>::reference>>
-doublet<typename std::iterator_traits<T>::value_type,
-        typename std::iterator_traits<U>::value_type>,
-ptrdiff_t,
-doublet<typename std::iterator_traits<T>::pointer,
-        typename std::iterator_traits<U>::pointer>,
-doublet<typename std::iterator_traits<T>::reference,
-        typename std::iterator_traits<U>::reference>>
+class coiterator
 {
     T it_T_;
     U it_U_;
 
     public:
+        typedef doublet<typename std::iterator_traits<T>::value_type,
+                        typename std::iterator_traits<U>::value_type> value_type;
+        typedef ptrdiff_t difference_type;
+        typedef doublet<typename std::iterator_traits<T>::pointer,
+                        typename std::iterator_traits<U>::pointer> pointer;
+        typedef doublet<typename std::iterator_traits<T>::reference,
+                        typename std::iterator_traits<U>::reference> reference;
+        typedef std::random_access_iterator_tag iterator_category;
+
         coiterator(const T& it_T, const U& it_U) : it_T_(it_T), it_U_(it_U) {}
 
         bool operator==(const coiterator& other) const

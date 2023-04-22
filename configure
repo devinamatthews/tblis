@@ -6706,8 +6706,8 @@ if test x"$vendor_string" = x; then
     as_fn_error $? "Unable to determine compiler vendor." "$LINENO" 5
 fi
 
-cc_vendor=`echo $vendor_string | $EGREP -oi 'icc|gcc|clang|emcc|pnacl|IBM|gnu-cc' | tr 'A-Z' 'a-z' | { read first rest ; echo $first ; }`
-if test x"$cc_vendor" = "xgnu-cc"; then
+cc_vendor=`echo $vendor_string | $EGREP -oi 'icc|gcc|clang|emcc|pnacl|IBM|gnu-cc|Free Software Foundation' | tr 'A-Z' 'a-z' | { read first rest ; echo $first ; }`
+if test x"$cc_vendor" = "xgnu-cc" || test x"$cc_vendor" = "xfree"; then
     cc_vendor=gcc
 fi
 if test x"$cc_vendor" = x; then
@@ -21261,5 +21261,3 @@ printf "%s\n" "$as_me: running $SHELL $ac_sub_configure $ac_sub_configure_args -
     cd "$ac_popdir"
   done
 fi
-
-

@@ -503,19 +503,14 @@ struct vector_traits<std::complex<float>>
 
     static __m128 div(__m128 a, __m128 b)
     {
-        __m128 bsqr = _mm_mul_ps(b, b);
-        bsqr = _mm_hadd_ps(bsqr, bsqr);
-        bsqr = _mm_shuffle_ps(bsqr, bsqr, _MM_SHUFFLE(3,1,2,0)); // bsqr = (|b0|^2, |b0|^2, |b1|^2, |b1|^2)
-
-        __m128 ashuf = _mm_shuffle_ps(a, a, _MM_SHUFFLE(2,3,0,1));
-        __m128 breal = _mm_moveldup_ps(b);
-        __m128 bimag = _mm_movehdup_ps(b);
-        __m128 tmp1 = _mm_mul_ps(    a, breal); // tmp1 = ( ar0*br0,  ai0*br0,  ar1*br1,  ai1*br1)
-        __m128 tmp2 = _mm_mul_ps(ashuf, bimag);
-        tmp2 = _mm_xor_ps(tmp2, _mm_set1_ps(-0.0f)); // tmp2 = (-ai0*bi0, -ar0*bi0, -ai1*bi1, -ar1*bi1)
-        __m128 abconj = _mm_addsub_ps(tmp1, tmp2);
-
-        return _mm_div_ps(abconj, bsqr);
+        std::complex<float> a0{(float)a[0], (float)a[1]};
+        std::complex<float> a1{(float)a[2], (float)a[3]};
+        std::complex<float> b0{(float)b[0], (float)b[1]};
+        std::complex<float> b1{(float)b[2], (float)b[3]};
+        std::complex<float> c0 = a0 / b0;
+        std::complex<float> c1 = a1 / b1;
+        return _mm_setr_ps(c0.real(), c0.imag(),
+                           c1.real(), c1.imag());
     }
 
     static __m128 pow(__m128 a, __m128 b)
@@ -527,7 +522,7 @@ struct vector_traits<std::complex<float>>
         std::complex<float> c0 = std::pow(a0, b0);
         std::complex<float> c1 = std::pow(a1, b1);
         return _mm_setr_ps(c0.real(), c0.imag(),
-                          c1.real(), c1.imag());
+                           c1.real(), c1.imag());
     }
 
     static __m128 negate(__m128 a)
@@ -542,7 +537,7 @@ struct vector_traits<std::complex<float>>
         std::complex<float> b0 = std::exp(a0);
         std::complex<float> b1 = std::exp(a1);
         return _mm_setr_ps(b0.real(), b0.imag(),
-                          b1.real(), b1.imag());
+                           b1.real(), b1.imag());
     }
 
     static __m128 sqrt(__m128 a)
@@ -552,13 +547,13 @@ struct vector_traits<std::complex<float>>
         std::complex<float> b0 = std::sqrt(a0);
         std::complex<float> b1 = std::sqrt(a1);
         return _mm_setr_ps(b0.real(), b0.imag(),
-                          b1.real(), b1.imag());
+                           b1.real(), b1.imag());
     }
 };
 
 template <typename U>
 struct vector_traits<U, std::enable_if_t<std::is_same<U,int8_t>::value ||
-                                            std::is_same<U,uint8_t>::value>>
+                                         std::is_same<U,uint8_t>::value>>
 {
     static constexpr int vector_width = 16;
     static constexpr size_t alignment = 16;

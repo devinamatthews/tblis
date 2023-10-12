@@ -664,19 +664,22 @@ struct vector_traits<std::complex<float>>
 
     static __m256 div(__m256 a, __m256 b)
     {
-        __m256 bsqr = _mm256_mul_ps(b, b);
-        bsqr = _mm256_hadd_ps(bsqr, bsqr);
-        bsqr = _mm256_permute_ps(bsqr, _MM_SHUFFLE(3,1,2,0)); // bsqr = (|b0|^2, |b0|^2, |b1|^2, |b1|^2)
-
-        __m256 ashuf = _mm256_permute_ps(a, _MM_SHUFFLE(2,3,0,1));
-        __m256 breal = _mm256_moveldup_ps(b);
-        __m256 bimag = _mm256_movehdup_ps(b);
-        __m256 tmp1 = _mm256_mul_ps(    a, breal); // tmp1 = ( ar0*br0,  ai0*br0,  ar1*br1,  ai1*br1)
-        __m256 tmp2 = _mm256_mul_ps(ashuf, bimag);
-        tmp2 = _mm256_xor_ps(tmp2, _mm256_set1_ps(-0.0f)); // tmp2 = (-ai0*bi0, -ar0*bi0, -ai1*bi1, -ar1*bi1)
-        __m256 abconj = _mm256_addsub_ps(tmp1, tmp2);
-
-        return _mm256_div_ps(abconj, bsqr);
+        std::complex<float> a0((float)a[0], (float)a[1]);
+        std::complex<float> a1((float)a[2], (float)a[3]);
+        std::complex<float> a2((float)a[4], (float)a[5]);
+        std::complex<float> a3((float)a[6], (float)a[7]);
+        std::complex<float> b0((float)b[0], (float)b[1]);
+        std::complex<float> b1((float)b[2], (float)b[3]);
+        std::complex<float> b2((float)b[4], (float)b[5]);
+        std::complex<float> b3((float)b[6], (float)b[7]);
+        std::complex<float> c0 = a0 / b0;
+        std::complex<float> c1 = a1 / b1;
+        std::complex<float> c2 = a2 / b2;
+        std::complex<float> c3 = a3 / b3;
+        return _mm256_setr_ps(c0.real(), c0.imag(),
+                              c1.real(), c1.imag(),
+                              c2.real(), c2.imag(),
+                              c3.real(), c3.imag());
     }
 
     static __m256 pow(__m256 a, __m256 b)
@@ -905,18 +908,14 @@ struct vector_traits<std::complex<double>>
 
     static __m256d div(__m256d a, __m256d b)
     {
-        __m256d bsqr = _mm256_mul_pd(b, b);
-        bsqr = _mm256_hadd_pd(bsqr, bsqr); // bsqr = (|b0|^2, |b0|^2, |b1|^2, |b1|^2)
-
-        __m256d ashuf = _mm256_shuffle_pd(a, a, 0x5);
-        __m256d breal = _mm256_shuffle_pd(b, b, 0x0);
-        __m256d bimag = _mm256_shuffle_pd(b, b, 0xf);
-        __m256d tmp1 = _mm256_mul_pd(    a, breal); // tmp1 = ( ar0*br0,  ai0*br0,  ar1*br1,  ai1*br1)
-        __m256d tmp2 = _mm256_mul_pd(ashuf, bimag);
-        tmp2 = _mm256_xor_pd(tmp2, _mm256_set1_pd(-0.0)); // tmp2 = (-ai0*bi0, -ar0*bi0, -ai1*bi1, -ar1*bi1)
-        __m256d abconj = _mm256_addsub_pd(tmp1, tmp2);
-
-        return _mm256_div_pd(abconj, bsqr);
+        std::complex<double> a0((double)a[0], (double)a[1]);
+        std::complex<double> a1((double)a[2], (double)a[3]);
+        std::complex<double> b0((double)b[0], (double)b[1]);
+        std::complex<double> b1((double)b[2], (double)b[3]);
+        std::complex<double> c0 = a0 / b0;
+        std::complex<double> c1 = a1 / b1;
+        return _mm256_setr_pd(c0.real(), c0.imag(),
+                              c1.real(), c1.imag());
     }
 
     static __m256d pow(__m256d a, __m256d b)

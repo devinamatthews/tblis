@@ -809,17 +809,38 @@ struct vector_traits<std::complex<float>>
 
     static __m512 div(__m512 a, __m512 b)
     {
-        __m512 bsqr = _mm512_mul_ps(b, b);
-        bsqr = _mm512_add_ps(bsqr, _mm512_permute_ps(bsqr, _MM_PERM_CDAB));
-        // bsqr = (|b0|^2, |b0|^2, |b1|^2, |b1|^2)
-
-        __m512 ashuf = _mm512_permute_ps(a, _MM_PERM_CDAB);
-        __m512 breal = _mm512_moveldup_ps(b);
-        __m512 bimag = _mm512_movehdup_ps(b);
-        __m512 tmp = _mm512_mul_ps(ashuf, bimag);          // tmp = (ai0*bi0, ar0*bi0, ai1*bi1, ar1*bi1)
-        __m512 abconj = _mm512_fmsubadd_ps(a, breal, tmp); //       (ar0*br0, ai0*br0, ar1*br1, ai1*br1)
-
-        return _mm512_div_ps(abconj, bsqr);
+        std::complex<float> a0((float)a[ 0], (float)a[ 1]);
+        std::complex<float> a1((float)a[ 2], (float)a[ 3]);
+        std::complex<float> a2((float)a[ 4], (float)a[ 5]);
+        std::complex<float> a3((float)a[ 6], (float)a[ 7]);
+        std::complex<float> a4((float)a[ 8], (float)a[ 9]);
+        std::complex<float> a5((float)a[10], (float)a[11]);
+        std::complex<float> a6((float)a[12], (float)a[13]);
+        std::complex<float> a7((float)a[14], (float)a[15]);
+        std::complex<float> b0((float)b[ 0], (float)b[ 1]);
+        std::complex<float> b1((float)b[ 2], (float)b[ 3]);
+        std::complex<float> b2((float)b[ 4], (float)b[ 5]);
+        std::complex<float> b3((float)b[ 6], (float)b[ 7]);
+        std::complex<float> b4((float)b[ 8], (float)b[ 9]);
+        std::complex<float> b5((float)b[10], (float)b[11]);
+        std::complex<float> b6((float)b[12], (float)b[13]);
+        std::complex<float> b7((float)b[14], (float)b[15]);
+        std::complex<float> c0 = a0 / b0;
+        std::complex<float> c1 = a1 / b1;
+        std::complex<float> c2 = a2 / b2;
+        std::complex<float> c3 = a3 / b3;
+        std::complex<float> c4 = a4 / b4;
+        std::complex<float> c5 = a5 / b5;
+        std::complex<float> c6 = a6 / b6;
+        std::complex<float> c7 = a7 / b7;
+        return _mm512_setr_ps(c0.real(), c0.imag(),
+                              c1.real(), c1.imag(),
+                              c2.real(), c2.imag(),
+                              c3.real(), c3.imag(),
+                              c4.real(), c4.imag(),
+                              c5.real(), c5.imag(),
+                              c6.real(), c6.imag(),
+                              c7.real(), c7.imag());
     }
 
     static __m512 pow(__m512 a, __m512 b)
@@ -1127,17 +1148,22 @@ struct vector_traits<std::complex<double>>
 
     static __m512d div(__m512d a, __m512d b)
     {
-        __m512d bsqr = _mm512_mul_pd(b, b);
-        bsqr = _mm512_add_pd(bsqr, _mm512_shuffle_pd(bsqr, bsqr, 0x55));
-        // bsqr = (|b0|^2, |b0|^2, |b1|^2, |b1|^2)
-
-        __m512d ashuf = _mm512_shuffle_pd(a, a, 0x55);
-        __m512d breal = _mm512_shuffle_pd(b, b, 0x00);
-        __m512d bimag = _mm512_shuffle_pd(b, b, 0xff);
-        __m512d tmp = _mm512_mul_pd(ashuf, bimag);          // tmp = (ai0*bi0, ar0*bi0, ai1*bi1, ar1*bi1)
-        __m512d abconj = _mm512_fmsubadd_pd(a, breal, tmp); //       (ar0*br0, ai0*br0, ar1*br1, ai1*br1)
-
-        return _mm512_div_pd(abconj, bsqr);
+        std::complex<double> a0((double)a[0], (double)a[1]);
+        std::complex<double> a1((double)a[2], (double)a[3]);
+        std::complex<double> a2((double)a[4], (double)a[5]);
+        std::complex<double> a3((double)a[6], (double)a[7]);
+        std::complex<double> b0((double)b[0], (double)b[1]);
+        std::complex<double> b1((double)b[2], (double)b[3]);
+        std::complex<double> b2((double)b[4], (double)b[5]);
+        std::complex<double> b3((double)b[6], (double)b[7]);
+        std::complex<double> c0 = a0 / b0;
+        std::complex<double> c1 = a1 / b1;
+        std::complex<double> c2 = a2 / b2;
+        std::complex<double> c3 = a3 / b3;
+        return _mm512_setr_pd(c0.real(), c0.imag(),
+                              c1.real(), c1.imag(),
+                              c2.real(), c2.imag(),
+                              c3.real(), c3.imag());
     }
 
     static __m512d pow(__m512d a, __m512d b)

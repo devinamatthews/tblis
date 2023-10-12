@@ -1,6 +1,7 @@
 #ifndef MARRAY_VECTOR_AVX_HPP
 #define MARRAY_VECTOR_AVX_HPP
 
+#include <immintrin.h>
 #include <x86intrin.h>
 
 #include "vector.hpp"
@@ -259,6 +260,23 @@ struct vector_traits<float>
                               std::exp((float)a[7]));
     }
 
+    static __m256 log(__m256 a)
+    {
+        return _mm256_setr_ps(std::log((float)a[0]),
+                              std::log((float)a[1]),
+                              std::log((float)a[2]),
+                              std::log((float)a[3]),
+                              std::log((float)a[4]),
+                              std::log((float)a[5]),
+                              std::log((float)a[6]),
+                              std::log((float)a[7]));
+    }
+
+    static __m256 abs(__m256 a)
+    {
+        return _mm256_and_ps(a, _mm256_castsi256_ps(_mm256_set1_epi32(0x7FFFFFFF)));
+    }
+
     static __m256 sqrt(__m256 a)
     {
         return _mm256_sqrt_ps(a);
@@ -467,6 +485,19 @@ struct vector_traits<double>
                               std::exp((double)a[1]),
                               std::exp((double)a[2]),
                               std::exp((double)a[3]));
+    }
+
+    static __m256d log(__m256d a)
+    {
+        return _mm256_setr_pd(std::log((double)a[0]),
+                              std::log((double)a[1]),
+                              std::log((double)a[2]),
+                              std::log((double)a[3]));
+    }
+
+    static __m256d abs(__m256d a)
+    {
+        return _mm256_and_pd(a, _mm256_castsi256_pd(_mm256_set1_epi64x(0x7FFFFFFFFFFFFFFFull)));
     }
 
     static __m256d sqrt(__m256d a)

@@ -16,6 +16,126 @@
 namespace MArray
 {
 
+namespace detail
+{
+
+inline stride_vector strides(const array_1d<len_type>& len, layout layout = DEFAULT_LAYOUT)
+{
+    len_vector len_;
+    len.slurp(len_);
+
+    MARRAY_ASSERT(len_.size() > 0);
+
+    int ndim = len_.size();
+    stride_vector stride(ndim);
+
+    if (layout == ROW_MAJOR)
+    {
+        stride[ndim-1] = 1;
+        for (auto i : reversed_range(ndim-1))
+            stride[i] = stride[i+1]*len_[i+1];
+    }
+    else
+    {
+        stride[0] = 1;
+        for (auto i : range(1,ndim))
+            stride[i] = stride[i-1]*len_[i-1];
+    }
+
+    return stride;
+}
+
+template <typename Type, int NDim>
+struct layout_like : protected array_1d<stride_type>
+{
+    struct no_layout : layout { constexpr no_layout() : layout(-1, construct{}) {} };
+
+    layout layout_ = no_layout{};
+
+    layout_like(layout layout) : layout_(layout) {}
+
+    using array_1d<stride_type>::array_1d;
+    using array_1d<stride_type>::size;
+
+    void stride(const detail::array_type_t<len_type, NDim>& len,
+                detail::array_type_t<stride_type, NDim>& strides) const
+    {
+        if (*this)
+        {
+            slurp(strides);
+        }
+        else
+        {
+            detail::assign(strides, detail::strides(len, layout_));
+        }
+    }
+
+    detail::array_type_t<stride_type, NDim> stride(const detail::array_type_t<len_type, NDim>& len) const
+    {
+        detail::array_type_t<stride_type, NDim> strides;
+        stride(len, strides);
+        return strides;
+    }
+
+    template <typename Type_, int NDim_>
+    operator layout_like<Type_, NDim_>&() const
+    {
+        return reinterpret_cast<const layout_like<Type_, NDim_>&>(*this);
+    }
+
+    explicit operator bool() const
+    {
+        return layout_ == no_layout{};
+    }
+};
+
+template <typename Type, int NDim>
+struct base_like : protected array_1d<len_type>
+{
+    struct no_base : index_base { constexpr no_base() : index_base(-1, construct{}) {} };
+
+    index_base base_ = no_base{};
+
+    base_like(index_base base) : base_(base) {}
+
+    using array_1d<len_type>::array_1d;
+    using array_1d<len_type>::size;
+
+    void base(const detail::array_type_t<len_type, NDim>& len,
+              detail::array_type_t<len_type, NDim>& base) const
+    {
+        if (*this)
+        {
+            slurp(base);
+        }
+        else
+        {
+            if constexpr (NDim == DYNAMIC) base.resize(len.size());
+            std::fill(base.begin(), base.end(), base_ == BASE_ZERO ? 0 : 1);
+        }
+    }
+
+    detail::array_type_t<len_type, NDim> base(const detail::array_type_t<len_type, NDim>& len) const
+    {
+        detail::array_type_t<len_type, NDim> bases;
+        base(len, bases);
+        return bases;
+    }
+
+    template <typename Type_, int NDim_>
+    operator base_like<Type_, NDim_>&() const
+    {
+        return reinterpret_cast<const base_like<Type_, NDim_>&>(*this);
+    }
+
+    explicit operator bool() const
+    {
+        return base_ == no_base{};
+    }
+};
+
+}
+
 template <typename Type, int NDim, typename Derived, bool Owner>
 class marray_base
 {
@@ -65,67 +185,8 @@ class marray_base
         typedef ctype* cptr;
 
     protected:
-        struct layout_like : protected array_1d<stride_type>
-        {
-            struct no_layout : layout { constexpr no_layout() : layout(-1, construct{}) {} };
-
-            layout layout_ = no_layout{};
-
-            layout_like(layout layout) : layout_(layout) {}
-
-            using array_1d<stride_type>::array_1d;
-            using array_1d<stride_type>::size;
-
-            void stride(const detail::array_type_t<len_type, NDim>& len,
-                        detail::array_type_t<stride_type, NDim>& strides) const
-            {
-                if (*this)
-                {
-                    slurp(strides);
-                }
-                else
-                {
-                    detail::assign(strides, marray_base::strides(len, layout_));
-                }
-            }
-
-            explicit operator bool() const
-            {
-                return layout_ == no_layout{};
-            }
-        };
-
-        struct base_like : protected array_1d<len_type>
-        {
-            struct no_base : index_base { constexpr no_base() : index_base(-1, construct{}) {} };
-
-            index_base base_ = no_base{};
-
-            base_like(index_base base) : base_(base) {}
-
-            using array_1d<len_type>::array_1d;
-            using array_1d<len_type>::size;
-
-            void base(const detail::array_type_t<len_type, NDim>& len,
-                      detail::array_type_t<len_type, NDim>& base) const
-            {
-                if (*this)
-                {
-                    slurp(base);
-                }
-                else
-                {
-                    if constexpr (NDim == DYNAMIC) base.resize(len.size());
-                    std::fill(base.begin(), base.end(), base_ == BASE_ZERO ? 0 : 1);
-                }
-            }
-
-            explicit operator bool() const
-            {
-                return base_ == no_base{};
-            }
-        };
-
+        using layout_like = detail::layout_like<Type, NDim>;
+        using base_like = detail::base_like<Type, NDim>;
         detail::array_type_t<len_type, NDim> base_ = {};
         detail::array_type_t<len_type, NDim> len_ = {};
         detail::array_type_t<stride_type, NDim> stride_ = {};
@@ -564,28 +625,7 @@ class marray_base
          */
         static stride_vector strides(const array_1d<len_type>& len, layout layout = DEFAULT_LAYOUT)
         {
-            len_vector len_;
-            len.slurp(len_);
-
-            MARRAY_ASSERT(len_.size() > 0);
-
-            int ndim = len_.size();
-            stride_vector stride(ndim);
-
-            if (layout == ROW_MAJOR)
-            {
-                stride[ndim-1] = 1;
-                for (auto i : reversed_range(ndim-1))
-                    stride[i] = stride[i+1]*len_[i+1];
-            }
-            else
-            {
-                stride[0] = 1;
-                for (auto i : range(1,ndim))
-                    stride[i] = stride[i-1]*len_[i-1];
-            }
-
-            return stride;
+            return detail::strides(len, layout);
         }
 
         /**

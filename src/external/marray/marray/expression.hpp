@@ -388,6 +388,36 @@ struct exp
     }
 };
 
+struct log
+{
+    template <typename T>
+    auto operator()(const T& a) const -> decltype(std::log(a))
+    {
+        return std::log(a);
+    }
+
+    template <typename T>
+    vector_type<T> vec(vector_type<T> a) const
+    {
+        return vector_traits<T>::log(a);
+    }
+};
+
+struct abs
+{
+    template <typename T>
+    auto operator()(const T& a) const -> decltype(std::abs(a))
+    {
+        return std::abs(a);
+    }
+
+    template <typename T>
+    vector_type<T> vec(vector_type<T> a) const
+    {
+        return vector_traits<T>::abs(a);
+    }
+};
+
 struct sqrt
 {
     template <typename T>
@@ -502,6 +532,12 @@ using negate_expr = unary_expr<Expr, operators::negate>;
 
 template <typename Expr>
 using exp_expr = unary_expr<Expr, operators::exp>;
+
+template <typename Expr>
+using log_expr = unary_expr<Expr, operators::log>;
+
+template <typename Expr>
+using abs_expr = unary_expr<Expr, operators::abs>;
 
 template <typename Expr>
 using sqrt_expr = unary_expr<Expr, operators::sqrt>;

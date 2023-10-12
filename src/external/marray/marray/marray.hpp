@@ -640,7 +640,16 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
          *
          * @param other The tensor from which to move. It is left in the state as if @ref reset() were called on it.
          */
+#if MARRAY_DOXYGEN
         void reset(marray&& other)
+#else
+        // The following is necessary to work around a defect in C++ whereby explicit
+        // constructors are NOT disregarded in overload resolution, leading to an
+        // ambiguity between this constructor and reset(array_1d) in something like
+        // x.reset({1,2})
+        template <typename T, typename=std::enable_if_t<std::is_same_v<T,marray>>>
+        void reset(T&& other)
+#endif
         {
             swap(other);
         }

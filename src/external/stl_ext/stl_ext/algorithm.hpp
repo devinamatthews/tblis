@@ -63,12 +63,13 @@ template <typename T>
 typename T::value_type max(const T& t)
 {
     typedef typename T::value_type V;
+    auto i = t.begin();
+    auto e = t.end();
 
-    if (t.empty()) return V();
+    if (i == e) return V();
 
-    typename T::const_iterator i = t.begin();
     V v = *i;
-    for (;i != t.end();++i) if (v < *i) v = *i;
+    for (;i != e;++i) if (v < *i) v = *i;
 
     return v;
 }
@@ -263,7 +264,7 @@ typename T::value_type sum(const T& v)
 {
     typedef typename T::value_type U;
     U s = U();
-    for (auto& i : v) s += i;
+    for (auto&& i : v) s += i;
     return s;
 }
 
@@ -272,7 +273,7 @@ typename T::value_type prod(const T& v)
 {
     typedef typename T::value_type U;
     U s = U(1);
-    for (auto& i : v) s *= i;
+    for (auto&& i : v) s *= i;
     return s;
 }
 
@@ -292,6 +293,12 @@ template <typename T, typename U>
 auto index_of(const T& v, const U& e)
 {
     return find(v, e) - v.begin();
+}
+
+template <typename T, typename Predicate>
+auto index_where(const T& v, Predicate&& pred)
+{
+    return find_if(v, std::forward<Predicate>(pred)) - v.begin();
 }
 
 template <typename T, typename U>

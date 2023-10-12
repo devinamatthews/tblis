@@ -17,8 +17,8 @@
 #include "util/random.hpp"
 #include "util/tensor.hpp"
 #include "util/macros.h"
-#include "external/stl_ext/include/algorithm.hpp"
-#include "external/stl_ext/include/iostream.hpp"
+#include "external/stl_ext/stl_ext/algorithm.hpp"
+#include "external/stl_ext/stl_ext/iostream.hpp"
 #include "internal/3t/dense/mult.hpp"
 #include "internal/3t/dpd/mult.hpp"
 

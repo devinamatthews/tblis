@@ -2,8 +2,6 @@
 
 #include "util/tensor.hpp"
 
-#include "external/stl_ext/include/iostream.hpp"
-
 namespace tblis
 {
 namespace internal

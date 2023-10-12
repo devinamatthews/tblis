@@ -6,9 +6,9 @@
 
 #include "util/basic_types.h"
 
-#include "external/stl_ext/include/algorithm.hpp"
-#include "external/stl_ext/include/type_traits.hpp"
-#include "external/stl_ext/include/vector.hpp"
+#include "external/stl_ext/stl_ext/algorithm.hpp"
+#include "external/stl_ext/stl_ext/type_traits.hpp"
+#include "external/stl_ext/stl_ext/vector.hpp"
 
 namespace MArray
 {

@@ -3,7 +3,7 @@
 
 #include "configs.hpp"
 
-#include "src/external/stl_ext/include/type_traits.hpp"
+#include "src/external/stl_ext/stl_ext/type_traits.hpp"
 
 #define TBLIS_HAS_COMMA_HELPER(_0,_1,_2,_3,_4,_5,_6,...) _6
 #define TBLIS_HAS_COMMA(...) TBLIS_HAS_COMMA_HELPER(__VA_ARGS__,1,1,1,1,1,0,barf)

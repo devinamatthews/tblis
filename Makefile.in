@@ -981,23 +981,23 @@ marrayinclude_HEADERS = \
     src/external/marray/marray/short_vector.hpp \
     src/external/marray/marray/types.hpp
 
-stl_extincludedir = $(pkgincludedir)/external/stl_ext/include
+stl_extincludedir = $(pkgincludedir)/external/stl_ext/stl_ext
 stl_extinclude_HEADERS = \
     \
-    src/external/stl_ext/include/algorithm.hpp \
-    src/external/stl_ext/include/any.hpp \
-    src/external/stl_ext/include/bounded_vector.hpp \
-    src/external/stl_ext/include/complex.hpp \
-    src/external/stl_ext/include/cosort.hpp \
-    src/external/stl_ext/include/fill_iterator.hpp \
-    src/external/stl_ext/include/global_ptr.hpp \
-    src/external/stl_ext/include/iostream.hpp \
-    src/external/stl_ext/include/ptr_list.hpp \
-    src/external/stl_ext/include/ptr_vector.hpp \
-    src/external/stl_ext/include/string.hpp \
-    src/external/stl_ext/include/type_traits.hpp \
-    src/external/stl_ext/include/vector.hpp \
-    src/external/stl_ext/include/zip.hpp
+    src/external/stl_ext/stl_ext/algorithm.hpp \
+    src/external/stl_ext/stl_ext/any.hpp \
+    src/external/stl_ext/stl_ext/bounded_vector.hpp \
+    src/external/stl_ext/stl_ext/complex.hpp \
+    src/external/stl_ext/stl_ext/cosort.hpp \
+    src/external/stl_ext/stl_ext/fill_iterator.hpp \
+    src/external/stl_ext/stl_ext/global_ptr.hpp \
+    src/external/stl_ext/stl_ext/iostream.hpp \
+    src/external/stl_ext/stl_ext/ptr_list.hpp \
+    src/external/stl_ext/stl_ext/ptr_vector.hpp \
+    src/external/stl_ext/stl_ext/string.hpp \
+    src/external/stl_ext/stl_ext/type_traits.hpp \
+    src/external/stl_ext/stl_ext/vector.hpp \
+    src/external/stl_ext/stl_ext/zip.hpp
 
 noinst_LTLIBRARIES = $(am__append_2) $(am__append_4) $(am__append_7) \
 	$(am__append_10) $(am__append_14) $(am__append_18) \

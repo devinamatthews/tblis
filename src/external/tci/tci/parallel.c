@@ -22,10 +22,20 @@ int tci_parallelize(tci_thread_func func, void* payload,
     #pragma omp parallel num_threads(nthread)
     {
         tci_comm comm;
-        tci_comm_init(&comm, context,
-                      nthread, (unsigned)omp_get_thread_num(), 1, 0);
+
+        if (omp_get_num_threads() != nthread)
+        {
+            tci_comm_init_single(&comm);
+        }
+        else
+        {
+            tci_comm_init(&comm, context,
+                          nthread, (unsigned)omp_get_thread_num(), 1, 0);
+        }
+
         func(&comm, payload);
         #pragma omp barrier
+
         tci_comm_destroy(&comm);
     }
 

@@ -34,7 +34,7 @@ int zen_check()
         return -1;
     }
 
-    if (family != 0x17)
+    if (family != 0x17 && family != 0x18 && family != 0x19)
     {
         if (get_verbose() >= 1) printf("tblis: zen: Wrong family (%xh).\n", family);
         return -1;

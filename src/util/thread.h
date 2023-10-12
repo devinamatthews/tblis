@@ -32,6 +32,7 @@ void tblis_set_num_threads(unsigned num_threads);
 #include <utility>
 #include <atomic>
 #include <iostream>
+#include <limits>
 
 namespace tblis
 {

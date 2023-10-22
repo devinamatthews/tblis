@@ -1,6 +1,7 @@
 #ifndef MARRAY_VECTOR_SSE41_HPP
 #define MARRAY_VECTOR_SSE41_HPP
 
+#include <emmintrin.h>
 #include <x86intrin.h>
 
 #include "vector.hpp"
@@ -186,6 +187,19 @@ struct vector_traits<float>
                            std::exp((float)a[3]));
     }
 
+    static __m128 log(__m128 a)
+    {
+        return _mm_setr_ps(std::log((float)a[0]),
+                           std::log((float)a[1]),
+                           std::log((float)a[2]),
+                           std::log((float)a[3]));
+    }
+
+    static __m128 abs(__m128 a)
+    {
+        return _mm_and_ps(a, _mm_castsi128_ps(_mm_set1_epi32(0x7FFFFFFF)));
+    }
+
     static __m128 sqrt(__m128 a)
     {
         return _mm_sqrt_ps(a);
@@ -349,7 +363,18 @@ struct vector_traits<double>
     static __m128d exp(__m128d a)
     {
         return _mm_setr_pd(std::exp((double)a[0]),
-                          std::exp((double)a[1]));
+                           std::exp((double)a[1]));
+    }
+
+    static __m128d log(__m128d a)
+    {
+        return _mm_setr_pd(std::log((double)a[0]),
+                           std::log((double)a[1]));
+    }
+
+    static __m128d abs(__m128d a)
+    {
+        return _mm_and_pd(a, _mm_castsi128_pd(_mm_set1_epi64x(0x7FFFFFFFFFFFFFFFull)));
     }
 
     static __m128d sqrt(__m128d a)

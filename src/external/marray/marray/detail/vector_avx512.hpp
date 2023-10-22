@@ -281,6 +281,11 @@ struct vector_traits<float>
                               std::pow((float)a[15], (float)b[15]));
     }
 
+    static __m256 abs(__m256 a)
+    {
+        return _mm256_and_ps(a, _mm256_castsi256_ps(_mm256_set1_epi32(0x7FFFFFFF)));
+    }
+
     static __m512 negate(__m512 a)
     {
         return _mm512_castsi512_ps(_mm512_xor_si512(_mm512_castps_si512(a),
@@ -305,6 +310,31 @@ struct vector_traits<float>
                               std::exp((float)a[13]),
                               std::exp((float)a[14]),
                               std::exp((float)a[15]));
+    }
+
+    static __m512 log(__m512 a)
+    {
+        return _mm512_setr_ps(std::log((float)a[ 0]),
+                              std::log((float)a[ 1]),
+                              std::log((float)a[ 2]),
+                              std::log((float)a[ 3]),
+                              std::log((float)a[ 4]),
+                              std::log((float)a[ 5]),
+                              std::log((float)a[ 6]),
+                              std::log((float)a[ 7]),
+                              std::log((float)a[ 8]),
+                              std::log((float)a[ 9]),
+                              std::log((float)a[10]),
+                              std::log((float)a[11]),
+                              std::log((float)a[12]),
+                              std::log((float)a[13]),
+                              std::log((float)a[14]),
+                              std::log((float)a[15]));
+    }
+
+    static __m512 abs(__m512 a)
+    {
+        return _mm512_and_ps(a, _mm512_castsi512_ps(_mm512_set1_epi32(0x7FFFFFFF)));
     }
 
     static __m512 sqrt(__m512 a)
@@ -573,6 +603,23 @@ struct vector_traits<double>
                               std::exp((double)a[5]),
                               std::exp((double)a[6]),
                               std::exp((double)a[7]));
+    }
+
+    static __m512d log(__m512d a)
+    {
+        return _mm512_setr_pd(std::log((double)a[0]),
+                              std::log((double)a[1]),
+                              std::log((double)a[2]),
+                              std::log((double)a[3]),
+                              std::log((double)a[4]),
+                              std::log((double)a[5]),
+                              std::log((double)a[6]),
+                              std::log((double)a[7]));
+    }
+
+    static __m512d abs(__m512d a)
+    {
+        return _mm512_and_pd(a, _mm512_castsi512_pd(_mm512_set1_epi64(0x7FFFFFFFFFFFFFFFull)));
     }
 
     static __m512d sqrt(__m512d a)

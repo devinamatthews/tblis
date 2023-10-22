@@ -10,6 +10,7 @@ TEST(marray_view, constructor)
 {
     double tmp;
     double* data = &tmp;
+    std::vector<double> x{1, 2, 3};
 
     marray<double,3> v0{4, 2, 5};
     marray<double,4> v01{3, 4, 2, 5};
@@ -123,12 +124,23 @@ TEST(marray_view, constructor)
     EXPECT_EQ(data, v18.data());
     EXPECT_EQ((array<len_type,3>{4, 2, 5}), v18.lengths());
     EXPECT_EQ((array<stride_type,3>{3, 8, 24}), v18.strides());
+
+    marray_view<double,1> v19(x);
+    EXPECT_EQ(x.data(), v19.data());
+    EXPECT_EQ((array<len_type,1>{3}), v19.lengths());
+    EXPECT_EQ((array<stride_type,1>{1}), v19.strides());
+
+    marray_view<const double,1> v20(std::as_const(x));
+    EXPECT_EQ(x.data(), v20.data());
+    EXPECT_EQ((array<len_type,1>{3}), v20.lengths());
+    EXPECT_EQ((array<stride_type,1>{1}), v20.strides());
 }
 
 TEST(varray_view, constructor)
 {
     double tmp;
     double* data = &tmp;
+    std::vector<double> x{1, 2, 3};
 
     marray<double> v0{4, 2, 5};
 
@@ -247,17 +259,32 @@ TEST(varray_view, constructor)
     EXPECT_EQ(data, v18.data());
     EXPECT_EQ((len_vector{4, 2, 5}), v18.lengths());
     EXPECT_EQ((stride_vector{3, 8, 24}), v18.strides());
+
+    marray_view<double> v19(x);
+    EXPECT_EQ(1u, v19.dimension());
+    EXPECT_EQ(x.data(), v19.data());
+    EXPECT_EQ((len_vector{3}), v19.lengths());
+    EXPECT_EQ((stride_vector{1}), v19.strides());
+
+    marray_view<const double> v20(std::as_const(x));
+    EXPECT_EQ(1u, v20.dimension());
+    EXPECT_EQ(x.data(), v20.data());
+    EXPECT_EQ((len_vector{3}), v20.lengths());
+    EXPECT_EQ((stride_vector{1}), v20.strides());
 }
 
 TEST(marray_view, reset)
 {
     double tmp;
     double* data = &tmp;
+    std::vector<double> x{1, 2, 3};
 
     marray_view<double,3> v1;
     marray_view<const double,3> v2;
     marray_view<double,3> v3({4, 2, 5}, data);
     marray_view<const double,3> v4({4, 2, 5}, data);
+    marray_view<double,1> v5;
+    marray_view<const double,1> v6;
     marray<double,3> v0{4, 2, 5};
     marray<double,4> v01{3, 4, 2, 5};
 
@@ -370,12 +397,23 @@ TEST(marray_view, reset)
     EXPECT_EQ(nullptr, v1.data());
     EXPECT_EQ((array<len_type,3>{0, 0, 0}), v2.lengths());
     EXPECT_EQ((array<stride_type,3>{0, 0, 0}), v2.strides());
+
+    v5.reset(x);
+    EXPECT_EQ(x.data(), v5.data());
+    EXPECT_EQ((array<len_type,1>{3}), v5.lengths());
+    EXPECT_EQ((array<stride_type,1>{1}), v5.strides());
+
+    v6.reset(x);
+    EXPECT_EQ(x.data(), v6.data());
+    EXPECT_EQ((array<len_type,1>{3}), v6.lengths());
+    EXPECT_EQ((array<stride_type,1>{1}), v6.strides());
 }
 
 TEST(varray_view, reset)
 {
     double tmp;
     double* data = &tmp;
+    std::vector<double> x{1, 2, 3};
 
     marray_view<double> v1;
     marray_view<double> v2({4, 2, 5}, data);
@@ -432,6 +470,12 @@ TEST(varray_view, reset)
     v1.reset();
     EXPECT_EQ(0u, v1.dimension());
     EXPECT_EQ(nullptr, v1.data());
+
+    v1.reset(x);
+    EXPECT_EQ(1u, v1.dimension());
+    EXPECT_EQ(x.data(), v1.data());
+    EXPECT_EQ((len_vector{3}), v1.lengths());
+    EXPECT_EQ((stride_vector{1}), v1.strides());
 
     marray_view<const double> v9;
     marray_view<const double> v10({4, 2, 5}, data);
@@ -502,6 +546,12 @@ TEST(varray_view, reset)
     v9.reset();
     EXPECT_EQ(0u, v9.dimension());
     EXPECT_EQ(nullptr, v9.data());
+
+    v9.reset(std::as_const(x));
+    EXPECT_EQ(1u, v9.dimension());
+    EXPECT_EQ(x.data(), v9.data());
+    EXPECT_EQ((len_vector{3}), v9.lengths());
+    EXPECT_EQ((stride_vector{1}), v9.strides());
 }
 
 TEST(marray_view, initialize)

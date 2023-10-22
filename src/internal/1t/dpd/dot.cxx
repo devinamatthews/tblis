@@ -55,7 +55,8 @@ void dot_block(type_t type, const communicator& comm, const config& cfg,
     dense_total_lengths_and_strides(dense_len, dense_stride, A, idx_A_AB);
 
     stride_type dense_size = stl_ext::prod(dense_len[0]);
-    if (nblock_AB > 1) std::max<stride_type>(1, dense_size/nirrep);
+    if (nblock_AB > 1)
+        dense_size = std::max<stride_type>(1, dense_size/nirrep);
 
     atomic_accumulator local_result;
 

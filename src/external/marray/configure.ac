@@ -15,4 +15,5 @@ LT_INIT
 mkdir -p bin
 
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_COMMANDS([quickfix], [sed -i' ' 's/marray\\\ 1.0/marray-1.0/g' Makefile])
 AC_OUTPUT

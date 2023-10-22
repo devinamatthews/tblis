@@ -84,6 +84,11 @@ TEST(marray, constructor)
     marray<double,3> v6(marray<double,3>{4, 2, 5});
     EXPECT_EQ((array<len_type,3>{4, 2, 5}), v6.lengths());
     EXPECT_EQ((array<stride_type,3>{10, 5, 1}), v6.strides());
+
+    marray<double,1> v7(std::vector<double>{1,2,3});
+    EXPECT_EQ((array<len_type,1>{3}), v7.lengths());
+    EXPECT_EQ((array<stride_type,1>{1}), v7.strides());
+    EXPECT_EQ(1, v7.data()[0]);
 }
 
 TEST(varray, constructor)
@@ -111,11 +116,16 @@ TEST(varray, constructor)
     EXPECT_EQ((stride_vector{10, 5, 1}), v2.strides());
     EXPECT_EQ(0, v2.data()[0]);
 
+    /*
+     * The semantics for this have changed, now a 1-D copy of
+     * the vector is created.
+     *
     marray<double> v3(vector<char>{4, 2, 5});
     EXPECT_EQ(3u, v3.dimension());
     EXPECT_EQ((len_vector{4, 2, 5}), v3.lengths());
     EXPECT_EQ((stride_vector{10, 5, 1}), v3.strides());
     EXPECT_EQ(0, v3.data()[0]);
+     */
 
     marray<double> v31({4, 2, 5}, 1.0);
     EXPECT_EQ(3u, v31.dimension());
@@ -171,6 +181,12 @@ TEST(varray, constructor)
     EXPECT_EQ(3u, v6.dimension());
     EXPECT_EQ((len_vector{4, 2, 5}), v6.lengths());
     EXPECT_EQ((stride_vector{10, 5, 1}), v6.strides());
+
+    marray<double> v7(std::vector<double>{1,2,3});
+    EXPECT_EQ(1u, v7.dimension());
+    EXPECT_EQ((len_vector{3}), v7.lengths());
+    EXPECT_EQ((stride_vector{1}), v7.strides());
+    EXPECT_EQ(1, v7.data()[0]);
 }
 
 TEST(marray, reset)
@@ -269,11 +285,16 @@ TEST(varray, reset)
     EXPECT_EQ((stride_vector{10, 5, 1}), v1.strides());
     EXPECT_EQ(0, v1.data()[0]);
 
+    /*
+     * The semantics for this have changed, now a 1-D copy of
+     * the vector is created.
+     *
     v1.reset(vector<char>{4, 2, 5});
     EXPECT_EQ(3u, v1.dimension());
     EXPECT_EQ((len_vector{4, 2, 5}), v1.lengths());
     EXPECT_EQ((stride_vector{10, 5, 1}), v1.strides());
     EXPECT_EQ(0, v1.data()[0]);
+     */
 
     v1.reset({4, 2, 5}, 1.0);
     EXPECT_EQ(3u, v1.dimension());

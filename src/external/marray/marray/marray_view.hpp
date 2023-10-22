@@ -100,6 +100,32 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
 #endif
 
         /**
+         * Construct a view that wraps an immutable std::vector of compatible type.
+         *
+         * @param v     The std::vector to wrap.
+         */
+#if !MARRAY_DOXYGEN
+        template <typename T>
+#endif
+        marray_view(const std::vector<T>& v, std::enable_if_t<(NDim == 1 || NDim == DYNAMIC) && std::is_convertible_v<const T*,pointer>>* = nullptr)
+        {
+            reset(v);
+        }
+
+        /**
+         * Construct a view that wraps a mutable std::vector of compatible type.
+         *
+         * @param v     The std::vector to wrap.
+         */
+#if !MARRAY_DOXYGEN
+        template <typename T>
+#endif
+        marray_view(std::vector<T>& v, std::enable_if_t<(NDim == 1 || NDim == DYNAMIC) && std::is_convertible_v<T*,pointer>>* = nullptr)
+        {
+            reset(v);
+        }
+
+        /**
          * Construct a view that wraps a raw data pointer, using the provided shape, and the default base and layout.
          *
          * @param len   The lengths of the tensor dimensions. May be any one-

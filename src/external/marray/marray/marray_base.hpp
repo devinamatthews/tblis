@@ -255,6 +255,42 @@ class marray_base
         }
 
         /**
+         * Reset to a view that wraps an immutable std::vector of compatible type.
+         *
+         * Only enabled for one-dimensional views.
+         *
+         * @param v     The std::vector to wrap.
+         */
+#if !MARRAY_DOXYGEN
+        template <typename T>
+        std::enable_if_t<(NDim == 1 || NDim == DYNAMIC) && std::is_convertible_v<const T*,pointer>>
+#else
+        void
+#endif
+        reset(const std::vector<T>& v)
+        {
+            reset({v.size()}, v.data(), {1});
+        }
+
+        /**
+         * Reset to a view that wraps a mutable std::vector of compatible type.
+         *
+         * Only enabled for one-dimensional views.
+         *
+         * @param v     The std::vector to wrap.
+         */
+#if !MARRAY_DOXYGEN
+        template <typename T>
+        std::enable_if_t<(NDim == 1 || NDim == DYNAMIC) && std::is_convertible_v<T*,pointer>>
+#else
+        void
+#endif
+        reset(std::vector<T>& v)
+        {
+            reset({v.size()}, v.data(), {1});
+        }
+
+        /**
          * Reset to a view of the given tensor, view, or partially-indexed tensor.
          *
          * @param other     The tensor, view, or partially-indexed tensor to view.
@@ -526,7 +562,8 @@ class marray_base
         void copy_(const marray_base<U, N, D, O>& other) const
         {
             static_assert(NDim == DYNAMIC || N == DYNAMIC || NDim == N);
-            MARRAY_ASSERT(lengths() == other.lengths());
+            MARRAY_ASSERT(dimension() == other.dimension());
+            MARRAY_ASSERT(std::equal(lengths().begin(), lengths().end(), other.lengths().begin()));
 
             if (!dimension()) return;
 
@@ -534,7 +571,7 @@ class marray_base
             auto b = other.data();
             auto [contiguous, size] = is_contiguous(lengths(), strides());
 
-            if (contiguous && strides() == other.strides())
+            if (contiguous && std::equal(strides().begin(), strides().end(), other.strides().begin()))
             {
                 std::copy_n(b, size, a);
             }
@@ -804,7 +841,7 @@ class marray_base
         tensor_or_view& operator=(tensor_or_view other);
 #else
         template <typename U, int N, typename D, bool O>
-        std::enable_if_t<NDim== DYNAMIC || N == DYNAMIC || NDim == N, Derived&>
+        std::enable_if_t<NDim == DYNAMIC || N == DYNAMIC || NDim == N, Derived&>
         operator=(const marray_base<U, N, D, O>& other)
         {
             copy_(other);
@@ -813,7 +850,7 @@ class marray_base
 
         /* Inherit docs */
         template <typename U, int N, typename D, bool O>
-        std::enable_if_t<NDim== DYNAMIC || N == DYNAMIC || NDim == N, const Derived&>
+        std::enable_if_t<NDim == DYNAMIC || N == DYNAMIC || NDim == N, const Derived&>
         operator=(const marray_base<U, N, D, O>& other) const
         {
             copy_(other);

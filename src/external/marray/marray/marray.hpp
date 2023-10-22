@@ -47,6 +47,19 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
         marray() {}
 
         /**
+         * Construct a tensor by copying a std::vector of compatible type.
+         *
+         * Only enabled for one-dimensional tensors.
+         *
+         * @param v     The std::vector to copy.
+         */
+        template <typename T>
+        marray(const std::vector<T>& v, std::enable_if_t<(NDim == 1 || NDim == DYNAMIC) && std::is_convertible_v<T,value_type>>* = nullptr)
+        {
+            reset(v);
+        }
+
+        /**
          * Copy constructor.
          *
          * If `other` is a tensor ([marray](@ref MArray::marray)), then its base and layout are inherited.
@@ -655,6 +668,24 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
         }
 
         /**
+         * Re-initialize the tensor by copying a std::vector of compatible type.
+         *
+         * Only enabled for one-dimensional tensors.
+         *
+         * @param v     The std::vector to copy.
+         */
+#if !MARRAY_DOXYGEN
+        template <typename T>
+        std::enable_if_t<(NDim == 1 || NDim == DYNAMIC) && std::is_convertible_v<T,value_type>>
+#else
+        void
+#endif
+        reset(const std::vector<T>& v)
+        {
+            reset(marray_view<const T,1>{v});
+        }
+
+        /**
          * Re-initialize the tensor by copying another tensor or tensor view.
          *
          * If `other` is a tensor ([marray](@ref MArray::marray)), then its base and layout are inherited.
@@ -1126,8 +1157,11 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
          * @param layout The layout to use, either #ROW_MAJOR or #COLUMN_MAJOR.
          *               If not specified, use the default layout.
          *
-         * @note Only available when `NDim != ` [DYNAMIC](@ref MArray::DYNAMIC).
+         * @note Only available when `NDim != ` [DYNAMIC](@ref MArray::DYNAMIC) or 1.
          */
+#if !MARRAY_DOXYGEN
+        template <int NDim_=NDim, typename=std::enable_if_t<NDim_!=1 && NDim_ != DYNAMIC>>
+#endif
         void reset(initializer_type data, layout layout = DEFAULT_LAYOUT)
         {
             detail::array_type_t<len_type, NDim> len(NDim);

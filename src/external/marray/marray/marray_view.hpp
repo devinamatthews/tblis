@@ -102,12 +102,18 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
         /**
          * Construct a view that wraps an immutable std::vector of compatible type.
          *
-         * @param v     The std::vector to wrap.
+         * @note        Only enable for one-dimensional views.
+         *
+         * @tparam T    Type such that `const T*` is convertible to `Type*`.
+         *
+         * @param  v    The std::vector to wrap.
          */
-#if !MARRAY_DOXYGEN
         template <typename T>
-#endif
+#if !MARRAY_DOXYGEN
         marray_view(const std::vector<T>& v, std::enable_if_t<(NDim == 1 || NDim == DYNAMIC) && std::is_convertible_v<const T*,pointer>>* = nullptr)
+#else
+        marray_view(const std::vector<T>& v)
+#endif
         {
             reset(v);
         }
@@ -115,12 +121,18 @@ class marray_view : public marray_base<Type, NDim, marray_view<Type, NDim>, fals
         /**
          * Construct a view that wraps a mutable std::vector of compatible type.
          *
+         * @note        Only enable for one-dimensional views.
+         *
+         * @tparam T    Type such that `T*` is convertible to `Type*`.
+         *
          * @param v     The std::vector to wrap.
          */
-#if !MARRAY_DOXYGEN
         template <typename T>
-#endif
+#if !MARRAY_DOXYGEN
         marray_view(std::vector<T>& v, std::enable_if_t<(NDim == 1 || NDim == DYNAMIC) && std::is_convertible_v<T*,pointer>>* = nullptr)
+#else
+        marray_view(std::vector<T>& v)
+#endif
         {
             reset(v);
         }

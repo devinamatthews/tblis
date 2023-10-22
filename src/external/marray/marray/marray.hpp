@@ -49,12 +49,18 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
         /**
          * Construct a tensor by copying a std::vector of compatible type.
          *
-         * Only enabled for one-dimensional tensors.
+         * @note        Only enabled for one-dimensional tensors.
+         *
+         * @tparam T    Type such that `T` is convertible to `Type`.
          *
          * @param v     The std::vector to copy.
          */
         template <typename T>
+#if !MARRAY_DOXYGEN
         marray(const std::vector<T>& v, std::enable_if_t<(NDim == 1 || NDim == DYNAMIC) && std::is_convertible_v<T,value_type>>* = nullptr)
+#else
+        marray(const std::vector<T>& v)
+#endif
         {
             reset(v);
         }
@@ -670,12 +676,14 @@ class marray : public marray_base<Type, NDim, marray<Type, NDim, Allocator>, tru
         /**
          * Re-initialize the tensor by copying a std::vector of compatible type.
          *
-         * Only enabled for one-dimensional tensors.
+         * @note        Only enabled for one-dimensional tensors.
+         *
+         * @tparam T    Type such that `T` is convertible to `Type`.
          *
          * @param v     The std::vector to copy.
          */
-#if !MARRAY_DOXYGEN
         template <typename T>
+#if !MARRAY_DOXYGEN
         std::enable_if_t<(NDim == 1 || NDim == DYNAMIC) && std::is_convertible_v<T,value_type>>
 #else
         void

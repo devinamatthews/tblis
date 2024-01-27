@@ -246,7 +246,7 @@ int get_cpu_type(int& model, int& part, int& features)
 
     auto pos = ptno.find("0x");
     TBLIS_ASSERT(pos != std::string::npos);
-    part = strtoi(ptno, pos, 16);
+    part = std::stoi(ptno, &pos, 16);
 
     return VENDOR_ARM;
 }

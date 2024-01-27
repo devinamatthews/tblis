@@ -1,7 +1,10 @@
 #ifndef _MARRAY_VECTOR_AVX_HPP_
 #define _MARRAY_VECTOR_AVX_HPP_
 
+#if defined(__i386__) || defined(__x86_64__)
 #include <x86intrin.h>
+#endif
+
 #include "vector.hpp"
 
 namespace MArray

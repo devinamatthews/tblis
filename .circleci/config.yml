@@ -1,11 +1,5 @@
 version: 2.1
 
-branches:
-  only:
-    - master
-    - develop
-    - /[0-9]+.x/
-
 executors:
   linux: # Docker using the Base Convenience Image
     docker:
@@ -199,7 +193,7 @@ jobs:
                 mkdir ../blis
                 cd ../blis
                 git init
-                git remote add origin git@github.com:flame/blis
+                git remote add origin https://github.com/flame/blis
                 git fetch --depth=1 origin $(cat $SRC_DIR/blis-git-tag)
                 git checkout FETCH_HEAD
                 ./configure --prefix=$(pwd)/usr --disable-shared --enable-static -t$THREADING auto

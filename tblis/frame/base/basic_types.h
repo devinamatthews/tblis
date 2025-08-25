@@ -14,8 +14,13 @@
 
 #ifndef TBLIS_ENABLE_CPLUSPLUS
 
-#if defined(__cplusplus) && __cplusplus >= 202002L && !defined(BLIS_DISABLE_CPLUSPLUS)
+#if defined(__cplusplus) && !defined(TBLIS_DISABLE_CPLUSPLUS)
+#if __cplusplus >= 202002L
 #define TBLIS_ENABLE_CPLUSPLUS 1
+#else
+#define TBLIS_ENABLE_CPLUSPLUS 0
+#warning TBLIS: C++ interface disabled because C++20 is required
+#endif
 #else
 #define TBLIS_ENABLE_CPLUSPLUS 0
 #endif

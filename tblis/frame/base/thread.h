@@ -1,9 +1,8 @@
 #ifndef _TBLIS_THREAD_HPP_
 #define _TBLIS_THREAD_HPP_
 
-#include "tci.hpp"
+#include "tci.h"
 #include "basic_types.h"
-#include "tci/mutex.hpp"
 
 typedef tci_comm tblis_comm;
 extern const tblis_comm* const tblis_single;
@@ -15,6 +14,8 @@ TBLIS_EXPORT
 void tblis_set_num_threads(unsigned num_threads);
 
 #if TBLIS_ENABLE_CPLUSPLUS
+
+#include "tci.hpp"
 
 #include <vector>
 #include <utility>

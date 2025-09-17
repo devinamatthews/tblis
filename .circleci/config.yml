@@ -232,7 +232,8 @@ jobs:
             fi
 
             if [ $TEST_INSTALL -eq 1 ]; then
-                $CXX -std=c++20 -o test_install $SRC_DIR/test/install/test_install.cxx -I$BLD_DIR/usr/include -L$BLD_DIR/usr/lib -ltblis
+                $CXX -std=c++20 -o test_install_cxx $SRC_DIR/test/install/test_install.cxx -I$BLD_DIR/usr/include -L$BLD_DIR/usr/lib -ltblis
+                $CC -std=c99 -o test_install_c $SRC_DIR/test/install/test_install.c -I$BLD_DIR/usr/include -L$BLD_DIR/usr/lib -ltblis
             fi
 
             if [ $TEST_EXTERNAL -eq 1 ]; then

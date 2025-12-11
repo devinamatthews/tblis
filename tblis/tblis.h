@@ -9,6 +9,7 @@
 #include "tblis/frame/1t/reduce.h"
 #include "tblis/frame/1t/scale.h"
 #include "tblis/frame/1t/set.h"
+#include "tblis/frame/1t/shift.h"
 
 #include "tblis/frame/3t/mult.h"
 

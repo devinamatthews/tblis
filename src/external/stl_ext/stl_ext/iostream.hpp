@@ -8,7 +8,6 @@
 #include <vector>
 #include <stdexcept>
 #include <cstring>
-#include <cstdint>
 
 #include "complex.hpp"
 #include "type_traits.hpp"
@@ -97,9 +96,9 @@ enable_if_t<is_integral<T>::value || is_pointer <T>::value>
 print_integer(std::ostream& os, const T& val, bool is_signed)
 {
     if (is_signed)
-        os << static_cast<int64_t>(val);
+        os << static_cast<intmax_t>(val);
     else
-        os << static_cast<uint64_t>(val);
+        os << static_cast<uintmax_t>(val);
 }
 
 template <typename T>

@@ -1,5 +1,5 @@
-#include "short_vector.hpp"
-#include "catch_amalgamated.hpp"
+#include "marray/short_vector.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <list>
 #include <vector>
@@ -248,7 +248,7 @@ TEST_CASE("short_vector::insert_emplace")
     CHECK(v1 == short_vector<int, 4>{1, 4, 2, 3, 5, 6, 7});
     v1.emplace(v1.begin(), 0);
     CHECK(v1 == short_vector<int, 4>{0, 1, 4, 2, 3, 5, 6, 7});
-    v1.emplace(v1.begin()+4, 8);
+    v1.emplace(v1.begin() + 4, 8);
     CHECK(v1 == short_vector<int, 4>{0, 1, 4, 2, 8, 3, 5, 6, 7});
     v1.emplace(v1.end(), 4);
     CHECK(v1 == short_vector<int, 4>{0, 1, 4, 2, 8, 3, 5, 6, 7, 4});
@@ -303,11 +303,11 @@ TEST_CASE("short_vector::erase")
     CHECK(v1 == short_vector<int, 4>{2, 3, 4, 5, 6, 7, 8, 9});
     v1.erase(prev(v1.end()));
     CHECK(v1 == short_vector<int, 4>{2, 3, 4, 5, 6, 7, 8});
-    v1.erase(v1.begin()+3);
+    v1.erase(v1.begin() + 3);
     CHECK(v1 == short_vector<int, 4>{2, 3, 4, 6, 7, 8});
-    v1.erase(v1.begin(), v1.begin()+2);
+    v1.erase(v1.begin(), v1.begin() + 2);
     CHECK(v1 == short_vector<int, 4>{4, 6, 7, 8});
-    v1.erase(v1.begin()+1, v1.begin()+3);
+    v1.erase(v1.begin() + 1, v1.begin() + 3);
     CHECK(v1 == short_vector<int, 4>{4, 8});
 }
 

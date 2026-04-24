@@ -1,5 +1,5 @@
-#include "range.hpp"
-#include "catch_amalgamated.hpp"
+#include "marray/range.hpp"
+#include <catch2/catch_all.hpp>
 
 using namespace std;
 using namespace MArray;
@@ -82,12 +82,12 @@ TEST_CASE("range::iterator")
     range_t<int>::iterator it4(0, 2);
     range_t<int>::iterator it5(4, 2);
     range_t<int>::iterator it6(8, 2);
-    CHECK(it4-it4 == 0);
-    CHECK(it4-it5 == -2);
-    CHECK(it4-it6 == -4);
-    CHECK(it5-it5 == 0);
-    CHECK(it5-it6 == -2);
-    CHECK(it6-it6 == 0);
+    CHECK(it4 - it4 == 0);
+    CHECK(it4 - it5 == -2);
+    CHECK(it4 - it6 == -4);
+    CHECK(it5 - it5 == 0);
+    CHECK(it5 - it6 == -2);
+    CHECK(it6 - it6 == 0);
 }
 
 TEST_CASE("range::range_t")
@@ -104,24 +104,24 @@ TEST_CASE("range::range_t")
     CHECK(r2.back() == 4);
     CHECK(r2.step() == 2);
     CHECK(r2.size() == 3);
-    CHECK(r2.begin() == range_t<int>::iterator(0,2));
-    CHECK(r2.end() == range_t<int>::iterator(6,2));
+    CHECK(r2.begin() == range_t<int>::iterator(0, 2));
+    CHECK(r2.end() == range_t<int>::iterator(6, 2));
     CHECK(r2[3] == 6);
 
     CHECK(r3.front() == 0);
     CHECK(r3.back() == 4);
     CHECK(r3.step() == 2);
     CHECK(r3.size() == 3);
-    CHECK(r3.begin() == range_t<int>::iterator(0,2));
-    CHECK(r3.end() == range_t<int>::iterator(6,2));
+    CHECK(r3.begin() == range_t<int>::iterator(0, 2));
+    CHECK(r3.end() == range_t<int>::iterator(6, 2));
     CHECK(r3[3] == 6);
 
     CHECK(r4.front() == 1);
     CHECK(r4.back() == 2);
     CHECK(r4.step() == 1);
     CHECK(r4.size() == 2);
-    CHECK(r4.begin() == range_t<int>::iterator(1,1));
-    CHECK(r4.end() == range_t<int>::iterator(3,1));
+    CHECK(r4.begin() == range_t<int>::iterator(1, 1));
+    CHECK(r4.end() == range_t<int>::iterator(3, 1));
     CHECK(r4[3] == 4);
 
     r1 = r2;
@@ -131,16 +131,16 @@ TEST_CASE("range::range_t")
     CHECK(r1.back() == 4);
     CHECK(r1.step() == 2);
     CHECK(r1.size() == 3);
-    CHECK(r1.begin() == range_t<int>::iterator(0,2));
-    CHECK(r1.end() == range_t<int>::iterator(6,2));
+    CHECK(r1.begin() == range_t<int>::iterator(0, 2));
+    CHECK(r1.end() == range_t<int>::iterator(6, 2));
     CHECK(r1[3] == 6);
 
     CHECK(r2.front() == 3);
     CHECK(r2.back() == 6);
     CHECK(r2.step() == 1);
     CHECK(r2.size() == 4);
-    CHECK(r2.begin() == range_t<int>::iterator(3,1));
-    CHECK(r2.end() == range_t<int>::iterator(7,1));
+    CHECK(r2.begin() == range_t<int>::iterator(3, 1));
+    CHECK(r2.end() == range_t<int>::iterator(7, 1));
     CHECK(r2[3] == 6);
 
     auto r22 = r1.reverse();
@@ -148,8 +148,8 @@ TEST_CASE("range::range_t")
     CHECK(r22.back() == 0);
     CHECK(r22.step() == -2);
     CHECK(r22.size() == 3);
-    CHECK(r22.begin() == range_t<int>::iterator(4,-2));
-    CHECK(r22.end() == range_t<int>::iterator(-2,-2));
+    CHECK(r22.begin() == range_t<int>::iterator(4, -2));
+    CHECK(r22.end() == range_t<int>::iterator(-2, -2));
     CHECK(r22[1] == 2);
 
     range_t<int> r5(4);
@@ -170,25 +170,25 @@ TEST_CASE("range::range_t")
     CHECK(r5.step() == 1);
     CHECK(r5.size() == 4);
 
-    auto r6 = r5+4;
+    auto r6 = r5 + 4;
     CHECK(r6.front() == 5);
     CHECK(r6.back() == 8);
     CHECK(r6.step() == 1);
     CHECK(r6.size() == 4);
 
-    auto r7 = 4+r5;
+    auto r7 = 4 + r5;
     CHECK(r7.front() == 5);
     CHECK(r7.back() == 8);
     CHECK(r7.step() == 1);
     CHECK(r7.size() == 4);
 
-    auto r8 = r7-5;
+    auto r8 = r7 - 5;
     CHECK(r8.front() == 0);
     CHECK(r8.back() == 3);
     CHECK(r8.step() == 1);
     CHECK(r8.size() == 4);
 
-    auto r9 = 6-r5;
+    auto r9 = 6 - r5;
     CHECK(r9.front() == 5);
     CHECK(r9.back() == 2);
     CHECK(r9.step() == -1);
@@ -201,8 +201,8 @@ TEST_CASE("range::vector")
     range_t<int> r2(2, 7, 2);
     vector<int> v1 = r1;
     vector<int> v2 = r2;
-    CHECK(v1 == vector<int>{0,1,2,3});
-    CHECK(v2 == vector<int>{2,4,6});
+    CHECK(v1 == vector<int>{0, 1, 2, 3});
+    CHECK(v2 == vector<int>{2, 4, 6});
 }
 
 TEST_CASE("range::string")
@@ -215,35 +215,35 @@ TEST_CASE("range::string")
 TEST_CASE("range::range")
 {
     vector<int> v1 = range(4);
-    vector<int> v2 = range(1,4);
-    vector<int> v3 = range(2,9,2);
-    CHECK(v1 == vector<int>{0,1,2,3});
-    CHECK(v2 == vector<int>{1,2,3});
-    CHECK(v3 == vector<int>{2,4,6,8});
+    vector<int> v2 = range(1, 4);
+    vector<int> v3 = range(2, 9, 2);
+    CHECK(v1 == vector<int>{0, 1, 2, 3});
+    CHECK(v2 == vector<int>{1, 2, 3});
+    CHECK(v3 == vector<int>{2, 4, 6, 8});
 }
 
 TEST_CASE("range::reversed_range")
 {
     vector<int> v1 = reversed_range(4);
-    vector<int> v2 = reversed_range(1,4);
-    vector<int> v3 = reversed_range(2,10,2);
-    CHECK(v1 == vector<int>{3,2,1,0});
-    CHECK(v2 == vector<int>{3,2,1});
-    CHECK(v3 == vector<int>{8,6,4,2});
+    vector<int> v2 = reversed_range(1, 4);
+    vector<int> v3 = reversed_range(2, 10, 2);
+    CHECK(v1 == vector<int>{3, 2, 1, 0});
+    CHECK(v2 == vector<int>{3, 2, 1});
+    CHECK(v3 == vector<int>{8, 6, 4, 2});
 }
 
 TEST_CASE("range::rangeN")
 {
-    vector<int> v2 = rangeN(1,4);
-    vector<int> v3 = rangeN(2,9,2);
-    CHECK(v2 == vector<int>{1,2,3,4});
-    CHECK(v3 == vector<int>{2,4,6,8,10,12,14,16,18});
+    vector<int> v2 = rangeN(1, 4);
+    vector<int> v3 = rangeN(2, 9, 2);
+    CHECK(v2 == vector<int>{1, 2, 3, 4});
+    CHECK(v3 == vector<int>{2, 4, 6, 8, 10, 12, 14, 16, 18});
 }
 
 TEST_CASE("range::reversed_rangeN")
 {
-    vector<int> v2 = reversed_rangeN(6,4);
-    vector<int> v3 = reversed_rangeN(18,9,2);
-    CHECK(v2 == vector<int>{5,4,3,2});
-    CHECK(v3 == vector<int>{16,14,12,10,8,6,4,2,0});
+    vector<int> v2 = reversed_rangeN(6, 4);
+    vector<int> v3 = reversed_rangeN(18, 9, 2);
+    CHECK(v2 == vector<int>{5, 4, 3, 2});
+    CHECK(v3 == vector<int>{16, 14, 12, 10, 8, 6, 4, 2, 0});
 }

@@ -6,20 +6,20 @@ orbs:
 jobs:
   build:
     docker:
-      - image: 'cimg/base:2024.10'
+      - image: 'cimg/base:2025.06'
     steps:
       - checkout
       - run:
           name: Installing Dependencies
-          command: 'sudo apt-get update && sudo apt-get install -y clang llvm-dev libclang-dev make python3'
+          command: 'sudo apt-get update && sudo apt-get install -y catch2 cmake clang llvm-dev libclang-dev make python3'
       - run:
           name: Configuring
-          command: './configure CC=clang CXX=clang++ --enable-code-coverage'
+          command: './configure CC=clang CXX=clang++ --enable-tests --enable-coverage'
       - run:
           name: Building
-          command: 'make -j2'
+          command: 'make -j2 VERBOSE=1'
       - run:
           name: Unit Testing
           command: './bin/run_tests.sh'
       - codecov/upload:
-          excludes: force-cover-3.0
+          excludes: src/force-cover

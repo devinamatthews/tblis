@@ -2,25 +2,26 @@
 #define MARRAY_VECTOR_HPP
 
 #include <complex>
+#include <cstring>
 #include <type_traits>
+
+#include "utility.hpp"
 
 #if __GNUC__ >= 6
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-attributes"
 #endif
 
-namespace MArray
-{
+MARRAY_BEGIN_NAMESPACE
 
-template <typename T, typename=void>
-struct vector_traits
+template <typename T, typename = void> struct vector_traits
 {
     static constexpr int vector_width = 1;
     static constexpr int alignment = 1;
     typedef T vector_type;
 };
 
-}
+MARRAY_END_NAMESPACE
 
 #if defined(__AVX512F__)
 
@@ -44,4 +45,4 @@ struct vector_traits
 #pragma GCC diagnostic pop
 #endif
 
-#endif //MARRAY_VECTOR_HPP
+#endif // MARRAY_VECTOR_HPP

@@ -3,8 +3,7 @@
 
 #include "marray.hpp"
 
-namespace MArray
-{
+MARRAY_BEGIN_NAMESPACE
 
 template <typename T, int N>
 void rotate(const marray_view<T, N>& array, const array_1d<len_type>& shift)
@@ -14,21 +13,17 @@ void rotate(const marray_view<T, N>& array, const array_1d<len_type>& shift)
     len_vector shift_;
     shift.slurp(shift_);
 
-    for (auto i : range(array.dimension()))
-        rotate(array, i, shift_[i]);
+    for (auto i : range(array.dimension())) rotate(array, i, shift_[i]);
 }
 
 template <typename T, int N, typename A>
 void rotate(marray<T, N, A>& array, const array_1d<len_type>& shift)
-{
-    rotate(array.view(), shift);
-}
+{ rotate(array.view(), shift); }
 
 template <typename T, int N, int I, typename... D>
-void rotate(const marray_slice<T, N, I, D...>& array, const array_1d<len_type>& shift)
-{
-    rotate(array.view(), shift);
-}
+void rotate(const marray_slice<T, N, I, D...>& array,
+            const array_1d<len_type>& shift)
+{ rotate(array.view(), shift); }
 
 template <typename T, int N>
 void rotate(const marray_view<T, N>& array, int dim, len_type shift)
@@ -38,12 +33,15 @@ void rotate(const marray_view<T, N>& array, int dim, len_type shift)
     len_type n = array.length(dim);
     stride_type s = array.stride(dim);
 
-    if (n == 0) return;
+    if (n == 0)
+        return;
 
-    shift = shift%n;
-    if (shift < 0) shift += n;
+    shift = shift % n;
+    if (shift < 0)
+        shift += n;
 
-    if (shift == 0) return;
+    if (shift == 0)
+        return;
 
     auto len = array.lengths();
     auto& stride = array.strides();
@@ -54,7 +52,7 @@ void rotate(const marray_view<T, N>& array, int dim, len_type shift)
     while (it.next(p))
     {
         auto a = p;
-        auto b = p+(shift-1)*s;
+        auto b = p + (shift - 1) * s;
         while (a < b)
         {
             std::iter_swap(a, b);
@@ -62,8 +60,8 @@ void rotate(const marray_view<T, N>& array, int dim, len_type shift)
             b -= s;
         }
 
-        a = p+shift*s;
-        b = p+(n-1)*s;
+        a = p + shift * s;
+        b = p + (n - 1) * s;
         while (a < b)
         {
             std::iter_swap(a, b);
@@ -72,7 +70,7 @@ void rotate(const marray_view<T, N>& array, int dim, len_type shift)
         }
 
         a = p;
-        b = p+(n-1)*s;
+        b = p + (n - 1) * s;
         while (a < b)
         {
             std::iter_swap(a, b);
@@ -84,16 +82,12 @@ void rotate(const marray_view<T, N>& array, int dim, len_type shift)
 
 template <typename T, int N, typename A>
 void rotate(marray<T, N, A>& array, int dim, len_type shift)
-{
-    rotate(array.view(), dim, shift);
-}
+{ rotate(array.view(), dim, shift); }
 
 template <typename T, int N, int I, typename... D>
 void rotate(const marray_slice<T, N, I, D...>& array, int dim, len_type shift)
-{
-    rotate(array.view(), dim, shift);
-}
+{ rotate(array.view(), dim, shift); }
 
-}
+MARRAY_END_NAMESPACE
 
-#endif //MARRAY_ROTATE_HPP
+#endif // MARRAY_ROTATE_HPP

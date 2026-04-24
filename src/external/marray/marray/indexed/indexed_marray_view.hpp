@@ -3,145 +3,121 @@
 
 #include "indexed_marray_base.hpp"
 
-namespace MArray
-{
+MARRAY_BEGIN_NAMESPACE
 
 template <typename Type>
-class indexed_marray_view : public indexed_marray_base<Type, indexed_marray_view<Type>, false>
+class indexed_marray_view
+: public indexed_marray_base<Type, indexed_marray_view<Type>, false>
 {
     template <typename, typename, bool> friend class indexed_marray_base;
     template <typename> friend class indexed_marray_view;
     template <typename, typename> friend class indexed_marray;
 
-    protected:
-        typedef indexed_marray_base<Type, indexed_marray_view, false> base;
+  protected:
+    typedef indexed_marray_base<Type, indexed_marray_view, false> base;
 
-        using base::data_;
-        using base::idx_;
-        using base::dense_len_;
-        using base::idx_len_;
-        using base::dense_stride_;
-        using base::factor_;
+    using base::data_;
+    using base::dense_len_;
+    using base::dense_stride_;
+    using base::factor_;
+    using base::idx_;
+    using base::idx_len_;
 
-    public:
-        using typename base::value_type;
-        using typename base::pointer;
-        using typename base::const_pointer;
-        using typename base::reference;
-        using typename base::const_reference;
+  public:
+    using typename base::const_pointer;
+    using typename base::const_reference;
+    using typename base::pointer;
+    using typename base::reference;
+    using typename base::value_type;
 
-        /***********************************************************************
-         *
-         * Constructors
-         *
-         **********************************************************************/
+    /***********************************************************************
+     *
+     * Constructors
+     *
+     **********************************************************************/
 
-        indexed_marray_view()
-        {
-            reset();
-        }
+    indexed_marray_view() { reset(); }
 
-        indexed_marray_view(const indexed_marray_view& other)
-        {
-            reset(other);
-        }
+    indexed_marray_view(const indexed_marray_view& other) { reset(other); }
 
-        indexed_marray_view(indexed_marray_view&& other)
-        {
-            reset(std::move(other));
-        }
+    indexed_marray_view(indexed_marray_view&& other)
+    { reset(std::move(other)); }
 
-        template <typename U, bool O, typename D>
-        indexed_marray_view(const indexed_marray_base<U, D, O>& other)
-        {
-            reset(other);
-        }
+    template <typename U, bool O, typename D>
+    indexed_marray_view(const indexed_marray_base<U, D, O>& other)
+    { reset(other); }
 
-        template <typename U, bool O, typename D>
-        indexed_marray_view(indexed_marray_base<U, D, O>&& other)
-        {
-            reset(other);
-        }
+    template <typename U, bool O, typename D>
+    indexed_marray_view(indexed_marray_base<U, D, O>&& other)
+    { reset(other); }
 
-        template <typename U, bool O, typename D>
-        indexed_marray_view(indexed_marray_base<U, D, O>& other)
-        {
-            reset(other);
-        }
+    template <typename U, bool O, typename D>
+    indexed_marray_view(indexed_marray_base<U, D, O>& other)
+    { reset(other); }
 
-        indexed_marray_view(const array_1d<len_type>& len,
-                            const array_1d<pointer>& ptr,
-                            const array_2d<len_type>& idx,
-                            layout layout = DEFAULT_LAYOUT)
-        {
-            reset(len, ptr, idx, layout);
-        }
+    indexed_marray_view(const array_1d<len_type>& len,
+                        const array_1d<pointer>& ptr,
+                        const array_2d<len_type>& idx,
+                        layout layout = DEFAULT_LAYOUT)
+    { reset(len, ptr, idx, layout); }
 
-        indexed_marray_view(const array_1d<len_type>& len,
-                            const array_1d<pointer>& ptr,
-                            const array_2d<len_type>& idx,
-                            const array_1d<stride_type>& stride)
-        {
-            reset(len, ptr, idx, stride);
-        }
+    indexed_marray_view(const array_1d<len_type>& len,
+                        const array_1d<pointer>& ptr,
+                        const array_2d<len_type>& idx,
+                        const array_1d<stride_type>& stride)
+    { reset(len, ptr, idx, stride); }
 
-        /***********************************************************************
-         *
-         * Base operations
-         *
-         **********************************************************************/
+    /***********************************************************************
+     *
+     * Base operations
+     *
+     **********************************************************************/
 
-        indexed_marray_view& operator=(const indexed_marray_view& other)
-        {
-            return base::operator=(other);
-        }
+    indexed_marray_view& operator=(const indexed_marray_view& other)
+    { return base::operator=(other); }
 
-        using base::operator=;
-        using base::reset;
-        using base::cview;
-        using base::view;
-        using base::operator[];
-        using base::cdata;
-        using base::data;
-        using base::factors;
-        using base::factor;
-        using base::indices;
-        using base::index;
-        using base::dense_length;
-        using base::dense_lengths;
-        using base::indexed_length;
-        using base::indexed_lengths;
-        using base::length;
-        using base::lengths;
-        using base::num_indices;
-        using base::dense_stride;
-        using base::dense_strides;
-        using base::dimension;
-        using base::dense_dimension;
-        using base::indexed_dimension;
+    using base::operator=;
+    using base::cview;
+    using base::reset;
+    using base::view;
+    using base::operator[];
+    using base::cdata;
+    using base::data;
+    using base::dense_dimension;
+    using base::dense_length;
+    using base::dense_lengths;
+    using base::dense_stride;
+    using base::dense_strides;
+    using base::dimension;
+    using base::factor;
+    using base::factors;
+    using base::index;
+    using base::indexed_dimension;
+    using base::indexed_length;
+    using base::indexed_lengths;
+    using base::indices;
+    using base::length;
+    using base::lengths;
+    using base::num_indices;
 
-        Type& factor(len_type idx)
-        {
-            return const_cast<Type&>(const_cast<const indexed_marray_view&>(*this).factor(idx));
-        }
+    Type& factor(len_type idx)
+    {
+        return const_cast<Type&>(
+            const_cast<const indexed_marray_view&>(*this).factor(idx));
+    }
 
-        /***********************************************************************
-         *
-         * Swap
-         *
-         **********************************************************************/
+    /***********************************************************************
+     *
+     * Swap
+     *
+     **********************************************************************/
 
-        void swap(indexed_marray_view& other)
-        {
-            base::swap(other);
-        }
+    void swap(indexed_marray_view& other) { base::swap(other); }
 
-        friend void swap(indexed_marray_view& a, indexed_marray_view& b)
-        {
-            a.swap(b);
-        }
+    friend void swap(indexed_marray_view& a, indexed_marray_view& b)
+    { a.swap(b); }
 };
 
-}
+MARRAY_END_NAMESPACE
 
-#endif //MARRAY_INDEXED_MARRAY_VIEW_HPP
+#endif // MARRAY_INDEXED_MARRAY_VIEW_HPP

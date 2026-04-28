@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=${prefix}
+includedir=${prefix}/include
+libdir=${exec_prefix}/lib
+
+Name: TCI
+Description: Thread Communicator Interface
+Version: @TCI_VERSION@
+Cflags: -I${includedir}
+Libs: -L${libdir} -ltci
+Requires.private: @PKGCONFIG_REQUIRES@
+Libs.private: @PKGCONFIG_LIBS@

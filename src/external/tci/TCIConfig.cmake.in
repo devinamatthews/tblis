@@ -1,0 +1,12 @@
+include(CMakeFindDependencyMacro)
+@THREADS_DEPENDENCY@
+@TBB_DEPENDENCY@
+if(@TCI_OPENMP_ENABLED@)
+    get_property(languages GLOBAL PROPERTY ENABLED_LANGUAGES)
+    if("C" IN_LIST languages)
+        find_dependency(OpenMP)
+    else()
+        message(SEND_ERROR "C language should be enabled for using TCI with OpenMP")
+    endif()
+endif()
+include(${CMAKE_CURRENT_LIST_DIR}/TCITargets.cmake)

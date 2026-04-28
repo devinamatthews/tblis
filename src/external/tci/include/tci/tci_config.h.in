@@ -1,0 +1,138 @@
+#ifndef _TCI_CONFIG_H_
+#define _TCI_CONFIG_H_
+
+#define TCI_VERSION_MAJOR        @TCI_VERSION_MAJOR@
+#define TCI_VERSION_MINOR        @TCI_VERSION_MINOR@
+#define TCI_VERSION              "@TCI_VERSION@"
+
+#define TCI_USE_ATOMIC_SPINLOCK  @USE_ATOMIC_SPINLOCK@
+#define TCI_USE_OMP_LOCK         @USE_OMP_LOCK@
+#define TCI_USE_OPENMP_THREADS   @USE_OPENMP_THREADS@
+#define TCI_USE_WINDOWS_THREADS  @USE_WINDOWS_THREADS@
+#define TCI_USE_TBB_THREADS      @USE_TBB_THREADS@
+#define TCI_USE_PPL_THREADS      @USE_PPL_THREADS@
+#define TCI_USE_OMPTASK_THREADS  @USE_OMPTASK_THREADS@
+#define TCI_USE_DISPATCH_THREADS @USE_DISPATCH_THREADS@
+#define TCI_USE_OSX_SPINLOCK     @USE_OSX_SPINLOCK@
+#define TCI_USE_PTHREADS_THREADS @USE_PTHREADS_THREADS@
+#define TCI_USE_PTHREAD_BARRIER  @USE_PTHREAD_BARRIER@
+#define TCI_USE_PTHREAD_MUTEX    @USE_PTHREAD_MUTEX@
+#define TCI_USE_PTHREAD_SPINLOCK @USE_PTHREAD_SPINLOCK@
+#define TCI_USE_SPIN_BARRIER     @USE_SPIN_BARRIER@
+
+#if TCI_USE_OPENMP_THREADS || TCI_USE_PTHREADS_THREADS || TCI_USE_WINDOWS_THREADS
+#define TCI_IS_TASK_BASED 0
+#define TCI_IS_THREAD_BASED 1
+#elif TCI_USE_TBB_THREADS || TCI_USE_OMPTASK_THREADS || TCI_USE_DISPATCH_THREADS || TCI_USE_PPL_THREADS
+#define TCI_IS_TASK_BASED 1
+#define TCI_IS_THREAD_BASED 0
+#else
+#define TCI_IS_TASK_BASED 0
+#define TCI_IS_THREAD_BASED 0
+#endif
+
+#define TCI_MIN(x,y) ((y)<(x)?(y):(x))
+#define TCI_MAX(x,y) ((x)<(y)?(y):(x))
+
+#ifdef __cplusplus
+#define TCI_INLINE inline
+#else
+#define TCI_INLINE static inline
+#endif
+
+#cmakedefine TCI_HAVE_GCC_ATOMIC_BUILTINS 1
+#cmakedefine TCI_HAVE_C11_ATOMIC 1
+
+#ifndef __cplusplus
+
+#if defined(TCI_HAVE_GCC_ATOMIC_BUILTINS)
+
+#define TCI_ATOMIC_RELAXED __ATOMIC_RELAXED
+#define TCI_ATOMIC_CONSUME __ATOMIC_CONSUME
+#define TCI_ATOMIC_ACQUIRE __ATOMIC_ACQUIRE
+#define TCI_ATOMIC_RELEASE __ATOMIC_RELEASE
+#define TCI_ATOMIC_ACQ_REL __ATOMIC_ACQ_REL
+#define TCI_ATOMIC_SEQ_CST __ATOMIC_SEQ_CST
+
+#define tci_atomic_load __atomic_load_n
+#define tci_atomic_store __atomic_store_n
+#define tci_atomic_exchange __atomic_exchange_n
+#define tci_atomic_compare_exchange __atomic_compare_exchange_n
+#define tci_atomic_fetch_add __atomic_fetch_add
+#define tci_atomic_fetch_sub __atomic_fetch_sub
+#define tci_atomic_fetch_and __atomic_fetch_and
+#define tci_atomic_fetch_or __atomic_fetch_or
+#define tci_atomic_fetch_xor __atomic_fetch_xor
+#define tci_atomic_add_fetch __atomic_add_fetch
+#define tci_atomic_sub_fetch __atomic_sub_fetch
+#define tci_atomic_and_fetch __atomic_and_fetch
+#define tci_atomic_or_fetch __atomic_or_fetch
+#define tci_atomic_xor_fetch __atomic_xor_fetch
+#define tci_atomic_test_and_set __atomic_test_and_set
+#define tci_atomic_clear __atomic_clear
+#define tci_atomic_thread_fence __atomic_thread_fence
+#define tci_atomic_signal_fence __atomic_signal_fence
+#define tci_atomic_is_lock_free(ptr) __atomic_is_lock_free(sizeof(*(ptr)), ptr)
+
+#define TCI_ATOMIC volatile
+#define TCI_ATOMIC_FLAG volatile char
+
+#elif defined(TCI_HAVE_C11_ATOMIC)
+
+#include <stdatomic.h>
+
+#define TCI_ATOMIC_RELAXED memory_order_relaxed
+#define TCI_ATOMIC_CONSUME memory_order_consume
+#define TCI_ATOMIC_ACQUIRE memory_order_acquire
+#define TCI_ATOMIC_RELEASE memory_order_release
+#define TCI_ATOMIC_ACQ_REL memory_order_acq_rel
+#define TCI_ATOMIC_SEQ_CST memory_order_seq_cst
+
+#define tci_atomic_load atomic_load_explicit
+#define tci_atomic_store atomic_store_explicit
+#define tci_atomic_exchange atomic_exchange_explicit
+#define tci_atomic_fetch_add atomic_fetch_add_explicit
+#define tci_atomic_fetch_sub atomic_fetch_sub_explicit
+#define tci_atomic_fetch_and atomic_fetch_and_explicit
+#define tci_atomic_fetch_or atomic_fetch_or_explicit
+#define tci_atomic_fetch_xor atomic_fetch_xor_explicit
+#define tci_atomic_test_and_set atomic_flag_test_and_set_explicit
+#define tci_atomic_clear atomic_flag_clear_explicit
+#define tci_atomic_thread_fence atomic_thread_fence
+#define tci_atomic_signal_fence atomic_signal_fence
+#define tci_atomic_is_lock_free atomic_is_lock_free
+
+#define tci_atomic_compare_exchange(ptr, expected, desired, weak, success_memorder, failure_memorder) \
+    ((weak) ? atomic_compare_exchange_weak_explicit(ptr, expected, desired, success_memorder, failure_memorder) \
+            : atomic_compare_exchange_strong_explicit(ptr, expected, desired, success_memorder, failure_memorder))
+
+#define tci_atomic_add_fetch(ptr, val, memorder) (atomic_fetch_add_explicit(ptr, val, memorder) + (val))
+#define tci_atomic_sub_fetch(ptr, val, memorder) (atomic_fetch_sub_explicit(ptr, val, memorder) + (val))
+#define tci_atomic_and_fetch(ptr, val, memorder) (atomic_fetch_and_explicit(ptr, val, memorder) + (val))
+#define tci_atomic_or_fetch(ptr, val, memorder) (atomic_fetch_or_explicit(ptr, val, memorder) + (val))
+#define tci_atomic_xor_fetch(ptr, val, memorder) (atomic_fetch_xor_explicit(ptr, val, memorder) + (val))
+
+#define TCI_ATOMIC _Atomic
+#define TCI_ATOMIC_FLAG atomic_flag
+
+#else
+
+#error "No atomics library available"
+
+#endif
+
+#else //__cplusplus
+
+#define TCI_ATOMIC volatile
+#define TCI_ATOMIC_FLAG volatile char
+
+#endif //__cplusplus
+
+#include <stdint.h>
+#include <errno.h>
+#include <stdlib.h>
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+
+#endif

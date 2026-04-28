@@ -1,0 +1,3 @@
+-I/Users/46774035/src/tci/include
+-I/Users/46774035/build/tci/include
+-I/opt/homebrew/include

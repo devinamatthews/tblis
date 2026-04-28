@@ -470,7 +470,7 @@ VPATH += $(srcdir)
 
 SUBDIRS = src/external/tci
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/util -I$(srcdir)/src/external/tci -Isrc/external/tci/tci
+AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/util -I$(srcdir)/src/external/marray -I$(srcdir)/src/external/tci -Isrc/external/tci/tci
 AM_LDFLAGS = -pthread
 bin_test_LDADD = lib/libtblis.la
 bin_skx_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)

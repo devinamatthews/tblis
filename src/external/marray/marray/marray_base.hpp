@@ -610,21 +610,6 @@ class marray_base
         }
     }
 
-    template <size_t... I, typename... Args>
-    reference get_reference_(std::index_sequence<I...>,
-                             const Args&... args) const
-    {
-        return *(const_cast<marray_base&>(*this).data()
-                 + ...
-                 +
-                 [&](int dim, len_type idx)
-                 {
-                     idx -= base(dim);
-                     MARRAY_ASSERT(idx >= 0 && idx < length(dim));
-                     return idx * stride(dim);
-                 }(I, args));
-    }
-
     template <typename U, int N, typename D, bool O>
     void copy_(const marray_base<U, N, D, O>& other) const
     {
@@ -671,35 +656,6 @@ class marray_base
         {
             auto it = make_iterator(lengths(), strides());
             while (it.next(a)) *a = value;
-        }
-    }
-
-    template <typename T, typename Arg, typename... Args>
-    auto index_(const Arg& arg, const Args&... args)
-    {
-        constexpr auto N = detail::count_dimensions<Arg, Args...>::value;
-        static_assert(NDim == DYNAMIC || N == NDim);
-        MARRAY_ASSERT(N == dimension());
-
-        if constexpr (std::is_same_v<std::decay_t<Arg>, bcast_t>)
-        {
-            return marray_slice<T, N, 0, bcast_dim>{*this,
-                                                    slice::bcast}(args...)
-                .view();
-        }
-        else if constexpr (std::is_same_v<std::decay_t<Arg>, all_t>)
-        {
-            return marray_slice<T, N, 1, slice_dim>{*this,
-                                                    range(length(0))}(args...)
-                .view();
-        }
-        else if constexpr (std::is_convertible_v<Arg, len_type>)
-        {
-            return marray_slice<T, N, 1>{*this, arg}(args...).view();
-        }
-        else
-        {
-            return marray_slice<T, N, 1, slice_dim>{*this, arg}(args...).view();
         }
     }
 
@@ -2641,37 +2597,34 @@ class marray_base
 #else
     template <typename Arg,
               typename... Args,
-              typename = std::enable_if_t<
-                  detail::are_indices_or_slices<Arg, Args...>::value
-                  && !detail::are_convertible<len_type, Arg, Args...>::value>>
-    auto operator()(const Arg& arg, const Args&... args)
-    { return index_<Type>(arg, args...); }
+              typename =
+                  std::enable_if_t<(detail::is_index_or_slice<Arg>::value
+                                    && ...
+                                    && detail::is_index_or_slice<Args>::value)>>
+    decltype(auto) operator()(const Arg& arg, const Args&... args)
+    {
+        constexpr auto N = detail::count_dimensions<Arg, Args...>::value;
+        if constexpr (sizeof...(args) == 0)
+            return view<N>()[arg];
+        else
+            return view<N>()[arg](args...);
+    }
 
     /* Inherit docs */
     template <typename Arg,
               typename... Args,
-              typename = std::enable_if_t<
-                  detail::are_indices_or_slices<Arg, Args...>::value
-                  && !detail::are_convertible<len_type, Arg, Args...>::value>>
-    auto operator()(const Arg& arg, const Args&... args) const
-    { return const_cast<marray_base&>(*this).index_<ctype>(arg, args...); }
-
-    /* Inherit docs */
-    template <typename... Args>
-    std::enable_if_t<detail::are_convertible<len_type, Args...>::value,
-                     reference>
-    operator()(const Args&... args)
+              typename =
+                  std::enable_if_t<(detail::is_index_or_slice<Arg>::value
+                                    && ...
+                                    && detail::is_index_or_slice<Args>::value)>>
+    decltype(auto) operator()(const Arg& arg, const Args&... args) const
     {
-        static_assert(NDim == DYNAMIC || NDim == sizeof...(Args));
-        MARRAY_ASSERT(sizeof...(Args) == dimension());
-        return get_reference_(std::index_sequence_for<Args...>{}, args...);
+        constexpr auto N = detail::count_dimensions<Arg, Args...>::value;
+        if constexpr (sizeof...(args) == 0)
+            return view<N>()[arg];
+        else
+            return view<N>()[arg](args...);
     }
-
-    /* Inherit docs */
-    template <typename... Args>
-    std::enable_if_t<detail::are_convertible<len_type, Args...>::value, cref>
-    operator()(const Args&... args) const
-    { return const_cast<marray_base&>(*this)(args...); }
 #endif
 
     /** @} */

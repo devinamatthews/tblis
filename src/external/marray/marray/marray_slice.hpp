@@ -437,7 +437,7 @@ class marray_slice
 
     /* Inherit docs */
     template <typename I, int N = DimsLeft>
-    std::enable_if_t<N == 1, marray_view<Type, NewNDim>>
+    std::enable_if_t<N == 1 && NewNDim, marray_view<Type, NewNDim>>
     operator[](range_t<I> x) const
     {
         x -= base_[NextDim];
@@ -449,7 +449,7 @@ class marray_slice
 
     /* Inherit docs */
     template <typename I, int N = DimsLeft>
-    std::enable_if_t<N != 1,
+    std::enable_if_t<N != 1 || !NewNDim,
                      marray_slice<Type, NDim, NIndexed + 1, Dims..., slice_dim>>
     operator[](range_t<I> x) const
     {
@@ -461,7 +461,8 @@ class marray_slice
 
     /* Inherit docs */
     template <int N = DimsLeft>
-    std::enable_if_t<N == 1, marray_view<Type, NewNDim>> operator[](all_t) const
+    std::enable_if_t<N == 1 && NewNDim, marray_view<Type, NewNDim>>
+    operator[](all_t) const
     {
         return marray_slice<Type, NDim, NIndexed + 1, Dims..., slice_dim>{
             *this,
@@ -471,7 +472,7 @@ class marray_slice
 
     /* Inherit docs */
     template <int N = DimsLeft>
-    std::enable_if_t<N != 1,
+    std::enable_if_t<N != 1 || !NewNDim,
                      marray_slice<Type, NDim, NIndexed + 1, Dims..., slice_dim>>
     operator[](all_t) const
     {
@@ -497,13 +498,15 @@ class marray_slice
 #if MARRAY_DOXYGEN
     tensor_view_or_reference operator()(index_or_slice... args) const
 #else
-    template <typename Arg,
-              typename... Args,
-              typename = std::enable_if_t<
-                  detail::are_indices_or_slices<Arg, Args...>::value>>
-    auto operator()(Arg&& arg, Args&&... args) const
+    template <typename Arg, typename... Args>
+    decltype(auto) operator()(const Arg& arg, const Args&... args) const
 #endif
-    { return (*this)[std::forward<Arg>(arg)](std::forward<Args>(args)...); }
+    {
+        if constexpr (sizeof...(args) == 0)
+            return (*this)[arg];
+        else
+            return (*this)[arg](args...);
+    }
 
     const_pointer cdata() const { return data(); }
 

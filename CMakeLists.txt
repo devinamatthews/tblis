@@ -162,6 +162,12 @@ else()
     set(RESTRICT "__restrict")
 endif()
 
+set(TBLIS_APPLE_GNU_CXX_FLAGS "")
+if(APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # Apple SDK Mach headers use C's _Static_assert, which GNU C++ rejects.
+    list(APPEND TBLIS_APPLE_GNU_CXX_FLAGS -D_Static_assert=static_assert)
+endif()
+
 # Check for bit operations
 check_cxx_source_compiles("
     int main()
@@ -452,7 +458,7 @@ add_custom_command(
         CC=${CMAKE_C_COMPILER}
         CXX=${CMAKE_CXX_COMPILER}
         CFLAGS="${PLUGIN_FLAGS} ${OMP_SIMD_FLAG}"
-        CXXFLAGS="${PLUGIN_FLAGS} ${OMP_SIMD_FLAG} -std=c++20"
+        CXXFLAGS="${PLUGIN_FLAGS} ${OMP_SIMD_FLAG} ${TBLIS_APPLE_GNU_CXX_FLAGS} -std=c++20"
         ${BLIS_DEBUG_FLAG}
         -f --build
         --path=${CMAKE_CURRENT_SOURCE_DIR}/tblis/plugin
@@ -567,7 +573,7 @@ set_target_properties(tblis-objects PROPERTIES
     CXX_EXTENSIONS OFF
 )
 target_compile_options(tblis-objects
-  PRIVATE ${OMP_SIMD_FLAG} $<$<CONFIG:Debug>:-O0>
+  PRIVATE ${OMP_SIMD_FLAG} ${TBLIS_APPLE_GNU_CXX_FLAGS} $<$<CONFIG:Debug>:-O0>
 )
 add_dependencies(tblis-objects plugin-build)
 

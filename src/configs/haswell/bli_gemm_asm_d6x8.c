@@ -37,6 +37,8 @@
 #define BLIS_ASM_SYNTAX_ATT
 #include "bli_x86_asm_macros.h"
 
+// clang-format off
+
 #define SGEMM_INPUT_GS_BETA_NZ \
     vmovlps(mem(rcx), xmm0, xmm0) \
     vmovhps(mem(rcx, rsi, 1), xmm0, xmm0) \
@@ -76,32 +78,35 @@
     vpermilps(imm(0x39), xmm2, xmm1) \
     vmovss(xmm1, mem(rcx, r10, 1))
 
-void bli_sgemm_haswell_asm_6x16
-     (
-       dim_t               k0,
-       float*     restrict alpha,
-       float*     restrict a,
-       float*     restrict b,
-       float*     restrict beta,
-       float*     restrict c, inc_t rs_c0, inc_t cs_c0,
-       auxinfo_t* restrict data,
-       cntx_t*    restrict cntx
-     )
+// clang-format on
+
+void bli_sgemm_haswell_asm_6x16(dim_t k0,
+                                float* restrict alpha,
+                                float* restrict a,
+                                float* restrict b,
+                                float* restrict beta,
+                                float* restrict c,
+                                inc_t rs_c0,
+                                inc_t cs_c0,
+                                auxinfo_t* restrict data,
+                                cntx_t* restrict cntx)
 {
     (void)alpha;
     (void)cntx;
 
-    //void*   a_next = bli_auxinfo_next_a( data );
-    //void*   b_next = bli_auxinfo_next_b( data );
+    // void*   a_next = bli_auxinfo_next_a( data );
+    // void*   b_next = bli_auxinfo_next_b( data );
 
     // Typecast local copies of integers in case dim_t and inc_t are a
     // different size than is expected by load instructions.
     uint64_t k_iter = k0 / 4;
     uint64_t k_left = k0 % 4;
-    uint64_t rs_c   = rs_c0;
-    uint64_t cs_c   = cs_c0;
+    uint64_t rs_c = rs_c0;
+    uint64_t cs_c = cs_c0;
 
     float* c_pre = data->c_prefetch;
+
+    // clang-format off
 
     begin_asm()
 
@@ -876,10 +881,11 @@ void bli_sgemm_haswell_asm_6x16
       "xmm12", "xmm13", "xmm14", "xmm15",
       "memory"
     )
+
+    // clang-format on
 }
 
-
-
+// clang-format off
 
 #define DGEMM_INPUT_GS_BETA_NZ \
     vmovlpd(mem(rcx), xmm0, xmm0) \
@@ -905,32 +911,35 @@ void bli_sgemm_haswell_asm_6x16
     vmovlpd(xmm1, mem(rcx, r13, 2)) \
     vmovhpd(xmm1, mem(rcx, r10, 1))*/
 
-void bli_dgemm_haswell_asm_6x8
-     (
-       dim_t               k0,
-       double*    restrict alpha,
-       double*    restrict a,
-       double*    restrict b,
-       double*    restrict beta,
-       double*    restrict c, inc_t rs_c0, inc_t cs_c0,
-       auxinfo_t* restrict data,
-       cntx_t*    restrict cntx
-     )
+// clang-format on
+
+void bli_dgemm_haswell_asm_6x8(dim_t k0,
+                               double* restrict alpha,
+                               double* restrict a,
+                               double* restrict b,
+                               double* restrict beta,
+                               double* restrict c,
+                               inc_t rs_c0,
+                               inc_t cs_c0,
+                               auxinfo_t* restrict data,
+                               cntx_t* restrict cntx)
 {
     (void)alpha;
     (void)cntx;
 
-    //void*   a_next = bli_auxinfo_next_a( data );
-    //void*   b_next = bli_auxinfo_next_b( data );
+    // void*   a_next = bli_auxinfo_next_a( data );
+    // void*   b_next = bli_auxinfo_next_b( data );
 
     // Typecast local copies of integers in case dim_t and inc_t are a
     // different size than is expected by load instructions.
     uint64_t k_iter = k0 / 4;
     uint64_t k_left = k0 % 4;
-    uint64_t rs_c   = rs_c0;
-    uint64_t cs_c   = cs_c0;
+    uint64_t rs_c = rs_c0;
+    uint64_t cs_c = cs_c0;
 
     double* c_pre = data->c_prefetch;
+
+    // clang-format off
 
     begin_asm()
 
@@ -1596,10 +1605,11 @@ void bli_dgemm_haswell_asm_6x8
       "xmm12", "xmm13", "xmm14", "xmm15",
       "memory"
     )
+
+    // clang-format on
 }
 
-
-
+// clang-format off
 
 // assumes beta.r, beta.i have been broadcast into ymm1, ymm2.
 // outputs to ymm0
@@ -1630,34 +1640,37 @@ void bli_dgemm_haswell_asm_6x8
     vaddsubps(ymm3, ymm0, ymm0)
 
 #define CGEMM_OUTPUT_RS \
-    vmovups(ymm0, mem(rcx)) \
+    vmovups(ymm0, mem(rcx))
 
-void bli_cgemm_haswell_asm_3x8
-     (
-       dim_t               k0,
-       scomplex*  restrict alpha,
-       scomplex*  restrict a,
-       scomplex*  restrict b,
-       scomplex*  restrict beta,
-       scomplex*  restrict c, inc_t rs_c0, inc_t cs_c0,
-       auxinfo_t* restrict data,
-       cntx_t*    restrict cntx
-     )
+// clang-format on
+
+void bli_cgemm_haswell_asm_3x8(dim_t k0,
+                               scomplex* restrict alpha,
+                               scomplex* restrict a,
+                               scomplex* restrict b,
+                               scomplex* restrict beta,
+                               scomplex* restrict c,
+                               inc_t rs_c0,
+                               inc_t cs_c0,
+                               auxinfo_t* restrict data,
+                               cntx_t* restrict cntx)
 {
     (void)alpha;
     (void)cntx;
 
-    //void*   a_next = bli_auxinfo_next_a( data );
-    //void*   b_next = bli_auxinfo_next_b( data );
+    // void*   a_next = bli_auxinfo_next_a( data );
+    // void*   b_next = bli_auxinfo_next_b( data );
 
     // Typecast local copies of integers in case dim_t and inc_t are a
     // different size than is expected by load instructions.
     uint64_t k_iter = k0 / 4;
     uint64_t k_left = k0 % 4;
-    uint64_t rs_c   = rs_c0;
-    uint64_t cs_c   = cs_c0;
+    uint64_t rs_c = rs_c0;
+    uint64_t cs_c = cs_c0;
 
     scomplex* c_pre = data->c_prefetch;
+
+    // clang-format off
 
     begin_asm()
 
@@ -2091,10 +2104,11 @@ void bli_cgemm_haswell_asm_3x8
       "xmm12", "xmm13", "xmm14", "xmm15",
       "memory"
     )
+
+    // clang-format on
 }
 
-
-
+// clang-format off
 
 // assumes beta.r, beta.i have been broadcast into ymm1, ymm2.
 // outputs to ymm0
@@ -2121,34 +2135,37 @@ void bli_cgemm_haswell_asm_3x8
     vaddsubpd(ymm3, ymm0, ymm0)
 
 #define ZGEMM_OUTPUT_RS \
-    vmovupd(ymm0, mem(rcx)) \
+    vmovupd(ymm0, mem(rcx))
 
-void bli_zgemm_haswell_asm_3x4
-     (
-       dim_t               k0,
-       dcomplex*  restrict alpha,
-       dcomplex*  restrict a,
-       dcomplex*  restrict b,
-       dcomplex*  restrict beta,
-       dcomplex*  restrict c, inc_t rs_c0, inc_t cs_c0,
-       auxinfo_t* restrict data,
-       cntx_t*    restrict cntx
-     )
+// clang-format on
+
+void bli_zgemm_haswell_asm_3x4(dim_t k0,
+                               dcomplex* restrict alpha,
+                               dcomplex* restrict a,
+                               dcomplex* restrict b,
+                               dcomplex* restrict beta,
+                               dcomplex* restrict c,
+                               inc_t rs_c0,
+                               inc_t cs_c0,
+                               auxinfo_t* restrict data,
+                               cntx_t* restrict cntx)
 {
     (void)alpha;
     (void)cntx;
 
-    //void*   a_next = bli_auxinfo_next_a( data );
-    //void*   b_next = bli_auxinfo_next_b( data );
+    // void*   a_next = bli_auxinfo_next_a( data );
+    // void*   b_next = bli_auxinfo_next_b( data );
 
     // Typecast local copies of integers in case dim_t and inc_t are a
     // different size than is expected by load instructions.
     uint64_t k_iter = k0 / 4;
     uint64_t k_left = k0 % 4;
-    uint64_t rs_c   = rs_c0;
-    uint64_t cs_c   = cs_c0;
+    uint64_t rs_c = rs_c0;
+    uint64_t cs_c = cs_c0;
 
     dcomplex* c_pre = data->c_prefetch;
+
+    // clang-format off
 
     begin_asm()
 
@@ -2581,4 +2598,6 @@ void bli_zgemm_haswell_asm_3x4
       "xmm12", "xmm13", "xmm14", "xmm15",
       "memory"
     )
+
+    // clang-format on
 }

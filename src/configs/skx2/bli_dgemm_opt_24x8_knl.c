@@ -16,7 +16,8 @@
       documentation and/or other materials provided with the distribution.
     - Neither the name of The University of Texas at Austin nor the names
       of its contributors may be used to endorse or promote products
-      derived derived from this software without specific prior written permission.
+      derived derived from this software without specific prior written
+   permission.
 
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
    AS IS AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -36,6 +37,8 @@
 #include <assert.h>
 
 #include "../knl/bli_avx512_macros.h"
+
+// clang-format off
 
 #define PREFETCH_C_L2 1
 
@@ -199,19 +202,22 @@
     VFMADD231PD(ZMM(30), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+22)*8)) \
     VFMADD231PD(ZMM(31), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+23)*8))
 
-//This is an array used for the scatter/gather instructions.
-static int64_t offsets[8] __attribute__((aligned(64))) = {0,1,2,3,4,5,6,7};
+// clang-format on
 
-void bli_dgemm_opt_24x8_knl(
-                             dim_t            k_,
-                             double* restrict alpha,
-                             double* restrict a,
-                             double* restrict b,
-                             double* restrict beta,
-                             double* restrict c, inc_t rs_c_, inc_t cs_c_,
-                             auxinfo_t*       data,
-                             cntx_t* restrict cntx
-                           )
+// This is an array used for the scatter/gather instructions.
+static int64_t offsets[8]
+    __attribute__((aligned(64))) = {0, 1, 2, 3, 4, 5, 6, 7};
+
+void bli_dgemm_opt_24x8_knl(dim_t k_,
+                            double* restrict alpha,
+                            double* restrict a,
+                            double* restrict b,
+                            double* restrict beta,
+                            double* restrict c,
+                            inc_t rs_c_,
+                            inc_t cs_c_,
+                            auxinfo_t* data,
+                            cntx_t* restrict cntx)
 {
     (void)data;
     (void)cntx;
@@ -221,6 +227,7 @@ void bli_dgemm_opt_24x8_knl(
     const int64_t rs_c = rs_c_;
     const int64_t cs_c = cs_c_;
 
+    // clang-format off
     __asm__ volatile
     (
 
@@ -491,4 +498,5 @@ void bli_dgemm_opt_24x8_knl(
       "zmm22", "zmm23", "zmm24", "zmm25", "zmm26", "zmm27", "zmm28", "zmm29",
       "zmm30", "zmm31", "memory"
     );
+    // clang-format on
 }

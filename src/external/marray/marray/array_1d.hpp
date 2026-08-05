@@ -59,11 +59,15 @@ using enable_if_1d_container_of_t =
 
 template <typename T>
 std::enable_if_t<is_container<T>::value, len_type> length(const T& len)
-{ return len.size(); }
+{
+    return len.size();
+}
 
 template <typename T>
 std::enable_if_t<is_row<T>::value, len_type> length(const T& len)
-{ return len.length(); }
+{
+    return len.length();
+}
 
 } // namespace detail
 
@@ -159,7 +163,9 @@ template <typename T> class array_1d
         }
 
         virtual adaptor_base& copy(adaptor_base& other) override
-        { return *(new (static_cast<adaptor*>(&other)) adaptor(*this)); }
+        {
+            return *(new (static_cast<adaptor*>(&other)) adaptor(*this));
+        }
 
         virtual adaptor_base& move(adaptor_base& other) override
         {
@@ -177,7 +183,9 @@ template <typename T> class array_1d
     adaptor_base& adaptor_;
 
     template <typename U> adaptor_base& adapt(U&& data)
-    { return *(new (&raw_adaptor_) adaptor<U>(data)); }
+    {
+        return *(new (&raw_adaptor_) adaptor<U>(data));
+    }
 
   public:
     array_1d() : adaptor_(adapt(std::array<T, 0>{})) {}
@@ -246,10 +254,14 @@ struct array_1d<T>::adaptor<std::array<U, 0>> : adaptor_base
     virtual void slurp(T*) const override {}
 
     virtual adaptor_base& copy(adaptor_base& other) override
-    { return *(new (static_cast<adaptor*>(&other)) adaptor(*this)); }
+    {
+        return *(new (static_cast<adaptor*>(&other)) adaptor(*this));
+    }
 
     virtual adaptor_base& move(adaptor_base& other) override
-    { return *(new (static_cast<adaptor*>(&other)) adaptor(std::move(*this))); }
+    {
+        return *(new (static_cast<adaptor*>(&other)) adaptor(std::move(*this)));
+    }
 };
 
 MARRAY_END_NAMESPACE

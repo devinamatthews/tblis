@@ -1,6 +1,6 @@
 /*
 
-   BLIS    
+   BLIS
    An object-based framework for developing high-performance BLAS-like
    libraries.
 
@@ -16,7 +16,8 @@
       documentation and/or other materials provided with the distribution.
     - Neither the name of The University of Texas at Austin nor the names
       of its contributors may be used to endorse or promote products
-      derived derived from this software without specific prior written permission.
+      derived derived from this software without specific prior written
+   permission.
 
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -34,24 +35,24 @@
 
 #include "blis.h"
 
-void bli_sgemm_asm_8x4
-     (
-       dim_t               k,
-       float*     restrict alpha,
-       float*     restrict a,
-       float*     restrict b,
-       float*     restrict beta,
-       float*     restrict c, inc_t rs_c, inc_t cs_c,
-       auxinfo_t* restrict data,
-       cntx_t*    restrict cntx
-     )
+void bli_sgemm_asm_8x4(dim_t k,
+                       float* restrict alpha,
+                       float* restrict a,
+                       float* restrict b,
+                       float* restrict beta,
+                       float* restrict c,
+                       inc_t rs_c,
+                       inc_t cs_c,
+                       auxinfo_t* restrict data,
+                       cntx_t* restrict cntx)
 {
-	//void*   a_next = bli_auxinfo_next_a( data );
-	void*   b_next = bli_auxinfo_next_b( data );
+    // void*   a_next = bli_auxinfo_next_a( data );
+    void* b_next = bli_auxinfo_next_b(data);
 
-	uint64_t   k_iter = k / 4;
-	uint64_t   k_left = k % 4;
+    uint64_t k_iter = k / 4;
+    uint64_t k_left = k % 4;
 
+    // clang-format off
 	__asm__ volatile
 	(
 		"                                \n\t"
@@ -301,7 +302,7 @@ void bli_sgemm_asm_8x4
 		"                                \n\t"
 		"                                \n\t"
 		"movq    %4, %%rax               \n\t" // load address of alpha
-		"movq    %5, %%rbx               \n\t" // load address of beta 
+		"movq    %5, %%rbx               \n\t" // load address of beta
 		"movss   (%%rax), %%xmm6         \n\t" // load alpha to bottom 4 bytes of xmm6
 		"movss   (%%rbx), %%xmm7         \n\t" // load beta to bottom 4 bytes of xmm7
 		"pshufd  $0x00, %%xmm6, %%xmm6   \n\t" // populate xmm6 with four alphas
@@ -813,7 +814,6 @@ void bli_sgemm_asm_8x4
 		"                                \n\t"
 		".SDONE:                         \n\t"
 		"                                \n\t"
-
 		: // output operands (none)
 		: // input operands
 		  "m" (k_iter),
@@ -834,26 +834,27 @@ void bli_sgemm_asm_8x4
 		  "xmm12", "xmm13", "xmm14", "xmm15",
 		  "memory"
 	);
+    // clang-format on
 }
 
-void bli_dgemm_asm_4x4
-     (
-       dim_t               k,
-       double*    restrict alpha,
-       double*    restrict a,
-       double*    restrict b,
-       double*    restrict beta,
-       double*    restrict c, inc_t rs_c, inc_t cs_c,
-       auxinfo_t* restrict data,
-       cntx_t*    restrict cntx
-     )
+void bli_dgemm_asm_4x4(dim_t k,
+                       double* restrict alpha,
+                       double* restrict a,
+                       double* restrict b,
+                       double* restrict beta,
+                       double* restrict c,
+                       inc_t rs_c,
+                       inc_t cs_c,
+                       auxinfo_t* restrict data,
+                       cntx_t* restrict cntx)
 {
-	void*   a_next = bli_auxinfo_next_a( data );
-	void*   b_next = bli_auxinfo_next_b( data );
+    void* a_next = bli_auxinfo_next_a(data);
+    void* b_next = bli_auxinfo_next_b(data);
 
-	uint64_t   k_iter = k / 4;
-	uint64_t   k_left = k % 4;
+    uint64_t k_iter = k / 4;
+    uint64_t k_left = k % 4;
 
+    // clang-format off
 	__asm__ volatile
 	(
 		"                                \n\t"
@@ -1122,7 +1123,7 @@ void bli_dgemm_asm_4x4
 		"                                \n\t"
 		"                                \n\t"
 		"movq    %4, %%rax               \n\t" // load address of alpha
-		"movq    %5, %%rbx               \n\t" // load address of beta 
+		"movq    %5, %%rbx               \n\t" // load address of beta
 		"movddup (%%rax), %%xmm6         \n\t" // load alpha and duplicate
 		"movddup (%%rbx), %%xmm7         \n\t" // load beta and duplicate
 		"                                \n\t"
@@ -1477,6 +1478,7 @@ void bli_dgemm_asm_4x4
 		  "xmm12", "xmm13", "xmm14", "xmm15",
 		  "memory"
 	);
+    // clang-format on
 }
 
 #if 0

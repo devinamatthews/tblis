@@ -15,12 +15,12 @@ extern int bulldozer_check();
 
 TBLIS_BEGIN_CONFIG(bulldozer)
 
-TBLIS_CONFIG_GEMM_MR(   8,    4,    8,    4)
-TBLIS_CONFIG_GEMM_NR(   8,    6,    4,    4)
-TBLIS_CONFIG_GEMM_KR(   8,    4,    4,    4)
-TBLIS_CONFIG_GEMM_MC( 128, 1080,   96,   64)
+TBLIS_CONFIG_GEMM_MR(8, 4, 8, 4)
+TBLIS_CONFIG_GEMM_NR(8, 6, 4, 4)
+TBLIS_CONFIG_GEMM_KR(8, 4, 4, 4)
+TBLIS_CONFIG_GEMM_MC(128, 1080, 96, 64)
 TBLIS_CONFIG_GEMM_NC(4096, 8400, 4096, 4096)
-TBLIS_CONFIG_GEMM_KC( 384,  120,  256,  192)
+TBLIS_CONFIG_GEMM_KC(384, 120, 256, 192)
 
 TBLIS_CONFIG_GEMM_WRAP_UKR(bli_sgemm_asm_8x8_fma4,
                            bli_dgemm_asm_4x6_fma4,
@@ -31,6 +31,6 @@ TBLIS_CONFIG_CHECK(bulldozer_check)
 
 TBLIS_END_CONFIG
 
-}
+} // namespace tblis
 
 #endif

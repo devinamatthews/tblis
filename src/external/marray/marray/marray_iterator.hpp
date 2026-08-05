@@ -27,20 +27,28 @@ template <typename Array> class marray_iterator
     }
 
     bool operator==(const marray_iterator& other) const
-    { return dim_ == other.dim_ && i_ == other.i_; }
+    {
+        return dim_ == other.dim_ && i_ == other.i_;
+    }
 
     bool operator!=(const marray_iterator& other) const
-    { return dim_ != other.dim_ || i_ != other.i_; }
+    {
+        return dim_ != other.dim_ || i_ != other.i_;
+    }
 
     auto operator<(const marray_iterator& other) const { return i_ < other.i_; }
 
     auto operator>(const marray_iterator& other) const { return i_ > other.i_; }
 
     auto operator<=(const marray_iterator& other) const
-    { return i_ <= other.i_; }
+    {
+        return i_ <= other.i_;
+    }
 
     auto operator>=(const marray_iterator& other) const
-    { return i_ >= other.i_; }
+    {
+        return i_ >= other.i_;
+    }
 
     value_type operator*() const { return (*array_).slice(dim_, i_); }
 
@@ -77,11 +85,15 @@ template <typename Array> class marray_iterator
     }
 
     marray_iterator operator+(difference_type n) const
-    { return marray_iterator(*array_, dim_, i_ + n); }
+    {
+        return marray_iterator(*array_, dim_, i_ + n);
+    }
 
     friend marray_iterator operator+(difference_type n,
                                      const marray_iterator& i)
-    { return marray_iterator(*i.array_, i.dim_, i.i_ + n); }
+    {
+        return marray_iterator(*i.array_, i.dim_, i.i_ + n);
+    }
 
     marray_iterator& operator-=(difference_type n)
     {
@@ -90,13 +102,19 @@ template <typename Array> class marray_iterator
     }
 
     marray_iterator operator-(difference_type n) const
-    { return marray_iterator(*array_, dim_, i_ - n); }
+    {
+        return marray_iterator(*array_, dim_, i_ - n);
+    }
 
     difference_type operator-(const marray_iterator& other) const
-    { return i_ - other.i_; }
+    {
+        return i_ - other.i_;
+    }
 
     value_type operator[](difference_type n) const
-    { return (*array_).slice(dim_, i_ + n); }
+    {
+        return (*array_).slice(dim_, i_ + n);
+    }
 
     friend void swap(marray_iterator& a, marray_iterator& b)
     {

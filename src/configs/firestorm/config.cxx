@@ -1,5 +1,5 @@
-#include "util/cpuid.hpp"
 #include "config.hpp"
+#include "util/cpuid.hpp"
 
 namespace tblis
 {
@@ -11,11 +11,12 @@ int firestorm_check()
 
     if (vendor != VENDOR_ARM)
     {
-        if (get_verbose() >= 1) printf("tblis: firestorm: Wrong vendor.\n");
+        if (get_verbose() >= 1)
+            printf("tblis: firestorm: Wrong vendor.\n");
         return -1;
     }
 
     return 1;
 }
 
-}
+} // namespace tblis

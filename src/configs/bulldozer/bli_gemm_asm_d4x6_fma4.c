@@ -1,6 +1,6 @@
 /*
 
-   BLIS    
+   BLIS
    An object-based framework for developing high-performance BLAS-like
    libraries.
 
@@ -33,6 +33,8 @@
 */
 
 #include "blis.h"
+
+// clang-format off
 
 #define GROUP_YMM_BY_4 \
 	"vmovaps          %%ymm15, %%ymm7            \n\t"\
@@ -82,24 +84,25 @@
 	"vpermilps  $0x39, %%xmm3,  %%xmm2           \n\t"\
 	"vmovss            %%xmm2, (%%rdx,%%r12)     \n\t"\
 	"vpermilps  $0x39, %%xmm2,  %%xmm3           \n\t"\
-	"vmovss            %%xmm3, (%%rdx,%%r13)     \n\t"\
+	"vmovss            %%xmm3, (%%rdx,%%r13)     \n\t"
 
+// clang-format on
 
-void bli_sgemm_asm_8x8_fma4
-     (
-       dim_t               k,
-       float*     restrict alpha,
-       float*     restrict a,
-       float*     restrict b,
-       float*     restrict beta,
-       float*     restrict c, inc_t rs_c, inc_t cs_c,
-       auxinfo_t* restrict data,
-       cntx_t*    restrict cntx
-     )
+void bli_sgemm_asm_8x8_fma4(dim_t k,
+                            float* restrict alpha,
+                            float* restrict a,
+                            float* restrict b,
+                            float* restrict beta,
+                            float* restrict c,
+                            inc_t rs_c,
+                            inc_t cs_c,
+                            auxinfo_t* restrict data,
+                            cntx_t* restrict cntx)
 {
-    uint64_t   k_iter = k / 4;
-	uint64_t   k_left = k % 4;
+    uint64_t k_iter = k / 4;
+    uint64_t k_left = k % 4;
 
+    // clang-format off
 	__asm__ volatile
 	(
 	"                                           \n\t"
@@ -284,65 +287,65 @@ void bli_sgemm_asm_8x8_fma4
 	".SPOSTACCUM:                                \n\t"
 	"                                            \n\t" // ymm15:  ymm13:  ymm11:  ymm9:
 	"                                            \n\t" // ( ab00  ( ab02  ( ab04  ( ab06
-	"                                            \n\t" //   ab10    ab12    ab14    ab16  
+	"                                            \n\t" //   ab10    ab12    ab14    ab16
 	"                                            \n\t" //   ab22    ab20    ab26    ab24
 	"                                            \n\t" //   ab32    ab30    ab36    ab34
 	"                                            \n\t" //   ab44    ab46    ab40    ab42
-	"                                            \n\t" //   ab54    ab56    ab50    ab52  
+	"                                            \n\t" //   ab54    ab56    ab50    ab52
 	"                                            \n\t" //   ab66    ab64    ab62    ab60
 	"                                            \n\t" //   ab76 )  ab74 )  ab72 )  ab70 )
 	"                                            \n\t"
 	"                                            \n\t" // ymm14:  ymm12:  ymm10:  ymm8:
 	"                                            \n\t" // ( ab01  ( ab03  ( ab05  ( ab07
-	"                                            \n\t" //   ab11    ab13    ab15    ab17  
+	"                                            \n\t" //   ab11    ab13    ab15    ab17
 	"                                            \n\t" //   ab23    ab21    ab27    ab25
 	"                                            \n\t" //   ab33    ab31    ab37    ab35
 	"                                            \n\t" //   ab45    ab47    ab41    ab43
-	"                                            \n\t" //   ab55    ab57    ab51    ab53  
+	"                                            \n\t" //   ab55    ab57    ab51    ab53
 	"                                            \n\t" //   ab67    ab65    ab63    ab61
 	"                                            \n\t" //   ab77 )  ab75 )  ab73 )  ab71 )
 	GROUP_YMM_BY_4
 	"                                            \n\t" // ymm15:  ymm13:  ymm11:  ymm9:
 	"                                            \n\t" // ( ab00  ( ab02  ( ab04  ( ab06
-	"                                            \n\t" //   ab10    ab12    ab14    ab16  
+	"                                            \n\t" //   ab10    ab12    ab14    ab16
 	"                                            \n\t" //   ab20    ab22    ab24    ab26
 	"                                            \n\t" //   ab30    ab32    ab34    ab36
 	"                                            \n\t" //   ab44    ab46    ab40    ab42
-	"                                            \n\t" //   ab54    ab56    ab50    ab52  
+	"                                            \n\t" //   ab54    ab56    ab50    ab52
 	"                                            \n\t" //   ab64    ab66    ab60    ab62
 	"                                            \n\t" //   ab74 )  ab76 )  ab70 )  ab72 )
 	"                                            \n\t"
 	"                                            \n\t" // ymm14:  ymm12:  ymm10:  ymm8:
 	"                                            \n\t" // ( ab01  ( ab03  ( ab05  ( ab07
-	"                                            \n\t" //   ab11    ab13    ab15    ab17  
+	"                                            \n\t" //   ab11    ab13    ab15    ab17
 	"                                            \n\t" //   ab21    ab23    ab25    ab27
 	"                                            \n\t" //   ab31    ab33    ab35    ab37
 	"                                            \n\t" //   ab45    ab47    ab41    ab43
-	"                                            \n\t" //   ab55    ab57    ab51    ab53  
+	"                                            \n\t" //   ab55    ab57    ab51    ab53
 	"                                            \n\t" //   ab65    ab67    ab61    ab63
 	"                                            \n\t" //   ab75 )  ab77 )  ab71 )  ab73 )
 	"                                            \n\t" // ymm15:  ymm13:  ymm11:  ymm9:
 	"                                            \n\t" // ( ab00  ( ab02  ( ab04  ( ab06
-	"                                            \n\t" //   ab10    ab12    ab14    ab16  
+	"                                            \n\t" //   ab10    ab12    ab14    ab16
 	"                                            \n\t" //   ab20    ab22    ab24    ab26
 	"                                            \n\t" //   ab30    ab32    ab34    ab36
 	"                                            \n\t" //   ab40    ab42    ab44    ab46
-	"                                            \n\t" //   ab50    ab52    ab54    ab56  
+	"                                            \n\t" //   ab50    ab52    ab54    ab56
 	"                                            \n\t" //   ab60    ab62    ab64    ab66
 	"                                            \n\t" //   ab70 )  ab72 )  ab74 )  ab76 )
 	"                                            \n\t"
 	"                                            \n\t" // ymm14:  ymm12:  ymm10:  ymm8:
 	"                                            \n\t" // ( ab01  ( ab03  ( ab05  ( ab07
-	"                                            \n\t" //   ab11    ab13    ab15    ab17  
+	"                                            \n\t" //   ab11    ab13    ab15    ab17
 	"                                            \n\t" //   ab21    ab23    ab25    ab27
 	"                                            \n\t" //   ab31    ab33    ab35    ab37
 	"                                            \n\t" //   ab41    ab43    ab45    ab47
-	"                                            \n\t" //   ab51    ab53    ab55    ab57  
+	"                                            \n\t" //   ab51    ab53    ab55    ab57
 	"                                            \n\t" //   ab61    ab63    ab65    ab67
 	"                                            \n\t" //   ab71 )  ab73 )  ab75 )  ab77 )
 	"                                            \n\t"
 	"movq         %4, %%rax                      \n\t" // load address of alpha
-	"movq         %5, %%rbx                      \n\t" // load address of beta 
+	"movq         %5, %%rbx                      \n\t" // load address of beta
 	"vbroadcastss    (%%rax), %%ymm0             \n\t" // load alpha and duplicate
 	"vbroadcastss    (%%rbx), %%ymm4             \n\t" // load beta and duplicate
 	"                                            \n\t"
@@ -732,7 +735,6 @@ void bli_sgemm_asm_8x8_fma4
 	"                                            \n\t"
 	".SDONE:                                     \n\t"
 	"                                            \n\t"
-
 	: // output operands (none)
 	: // input operands
 	  "m" (k_iter), // 0
@@ -747,7 +749,7 @@ void bli_sgemm_asm_8x8_fma4
 	  "m" (b_next), // 9
 	  "m" (a_next)*/  // 10
 	: // register clobber list
-	  "rax", "rbx", "rcx", "rdx", "rsi", "rdi", 
+	  "rax", "rbx", "rcx", "rdx", "rsi", "rdi",
 	  "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
 	  "xmm0", "xmm1", "xmm2", "xmm3",
 	  "xmm4", "xmm5", "xmm6", "xmm7",
@@ -755,12 +757,15 @@ void bli_sgemm_asm_8x8_fma4
 	  "xmm12", "xmm13", "xmm14", "xmm15",
 	  "memory"
 	);
+    // clang-format on
 }
 
 #undef KERNEL4x6_1
 #undef KERNEL4x6_2
 #undef KERNEL4x6_3
 #undef KERNEL4x6_4
+
+// clang-format off
 
 #define KERNEL4x6_1(xx) \
 		".p2align 2											\n\t"\
@@ -853,22 +858,24 @@ void bli_sgemm_asm_8x8_fma4
 		"vmovaps  16 * 8(%%rbx), %%xmm3                     \n\t"\
 		"addq       $24*8, %%rbx		                    \n\t"
 
-void bli_dgemm_asm_4x6_fma4
-     (
-       dim_t               k,
-       double*    restrict alpha,
-       double*    restrict a,
-       double*    restrict b,
-       double*    restrict beta,
-       double*    restrict c, inc_t rs_c, inc_t cs_c,
-       auxinfo_t* restrict data,
-       cntx_t*    restrict cntx
-     )
-{
-	dim_t k_iter  = k / 12;
-	dim_t k_left  = k % 12;
+// clang-format on
 
-	__asm__ 
+void bli_dgemm_asm_4x6_fma4(dim_t k,
+                            double* restrict alpha,
+                            double* restrict a,
+                            double* restrict b,
+                            double* restrict beta,
+                            double* restrict c,
+                            inc_t rs_c,
+                            inc_t cs_c,
+                            auxinfo_t* restrict data,
+                            cntx_t* restrict cntx)
+{
+    dim_t k_iter = k / 12;
+    dim_t k_left = k % 12;
+
+    // clang-format off
+	__asm__
 	(
 		"				\n\t"
 		"				\n\t"
@@ -910,7 +917,7 @@ void bli_dgemm_asm_4x6_fma4
 		".CONSIDERKLEFT:        					        \n\t"
 		"                       					        \n\t"
 		"movq %1, %%rsi         					        \n\t"
-		"testq %%rsi, %%rsi     					        \n\t" 
+		"testq %%rsi, %%rsi     					        \n\t"
 		".LOOPKLEFT:            					        \n\t"
 		"je .POSTACCUM          					        \n\t"
 		"                       					        \n\t"
@@ -933,29 +940,29 @@ void bli_dgemm_asm_4x6_fma4
 		"salq    $3, %%rdi              \n\t" // rs_c *= sizeof(double)
 		"leaq    (%%rcx, %%rdi,2), %%rdx 	\n\t"
 		"                                	\n\t"
-		"vmovlpd  (%%rcx),       %%xmm0, %%xmm0	\n\t" 		
-		"vmovlpd  (%%rdx),       %%xmm1, %%xmm1 	\n\t" 			
+		"vmovlpd  (%%rcx),       %%xmm0, %%xmm0	\n\t"
+		"vmovlpd  (%%rdx),       %%xmm1, %%xmm1 	\n\t"
 		"vmovhpd  (%%rcx,%%rdi), %%xmm0, %%xmm0   	\n\t"
 		"vmovhpd  (%%rdx,%%rdi), %%xmm1, %%xmm1   	\n\t"
 		"leaq     (%%rdx, %%rdi,2), %%r8 	\n\t"
 		"vmulpd   %%xmm2,  %%xmm4, %%xmm4         	\n\t"			// scale by alpha,
 		"vmulpd   %%xmm2,  %%xmm5, %%xmm5         	\n\t"			// scale by alpha,
 		"vfmaddpd %%xmm4, %%xmm0, %%xmm3, %%xmm4         \n\t"	// scale by beta, and add the gemm result
-		"vmovlpd  (%%r8),       %%xmm0, %%xmm0   	\n\t" 			
+		"vmovlpd  (%%r8),       %%xmm0, %%xmm0   	\n\t"
 		"vfmaddpd %%xmm5, %%xmm1, %%xmm3, %%xmm5         \n\t"	// scale by beta, and add the gemm result
 		"vmovhpd  (%%r8,%%rdi), %%xmm0, %%xmm0   	\n\t"
 		"vmovlpd  %%xmm4,  (%%rcx)        	\n\t" 			// and store back to memory.
 		"vmovlpd  %%xmm5,  (%%rdx)        	\n\t" 			// and store back to memory.
 		"vmovhpd  %%xmm4,  (%%rcx,%%rdi)  	\n\t"
-		"addq %%rsi, %%rcx				   	\n\t" 
+		"addq %%rsi, %%rcx				   	\n\t"
 		"vmovhpd  %%xmm5,  (%%rdx,%%rdi)  	\n\t"
-		"addq %%rsi, %%rdx				   	\n\t" 
+		"addq %%rsi, %%rdx				   	\n\t"
 		"                                	\n\t"
 		"vmulpd   %%xmm2,  %%xmm6, %%xmm6         	\n\t"			// scale by alpha,
 		"vfmaddpd %%xmm6,   %%xmm0, %%xmm3, %%xmm6       \n\t"	// scale by beta, and add the gemm result
 		"vmovlpd  %%xmm6,  (%%r8)        	\n\t" 			// and store back to memory.
 		"vmovhpd  %%xmm6,  (%%r8,%%rdi)  	\n\t"
-		"addq %%rsi, %%r8				   	\n\t" 
+		"addq %%rsi, %%r8				   	\n\t"
 		"                                	\n\t"
 		"                                	\n\t"
 		"vmovlpd  (%%rcx),       %%xmm0, %%xmm0   	\n\t"
@@ -974,11 +981,11 @@ void bli_dgemm_asm_4x6_fma4
 		"vmovlpd  %%xmm8,  (%%rdx)        	\n\t" 			// and store back to memory.
 		"vmovlpd  %%xmm9,  (%%r8)        	\n\t" 			// and store back to memory.
 		"vmovhpd  %%xmm7,  (%%rcx,%%rdi)  	\n\t"
-		"addq %%rsi, %%rcx				   	\n\t" 
+		"addq %%rsi, %%rcx				   	\n\t"
 		"vmovhpd  %%xmm8,  (%%rdx,%%rdi)  	\n\t"
-		"addq %%rsi, %%rdx				   	\n\t" 
+		"addq %%rsi, %%rdx				   	\n\t"
 		"vmovhpd  %%xmm9,  (%%r8,%%rdi)  	\n\t"
-		"addq %%rsi, %%r8				   	\n\t" 
+		"addq %%rsi, %%r8				   	\n\t"
 		"                                	\n\t"
 		"                                	\n\t"
 		"vmovlpd  (%%rcx),       %%xmm0, %%xmm0   	\n\t"
@@ -997,11 +1004,11 @@ void bli_dgemm_asm_4x6_fma4
 		"vmovlpd  %%xmm11,  (%%rdx)        	\n\t" 			// and store back to memory.
 		"vmovlpd  %%xmm12,  (%%r8)        	\n\t" 			// and store back to memory.
 		"vmovhpd  %%xmm10,  (%%rcx,%%rdi)  	\n\t"
-		"addq %%rsi, %%rcx				   	\n\t" 
+		"addq %%rsi, %%rcx				   	\n\t"
 		"vmovhpd  %%xmm11,  (%%rdx,%%rdi)  	\n\t"
-		"addq %%rsi, %%rdx				   	\n\t" 
+		"addq %%rsi, %%rdx				   	\n\t"
 		"vmovhpd  %%xmm12,  (%%r8,%%rdi)  	\n\t"
-		"addq %%rsi, %%r8				   	\n\t" 
+		"addq %%rsi, %%r8				   	\n\t"
 		"                                	\n\t"
 		"                                	\n\t"
 		"vmovlpd  (%%rcx),       %%xmm0, %%xmm0 	\n\t"
@@ -1021,8 +1028,7 @@ void bli_dgemm_asm_4x6_fma4
 		"vmovlpd  %%xmm15,  (%%r8)        	\n\t" 			// and store back to memory.
 		"vmovhpd  %%xmm13,  (%%rcx,%%rdi)  	\n\t"
 		"vmovhpd  %%xmm14,  (%%rdx,%%rdi)  	\n\t"
-		"vmovhpd  %%xmm15,  (%%r8,%%rdi)  	\n\t" 
-
+		"vmovhpd  %%xmm15,  (%%r8,%%rdi)  	\n\t"
 		: // output operands (none)
 		: // input operands
 		  "r" (k_iter),
@@ -1042,7 +1048,11 @@ void bli_dgemm_asm_4x6_fma4
 		  "xmm12", "xmm13", "xmm14", "xmm15",
 		  "memory"
 	);
+    // clang-format on
 }
+
+// clang-format off
+
 //The parameter "i" is the iteration number, i.e. the B values to read
 #define MADD_TO_YMM(i) \
 	"vfmaddps	%%ymm15, %%ymm0, %%ymm2, %%ymm15	\n\t"\
@@ -1059,26 +1069,28 @@ void bli_dgemm_asm_4x6_fma4
 	"vfmaddps	%%ymm10, %%ymm1, %%ymm4, %%ymm10	\n\t"\
 	"vperm2f128 $0x3, %%ymm2,  %%ymm2,  %%ymm4   \n\t"\
 	"vfmaddps	%%ymm8, %%ymm1, %%ymm5, %%ymm8	\n\t"\
-	"vperm2f128 $0x3, %%ymm3,  %%ymm3,  %%ymm5   \n\t"\
+	"vperm2f128 $0x3, %%ymm3,  %%ymm3,  %%ymm5   \n\t"
 
-void bli_cgemm_asm_8x4_fma4
-     (
-       dim_t               k,
-       scomplex*  restrict alpha,
-       scomplex*  restrict a,
-       scomplex*  restrict b,
-       scomplex*  restrict beta,
-       scomplex*  restrict c, inc_t rs_c, inc_t cs_c,
-       auxinfo_t* restrict data,
-       cntx_t*    restrict cntx
-     )
+// clang-format on
+
+void bli_cgemm_asm_8x4_fma4(dim_t k,
+                            scomplex* restrict alpha,
+                            scomplex* restrict a,
+                            scomplex* restrict b,
+                            scomplex* restrict beta,
+                            scomplex* restrict c,
+                            inc_t rs_c,
+                            inc_t cs_c,
+                            auxinfo_t* restrict data,
+                            cntx_t* restrict cntx)
 {
-	//void*   a_next = bli_auxinfo_next_a( data );
-	void*   b_next = bli_auxinfo_next_b( data );
+    // void*   a_next = bli_auxinfo_next_a( data );
+    void* b_next = bli_auxinfo_next_b(data);
 
-	dim_t   k_iter = k / 4;
-	dim_t   k_left = k % 4;
+    dim_t k_iter = k / 4;
+    dim_t k_left = k % 4;
 
+    // clang-format off
 	__asm__ volatile
 	(
 	"                                            \n\t"
@@ -1301,63 +1313,63 @@ void bli_cgemm_asm_8x4_fma4
 	".CPOSTACCUM:                                \n\t"
 	"                                            \n\t"
 	"                                            \n\t" // ymm15:  ymm13:  ymm11:  ymm9:
-	"                                            \n\t" // ( ab00  ( ab01  ( ab02  ( ab03 
-	"                                            \n\t" //   ab10    ab11    ab12    ab13 
-	"                                            \n\t" //   ab21    ab20    ab23    ab22 
-	"                                            \n\t" //   ab31    ab30    ab33    ab32 
-	"                                            \n\t" //   ab42    ab43    ab40    ab41 
-	"                                            \n\t" //   ab52    ab53    ab50    ab51 
-	"                                            \n\t" //   ab63    ab62    ab61    ab60 
+	"                                            \n\t" // ( ab00  ( ab01  ( ab02  ( ab03
+	"                                            \n\t" //   ab10    ab11    ab12    ab13
+	"                                            \n\t" //   ab21    ab20    ab23    ab22
+	"                                            \n\t" //   ab31    ab30    ab33    ab32
+	"                                            \n\t" //   ab42    ab43    ab40    ab41
+	"                                            \n\t" //   ab52    ab53    ab50    ab51
+	"                                            \n\t" //   ab63    ab62    ab61    ab60
 	"                                            \n\t" //   ab73 )  ab72 )  ab71 )  ab70 )
 	"                                            \n\t"
 	"                                            \n\t" // ymm14:  ymm12:  ymm10:  ymm8:
-	"                                            \n\t" // ( ab80  ( ab81  ( ab82  ( ab83 
-	"                                            \n\t" //   ab90    ab91    ab92    ab93 
-	"                                            \n\t" //   aba1    aba0    aba3    aba2 
-	"                                            \n\t" //   abb1    abb0    abb3    abb2 
-	"                                            \n\t" //   abc2    abc3    abc0    abc1 
-	"                                            \n\t" //   abd2    abd3    abd0    abd1 
-	"                                            \n\t" //   abe3    abe2    abe1    abe0 
+	"                                            \n\t" // ( ab80  ( ab81  ( ab82  ( ab83
+	"                                            \n\t" //   ab90    ab91    ab92    ab93
+	"                                            \n\t" //   aba1    aba0    aba3    aba2
+	"                                            \n\t" //   abb1    abb0    abb3    abb2
+	"                                            \n\t" //   abc2    abc3    abc0    abc1
+	"                                            \n\t" //   abd2    abd3    abd0    abd1
+	"                                            \n\t" //   abe3    abe2    abe1    abe0
 	"                                            \n\t" //   abf3    abf2    abf1    abf0 )
 	GROUP_YMM_BY_4
 	"                                            \n\t" // ymm15:  ymm13:  ymm11:  ymm9:
-	"                                            \n\t" // ( ab00  ( ab01  ( ab02  ( ab03 
-	"                                            \n\t" //   ab10    ab11    ab12    ab13 
-	"                                            \n\t" //   ab20    ab21    ab22    ab23 
-	"                                            \n\t" //   ab30    ab31    ab32    ab33 
-	"                                            \n\t" //   ab42    ab43    ab40    ab41 
-	"                                            \n\t" //   ab52    ab53    ab50    ab51 
-	"                                            \n\t" //   ab62    ab63    ab60    ab61 
+	"                                            \n\t" // ( ab00  ( ab01  ( ab02  ( ab03
+	"                                            \n\t" //   ab10    ab11    ab12    ab13
+	"                                            \n\t" //   ab20    ab21    ab22    ab23
+	"                                            \n\t" //   ab30    ab31    ab32    ab33
+	"                                            \n\t" //   ab42    ab43    ab40    ab41
+	"                                            \n\t" //   ab52    ab53    ab50    ab51
+	"                                            \n\t" //   ab62    ab63    ab60    ab61
 	"                                            \n\t" //   ab72 )  ab73 )  ab70 )  ab71 )
 	"                                            \n\t"
 	"                                            \n\t" // ymm14:  ymm12:  ymm10:  ymm8:
-	"                                            \n\t" // ( ab80  ( ab81  ( ab82  ( ab83 
-	"                                            \n\t" //   ab90    ab91    ab92    ab93 
-	"                                            \n\t" //   aba0    aba1    aba2    aba3 
-	"                                            \n\t" //   abb0    abb1    abb2    abb3 
-	"                                            \n\t" //   abc2    abc3    abc0    abc1 
-	"                                            \n\t" //   abd2    abd3    abd0    abd1 
-	"                                            \n\t" //   abe2    abe3    abe0    abe1 
+	"                                            \n\t" // ( ab80  ( ab81  ( ab82  ( ab83
+	"                                            \n\t" //   ab90    ab91    ab92    ab93
+	"                                            \n\t" //   aba0    aba1    aba2    aba3
+	"                                            \n\t" //   abb0    abb1    abb2    abb3
+	"                                            \n\t" //   abc2    abc3    abc0    abc1
+	"                                            \n\t" //   abd2    abd3    abd0    abd1
+	"                                            \n\t" //   abe2    abe3    abe0    abe1
 	"                                            \n\t" //   abf2 )  abf3 )  abf0 )  abf1 )
 	"                                            \n\t"
 	"                                            \n\t" // ymm15:  ymm13:  ymm11:  ymm9:
-	"                                            \n\t" // ( ab00  ( ab01  ( ab02  ( ab03 
-	"                                            \n\t" //   ab10    ab11    ab12    ab13 
-	"                                            \n\t" //   ab20    ab21    ab22    ab23 
-	"                                            \n\t" //   ab30    ab31    ab32    ab33 
-	"                                            \n\t" //   ab40    ab41    ab42    ab43 
-	"                                            \n\t" //   ab50    ab51    ab52    ab53 
-	"                                            \n\t" //   ab60    ab61    ab62    ab63 
+	"                                            \n\t" // ( ab00  ( ab01  ( ab02  ( ab03
+	"                                            \n\t" //   ab10    ab11    ab12    ab13
+	"                                            \n\t" //   ab20    ab21    ab22    ab23
+	"                                            \n\t" //   ab30    ab31    ab32    ab33
+	"                                            \n\t" //   ab40    ab41    ab42    ab43
+	"                                            \n\t" //   ab50    ab51    ab52    ab53
+	"                                            \n\t" //   ab60    ab61    ab62    ab63
 	"                                            \n\t" //   ab70 )  ab71 )  ab72 )  ab73 )
 	"                                            \n\t"
 	"                                            \n\t" // ymm14:  ymm12:  ymm10:  ymm8:
-	"                                            \n\t" // ( ab80  ( ab81  ( ab82  ( ab83 
-	"                                            \n\t" //   ab90    ab91    ab92    ab93 
-	"                                            \n\t" //   aba0    aba1    aba2    aba3 
-	"                                            \n\t" //   abb0    abb1    abb2    abb3 
-	"                                            \n\t" //   abc0    abc1    abc2    abc3 
-	"                                            \n\t" //   abd0    abd1    abd2    abd3 
-	"                                            \n\t" //   abe0    abe1    abe2    abe3 
+	"                                            \n\t" // ( ab80  ( ab81  ( ab82  ( ab83
+	"                                            \n\t" //   ab90    ab91    ab92    ab93
+	"                                            \n\t" //   aba0    aba1    aba2    aba3
+	"                                            \n\t" //   abb0    abb1    abb2    abb3
+	"                                            \n\t" //   abc0    abc1    abc2    abc3
+	"                                            \n\t" //   abd0    abd1    abd2    abd3
+	"                                            \n\t" //   abe0    abe1    abe2    abe3
 	"                                            \n\t" //   abf0 )  abf1 )  abf2 )  abf3 )
 	"                                            \n\t"
 	"                                            \n\t" // scale by alpha
@@ -1409,7 +1421,7 @@ void bli_cgemm_asm_8x4_fma4
 	"                                            \n\t"
 	"                                            \n\t"
 	"                                            \n\t"
-	"movq         %5, %%rbx                      \n\t" // load address of beta 
+	"movq         %5, %%rbx                      \n\t" // load address of beta
 	"vbroadcastss    (%%rbx), %%ymm7             \n\t" // load beta_r and duplicate
 	"vbroadcastss   4(%%rbx), %%ymm6             \n\t" // load beta_i and duplicate
 	"                                            \n\t"
@@ -1819,7 +1831,6 @@ void bli_cgemm_asm_8x4_fma4
 	"                                            \n\t"
 	".CDONE:                                     \n\t"
 	"                                            \n\t"
-
 	: // output operands (none)
 	: // input operands
 	  "m" (k_iter), // 0
@@ -1834,7 +1845,7 @@ void bli_cgemm_asm_8x4_fma4
 	  "m" (b_next)/*, // 9
 	  "m" (a_next)*/  // 10
 	: // register clobber list
-	  "rax", "rbx", "rcx", "rdx", "rsi", "rdi", 
+	  "rax", "rbx", "rcx", "rdx", "rsi", "rdi",
 	  "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
 	  "ymm0", "ymm1", "ymm2", "ymm3",
 	  "ymm4", "ymm5", "ymm6", "ymm7",
@@ -1842,7 +1853,10 @@ void bli_cgemm_asm_8x4_fma4
 	  "ymm12", "ymm13", "ymm14", "ymm15",
 	  "memory"
 	);
+    // clang-format on
 }
+
+// clang-format off
 
 #define MADDSUBPD_TO_YMM \
 	"vfmaddpd	%%ymm13, %%ymm0, %%ymm4, %%ymm13\n\t"\
@@ -1868,24 +1882,26 @@ void bli_cgemm_asm_8x4_fma4
 	"vaddsubpd        %%ymm"j",  %%ymm"i", %%ymm"i"  \n\t"\
 	"                                            \n\t"
 
-void bli_zgemm_asm_4x4_fma4
-     (
-       dim_t               k,
-       dcomplex*  restrict alpha,
-       dcomplex*  restrict a,
-       dcomplex*  restrict b,
-       dcomplex*  restrict beta,
-       dcomplex*  restrict c, inc_t rs_c, inc_t cs_c,
-       auxinfo_t* restrict data,
-       cntx_t*    restrict cntx
-     )
+// clang-format on
+
+void bli_zgemm_asm_4x4_fma4(dim_t k,
+                            dcomplex* restrict alpha,
+                            dcomplex* restrict a,
+                            dcomplex* restrict b,
+                            dcomplex* restrict beta,
+                            dcomplex* restrict c,
+                            inc_t rs_c,
+                            inc_t cs_c,
+                            auxinfo_t* restrict data,
+                            cntx_t* restrict cntx)
 {
-	//void*   a_next = bli_auxinfo_next_a( data );
-	//void*   b_next = bli_auxinfo_next_b( data );
+    // void*   a_next = bli_auxinfo_next_a( data );
+    // void*   b_next = bli_auxinfo_next_b( data );
 
-	dim_t   k_iter = k / 4;
-	dim_t   k_left = k % 4;
+    dim_t k_iter = k / 4;
+    dim_t k_left = k % 4;
 
+    // clang-format off
 	__asm__ volatile
 	(
 	"                                            \n\t"
@@ -2115,13 +2131,13 @@ void bli_zgemm_asm_4x4_fma4
 	".ZPOSTACCUM:                                \n\t"
 	"                                            \n\t" // ymm15:  ymm13:  ymm11:  ymm9:
 	"                                            \n\t" // ( ab00  ( ab01  ( ab02  ( ab03
-	"                                            \n\t" //   ab10    ab11    ab12    ab13  
+	"                                            \n\t" //   ab10    ab11    ab12    ab13
 	"                                            \n\t" //   ab21    ab20    ab23    ab22
 	"                                            \n\t" //   ab31 )  ab30 )  ab33 )  ab32 )
 	"                                            \n\t"
 	"                                            \n\t" // ymm14:  ymm12:  ymm10:  ymm8:
 	"                                            \n\t" // ( ab40  ( ab41  ( ab42  ( ab43
-	"                                            \n\t" //   ab50    ab51    ab52    ab53  
+	"                                            \n\t" //   ab50    ab51    ab52    ab53
 	"                                            \n\t" //   ab61    ab60    ab63    ab62
 	"                                            \n\t" //   ab71 )  ab70 )  ab73 )  ab72 )
 	"                                            \n\t"
@@ -2144,13 +2160,13 @@ void bli_zgemm_asm_4x4_fma4
 	"                                            \n\t"
 	"                                            \n\t" // ymm15:  ymm13:  ymm11:  ymm9:
 	"                                            \n\t" // ( ab00  ( ab01  ( ab02  ( ab03
-	"                                            \n\t" //   ab10    ab11    ab12    ab13  
+	"                                            \n\t" //   ab10    ab11    ab12    ab13
 	"                                            \n\t" //   ab20    ab21    ab22    ab23
 	"                                            \n\t" //   ab30 )  ab31 )  ab32 )  ab33 )
 	"                                            \n\t"
 	"                                            \n\t" // ymm14:  ymm12:  ymm10:  ymm8:
 	"                                            \n\t" // ( ab40  ( ab41  ( ab42  ( ab43
-	"                                            \n\t" //   ab50    ab51    ab52    ab53  
+	"                                            \n\t" //   ab50    ab51    ab52    ab53
 	"                                            \n\t" //   ab60    ab61    ab62    ab63
 	"                                            \n\t" //   ab70 )  ab71 )  ab72 )  ab73 )
 	"                                            \n\t"
@@ -2171,7 +2187,7 @@ void bli_zgemm_asm_4x4_fma4
 	Z_ALPHA("9", "1")
 	Z_ALPHA("8", "0")
 	"                                            \n\t"
-	"movq         %5, %%rbx                      \n\t" // load address of beta 
+	"movq         %5, %%rbx                      \n\t" // load address of beta
 	"vbroadcastsd    (%%rbx), %%ymm7             \n\t" // load beta_r and duplicate
 	"vbroadcastsd   8(%%rbx), %%ymm6             \n\t" // load beta_i and duplicate
 	"                                            \n\t"
@@ -2503,7 +2519,7 @@ void bli_zgemm_asm_4x4_fma4
 	  "m" (b_next), // 9
 	  "m" (a_next)*/  // 10
 	: // register clobber list
-	  "rax", "rbx", "rcx", "rdx", "rsi", "rdi", 
+	  "rax", "rbx", "rcx", "rdx", "rsi", "rdi",
 	  "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
 	  "ymm0", "ymm1", "ymm2", "ymm3",
 	  "ymm4", "ymm5", "ymm6", "ymm7",
@@ -2511,4 +2527,5 @@ void bli_zgemm_asm_4x4_fma4
 	  "ymm12", "ymm13", "ymm14", "ymm15",
 	  "memory"
 	);
+    // clang-format on
 }

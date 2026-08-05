@@ -6,12 +6,10 @@
  * uniformly.
  */
 template <typename T>
-void random_gemv(stride_type N, matrix<T>& A,
-                                matrix<T>& B,
-                                matrix<T>& C)
+void random_gemv(stride_type N, matrix<T>& A, matrix<T>& B, matrix<T>& C)
 {
-    len_type m = random_number<len_type>(1, lrint(floor(sqrt(N/sizeof(T)))));
-    len_type k = random_number<len_type>(1, lrint(floor(sqrt(N/sizeof(T)))));
+    len_type m = random_number<len_type>(1, lrint(floor(sqrt(N / sizeof(T)))));
+    len_type k = random_number<len_type>(1, lrint(floor(sqrt(N / sizeof(T)))));
 
     random_matrix(N, m, k, A);
     random_matrix(N, k, 1, B);
@@ -24,7 +22,7 @@ REPLICATED_TEMPLATED_TEST_CASE(gemv, R, T, all_types)
 
     random_gemv(N, A, B, C);
 
-    T scale(10.0*random_unit<T>());
+    T scale(10.0 * random_unit<T>());
 
     len_type m = C.length(0);
     len_type n = C.length(1);
@@ -44,5 +42,5 @@ REPLICATED_TEMPLATED_TEST_CASE(gemv, R, T, all_types)
     add(-1, D, 1, E);
     T error = reduce<T>(REDUCE_NORM_2, E);
 
-    check("REF", error, scale*m*n*k);
+    check("REF", error, scale * m * n * k);
 }

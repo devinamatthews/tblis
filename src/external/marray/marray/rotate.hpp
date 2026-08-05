@@ -18,12 +18,16 @@ void rotate(const marray_view<T, N>& array, const array_1d<len_type>& shift)
 
 template <typename T, int N, typename A>
 void rotate(marray<T, N, A>& array, const array_1d<len_type>& shift)
-{ rotate(array.view(), shift); }
+{
+    rotate(array.view(), shift);
+}
 
 template <typename T, int N, int I, typename... D>
 void rotate(const marray_slice<T, N, I, D...>& array,
             const array_1d<len_type>& shift)
-{ rotate(array.view(), shift); }
+{
+    rotate(array.view(), shift);
+}
 
 template <typename T, int N>
 void rotate(const marray_view<T, N>& array, int dim, len_type shift)
@@ -82,11 +86,15 @@ void rotate(const marray_view<T, N>& array, int dim, len_type shift)
 
 template <typename T, int N, typename A>
 void rotate(marray<T, N, A>& array, int dim, len_type shift)
-{ rotate(array.view(), dim, shift); }
+{
+    rotate(array.view(), dim, shift);
+}
 
 template <typename T, int N, int I, typename... D>
 void rotate(const marray_slice<T, N, I, D...>& array, int dim, len_type shift)
-{ rotate(array.view(), dim, shift); }
+{
+    rotate(array.view(), dim, shift);
+}
 
 MARRAY_END_NAMESPACE
 

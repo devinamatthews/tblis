@@ -48,25 +48,33 @@ class dpd_marray
     dpd_marray(dpd_marray&& other) { reset(std::move(other)); }
 
     template <typename U, typename A> dpd_marray(const dpd_marray<U, A>& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     template <typename U, typename D, bool O>
     dpd_marray(const dpd_marray_base<U, D, O>& other,
                dpd_layout layout = DEFAULT_LAYOUT)
-    { reset(other, layout); }
+    {
+        reset(other, layout);
+    }
 
     template <typename U, typename D, bool O>
     dpd_marray(const dpd_marray_base<U, D, O>& other,
                const array_1d<int>& depth,
                layout layout = DEFAULT_LAYOUT)
-    { reset(other, depth, layout); }
+    {
+        reset(other, depth, layout);
+    }
 
     dpd_marray(int irrep,
                int nirrep,
                const array_2d<len_type>& len,
                const Type& val = Type(),
                dpd_layout layout = DEFAULT_LAYOUT)
-    { reset(irrep, nirrep, len, val, layout); }
+    {
+        reset(irrep, nirrep, len, val, layout);
+    }
 
     dpd_marray(int irrep,
                int nirrep,
@@ -74,27 +82,35 @@ class dpd_marray
                const Type& val,
                const array_1d<int>& depth,
                layout layout = DEFAULT_LAYOUT)
-    { reset(irrep, nirrep, len, val, depth, layout); }
+    {
+        reset(irrep, nirrep, len, val, depth, layout);
+    }
 
     dpd_marray(int irrep,
                int nirrep,
                const array_2d<len_type>& len,
                dpd_layout layout)
-    { reset(irrep, nirrep, len, Type(), layout); }
+    {
+        reset(irrep, nirrep, len, Type(), layout);
+    }
 
     dpd_marray(int irrep,
                int nirrep,
                const array_2d<len_type>& len,
                const array_1d<int>& depth,
                layout layout)
-    { reset(irrep, nirrep, len, Type(), depth, layout); }
+    {
+        reset(irrep, nirrep, len, Type(), depth, layout);
+    }
 
     dpd_marray(int irrep,
                int nirrep,
                const array_2d<len_type>& len,
                uninitialized_t,
                dpd_layout layout = DEFAULT_LAYOUT)
-    { reset(irrep, nirrep, len, uninitialized, layout); }
+    {
+        reset(irrep, nirrep, len, uninitialized, layout);
+    }
 
     dpd_marray(int irrep,
                int nirrep,
@@ -102,7 +118,9 @@ class dpd_marray
                uninitialized_t,
                const array_1d<int>& depth,
                layout layout = DEFAULT_LAYOUT)
-    { reset(irrep, nirrep, len, uninitialized, depth, layout); }
+    {
+        reset(irrep, nirrep, len, uninitialized, depth, layout);
+    }
 
     ~dpd_marray() { reset(); }
 
@@ -113,7 +131,9 @@ class dpd_marray
      **********************************************************************/
 
     dpd_marray& operator=(const dpd_marray& other)
-    { return base::operator=(other); }
+    {
+        return base::operator=(other);
+    }
 
     stride_type size() const { return size_[2 * dimension() - 2][irrep_]; }
 
@@ -236,14 +256,18 @@ class dpd_marray
                int nirrep,
                const array_2d<len_type>& len,
                dpd_layout layout)
-    { reset(irrep, nirrep, len, Type(), layout); }
+    {
+        reset(irrep, nirrep, len, Type(), layout);
+    }
 
     void reset(int irrep,
                int nirrep,
                const array_2d<len_type>& len,
                const array_1d<int>& depth,
                layout layout)
-    { reset(irrep, nirrep, len, Type(), depth, layout); }
+    {
+        reset(irrep, nirrep, len, Type(), depth, layout);
+    }
 
     void reset(int irrep,
                int nirrep,

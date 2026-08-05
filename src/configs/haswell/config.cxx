@@ -1,5 +1,5 @@
-#include "util/cpuid.hpp"
 #include "config.hpp"
+#include "util/cpuid.hpp"
 
 namespace tblis
 {
@@ -11,29 +11,32 @@ int haswell_check()
 
     if (vendor != VENDOR_INTEL)
     {
-        if (get_verbose() >= 1) printf("tblis: haswell: Wrong vendor.\n");
+        if (get_verbose() >= 1)
+            printf("tblis: haswell: Wrong vendor.\n");
         return -1;
     }
 
     if (!check_features(features, FEATURE_AVX))
     {
-        if (get_verbose() >= 1) printf("tblis: haswell: Doesn't support AVX.\n");
+        if (get_verbose() >= 1)
+            printf("tblis: haswell: Doesn't support AVX.\n");
         return -1;
     }
 
-    //if (!check_features(features, FEATURE_FMA3))
+    // if (!check_features(features, FEATURE_FMA3))
     //{
-    //    if (get_verbose() >= 1) printf("tblis: haswell: Doesn't support FMA3.\n");
-    //    return -1;
-    //}
+    //     if (get_verbose() >= 1) printf("tblis: haswell: Doesn't support
+    //     FMA3.\n"); return -1;
+    // }
 
     if (!check_features(features, FEATURE_AVX2))
     {
-        if (get_verbose() >= 1) printf("tblis: haswell: Doesn't support AVX2.\n");
+        if (get_verbose() >= 1)
+            printf("tblis: haswell: Doesn't support AVX2.\n");
         return -1;
     }
 
     return 3;
 }
 
-}
+} // namespace tblis

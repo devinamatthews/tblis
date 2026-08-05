@@ -7,7 +7,12 @@ int tci_work_item_try_work(tci_work_item* item)
 {
     int expected = TCI_NOT_WORKED_ON;
 
-    if (tci_atomic_compare_exchange(item, &expected, TCI_IN_PROGRESS, 1, TCI_ATOMIC_ACQUIRE, TCI_ATOMIC_ACQUIRE))
+    if (tci_atomic_compare_exchange(item,
+                                    &expected,
+                                    TCI_IN_PROGRESS,
+                                    1,
+                                    TCI_ATOMIC_ACQUIRE,
+                                    TCI_ATOMIC_ACQUIRE))
     {
         return TCI_RESERVED;
     }

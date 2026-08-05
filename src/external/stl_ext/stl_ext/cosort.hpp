@@ -12,13 +12,14 @@ namespace detail
 
 using std::ptrdiff_t;
 
-template <class T, class U>
-struct doublet
+template <class T, class U> struct doublet
 {
     T first;
     U second;
 
-    doublet(const T& first_, const U& second_) : first(first_), second(second_) {}
+    doublet(const T& first_, const U& second_) : first(first_), second(second_)
+    {
+    }
 
     friend void swap(doublet& lhs, doublet& rhs)
     {
@@ -34,109 +35,114 @@ struct doublet
         swap(lhs.second, rhs.second);
     }
 
-    doublet(const doublet<T&,U&>& other)
-    : first(other.first), second(other.second) {}
+    doublet(const doublet<T&, U&>& other)
+    : first(other.first),
+      second(other.second)
+    {
+    }
 
-    doublet(doublet<T&,U&>&& other)
-    : first(std::move(other.first)), second(std::move(other.second)) {}
+    doublet(doublet<T&, U&>&& other)
+    : first(std::move(other.first)),
+      second(std::move(other.second))
+    {
+    }
 
-    doublet(const doublet<T,U>& other)
-    : first(other.first), second(other.second) {}
+    doublet(const doublet<T, U>& other)
+    : first(other.first),
+      second(other.second)
+    {
+    }
 
-    doublet(doublet<T,U>&& other)
-    : first(std::move(other.first)), second(std::move(other.second)) {}
+    doublet(doublet<T, U>&& other)
+    : first(std::move(other.first)),
+      second(std::move(other.second))
+    {
+    }
 
-    doublet& operator=(const doublet<T&,U&>& other)
+    doublet& operator=(const doublet<T&, U&>& other)
     {
         first = other.first;
         second = other.second;
         return *this;
     }
 
-    doublet& operator=(doublet<T&,U&>&& other)
+    doublet& operator=(doublet<T&, U&>&& other)
     {
         first = std::move(other.first);
         second = std::move(other.second);
         return *this;
     }
 
-    doublet& operator=(const doublet<T,U>& other)
+    doublet& operator=(const doublet<T, U>& other)
     {
         first = other.first;
         second = other.second;
         return *this;
     }
 
-    doublet& operator=(doublet<T,U>&& other)
+    doublet& operator=(doublet<T, U>&& other)
     {
         first = std::move(other.first);
         second = std::move(other.second);
         return *this;
     }
 
-    bool operator==(const doublet<T&,U&>& other) const
+    bool operator==(const doublet<T&, U&>& other) const
     {
         return first == other.first;
     }
 
-    bool operator!=(const doublet<T&,U&>& other) const
+    bool operator!=(const doublet<T&, U&>& other) const
     {
         return first != other.first;
     }
 
-    bool operator==(const doublet& other) const
-    {
-        return first == other.first;
-    }
+    bool operator==(const doublet& other) const { return first == other.first; }
 
-    bool operator!=(const doublet& other) const
-    {
-        return first != other.first;
-    }
+    bool operator!=(const doublet& other) const { return first != other.first; }
 
-    bool operator<(const doublet<T&,U&>& other) const
+    bool operator<(const doublet<T&, U&>& other) const
     {
         return first < other.first;
     }
 
-    bool operator>(const doublet<T&,U&>& other) const
+    bool operator>(const doublet<T&, U&>& other) const
     {
         return first > other.first;
     }
 
-    bool operator<=(const doublet<T&,U&>& other) const
+    bool operator<=(const doublet<T&, U&>& other) const
     {
         return first <= other.first;
     }
 
-    bool operator>=(const doublet<T&,U&>& other) const
+    bool operator>=(const doublet<T&, U&>& other) const
     {
         return first >= other.first;
     }
 
-    bool operator<(const doublet<T,U>& other) const
+    bool operator<(const doublet<T, U>& other) const
     {
         return first < other.first;
     }
 
-    bool operator>(const doublet<T,U>& other) const
+    bool operator>(const doublet<T, U>& other) const
     {
         return first > other.first;
     }
 
-    bool operator<=(const doublet<T,U>& other) const
+    bool operator<=(const doublet<T, U>& other) const
     {
         return first <= other.first;
     }
 
-    bool operator>=(const doublet<T,U>& other) const
+    bool operator>=(const doublet<T, U>& other) const
     {
         return first >= other.first;
     }
 };
 
-template <class T, class U>
-struct doublet<T&,U&>
+template <class T, class U> struct doublet<T&, U&>
 {
     T& first;
     U& second;
@@ -157,262 +163,249 @@ struct doublet<T&,U&>
         swap(lhs.second, rhs.second);
     }
 
-    doublet(doublet<T&,U&>& other)
-    : first(other.first), second(other.second) {}
+    doublet(doublet<T&, U&>& other) : first(other.first), second(other.second)
+    {
+    }
 
-    doublet(doublet<T&,U&>&& other)
-    : first(other.first), second(other.second) {}
+    doublet(doublet<T&, U&>&& other) : first(other.first), second(other.second)
+    {
+    }
 
-    doublet(doublet<T,U>& other)
-    : first(other.first), second(other.second) {}
+    doublet(doublet<T, U>& other) : first(other.first), second(other.second) {}
 
-    doublet& operator=(const doublet<T&,U&>& other)
+    doublet& operator=(const doublet<T&, U&>& other)
     {
         first = other.first;
         second = other.second;
         return *this;
     }
 
-    doublet& operator=(doublet<T&,U&>&& other)
+    doublet& operator=(doublet<T&, U&>&& other)
     {
         first = std::move(other.first);
         second = std::move(other.second);
         return *this;
     }
 
-    doublet& operator=(const doublet<T,U>& other)
+    doublet& operator=(const doublet<T, U>& other)
     {
         first = other.first;
         second = other.second;
         return *this;
     }
 
-    doublet& operator=(doublet<T,U>&& other)
+    doublet& operator=(doublet<T, U>&& other)
     {
         first = std::move(other.first);
         second = std::move(other.second);
         return *this;
     }
 
-    bool operator==(const doublet<T,U>& other) const
+    bool operator==(const doublet<T, U>& other) const
     {
         return first == other.first;
     }
 
-    bool operator!=(const doublet<T,U>& other) const
+    bool operator!=(const doublet<T, U>& other) const
     {
         return first != other.first;
     }
 
-    bool operator==(const doublet& other) const
-    {
-        return first == other.first;
-    }
+    bool operator==(const doublet& other) const { return first == other.first; }
 
-    bool operator!=(const doublet& other) const
-    {
-        return first != other.first;
-    }
+    bool operator!=(const doublet& other) const { return first != other.first; }
 
-    bool operator<(const doublet<T,U>& other) const
+    bool operator<(const doublet<T, U>& other) const
     {
         return first < other.first;
     }
 
-    bool operator>(const doublet<T,U>& other) const
+    bool operator>(const doublet<T, U>& other) const
     {
         return first > other.first;
     }
 
-    bool operator<=(const doublet<T,U>& other) const
+    bool operator<=(const doublet<T, U>& other) const
     {
         return first <= other.first;
     }
 
-    bool operator>=(const doublet<T,U>& other) const
+    bool operator>=(const doublet<T, U>& other) const
     {
         return first >= other.first;
     }
 
-    bool operator<(const doublet& other) const
-    {
-        return first < other.first;
-    }
+    bool operator<(const doublet& other) const { return first < other.first; }
 
-    bool operator>(const doublet& other) const
-    {
-        return first > other.first;
-    }
+    bool operator>(const doublet& other) const { return first > other.first; }
 
-    bool operator<=(const doublet& other) const
-    {
-        return first <= other.first;
-    }
+    bool operator<=(const doublet& other) const { return first <= other.first; }
 
-    bool operator>=(const doublet& other) const
-    {
-        return first >= other.first;
-    }
+    bool operator>=(const doublet& other) const { return first >= other.first; }
 };
 
-template <class T, class U>
-class coiterator
+template <class T, class U> class coiterator
 {
     T it_T_;
     U it_U_;
 
-    public:
-        typedef doublet<typename std::iterator_traits<T>::value_type,
-                        typename std::iterator_traits<U>::value_type> value_type;
-        typedef ptrdiff_t difference_type;
-        typedef doublet<typename std::iterator_traits<T>::pointer,
-                        typename std::iterator_traits<U>::pointer> pointer;
-        typedef doublet<typename std::iterator_traits<T>::reference,
-                        typename std::iterator_traits<U>::reference> reference;
-        typedef std::random_access_iterator_tag iterator_category;
+  public:
+    typedef doublet<typename std::iterator_traits<T>::value_type,
+                    typename std::iterator_traits<U>::value_type>
+        value_type;
+    typedef ptrdiff_t difference_type;
+    typedef doublet<typename std::iterator_traits<T>::pointer,
+                    typename std::iterator_traits<U>::pointer>
+        pointer;
+    typedef doublet<typename std::iterator_traits<T>::reference,
+                    typename std::iterator_traits<U>::reference>
+        reference;
+    typedef std::random_access_iterator_tag iterator_category;
 
-        coiterator(const T& it_T, const U& it_U) : it_T_(it_T), it_U_(it_U) {}
+    coiterator(const T& it_T, const U& it_U) : it_T_(it_T), it_U_(it_U) {}
 
-        bool operator==(const coiterator& other) const
-        {
-            return it_T_ == other.it_T_;
-        }
+    bool operator==(const coiterator& other) const
+    {
+        return it_T_ == other.it_T_;
+    }
 
-        bool operator!=(const coiterator& other) const
-        {
-            return it_T_ != other.it_T_;
-        }
+    bool operator!=(const coiterator& other) const
+    {
+        return it_T_ != other.it_T_;
+    }
 
-        bool operator<(const coiterator& other) const
-        {
-            return it_T_ < other.it_T_;
-        }
+    bool operator<(const coiterator& other) const
+    {
+        return it_T_ < other.it_T_;
+    }
 
-        bool operator>(const coiterator& other) const
-        {
-            return it_T_ > other.it_T_;
-        }
+    bool operator>(const coiterator& other) const
+    {
+        return it_T_ > other.it_T_;
+    }
 
-        bool operator<=(const coiterator& other) const
-        {
-            return it_T_ <= other.it_T_;
-        }
+    bool operator<=(const coiterator& other) const
+    {
+        return it_T_ <= other.it_T_;
+    }
 
-        bool operator>=(const coiterator& other) const
-        {
-            return it_T_ >= other.it_T_;
-        }
+    bool operator>=(const coiterator& other) const
+    {
+        return it_T_ >= other.it_T_;
+    }
 
-        typename coiterator::reference operator*()
-        {
-            //return typename coiterator::reference(move(*it_T),move(*it_U));
-            return typename coiterator::reference(*it_T_,*it_U_);
-        }
+    typename coiterator::reference operator*()
+    {
+        // return typename coiterator::reference(move(*it_T),move(*it_U));
+        return typename coiterator::reference(*it_T_, *it_U_);
+    }
 
-        typename coiterator::reference operator[](ptrdiff_t n)
-        {
-            //return typename coiterator::reference(move(it_T[n]),move(it_U[n]));
-            return typename coiterator::reference(it_T_[n],it_U_[n]);
-        }
+    typename coiterator::reference operator[](ptrdiff_t n)
+    {
+        // return typename coiterator::reference(move(it_T[n]),move(it_U[n]));
+        return typename coiterator::reference(it_T_[n], it_U_[n]);
+    }
 
-        coiterator& operator++()
-        {
-            ++it_T_;
-            ++it_U_;
-            return *this;
-        }
+    coiterator& operator++()
+    {
+        ++it_T_;
+        ++it_U_;
+        return *this;
+    }
 
-        coiterator& operator--()
-        {
-            --it_T_;
-            --it_U_;
-            return *this;
-        }
+    coiterator& operator--()
+    {
+        --it_T_;
+        --it_U_;
+        return *this;
+    }
 
-        coiterator operator++(int)
-        {
-            return coiterator(it_T_++, it_U_++);
-        }
+    coiterator operator++(int) { return coiterator(it_T_++, it_U_++); }
 
-        coiterator operator--(int)
-        {
-            return coiterator(it_T_--, it_U_--);
-        }
+    coiterator operator--(int) { return coiterator(it_T_--, it_U_--); }
 
-        coiterator& operator+=(ptrdiff_t n)
-        {
-            it_T_ += n;
-            it_U_ += n;
-            return *this;
-        }
+    coiterator& operator+=(ptrdiff_t n)
+    {
+        it_T_ += n;
+        it_U_ += n;
+        return *this;
+    }
 
-        coiterator& operator-=(ptrdiff_t n)
-        {
-            it_T_ -= n;
-            it_U_ -= n;
-            return *this;
-        }
+    coiterator& operator-=(ptrdiff_t n)
+    {
+        it_T_ -= n;
+        it_U_ -= n;
+        return *this;
+    }
 
-        coiterator operator+(ptrdiff_t n) const
-        {
-            return coiterator(it_T_+n, it_U_+n);
-        }
+    coiterator operator+(ptrdiff_t n) const
+    {
+        return coiterator(it_T_ + n, it_U_ + n);
+    }
 
-        friend coiterator operator+(ptrdiff_t n, const coiterator& other)
-        {
-            return coiterator(other.it_T_+n, other.it_U_+n);
-        }
+    friend coiterator operator+(ptrdiff_t n, const coiterator& other)
+    {
+        return coiterator(other.it_T_ + n, other.it_U_ + n);
+    }
 
-        coiterator operator-(ptrdiff_t n) const
-        {
-            return coiterator(it_T_-n, it_U_-n);
-        }
+    coiterator operator-(ptrdiff_t n) const
+    {
+        return coiterator(it_T_ - n, it_U_ - n);
+    }
 
-        ptrdiff_t operator-(const coiterator& other) const
-        {
-            return it_T_-other.it_T_;
-        }
+    ptrdiff_t operator-(const coiterator& other) const
+    {
+        return it_T_ - other.it_T_;
+    }
 };
 
 template <class key_iterator, class val_iterator, class Comparator>
 class cocomparator
 {
-    typedef typename coiterator<key_iterator,val_iterator>::value_type val;
+    typedef typename coiterator<key_iterator, val_iterator>::value_type val;
 
     Comparator comp_;
 
-    public:
-        cocomparator(Comparator comp) : comp_(comp) {}
+  public:
+    cocomparator(Comparator comp) : comp_(comp) {}
 
-        bool operator()(const val& r1, const val& r2) const
-        {
-            return comp_(r1.first, r2.first);
-        }
+    bool operator()(const val& r1, const val& r2) const
+    {
+        return comp_(r1.first, r2.first);
+    }
 };
 
-}
+} // namespace detail
 
 template <class key_iterator, class val_iterator>
-void cosort(key_iterator keys_begin, key_iterator keys_end,
-            val_iterator vals_begin, val_iterator vals_end)
+void cosort(key_iterator keys_begin,
+            key_iterator keys_end,
+            val_iterator vals_begin,
+            val_iterator vals_end)
 {
-    detail::coiterator<key_iterator,val_iterator> begin(keys_begin, vals_begin);
-    detail::coiterator<key_iterator,val_iterator> end  (keys_end  , vals_end  );
+    detail::coiterator<key_iterator, val_iterator> begin(keys_begin,
+                                                         vals_begin);
+    detail::coiterator<key_iterator, val_iterator> end(keys_end, vals_end);
     std::sort(begin, end);
 }
 
 template <class key_iterator, class val_iterator, class Comparator>
-void cosort(key_iterator keys_begin, key_iterator keys_end,
-            val_iterator vals_begin, val_iterator vals_end,
+void cosort(key_iterator keys_begin,
+            key_iterator keys_end,
+            val_iterator vals_begin,
+            val_iterator vals_end,
             Comparator comp)
 {
-    detail::coiterator<key_iterator,val_iterator> begin(keys_begin, vals_begin);
-    detail::coiterator<key_iterator,val_iterator> end  (keys_end  , vals_end  );
-    std::sort(begin, end, detail::cocomparator<key_iterator,val_iterator,Comparator>(comp));
+    detail::coiterator<key_iterator, val_iterator> begin(keys_begin,
+                                                         vals_begin);
+    detail::coiterator<key_iterator, val_iterator> end(keys_end, vals_end);
+    std::sort(
+        begin,
+        end,
+        detail::cocomparator<key_iterator, val_iterator, Comparator>(comp));
 }
 
-template <class Keys, class Values>
-void cosort(Keys& keys, Values& values)
+template <class Keys, class Values> void cosort(Keys& keys, Values& values)
 {
     cosort(keys.begin(), keys.end(), values.begin(), values.end());
 }
@@ -423,6 +416,6 @@ void cosort(Keys& keys, Values& values, Comparator comp)
     cosort(keys.begin(), keys.end(), values.begin(), values.end(), comp);
 }
 
-}
+} // namespace stl_ext
 
 #endif

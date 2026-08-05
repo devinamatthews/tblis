@@ -38,7 +38,8 @@
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #if TCI_ARCH_MIC
@@ -53,7 +54,7 @@ TCI_INLINE void tci_yield()
 TCI_INLINE void tci_yield()
 {
     //_mm_pause();
-    __asm__ __volatile__ ("pause");
+    __asm__ __volatile__("pause");
 }
 
 #else

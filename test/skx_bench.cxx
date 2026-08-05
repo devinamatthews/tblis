@@ -1,69 +1,106 @@
-#include <cstdlib>
 #include <algorithm>
-#include <limits>
-#include <stdint.h>
-#include <iostream>
-#include <random>
-#include <numeric>
-#include <getopt.h>
-#include <sstream>
-#include <type_traits>
-#include <iomanip>
+#include <cstdlib>
 #include <functional>
-#include <set>
+#include <getopt.h>
+#include <iomanip>
+#include <iostream>
+#include <limits>
 #include <map>
+#include <numeric>
+#include <random>
+#include <set>
+#include <sstream>
+#include <stdint.h>
+#include <type_traits>
 
 #include "../src/configs/skx2/config.hpp"
 #include "tblis.h"
-#include "util/time.hpp"
-#include "util/tensor.hpp"
 #include "util/random.hpp"
+#include "util/tensor.hpp"
+#include "util/time.hpp"
 
 using namespace std;
 using namespace tblis;
 using namespace stl_ext;
 
 template <typename T>
-using gemm_p = void (*)(const char* transa, const char* transb,
-                        const int* m, const int* n, const int* k,
-                        const T* alpha, const T* A, const int* lda,
-                                        const T* B, const int* ldb,
-                        const T*  beta,       T* C, const int* ldc);
+using gemm_p = void (*)(const char* transa,
+                        const char* transb,
+                        const int* m,
+                        const int* n,
+                        const int* k,
+                        const T* alpha,
+                        const T* A,
+                        const int* lda,
+                        const T* B,
+                        const int* ldb,
+                        const T* beta,
+                        T* C,
+                        const int* ldc);
 
-template <typename T>
-using gemm_f = typename remove_pointer<gemm_p<T>>::type;
+template <typename T> using gemm_f = typename remove_pointer<gemm_p<T>>::type;
 
 extern "C"
 {
-
-gemm_f<   float> sgemm_;
-gemm_f<  double> dgemm_;
+gemm_f<float> sgemm_;
+gemm_f<double> dgemm_;
 gemm_f<scomplex> cgemm_;
 gemm_f<dcomplex> zgemm_;
-
 }
 
-template<typename T> struct gemm_ptr;
-template <> struct gemm_ptr<   float> { constexpr static gemm_p<   float> value = &sgemm_; };
-template <> struct gemm_ptr<  double> { constexpr static gemm_p<  double> value = &dgemm_; };
-template <> struct gemm_ptr<scomplex> { constexpr static gemm_p<scomplex> value = &cgemm_; };
-template <> struct gemm_ptr<dcomplex> { constexpr static gemm_p<dcomplex> value = &zgemm_; };
+template <typename T> struct gemm_ptr;
 
-template<typename T>
-void gemm(char transa, char transb,
-          int m, int n, int k,
-          T alpha, const T* A, int lda,
-                   const T* B, int ldb,
-          T  beta,       T* C, int ldc)
+template <> struct gemm_ptr<float>
 {
-    gemm_ptr<T>::value(&transa, &transb, &m, &n, &k,
-                       &alpha, A, &lda,
-                               B, &ldb,
-                        &beta, C, &ldc);
+    constexpr static gemm_p<float> value = &sgemm_;
+};
+
+template <> struct gemm_ptr<double>
+{
+    constexpr static gemm_p<double> value = &dgemm_;
+};
+
+template <> struct gemm_ptr<scomplex>
+{
+    constexpr static gemm_p<scomplex> value = &cgemm_;
+};
+
+template <> struct gemm_ptr<dcomplex>
+{
+    constexpr static gemm_p<dcomplex> value = &zgemm_;
+};
+
+template <typename T>
+void gemm(char transa,
+          char transb,
+          int m,
+          int n,
+          int k,
+          T alpha,
+          const T* A,
+          int lda,
+          const T* B,
+          int ldb,
+          T beta,
+          T* C,
+          int ldc)
+{
+    gemm_ptr<T>::value(&transa,
+                       &transb,
+                       &m,
+                       &n,
+                       &k,
+                       &alpha,
+                       A,
+                       &lda,
+                       B,
+                       &ldb,
+                       &beta,
+                       C,
+                       &ldc);
 }
 
-const config* configs[] =
-{
+const config* configs[] = {
     //&skx_32x6_l1_config::instance(),
     //&skx_32x6_l2_config::instance(),
     //&skx_24x8_l1_config::instance(),
@@ -82,16 +119,18 @@ const config* configs[] =
     //&skx_8x8_l1_flip_config::instance(),
     //&skx_8x8_l2_flip_config::instance(),
 };
-constexpr auto num_configs = sizeof(configs)/sizeof(configs[0]);
+constexpr auto num_configs = sizeof(configs) / sizeof(configs[0]);
 
 template <typename T>
-void gemm_ref(T alpha, matrix_view<const T> A,
-                       matrix_view<const T> B,
-              T  beta,       matrix_view<T> C)
+void gemm_ref(T alpha,
+              matrix_view<const T> A,
+              matrix_view<const T> B,
+              T beta,
+              matrix_view<T> C)
 {
     const T* ptr_A = A.data();
     const T* ptr_B = B.data();
-          T* ptr_C = C.data();
+    T* ptr_C = C.data();
 
     len_type m_A = A.length(0);
     len_type m_C = C.length(0);
@@ -115,39 +154,41 @@ void gemm_ref(T alpha, matrix_view<const T> A,
     len_type n = n_B;
     len_type k = k_A;
 
-    for (len_type i = 0;i < m;i++)
+    for (len_type i = 0; i < m; i++)
     {
-        for (len_type j = 0;j < n;j++)
+        for (len_type j = 0; j < n; j++)
         {
             T tmp = T();
 
             if (alpha != T(0))
             {
-                for (len_type ik = 0;ik < k;ik++)
+                for (len_type ik = 0; ik < k; ik++)
                 {
-                    tmp += ptr_A[i*rs_A + ik*cs_A]*ptr_B[ik*rs_B + j*cs_B];
+                    tmp += ptr_A[i * rs_A + ik * cs_A]
+                         * ptr_B[ik * rs_B + j * cs_B];
                 }
             }
 
             if (beta == T(0))
             {
-                ptr_C[i*rs_C + j*cs_C] = alpha*tmp;
+                ptr_C[i * rs_C + j * cs_C] = alpha * tmp;
             }
             else
             {
-                ptr_C[i*rs_C + j*cs_C] = alpha*tmp + beta*ptr_C[i*rs_C + j*cs_C];
+                ptr_C[i * rs_C + j * cs_C] =
+                    alpha * tmp + beta * ptr_C[i * rs_C + j * cs_C];
             }
         }
     }
 }
 
-range_t<stride_type> parse_range(const string & s)
+range_t<stride_type> parse_range(const string& s)
 {
     stride_type mn, mx;
     stride_type delta = 1;
 
     size_t colon1 = s.find(':');
-    size_t colon2 = s.find(':', colon1 == string::npos ? colon1 : colon1+1);
+    size_t colon2 = s.find(':', colon1 == string::npos ? colon1 : colon1 + 1);
 
     if (colon1 == string::npos)
     {
@@ -156,55 +197,53 @@ range_t<stride_type> parse_range(const string & s)
     else if (colon2 == string::npos)
     {
         mn = stol(s.substr(0, colon1));
-        mx = stol(s.substr(colon1+1));
+        mx = stol(s.substr(colon1 + 1));
     }
     else
     {
         mn = stol(s.substr(0, colon1));
-        mx = stol(s.substr(colon1+1, colon2-colon1-1));
-        delta = stol(s.substr(colon2+1));
+        mx = stol(s.substr(colon1 + 1, colon2 - colon1 - 1));
+        delta = stol(s.substr(colon2 + 1));
     }
 
-    return
-    {
-        mn, mx+delta, delta
-    };
+    return {mn, mx + delta, delta};
 }
 
-template<typename Kernel, typename ...Args>
-double run_kernel(len_type R, const Kernel & kernel, Args &&...args)
+template <typename Kernel, typename... Args>
+double run_kernel(len_type R, const Kernel& kernel, Args&&... args)
 {
     double bias = numeric_limits<double>::max();
-    for (len_type r = 0;r < R;r++)
+    for (len_type r = 0; r < R; r++)
     {
         double t0 = tic();
         double t1 = tic();
-        bias = min(bias, t1-t0);
+        bias = min(bias, t1 - t0);
     }
 
     double dt = numeric_limits<double>::max();
-    for (len_type r = 0;r < R;r++)
+    for (len_type r = 0; r < R; r++)
     {
         double t0 = tic();
         kernel(args...);
         double t1 = tic();
-        dt = min(dt, t1-t0);
+        dt = min(dt, t1 - t0);
     }
 
     return dt - bias;
 }
 
-template<typename Experiment>
-void iterate_over_ranges_helper(const Experiment & experiment,
-                                const map<char,range_t<stride_type>> &ranges,
-                                map<char,range_t<stride_type>>::const_iterator range,
-                                map<char,len_type> &values)
+template <typename Experiment>
+void iterate_over_ranges_helper(
+    const Experiment& experiment,
+    const map<char, range_t<stride_type>>& ranges,
+    map<char, range_t<stride_type>>::const_iterator range,
+    map<char, len_type>& values)
 {
     if (range == ranges.end())
     {
         len_type var = 0;
 
-        for (auto & r : ranges)
+        for (auto& r : ranges)
         {
             if (r.second.size() > 1)
             {
@@ -212,7 +251,7 @@ void iterate_over_ranges_helper(const Experiment & experiment,
             }
         }
 
-        for (auto & r : ranges)
+        for (auto& r : ranges)
         {
             if (r.second.front() == -1)
             {
@@ -224,38 +263,43 @@ void iterate_over_ranges_helper(const Experiment & experiment,
     }
     else
     {
-        //cout << range->second.front() << " " << range->second.back() << endl;
+        // cout << range->second.front() << " " << range->second.back() << endl;
         for (stride_type v : range->second)
         {
-            //cout << v << endl;
+            // cout << v << endl;
             values[range->first] = v;
             iterate_over_ranges_helper(experiment, ranges, next(range), values);
         }
     }
 }
 
-template<typename Experiment>
-void iterate_over_ranges(const Experiment & experiment,
-                         const map<char,range_t<stride_type>> &ranges)
+template <typename Experiment>
+void iterate_over_ranges(const Experiment& experiment,
+                         const map<char, range_t<stride_type>>& ranges)
 {
     map<char, len_type> values;
     iterate_over_ranges_helper(experiment, ranges, ranges.begin(), values);
 }
 
-template<typename T>
-struct gemm_experiment
+template <typename T> struct gemm_experiment
 {
     len_type R;
 
-    gemm_experiment(len_type R, const range_t<stride_type> &m_range,
-                    const range_t<stride_type> &n_range,
-                    const range_t<stride_type> &k_range)
+    gemm_experiment(len_type R,
+                    const range_t<stride_type>& m_range,
+                    const range_t<stride_type>& n_range,
+                    const range_t<stride_type>& k_range)
     : R(R)
     {
-        iterate_over_ranges(*this, {{'m', m_range}, {'n', n_range}, {'k', k_range}});
+        iterate_over_ranges(*this,
+                            {
+                                {'m', m_range},
+                                {'n', n_range},
+                                {'k', k_range}
+        });
     }
 
-    void operator()(const map<char, len_type> &values) const
+    void operator()(const map<char, len_type>& values) const
     {
         stride_type m = values.at('m');
         stride_type n = values.at('n');
@@ -269,27 +313,40 @@ struct gemm_experiment
         tblis_matrix Bt(B.view());
         tblis_matrix Ct(0.0, C.view());
 
-        double gflops = 2*m*n*k*1e-9;
+        double gflops = 2 * m * n * k * 1e-9;
 
         printf("%ld %ld %ld ", m, n, k);
 
-        for (size_t i = 0;i < num_configs;i++)
+        for (size_t i = 0; i < num_configs; i++)
         {
-            double perf = gflops/run_kernel(R,
-            [&]
-            {
-                tblis_matrix_mult(NULL, *configs[i], &At, &Bt, &Ct);
-            });
+            double perf =
+                gflops
+                / run_kernel(
+                    R,
+                    [&]
+                    { tblis_matrix_mult(NULL, *configs[i], &At, &Bt, &Ct); });
 
             printf("%e ", perf);
         }
 
-        double perf = gflops/run_kernel(R,
-        [&]
-        {
-            gemm<T>('N', 'N', m, n, k,
-                    1.0, A.data(), m, B.data(), k, 0.0, C.data(), m);
-        });
+        double perf = gflops
+                    / run_kernel(R,
+                                 [&]
+                                 {
+                                     gemm<T>('N',
+                                             'N',
+                                             m,
+                                             n,
+                                             k,
+                                             1.0,
+                                             A.data(),
+                                             m,
+                                             B.data(),
+                                             k,
+                                             0.0,
+                                             C.data(),
+                                             m);
+                                 });
 
         printf("%e ", perf);
 
@@ -298,8 +355,7 @@ struct gemm_experiment
     }
 };
 
-template <typename T>
-void test_gemm(len_type m, len_type n, len_type k)
+template <typename T> void test_gemm(len_type m, len_type n, len_type k)
 {
     matrix<T> A({m, k});
     matrix<T> B({k, n});
@@ -314,7 +370,7 @@ void test_gemm(len_type m, len_type n, len_type k)
 
     printf("%ld %ld %ld\n", m, n, k);
 
-    for (size_t i = 0;i < num_configs;i++)
+    for (size_t i = 0; i < num_configs; i++)
     {
         matrix<T> C_skx(C);
         matrix<T> C_ref(C);
@@ -329,7 +385,7 @@ void test_gemm(len_type m, len_type n, len_type k)
         add<T>(T(-1), C_ref, T(1), C_skx);
         double err = reduce<T>(REDUCE_NORM_2, C_skx).first;
 
-        printf("%e\n", err/max(m*n*k,len_type(1)));
+        printf("%e\n", err / max(m * n * k, len_type(1)));
     }
 
     printf("\n");
@@ -340,9 +396,11 @@ int main(int argc, char** argv)
     int R = 10;
     time_t seed = time(nullptr);
 
-    struct option opts[] = {{"rep", required_argument, NULL, 'r'},
-                            {"seed", required_argument, NULL, 's'},
-                            {0, 0, 0, 0}};
+    struct option opts[] = {
+        { "rep", required_argument, NULL, 'r'},
+        {"seed", required_argument, NULL, 's'},
+        {     0,                 0,    0,   0}
+    };
 
     int arg;
     int index;
@@ -359,9 +417,7 @@ int main(int argc, char** argv)
                 iss.str(optarg);
                 iss >> seed;
                 break;
-            case '?':
-                abort();
-                break;
+            case '?': abort(); break;
         }
     }
 
@@ -374,16 +430,14 @@ int main(int argc, char** argv)
     printf("Getting SKX DGEMM performance:\n");
 
     printf("              ");
-    for (int i = 0;i < num_configs;i++)
-    {
-        printf("%13s", configs[i]->name);
-    }
+    for (int i = 0; i < num_configs; i++) { printf("%13s", configs[i]->name); }
     printf("\n");
 
     string line;
     while (getline(cin, line) && !line.empty())
     {
-        if (line[0] == '#') continue;
+        if (line[0] == '#')
+            continue;
 
         istringstream iss(line);
 

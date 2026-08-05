@@ -1,11 +1,11 @@
 #include "dot.h"
 
-#include "util/macros.h"
-#include "util/tensor.hpp"
 #include "internal/1t/dense/dot.hpp"
 #include "internal/1t/dpd/dot.hpp"
 #include "internal/1t/indexed/dot.hpp"
 #include "internal/1t/indexed_dpd/dot.hpp"
+#include "util/macros.h"
+#include "util/tensor.hpp"
 
 namespace tblis
 {
@@ -60,21 +60,32 @@ void tblis_tensor_dot(const tblis_comm* comm,
     fold(len_AB, idx_AB, stride_A_AB, stride_B_AB);
 
     parallelize_if(
-    [&](const communicator& comm)
-    {
-        internal::dot(A->type, comm, get_config(cfg), len_AB,
-                      A->conj, reinterpret_cast<char*>(A->data), stride_A_AB,
-                      B->conj, reinterpret_cast<char*>(B->data), stride_B_AB,
-                      result->raw());
-    }, comm);
+        [&](const communicator& comm)
+        {
+            internal::dot(A->type,
+                          comm,
+                          get_config(cfg),
+                          len_AB,
+                          A->conj,
+                          reinterpret_cast<char*>(A->data),
+                          stride_A_AB,
+                          B->conj,
+                          reinterpret_cast<char*>(B->data),
+                          stride_B_AB,
+                          result->raw());
+        },
+        comm);
 
-    *result *= A->scalar*B->scalar;
+    *result *= A->scalar * B->scalar;
 }
 
 template <typename T>
 void dot(const communicator& comm,
-         dpd_marray_view<const T> A, const label_vector& idx_A,
-         dpd_marray_view<const T> B, const label_vector& idx_B, T& result)
+         dpd_marray_view<const T> A,
+         const label_vector& idx_A,
+         dpd_marray_view<const T> B,
+         const label_vector& idx_B,
+         T& result)
 {
     auto nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
@@ -82,13 +93,11 @@ void dot(const communicator& comm,
     auto ndim_A = A.dimension();
     auto ndim_B = B.dimension();
 
-    for (auto i : range(1,ndim_A))
-    for (auto j : range(i))
-        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+    for (auto i : range(1, ndim_A))
+        for (auto j : range(i)) TBLIS_ASSERT(idx_A[i] != idx_A[j]);
 
-    for (auto i : range(1,ndim_B))
-    for (auto j : range(i))
-        TBLIS_ASSERT(idx_B[i] != idx_B[j]);
+    for (auto i : range(1, ndim_B))
+        for (auto j : range(i)) TBLIS_ASSERT(idx_B[i] != idx_B[j]);
 
     auto idx_AB = stl_ext::intersection(idx_A, idx_B);
     auto idx_A_only = stl_ext::exclusion(idx_A, idx_AB);
@@ -104,39 +113,49 @@ void dot(const communicator& comm,
     auto idx_B_AB = stl_ext::select_from(range_B, idx_B, idx_AB);
 
     for (auto i : range(idx_AB.size()))
-    for (auto irrep : range(nirrep))
-    {
-        TBLIS_ASSERT(A.length(idx_A_AB[i], irrep) ==
-                     B.length(idx_B_AB[i], irrep));
-    }
+        for (auto irrep : range(nirrep))
+        {
+            TBLIS_ASSERT(A.length(idx_A_AB[i], irrep)
+                         == B.length(idx_B_AB[i], irrep));
+        }
 
-    internal::dot(type_tag<T>::value, comm, get_default_config(),
-                  false, reinterpret_cast<const dpd_marray_view<char>&>(A), idx_A_AB,
-                  false, reinterpret_cast<const dpd_marray_view<char>&>(B), idx_B_AB,
+    internal::dot(type_tag<T>::value,
+                  comm,
+                  get_default_config(),
+                  false,
+                  reinterpret_cast<const dpd_marray_view<char>&>(A),
+                  idx_A_AB,
+                  false,
+                  reinterpret_cast<const dpd_marray_view<char>&>(B),
+                  idx_B_AB,
                   reinterpret_cast<char*>(&result));
 }
 
-#define FOREACH_TYPE(T) \
-template void dot(const communicator& comm, \
-                  dpd_marray_view<const T> A, const label_vector& idx_A, \
-                  dpd_marray_view<const T> B, const label_vector& idx_B, T& result);
+#define FOREACH_TYPE(T)                           \
+    template void dot(const communicator& comm,   \
+                      dpd_marray_view<const T> A, \
+                      const label_vector& idx_A,  \
+                      dpd_marray_view<const T> B, \
+                      const label_vector& idx_B,  \
+                      T& result);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void dot(const communicator& comm,
-         indexed_marray_view<const T> A, const label_vector& idx_A,
-         indexed_marray_view<const T> B, const label_vector& idx_B, T& result)
+         indexed_marray_view<const T> A,
+         const label_vector& idx_A,
+         indexed_marray_view<const T> B,
+         const label_vector& idx_B,
+         T& result)
 {
     auto ndim_A = A.dimension();
     auto ndim_B = B.dimension();
 
-    for (auto i : range(1,ndim_A))
-    for (auto j : range(i))
-        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+    for (auto i : range(1, ndim_A))
+        for (auto j : range(i)) TBLIS_ASSERT(idx_A[i] != idx_A[j]);
 
-    for (auto i : range(1,ndim_B))
-    for (auto j : range(i))
-        TBLIS_ASSERT(idx_B[i] != idx_B[j]);
+    for (auto i : range(1, ndim_B))
+        for (auto j : range(i)) TBLIS_ASSERT(idx_B[i] != idx_B[j]);
 
     auto idx_AB = stl_ext::intersection(idx_A, idx_B);
     auto idx_A_only = stl_ext::exclusion(idx_A, idx_AB);
@@ -153,26 +172,37 @@ void dot(const communicator& comm,
 
     for (auto i : range(idx_AB.size()))
     {
-        TBLIS_ASSERT(A.length(idx_A_AB[i]) ==
-                     B.length(idx_B_AB[i]));
+        TBLIS_ASSERT(A.length(idx_A_AB[i]) == B.length(idx_B_AB[i]));
     }
 
-    internal::dot(type_tag<T>::value, comm, get_default_config(),
-                  false, reinterpret_cast<const indexed_marray_view<char>&>(A), idx_A_AB,
-                  false, reinterpret_cast<const indexed_marray_view<char>&>(B), idx_B_AB,
+    internal::dot(type_tag<T>::value,
+                  comm,
+                  get_default_config(),
+                  false,
+                  reinterpret_cast<const indexed_marray_view<char>&>(A),
+                  idx_A_AB,
+                  false,
+                  reinterpret_cast<const indexed_marray_view<char>&>(B),
+                  idx_B_AB,
                   reinterpret_cast<char*>(&result));
 }
 
-#define FOREACH_TYPE(T) \
-template void dot(const communicator& comm, \
-                  indexed_marray_view<const T> A, const label_vector& idx_A, \
-                  indexed_marray_view<const T> B, const label_vector& idx_B, T& result);
+#define FOREACH_TYPE(T)                               \
+    template void dot(const communicator& comm,       \
+                      indexed_marray_view<const T> A, \
+                      const label_vector& idx_A,      \
+                      indexed_marray_view<const T> B, \
+                      const label_vector& idx_B,      \
+                      T& result);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void dot(const communicator& comm,
-         indexed_dpd_marray_view<const T> A, const label_vector& idx_A,
-         indexed_dpd_marray_view<const T> B, const label_vector& idx_B, T& result)
+         indexed_dpd_marray_view<const T> A,
+         const label_vector& idx_A,
+         indexed_dpd_marray_view<const T> B,
+         const label_vector& idx_B,
+         T& result)
 {
     auto nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
@@ -180,13 +210,11 @@ void dot(const communicator& comm,
     auto ndim_A = A.dimension();
     auto ndim_B = B.dimension();
 
-    for (auto i : range(1,ndim_A))
-    for (auto j : range(i))
-        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+    for (auto i : range(1, ndim_A))
+        for (auto j : range(i)) TBLIS_ASSERT(idx_A[i] != idx_A[j]);
 
-    for (auto i : range(1,ndim_B))
-    for (auto j : range(i))
-        TBLIS_ASSERT(idx_B[i] != idx_B[j]);
+    for (auto i : range(1, ndim_B))
+        for (auto j : range(i)) TBLIS_ASSERT(idx_B[i] != idx_B[j]);
 
     auto idx_AB = stl_ext::intersection(idx_A, idx_B);
     auto idx_A_only = stl_ext::exclusion(idx_A, idx_AB);
@@ -202,22 +230,31 @@ void dot(const communicator& comm,
     auto idx_B_AB = stl_ext::select_from(range_B, idx_B, idx_AB);
 
     for (auto i : range(idx_AB.size()))
-    for (auto irrep : range(nirrep))
-    {
-        TBLIS_ASSERT(A.length(idx_A_AB[i], irrep) ==
-                     B.length(idx_B_AB[i], irrep));
-    }
+        for (auto irrep : range(nirrep))
+        {
+            TBLIS_ASSERT(A.length(idx_A_AB[i], irrep)
+                         == B.length(idx_B_AB[i], irrep));
+        }
 
-    internal::dot(type_tag<T>::value, comm, get_default_config(),
-                  false, reinterpret_cast<const indexed_dpd_marray_view<char>&>(A), idx_A_AB,
-                  false, reinterpret_cast<const indexed_dpd_marray_view<char>&>(B), idx_B_AB,
+    internal::dot(type_tag<T>::value,
+                  comm,
+                  get_default_config(),
+                  false,
+                  reinterpret_cast<const indexed_dpd_marray_view<char>&>(A),
+                  idx_A_AB,
+                  false,
+                  reinterpret_cast<const indexed_dpd_marray_view<char>&>(B),
+                  idx_B_AB,
                   reinterpret_cast<char*>(&result));
 }
 
-#define FOREACH_TYPE(T) \
-template void dot(const communicator& comm, \
-                  indexed_dpd_marray_view<const T> A, const label_vector& idx_A, \
-                  indexed_dpd_marray_view<const T> B, const label_vector& idx_B, T& result);
+#define FOREACH_TYPE(T)                                   \
+    template void dot(const communicator& comm,           \
+                      indexed_dpd_marray_view<const T> A, \
+                      const label_vector& idx_A,          \
+                      indexed_dpd_marray_view<const T> B, \
+                      const label_vector& idx_B,          \
+                      T& result);
 #include "configs/foreach_type.h"
 
-}
+} // namespace tblis

@@ -2,9 +2,9 @@
 #define _TBLIS_CONFIGS_HPP_
 
 #include "util/basic_types.h"
-#include "util/thread.h"
-#include "util/macros.h"
 #include "util/env.hpp"
+#include "util/macros.h"
+#include "util/thread.h"
 
 #include "kernels/1v/add.hpp"
 #include "kernels/1v/dot.hpp"
@@ -32,80 +32,123 @@ using check_fn_t = int (*)(void);
 
 template <typename T> struct type_idx;
 
-template <> struct type_idx<   float> { constexpr static int value = 0; };
-template <> struct type_idx<  double> { constexpr static int value = 1; };
-template <> struct type_idx<scomplex> { constexpr static int value = 2; };
-template <> struct type_idx<dcomplex> { constexpr static int value = 3; };
+template <> struct type_idx<float>
+{
+    constexpr static int value = 0;
+};
+
+template <> struct type_idx<double>
+{
+    constexpr static int value = 1;
+};
+
+template <> struct type_idx<scomplex>
+{
+    constexpr static int value = 2;
+};
+
+template <> struct type_idx<dcomplex>
+{
+    constexpr static int value = 3;
+};
 
 struct blocksize
 {
-    len_type    _def[4];
-    len_type    _max[4];
-    len_type   _iota[4];
+    len_type _def[4];
+    len_type _max[4];
+    len_type _iota[4];
     len_type _extent[4];
 
-    len_type    def(type_t type) const { return    _def[type]; }
-    len_type    max(type_t type) const { return    _max[type]; }
-    len_type   iota(type_t type) const { return   _iota[type]; }
+    len_type def(type_t type) const { return _def[type]; }
+
+    len_type max(type_t type) const { return _max[type]; }
+
+    len_type iota(type_t type) const { return _iota[type]; }
+
     len_type extent(type_t type) const { return _extent[type]; }
 
-    template <typename T> len_type    def() const { return    _def[type_idx<T>::value]; }
-    template <typename T> len_type    max() const { return    _max[type_idx<T>::value]; }
-    template <typename T> len_type   iota() const { return   _iota[type_idx<T>::value]; }
-    template <typename T> len_type extent() const { return _extent[type_idx<T>::value]; }
+    template <typename T> len_type def() const
+    {
+        return _def[type_idx<T>::value];
+    }
 
-    template <template <typename> class BS, typename T> blocksize(const BS<T>&)
-    : _def   {BS<float>::def,    BS<double>::def,    BS<scomplex>::def,    BS<dcomplex>::def},
-      _max   {BS<float>::max,    BS<double>::max,    BS<scomplex>::max,    BS<dcomplex>::max},
-      _iota  {BS<float>::iota,   BS<double>::iota,   BS<scomplex>::iota,   BS<dcomplex>::iota},
-      _extent{BS<float>::extent, BS<double>::extent, BS<scomplex>::extent, BS<dcomplex>::extent} {}
+    template <typename T> len_type max() const
+    {
+        return _max[type_idx<T>::value];
+    }
+
+    template <typename T> len_type iota() const
+    {
+        return _iota[type_idx<T>::value];
+    }
+
+    template <typename T> len_type extent() const
+    {
+        return _extent[type_idx<T>::value];
+    }
+
+    template <template <typename> class BS, typename T>
+    blocksize(const BS<T>&)
+    : _def{BS<float>::def,
+           BS<double>::def,
+           BS<scomplex>::def,
+           BS<dcomplex>::def},
+      _max{BS<float>::max,
+           BS<double>::max,
+           BS<scomplex>::max,
+           BS<dcomplex>::max},
+      _iota{BS<float>::iota,
+            BS<double>::iota,
+            BS<scomplex>::iota,
+            BS<dcomplex>::iota},
+      _extent{BS<float>::extent,
+              BS<double>::extent,
+              BS<scomplex>::extent,
+              BS<dcomplex>::extent}
+    {
+    }
 };
 
-template <typename ukr_t>
-struct microkernel
+template <typename ukr_t> struct microkernel
 {
     ukr_t _ukr[4];
 
-    template <template <typename> class ukr, typename T> microkernel(const ukr<T>&)
-    : _ukr{ukr<   float>::value,
-           ukr<  double>::value,
+    template <template <typename> class ukr, typename T>
+    microkernel(const ukr<T>&)
+    : _ukr{ukr<float>::value,
+           ukr<double>::value,
            ukr<scomplex>::value,
-           ukr<dcomplex>::value} {}
+           ukr<dcomplex>::value}
+    {
+    }
 
-    template <typename... Args>
-    void call(type_t type, Args&&... args) const
+    template <typename... Args> void call(type_t type, Args&&... args) const
     {
         _ukr[type](std::forward<Args>(args)...);
     }
 
-    template <typename T, typename... Args>
-    void call(Args&&... args) const
+    template <typename T, typename... Args> void call(Args&&... args) const
     {
         _ukr[type_tag<T>::value](std::forward<Args>(args)...);
     }
 };
 
-template <typename U>
-struct parameter
+template <typename U> struct parameter
 {
     U _val[4];
 
-    template <template <typename> class param, typename T> parameter(const param<T>&)
-    : _val{param<   float>::value,
-           param<  double>::value,
+    template <template <typename> class param, typename T>
+    parameter(const param<T>&)
+    : _val{param<float>::value,
+           param<double>::value,
            param<scomplex>::value,
-           param<dcomplex>::value} {}
-
-    U value(type_t type) const
+           param<dcomplex>::value}
     {
-        return _val[type];
     }
 
-    template <typename T>
-    U value() const
-    {
-        return _val[type_idx<T>::value];
-    }
+    U value(type_t type) const { return _val[type]; }
+
+    template <typename T> U value() const { return _val[type_idx<T>::value]; }
 };
 
 struct config
@@ -178,7 +221,8 @@ struct config
     check_fn_t check;
     const char* name;
 
-    template <typename Traits> config(const Traits&)
+    template <typename Traits>
+    config(const Traits&)
     : add_ukr(typename Traits::template add_ukr<float>()),
       dot_ukr(typename Traits::template dot_ukr<float>()),
       mult_ukr(typename Traits::template mult_ukr<float>()),
@@ -217,8 +261,10 @@ struct config
       pack_ss_nr_ukr(typename Traits::template pack_ss_nr_ukr<float>()),
       pack_nb_mr_ukr(typename Traits::template pack_nb_mr_ukr<float>()),
       pack_nb_nr_ukr(typename Traits::template pack_nb_nr_ukr<float>()),
-      pack_ss_scal_mr_ukr(typename Traits::template pack_ss_scal_mr_ukr<float>()),
-      pack_ss_scal_nr_ukr(typename Traits::template pack_ss_scal_nr_ukr<float>()),
+      pack_ss_scal_mr_ukr(
+          typename Traits::template pack_ss_scal_mr_ukr<float>()),
+      pack_ss_scal_nr_ukr(
+          typename Traits::template pack_ss_scal_nr_ukr<float>()),
 
       update_nn_ukr(typename Traits::template update_nn_ukr<float>()),
       update_ss_ukr(typename Traits::template update_ss_ukr<float>()),
@@ -228,12 +274,15 @@ struct config
       mr_max_thread(typename Traits::template mr_max_thread<float>()),
       nr_max_thread(typename Traits::template nr_max_thread<float>()),
 
-      check(Traits::check), name(Traits::name) {}
+      check(Traits::check),
+      name(Traits::name)
+    {
+    }
 
-      operator const tblis_config*() const
-      {
-          return reinterpret_cast<const tblis_config*>(this);
-      }
+    operator const tblis_config*() const
+    {
+        return reinterpret_cast<const tblis_config*>(this);
+    }
 };
 
 const config& get_default_config();
@@ -242,6 +291,6 @@ const config& get_config(const tblis_config* cfg);
 
 const config& get_config(const std::string& name);
 
-}
+} // namespace tblis
 
 #endif

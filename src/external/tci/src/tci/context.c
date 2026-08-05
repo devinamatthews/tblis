@@ -1,13 +1,14 @@
 #include "tci/context.h"
 
-#include <stdlib.h>
 #include <errno.h>
+#include <stdlib.h>
 
-int tci_context_init(tci_context** context,
-                     unsigned nthread, unsigned group_size)
+int
+tci_context_init(tci_context** context, unsigned nthread, unsigned group_size)
 {
     *context = (tci_context*)malloc(sizeof(tci_context));
-    if (!*context) return ENOMEM;
+    if (!*context)
+        return ENOMEM;
     (*context)->refcount = 0;
     (*context)->buffer = NULL;
     return tci_barrier_init(&(*context)->barrier, nthread, group_size);
@@ -40,12 +41,12 @@ int tci_context_send(tci_context* context, unsigned tid, void* object)
 {
     tci_atomic_store(&context->buffer, object, TCI_ATOMIC_RELEASE);
     int ret = tci_context_barrier(context, tid);
-    if (ret != 0) return ret;
+    if (ret != 0)
+        return ret;
     return tci_context_barrier(context, tid);
 }
 
-int tci_context_send_nowait(tci_context* context,
-                            unsigned tid, void* object)
+int tci_context_send_nowait(tci_context* context, unsigned tid, void* object)
 {
     tci_atomic_store(&context->buffer, object, TCI_ATOMIC_RELEASE);
     return tci_context_barrier(context, tid);
@@ -54,16 +55,18 @@ int tci_context_send_nowait(tci_context* context,
 int tci_context_receive(tci_context* context, unsigned tid, void** object)
 {
     int ret = tci_context_barrier(context, tid);
-    if (ret != 0) return ret;
+    if (ret != 0)
+        return ret;
     *object = (void*)tci_atomic_load(&context->buffer, TCI_ATOMIC_ACQUIRE);
     return tci_context_barrier(context, tid);
 }
 
-int tci_context_receive_nowait(tci_context* context,
-                               unsigned tid, void** object)
+int
+tci_context_receive_nowait(tci_context* context, unsigned tid, void** object)
 {
     int ret = tci_context_barrier(context, tid);
-    if (ret != 0) return ret;
+    if (ret != 0)
+        return ret;
     *object = (void*)tci_atomic_load(&context->buffer, TCI_ATOMIC_ACQUIRE);
     return 0;
 }

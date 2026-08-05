@@ -57,18 +57,24 @@ class dpd_marray_view
 
     template <typename U, typename D, bool O>
     dpd_marray_view(const dpd_marray_base<U, D, O>& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     template <typename U, typename D, bool O>
     dpd_marray_view(dpd_marray_base<U, D, O>& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     dpd_marray_view(int irrep,
                     int nirrep,
                     const array_2d<len_type>& len,
                     pointer ptr,
                     dpd_layout layout = DEFAULT_LAYOUT)
-    { reset(irrep, nirrep, len, ptr, layout); }
+    {
+        reset(irrep, nirrep, len, ptr, layout);
+    }
 
     dpd_marray_view(int irrep,
                     int nirrep,
@@ -76,7 +82,9 @@ class dpd_marray_view
                     pointer ptr,
                     const array_1d<int>& depth,
                     layout layout = DEFAULT_LAYOUT)
-    { reset(irrep, nirrep, len, ptr, depth, layout); }
+    {
+        reset(irrep, nirrep, len, ptr, depth, layout);
+    }
 
     /***********************************************************************
      *
@@ -85,7 +93,9 @@ class dpd_marray_view
      **********************************************************************/
 
     dpd_marray_view& operator=(const dpd_marray_view& other)
-    { return base::operator=(other); }
+    {
+        return base::operator=(other);
+    }
 
     using base::operator=;
     using base::cview;

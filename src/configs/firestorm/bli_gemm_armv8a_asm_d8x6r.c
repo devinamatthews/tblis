@@ -42,6 +42,8 @@
 // Nanokernel operations.
 #include "armv8a_asm_d2x2.h"
 
+// clang-format off
+
 /* Order of row-major SGEMM_12x8's execution in 4x5 blocks:
  *
  * +---+ +---+
@@ -132,32 +134,34 @@
 " prfm PLDL1KEEP, ["#CADDR", "#LASTB"] \n\t" \
 " add  "#CADDR", "#CADDR", "#RSC"      \n\t"
 
-void bli_sgemm_armv8a_asm_12x8r
-     (
-       dim_t               k,
-       float*     restrict alpha,
-       float*     restrict a,
-       float*     restrict b,
-       float*     restrict beta,
-       float*     restrict c, inc_t rs_c0, inc_t cs_c0,
-       auxinfo_t*          data,
-       cntx_t*             cntx
-     )
+// clang-format on
+
+void bli_sgemm_armv8a_asm_12x8r(dim_t k,
+                                float* restrict alpha,
+                                float* restrict a,
+                                float* restrict b,
+                                float* restrict beta,
+                                float* restrict c,
+                                inc_t rs_c0,
+                                inc_t cs_c0,
+                                auxinfo_t* data,
+                                cntx_t* cntx)
 {
-  const void* a_next = bli_auxinfo_next_a( data );
-  const void* b_next = bli_auxinfo_next_b( data );
+    const void* a_next = bli_auxinfo_next_a(data);
+    const void* b_next = bli_auxinfo_next_b(data);
 
-  // Typecast local copies of integers in case dim_t and inc_t are a
-  // different size than is expected by load instructions.
-  const dim_t m = 12;
-  const dim_t n = 8;
-  uint64_t k_mker = k / 4;
-  uint64_t k_left = k % 4;
-  uint64_t rs_c   = rs_c0;
-  uint64_t cs_c   = cs_c0;
+    // Typecast local copies of integers in case dim_t and inc_t are a
+    // different size than is expected by load instructions.
+    const dim_t m = 12;
+    const dim_t n = 8;
+    uint64_t k_mker = k / 4;
+    uint64_t k_left = k % 4;
+    uint64_t rs_c = rs_c0;
+    uint64_t cs_c = cs_c0;
 
-  GEMM_UKR_SETUP_CT( s, 12, 8, true );
+    GEMM_UKR_SETUP_CT(s, 12, 8, true);
 
+    // clang-format off
   __asm__ volatile
   (
 " ldr             x0, %[a]                        \n\t"
@@ -369,40 +373,42 @@ LABEL(SEND_WRITE_MEM)
   "v24","v25","v26","v27",
   "v28","v29","v30","v31"
   );
+    // clang-format on
 
-  GEMM_UKR_FLUSH_CT( s );
+    GEMM_UKR_FLUSH_CT(s);
 }
 
 /*
  * Differences from the col-major 6x8 in HW modeling:
- * * Stream HW prefetcher is assumed s.t. PRFM instructions for packed A&B are omitted.
+ * * Stream HW prefetcher is assumed s.t. PRFM instructions for packed A&B are
+ * omitted.
  */
-void bli_dgemm_armv8a_asm_8x6r
-     (
-       dim_t               k,
-       double*    restrict alpha,
-       double*    restrict a,
-       double*    restrict b,
-       double*    restrict beta,
-       double*    restrict c, inc_t rs_c0, inc_t cs_c0,
-       auxinfo_t*          data,
-       cntx_t*             cntx
-     )
+void bli_dgemm_armv8a_asm_8x6r(dim_t k,
+                               double* restrict alpha,
+                               double* restrict a,
+                               double* restrict b,
+                               double* restrict beta,
+                               double* restrict c,
+                               inc_t rs_c0,
+                               inc_t cs_c0,
+                               auxinfo_t* data,
+                               cntx_t* cntx)
 {
-  const void* a_next = bli_auxinfo_next_a( data );
-  const void* b_next = bli_auxinfo_next_b( data );
+    const void* a_next = bli_auxinfo_next_a(data);
+    const void* b_next = bli_auxinfo_next_b(data);
 
-  // Typecast local copies of integers in case dim_t and inc_t are a
-  // different size than is expected by load instructions.
-  const dim_t m = 8;
-  const dim_t n = 6;
-  uint64_t k_mker = k / 4;
-  uint64_t k_left = k % 4;
-  uint64_t rs_c   = rs_c0;
-  uint64_t cs_c   = cs_c0;
+    // Typecast local copies of integers in case dim_t and inc_t are a
+    // different size than is expected by load instructions.
+    const dim_t m = 8;
+    const dim_t n = 6;
+    uint64_t k_mker = k / 4;
+    uint64_t k_left = k % 4;
+    uint64_t rs_c = rs_c0;
+    uint64_t cs_c = cs_c0;
 
-  GEMM_UKR_SETUP_CT( d, 8, 6, true );
+    GEMM_UKR_SETUP_CT(d, 8, 6, true);
 
+    // clang-format off
   __asm__ volatile
   (
 " ldr             x0, %[a]                        \n\t"
@@ -599,7 +605,7 @@ LABEL(DEND_WRITE_MEM)
   "v24","v25","v26","v27",
   "v28","v29","v30","v31"
   );
+    // clang-format on
 
-  GEMM_UKR_FLUSH_CT( d );
+    GEMM_UKR_FLUSH_CT(d);
 }
-

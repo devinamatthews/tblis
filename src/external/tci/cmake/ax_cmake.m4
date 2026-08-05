@@ -183,8 +183,34 @@ _AX_CMAKE_WITH([$1], [$2], m4_translit([with_$1], [-+.], [___]), m4_translit([$1
 #   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 AC_DEFUN([AX_CMAKE], [
-test -z $CC || ax_cv_cmake_flags="$ax_cv_cmake_flags -DCMAKE_C_COMPILER=$CC"
-test -z $CXX || ax_cv_cmake_flags="$ax_cv_cmake_flags -DCMAKE_CXX_COMPILER=$CXX"
+test -z "$CC" || ax_cv_cmake_flags="$ax_cv_cmake_flags -DCMAKE_C_COMPILER=$CC"
+test -z "$CXX" || ax_cv_cmake_flags="$ax_cv_cmake_flags -DCMAKE_CXX_COMPILER=$CXX"
+echo $2 cmake \
+	-DCMAKE_INSTALL_PREFIX=$prefix \
+	-DINSTALL_PREFIX=$prefix \
+	-DINSTALL_EXEC_PREFIX=$exec_prefix \
+	-DINSTALL_BINDIR=$bindir \
+	-DINSTALL_SBINDIR=$sbindir \
+	-DINSTALL_LIBEXECDIR=$libexecdir \
+	-DINSTALL_SYSCONFDIR=$sysconfdir \
+	-DINSTALL_SHAREDSTATEDIR=$sharedstatedir \
+	-DINSTALL_LOCALSTATEDIR=$localstatedir \
+	-DINSTALL_RUNSTATEDIR=$runstatedir \
+	-DINSTALL_LIBDIR=$libdir \
+	-DINSTALL_INCLUDEDIR=$includedir \
+	-DINSTALL_DATAROOTDIR=$datarootdir \
+	-DINSTALL_DATADIR=$datadir \
+	-DINSTALL_INFODIR=$infodir \
+	-DINSTALL_LOCALEDIR=$localedir \
+	-DINSTALL_MANDIR=$mandir \
+	-DINSTALL_DOCDIR=$docdir \
+	-DINSTALL_HTMLDIR=$htmldir \
+	-DINSTALL_DVIDIR=$dvidir \
+	-DINSTALL_PDFDIR=$pdfdir \
+	-DINSTALL_PSDIR=$psdir \
+	$ax_cv_cmake_flags \
+	$1 \
+    $srcdir
 $2 cmake \
 	-DCMAKE_INSTALL_PREFIX=$prefix \
 	-DINSTALL_PREFIX=$prefix \

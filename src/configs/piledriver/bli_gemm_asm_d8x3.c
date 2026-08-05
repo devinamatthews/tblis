@@ -1,6 +1,6 @@
 /*
 
-   BLIS    
+   BLIS
    An object-based framework for developing high-performance BLAS-like
    libraries.
 
@@ -37,24 +37,24 @@
 
 #include "blis.h"
 
-void bli_sgemm_asm_16x3
-     (
-       dim_t               k,
-       float*     restrict alpha,
-       float*     restrict a,
-       float*     restrict b,
-       float*     restrict beta,
-       float*     restrict c, inc_t rs_c, inc_t cs_c,
-       auxinfo_t* restrict data,
-       cntx_t*    restrict cntx
-     )
+void bli_sgemm_asm_16x3(dim_t k,
+                        float* restrict alpha,
+                        float* restrict a,
+                        float* restrict b,
+                        float* restrict beta,
+                        float* restrict c,
+                        inc_t rs_c,
+                        inc_t cs_c,
+                        auxinfo_t* restrict data,
+                        cntx_t* restrict cntx)
 {
-	void*   a_next = bli_auxinfo_next_a( data );
-	void*   b_next = bli_auxinfo_next_b( data );
+    void* a_next = bli_auxinfo_next_a(data);
+    void* b_next = bli_auxinfo_next_b(data);
 
-	uint64_t   k_iter = k / 8;
-	uint64_t   k_left = k % 8;
+    uint64_t k_iter = k / 8;
+    uint64_t k_left = k % 8;
 
+    // clang-format off
 	__asm__ volatile
 	(
 	"                                            \n\t"
@@ -360,34 +360,34 @@ void bli_sgemm_asm_16x3
 	"prefetchw    0 * 8(%%r11)                   \n\t" // prefetch c + 2*cs_c
 	"                                            \n\t"
 	"                                            \n\t"
-	"                                            \n\t" // xmm4:   xmm5:   xmm6: 
+	"                                            \n\t" // xmm4:   xmm5:   xmm6:
 	"                                            \n\t" // ( ab00  ( ab01  ( ab02
-	"                                            \n\t" //   ab10    ab11    ab12  
+	"                                            \n\t" //   ab10    ab11    ab12
 	"                                            \n\t" //   ab20    ab21    ab22
 	"                                            \n\t" //   ab30 )  ab31 )  ab32 )
 	"                                            \n\t"
-	"                                            \n\t" // xmm7:   xmm8:   xmm9: 
+	"                                            \n\t" // xmm7:   xmm8:   xmm9:
 	"                                            \n\t" // ( ab40  ( ab41  ( ab42
-	"                                            \n\t" //   ab50    ab51    ab52  
+	"                                            \n\t" //   ab50    ab51    ab52
 	"                                            \n\t" //   ab60    ab61    ab62
 	"                                            \n\t" //   ab70 )  ab71 )  ab72 )
 	"                                            \n\t"
 	"                                            \n\t" // xmm10:  xmm11:  xmm12:
 	"                                            \n\t" // ( ab80  ( ab01  ( ab02
-	"                                            \n\t" //   ab90    ab11    ab12  
+	"                                            \n\t" //   ab90    ab11    ab12
 	"                                            \n\t" //   abA0    abA1    abA2
 	"                                            \n\t" //   abB0 )  abB1 )  abB2 )
 	"                                            \n\t"
 	"                                            \n\t" // xmm13:  xmm14:  xmm15:
 	"                                            \n\t" // ( abC0  ( abC1  ( abC2
-	"                                            \n\t" //   abD0    abD1    abD2  
+	"                                            \n\t" //   abD0    abD1    abD2
 	"                                            \n\t" //   abE0    abE1    abE2
 	"                                            \n\t" //   abF0 )  abF1 )  abF2 )
 	"                                            \n\t"
 	"                                            \n\t"
 	"                                            \n\t"
 	"movq         %4, %%rax                      \n\t" // load address of alpha
-	"movq         %5, %%rbx                      \n\t" // load address of beta 
+	"movq         %5, %%rbx                      \n\t" // load address of beta
 	"vbroadcastss    (%%rax), %%xmm0             \n\t" // load alpha and duplicate
 	"vbroadcastss    (%%rbx), %%xmm2             \n\t" // load beta and duplicate
 	"                                            \n\t"
@@ -894,7 +894,7 @@ void bli_sgemm_asm_16x3
 	  "m" (b_next), // 9
 	  "m" (a_next)  // 10
 	: // register clobber list
-	  "rax", "rbx", "rcx", "rdx", "rsi", "rdi", 
+	  "rax", "rbx", "rcx", "rdx", "rsi", "rdi",
 	  "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
 	  "xmm0", "xmm1", "xmm2", "xmm3",
 	  "xmm4", "xmm5", "xmm6", "xmm7",
@@ -902,26 +902,27 @@ void bli_sgemm_asm_16x3
 	  "xmm12", "xmm13", "xmm14", "xmm15",
 	  "memory"
 	);
+    // clang-format on
 }
 
-void bli_dgemm_asm_8x3
-     (
-       dim_t               k,
-       double*    restrict alpha,
-       double*    restrict a,
-       double*    restrict b,
-       double*    restrict beta,
-       double*    restrict c, inc_t rs_c, inc_t cs_c,
-       auxinfo_t* restrict data,
-       cntx_t*    restrict cntx
-     )
+void bli_dgemm_asm_8x3(dim_t k,
+                       double* restrict alpha,
+                       double* restrict a,
+                       double* restrict b,
+                       double* restrict beta,
+                       double* restrict c,
+                       inc_t rs_c,
+                       inc_t cs_c,
+                       auxinfo_t* restrict data,
+                       cntx_t* restrict cntx)
 {
-	void*   a_next = bli_auxinfo_next_a( data );
-	void*   b_next = bli_auxinfo_next_b( data );
+    void* a_next = bli_auxinfo_next_a(data);
+    void* b_next = bli_auxinfo_next_b(data);
 
-	dim_t   k_iter = k / 8;
-	dim_t   k_left = k % 8;
+    dim_t k_iter = k / 8;
+    dim_t k_left = k % 8;
 
+    // clang-format off
 	__asm__ volatile
 	(
 	"                                            \n\t"
@@ -1223,27 +1224,27 @@ void bli_dgemm_asm_8x3
 	"prefetchw    0 * 8(%%r11)                   \n\t" // prefetch c + 2*cs_c
 	"                                            \n\t"
 	"                                            \n\t"
-	"                                            \n\t" // xmm4:   xmm5:   xmm6:   
-	"                                            \n\t" // ( ab00  ( ab01  ( ab02  
+	"                                            \n\t" // xmm4:   xmm5:   xmm6:
+	"                                            \n\t" // ( ab00  ( ab01  ( ab02
 	"                                            \n\t" //   ab10 )  ab11 )  ab12 )
 	"                                            \n\t" //
-	"                                            \n\t" // xmm7:   xmm8:   xmm9:   
-	"                                            \n\t" // ( ab20  ( ab21  ( ab22  
+	"                                            \n\t" // xmm7:   xmm8:   xmm9:
+	"                                            \n\t" // ( ab20  ( ab21  ( ab22
 	"                                            \n\t" //   ab30 )  ab31 )  ab32 )
 	"                                            \n\t" //
-	"                                            \n\t" // xmm10:  xmm11:  xmm12:  
-	"                                            \n\t" // ( ab40  ( ab41  ( ab42  
+	"                                            \n\t" // xmm10:  xmm11:  xmm12:
+	"                                            \n\t" // ( ab40  ( ab41  ( ab42
 	"                                            \n\t" //   ab50 )  ab51 )  ab52 )
 	"                                            \n\t" //
-	"                                            \n\t" // xmm13:  xmm14:  xmm15:  
-	"                                            \n\t" // ( ab60  ( ab61  ( ab62  
+	"                                            \n\t" // xmm13:  xmm14:  xmm15:
+	"                                            \n\t" // ( ab60  ( ab61  ( ab62
 	"                                            \n\t" //   ab70 )  ab71 )  ab72 )
 	"                                            \n\t"
 	"                                            \n\t"
 	"                                            \n\t"
 	"                                            \n\t"
 	"movq         %4, %%rax                      \n\t" // load address of alpha
-	"movq         %5, %%rbx                      \n\t" // load address of beta 
+	"movq         %5, %%rbx                      \n\t" // load address of beta
 	"vmovddup        (%%rax), %%xmm0             \n\t" // load alpha and duplicate
 	"vmovddup        (%%rbx), %%xmm2             \n\t" // load beta and duplicate
 	"                                            \n\t"
@@ -1312,20 +1313,20 @@ void bli_dgemm_asm_8x3
 	"                                            \n\t"
 	".DCOLSTORED:                                \n\t"
 	"                                            \n\t"
-	"                                            \n\t" // xmm4:   xmm5:   xmm6:   
-	"                                            \n\t" // ( ab00  ( ab01  ( ab02  
+	"                                            \n\t" // xmm4:   xmm5:   xmm6:
+	"                                            \n\t" // ( ab00  ( ab01  ( ab02
 	"                                            \n\t" //   ab10 )  ab11 )  ab12 )
 	"                                            \n\t" //
-	"                                            \n\t" // xmm7:   xmm8:   xmm9:   
-	"                                            \n\t" // ( ab20  ( ab21  ( ab22  
+	"                                            \n\t" // xmm7:   xmm8:   xmm9:
+	"                                            \n\t" // ( ab20  ( ab21  ( ab22
 	"                                            \n\t" //   ab30 )  ab31 )  ab32 )
 	"                                            \n\t" //
-	"                                            \n\t" // xmm10:  xmm11:  xmm12:  
-	"                                            \n\t" // ( ab40  ( ab41  ( ab42  
+	"                                            \n\t" // xmm10:  xmm11:  xmm12:
+	"                                            \n\t" // ( ab40  ( ab41  ( ab42
 	"                                            \n\t" //   ab50 )  ab51 )  ab52 )
 	"                                            \n\t" //
-	"                                            \n\t" // xmm13:  xmm14:  xmm15:  
-	"                                            \n\t" // ( ab60  ( ab61  ( ab62  
+	"                                            \n\t" // xmm13:  xmm14:  xmm15:
+	"                                            \n\t" // ( ab60  ( ab61  ( ab62
 	"                                            \n\t" //   ab70 )  ab71 )  ab72 )
 	"                                            \n\t"
 	"                                            \n\t"
@@ -1609,7 +1610,7 @@ void bli_dgemm_asm_8x3
 	  "m" (b_next), // 9
 	  "m" (a_next)  // 10
 	: // register clobber list
-	  "rax", "rbx", "rcx", "rdx", "rsi", "rdi", 
+	  "rax", "rbx", "rcx", "rdx", "rsi", "rdi",
 	  "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
 	  "xmm0", "xmm1", "xmm2", "xmm3",
 	  "xmm4", "xmm5", "xmm6", "xmm7",
@@ -1617,26 +1618,27 @@ void bli_dgemm_asm_8x3
 	  "xmm12", "xmm13", "xmm14", "xmm15",
 	  "memory"
 	);
+    // clang-format on
 }
 
-void bli_cgemm_asm_4x2
-     (
-       dim_t               k,
-       scomplex*  restrict alpha,
-       scomplex*  restrict a,
-       scomplex*  restrict b,
-       scomplex*  restrict beta,
-       scomplex*  restrict c, inc_t rs_c, inc_t cs_c,
-       auxinfo_t* restrict data,
-       cntx_t*    restrict cntx
-     )
+void bli_cgemm_asm_4x2(dim_t k,
+                       scomplex* restrict alpha,
+                       scomplex* restrict a,
+                       scomplex* restrict b,
+                       scomplex* restrict beta,
+                       scomplex* restrict c,
+                       inc_t rs_c,
+                       inc_t cs_c,
+                       auxinfo_t* restrict data,
+                       cntx_t* restrict cntx)
 {
-	void*   a_next = bli_auxinfo_next_a( data );
-	void*   b_next = bli_auxinfo_next_b( data );
+    void* a_next = bli_auxinfo_next_a(data);
+    void* b_next = bli_auxinfo_next_b(data);
 
-	dim_t   k_iter = k / 8;
-	dim_t   k_left = k % 8;
+    dim_t k_iter = k / 8;
+    dim_t k_left = k % 8;
 
+    // clang-format off
 	__asm__ volatile
 	(
 	"                                            \n\t"
@@ -1937,7 +1939,7 @@ void bli_cgemm_asm_4x2
 	"                                            \n\t"
 	"                                            \n\t"
 	"                                            \n\t"
-	"movq         %5, %%rbx                      \n\t" // load address of beta 
+	"movq         %5, %%rbx                      \n\t" // load address of beta
 	"vbroadcastss    (%%rbx), %%xmm6             \n\t" // load beta_r and duplicate
 	"vbroadcastss   4(%%rbx), %%xmm7             \n\t" // load beta_i and duplicate
 	"                                            \n\t"
@@ -2153,7 +2155,7 @@ void bli_cgemm_asm_4x2
 	  "m" (b_next), // 9
 	  "m" (a_next)  // 10
 	: // register clobber list
-	  "rax", "rbx", "rcx", "rdx", "rsi", "rdi", 
+	  "rax", "rbx", "rcx", "rdx", "rsi", "rdi",
 	  "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
 	  "xmm0", "xmm1", "xmm2", "xmm3",
 	  "xmm4", "xmm5", "xmm6", "xmm7",
@@ -2161,26 +2163,27 @@ void bli_cgemm_asm_4x2
 	  "xmm12", "xmm13", "xmm14", "xmm15",
 	  "memory"
 	);
+    // clang-format on
 }
 
-void bli_zgemm_asm_2x2
-     (
-       dim_t               k,
-       dcomplex*  restrict alpha,
-       dcomplex*  restrict a,
-       dcomplex*  restrict b,
-       dcomplex*  restrict beta,
-       dcomplex*  restrict c, inc_t rs_c, inc_t cs_c,
-       auxinfo_t* restrict data,
-       cntx_t*    restrict cntx
-     )
+void bli_zgemm_asm_2x2(dim_t k,
+                       dcomplex* restrict alpha,
+                       dcomplex* restrict a,
+                       dcomplex* restrict b,
+                       dcomplex* restrict beta,
+                       dcomplex* restrict c,
+                       inc_t rs_c,
+                       inc_t cs_c,
+                       auxinfo_t* restrict data,
+                       cntx_t* restrict cntx)
 {
-	void*   a_next = bli_auxinfo_next_a( data );
-	void*   b_next = bli_auxinfo_next_b( data );
+    void* a_next = bli_auxinfo_next_a(data);
+    void* b_next = bli_auxinfo_next_b(data);
 
-	dim_t   k_iter = k / 8;
-	dim_t   k_left = k % 8;
+    dim_t k_iter = k / 8;
+    dim_t k_left = k % 8;
 
+    // clang-format off
 	__asm__ volatile
 	(
 	"                                            \n\t"
@@ -2481,7 +2484,7 @@ void bli_zgemm_asm_2x2
 	"                                            \n\t"
 	"                                            \n\t"
 	"                                            \n\t"
-	"movq         %5, %%rbx                      \n\t" // load address of beta 
+	"movq         %5, %%rbx                      \n\t" // load address of beta
 	"vmovddup        (%%rbx), %%xmm6             \n\t" // load beta_r and duplicate
 	"vmovddup       8(%%rbx), %%xmm7             \n\t" // load beta_i and duplicate
 	"                                            \n\t"
@@ -2683,7 +2686,7 @@ void bli_zgemm_asm_2x2
 	  "m" (b_next), // 9
 	  "m" (a_next)  // 10
 	: // register clobber list
-	  "rax", "rbx", "rcx", "rdx", "rsi", "rdi", 
+	  "rax", "rbx", "rcx", "rdx", "rsi", "rdi",
 	  "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
 	  "xmm0", "xmm1", "xmm2", "xmm3",
 	  "xmm4", "xmm5", "xmm6", "xmm7",
@@ -2691,5 +2694,5 @@ void bli_zgemm_asm_2x2
 	  "xmm12", "xmm13", "xmm14", "xmm15",
 	  "memory"
 	);
+    // clang-format on
 }
-

@@ -76,7 +76,9 @@ length(const T& len, int dim)
 
 template <typename T>
 std::enable_if_t<is_matrix<T>::value, len_type> length(const T& len, int dim)
-{ return len.length(dim); }
+{
+    return len.length(dim);
+}
 
 } // namespace detail
 
@@ -203,10 +205,14 @@ template <typename T> class array_2d
         }
 
         virtual void slurp(T* x, len_type rs, len_type cs) const override
-        { do_slurp(x, rs, cs); }
+        {
+            do_slurp(x, rs, cs);
+        }
 
         virtual void slurp(std::vector<std::vector<T>>& x) const override
-        { do_slurp(x); }
+        {
+            do_slurp(x);
+        }
     };
 
     static constexpr size_t _s1 =
@@ -218,7 +224,9 @@ template <typename T> class array_2d
     adaptor_base& adaptor_;
 
     template <typename U> adaptor_base& adapt(U data)
-    { return *(new (&raw_adaptor_) adaptor<U>(data)); }
+    {
+        return *(new (&raw_adaptor_) adaptor<U>(data));
+    }
 
     adaptor_base& adapt(const array_2d& other)
     {

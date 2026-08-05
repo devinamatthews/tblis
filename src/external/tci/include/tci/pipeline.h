@@ -4,7 +4,8 @@
 #include "tci/tci_config.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 enum
@@ -25,7 +26,8 @@ typedef struct tci_pipeline
     TCI_ATOMIC int state[1];
 } tci_pipeline;
 
-void tci_pipeline_init(tci_pipeline** p, unsigned depth, size_t size, void* buffer);
+void
+tci_pipeline_init(tci_pipeline** p, unsigned depth, size_t size, void* buffer);
 
 void tci_pipeline_destroy(tci_pipeline* p);
 

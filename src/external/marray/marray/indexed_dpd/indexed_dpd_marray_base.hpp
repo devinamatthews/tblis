@@ -60,7 +60,9 @@ class indexed_dpd_marray_base : detail::dpd_base
 
     template <typename U, bool O, typename D>
     void reset(const indexed_dpd_marray_base<U, D, O>& other)
-    { reset(const_cast<indexed_dpd_marray_base<U, D, O>&>(other)); }
+    {
+        reset(const_cast<indexed_dpd_marray_base<U, D, O>&>(other));
+    }
 
     template <typename U, bool O, typename D>
     void reset(indexed_dpd_marray_base<U, D, O>& other)
@@ -76,7 +78,9 @@ class indexed_dpd_marray_base : detail::dpd_base
 
     template <typename U, bool O, typename D>
     void reset(const dpd_marray_base<U, D, O>& other)
-    { reset(const_cast<dpd_marray_base<U, D, O>&>(other)); }
+    {
+        reset(const_cast<dpd_marray_base<U, D, O>&>(other));
+    }
 
     template <typename U, bool O, typename D>
     void reset(dpd_marray_base<U, D, O>& other)
@@ -325,7 +329,9 @@ class indexed_dpd_marray_base : detail::dpd_base
      **********************************************************************/
 
     Derived& operator=(const indexed_dpd_marray_base& other)
-    { return operator= <>(other); }
+    {
+        return operator= <>(other);
+    }
 
     template <
         typename U,
@@ -378,13 +384,19 @@ class indexed_dpd_marray_base : detail::dpd_base
 
     friend indexed_dpd_marray_view<const Type>
     cview(const indexed_dpd_marray_base& x)
-    { return x; }
+    {
+        return x;
+    }
 
     friend indexed_dpd_marray_view<ctype> view(const indexed_dpd_marray_base& x)
-    { return x; }
+    {
+        return x;
+    }
 
     friend indexed_dpd_marray_view<Type> view(indexed_dpd_marray_base& x)
-    { return x; }
+    {
+        return x;
+    }
 
     /***********************************************************************
      *
@@ -393,7 +405,9 @@ class indexed_dpd_marray_base : detail::dpd_base
      **********************************************************************/
 
     dpd_marray_view<ctype> operator[](len_type idx) const
-    { return const_cast<indexed_dpd_marray_base&>(*this)[idx]; }
+    {
+        return const_cast<indexed_dpd_marray_base&>(*this)[idx];
+    }
 
     dpd_marray_view<Type> operator[](len_type idx)
     {
@@ -408,10 +422,14 @@ class indexed_dpd_marray_base : detail::dpd_base
      **********************************************************************/
 
     template <typename Func> void for_each_index(Func&& f) const
-    { for_each_index_<dpd_marray_view<ctype>>(std::forward<Func>(f)); }
+    {
+        for_each_index_<dpd_marray_view<ctype>>(std::forward<Func>(f));
+    }
 
     template <typename Func> void for_each_index(Func&& f)
-    { for_each_index_<dpd_marray_view<Type>>(std::forward<Func>(f)); }
+    {
+        for_each_index_<dpd_marray_view<Type>>(std::forward<Func>(f));
+    }
 
     template <int DenseNDim, int IdxNDim, typename Func>
     void for_each_index(Func&& f) const
@@ -432,10 +450,14 @@ class indexed_dpd_marray_base : detail::dpd_base
     }
 
     template <typename Func> void for_each_element(Func&& f) const
-    { for_each_element_<ctype>(std::forward<Func>(f)); }
+    {
+        for_each_element_<ctype>(std::forward<Func>(f));
+    }
 
     template <typename Func> void for_each_element(Func&& f)
-    { for_each_element_<Type>(std::forward<Func>(f)); }
+    {
+        for_each_element_<Type>(std::forward<Func>(f));
+    }
 
     template <int DenseNDim, int IdxNDim, typename Func>
     void for_each_element(Func&& f) const
@@ -462,15 +484,21 @@ class indexed_dpd_marray_base : detail::dpd_base
     const std::vector<const_pointer>& cdata() const { return data(); }
 
     const std::vector<const_pointer>& data() const
-    { return reinterpret_cast<const std::vector<const_pointer>&>(data_); }
+    {
+        return reinterpret_cast<const std::vector<const_pointer>&>(data_);
+    }
 
     const std::vector<pointer>& data() { return data_; }
 
     const_pointer cdata(len_type idx) const
-    { return const_cast<indexed_dpd_marray_base&>(*this).data(idx); }
+    {
+        return const_cast<indexed_dpd_marray_base&>(*this).data(idx);
+    }
 
     cptr data(len_type idx) const
-    { return const_cast<indexed_dpd_marray_base&>(*this).data(idx); }
+    {
+        return const_cast<indexed_dpd_marray_base&>(*this).data(idx);
+    }
 
     pointer data(len_type idx)
     {
@@ -479,7 +507,9 @@ class indexed_dpd_marray_base : detail::dpd_base
     }
 
     const std::vector<typename std::remove_const<Type>::type>& factors() const
-    { return factor_; }
+    {
+        return factor_;
+    }
 
     row_view<Type> factors() { return {{factor_.size()}, factor_.data()}; }
 

@@ -4,7 +4,8 @@
 #include "tci/tci_config.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 typedef TCI_ATOMIC int tci_slot;

@@ -2,138 +2,160 @@
 #define _TBLIS_TEST_HPP_
 
 #include <algorithm>
-#include <limits>
-#include <numeric>
-#include <getopt.h>
-#include <sstream>
-#include <iomanip>
-#include <map>
-#include <typeinfo>
-#include <cxxabi.h>
 #include <chrono>
+#include <cxxabi.h>
+#include <getopt.h>
+#include <iomanip>
+#include <limits>
 #include <list>
+#include <map>
+#include <numeric>
+#include <sstream>
+#include <typeinfo>
 
-#include "tblis.h"
-#include "util/random.hpp"
-#include "util/tensor.hpp"
-#include "util/macros.h"
 #include "external/stl_ext/stl_ext/algorithm.hpp"
 #include "external/stl_ext/stl_ext/iostream.hpp"
 #include "internal/3t/dense/mult.hpp"
 #include "internal/3t/dpd/mult.hpp"
+#include "tblis.h"
+#include "util/macros.h"
+#include "util/random.hpp"
+#include "util/tensor.hpp"
 
 #include "external/catch/catch.hpp"
 
-using std::string;
-using std::min;
+using std::istringstream;
+using std::map;
 using std::max;
+using std::min;
 using std::numeric_limits;
 using std::pair;
-using std::map;
+using std::string;
 using std::swap;
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
 using std::chrono::nanoseconds;
-using std::istringstream;
 using namespace stl_ext;
 using namespace tblis;
 using namespace tblis::internal;
 using namespace tblis::detail;
 using namespace tblis::slice;
 
-#define INFO_OR_PRINT(...) INFO(__VA_ARGS__); //cout << __VA_ARGS__ << endl;
+#define INFO_OR_PRINT(...) INFO(__VA_ARGS__); // cout << __VA_ARGS__ << endl;
 
-#define TENSOR_INFO(t) \
-INFO_OR_PRINT("len_" #t "    = " << t.lengths()); \
-INFO_OR_PRINT("stride_" #t " = " << t.strides()); \
-INFO_OR_PRINT("idx_" #t "    = " << idx_##t);
+#define TENSOR_INFO(t)                                \
+    INFO_OR_PRINT("len_" #t "    = " << t.lengths()); \
+    INFO_OR_PRINT("stride_" #t " = " << t.strides()); \
+    INFO_OR_PRINT("idx_" #t "    = " << idx_##t);
 
-#define DPD_TENSOR_INFO(t) \
-INFO_OR_PRINT("irrep_" #t " = " << t.irrep()); \
-INFO_OR_PRINT("len_" #t "   = \n" << t.lengths()); \
-INFO_OR_PRINT("idx_" #t "   = " << idx_##t);
+#define DPD_TENSOR_INFO(t)                             \
+    INFO_OR_PRINT("irrep_" #t " = " << t.irrep());     \
+    INFO_OR_PRINT("len_" #t "   = \n" << t.lengths()); \
+    INFO_OR_PRINT("idx_" #t "   = " << idx_##t);
 
-#define INDEXED_TENSOR_INFO(t) \
-INFO_OR_PRINT("dense len_" #t "    = " << t.dense_lengths()); \
-INFO_OR_PRINT("dense stride_" #t " = " << t.dense_strides()); \
-INFO_OR_PRINT("idx len_" #t "      = " << t.indexed_lengths()); \
-INFO_OR_PRINT("data_" #t "         = \n" << t.data()); \
-INFO_OR_PRINT("indices_" #t "      = \n" << t.indices()); \
-INFO_OR_PRINT("idx_" #t "          = " << substr(idx_##t,0,t.dense_dimension()) << \
-                                   " " << substr(idx_##t,t.dense_dimension()));
+#define INDEXED_TENSOR_INFO(t)                                      \
+    INFO_OR_PRINT("dense len_" #t "    = " << t.dense_lengths());   \
+    INFO_OR_PRINT("dense stride_" #t " = " << t.dense_strides());   \
+    INFO_OR_PRINT("idx len_" #t "      = " << t.indexed_lengths()); \
+    INFO_OR_PRINT("data_" #t "         = \n" << t.data());          \
+    INFO_OR_PRINT("indices_" #t "      = \n" << t.indices());       \
+    INFO_OR_PRINT("idx_" #t "          = "                          \
+                  << substr(idx_##t, 0, t.dense_dimension())        \
+                  << " "                                            \
+                  << substr(idx_##t, t.dense_dimension()));
 
-#define INDEXED_DPD_TENSOR_INFO(t) \
-INFO_OR_PRINT("irrep_" #t "       = " << t.irrep()); \
-INFO_OR_PRINT("dense irrep_" #t " = " << t.dense_irrep()); \
-INFO_OR_PRINT("dense len_" #t "   = \n" << t.dense_lengths()); \
-INFO_OR_PRINT("idx irrep_" #t "   = " << t.indexed_irreps()); \
-INFO_OR_PRINT("idx len_" #t "     = " << t.indexed_lengths()); \
-INFO_OR_PRINT("nidx_" #t "        = " << t.num_indices()); \
-INFO_OR_PRINT("data_" #t "        = \n" << t.data()); \
-INFO_OR_PRINT("indices_" #t "     = \n" << t.indices()); \
-INFO_OR_PRINT("idx_" #t "          = " << substr(idx_##t,0,t.dense_dimension()) << \
-                                   " " << substr(idx_##t,t.dense_dimension()));
+#define INDEXED_DPD_TENSOR_INFO(t)                                 \
+    INFO_OR_PRINT("irrep_" #t "       = " << t.irrep());           \
+    INFO_OR_PRINT("dense irrep_" #t " = " << t.dense_irrep());     \
+    INFO_OR_PRINT("dense len_" #t "   = \n" << t.dense_lengths()); \
+    INFO_OR_PRINT("idx irrep_" #t "   = " << t.indexed_irreps());  \
+    INFO_OR_PRINT("idx len_" #t "     = " << t.indexed_lengths()); \
+    INFO_OR_PRINT("nidx_" #t "        = " << t.num_indices());     \
+    INFO_OR_PRINT("data_" #t "        = \n" << t.data());          \
+    INFO_OR_PRINT("indices_" #t "     = \n" << t.indices());       \
+    INFO_OR_PRINT("idx_" #t "          = "                         \
+                  << substr(idx_##t, 0, t.dense_dimension())       \
+                  << " "                                           \
+                  << substr(idx_##t, t.dense_dimension()));
 
-#define PRINT_TENSOR(t) \
-cout << "\n" #t ":\n"; \
-vary(t).for_each_element( \
-[](auto&& e, auto&& pos) \
-{ \
-    if (std::abs(e) > 1e-13) cout << pos << " " << e << endl; \
-});
+#define PRINT_TENSOR(t)                          \
+    cout << "\n" #t ":\n";                       \
+    vary(t).for_each_element(                    \
+        [](auto&& e, auto&& pos)                 \
+        {                                        \
+            if (std::abs(e) > 1e-13)             \
+                cout << pos << " " << e << endl; \
+        });
 
-template <typename T>
-auto tensor_data(const marray<T>& v) { return v.data(); }
+template <typename T> auto tensor_data(const marray<T>& v)
+{
+    return v.data();
+}
 
-template <typename T>
-auto tensor_data(const dpd_marray<T>& v) { return v.data(); }
+template <typename T> auto tensor_data(const dpd_marray<T>& v)
+{
+    return v.data();
+}
 
-template <typename T>
-auto tensor_data(const indexed_marray<T>& v) { return v.data(0); }
+template <typename T> auto tensor_data(const indexed_marray<T>& v)
+{
+    return v.data(0);
+}
 
-template <typename T>
-auto tensor_data(const indexed_dpd_marray<T>& v) { return v.data(0); }
+template <typename T> auto tensor_data(const indexed_dpd_marray<T>& v)
+{
+    return v.data(0);
+}
 
-template <typename... Ts>
-auto substr(const std::string& s, Ts&&... args)
+template <typename... Ts> auto substr(const std::string& s, Ts&&... args)
 {
     label_vector l;
     return s.substr(std::forward<Ts>(args)...);
 }
 
 template <size_t N>
-auto substr(const MArray::short_vector<label_type,N>& s, int begin)
+auto substr(const MArray::short_vector<label_type, N>& s, int begin)
 {
-    MArray::short_vector<label_type,N> r;
+    MArray::short_vector<label_type, N> r;
     if (begin < s.size())
-        r.insert(r.end(), s.begin()+begin, s.end());
+        r.insert(r.end(), s.begin() + begin, s.end());
     return r;
 }
 
 template <size_t N>
-auto substr(const MArray::short_vector<label_type,N>& s, int begin, int len)
+auto substr(const MArray::short_vector<label_type, N>& s, int begin, int len)
 {
-    MArray::short_vector<label_type,N> r;
+    MArray::short_vector<label_type, N> r;
     if (begin < s.size())
     {
-        if (begin+len < s.size())
-            r.insert(r.end(), s.begin()+begin, s.begin()+begin+len);
+        if (begin + len < s.size())
+            r.insert(r.end(), s.begin() + begin, s.begin() + begin + len);
         else
-            r.insert(r.end(), s.begin()+begin, s.end());
+            r.insert(r.end(), s.begin() + begin, s.end());
     }
     return r;
 }
 
-#define PRINT_DPD_TENSOR(t) \
-cout << "\n" #t ":\n"; \
-t.for_each_element( \
-[&t](const typename decltype(t)::value_type & e, const irrep_vector& irreps, const index_vector& pos) \
-{ \
-    if (std::abs(e) > 1e-13) cout << irreps << " " << pos << " " << e << " " << (&e - tensor_data(t)) << endl; \
-});
+#define PRINT_DPD_TENSOR(t)                             \
+    cout << "\n" #t ":\n";                              \
+    t.for_each_element(                                 \
+        [&t](const typename decltype(t)::value_type& e, \
+             const irrep_vector& irreps,                \
+             const index_vector& pos)                   \
+        {                                               \
+            if (std::abs(e) > 1e-13)                    \
+                cout                                    \
+                    << irreps                           \
+                    << " "                              \
+                    << pos                              \
+                    << " "                              \
+                    << e                                \
+                    << " "                              \
+                    << (&e - tensor_data(t))            \
+                    << endl;                            \
+        });
 
-template <typename T>
-void randomize_tensor(T& t)
+template <typename T> void randomize_tensor(T& t)
 {
     typedef typename T::value_type U;
     t.for_each_element([](U& e) { e = random_unit<U>(); });
@@ -143,15 +165,13 @@ template <typename T> const string& type_name();
 
 template <typename... Types> struct types;
 
-template <template <typename> class Body, typename... Types> struct templated_test_case_runner;
+template <template <typename> class Body, typename... Types>
+struct templated_test_case_runner;
 
 template <template <typename> class Body, typename... Types>
 struct templated_test_case_runner<Body, types<Types...>>
 {
-    static void run()
-    {
-        templated_test_case_runner<Body, Types...>::run();
-    }
+    static void run() { templated_test_case_runner<Body, Types...>::run(); }
 };
 
 template <template <typename> class Body, typename Type, typename... Types>
@@ -173,40 +193,46 @@ struct templated_test_case_runner<Body>
     static void run() {}
 };
 
-#define REPLICATED_TEST_CASE(name, ntrial) \
-static void TBLIS_PASTE(__replicated_test_case_body_, name)(); \
-TEST_CASE(#name) \
-{ \
-    for (int trial = 0;trial < ntrial;trial++) \
-    { \
-        INFO_OR_PRINT("Trial " << (trial+1) << " of " << ntrial); \
-        TBLIS_PASTE(__replicated_test_case_body_, name)(); \
-    } \
-} \
-static void TBLIS_PASTE(__replicated_test_case_body_, name)()
+#define REPLICATED_TEST_CASE(name, ntrial)                              \
+    static void TBLIS_PASTE(__replicated_test_case_body_, name)();      \
+    TEST_CASE(#name)                                                    \
+    {                                                                   \
+        for (int trial = 0; trial < ntrial; trial++)                    \
+        {                                                               \
+            INFO_OR_PRINT("Trial " << (trial + 1) << " of " << ntrial); \
+            TBLIS_PASTE(__replicated_test_case_body_, name)();          \
+        }                                                               \
+    }                                                                   \
+    static void TBLIS_PASTE(__replicated_test_case_body_, name)()
 
-#define TEMPLATED_TEST_CASE(name, T, ...) \
-template <typename T> struct TBLIS_PASTE(__templated_test_case_body_, name) \
-{ \
-    static void run(); \
-}; \
-TEST_CASE(#name) \
-{ \
-    templated_test_case_runner<TBLIS_PASTE(__templated_test_case_body_, name), __VA_ARGS__>::run(); \
-} \
-template <typename T> void TBLIS_PASTE(__templated_test_case_body_, name)<T>::run()
+#define TEMPLATED_TEST_CASE(name, T, ...)                                   \
+    template <typename T>                                                   \
+    struct TBLIS_PASTE(__templated_test_case_body_, name)                   \
+    {                                                                       \
+        static void run();                                                  \
+    };                                                                      \
+    TEST_CASE(#name)                                                        \
+    {                                                                       \
+        templated_test_case_runner<TBLIS_PASTE(__templated_test_case_body_, \
+                                               name),                       \
+                                   __VA_ARGS__>::run();                     \
+    }                                                                       \
+    template <typename T>                                                   \
+    void TBLIS_PASTE(__templated_test_case_body_, name)<T>::run()
 
-#define REPLICATED_TEMPLATED_TEST_CASE(name, ntrial, T, ...) \
-template <typename T> static void TBLIS_PASTE(__replicated_templated_test_case_body_, name)(); \
-TEMPLATED_TEST_CASE(name, T, __VA_ARGS__) \
-{ \
-    for (int trial = 0;trial < ntrial;trial++) \
-    { \
-        INFO_OR_PRINT("Trial " << (trial+1) << " of " << ntrial); \
-        TBLIS_PASTE(__replicated_templated_test_case_body_, name)<T>(); \
-    } \
-} \
-template <typename T> static void TBLIS_PASTE(__replicated_templated_test_case_body_, name)()
+#define REPLICATED_TEMPLATED_TEST_CASE(name, ntrial, T, ...)                 \
+    template <typename T>                                                    \
+    static void TBLIS_PASTE(__replicated_templated_test_case_body_, name)(); \
+    TEMPLATED_TEST_CASE(name, T, __VA_ARGS__)                                \
+    {                                                                        \
+        for (int trial = 0; trial < ntrial; trial++)                         \
+        {                                                                    \
+            INFO_OR_PRINT("Trial " << (trial + 1) << " of " << ntrial);      \
+            TBLIS_PASTE(__replicated_templated_test_case_body_, name)<T>();  \
+        }                                                                    \
+    }                                                                        \
+    template <typename T>                                                    \
+    static void TBLIS_PASTE(__replicated_templated_test_case_body_, name)()
 
 constexpr static int ulp_factor = 32;
 
@@ -226,7 +252,8 @@ enum index_type
 };
 
 template <typename T>
-len_vector group_size(const matrix<len_type>& len, const T& idx, const T& choose)
+len_vector
+group_size(const matrix<len_type>& len, const T& idx, const T& choose)
 {
     auto nirrep = len.length(1);
     matrix<len_type> sublen{choose.size(), nirrep};
@@ -251,8 +278,7 @@ len_vector group_size(const matrix<len_type>& len, const T& idx, const T& choose
     return size;
 }
 
-template <typename T>
-double ceil2(T x)
+template <typename T> double ceil2(T x)
 {
     return nearbyint(pow(2.0, max(0.0, ceil(log2((double)std::abs(x))))));
 }
@@ -262,7 +288,8 @@ void check(const string& label, stride_type ia, stride_type ib, T error, U ulps)
 {
     typedef decltype(std::abs(error)) V;
     auto epsilon = std::abs(max(numeric_limits<V>::min(),
-       float(ceil2(ulp_factor*std::abs(ulps)))*numeric_limits<V>::epsilon()));
+                                float(ceil2(ulp_factor * std::abs(ulps)))
+                                    * numeric_limits<V>::epsilon()));
 
     INFO_OR_PRINT(label);
     INFO_OR_PRINT("Error = " << std::abs(error));
@@ -278,10 +305,11 @@ void check(const string& label, T error, U ulps)
 }
 
 template <typename T, typename U, typename V>
-void check(const string& label, stride_type ia, stride_type ib, T a, U b, V ulps)
+void
+check(const string& label, stride_type ia, stride_type ib, T a, U b, V ulps)
 {
     INFO_OR_PRINT("Values = " << a << ", " << b);
-    check(label, ia, ib, a-b, ulps);
+    check(label, ia, ib, a - b, ulps);
 }
 
 template <typename T, typename U, typename V>
@@ -291,15 +319,19 @@ void check(const string& label, T a, U b, V ulps)
 }
 
 template <typename T>
-void gemm_ref(T alpha, matrix_view<const T> A,
-                       matrix_view<const T> B,
-              T  beta,       matrix_view<T> C);
+void gemm_ref(T alpha,
+              matrix_view<const T> A,
+              matrix_view<const T> B,
+              T beta,
+              matrix_view<T> C);
 
 template <typename T>
-void gemm_ref(T alpha, matrix_view<const T> A,
-                          row_view<const T> D,
-                       matrix_view<const T> B,
-              T  beta,       matrix_view<T> C);
+void gemm_ref(T alpha,
+              matrix_view<const T> A,
+              row_view<const T> D,
+              matrix_view<const T> B,
+              T beta,
+              matrix_view<T> C);
 
 /*
  * Creates a matrix whose total storage size is between N/4
@@ -318,8 +350,7 @@ void random_matrix(stride_type N, len_type m_min, len_type n_min, matrix<T>& t);
  * are initialized to zero, while referencable elements are randomly
  * initialized from the interior of the unit circle.
  */
-template <typename T>
-void random_matrix(stride_type N, matrix<T>& t);
+template <typename T> void random_matrix(stride_type N, matrix<T>& t);
 
 /*
  * Creates a tensor of d dimensions, whose total storage size is between N/2^d
@@ -328,27 +359,50 @@ void random_matrix(stride_type N, matrix<T>& t);
  * are initialized to zero, while referencable elements are randomly
  * initialized from the interior of the unit circle.
  */
-void random_lengths(stride_type N, int d, const vector<len_type>& len_min, len_vector& len);
+void random_lengths(stride_type N,
+                    int d,
+                    const vector<len_type>& len_min,
+                    len_vector& len);
 
 matrix<len_type> random_indices(const len_vector& len, double sparsity);
 
 template <typename T>
-void random_tensor(stride_type N, int d, const vector<len_type>& len_min, marray<T>& A);
+void random_tensor(stride_type N,
+                   int d,
+                   const vector<len_type>& len_min,
+                   marray<T>& A);
 
 template <typename T>
-void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, dpd_marray<T>& A);
+void random_tensor(stride_type N,
+                   int d,
+                   int nirrep,
+                   const vector<len_type>& len_min,
+                   dpd_marray<T>& A);
 
 template <typename T>
-void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_marray<T>& A);
+void random_tensor(stride_type N,
+                   int d,
+                   const vector<len_type>& len_min,
+                   indexed_marray<T>& A);
 
 template <typename T>
-void random_tensor(stride_type N, int d, int nirrep, const vector<len_type>& len_min, indexed_dpd_marray<T>& A);
+void random_tensor(stride_type N,
+                   int d,
+                   int nirrep,
+                   const vector<len_type>& len_min,
+                   indexed_dpd_marray<T>& A);
 
 template <typename T>
-void random_tensor(stride_type N, int d, const vector<len_type>& len_min, dpd_marray<T>& A);
+void random_tensor(stride_type N,
+                   int d,
+                   const vector<len_type>& len_min,
+                   dpd_marray<T>& A);
 
 template <typename T>
-void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexed_dpd_marray<T>& A);
+void random_tensor(stride_type N,
+                   int d,
+                   const vector<len_type>& len_min,
+                   indexed_dpd_marray<T>& A);
 
 /*
  * Creates a tensor of d dimensions, whose total storage size is between N/2
@@ -359,8 +413,7 @@ void random_tensor(stride_type N, int d, const vector<len_type>& len_min, indexe
  */
 void random_lengths(stride_type N, int d, len_vector& len);
 
-template <typename T>
-void random_tensor(stride_type N, int d, T& A)
+template <typename T> void random_tensor(stride_type N, int d, T& A)
 {
     random_tensor(N, d, vector<len_type>(d), A);
 }
@@ -370,86 +423,137 @@ void random_tensor(stride_type N, int d, T& A)
  */
 void random_lengths(stride_type N, len_vector& len);
 
-template <typename T>
-void random_tensor(stride_type N, T& A)
+template <typename T> void random_tensor(stride_type N, T& A)
 {
-    random_tensor(N, random_number(1,8), A);
+    random_tensor(N, random_number(1, 8), A);
 }
 
 void random_lengths(stride_type N,
-                    int ndim_A_only, int ndim_B_only,
+                    int ndim_A_only,
+                    int ndim_B_only,
                     int ndim_AB,
-                    len_vector& len_A, label_vector& idx_A,
-                    len_vector& len_B, label_vector& idx_B);
+                    len_vector& len_A,
+                    label_vector& idx_A,
+                    len_vector& len_B,
+                    label_vector& idx_B);
 
 template <typename T>
 void random_tensors(stride_type N,
-                    int ndim_A_only, int ndim_B_only,
+                    int ndim_A_only,
+                    int ndim_B_only,
                     int ndim_AB,
-                    marray<T>& A, label_vector& idx_A,
-                    marray<T>& B, label_vector& idx_B);
+                    marray<T>& A,
+                    label_vector& idx_A,
+                    marray<T>& B,
+                    label_vector& idx_B);
 
 template <typename T>
 void random_tensors(stride_type N,
-                    int ndim_A_only, int ndim_B_only, int ndim_AB,
-                    dpd_marray<T>& A, label_vector& idx_A,
-                    dpd_marray<T>& B, label_vector& idx_B);
-
-template <typename T>
-void random_tensors(stride_type N,
-                    int ndim_A_only, int ndim_B_only,
+                    int ndim_A_only,
+                    int ndim_B_only,
                     int ndim_AB,
-                    indexed_marray<T>& A, label_vector& idx_A,
-                    indexed_marray<T>& B, label_vector& idx_B);
+                    dpd_marray<T>& A,
+                    label_vector& idx_A,
+                    dpd_marray<T>& B,
+                    label_vector& idx_B);
 
 template <typename T>
 void random_tensors(stride_type N,
-                    int ndim_A_only, int ndim_B_only, int ndim_AB,
-                    indexed_dpd_marray<T>& A, label_vector& idx_A,
-                    indexed_dpd_marray<T>& B, label_vector& idx_B);
+                    int ndim_A_only,
+                    int ndim_B_only,
+                    int ndim_AB,
+                    indexed_marray<T>& A,
+                    label_vector& idx_A,
+                    indexed_marray<T>& B,
+                    label_vector& idx_B);
+
+template <typename T>
+void random_tensors(stride_type N,
+                    int ndim_A_only,
+                    int ndim_B_only,
+                    int ndim_AB,
+                    indexed_dpd_marray<T>& A,
+                    label_vector& idx_A,
+                    indexed_dpd_marray<T>& B,
+                    label_vector& idx_B);
 
 void random_lengths(stride_type N,
-                    int ndim_A_only, int ndim_B_only, int ndim_C_only,
-                    int ndim_AB, int ndim_AC, int ndim_BC,
+                    int ndim_A_only,
+                    int ndim_B_only,
+                    int ndim_C_only,
+                    int ndim_AB,
+                    int ndim_AC,
+                    int ndim_BC,
                     int ndim_ABC,
-                    len_vector& len_A, label_vector& idx_A,
-                    len_vector& len_B, label_vector& idx_B,
-                    len_vector& len_C, label_vector& idx_C);
+                    len_vector& len_A,
+                    label_vector& idx_A,
+                    len_vector& len_B,
+                    label_vector& idx_B,
+                    len_vector& len_C,
+                    label_vector& idx_C);
 
 template <typename T>
 void random_tensors(stride_type N,
-                    int ndim_A_only, int ndim_B_only, int ndim_C_only,
-                    int ndim_AB, int ndim_AC, int ndim_BC,
+                    int ndim_A_only,
+                    int ndim_B_only,
+                    int ndim_C_only,
+                    int ndim_AB,
+                    int ndim_AC,
+                    int ndim_BC,
                     int ndim_ABC,
-                    marray<T>& A, label_vector& idx_A,
-                    marray<T>& B, label_vector& idx_B,
-                    marray<T>& C, label_vector& idx_C);
+                    marray<T>& A,
+                    label_vector& idx_A,
+                    marray<T>& B,
+                    label_vector& idx_B,
+                    marray<T>& C,
+                    label_vector& idx_C);
 
 template <typename T>
 void random_tensors(stride_type N,
-                    int ndim_A_only, int ndim_B_only, int ndim_C_only,
-                    int ndim_AB, int ndim_AC, int ndim_BC,
+                    int ndim_A_only,
+                    int ndim_B_only,
+                    int ndim_C_only,
+                    int ndim_AB,
+                    int ndim_AC,
+                    int ndim_BC,
                     int ndim_ABC,
-                    dpd_marray<T>& A, label_vector& idx_A,
-                    dpd_marray<T>& B, label_vector& idx_B,
-                    dpd_marray<T>& C, label_vector& idx_C);
+                    dpd_marray<T>& A,
+                    label_vector& idx_A,
+                    dpd_marray<T>& B,
+                    label_vector& idx_B,
+                    dpd_marray<T>& C,
+                    label_vector& idx_C);
 
 template <typename T>
 void random_tensors(stride_type N,
-                    int ndim_A_only, int ndim_B_only, int ndim_C_only,
-                    int ndim_AB, int ndim_AC, int ndim_BC,
+                    int ndim_A_only,
+                    int ndim_B_only,
+                    int ndim_C_only,
+                    int ndim_AB,
+                    int ndim_AC,
+                    int ndim_BC,
                     int ndim_ABC,
-                    indexed_marray<T>& A, label_vector& idx_A,
-                    indexed_marray<T>& B, label_vector& idx_B,
-                    indexed_marray<T>& C, label_vector& idx_C);
+                    indexed_marray<T>& A,
+                    label_vector& idx_A,
+                    indexed_marray<T>& B,
+                    label_vector& idx_B,
+                    indexed_marray<T>& C,
+                    label_vector& idx_C);
 
 template <typename T>
 void random_tensors(stride_type N,
-                    int ndim_A_only, int ndim_B_only, int ndim_C_only,
-                    int ndim_AB, int ndim_AC, int ndim_BC,
+                    int ndim_A_only,
+                    int ndim_B_only,
+                    int ndim_C_only,
+                    int ndim_AB,
+                    int ndim_AC,
+                    int ndim_BC,
                     int ndim_ABC,
-                    indexed_dpd_marray<T>& A, label_vector& idx_A,
-                    indexed_dpd_marray<T>& B, label_vector& idx_B,
-                    indexed_dpd_marray<T>& C, label_vector& idx_C);
+                    indexed_dpd_marray<T>& A,
+                    label_vector& idx_A,
+                    indexed_dpd_marray<T>& B,
+                    label_vector& idx_B,
+                    indexed_dpd_marray<T>& C,
+                    label_vector& idx_C);
 
 #endif

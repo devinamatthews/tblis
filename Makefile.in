@@ -361,11 +361,11 @@ lib_libskx2_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(lib_libskx2_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 @ENABLE_SKX2_TRUE@am_lib_libskx2_la_rpath =
-lib_libtblis_la_DEPENDENCIES = src/external/tci/lib/libtci.la \
-	$(am__append_3) $(am__append_5) $(am__append_8) \
-	$(am__append_11) $(am__append_15) $(am__append_19) \
-	$(am__append_22) $(am__append_25) $(am__append_28) \
-	$(am__append_31) $(am__append_36) $(am__append_39)
+lib_libtblis_la_DEPENDENCIES = $(am__append_3) $(am__append_5) \
+	$(am__append_8) $(am__append_11) $(am__append_15) \
+	$(am__append_19) $(am__append_22) $(am__append_25) \
+	$(am__append_28) $(am__append_31) $(am__append_36) \
+	$(am__append_39)
 am__lib_libtblis_la_SOURCES_DIST = src/iface/1t/add.cxx \
 	src/iface/1t/dot.cxx src/iface/1t/reduce.cxx \
 	src/iface/1t/scale.cxx src/iface/1t/set.cxx \
@@ -1008,11 +1008,11 @@ noinst_LTLIBRARIES = $(am__append_2) $(am__append_4) $(am__append_7) \
 	$(am__append_10) $(am__append_14) $(am__append_18) \
 	$(am__append_21) $(am__append_24) $(am__append_27) \
 	$(am__append_30) $(am__append_35) $(am__append_38)
-lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la \
-	$(am__append_3) $(am__append_5) $(am__append_8) \
-	$(am__append_11) $(am__append_15) $(am__append_19) \
-	$(am__append_22) $(am__append_25) $(am__append_28) \
-	$(am__append_31) $(am__append_36) $(am__append_39)
+lib_libtblis_la_LIBADD = $(am__append_3) $(am__append_5) \
+	$(am__append_8) $(am__append_11) $(am__append_15) \
+	$(am__append_19) $(am__append_22) $(am__append_25) \
+	$(am__append_28) $(am__append_31) $(am__append_36) \
+	$(am__append_39)
 @ENABLE_REFERENCE_TRUE@lib_libreference_la_SOURCES = src/configs/reference/config.cxx
 @ENABLE_REFERENCE_TRUE@lib_libreference_la_CFLAGS = -O3
 @ENABLE_REFERENCE_TRUE@lib_libreference_la_CXXFLAGS = -O3
@@ -1133,10 +1133,11 @@ bin_skx_bench_SOURCES = test/skx_bench.cxx
 bin_bench_SOURCES = test/bench.cxx
 bin_batched_bench_SOURCES = test/batched_bench.cxx
 bin_dpd_bench_SOURCES = test/dpd_bench.cxx
+TCI_LIBS = $(shell grep "Libs.private:" src/external/tci/tci.pc | sed 's/Libs.private://g')
 SUBDIRS = src/external/tci
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/util -I$(srcdir)/src/external/marray -I$(srcdir)/src/external/tci -Isrc/external/tci/tci
-AM_LDFLAGS = -pthread
+AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/util -I$(srcdir)/src/external/marray -I$(srcdir)/src/external/tci/include -Isrc/external/tci/include
+AM_LDFLAGS = -pthread -Lsrc/external/tci/lib -ltci -Wl,-rpath -Wl,$(builddir)/src/external/tci/lib $(TCI_LIBS)
 bin_test_LDADD = lib/libtblis.la
 bin_skx_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
@@ -2651,7 +2652,9 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-recursive
-all-am: Makefile $(PROGRAMS) $(LTLIBRARIES) $(HEADERS) config.h
+@IS_OSX_FALSE@all-local:
+all-am: Makefile $(PROGRAMS) $(LTLIBRARIES) $(HEADERS) config.h \
+		all-local
 installdirs: installdirs-recursive
 installdirs-am:
 	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(iface1tincludedir)" "$(DESTDIR)$(iface3tincludedir)" "$(DESTDIR)$(marrayincludedir)" "$(DESTDIR)$(memoryincludedir)" "$(DESTDIR)$(pkgincludedir)" "$(DESTDIR)$(stl_extincludedir)" "$(DESTDIR)$(utilincludedir)"; do \
@@ -3037,7 +3040,7 @@ uninstall-am: uninstall-iface1tincludeHEADERS \
 
 .MAKE: $(am__recursive_targets) all install-am install-strip
 
-.PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am \
+.PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am all-local \
 	am--depfiles am--refresh check check-am clean clean-cscope \
 	clean-generic clean-libLTLIBRARIES clean-libtool \
 	clean-noinstLTLIBRARIES clean-noinstPROGRAMS cscope \
@@ -3068,6 +3071,11 @@ uninstall-am: uninstall-iface1tincludeHEADERS \
 
 .PRECIOUS: Makefile
 
+
+@IS_OSX_TRUE@all-local: bin/test$(EXEEXT)
+@IS_OSX_TRUE@	@otool -l bin/.libs/test$(EXEEXT) | \
+@IS_OSX_TRUE@        grep -q $(abs_builddir)/src/external/tci/lib || \
+@IS_OSX_TRUE@        install_name_tool -add_rpath $(abs_builddir)/src/external/tci/lib bin/.libs/test$(EXEEXT)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

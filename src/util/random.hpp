@@ -14,7 +14,8 @@ extern std::mt19937 rand_engine;
  * Returns a pseudo-random number uniformly distributed in the range [mn,mx).
  */
 template <typename T>
-enable_if_floating_point_t<real_type_t<T>,T> random_number(T mn, T mx)
+std::enable_if_t<std::is_floating_point_v<real_type_t<T>>, real_type_t<T>>
+random_number(T mn, T mx)
 {
     std::uniform_real_distribution<real_type_t<T>> d(mn, mx);
     return d(rand_engine);
@@ -24,7 +25,8 @@ enable_if_floating_point_t<real_type_t<T>,T> random_number(T mn, T mx)
  * Returns a pseudo-random number uniformly distributed in the range [0,mx).
  */
 template <typename T>
-enable_if_floating_point_t<real_type_t<T>,T> random_number(T mx)
+std::enable_if_t<std::is_floating_point_v<real_type_t<T>>, real_type_t<T>>
+random_number(T mx)
 {
     return random_number<T>(0, mx);
 }
@@ -33,7 +35,8 @@ enable_if_floating_point_t<real_type_t<T>,T> random_number(T mx)
  * Returns a pseudo-random number uniformly distributed in the range [0,1).
  */
 template <typename T>
-enable_if_floating_point_t<real_type_t<T>,T> random_number()
+std::enable_if_t<std::is_floating_point_v<real_type_t<T>>, real_type_t<T>>
+random_number()
 {
     return random_number<T>(0, 1);
 }
@@ -42,7 +45,7 @@ enable_if_floating_point_t<real_type_t<T>,T> random_number()
  * Returns a random integer uniformly distributed in the range [mn,mx]
  */
 template <typename T>
-enable_if_integral_t<T,T> random_number(T mn, T mx)
+std::enable_if_t<std::is_integral_v<T>, T> random_number(T mn, T mx)
 {
     std::uniform_int_distribution<T> d(mn, mx);
     return d(rand_engine);
@@ -52,7 +55,7 @@ enable_if_integral_t<T,T> random_number(T mn, T mx)
  * Returns a random integer uniformly distributed in the range [0,mx]
  */
 template <typename T>
-enable_if_integral_t<T,T> random_number(T mx)
+std::enable_if_t<std::is_integral_v<T>, T> random_number(T mx)
 {
     return random_number<T>(0, mx);
 }
@@ -61,13 +64,10 @@ enable_if_integral_t<T,T> random_number(T mx)
  * Returns a pseudo-random number uniformly distributed in the range (-1,1).
  */
 template <typename T>
-enable_if_floating_point_t<T,T> random_unit()
+std::enable_if_t<std::is_floating_point_v<T>, T> random_unit()
 {
     T val;
-    do
-    {
-        val = 2*random_number<T>()-1;
-    } while (val == -1.0);
+    do { val = 2 * random_number<T>() - 1; } while (val == -1.0);
     return val;
 }
 
@@ -75,8 +75,7 @@ enable_if_floating_point_t<T,T> random_unit()
  * Returns a psuedo-random complex number unformly distirbuted in the
  * interior of the unit circle.
  */
-template <typename T>
-enable_if_complex_t<T,T> random_unit()
+template <typename T> std::enable_if_t<is_complex_v<T>, T> random_unit()
 {
     using R = real_type_t<T>;
 
@@ -85,30 +84,26 @@ enable_if_complex_t<T,T> random_unit()
     {
         r = random_unit<R>();
         i = random_unit<R>();
-    }
-    while (r*r+i*i >= 1.0);
+    } while (r * r + i * i >= 1.0);
 
     return {r, i};
 }
 
-inline
-bool random_choice()
+inline bool random_choice()
 {
     return random_number(1);
 }
 
-template <typename T>
-T random_choice(std::initializer_list<T> options)
+template <typename T> T random_choice(std::initializer_list<T> options)
 {
-    return *(options.begin()+random_number(options.size()-1));
+    return *(options.begin() + random_number(options.size() - 1));
 }
 
 /*
  * Returns a random choice from a set of objects with non-negative weights w,
  * which do not need to sum to unity.
  */
-template <typename Weights>
-int random_weighted_choice(const Weights& w)
+template <typename Weights> int random_weighted_choice(const Weights& w)
 {
     using T = typename Weights::value_type;
 
@@ -125,11 +120,12 @@ int random_weighted_choice(const Weights& w)
     T c = random_number(s);
     for (auto i : range(n))
     {
-        if (c < w[i]) return i;
+        if (c < w[i])
+            return i;
         c -= w[i];
     }
 
-    return n-1;
+    return n - 1;
 }
 
 /*
@@ -137,7 +133,8 @@ int random_weighted_choice(const Weights& w)
  * and n_i >= mn_i, with uniform distribution.
  */
 template <typename T>
-std::vector<T> random_sum_constrained_sequence(int n, T s, const std::vector<T>& mn)
+std::vector<T>
+random_sum_constrained_sequence(int n, T s, const std::vector<T>& mn)
 {
     TBLIS_ASSERT(n > 0);
     TBLIS_ASSERT(s >= 0);
@@ -150,22 +147,16 @@ std::vector<T> random_sum_constrained_sequence(int n, T s, const std::vector<T>&
         TBLIS_ASSERT(s >= 0);
     }
 
-    std::vector<T> p(n+1);
+    std::vector<T> p(n + 1);
 
     p[0] = 0;
     p[n] = s;
-    for (auto i : range(1,n))
-    {
-        p[i] = random_number<T>(s);
-    }
+    for (auto i : range(1, n)) { p[i] = random_number<T>(s); }
     std::sort(p.begin(), p.end());
 
-    for (auto i : range(n))
-    {
-        p[i] = p[i+1]-p[i]+mn[i];
-    }
+    for (auto i : range(n)) { p[i] = p[i + 1] - p[i] + mn[i]; }
     p.resize(n);
-    //cout << s << p << accumulate(p.begin(), p.end(), 0.0) << endl;
+    // cout << s << p << accumulate(p.begin(), p.end(), 0.0) << endl;
 
     return p;
 }
@@ -174,8 +165,7 @@ std::vector<T> random_sum_constrained_sequence(int n, T s, const std::vector<T>&
  * Returns a sequence of n non-negative numbers such that sum_i n_i = s,
  * with uniform distribution.
  */
-template <typename T>
-std::vector<T> random_sum_constrained_sequence(int n, T s)
+template <typename T> std::vector<T> random_sum_constrained_sequence(int n, T s)
 {
     TBLIS_ASSERT(n > 0);
     return random_sum_constrained_sequence(n, s, std::vector<T>(n));
@@ -186,10 +176,10 @@ std::vector<T> random_sum_constrained_sequence(int n, T s)
  * where n_i and p are >= 1 and with uniform distribution.
  */
 template <typename T>
-enable_if_floating_point_t<T,std::vector<T>>
+enable_if_floating_point_t<T, std::vector<T>>
 random_product_constrained_sequence(int n, T p, const std::vector<T>& mn)
 {
-    TBLIS_ASSERT(n >  0);
+    TBLIS_ASSERT(n > 0);
     TBLIS_ASSERT(p >= 1);
     TBLIS_ASSERT((int)mn.size() == n);
 
@@ -199,12 +189,11 @@ random_product_constrained_sequence(int n, T p, const std::vector<T>& mn)
         log_mn[i] = (mn[i] <= 0.0 ? 1.0 : std::log(mn[i]));
     }
 
-    std::vector<T> s = random_sum_constrained_sequence<T>(n, std::log(p), log_mn);
-    for (auto i : range(n))
-    {
-        s[i] = std::exp(s[i]);
-    }
-    //cout << p << s << accumulate(s.begin(), s.end(), 1.0, multiplies<double>()) << endl;
+    std::vector<T> s =
+        random_sum_constrained_sequence<T>(n, std::log(p), log_mn);
+    for (auto i : range(n)) { s[i] = std::exp(s[i]); }
+    // cout << p << s << accumulate(s.begin(), s.end(), 1.0,
+    // multiplies<double>()) << endl;
     return s;
 }
 
@@ -213,46 +202,50 @@ random_product_constrained_sequence(int n, T p, const std::vector<T>& mn)
  * p are >= 1 and with uniform distribution.
  */
 template <typename T>
-enable_if_floating_point_t<T,std::vector<T>>
+enable_if_floating_point_t<T, std::vector<T>>
 random_product_constrained_sequence(int n, T p)
 {
     TBLIS_ASSERT(n > 0);
     return random_product_constrained_sequence(n, p, std::vector<T>(n, 1.0));
 }
 
-enum rounding_mode {ROUND_UP, ROUND_DOWN, ROUND_NEAREST};
+enum rounding_mode
+{
+    ROUND_UP,
+    ROUND_DOWN,
+    ROUND_NEAREST
+};
 
 /*
  * Returns a sequence of n numbers such that p/2^d <= prod_i n_i <= p and
  * n_i >= mn_i, where n_i and p are >= 1 and with uniform distribution.
  */
-template <typename T, rounding_mode Mode=ROUND_DOWN>
-enable_if_integral_t<T,std::vector<T>>
+template <typename T, rounding_mode Mode = ROUND_DOWN>
+enable_if_integral_t<T, std::vector<T>>
 random_product_constrained_sequence(int n, T p, const std::vector<T>& mn)
 {
-    TBLIS_ASSERT(n >  0);
+    TBLIS_ASSERT(n > 0);
     TBLIS_ASSERT(p >= 1);
     TBLIS_ASSERT((int)mn.size() == n);
 
     std::vector<double> mnd(n);
-    for (auto i : range(n))
-    {
-        mnd[i] = std::max(T(1), mn[i]);
-    }
+    for (auto i : range(n)) { mnd[i] = std::max(T(1), mn[i]); }
 
-    std::vector<double> sd = random_product_constrained_sequence<double>(n, p, mnd);
+    std::vector<double> sd =
+        random_product_constrained_sequence<double>(n, p, mnd);
     std::vector<T> si(n);
     for (auto i : range(n))
     {
         switch (Mode)
         {
-            case      ROUND_UP: si[i] = lrint( ceil(sd[i])); break;
-            case    ROUND_DOWN: si[i] = lrint(floor(sd[i])); break;
-            case ROUND_NEAREST: si[i] = lrint(      sd[i] ); break;
+            case ROUND_UP:      si[i] = lrint(ceil(sd[i])); break;
+            case ROUND_DOWN:    si[i] = lrint(floor(sd[i])); break;
+            case ROUND_NEAREST: si[i] = lrint(sd[i]); break;
         }
         si[i] = std::max(si[i], mn[i]);
     }
-    //cout << p << si << accumulate(si.begin(), si.end(), T(1), multiplies<T>()) << endl;
+    // cout << p << si << accumulate(si.begin(), si.end(), T(1),
+    // multiplies<T>()) << endl;
 
     return si;
 }
@@ -261,14 +254,17 @@ random_product_constrained_sequence(int n, T p, const std::vector<T>& mn)
  * Returns a sequence of n numbers such that p/2^d <= prod_i n_i <= p, where
  * n_i and p are >= 1 and with uniform distribution.
  */
-template <typename T, rounding_mode Mode=ROUND_DOWN>
-enable_if_integral_t<T,std::vector<T>>
+template <typename T, rounding_mode Mode = ROUND_DOWN>
+enable_if_integral_t<T, std::vector<T>>
 random_product_constrained_sequence(int n, T p)
 {
     TBLIS_ASSERT(n > 0);
-    return random_product_constrained_sequence<T, Mode>(n, p, std::vector<T>(n, T(1)));
+    return random_product_constrained_sequence<T, Mode>(
+        n,
+        p,
+        std::vector<T>(n, T(1)));
 }
 
-}
+} // namespace tblis
 
 #endif

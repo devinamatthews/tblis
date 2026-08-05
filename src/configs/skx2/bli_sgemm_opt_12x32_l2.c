@@ -16,7 +16,8 @@
       documentation and/or other materials provided with the distribution.
     - Neither the name of The University of Texas at Austin nor the names
       of its contributors may be used to endorse or promote products
-      derived derived from this software without specific prior written permission.
+      derived derived from this software without specific prior written
+   permission.
 
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
    AS IS AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -37,6 +38,8 @@
 
 #include "../knl/bli_avx512_macros.h"
 #include "common.h"
+
+// clang-format off
 
 #define CACHELINE_SIZE 64 //size of cache line in bytes
 
@@ -262,20 +265,22 @@
     VMOVAPS(ZMM(0), MEM(RBX,(32*n+ 0)*4)) \
     VMOVAPS(ZMM(1), MEM(RBX,(32*n+16)*4))
 
-//This is an array used for the scatter/gather instructions.
-static int64_t offsets[16] __attribute__((aligned(64))) =
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15};
+// clang-format on
 
-void bli_sgemm_opt_12x32_l2(
-                             dim_t            k_,
-                             float* restrict alpha,
-                             float* restrict a,
-                             float* restrict b,
-                             float* restrict beta,
-                             float* restrict c, inc_t rs_c_, inc_t cs_c_,
-                             auxinfo_t*       data,
-                             cntx_t* restrict cntx
-                           )
+// This is an array used for the scatter/gather instructions.
+static int64_t offsets[16] __attribute__((
+    aligned(64))) = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+
+void bli_sgemm_opt_12x32_l2(dim_t k_,
+                            float* restrict alpha,
+                            float* restrict a,
+                            float* restrict b,
+                            float* restrict beta,
+                            float* restrict c,
+                            inc_t rs_c_,
+                            inc_t cs_c_,
+                            auxinfo_t* data,
+                            cntx_t* restrict cntx)
 {
     (void)data;
     (void)cntx;
@@ -285,6 +290,7 @@ void bli_sgemm_opt_12x32_l2(
     const int64_t rs_c = rs_c_;
     const int64_t cs_c = cs_c_;
 
+    // clang-format off
     __asm__ volatile
     (
 
@@ -513,4 +519,5 @@ void bli_sgemm_opt_12x32_l2(
       "zmm22", "zmm23", "zmm24", "zmm25", "zmm26", "zmm27", "zmm28", "zmm29",
       "zmm30", "zmm31", "memory"
     );
+    // clang-format on
 }

@@ -11,23 +11,26 @@ int core2_check()
 
     if (vendor != VENDOR_INTEL)
     {
-        if (get_verbose() >= 1) printf("tblis: core2: Wrong vendor.\n");
+        if (get_verbose() >= 1)
+            printf("tblis: core2: Wrong vendor.\n");
         return -1;
     }
 
     if (!check_features(features, FEATURE_SSE3))
     {
-        if (get_verbose() >= 1) printf("tblis: core2: Doesn't support SSE3.\n");
+        if (get_verbose() >= 1)
+            printf("tblis: core2: Doesn't support SSE3.\n");
         return -1;
     }
 
     if (!check_features(features, FEATURE_SSSE3))
     {
-        if (get_verbose() >= 1) printf("tblis: core2: Doesn't support SSSE3.\n");
+        if (get_verbose() >= 1)
+            printf("tblis: core2: Doesn't support SSSE3.\n");
         return -1;
     }
 
     return 1;
 }
 
-}
+} // namespace tblis

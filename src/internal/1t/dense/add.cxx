@@ -12,11 +12,17 @@ namespace tblis
 namespace internal
 {
 
-void add(type_t type, const communicator& comm, const config& cfg,
+void add(type_t type,
+         const communicator& comm,
+         const config& cfg,
          const len_vector& len_A,
-         const scalar& alpha, bool conj_A, char* A,
+         const scalar& alpha,
+         bool conj_A,
+         char* A,
          const stride_vector& stride_A,
-         const scalar&  beta, bool conj_B, char* B)
+         const scalar& beta,
+         bool conj_B,
+         char* B)
 {
     scalar sum(0.0, type);
     len_type idx;
@@ -26,28 +32,40 @@ void add(type_t type, const communicator& comm, const config& cfg,
         add(type, alpha, conj_A, sum.raw(), beta, conj_B, B);
 }
 
-void add(type_t type, const communicator& comm, const config& cfg,
+void add(type_t type,
+         const communicator& comm,
+         const config& cfg,
          const len_vector& len_B,
-         const scalar& alpha, bool conj_A, char* A,
-         const scalar&  beta, bool conj_B, char* B,
+         const scalar& alpha,
+         bool conj_A,
+         char* A,
+         const scalar& beta,
+         bool conj_B,
+         char* B,
          const stride_vector& stride_B)
 {
     scalar alpha_A(0, type);
     alpha_A.from(A);
-    if (conj_A) alpha_A.conj();
+    if (conj_A)
+        alpha_A.conj();
     alpha_A *= alpha;
 
-    shift(type, comm, cfg, len_B, alpha_A,
-          beta, conj_B, B, stride_B);
+    shift(type, comm, cfg, len_B, alpha_A, beta, conj_B, B, stride_B);
 }
 
-void add(type_t type, const communicator& comm, const config& cfg,
+void add(type_t type,
+         const communicator& comm,
+         const config& cfg,
          const len_vector& len_A,
          const len_vector& len_AB,
-         const scalar& alpha, bool conj_A, char* A,
+         const scalar& alpha,
+         bool conj_A,
+         char* A,
          const stride_vector& stride_A,
          const stride_vector& stride_A_AB_,
-         const scalar&  beta, bool conj_B, char* B,
+         const scalar& beta,
+         bool conj_B,
+         char* B,
          const stride_vector& stride_B_AB_)
 {
     bool empty = len_A.size() == 0;
@@ -61,41 +79,55 @@ void add(type_t type, const communicator& comm, const config& cfg,
 
     stride_type stride_A0 = (empty ? 1 : stride_A[0]);
     len_vector stride_A1;
-    for (auto i : range(1,stride_A.size())) stride_A1.push_back(stride_A[i]*ts);
+    for (auto i : range(1, stride_A.size()))
+        stride_A1.push_back(stride_A[i] * ts);
 
     len_vector stride_A_AB, stride_B_AB;
-    for (auto i : stride_A_AB_) stride_A_AB.push_back(i*ts);
-    for (auto i : stride_B_AB_) stride_B_AB.push_back(i*ts);
+    for (auto i : stride_A_AB_) stride_A_AB.push_back(i * ts);
+    for (auto i : stride_B_AB_) stride_B_AB.push_back(i * ts);
 
-    comm.distribute_over_threads(n_AB,
-    [&](len_type n_min, len_type n_max)
-    {
-        auto A1 = A;
-        auto B1 = B;
-
-        viterator<1> iter_A(len_A1, stride_A1);
-        viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
-        iter_AB.position(n_min, A1, B1);
-
-        for (len_type i = n_min;i < n_max;i++)
+    comm.distribute_over_threads(
+        n_AB,
+        [&](len_type n_min, len_type n_max)
         {
-            iter_AB.next(A1, B1);
+            auto A1 = A;
+            auto B1 = B;
 
-            scalar sum_A(0.0, type);
-            while (iter_A.next(A1))
-                cfg.reduce_ukr.call(type, REDUCE_SUM, n0, A1, stride_A0, sum_A.raw(), dummy);
+            viterator<1> iter_A(len_A1, stride_A1);
+            viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
+            iter_AB.position(n_min, A1, B1);
 
-            add(type, alpha, conj_A, sum_A.raw(), beta, conj_B, B1);
-        }
-    });
+            for (len_type i = n_min; i < n_max; i++)
+            {
+                iter_AB.next(A1, B1);
+
+                scalar sum_A(0.0, type);
+                while (iter_A.next(A1))
+                    cfg.reduce_ukr.call(type,
+                                        REDUCE_SUM,
+                                        n0,
+                                        A1,
+                                        stride_A0,
+                                        sum_A.raw(),
+                                        dummy);
+
+                add(type, alpha, conj_A, sum_A.raw(), beta, conj_B, B1);
+            }
+        });
 }
 
-void add(type_t type, const communicator& comm, const config& cfg,
+void add(type_t type,
+         const communicator& comm,
+         const config& cfg,
          const len_vector& len_B,
          const len_vector& len_AB,
-         const scalar& alpha, bool conj_A, char* A,
+         const scalar& alpha,
+         bool conj_A,
+         char* A,
          const stride_vector& stride_A_AB_,
-         const scalar&  beta, bool conj_B, char* B,
+         const scalar& beta,
+         bool conj_B,
+         char* B,
          const stride_vector& stride_B,
          const stride_vector& stride_B_AB_)
 {
@@ -109,42 +141,52 @@ void add(type_t type, const communicator& comm, const config& cfg,
 
     stride_type stride_B0 = (empty ? 1 : stride_B[0]);
     len_vector stride_B1;
-    for (auto i : range(1,stride_B.size())) stride_B1.push_back(stride_B[i]*ts);
+    for (auto i : range(1, stride_B.size()))
+        stride_B1.push_back(stride_B[i] * ts);
 
     len_vector stride_A_AB, stride_B_AB;
-    for (auto i : stride_A_AB_) stride_A_AB.push_back(i*ts);
-    for (auto i : stride_B_AB_) stride_B_AB.push_back(i*ts);
+    for (auto i : stride_A_AB_) stride_A_AB.push_back(i * ts);
+    for (auto i : stride_B_AB_) stride_B_AB.push_back(i * ts);
 
-    comm.distribute_over_threads(n_AB,
-    [&](len_type n_min, len_type n_max)
-    {
-        auto A1 = A;
-        auto B1 = B;
-
-        viterator<1> iter_B(len_B1, stride_B1);
-        viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
-        iter_AB.position(n_min, A1, B1);
-
-        for (len_type i = n_min;i < n_max;i++)
+    comm.distribute_over_threads(
+        n_AB,
+        [&](len_type n_min, len_type n_max)
         {
-            iter_AB.next(A1, B1);
+            auto A1 = A;
+            auto B1 = B;
 
-            scalar alpha_A(0, type);
-            alpha_A.from(A1);
-            if (conj_A) alpha_A.conj();
-            alpha_A *= alpha;
+            viterator<1> iter_B(len_B1, stride_B1);
+            viterator<2> iter_AB(len_AB, stride_A_AB, stride_B_AB);
+            iter_AB.position(n_min, A1, B1);
 
-            while (iter_B.next(B1))
-                cfg.shift_ukr.call(type, n0, &alpha_A, &beta, conj_B, B1, stride_B0);
-        }
-    });
+            for (len_type i = n_min; i < n_max; i++)
+            {
+                iter_AB.next(A1, B1);
+
+                scalar alpha_A(0, type);
+                alpha_A.from(A1);
+                if (conj_A)
+                    alpha_A.conj();
+                alpha_A *= alpha;
+
+                while (iter_B.next(B1))
+                    cfg.shift_ukr
+                        .call(type, n0, &alpha_A, &beta, conj_B, B1, stride_B0);
+            }
+        });
 }
 
-void add(type_t type, const communicator& comm, const config& cfg,
+void add(type_t type,
+         const communicator& comm,
+         const config& cfg,
          const len_vector& len_AB,
-         const scalar& alpha, bool conj_A, char* A,
+         const scalar& alpha,
+         bool conj_A,
+         char* A,
          const stride_vector& stride_A_AB,
-         const scalar&  beta, bool conj_B, char* B,
+         const scalar& beta,
+         bool conj_B,
+         char* B,
          const stride_vector& stride_B_AB)
 {
     const len_type ts = type_size[type];
@@ -155,11 +197,14 @@ void add(type_t type, const communicator& comm, const config& cfg,
     auto unit_A_AB = 0;
     auto unit_B_AB = 0;
 
-    for (auto i : range(1,len_AB.size()))
+    for (auto i : range(1, len_AB.size()))
     {
-        if (len_AB[i] == 1) continue;
-        if (stride_A_AB[i] == 1 && unit_A_AB == 0) unit_A_AB = i;
-        if (stride_B_AB[i] == 1 && unit_B_AB == 0) unit_B_AB = i;
+        if (len_AB[i] == 1)
+            continue;
+        if (stride_A_AB[i] == 1 && unit_A_AB == 0)
+            unit_A_AB = i;
+        if (stride_B_AB[i] == 1 && unit_B_AB == 0)
+            unit_B_AB = i;
     }
 
     len_type m0 = len_AB[unit_A_AB];
@@ -175,42 +220,55 @@ void add(type_t type, const communicator& comm, const config& cfg,
     stride_vector stride_A1;
     for (int i : range(len_AB.size()))
         if (i != unit_A_AB && i != unit_B_AB)
-            stride_A1.push_back(stride_A_AB[i]*ts);
+            stride_A1.push_back(stride_A_AB[i] * ts);
 
     stride_type stride_B_m = stride_B_AB[unit_A_AB];
     stride_type stride_B_n = stride_B_AB[unit_B_AB];
     stride_vector stride_B1;
     for (int i : range(len_AB.size()))
         if (i != unit_A_AB && i != unit_B_AB)
-            stride_B1.push_back(stride_B_AB[i]*ts);
+            stride_B1.push_back(stride_B_AB[i] * ts);
 
     if (unit_A_AB == unit_B_AB)
     {
-        comm.distribute_over_threads(n0, mn1,
-        [&](len_type n0_min, len_type n0_max, len_type n1_min, len_type n1_max)
-        {
-            auto A1 = A;
-            auto B1 = B;
-
-            viterator<2> iter_AB(len1, stride_A1, stride_B1);
-            iter_AB.position(n1_min, A1, B1);
-            A1 += n0_min*stride_A_m*ts;
-            B1 += n0_min*stride_B_m*ts;
-
-            for (len_type i = n1_min;i < n1_max;i++)
+        comm.distribute_over_threads(
+            n0,
+            mn1,
+            [&](len_type n0_min,
+                len_type n0_max,
+                len_type n1_min,
+                len_type n1_max)
             {
-                iter_AB.next(A1, B1);
+                auto A1 = A;
+                auto B1 = B;
 
-                cfg.add_ukr.call(type, n0_max-n0_min,
-                                 &alpha, conj_A, A1, stride_A_m,
-                                  &beta, conj_B, B1, stride_B_m);
-            }
-        });
+                viterator<2> iter_AB(len1, stride_A1, stride_B1);
+                iter_AB.position(n1_min, A1, B1);
+                A1 += n0_min * stride_A_m * ts;
+                B1 += n0_min * stride_B_m * ts;
+
+                for (len_type i = n1_min; i < n1_max; i++)
+                {
+                    iter_AB.next(A1, B1);
+
+                    cfg.add_ukr.call(type,
+                                     n0_max - n0_min,
+                                     &alpha,
+                                     conj_A,
+                                     A1,
+                                     stride_A_m,
+                                     &beta,
+                                     conj_B,
+                                     B1,
+                                     stride_B_m);
+                }
+            });
     }
     else
     {
         unsigned nt_mn1, nt_mn;
-        std::tie(nt_mn1, nt_mn) = partition_2x2(comm.num_threads(), mn1, m0*n0);
+        std::tie(nt_mn1, nt_mn) =
+            partition_2x2(comm.num_threads(), mn1, m0 * n0);
 
         auto subcomm = comm.gang(TCI_EVENLY, nt_mn1);
 
@@ -228,46 +286,69 @@ void add(type_t type, const communicator& comm, const config& cfg,
             std::swap(rs_B, cs_B);
         }
 
-        subcomm.distribute_over_gangs(mn1,
-        [&](len_type mn1_min, len_type mn1_max)
-        {
-            auto A1 = A;
-            auto B1 = B;
-
-            viterator<2> iter_AB(len1, stride_A1, stride_B1);
-            iter_AB.position(mn1_min, A1, B1);
-
-            for (len_type i = mn1_min;i < mn1_max;i++)
+        subcomm.distribute_over_gangs(
+            mn1,
+            [&](len_type mn1_min, len_type mn1_max)
             {
-                iter_AB.next(A1, B1);
+                auto A1 = A;
+                auto B1 = B;
 
-                subcomm.distribute_over_threads({m, MR}, {n, NR},
-                [&](len_type m_min, len_type m_max, len_type n_min, len_type n_max)
+                viterator<2> iter_AB(len1, stride_A1, stride_B1);
+                iter_AB.position(mn1_min, A1, B1);
+
+                for (len_type i = mn1_min; i < mn1_max; i++)
                 {
-                    for (len_type i = m_min;i < m_max;i += MR)
-                    for (len_type j = n_min;j < n_max;j += NR)
-                    {
-                        len_type m_loc = std::min(m_max-i, MR);
-                        len_type n_loc = std::min(n_max-j, NR);
+                    iter_AB.next(A1, B1);
 
-                        cfg.trans_ukr.call(type, m_loc, n_loc,
-                            &alpha, conj_A, A1 + i*rs_A*ts + j*cs_A*ts, rs_A, cs_A,
-                             &beta, conj_B, B1 + i*rs_B*ts + j*cs_B*ts, rs_B, cs_B);
-                    }
-                });
-            }
-        });
+                    subcomm.distribute_over_threads(
+                        {m, MR},
+                        {n, NR},
+                        [&](len_type m_min,
+                            len_type m_max,
+                            len_type n_min,
+                            len_type n_max)
+                        {
+                            for (len_type i = m_min; i < m_max; i += MR)
+                                for (len_type j = n_min; j < n_max; j += NR)
+                                {
+                                    len_type m_loc = std::min(m_max - i, MR);
+                                    len_type n_loc = std::min(n_max - j, NR);
+
+                                    cfg.trans_ukr.call(
+                                        type,
+                                        m_loc,
+                                        n_loc,
+                                        &alpha,
+                                        conj_A,
+                                        A1 + i * rs_A * ts + j * cs_A * ts,
+                                        rs_A,
+                                        cs_A,
+                                        &beta,
+                                        conj_B,
+                                        B1 + i * rs_B * ts + j * cs_B * ts,
+                                        rs_B,
+                                        cs_B);
+                                }
+                        });
+                }
+            });
     }
 }
 
-void add(type_t type, const communicator& comm, const config& cfg,
+void add(type_t type,
+         const communicator& comm,
+         const config& cfg,
          const len_vector& len_A_,
          const len_vector& len_B_,
          const len_vector& len_AB_,
-         const scalar& alpha, bool conj_A, char* A,
+         const scalar& alpha,
+         bool conj_A,
+         char* A,
          const stride_vector& stride_A_,
          const stride_vector& stride_A_AB_,
-         const scalar&  beta, bool conj_B, char* B,
+         const scalar& beta,
+         bool conj_B,
+         char* B,
          const stride_vector& stride_B_,
          const stride_vector& stride_B_AB_)
 {
@@ -275,7 +356,8 @@ void add(type_t type, const communicator& comm, const config& cfg,
     len_type n_A = stl_ext::prod(len_A_);
     len_type n_B = stl_ext::prod(len_B_);
 
-    if (n_AB == 0 || n_B == 0) return;
+    if (n_AB == 0 || n_B == 0)
+        return;
 
     if (n_A == 0)
     {
@@ -300,46 +382,92 @@ void add(type_t type, const communicator& comm, const config& cfg,
     {
         if (n_A > 1)
         {
-            add(type, comm, cfg, len_A,
-                alpha, conj_A, A, stride_A,
-                 beta, conj_B, B);
+            add(type,
+                comm,
+                cfg,
+                len_A,
+                alpha,
+                conj_A,
+                A,
+                stride_A,
+                beta,
+                conj_B,
+                B);
         }
         else if (n_B > 1)
         {
-            add(type, comm, cfg, len_B,
-                alpha, conj_A, A,
-                 beta, conj_B, B, stride_B);
+            add(type,
+                comm,
+                cfg,
+                len_B,
+                alpha,
+                conj_A,
+                A,
+                beta,
+                conj_B,
+                B,
+                stride_B);
         }
         else if (comm.master())
         {
-            add(type, alpha, conj_A, A,
-                       beta, conj_B, B);
+            add(type, alpha, conj_A, A, beta, conj_B, B);
         }
     }
     else
     {
         if (n_A > 1)
         {
-            add(type, comm, cfg, len_A, len_AB,
-                alpha, conj_A, A, stride_A, stride_A_AB,
-                 beta, conj_B, B, stride_B_AB);
+            add(type,
+                comm,
+                cfg,
+                len_A,
+                len_AB,
+                alpha,
+                conj_A,
+                A,
+                stride_A,
+                stride_A_AB,
+                beta,
+                conj_B,
+                B,
+                stride_B_AB);
         }
         else if (n_B > 1)
         {
-            add(type, comm, cfg, len_B, len_AB,
-                alpha, conj_A, A, stride_A_AB,
-                 beta, conj_B, B, stride_B, stride_B_AB);
+            add(type,
+                comm,
+                cfg,
+                len_B,
+                len_AB,
+                alpha,
+                conj_A,
+                A,
+                stride_A_AB,
+                beta,
+                conj_B,
+                B,
+                stride_B,
+                stride_B_AB);
         }
         else
         {
-            add(type, comm, cfg, len_AB,
-                alpha, conj_A, A, stride_A_AB,
-                 beta, conj_B, B, stride_B_AB);
+            add(type,
+                comm,
+                cfg,
+                len_AB,
+                alpha,
+                conj_A,
+                A,
+                stride_A_AB,
+                beta,
+                conj_B,
+                B,
+                stride_B_AB);
         }
     }
 
     comm.barrier();
 }
 
-}
-}
+} // namespace internal
+} // namespace tblis

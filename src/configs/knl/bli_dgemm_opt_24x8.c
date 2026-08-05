@@ -37,6 +37,8 @@
 
 #include "bli_avx512_macros.h"
 
+// clang-format off
+
 #define UNROLL_K 32
 
 #define SCATTER_PREFETCH_C 1
@@ -175,6 +177,8 @@
         VFMADD231PD(ZMM(31), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*24+23)*8)) \
         PREFETCH_B_L2(n)
 
+// clang-format on
+
 //This is an array used for the scatter/gather instructions.
 static int32_t offsets[32] __attribute__((aligned(64))) =
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
@@ -211,6 +215,7 @@ void bli_dgemm_opt_24x8(
     int tlooph, tloopl, blooph, bloopl;
 #endif
 
+// clang-format off
     __asm__ volatile
     (
 #ifdef MONITORS
@@ -696,6 +701,7 @@ void bli_dgemm_opt_24x8(
       "zmm22", "zmm23", "zmm24", "zmm25", "zmm26", "zmm27", "zmm28", "zmm29",
       "zmm30", "zmm31", "memory"
     );
+// clang-format on
 
 #ifdef LOOPMON
     printf("looptime = \t%d\n", bloopl - tloopl);

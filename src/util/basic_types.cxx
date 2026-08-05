@@ -5,7 +5,6 @@ namespace tblis
 
 extern "C"
 {
-
 void tblis_init_scalar_s(tblis_scalar* s, float value)
 {
     s->type = TYPE_SINGLE;
@@ -30,8 +29,11 @@ void tblis_init_scalar_z(tblis_scalar* s, dcomplex value)
     s->data.z = value;
 }
 
-void tblis_init_tensor_scaled_s(tblis_tensor* t, float scalar,
-                                int ndim, len_type* len, float* data,
+void tblis_init_tensor_scaled_s(tblis_tensor* t,
+                                float scalar,
+                                int ndim,
+                                len_type* len,
+                                float* data,
                                 stride_type* stride)
 {
     t->type = TYPE_SINGLE;
@@ -44,8 +46,11 @@ void tblis_init_tensor_scaled_s(tblis_tensor* t, float scalar,
     t->stride = stride;
 }
 
-void tblis_init_tensor_scaled_d(tblis_tensor* t, double scalar,
-                                int ndim, len_type* len, double* data,
+void tblis_init_tensor_scaled_d(tblis_tensor* t,
+                                double scalar,
+                                int ndim,
+                                len_type* len,
+                                double* data,
                                 stride_type* stride)
 {
     t->type = TYPE_DOUBLE;
@@ -58,8 +63,11 @@ void tblis_init_tensor_scaled_d(tblis_tensor* t, double scalar,
     t->stride = stride;
 }
 
-void tblis_init_tensor_scaled_c(tblis_tensor* t, scomplex scalar,
-                                int ndim, len_type* len, scomplex* data,
+void tblis_init_tensor_scaled_c(tblis_tensor* t,
+                                scomplex scalar,
+                                int ndim,
+                                len_type* len,
+                                scomplex* data,
                                 stride_type* stride)
 {
     t->type = TYPE_SCOMPLEX;
@@ -72,8 +80,11 @@ void tblis_init_tensor_scaled_c(tblis_tensor* t, scomplex scalar,
     t->stride = stride;
 }
 
-void tblis_init_tensor_scaled_z(tblis_tensor* t, dcomplex scalar,
-                                int ndim, len_type* len, dcomplex* data,
+void tblis_init_tensor_scaled_z(tblis_tensor* t,
+                                dcomplex scalar,
+                                int ndim,
+                                len_type* len,
+                                dcomplex* data,
                                 stride_type* stride)
 {
     t->type = TYPE_DCOMPLEX;
@@ -87,33 +98,40 @@ void tblis_init_tensor_scaled_z(tblis_tensor* t, dcomplex scalar,
 }
 
 void tblis_init_tensor_s(tblis_tensor* t,
-                         int ndim, len_type* len, float* data,
+                         int ndim,
+                         len_type* len,
+                         float* data,
                          stride_type* stride)
 {
     tblis_init_tensor_scaled_s(t, 1.0f, ndim, len, data, stride);
 }
 
 void tblis_init_tensor_d(tblis_tensor* t,
-                         int ndim, len_type* len, double* data,
+                         int ndim,
+                         len_type* len,
+                         double* data,
                          stride_type* stride)
 {
     tblis_init_tensor_scaled_d(t, 1.0, ndim, len, data, stride);
 }
 
 void tblis_init_tensor_c(tblis_tensor* t,
-                         int ndim, len_type* len, scomplex* data,
+                         int ndim,
+                         len_type* len,
+                         scomplex* data,
                          stride_type* stride)
 {
     tblis_init_tensor_scaled_c(t, {1.0f, 0.0f}, ndim, len, data, stride);
 }
 
 void tblis_init_tensor_z(tblis_tensor* t,
-                         int ndim, len_type* len, dcomplex* data,
+                         int ndim,
+                         len_type* len,
+                         dcomplex* data,
                          stride_type* stride)
 {
     tblis_init_tensor_scaled_z(t, {1.0, 0.0}, ndim, len, data, stride);
 }
-
 }
 
 label_vector idx(const std::string& from, label_vector&& to)
@@ -149,4 +167,4 @@ label_vector idx(const std::string& from, label_vector&& to)
     return std::move(to);
 }
 
-}
+} // namespace tblis

@@ -1,6 +1,6 @@
 /*
 
-   BLIS    
+   BLIS
    An object-based framework for developing high-performance BLAS-like
    libraries.
 
@@ -57,6 +57,7 @@ void bli_dgemm_asm_12x16
 
     const int32_t * offsetPtr = &offsets[0];
 
+// clang-format off
 	__asm__ volatile
 	(
 
@@ -744,4 +745,5 @@ void bli_dgemm_asm_12x16
       "zmm22", "zmm23", "zmm24", "zmm25", "zmm26", "zmm27", "zmm28", "zmm29",
       "zmm30", "zmm31", "memory"
 	);
+// clang-format on
 }

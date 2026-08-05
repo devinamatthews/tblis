@@ -805,7 +805,9 @@ class dpd_marray_base : protected detail::dpd_base
      **********************************************************************/
 
     Derived& operator=(const dpd_marray_base& other)
-    { return operator= <>(other); }
+    {
+        return operator= <>(other);
+    }
 
     template <typename U, typename D, bool O>
     Derived& operator=(const dpd_marray_base<U, D, O>& other)
@@ -856,18 +858,26 @@ class dpd_marray_base : protected detail::dpd_base
      **********************************************************************/
 
     dpd_marray_view<const Type> cview() const
-    { return const_cast<dpd_marray_base&>(*this).view(); }
+    {
+        return const_cast<dpd_marray_base&>(*this).view();
+    }
 
     dpd_marray_view<ctype> view() const
-    { return const_cast<dpd_marray_base&>(*this).view(); }
+    {
+        return const_cast<dpd_marray_base&>(*this).view();
+    }
 
     dpd_marray_view<Type> view() { return *this; }
 
     friend dpd_marray_view<const Type> cview(const dpd_marray_base& x)
-    { return x.view(); }
+    {
+        return x.view();
+    }
 
     friend dpd_marray_view<ctype> view(const dpd_marray_base& x)
-    { return x.view(); }
+    {
+        return x.view();
+    }
 
     friend dpd_marray_view<Type> view(dpd_marray_base& x) { return x.view(); }
 
@@ -878,7 +888,9 @@ class dpd_marray_base : protected detail::dpd_base
      **********************************************************************/
 
     dpd_marray_view<ctype> permuted(const array_1d<int>& perm) const
-    { return const_cast<dpd_marray_base&>(*this).permuted(perm); }
+    {
+        return const_cast<dpd_marray_base&>(*this).permuted(perm);
+    }
 
     dpd_marray_view<Type> permuted(const array_1d<int>& perm)
     {
@@ -897,7 +909,9 @@ class dpd_marray_base : protected detail::dpd_base
     std::enable_if_t<detail::are_assignable<int&, Irreps...>::value,
                      marray_view<ctype, sizeof...(Irreps)>>
     operator()(const Irreps&... irreps) const
-    { return const_cast<dpd_marray_base&>(*this)(irreps...); }
+    {
+        return const_cast<dpd_marray_base&>(*this)(irreps...);
+    }
 
     template <typename... Irreps>
     std::enable_if_t<detail::are_assignable<int&, Irreps...>::value,
@@ -919,7 +933,9 @@ class dpd_marray_base : protected detail::dpd_base
     }
 
     marray_view<ctype> operator()(const array_1d<int>& irreps) const
-    { return const_cast<dpd_marray_base&>(*this)(irreps); }
+    {
+        return const_cast<dpd_marray_base&>(*this)(irreps);
+    }
 
     marray_view<Type> operator()(const array_1d<int>& irreps_)
     {
@@ -954,7 +970,9 @@ class dpd_marray_base : protected detail::dpd_base
                          && detail::sliced_dimension<Slices...>::value,
                      dpd_marray_view<ctype>>
     operator()(const Slices&... slices) const
-    { return const_cast<dpd_marray_base&>(*this)(slices...); }
+    {
+        return const_cast<dpd_marray_base&>(*this)(slices...);
+    }
 
     template <typename... Slices>
     std::enable_if_t<detail::are_dpd_indices_or_slices<Slices...>::value
@@ -968,7 +986,9 @@ class dpd_marray_base : protected detail::dpd_base
     }
 
     dpd_marray_view<ctype> operator()(const array_1d<dpd_range>& slices) const
-    { return const_cast<dpd_marray_base&>(*this)(slices); }
+    {
+        return const_cast<dpd_marray_base&>(*this)(slices);
+    }
 
     dpd_marray_view<Type> operator()(const array_1d<dpd_range>& slices_)
     {
@@ -989,10 +1009,14 @@ class dpd_marray_base : protected detail::dpd_base
      **********************************************************************/
 
     template <typename Func> void for_each_block(Func&& f) const
-    { for_each_block_<marray_view<ctype>>(std::forward<Func>(f)); }
+    {
+        for_each_block_<marray_view<ctype>>(std::forward<Func>(f));
+    }
 
     template <typename Func> void for_each_block(Func&& f)
-    { for_each_block_<marray_view<Type>>(std::forward<Func>(f)); }
+    {
+        for_each_block_<marray_view<Type>>(std::forward<Func>(f));
+    }
 
     template <int NDim, typename Func> void for_each_block(Func&& f) const
     {
@@ -1009,10 +1033,14 @@ class dpd_marray_base : protected detail::dpd_base
     }
 
     template <typename Func> void for_each_element(Func&& f) const
-    { for_each_element_<ctype>(std::forward<Func>(f)); }
+    {
+        for_each_element_<ctype>(std::forward<Func>(f));
+    }
 
     template <typename Func> void for_each_element(Func&& f)
-    { for_each_element_<Type>(std::forward<Func>(f)); }
+    {
+        for_each_element_<Type>(std::forward<Func>(f));
+    }
 
     template <int NDim, typename Func> void for_each_element(Func&& f) const
     {
@@ -1033,7 +1061,9 @@ class dpd_marray_base : protected detail::dpd_base
      **********************************************************************/
 
     const_pointer cdata() const
-    { return const_cast<dpd_marray_base&>(*this).data(); }
+    {
+        return const_cast<dpd_marray_base&>(*this).data();
+    }
 
     cptr data() const { return const_cast<dpd_marray_base&>(*this).data(); }
 

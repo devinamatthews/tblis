@@ -1,6 +1,6 @@
 /*
 
-   BLIS    
+   BLIS
    An object-based framework for developing high-performance BLAS-like
    libraries.
 
@@ -36,6 +36,8 @@
 #include <assert.h>
 
 #include "bli_avx512_macros.h"
+
+// clang-format off
 
 #define UNROLL_K 32
 
@@ -202,6 +204,8 @@
         VFMADD231PD(ZMM(31), ZMM(b), MEM_1TO8(__VA_ARGS__,((n%%4)*32+29)*8)) \
         PREFETCH_B_L2(n)
 
+// clang-format on
+
 //This is an array used for the scatter/gather instructions.
 static int32_t offsets[32] __attribute__((aligned(64))) =
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
@@ -222,7 +226,8 @@ void bli_dgemm_opt_30x8(
 {
     const int32_t * offsetPtr = &offsets[0];
     uint64_t k64 = k;
-    
+
+// clang-format off
     __asm__ volatile
     (
 
@@ -765,4 +770,5 @@ void bli_dgemm_opt_30x8(
       "zmm22", "zmm23", "zmm24", "zmm25", "zmm26", "zmm27", "zmm28", "zmm29",
       "zmm30", "zmm31", "memory"
     );
+// clang-format on
 }

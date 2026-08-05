@@ -1,24 +1,24 @@
-#include <cstdlib>
 #include <algorithm>
-#include <limits>
-#include <stdint.h>
-#include <iostream>
-#include <random>
-#include <numeric>
-#include <getopt.h>
-#include <sstream>
-#include <type_traits>
-#include <iomanip>
-#include <functional>
-#include <set>
-#include <map>
 #include <atomic>
+#include <cstdlib>
+#include <functional>
+#include <getopt.h>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+#include <map>
+#include <numeric>
+#include <random>
+#include <set>
+#include <sstream>
+#include <stdint.h>
+#include <type_traits>
 
-#include "tblis.h"
-#include "util/time.hpp"
-#include "util/tensor.hpp"
-#include "util/random.hpp"
 #include "internal/3t/dense/mult.hpp"
+#include "tblis.h"
+#include "util/random.hpp"
+#include "util/tensor.hpp"
+#include "util/time.hpp"
 
 int dumb = 0;
 int check = 0;
@@ -30,24 +30,24 @@ using namespace stl_ext;
 len_type v = 30;
 len_type o = 5;
 
-template <typename Kernel, typename ...Args>
-double run_kernel(len_type R, Kernel&& kernel, Args&&...args)
+template <typename Kernel, typename... Args>
+double run_kernel(len_type R, Kernel&& kernel, Args&&... args)
 {
     double bias = numeric_limits<double>::max();
-    for (len_type r = 0;r < R;r++)
+    for (len_type r = 0; r < R; r++)
     {
         double t0 = tic();
         double t1 = tic();
-        bias = min(bias, t1-t0);
+        bias = min(bias, t1 - t0);
     }
 
     double dt = numeric_limits<double>::max();
-    for (len_type r = 0;r < R;r++)
+    for (len_type r = 0; r < R; r++)
     {
         double t0 = tic();
         kernel(args...);
         double t1 = tic();
-        dt = min(dt, t1-t0);
+        dt = min(dt, t1 - t0);
     }
 
     return dt - bias;
@@ -60,25 +60,26 @@ void init(indexed_marray<T>& A, const string& dense, const string& batch)
     auto m = batch.size();
 
     len_vector len;
-    for (auto c : dense+batch)
-        len.push_back(tolower(c) >= 'a' && tolower(c) <= 'h' ? v :
-                      tolower(c) >= 'i' && tolower(c) <= 'p' ? o : len.back());
+    for (auto c : dense + batch)
+        len.push_back(tolower(c) >= 'a' && tolower(c) <= 'h'   ? v
+                      : tolower(c) >= 'i' && tolower(c) <= 'p' ? o
+                                                               : len.back());
 
     len_type size = 1;
     auto i = 0;
     while (i < m)
     {
-        int j = i+1;
+        int j = i + 1;
         while (j < m && batch[j] == '=') j++;
 
-        len_type s = len[n+i];
+        len_type s = len[n + i];
 
-        switch (j-i)
+        switch (j - i)
         {
             case 1: size *= s; break;
-            case 2: size *= s*(s+1)/2; break;
-            case 3: size *= s*(s+1)*(s+2)/6-s; break;
-            case 4: size *= s*(s+1)*(s+2)*(s+3)/24-s*s; break;
+            case 2: size *= s * (s + 1) / 2; break;
+            case 3: size *= s * (s + 1) * (s + 2) / 6 - s; break;
+            case 4: size *= s * (s + 1) * (s + 2) * (s + 3) / 24 - s * s; break;
         }
 
         i = j;
@@ -91,13 +92,18 @@ void init(indexed_marray<T>& A, const string& dense, const string& batch)
         {
             cur_idx[i] = 0;
         }
-        else if (i == 1 || batch[i-1] != '=' || cur_idx[i-2] != cur_idx[i-1])
+        else if (i
+                 == 1
+                 || batch[i - 1]
+                 != '='
+                 || cur_idx[i - 2]
+                 != cur_idx[i - 1])
         {
-            cur_idx[i] = cur_idx[i-1];
+            cur_idx[i] = cur_idx[i - 1];
         }
         else
         {
-            cur_idx[i] = cur_idx[i-1]+1;
+            cur_idx[i] = cur_idx[i - 1] + 1;
         }
     }
 
@@ -106,45 +112,55 @@ void init(indexed_marray<T>& A, const string& dense, const string& batch)
     if (m > 0 && size > 0)
     {
         len_type off = 0;
-        for (bool done = false;!done;)
+        for (bool done = false; !done;)
         {
             for (auto i : range(m)) idx[off][i] = cur_idx[i];
             off++;
 
             for (auto i : reversed_range(m))
             {
-                bool over = (i == m-1 || batch[i+1] != '=')
+                bool over = (i == m - 1 || batch[i + 1] != '=')
 
-                                ? (cur_idx[i] >= len[n+i]-1) :
+                              ? (cur_idx[i] >= len[n + i] - 1)
+                          : (i
+                             == m
+                             - 2
+                             || batch[i + 2]
+                             != '='
+                             || cur_idx[i + 1]
+                             != cur_idx[i + 2])
 
-                            (i == m-2 || batch[i+2] != '=' ||
-                             cur_idx[i+1] != cur_idx[i+2])
+                              ? (cur_idx[i] >= cur_idx[i + 1])
 
-                                ? (cur_idx[i] >= cur_idx[i+1])
-
-                                : (cur_idx[i] >= cur_idx[i+1]-1);
+                              : (cur_idx[i] >= cur_idx[i + 1] - 1);
 
                 if (over)
                 {
-                    if (i == 0) done = true;
+                    if (i == 0)
+                        done = true;
                 }
                 else
                 {
                     cur_idx[i]++;
 
-                    for (i++;i < m;i++)
+                    for (i++; i < m; i++)
                     {
                         if (i == 0 || batch[i] != '=')
                         {
                             cur_idx[i] = 0;
                         }
-                        else if (i == 1 || batch[i-1] != '=' || cur_idx[i-2] != cur_idx[i-1])
+                        else if (i
+                                 == 1
+                                 || batch[i - 1]
+                                 != '='
+                                 || cur_idx[i - 2]
+                                 != cur_idx[i - 1])
                         {
-                            cur_idx[i] = cur_idx[i-1];
+                            cur_idx[i] = cur_idx[i - 1];
                         }
                         else
                         {
-                            cur_idx[i] = cur_idx[i-1]+1;
+                            cur_idx[i] = cur_idx[i - 1] + 1;
                         }
                     }
 
@@ -172,20 +188,19 @@ void init(indexed_marray<T>& A, const string& dense, const string& batch)
 }
 
 template <typename T>
-double diff(const indexed_marray_view<T>& A,
-            const indexed_marray_view<T>& B)
+double diff(const indexed_marray_view<T>& A, const indexed_marray_view<T>& B)
 {
     double d = 0.0;
 
     viterator<> it(A.dense_lengths(), A.dense_strides());
 
-    for (len_type i = 0;i < A.num_indices();i++)
+    for (len_type i = 0; i < A.num_indices(); i++)
     {
         const T* a = A.data(i);
         const T* b = B.data(i);
 
         stride_type off = 0;
-        while (it.next(off)) d += norm2(a[off]-b[off]);
+        while (it.next(off)) d += norm2(a[off] - b[off]);
     }
 
     return sqrt(d);
@@ -193,23 +208,33 @@ double diff(const indexed_marray_view<T>& A,
 
 template <typename T>
 void bench(int R,
-           T alpha, indexed_marray_view<const T> A, const std::string& typea,
-                    indexed_marray_view<const T> B, const std::string& typeb,
-           T  beta, indexed_marray_view<      T> C, const std::string& typec)
+           T alpha,
+           indexed_marray_view<const T> A,
+           const std::string& typea,
+           indexed_marray_view<const T> B,
+           const std::string& typeb,
+           T beta,
+           indexed_marray_view<T> C,
+           const std::string& typec)
 {
     flops = 0;
 
     double t1 = run_kernel(R,
-    [&]
-    {
-        mult<double>(alpha, A, typea.data(),
-                            B, typeb.data(),
-                      beta, C, typec.data());
-    });
+                           [&]
+                           {
+                               mult<double>(alpha,
+                                            A,
+                                            typea.data(),
+                                            B,
+                                            typeb.data(),
+                                            beta,
+                                            C,
+                                            typec.data());
+                           });
 
-    long flops1 = flops.load()/R;
+    long flops1 = flops.load() / R;
 
-    printf("%ld %g %g\n", flops1, t1, flops1/t1/1e9);
+    printf("%ld %g %g\n", flops1, t1, flops1 / t1 / 1e9);
 }
 
 int main(int argc, char** argv)
@@ -217,23 +242,26 @@ int main(int argc, char** argv)
     int R = 5;
     time_t seed = time(nullptr);
 
-    struct option opts[] = {{"rep", required_argument, NULL, 'r'},
-                            {"seed", required_argument, NULL, 's'},
-                            {"check", no_argument, &check, 1},
-                            {"no-check", no_argument, &check, 0},
-                            {"dumb", no_argument, &dumb, 1},
-                            {"no-dumb", no_argument, &dumb, 0},
-                            {"inout-ratio", required_argument, NULL, 'i'},
-                            {"occ", required_argument, NULL, 'o'},
-                            {"vrt", required_argument, NULL, 'v'},
-                            {0, 0, 0, 0}};
+    struct option opts[] = {
+        {        "rep", required_argument,   NULL, 'r'},
+        {       "seed", required_argument,   NULL, 's'},
+        {      "check",       no_argument, &check,   1},
+        {   "no-check",       no_argument, &check,   0},
+        {       "dumb",       no_argument,  &dumb,   1},
+        {    "no-dumb",       no_argument,  &dumb,   0},
+        {"inout-ratio", required_argument,   NULL, 'i'},
+        {        "occ", required_argument,   NULL, 'o'},
+        {        "vrt", required_argument,   NULL, 'v'},
+        {            0,                 0,      0,   0}
+    };
 
     while (true)
     {
         istringstream iss;
         int arg = getopt_long(argc, argv, "r:s:v:o:i:", opts, NULL);
 
-        if (arg == -1) break;
+        if (arg == -1)
+            break;
 
         switch (arg)
         {
@@ -257,9 +285,7 @@ int main(int argc, char** argv)
                 iss.str(optarg);
                 iss >> seed;
                 break;
-            case '?':
-                abort();
-                break;
+            case '?': abort(); break;
         }
     }
 
@@ -280,12 +306,10 @@ int main(int argc, char** argv)
         indexed_marray<double> Wa;
 
         init(T4, "ABCD", "I===");
-        init(T3,  "ABC",  "I==");
-        init(Wa,  "ABC",  "I=K");
+        init(T3, "ABC", "I==");
+        init(Wa, "ABC", "I=K");
 
-        bench<double>(R, 1.0, T3,   "ABEIJM",
-                              Wa,   "CDEKLM",
-                         1.0, T4, "ABCDIJKL");
+        bench<double>(R, 1.0, T3, "ABEIJM", Wa, "CDEKLM", 1.0, T4, "ABCDIJKL");
     }
 
     if (test1)
@@ -298,9 +322,7 @@ int main(int argc, char** argv)
         init(W, "IJKA", "");
         init(T3, "ABC", "I==");
 
-        bench<double>(R, 1.0, T2,   "ABIM",
-                               W,   "JKMC",
-                         1.0, T3, "ABCIJK");
+        bench<double>(R, 1.0, T2, "ABIM", W, "JKMC", 1.0, T3, "ABCIJK");
     }
 
     if (test2)
@@ -313,9 +335,7 @@ int main(int argc, char** argv)
         init(W, "ABCI", "");
         init(T3, "ABC", "I==");
 
-        bench<double>(R, 1.0, T2,   "AEIJ",
-                               W,   "BCEK",
-                         1.0, T3, "ABCIJK");
+        bench<double>(R, 1.0, T2, "AEIJ", W, "BCEK", 1.0, T3, "ABCIJK");
     }
 
     if (test3)
@@ -328,9 +348,7 @@ int main(int argc, char** argv)
         init(Z4, "ABCD", "I===");
         init(Wa, "AIBJ", "");
 
-        bench<double>(R, 1.0, T4, "ABCEIJKM",
-                              Wa,     "DMEL",
-                         1.0, Z4, "ABCDIJKL");
+        bench<double>(R, 1.0, T4, "ABCEIJKM", Wa, "DMEL", 1.0, Z4, "ABCDIJKL");
     }
 
     if (test4)
@@ -340,12 +358,10 @@ int main(int argc, char** argv)
         indexed_marray<double> W;
 
         init(T4, "ABCD", "I===");
-        init(T3,  "ABC",  "I==");
-        init(W,  "IJKA",  "");
+        init(T3, "ABC", "I==");
+        init(W, "IJKA", "");
 
-        bench<double>(R, 1.0, T3,   "ABCIJM",
-                               W,     "KLMD",
-                         1.0, T4, "ABCDIJKL");
+        bench<double>(R, 1.0, T3, "ABCIJM", W, "KLMD", 1.0, T4, "ABCDIJKL");
     }
 
     if (test5)
@@ -358,9 +374,7 @@ int main(int argc, char** argv)
         init(Z4, "ABCD", "I===");
         init(W, "ABCI", "");
 
-        bench<double>(R, 1.0, T3,   "ABEIJK",
-                               W,     "CDEL",
-                         1.0, Z4, "ABCDIJKL");
+        bench<double>(R, 1.0, T3, "ABEIJK", W, "CDEL", 1.0, Z4, "ABCDIJKL");
     }
 
     return 0;

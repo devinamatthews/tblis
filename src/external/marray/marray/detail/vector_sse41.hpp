@@ -19,17 +19,23 @@ template <> struct vector_traits<float>
     template <typename T>
     static std::enable_if_t<std::is_same<T, float>::value, __m128>
     convert(__m128 v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, double>::value, __m128d>
     convert(__m128 v)
-    { return _mm_cvtps_pd(v); }
+    {
+        return _mm_cvtps_pd(v);
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value, __m128>
     convert(__m128 v)
-    { return _mm_unpacklo_ps(v, _mm_setzero_ps()); }
+    {
+        return _mm_unpacklo_ps(v, _mm_setzero_ps());
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int8_t>::value, __m128i>
@@ -68,7 +74,9 @@ template <> struct vector_traits<float>
     template <typename T>
     static std::enable_if_t<std::is_same<T, int32_t>::value, __m128i>
     convert(__m128 v)
-    { return _mm_cvtps_epi32(v); }
+    {
+        return _mm_cvtps_epi32(v);
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, uint32_t>::value, __m128i>
@@ -85,21 +93,29 @@ template <> struct vector_traits<float>
                                 || std::is_same<T, uint64_t>::value,
                             __m128i>
     convert(__m128 v)
-    { return _mm_set_epi64x((T)v[1], (T)v[0]); }
+    {
+        return _mm_set_epi64x((T)v[1], (T)v[0]);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned, __m128>
     load(const float* ptr)
-    { return _mm_loadu_ps(ptr); }
+    {
+        return _mm_loadu_ps(ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned, __m128>
     load(const float* ptr)
-    { return _mm_load_ps(ptr); }
+    {
+        return _mm_load_ps(ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2, __m128> load(const float* ptr)
-    { return _mm_castpd_ps(_mm_load1_pd((double*)ptr)); }
+    {
+        return _mm_castpd_ps(_mm_load1_pd((double*)ptr));
+    }
 
     static __m128 load1(const float* ptr) { return _mm_load1_ps(ptr); }
 
@@ -107,15 +123,21 @@ template <> struct vector_traits<float>
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned> store(__m128 v, float* ptr)
-    { _mm_storeu_ps(ptr, v); }
+    {
+        _mm_storeu_ps(ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned> store(__m128 v, float* ptr)
-    { _mm_store_ps(ptr, v); }
+    {
+        _mm_store_ps(ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2> store(__m128 v, float* ptr)
-    { _mm_store_sd((double*)ptr, _mm_castps_pd(v)); }
+    {
+        _mm_store_sd((double*)ptr, _mm_castps_pd(v));
+    }
 
     static __m128 add(__m128 a, __m128 b) { return _mm_add_ps(a, b); }
 
@@ -152,7 +174,9 @@ template <> struct vector_traits<float>
     }
 
     static __m128 abs(__m128 a)
-    { return _mm_and_ps(a, _mm_castsi128_ps(_mm_set1_epi32(0x7FFFFFFF))); }
+    {
+        return _mm_and_ps(a, _mm_castsi128_ps(_mm_set1_epi32(0x7FFFFFFF)));
+    }
 
     static __m128 sqrt(__m128 a) { return _mm_sqrt_ps(a); }
 };
@@ -166,17 +190,23 @@ template <> struct vector_traits<double>
     template <typename T>
     static std::enable_if_t<std::is_same<T, float>::value, __m128>
     convert(__m128d v)
-    { return _mm_cvtpd_ps(v); }
+    {
+        return _mm_cvtpd_ps(v);
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, double>::value, __m128d>
     convert(__m128d v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value, __m128>
     convert(__m128d v)
-    { return _mm_unpacklo_ps(_mm_cvtpd_ps(v), _mm_setzero_ps()); }
+    {
+        return _mm_unpacklo_ps(_mm_cvtpd_ps(v), _mm_setzero_ps());
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int8_t>::value, __m128i>
@@ -215,7 +245,9 @@ template <> struct vector_traits<double>
     template <typename T>
     static std::enable_if_t<std::is_same<T, int32_t>::value, __m128i>
     convert(__m128d v)
-    { return _mm_cvtpd_epi32(v); }
+    {
+        return _mm_cvtpd_epi32(v);
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, uint32_t>::value, __m128i>
@@ -232,17 +264,23 @@ template <> struct vector_traits<double>
                                 || std::is_same<T, uint64_t>::value,
                             __m128i>
     convert(__m128d v)
-    { return _mm_set_epi64x((T)v[1], (T)v[0]); }
+    {
+        return _mm_set_epi64x((T)v[1], (T)v[0]);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && !Aligned, __m128d>
     load(const double* ptr)
-    { return _mm_loadu_pd(ptr); }
+    {
+        return _mm_loadu_pd(ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && Aligned, __m128d>
     load(const double* ptr)
-    { return _mm_load_pd(ptr); }
+    {
+        return _mm_load_pd(ptr);
+    }
 
     static __m128d load1(const double* ptr) { return _mm_load1_pd(ptr); }
 
@@ -251,11 +289,15 @@ template <> struct vector_traits<double>
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && !Aligned> store(__m128d v,
                                                           double* ptr)
-    { _mm_storeu_pd(ptr, v); }
+    {
+        _mm_storeu_pd(ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && Aligned> store(__m128d v, double* ptr)
-    { _mm_store_pd(ptr, v); }
+    {
+        _mm_store_pd(ptr, v);
+    }
 
     static __m128d add(__m128d a, __m128d b) { return _mm_add_pd(a, b); }
 
@@ -272,13 +314,19 @@ template <> struct vector_traits<double>
     }
 
     static __m128d negate(__m128d a)
-    { return _mm_xor_pd(a, _mm_set1_pd(-0.0)); }
+    {
+        return _mm_xor_pd(a, _mm_set1_pd(-0.0));
+    }
 
     static __m128d exp(__m128d a)
-    { return _mm_setr_pd(std::exp((double)a[0]), std::exp((double)a[1])); }
+    {
+        return _mm_setr_pd(std::exp((double)a[0]), std::exp((double)a[1]));
+    }
 
     static __m128d log(__m128d a)
-    { return _mm_setr_pd(std::log((double)a[0]), std::log((double)a[1])); }
+    {
+        return _mm_setr_pd(std::log((double)a[0]), std::log((double)a[1]));
+    }
 
     static __m128d abs(__m128d a)
     {
@@ -299,17 +347,23 @@ template <> struct vector_traits<std::complex<float>>
     template <typename T>
     static std::enable_if_t<std::is_same<T, float>::value, __m128>
     convert(__m128 v)
-    { return _mm_shuffle_ps(v, v, _MM_SHUFFLE(2, 0, 2, 0)); }
+    {
+        return _mm_shuffle_ps(v, v, _MM_SHUFFLE(2, 0, 2, 0));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, double>::value, __m128d>
     convert(__m128 v)
-    { return _mm_cvtps_pd(convert<float>(v)); }
+    {
+        return _mm_cvtps_pd(convert<float>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value, __m128>
     convert(__m128 v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int8_t>::value, __m128i>
@@ -348,7 +402,9 @@ template <> struct vector_traits<std::complex<float>>
     template <typename T>
     static std::enable_if_t<std::is_same<T, int32_t>::value, __m128i>
     convert(__m128 v)
-    { return _mm_cvtps_epi32(convert<float>(v)); }
+    {
+        return _mm_cvtps_epi32(convert<float>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, uint32_t>::value, __m128i>
@@ -365,33 +421,47 @@ template <> struct vector_traits<std::complex<float>>
                                 || std::is_same<T, uint64_t>::value,
                             __m128i>
     convert(__m128 v)
-    { return _mm_set_epi64x((T)v[2], (T)v[0]); }
+    {
+        return _mm_set_epi64x((T)v[2], (T)v[0]);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && !Aligned, __m128>
     load(const std::complex<float>* ptr)
-    { return _mm_loadu_ps((float*)ptr); }
+    {
+        return _mm_loadu_ps((float*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && Aligned, __m128>
     load(const std::complex<float>* ptr)
-    { return _mm_load_ps((float*)ptr); }
+    {
+        return _mm_load_ps((float*)ptr);
+    }
 
     static __m128 load1(const std::complex<float>* ptr)
-    { return _mm_castpd_ps(_mm_load1_pd((double*)ptr)); }
+    {
+        return _mm_castpd_ps(_mm_load1_pd((double*)ptr));
+    }
 
     static __m128 set1(std::complex<float> val)
-    { return _mm_castpd_ps(_mm_set1_pd(*(double*)&val)); }
+    {
+        return _mm_castpd_ps(_mm_set1_pd(*(double*)&val));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && !Aligned>
     store(__m128 v, std::complex<float>* ptr)
-    { _mm_storeu_ps((float*)ptr, v); }
+    {
+        _mm_storeu_ps((float*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && Aligned>
     store(__m128 v, std::complex<float>* ptr)
-    { _mm_store_ps((float*)ptr, v); }
+    {
+        _mm_store_ps((float*)ptr, v);
+    }
 
     static __m128 add(__m128 a, __m128 b) { return _mm_add_ps(a, b); }
 
@@ -465,24 +535,32 @@ struct vector_traits<U,
     template <typename T>
     static std::enable_if_t<std::is_same<T, float>::value, __m128>
     convert(__m128i v)
-    { return _mm_cvtepi32_ps(convert<int32_t>(v)); }
+    {
+        return _mm_cvtepi32_ps(convert<int32_t>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, double>::value, __m128d>
     convert(__m128i v)
-    { return _mm_cvtepi32_pd(convert<int32_t>(v)); }
+    {
+        return _mm_cvtepi32_pd(convert<int32_t>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value, __m128>
     convert(__m128i v)
-    { return _mm_unpacklo_ps(convert<float>(v), _mm_setzero_ps()); }
+    {
+        return _mm_unpacklo_ps(convert<float>(v), _mm_setzero_ps());
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int8_t>::value
                                 || std::is_same<T, uint8_t>::value,
                             __m128i>
     convert(__m128i v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int16_t>::value
@@ -516,23 +594,33 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && !Aligned, __m128i> load(const U* ptr)
-    { return _mm_loadu_si128((__m128i*)ptr); }
+    {
+        return _mm_loadu_si128((__m128i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && Aligned, __m128i> load(const U* ptr)
-    { return _mm_load_si128((__m128i*)ptr); }
+    {
+        return _mm_load_si128((__m128i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8, __m128i> load(const U* ptr)
-    { return _mm_set1_epi64x(*(int64_t*)ptr); }
+    {
+        return _mm_set1_epi64x(*(int64_t*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4, __m128i> load(const U* ptr)
-    { return _mm_set1_epi32(*(int32_t*)ptr); }
+    {
+        return _mm_set1_epi32(*(int32_t*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2, __m128i> load(const U* ptr)
-    { return _mm_set1_epi16(*(int16_t*)ptr); }
+    {
+        return _mm_set1_epi16(*(int16_t*)ptr);
+    }
 
     static __m128i load1(const U* ptr) { return _mm_set1_epi8(*ptr); }
 
@@ -540,23 +628,33 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && !Aligned> store(__m128i v, U* ptr)
-    { _mm_storeu_si128((__m128i*)ptr, v); }
+    {
+        _mm_storeu_si128((__m128i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && Aligned> store(__m128i v, U* ptr)
-    { _mm_store_si128((__m128i*)ptr, v); }
+    {
+        _mm_store_si128((__m128i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8> store(__m128i v, U* ptr)
-    { _mm_storel_epi64((__m128i*)ptr, v); }
+    {
+        _mm_storel_epi64((__m128i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4> store(__m128i v, U* ptr)
-    { *(int32_t*)ptr = _mm_extract_epi32(v, 0); }
+    {
+        *(int32_t*)ptr = _mm_extract_epi32(v, 0);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2> store(__m128i v, U* ptr)
-    { *(int16_t*)ptr = _mm_extract_epi16(v, 0); }
+    {
+        *(int16_t*)ptr = _mm_extract_epi16(v, 0);
+    }
 
     static __m128i add(__m128i a, __m128i b) { return _mm_add_epi8(a, b); }
 
@@ -614,7 +712,9 @@ struct vector_traits<U,
     }
 
     static __m128i negate(__m128i a)
-    { return _mm_sub_epi8(_mm_setzero_si128(), a); }
+    {
+        return _mm_sub_epi8(_mm_setzero_si128(), a);
+    }
 
     static __m128i exp(__m128i a)
     {
@@ -669,17 +769,23 @@ struct vector_traits<U,
     template <typename T>
     static std::enable_if_t<std::is_same<T, float>::value, __m128>
     convert(__m128i v)
-    { return _mm_cvtepi32_ps(convert<int32_t>(v)); }
+    {
+        return _mm_cvtepi32_ps(convert<int32_t>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, double>::value, __m128d>
     convert(__m128i v)
-    { return _mm_cvtepi32_pd(convert<int32_t>(v)); }
+    {
+        return _mm_cvtepi32_pd(convert<int32_t>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value, __m128>
     convert(__m128i v)
-    { return _mm_unpacklo_ps(convert<float>(v), _mm_setzero_ps()); }
+    {
+        return _mm_unpacklo_ps(convert<float>(v), _mm_setzero_ps());
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int8_t>::value
@@ -696,7 +802,9 @@ struct vector_traits<U,
                                 || std::is_same<T, uint16_t>::value,
                             __m128i>
     convert(__m128i v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int32_t>::value
@@ -720,19 +828,27 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned, __m128i> load(const U* ptr)
-    { return _mm_loadu_si128((__m128i*)ptr); }
+    {
+        return _mm_loadu_si128((__m128i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && Aligned, __m128i> load(const U* ptr)
-    { return _mm_load_si128((__m128i*)ptr); }
+    {
+        return _mm_load_si128((__m128i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4, __m128i> load(const U* ptr)
-    { return _mm_set1_epi64x(*(int64_t*)ptr); }
+    {
+        return _mm_set1_epi64x(*(int64_t*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2, __m128i> load(const U* ptr)
-    { return _mm_set1_epi32(*(int32_t*)ptr); }
+    {
+        return _mm_set1_epi32(*(int32_t*)ptr);
+    }
 
     static __m128i load1(const U* ptr) { return _mm_set1_epi16(*ptr); }
 
@@ -740,19 +856,27 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned> store(__m128i v, U* ptr)
-    { _mm_storeu_si128((__m128i*)ptr, v); }
+    {
+        _mm_storeu_si128((__m128i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && Aligned> store(__m128i v, U* ptr)
-    { _mm_store_si128((__m128i*)ptr, v); }
+    {
+        _mm_store_si128((__m128i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4> store(__m128i v, U* ptr)
-    { _mm_storel_epi64((__m128i*)ptr, v); }
+    {
+        _mm_storel_epi64((__m128i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2> store(__m128i v, U* ptr)
-    { *(int32_t*)ptr = _mm_extract_epi32(v, 0); }
+    {
+        *(int32_t*)ptr = _mm_extract_epi32(v, 0);
+    }
 
     static __m128i add(__m128i a, __m128i b) { return _mm_add_epi16(a, b); }
 
@@ -788,7 +912,9 @@ struct vector_traits<U,
     }
 
     static __m128i negate(__m128i a)
-    { return _mm_sub_epi16(_mm_setzero_si128(), a); }
+    {
+        return _mm_sub_epi16(_mm_setzero_si128(), a);
+    }
 
     static __m128i exp(__m128i a)
     {
@@ -827,17 +953,23 @@ struct vector_traits<U,
     template <typename T>
     static std::enable_if_t<std::is_same<T, float>::value, __m128>
     convert(__m128i v)
-    { return _mm_cvtepi32_ps(v); }
+    {
+        return _mm_cvtepi32_ps(v);
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, double>::value, __m128d>
     convert(__m128i v)
-    { return _mm_cvtepi32_pd(v); }
+    {
+        return _mm_cvtepi32_pd(v);
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value, __m128>
     convert(__m128i v)
-    { return _mm_unpacklo_ps(convert<float>(v), _mm_setzero_ps()); }
+    {
+        return _mm_unpacklo_ps(convert<float>(v), _mm_setzero_ps());
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int8_t>::value
@@ -866,7 +998,9 @@ struct vector_traits<U,
                                 || std::is_same<T, uint32_t>::value,
                             __m128i>
     convert(__m128i v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int64_t>::value
@@ -880,15 +1014,21 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned, __m128i> load(const U* ptr)
-    { return _mm_loadu_si128((__m128i*)ptr); }
+    {
+        return _mm_loadu_si128((__m128i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned, __m128i> load(const U* ptr)
-    { return _mm_load_si128((__m128i*)ptr); }
+    {
+        return _mm_load_si128((__m128i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2, __m128i> load(const U* ptr)
-    { return _mm_set1_epi64x(*(int64_t*)ptr); }
+    {
+        return _mm_set1_epi64x(*(int64_t*)ptr);
+    }
 
     static __m128i load1(const U* ptr) { return _mm_set1_epi32(*ptr); }
 
@@ -896,15 +1036,21 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned> store(__m128i v, U* ptr)
-    { _mm_storeu_si128((__m128i*)ptr, v); }
+    {
+        _mm_storeu_si128((__m128i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned> store(__m128i v, U* ptr)
-    { _mm_store_si128((__m128i*)ptr, v); }
+    {
+        _mm_store_si128((__m128i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2> store(__m128i v, U* ptr)
-    { _mm_storel_epi64((__m128i*)ptr, v); }
+    {
+        _mm_storel_epi64((__m128i*)ptr, v);
+    }
 
     static __m128i add(__m128i a, __m128i b) { return _mm_add_epi32(a, b); }
 
@@ -932,7 +1078,9 @@ struct vector_traits<U,
     }
 
     static __m128i negate(__m128i a)
-    { return _mm_sub_epi32(_mm_setzero_si128(), a); }
+    {
+        return _mm_sub_epi32(_mm_setzero_si128(), a);
+    }
 
     static __m128i exp(__m128i a)
     {
@@ -981,7 +1129,9 @@ struct vector_traits<U,
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value, __m128>
     convert(__m128i v)
-    { return _mm_unpacklo_ps(convert<float>(v), _mm_setzero_ps()); }
+    {
+        return _mm_unpacklo_ps(convert<float>(v), _mm_setzero_ps());
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int8_t>::value
@@ -1021,15 +1171,21 @@ struct vector_traits<U,
                                 || std::is_same<T, uint64_t>::value,
                             __m128i>
     convert(__m128i v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && !Aligned, __m128i> load(const U* ptr)
-    { return _mm_loadu_si128((__m128i*)ptr); }
+    {
+        return _mm_loadu_si128((__m128i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && Aligned, __m128i> load(const U* ptr)
-    { return _mm_load_si128((__m128i*)ptr); }
+    {
+        return _mm_load_si128((__m128i*)ptr);
+    }
 
     static __m128i load1(const U* ptr) { return _mm_set1_epi64x(*ptr); }
 
@@ -1037,11 +1193,15 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && !Aligned> store(__m128i v, U* ptr)
-    { _mm_storeu_si128((__m128i*)ptr, v); }
+    {
+        _mm_storeu_si128((__m128i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && Aligned> store(__m128i v, U* ptr)
-    { _mm_store_si128((__m128i*)ptr, v); }
+    {
+        _mm_store_si128((__m128i*)ptr, v);
+    }
 
     static __m128i add(__m128i a, __m128i b) { return _mm_add_epi64(a, b); }
 
@@ -1070,7 +1230,9 @@ struct vector_traits<U,
     }
 
     static __m128i negate(__m128i a)
-    { return _mm_sub_epi64(_mm_setzero_si128(), a); }
+    {
+        return _mm_sub_epi64(_mm_setzero_si128(), a);
+    }
 
     static __m128i exp(__m128i a)
     {

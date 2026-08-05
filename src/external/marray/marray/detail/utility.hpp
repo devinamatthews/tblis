@@ -292,7 +292,9 @@ void inc_offsets_helper(int i, Iterator it, Offset& off0, Offsets&... off)
 
 template <typename Strides, typename... Offsets>
 void inc_offsets(int i, const Strides& strides, Offsets&... off)
-{ inc_offsets_helper(i, strides.begin(), off...); }
+{
+    inc_offsets_helper(i, strides.begin(), off...);
+}
 
 template <typename Pos, typename Iterator>
 void dec_offsets_helper(int, const Pos&, Iterator)
@@ -312,7 +314,9 @@ void dec_offsets_helper(int i,
 
 template <typename Pos, typename Strides, typename... Offsets>
 void dec_offsets(int i, const Pos& pos, const Strides& strides, Offsets&... off)
-{ dec_offsets_helper(i, pos, strides.begin(), off...); }
+{
+    dec_offsets_helper(i, pos, strides.begin(), off...);
+}
 
 template <typename Pos, typename Iterator>
 void move_offsets_helper(const Pos&, Iterator)
@@ -329,7 +333,9 @@ move_offsets_helper(const Pos& pos, Iterator it, Offset& off0, Offsets&... off)
 
 template <typename Pos, typename Strides, typename... Offsets>
 void move_offsets(const Pos& pos, const Strides& strides, Offsets&... off)
-{ move_offsets_helper(pos, strides.begin(), off...); }
+{
+    move_offsets_helper(pos, strides.begin(), off...);
+}
 
 template <typename Iterator> void set_strides_helper(Iterator) {}
 
@@ -343,7 +349,9 @@ set_strides_helper(Iterator it, const Stride& stride, const Strides&... strides)
 
 template <typename Strides_, typename... Strides>
 void set_strides(Strides_& strides_, const Strides&... strides)
-{ set_strides_helper(strides_.begin(), strides...); }
+{
+    set_strides_helper(strides_.begin(), strides...);
+}
 
 template <typename T> struct integral_wrapper
 {
@@ -418,14 +426,18 @@ std::enable_if_t<
                                                     std::declval<Args&&>()...)),
                     void>::value>
 call(Func&& f, Arg&& arg, Args&&... args)
-{ f(std::forward<Arg>(arg), std::forward<Args>(args)...); }
+{
+    f(std::forward<Arg>(arg), std::forward<Args>(args)...);
+}
 
 template <typename Func, typename Arg, typename... Args>
 std::enable_if_t<
     std::is_same<decltype(std::declval<Func&&>()(std::declval<Arg&&>())),
                  void>::value>
 call(Func&& f, Arg&& arg, Args&&...)
-{ f(std::forward<Arg>(arg)); }
+{
+    f(std::forward<Arg>(arg));
+}
 
 template <typename T, size_t N> struct array : std::array<T, N>
 {
@@ -462,14 +474,18 @@ template <typename T,
           typename C,
           typename = std::enable_if_t<is_container_of<C, T>::value>>
 void assign(array<T, N>& lhs, const C& rhs)
-{ std::copy_n(rhs.begin(), N, lhs.begin()); }
+{
+    std::copy_n(rhs.begin(), N, lhs.begin());
+}
 
 template <typename T,
           size_t M,
           typename C,
           typename = std::enable_if_t<is_container_of<C, T>::value>>
 void assign(short_vector<T, M>& lhs, const C& rhs)
-{ lhs.assign(rhs.begin(), rhs.end()); }
+{
+    lhs.assign(rhs.begin(), rhs.end());
+}
 
 template <int I, typename T, size_t N> void assign_helper(std::array<T, N>&) {}
 
@@ -489,7 +505,9 @@ template <typename T,
               && sizeof...(C)
               == N>>
 void assign(std::array<T, N>& lhs, const C&... rhs)
-{ assign_helper<0>(lhs, rhs...); }
+{
+    assign_helper<0>(lhs, rhs...);
+}
 
 } // namespace detail
 

@@ -2,8 +2,8 @@
 #define _STL_EXT_STRING_HPP_
 
 #include <cctype>
-#include <string>
 #include <sstream>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -56,15 +56,15 @@ inline string& translate(string& s, const string& from, const string& to)
     unsigned char trans[256];
     if (s.size() < 256)
     {
-        for (size_t i = 0;i < s.size();i++) trans[(unsigned char)s[i]] = s[i];
+        for (size_t i = 0; i < s.size(); i++) trans[(unsigned char)s[i]] = s[i];
     }
     else
     {
-        for (int i = 0;i < 256;i++) trans[i] = i;
+        for (int i = 0; i < 256; i++) trans[i] = i;
     }
 
-    for (size_t i = 0;i < n;i++) trans[(unsigned char)from[i]] = to[i];
-    for (size_t i = 0;i < s.size();i++) s[i] = trans[(unsigned char)s[i]];
+    for (size_t i = 0; i < n; i++) trans[(unsigned char)from[i]] = to[i];
+    for (size_t i = 0; i < s.size(); i++) s[i] = trans[(unsigned char)s[i]];
 
     return s;
 }
@@ -108,13 +108,14 @@ inline std::string trim(const std::string& s)
     auto begin = s.find_first_not_of(" \n\r\t");
     auto end = s.find_last_not_of(" \n\r\t");
 
-    if (begin == s.npos) return "";
-    else return s.substr(begin, end-begin+1);
+    if (begin == s.npos)
+        return "";
+    else
+        return s.substr(begin, end - begin + 1);
 }
 
-inline std::vector<std::string> split(const std::string& s,
-                                      const std::string& sep = "",
-                                      int max_split = -1)
+inline std::vector<std::string>
+split(const std::string& s, const std::string& sep = "", int max_split = -1)
 {
     std::vector<std::string> tokens;
 
@@ -122,18 +123,20 @@ inline std::vector<std::string> split(const std::string& s,
     {
         std::istringstream iss(s);
         std::string token;
-        for (auto i = 0;(i < max_split || max_split == -1) && (iss >> token);i++)
+        for (auto i = 0; (i < max_split || max_split == -1) && (iss >> token);
+             i++)
             tokens.push_back(token);
 
         token.clear();
         char c;
         while (iss.get(c)) token.push_back(c);
-        if (!token.empty()) tokens.push_back(token);
+        if (!token.empty())
+            tokens.push_back(token);
     }
     else
     {
         auto begin = 0;
-        for (auto i = 0;i < max_split || max_split == -1;i++)
+        for (auto i = 0; i < max_split || max_split == -1; i++)
         {
             auto end = s.find(sep, begin);
 
@@ -145,8 +148,8 @@ inline std::vector<std::string> split(const std::string& s,
             }
             else
             {
-                tokens.push_back(s.substr(begin, end-begin));
-                begin = end+sep.size();
+                tokens.push_back(s.substr(begin, end - begin));
+                begin = end + sep.size();
             }
         }
 
@@ -157,6 +160,6 @@ inline std::vector<std::string> split(const std::string& s,
     return tokens;
 }
 
-}
+} // namespace stl_ext
 
 #endif

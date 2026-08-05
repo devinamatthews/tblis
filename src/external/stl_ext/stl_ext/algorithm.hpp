@@ -2,10 +2,10 @@
 #define _STL_EXT_ALGORITHM_HPP_
 
 #include <algorithm>
-#include <iterator>
-#include <vector>
 #include <cstring>
+#include <iterator>
 #include <string>
+#include <vector>
 
 #include "cosort.hpp"
 #include "type_traits.hpp"
@@ -13,92 +13,92 @@
 namespace stl_ext
 {
 
-template<class Pred1, class Pred2>
-class binary_or
+template <class Pred1, class Pred2> class binary_or
 {
-    protected:
-        Pred1 p1_;
-        Pred2 p2_;
+  protected:
+    Pred1 p1_;
+    Pred2 p2_;
 
-    public:
-        binary_or(Pred1 p1, Pred2 p2) : p1_(p1), p2_(p2) {}
+  public:
+    binary_or(Pred1 p1, Pred2 p2) : p1_(p1), p2_(p2) {}
 
-        template <typename T>
-        bool operator()(const T& t) const
-        {
-            return p1_(t) || p2_(t);
-        }
+    template <typename T> bool operator()(const T& t) const
+    {
+        return p1_(t) || p2_(t);
+    }
 };
 
-template<class Pred1, class Pred2>
-class binary_and
+template <class Pred1, class Pred2> class binary_and
 {
-    protected:
-        Pred1 p1_;
-        Pred2 p2_;
+  protected:
+    Pred1 p1_;
+    Pred2 p2_;
 
-    public:
-        binary_and(Pred1 p1, Pred2 p2) : p1_(p1), p2_(p2) {}
+  public:
+    binary_and(Pred1 p1, Pred2 p2) : p1_(p1), p2_(p2) {}
 
-        template <typename T>
-        bool operator()(const T& t) const
-        {
-            return p1_(t) && p2_(t);
-        }
+    template <typename T> bool operator()(const T& t) const
+    {
+        return p1_(t) && p2_(t);
+    }
 };
 
-template<class Pred1, class Pred2>
-binary_or<Pred1,Pred2> or1(Pred1 p1, Pred2 p2)
+template <class Pred1, class Pred2>
+binary_or<Pred1, Pred2> or1(Pred1 p1, Pred2 p2)
 {
-    return binary_or<Pred1,Pred2>(p1,p2);
+    return binary_or<Pred1, Pred2>(p1, p2);
 }
 
-template<class Pred1, class Pred2>
-binary_and<Pred1,Pred2> and1(Pred1 p1, Pred2 p2)
+template <class Pred1, class Pred2>
+binary_and<Pred1, Pred2> and1(Pred1 p1, Pred2 p2)
 {
-    return binary_and<Pred1,Pred2>(p1,p2);
+    return binary_and<Pred1, Pred2>(p1, p2);
 }
 
-template <typename T>
-typename T::value_type max(const T& t)
+template <typename T> typename T::value_type max(const T& t)
 {
     typedef typename T::value_type V;
     auto i = t.begin();
     auto e = t.end();
 
-    if (i == e) return V();
+    if (i == e)
+        return V();
 
     V v = *i;
-    for (;i != e;++i) if (v < *i) v = *i;
+    for (; i != e; ++i)
+        if (v < *i)
+            v = *i;
 
     return v;
 }
 
-template <typename T>
-typename T::value_type min(const T& t)
+template <typename T> typename T::value_type min(const T& t)
 {
     typedef typename T::value_type V;
 
-    if (t.empty()) return V();
+    if (t.empty())
+        return V();
 
     typename T::const_iterator i = t.begin();
     V v = *i;
-    for (;i != t.end();++i) if (*i < v) v = *i;
+    for (; i != t.end(); ++i)
+        if (*i < v)
+            v = *i;
 
     return v;
 }
 
-template <typename T>
-size_t max_pos(const T& t)
+template <typename T> size_t max_pos(const T& t)
 {
     typedef typename T::value_type V;
 
-    if (t.empty()) return 0;
+    if (t.empty())
+        return 0;
 
     size_t pos = 0;
     typename T::const_iterator i = t.begin();
     V v = *i;
-    for (size_t j = 0;i != t.end();++i,++j)
+    for (size_t j = 0; i != t.end(); ++i, ++j)
     {
         if (v < *i)
         {
@@ -110,17 +110,17 @@ size_t max_pos(const T& t)
     return pos;
 }
 
-template <typename T>
-size_t min_pos(const T& t)
+template <typename T> size_t min_pos(const T& t)
 {
     typedef typename T::value_type V;
 
-    if (t.empty()) return 0;
+    if (t.empty())
+        return 0;
 
     size_t pos = 0;
     typename T::const_iterator i = t.begin();
     V v = *i;
-    for (size_t j = 0;i != t.end();++i,++j)
+    for (size_t j = 0; i != t.end(); ++i, ++j)
     {
         if (*i < v)
         {
@@ -133,15 +133,14 @@ size_t min_pos(const T& t)
 }
 
 template <typename T, typename Functor>
-enable_if_not_same_t<typename T::value_type,Functor,T&>
+enable_if_not_same_t<typename T::value_type, Functor, T&>
 erase(T& v, const Functor& f)
 {
     v.erase(std::remove_if(v.begin(), v.end(), f), v.end());
     return v;
 }
 
-template <typename T>
-T& erase(T& v, const typename T::value_type& e)
+template <typename T> T& erase(T& v, const typename T::value_type& e)
 {
     v.erase(std::remove(v.begin(), v.end(), e), v.end());
     return v;
@@ -160,15 +159,14 @@ inline std::string& erase(std::string& v, const char* e)
 }
 
 template <typename T, typename Functor>
-enable_if_not_same_t<typename T::value_type,Functor,T>
+enable_if_not_same_t<typename T::value_type, Functor, T>
 erased(T v, const Functor& x)
 {
     erase(v, x);
     return v;
 }
 
-template <typename T>
-T erased(T v, const typename T::value_type& e)
+template <typename T> T erased(T v, const typename T::value_type& e)
 {
     erase(v, e);
     return v;
@@ -186,8 +184,7 @@ inline std::string erased(std::string v, const char* e)
     return v;
 }
 
-template <typename T, class Predicate>
-T& filter(T& v, Predicate pred)
+template <typename T, class Predicate> T& filter(T& v, Predicate pred)
 {
     auto i1 = v.begin();
     auto i2 = v.begin();
@@ -202,12 +199,11 @@ T& filter(T& v, Predicate pred)
         ++i1;
     }
 
-    v.resize(i2-v.begin());
+    v.resize(i2 - v.begin());
     return v;
 }
 
-template <typename T, class Predicate>
-T filtered(T v, Predicate pred)
+template <typename T, class Predicate> T filtered(T v, Predicate pred)
 {
     filter(v, pred);
     return v;
@@ -217,50 +213,51 @@ template <template <typename...> class T, typename U, class Functor>
 auto apply(const T<U>& v, const Functor& f) -> T<decltype(f(std::declval<U>()))>
 {
     T<decltype(f(std::declval<U>()))> v2;
-    for (auto& i : v)
-    {
-        v2.push_back(f(i));
-    }
+    for (auto& i : v) { v2.push_back(f(i)); }
     return v2;
 }
 
 template <class InputIt, class OutputIt, class T>
 OutputIt prefix_sum(InputIt first, InputIt last, OutputIt d_first, T init)
 {
-    if (first == last) return d_first;
+    if (first == last)
+        return d_first;
 
     typename std::iterator_traits<InputIt>::value_type sum = init;
     *d_first = sum;
 
     while (++first != last)
     {
-       sum = sum + *first;
-       *++d_first = sum;
+        sum = sum + *first;
+        *++d_first = sum;
     }
 
     return ++d_first;
 }
 
 template <class InputIt, class OutputIt, class T, class BinaryOperation>
-OutputIt prefix_sum(InputIt first, InputIt last, OutputIt d_first, T init,
+OutputIt prefix_sum(InputIt first,
+                    InputIt last,
+                    OutputIt d_first,
+                    T init,
                     BinaryOperation op)
 {
-    if (first == last) return d_first;
+    if (first == last)
+        return d_first;
 
     typename std::iterator_traits<InputIt>::value_type sum = init;
     *d_first = sum;
 
     while (++first != last)
     {
-       sum = op(sum, *first);
-       *++d_first = sum;
+        sum = op(sum, *first);
+        *++d_first = sum;
     }
 
     return ++d_first;
 }
 
-template <typename T>
-typename T::value_type sum(const T& v)
+template <typename T> typename T::value_type sum(const T& v)
 {
     typedef typename T::value_type U;
     U s = U();
@@ -268,8 +265,7 @@ typename T::value_type sum(const T& v)
     return s;
 }
 
-template <typename T>
-typename T::value_type prod(const T& v)
+template <typename T> typename T::value_type prod(const T& v)
 {
     typedef typename T::value_type U;
     U s = U(1);
@@ -277,8 +273,7 @@ typename T::value_type prod(const T& v)
     return s;
 }
 
-template <typename T, typename U>
-auto find(const T& v, const U& e)
+template <typename T, typename U> auto find(const T& v, const U& e)
 {
     return std::find(v.begin(), v.end(), e);
 }
@@ -289,8 +284,7 @@ auto find_if(const T& v, Predicate&& pred)
     return std::find_if(v.begin(), v.end(), std::forward<Predicate>(pred));
 }
 
-template <typename T, typename U>
-auto index_of(const T& v, const U& e)
+template <typename T, typename U> auto index_of(const T& v, const U& e)
 {
     return find(v, e) - v.begin();
 }
@@ -301,14 +295,12 @@ auto index_where(const T& v, Predicate&& pred)
     return find_if(v, std::forward<Predicate>(pred)) - v.begin();
 }
 
-template <typename T, typename U>
-bool contains(const T& v, const U& e)
+template <typename T, typename U> bool contains(const T& v, const U& e)
 {
     return find(v, e) != v.end();
 }
 
-template <typename T, typename U>
-auto count(const T& v, const U& e)
+template <typename T, typename U> auto count(const T& v, const U& e)
 {
     return std::count(v.begin(), v.end(), e);
 }
@@ -320,7 +312,7 @@ bool matches(const T& v, Predicate&& pred)
 }
 
 template <typename T, typename U>
-std::enable_if_t<!std::is_same<U,typename T::value_type>::value,bool>
+std::enable_if_t<!std::is_same<U, typename T::value_type>::value, bool>
 starts_with(const T& v1, const U& v2)
 {
     if (v1.size() < v2.size())
@@ -329,15 +321,14 @@ starts_with(const T& v1, const U& v2)
     return std::equal(v2.begin(), v2.end(), v1.begin());
 }
 
-template <typename T>
-bool starts_with(const T& v1, const char* v2)
+template <typename T> bool starts_with(const T& v1, const char* v2)
 {
     auto len = strlen(v2);
 
     if (v1.size() < len)
         return false;
 
-    return std::equal(v2, v2+len, v1.begin());
+    return std::equal(v2, v2 + len, v1.begin());
 }
 
 template <typename T>
@@ -350,7 +341,7 @@ bool starts_with(const T& v, const typename T::value_type& e)
 }
 
 template <typename T, typename U>
-std::enable_if_t<!std::is_same<U,typename T::value_type>::value,bool>
+std::enable_if_t<!std::is_same<U, typename T::value_type>::value, bool>
 ends_with(const T& v1, const U& v2)
 {
     if (v1.size() < v2.size())
@@ -359,15 +350,14 @@ ends_with(const T& v1, const U& v2)
     return std::equal(v2.rbegin(), v2.rend(), v1.rbegin());
 }
 
-template <typename T>
-bool ends_with(const T& v1, const char* v2)
+template <typename T> bool ends_with(const T& v1, const char* v2)
 {
     auto len = strlen(v2);
 
     if (v1.size() < len)
         return false;
 
-    return std::equal(v2, v2+len, std::next(v1.begin(), v1.size()-len));
+    return std::equal(v2, v2 + len, std::next(v1.begin(), v1.size() - len));
 }
 
 template <typename T>
@@ -385,51 +375,44 @@ auto count_if(const T& v, Predicate&& pred)
     return std::count_if(v.begin(), v.end(), std::forward<Predicate>(pred));
 }
 
-template <typename T>
-T& sort(T& v)
+template <typename T> T& sort(T& v)
 {
     std::sort(v.begin(), v.end());
     return v;
 }
 
-template <typename T, typename Compare>
-T& sort(T& v, const Compare& comp)
+template <typename T, typename Compare> T& sort(T& v, const Compare& comp)
 {
     std::sort(v.begin(), v.end(), comp);
     return v;
 }
 
-template <typename T>
-T sorted(T v)
+template <typename T> T sorted(T v)
 {
     sort(v);
     return v;
 }
 
-template <typename T, typename Compare>
-T sorted(T v, const Compare& comp)
+template <typename T, typename Compare> T sorted(T v, const Compare& comp)
 {
     sort(v, comp);
     return v;
 }
 
-template <typename T>
-T& unique(T& v)
+template <typename T> T& unique(T& v)
 {
     sort(v);
     v.erase(std::unique(v.begin(), v.end()), v.end());
     return v;
 }
 
-template <typename T>
-T uniqued(T v)
+template <typename T> T uniqued(T v)
 {
     unique(v);
     return v;
 }
 
-template <typename T, typename I>
-T& rotate(T& v, I n)
+template <typename T, typename I> T& rotate(T& v, I n)
 {
     if (n > 0)
     {
@@ -442,8 +425,7 @@ T& rotate(T& v, I n)
     return v;
 }
 
-template <typename T>
-T& intersect(T& v1, T v2)
+template <typename T> T& intersect(T& v1, T v2)
 {
     sort(v1);
     sort(v2);
@@ -475,23 +457,20 @@ T& intersect(T& v1, T v2)
 }
 
 template <typename T, typename U, typename... Ts>
-enable_if_t<(sizeof...(Ts) > 0),T&>
-intersect(T& v1, U&& v2, Ts&&... vs)
+enable_if_t<(sizeof...(Ts) > 0), T&> intersect(T& v1, U&& v2, Ts&&... vs)
 {
     intersect(v1, std::forward<U>(v2));
     intersect(v1, std::forward<Ts>(vs)...);
     return v1;
 }
 
-template <typename T, typename... Ts>
-T intersection(T v1, Ts&&... vs)
+template <typename T, typename... Ts> T intersection(T v1, Ts&&... vs)
 {
     intersect(v1, std::forward<Ts>(vs)...);
     return v1;
 }
 
-template <typename T>
-T& unite(T& v1, T v2)
+template <typename T> T& unite(T& v1, T v2)
 {
     T v3;
 
@@ -509,23 +488,20 @@ T& unite(T& v1, T v2)
 }
 
 template <typename T, typename U, typename... Ts>
-enable_if_t<(sizeof...(Ts) > 0),T&>
-unite(T& v1, U&& v2, Ts&&... vs)
+enable_if_t<(sizeof...(Ts) > 0), T&> unite(T& v1, U&& v2, Ts&&... vs)
 {
     unite(v1, std::forward<U>(v2));
     unite(v1, std::forward<Ts>(vs)...);
     return v1;
 }
 
-template <typename T, typename... Ts>
-T union_of(T v1, Ts&&... vs)
+template <typename T, typename... Ts> T union_of(T v1, Ts&&... vs)
 {
     unite(v1, std::forward<Ts>(vs)...);
     return v1;
 }
 
-template <typename T>
-T& exclude(T& v1, T v2)
+template <typename T> T& exclude(T& v1, T v2)
 {
     sort(v1);
     sort(v2);
@@ -558,23 +534,20 @@ T& exclude(T& v1, T v2)
 }
 
 template <typename T, typename U, typename... Ts>
-enable_if_t<(sizeof...(Ts) > 0),T&>
-exclude(T& v1, U&& v2, Ts&&... vs)
+enable_if_t<(sizeof...(Ts) > 0), T&> exclude(T& v1, U&& v2, Ts&&... vs)
 {
     exclude(v1, std::forward<U>(v2));
     exclude(v1, std::forward<Ts>(vs)...);
     return v1;
 }
 
-template <typename T, typename... Ts>
-T exclusion(T v1, Ts&&... vs)
+template <typename T, typename... Ts> T exclusion(T v1, Ts&&... vs)
 {
     exclude(v1, std::forward<Ts>(vs)...);
     return v1;
 }
 
-template <typename T>
-T mutual_exclusion(T v1, T v2)
+template <typename T> T mutual_exclusion(T v1, T v2)
 {
     T v3;
     sort(v1);
@@ -587,8 +560,7 @@ T mutual_exclusion(T v1, T v2)
     return v3;
 }
 
-template <typename T, typename U>
-T& mask(T& v, const U& m)
+template <typename T, typename U> T& mask(T& v, const U& m)
 {
     auto i1 = v.begin();
     auto i2 = m.begin();
@@ -604,19 +576,17 @@ T& mask(T& v, const U& m)
         ++i2;
     }
 
-    v.resize(i3-v.begin());
+    v.resize(i3 - v.begin());
     return v;
 }
 
-template <typename T, typename U>
-T masked(T v, const U& m)
+template <typename T, typename U> T masked(T v, const U& m)
 {
     mask(v, m);
     return v;
 }
 
-template <typename T, typename U>
-T& translate(T& s, U from, U to)
+template <typename T, typename U> T& translate(T& s, U from, U to)
 {
     cosort(from, to);
 
@@ -633,54 +603,49 @@ T& translate(T& s, U from, U to)
     return s;
 }
 
-template <typename T, typename U>
-T translated(T s, const U& from, const U& to)
+template <typename T, typename U> T translated(T s, const U& from, const U& to)
 {
     translate(s, from, to);
     return s;
 }
 
-template <typename T, typename U>
-T translated(T s, const U& from, U&& to)
+template <typename T, typename U> T translated(T s, const U& from, U&& to)
 {
     translate(s, from, std::move(to));
     return s;
 }
 
-template <typename T, typename U>
-T translated(T s, U&& from, const U& to)
+template <typename T, typename U> T translated(T s, U&& from, const U& to)
 {
     translate(s, std::move(from), to);
     return s;
 }
 
 template <typename T, typename U>
-enable_if_not_reference_t<U,T>
-translated(T s, U&& from, U&& to)
+enable_if_not_reference_t<U, T> translated(T s, U&& from, U&& to)
 {
     translate(s, std::move(from), std::move(to));
     return s;
 }
 
-template <typename T, typename U>
-T permuted(const T& v, const U& p)
+template <typename T, typename U> T permuted(const T& v, const U& p)
 {
-    T v2; v2.reserve(v.size());
+    T v2;
+    v2.reserve(v.size());
     for (auto& i : p) v2.push_back(v[i]);
     return v2;
 }
 
-template <typename T, typename U>
-void permute(T& v, const U& p)
+template <typename T, typename U> void permute(T& v, const U& p)
 {
     v = permuted(v, p);
 }
 
-template <typename T, typename U>
-T unpermuted(const T& v, const U& p)
+template <typename T, typename U> T unpermuted(const T& v, const U& p)
 {
-    T v2; v2.reserve(v.size());
-    for (size_t i = 0;i < v.size();i++)
+    T v2;
+    v2.reserve(v.size());
+    for (size_t i = 0; i < v.size(); i++)
     {
         size_t j = std::find(p.begin(), p.end(), i) - p.begin();
         v2.push_back(v[j]);
@@ -688,8 +653,7 @@ T unpermuted(const T& v, const U& p)
     return v2;
 }
 
-template <typename T, typename U>
-void unpermute(T& v, const U& p)
+template <typename T, typename U> void unpermute(T& v, const U& p)
 {
     v = unpermuted(v, p);
 }
@@ -697,11 +661,12 @@ void unpermute(T& v, const U& p)
 template <typename T, typename U>
 T select_from(const T& v, const U& s, const U& match)
 {
-    T v2; v2.reserve(match.size());
+    T v2;
+    v2.reserve(match.size());
 
     for (auto& m : match)
     {
-        for (size_t i = 0;i < s.size();i++)
+        for (size_t i = 0; i < s.size(); i++)
         {
             if (s[i] == m)
             {
@@ -714,25 +679,24 @@ T select_from(const T& v, const U& s, const U& match)
     return v2;
 }
 
-template <typename T, typename U>
-T select_from(const T& v, const U& idx)
+template <typename T, typename U> T select_from(const T& v, const U& idx)
 {
-    T v2; v2.reserve(idx.size());
+    T v2;
+    v2.reserve(idx.size());
     for (auto& i : idx) v2.push_back(v[i]);
     return v2;
 }
 
-template <typename T, typename U>
-void append(T& t, const U& u)
+template <typename T, typename U> void append(T& t, const U& u)
 {
     t.insert(t.end(), u.begin(), u.end());
 }
 
-template <typename T, typename U>
-void append(T& t, U&& u)
+template <typename T, typename U> void append(T& t, U&& u)
 {
-    t.insert(t.end(), std::make_move_iterator(u.begin()),
-                      std::make_move_iterator(u.end()));
+    t.insert(t.end(),
+             std::make_move_iterator(u.begin()),
+             std::make_move_iterator(u.end()));
 }
 
 template <typename T, typename U, typename V, typename... W>
@@ -742,24 +706,23 @@ void append(T& t, U&& u, V&& v, W&&... w)
     append(t, std::forward<V&&>(v), std::forward<W&&>(w)...);
 }
 
-template <typename T, typename... U>
-T appended(T t, U&&... u)
+template <typename T, typename... U> T appended(T t, U&&... u)
 {
     append(t, std::forward<U&&>(u)...);
     return t;
 }
 
-template <typename Functor, typename T>
-auto map(Functor&& func, const T& v)
+template <typename Functor, typename T> auto map(Functor&& func, const T& v)
 {
     typedef std::decay_t<decltype(*v.begin())> R;
     typedef std::decay_t<decltype(func(*v.begin()))> S;
-    typedef std::conditional_t<std::is_same<R,S>::value,T,std::vector<S>> U;
-    U v2; v2.reserve(v.size());
+    typedef std::conditional_t<std::is_same<R, S>::value, T, std::vector<S>> U;
+    U v2;
+    v2.reserve(v.size());
     for (auto& e : v) v2.push_back(func(e));
     return v2;
 }
 
-}
+} // namespace stl_ext
 
 #endif

@@ -43,6 +43,9 @@
  * -- <- |   --
  * --    |
  */
+
+// clang-format off
+
 #define DGEMM_2X2_NANOKERNEL(C0,C1,A,B) \
 " fmla  v"#C0".2d, v"#A".2d, v"#B".d[0] \n\t" \
 " fmla  v"#C1".2d, v"#A".2d, v"#B".d[1] \n\t"
@@ -53,3 +56,4 @@
 " fmla  v"#C2".4s, v"#A".4s, v"#B".s[2] \n\t" \
 " fmla  v"#C3".4s, v"#A".4s, v"#B".s[3] \n\t"
 
+// clang-format on

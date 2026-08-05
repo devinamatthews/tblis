@@ -473,7 +473,9 @@ template <int NDim, int N> class index_iterator
      * @param rhs     Another iterator.
      */
     friend void swap(index_iterator& lhs, index_iterator& rhs)
-    { lhs.swap(rhs); }
+    {
+        lhs.swap(rhs);
+    }
 
     /**
      * Check if the iteration space is empty.
@@ -532,7 +534,9 @@ index_iterator<detail::container_size<Lengths>::value, sizeof...(Strides)>
 index_iterator
 #endif
 make_iterator(const Lengths& len, const Strides&... strides)
-{ return {len, strides...}; }
+{
+    return {len, strides...};
+}
 
 MARRAY_END_NAMESPACE
 

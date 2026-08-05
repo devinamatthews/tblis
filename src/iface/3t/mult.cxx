@@ -1,19 +1,19 @@
 #include "mult.h"
 
-#include "util/macros.h"
-#include "util/tensor.hpp"
 #include "internal/1t/dense/scale.hpp"
 #include "internal/1t/dense/set.hpp"
-#include "internal/3t/dense/mult.hpp"
 #include "internal/1t/dpd/scale.hpp"
 #include "internal/1t/dpd/set.hpp"
-#include "internal/3t/dpd/mult.hpp"
 #include "internal/1t/indexed/scale.hpp"
 #include "internal/1t/indexed/set.hpp"
-#include "internal/3t/indexed/mult.hpp"
 #include "internal/1t/indexed_dpd/scale.hpp"
 #include "internal/1t/indexed_dpd/set.hpp"
+#include "internal/3t/dense/mult.hpp"
+#include "internal/3t/dpd/mult.hpp"
+#include "internal/3t/indexed/mult.hpp"
 #include "internal/3t/indexed_dpd/mult.hpp"
+#include "util/macros.h"
+#include "util/tensor.hpp"
 
 namespace tblis
 {
@@ -25,7 +25,7 @@ void tblis_tensor_mult(const tblis_comm* comm,
                        const label_type* idx_A_,
                        const tblis_tensor* B,
                        const label_type* idx_B_,
-                             tblis_tensor* C,
+                       tblis_tensor* C,
                        const label_type* idx_C_)
 {
     TBLIS_ASSERT(A->type == B->type);
@@ -81,19 +81,22 @@ void tblis_tensor_mult(const tblis_comm* comm,
     auto stride_B_ABC = stl_ext::select_from(stride_B, idx_B, idx_ABC);
     auto stride_C_ABC = stl_ext::select_from(stride_C, idx_C, idx_ABC);
 
-    auto idx_AB = stl_ext::exclusion(stl_ext::intersection(idx_A, idx_B), idx_ABC);
+    auto idx_AB =
+        stl_ext::exclusion(stl_ext::intersection(idx_A, idx_B), idx_ABC);
     auto len_AB = stl_ext::select_from(len_A, idx_A, idx_AB);
     TBLIS_ASSERT(len_AB == stl_ext::select_from(len_B, idx_B, idx_AB));
     auto stride_A_AB = stl_ext::select_from(stride_A, idx_A, idx_AB);
     auto stride_B_AB = stl_ext::select_from(stride_B, idx_B, idx_AB);
 
-    auto idx_AC = stl_ext::exclusion(stl_ext::intersection(idx_A, idx_C), idx_ABC);
+    auto idx_AC =
+        stl_ext::exclusion(stl_ext::intersection(idx_A, idx_C), idx_ABC);
     auto len_AC = stl_ext::select_from(len_A, idx_A, idx_AC);
     TBLIS_ASSERT(len_AC == stl_ext::select_from(len_C, idx_C, idx_AC));
     auto stride_A_AC = stl_ext::select_from(stride_A, idx_A, idx_AC);
     auto stride_C_AC = stl_ext::select_from(stride_C, idx_C, idx_AC);
 
-    auto idx_BC = stl_ext::exclusion(stl_ext::intersection(idx_B, idx_C), idx_ABC);
+    auto idx_BC =
+        stl_ext::exclusion(stl_ext::intersection(idx_B, idx_C), idx_ABC);
     auto len_BC = stl_ext::select_from(len_B, idx_B, idx_BC);
     TBLIS_ASSERT(len_BC == stl_ext::select_from(len_C, idx_C, idx_BC));
     auto stride_B_BC = stl_ext::select_from(stride_B, idx_B, idx_BC);
@@ -122,7 +125,7 @@ void tblis_tensor_mult(const tblis_comm* comm,
     len_vector nolen;
     stride_vector nostride;
 
-    auto alpha = A->scalar*B->scalar;
+    auto alpha = A->scalar * B->scalar;
     auto beta = C->scalar;
 
     auto data_A = reinterpret_cast<char*>(A->data);
@@ -130,36 +133,61 @@ void tblis_tensor_mult(const tblis_comm* comm,
     auto data_C = reinterpret_cast<char*>(C->data);
 
     parallelize_if(
-    [&](const communicator& comm)
-    {
-        if (alpha.is_zero())
+        [&](const communicator& comm)
         {
-            if (beta.is_zero())
+            if (alpha.is_zero())
             {
-                internal::set(A->type, comm, get_config(cfg),
-                              len_AC+len_BC+len_ABC, beta, data_C,
-                              stride_C_AC+stride_C_BC+stride_C_ABC);
+                if (beta.is_zero())
+                {
+                    internal::set(A->type,
+                                  comm,
+                                  get_config(cfg),
+                                  len_AC + len_BC + len_ABC,
+                                  beta,
+                                  data_C,
+                                  stride_C_AC + stride_C_BC + stride_C_ABC);
+                }
+                else if (!beta.is_one() || (beta.is_complex() && C->conj))
+                {
+                    internal::scale(A->type,
+                                    comm,
+                                    get_config(cfg),
+                                    len_AC + len_BC + len_ABC,
+                                    beta,
+                                    C->conj,
+                                    data_C,
+                                    stride_C_AC + stride_C_BC + stride_C_ABC);
+                }
             }
-            else if (!beta.is_one() || (beta.is_complex() && C->conj))
+            else
             {
-                internal::scale(A->type, comm, get_config(cfg),
-                                len_AC+len_BC+len_ABC,
-                                beta, C->conj, data_C,
-                                stride_C_AC+stride_C_BC+stride_C_ABC);
+                internal::mult(A->type,
+                               comm,
+                               get_config(cfg),
+                               len_AB,
+                               len_AC,
+                               len_BC,
+                               len_ABC,
+                               alpha,
+                               A->conj,
+                               data_A,
+                               stride_A_AB,
+                               stride_A_AC,
+                               stride_A_ABC,
+                               B->conj,
+                               data_B,
+                               stride_B_AB,
+                               stride_B_BC,
+                               stride_B_ABC,
+                               beta,
+                               C->conj,
+                               data_C,
+                               stride_C_AC,
+                               stride_C_BC,
+                               stride_C_ABC);
             }
-        }
-        else
-        {
-            internal::mult(A->type, comm, get_config(cfg),
-                           len_AB, len_AC, len_BC, len_ABC,
-                           alpha, A->conj, data_A,
-                           stride_A_AB, stride_A_AC, stride_A_ABC,
-                                  B->conj, data_B,
-                           stride_B_AB, stride_B_BC, stride_B_ABC,
-                            beta, C->conj, data_C,
-                           stride_C_AC, stride_C_BC, stride_C_ABC);
-        }
-    }, comm);
+        },
+        comm);
 
     C->scalar = 1;
     C->conj = false;
@@ -167,9 +195,14 @@ void tblis_tensor_mult(const tblis_comm* comm,
 
 template <typename T>
 void mult(const communicator& comm,
-          T alpha, const dpd_marray_view<const T>& A, const label_vector& idx_A,
-                   const dpd_marray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const dpd_marray_view<      T>& C, const label_vector& idx_C)
+          T alpha,
+          const dpd_marray_view<const T>& A,
+          const label_vector& idx_A,
+          const dpd_marray_view<const T>& B,
+          const label_vector& idx_B,
+          T beta,
+          const dpd_marray_view<T>& C,
+          const label_vector& idx_C)
 {
     auto nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
@@ -179,22 +212,22 @@ void mult(const communicator& comm,
     auto ndim_B = B.dimension();
     auto ndim_C = C.dimension();
 
-    for (auto i : range(1,ndim_A))
-    for (auto j : range(i))
-        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+    for (auto i : range(1, ndim_A))
+        for (auto j : range(i)) TBLIS_ASSERT(idx_A[i] != idx_A[j]);
 
-    for (auto i : range(1,ndim_B))
-    for (auto j : range(i))
-        TBLIS_ASSERT(idx_B[i] != idx_B[j]);
+    for (auto i : range(1, ndim_B))
+        for (auto j : range(i)) TBLIS_ASSERT(idx_B[i] != idx_B[j]);
 
-    for (auto i : range(1,ndim_C))
-    for (auto j : range(i))
-        TBLIS_ASSERT(idx_C[i] != idx_C[j]);
+    for (auto i : range(1, ndim_C))
+        for (auto j : range(i)) TBLIS_ASSERT(idx_C[i] != idx_C[j]);
 
     auto idx_ABC = stl_ext::intersection(idx_A, idx_B, idx_C);
-    auto idx_AB = stl_ext::exclusion(stl_ext::intersection(idx_A, idx_B), idx_ABC);
-    auto idx_AC = stl_ext::exclusion(stl_ext::intersection(idx_A, idx_C), idx_ABC);
-    auto idx_BC = stl_ext::exclusion(stl_ext::intersection(idx_B, idx_C), idx_ABC);
+    auto idx_AB =
+        stl_ext::exclusion(stl_ext::intersection(idx_A, idx_B), idx_ABC);
+    auto idx_AC =
+        stl_ext::exclusion(stl_ext::intersection(idx_A, idx_C), idx_ABC);
+    auto idx_BC =
+        stl_ext::exclusion(stl_ext::intersection(idx_B, idx_C), idx_ABC);
     auto idx_A_only = stl_ext::exclusion(idx_A, idx_AB, idx_AC, idx_ABC);
     auto idx_B_only = stl_ext::exclusion(idx_B, idx_AB, idx_BC, idx_ABC);
     auto idx_C_only = stl_ext::exclusion(idx_C, idx_AC, idx_BC, idx_ABC);
@@ -225,90 +258,127 @@ void mult(const communicator& comm,
     auto idx_C_BC = stl_ext::select_from(range_C, idx_C, idx_BC);
 
     for (auto i : range(idx_ABC.size()))
-    for (auto irrep : range(nirrep))
-    {
-        TBLIS_ASSERT(A.length(idx_A_ABC[i], irrep) ==
-                     B.length(idx_B_ABC[i], irrep));
-        TBLIS_ASSERT(A.length(idx_A_ABC[i], irrep) ==
-                     C.length(idx_C_ABC[i], irrep));
-    }
+        for (auto irrep : range(nirrep))
+        {
+            TBLIS_ASSERT(A.length(idx_A_ABC[i], irrep)
+                         == B.length(idx_B_ABC[i], irrep));
+            TBLIS_ASSERT(A.length(idx_A_ABC[i], irrep)
+                         == C.length(idx_C_ABC[i], irrep));
+        }
 
     for (auto i : range(idx_AB.size()))
-    for (auto irrep : range(nirrep))
-    {
-        TBLIS_ASSERT(A.length(idx_A_AB[i], irrep) ==
-                     B.length(idx_B_AB[i], irrep));
-    }
+        for (auto irrep : range(nirrep))
+        {
+            TBLIS_ASSERT(A.length(idx_A_AB[i], irrep)
+                         == B.length(idx_B_AB[i], irrep));
+        }
 
     for (auto i : range(idx_AC.size()))
-    for (auto irrep : range(nirrep))
-    {
-        TBLIS_ASSERT(A.length(idx_A_AC[i], irrep) ==
-                     C.length(idx_C_AC[i], irrep));
-    }
+        for (auto irrep : range(nirrep))
+        {
+            TBLIS_ASSERT(A.length(idx_A_AC[i], irrep)
+                         == C.length(idx_C_AC[i], irrep));
+        }
 
     for (auto i : range(idx_BC.size()))
-    for (auto irrep : range(nirrep))
-    {
-        TBLIS_ASSERT(B.length(idx_B_BC[i], irrep) ==
-                     C.length(idx_C_BC[i], irrep));
-    }
+        for (auto irrep : range(nirrep))
+        {
+            TBLIS_ASSERT(B.length(idx_B_BC[i], irrep)
+                         == C.length(idx_C_BC[i], irrep));
+        }
 
-    if (alpha == T(0) || (idx_ABC.empty() && ((A.irrep()^B.irrep()) != C.irrep())))
+    if (alpha
+        == T(0)
+        || (idx_ABC.empty() && ((A.irrep() ^ B.irrep()) != C.irrep())))
     {
         if (beta == T(0))
         {
-            internal::set(type_tag<T>::value, comm, get_default_config(),
-                          beta, reinterpret_cast<const dpd_marray_view<char>&>(C), range_C);
+            internal::set(type_tag<T>::value,
+                          comm,
+                          get_default_config(),
+                          beta,
+                          reinterpret_cast<const dpd_marray_view<char>&>(C),
+                          range_C);
         }
         else if (beta != T(1))
         {
-            internal::scale(type_tag<T>::value, comm, get_default_config(),
-                            beta, false, reinterpret_cast<const dpd_marray_view<char>&>(C), range_C);
+            internal::scale(type_tag<T>::value,
+                            comm,
+                            get_default_config(),
+                            beta,
+                            false,
+                            reinterpret_cast<const dpd_marray_view<char>&>(C),
+                            range_C);
         }
     }
     else
     {
-        internal::mult(type_tag<T>::value, comm, get_default_config(),
-                       alpha, false, reinterpret_cast<const dpd_marray_view<char>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
-                              false, reinterpret_cast<const dpd_marray_view<char>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
-                        beta, false, reinterpret_cast<const dpd_marray_view<char>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
+        internal::mult(type_tag<T>::value,
+                       comm,
+                       get_default_config(),
+                       alpha,
+                       false,
+                       reinterpret_cast<const dpd_marray_view<char>&>(A),
+                       idx_A_AB,
+                       idx_A_AC,
+                       idx_A_ABC,
+                       false,
+                       reinterpret_cast<const dpd_marray_view<char>&>(B),
+                       idx_B_AB,
+                       idx_B_BC,
+                       idx_B_ABC,
+                       beta,
+                       false,
+                       reinterpret_cast<const dpd_marray_view<char>&>(C),
+                       idx_C_AC,
+                       idx_C_BC,
+                       idx_C_ABC);
     }
 }
 
-#define FOREACH_TYPE(T) \
-template void mult(const communicator& comm, \
-                   T alpha, const dpd_marray_view<const T>& A, const label_vector& idx_A, \
-                            const dpd_marray_view<const T>& B, const label_vector& idx_B, \
-                   T  beta, const dpd_marray_view<      T>& C, const label_vector& idx_C);
+#define FOREACH_TYPE(T)                                   \
+    template void mult(const communicator& comm,          \
+                       T alpha,                           \
+                       const dpd_marray_view<const T>& A, \
+                       const label_vector& idx_A,         \
+                       const dpd_marray_view<const T>& B, \
+                       const label_vector& idx_B,         \
+                       T beta,                            \
+                       const dpd_marray_view<T>& C,       \
+                       const label_vector& idx_C);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void mult(const communicator& comm,
-          T alpha, const indexed_marray_view<const T>& A, const label_vector& idx_A,
-                   const indexed_marray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const indexed_marray_view<      T>& C, const label_vector& idx_C)
+          T alpha,
+          const indexed_marray_view<const T>& A,
+          const label_vector& idx_A,
+          const indexed_marray_view<const T>& B,
+          const label_vector& idx_B,
+          T beta,
+          const indexed_marray_view<T>& C,
+          const label_vector& idx_C)
 {
     auto ndim_A = A.dimension();
     auto ndim_B = B.dimension();
     auto ndim_C = C.dimension();
 
-    for (auto i : range(1,ndim_A))
-    for (auto j : range(i))
-        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+    for (auto i : range(1, ndim_A))
+        for (auto j : range(i)) TBLIS_ASSERT(idx_A[i] != idx_A[j]);
 
-    for (auto i : range(1,ndim_B))
-    for (auto j : range(i))
-        TBLIS_ASSERT(idx_B[i] != idx_B[j]);
+    for (auto i : range(1, ndim_B))
+        for (auto j : range(i)) TBLIS_ASSERT(idx_B[i] != idx_B[j]);
 
-    for (auto i : range(1,ndim_C))
-    for (auto j : range(i))
-        TBLIS_ASSERT(idx_C[i] != idx_C[j]);
+    for (auto i : range(1, ndim_C))
+        for (auto j : range(i)) TBLIS_ASSERT(idx_C[i] != idx_C[j]);
 
     auto idx_ABC = stl_ext::intersection(idx_A, idx_B, idx_C);
-    auto idx_AB = stl_ext::exclusion(stl_ext::intersection(idx_A, idx_B), idx_ABC);
-    auto idx_AC = stl_ext::exclusion(stl_ext::intersection(idx_A, idx_C), idx_ABC);
-    auto idx_BC = stl_ext::exclusion(stl_ext::intersection(idx_B, idx_C), idx_ABC);
+    auto idx_AB =
+        stl_ext::exclusion(stl_ext::intersection(idx_A, idx_B), idx_ABC);
+    auto idx_AC =
+        stl_ext::exclusion(stl_ext::intersection(idx_A, idx_C), idx_ABC);
+    auto idx_BC =
+        stl_ext::exclusion(stl_ext::intersection(idx_B, idx_C), idx_ABC);
     auto idx_A_only = stl_ext::exclusion(idx_A, idx_AB, idx_AC, idx_ABC);
     auto idx_B_only = stl_ext::exclusion(idx_B, idx_AB, idx_BC, idx_ABC);
     auto idx_C_only = stl_ext::exclusion(idx_C, idx_AC, idx_BC, idx_ABC);
@@ -340,64 +410,95 @@ void mult(const communicator& comm,
 
     for (auto i : range(idx_ABC.size()))
     {
-        TBLIS_ASSERT(A.length(idx_A_ABC[i]) ==
-                     B.length(idx_B_ABC[i]));
-        TBLIS_ASSERT(A.length(idx_A_ABC[i]) ==
-                     C.length(idx_C_ABC[i]));
+        TBLIS_ASSERT(A.length(idx_A_ABC[i]) == B.length(idx_B_ABC[i]));
+        TBLIS_ASSERT(A.length(idx_A_ABC[i]) == C.length(idx_C_ABC[i]));
     }
 
     for (auto i : range(idx_AB.size()))
     {
-        TBLIS_ASSERT(A.length(idx_A_AB[i]) ==
-                     B.length(idx_B_AB[i]));
+        TBLIS_ASSERT(A.length(idx_A_AB[i]) == B.length(idx_B_AB[i]));
     }
 
     for (auto i : range(idx_AC.size()))
     {
-        TBLIS_ASSERT(A.length(idx_A_AC[i]) ==
-                     C.length(idx_C_AC[i]));
+        TBLIS_ASSERT(A.length(idx_A_AC[i]) == C.length(idx_C_AC[i]));
     }
 
     for (auto i : range(idx_BC.size()))
     {
-        TBLIS_ASSERT(B.length(idx_B_BC[i]) ==
-                     C.length(idx_C_BC[i]));
+        TBLIS_ASSERT(B.length(idx_B_BC[i]) == C.length(idx_C_BC[i]));
     }
 
     if (alpha == T(0))
     {
         if (beta == T(0))
         {
-            internal::set(type_tag<T>::value, comm, get_default_config(),
-                          beta, reinterpret_cast<const indexed_marray_view<char>&>(C), range_C);
+            internal::set(type_tag<T>::value,
+                          comm,
+                          get_default_config(),
+                          beta,
+                          reinterpret_cast<const indexed_marray_view<char>&>(C),
+                          range_C);
         }
         else if (beta != T(1))
         {
-            internal::scale(type_tag<T>::value, comm, get_default_config(),
-                            beta, false, reinterpret_cast<const indexed_marray_view<char>&>(C), range_C);
+            internal::scale(
+                type_tag<T>::value,
+                comm,
+                get_default_config(),
+                beta,
+                false,
+                reinterpret_cast<const indexed_marray_view<char>&>(C),
+                range_C);
         }
     }
     else
     {
-        internal::mult(type_tag<T>::value, comm, get_default_config(),
-                       alpha, false, reinterpret_cast<const indexed_marray_view<char>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
-                              false, reinterpret_cast<const indexed_marray_view<char>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
-                        beta, false, reinterpret_cast<const indexed_marray_view<char>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
+        internal::mult(type_tag<T>::value,
+                       comm,
+                       get_default_config(),
+                       alpha,
+                       false,
+                       reinterpret_cast<const indexed_marray_view<char>&>(A),
+                       idx_A_AB,
+                       idx_A_AC,
+                       idx_A_ABC,
+                       false,
+                       reinterpret_cast<const indexed_marray_view<char>&>(B),
+                       idx_B_AB,
+                       idx_B_BC,
+                       idx_B_ABC,
+                       beta,
+                       false,
+                       reinterpret_cast<const indexed_marray_view<char>&>(C),
+                       idx_C_AC,
+                       idx_C_BC,
+                       idx_C_ABC);
     }
 }
 
-#define FOREACH_TYPE(T) \
-template void mult(const communicator& comm, \
-                   T alpha, const indexed_marray_view<const T>& A, const label_vector& idx_A, \
-                            const indexed_marray_view<const T>& B, const label_vector& idx_B, \
-                   T  beta, const indexed_marray_view<      T>& C, const label_vector& idx_C);
+#define FOREACH_TYPE(T)                                       \
+    template void mult(const communicator& comm,              \
+                       T alpha,                               \
+                       const indexed_marray_view<const T>& A, \
+                       const label_vector& idx_A,             \
+                       const indexed_marray_view<const T>& B, \
+                       const label_vector& idx_B,             \
+                       T beta,                                \
+                       const indexed_marray_view<T>& C,       \
+                       const label_vector& idx_C);
 #include "configs/foreach_type.h"
 
 template <typename T>
 void mult(const communicator& comm,
-          T alpha, const indexed_dpd_marray_view<const T>& A, const label_vector& idx_A,
-                   const indexed_dpd_marray_view<const T>& B, const label_vector& idx_B,
-          T  beta, const indexed_dpd_marray_view<      T>& C, const label_vector& idx_C)
+          T alpha,
+          const indexed_dpd_marray_view<const T>& A,
+          const label_vector& idx_A,
+          const indexed_dpd_marray_view<const T>& B,
+          const label_vector& idx_B,
+          T beta,
+          const indexed_dpd_marray_view<T>& C,
+          const label_vector& idx_C)
 {
     auto nirrep = A.num_irreps();
     TBLIS_ASSERT(B.num_irreps() == nirrep);
@@ -407,22 +508,22 @@ void mult(const communicator& comm,
     auto ndim_B = B.dimension();
     auto ndim_C = C.dimension();
 
-    for (auto i : range(1,ndim_A))
-    for (auto j : range(i))
-        TBLIS_ASSERT(idx_A[i] != idx_A[j]);
+    for (auto i : range(1, ndim_A))
+        for (auto j : range(i)) TBLIS_ASSERT(idx_A[i] != idx_A[j]);
 
-    for (auto i : range(1,ndim_B))
-    for (auto j : range(i))
-        TBLIS_ASSERT(idx_B[i] != idx_B[j]);
+    for (auto i : range(1, ndim_B))
+        for (auto j : range(i)) TBLIS_ASSERT(idx_B[i] != idx_B[j]);
 
-    for (auto i : range(1,ndim_C))
-    for (auto j : range(i))
-        TBLIS_ASSERT(idx_C[i] != idx_C[j]);
+    for (auto i : range(1, ndim_C))
+        for (auto j : range(i)) TBLIS_ASSERT(idx_C[i] != idx_C[j]);
 
     auto idx_ABC = stl_ext::intersection(idx_A, idx_B, idx_C);
-    auto idx_AB = stl_ext::exclusion(stl_ext::intersection(idx_A, idx_B), idx_ABC);
-    auto idx_AC = stl_ext::exclusion(stl_ext::intersection(idx_A, idx_C), idx_ABC);
-    auto idx_BC = stl_ext::exclusion(stl_ext::intersection(idx_B, idx_C), idx_ABC);
+    auto idx_AB =
+        stl_ext::exclusion(stl_ext::intersection(idx_A, idx_B), idx_ABC);
+    auto idx_AC =
+        stl_ext::exclusion(stl_ext::intersection(idx_A, idx_C), idx_ABC);
+    auto idx_BC =
+        stl_ext::exclusion(stl_ext::intersection(idx_B, idx_C), idx_ABC);
     auto idx_A_only = stl_ext::exclusion(idx_A, idx_AB, idx_AC, idx_ABC);
     auto idx_B_only = stl_ext::exclusion(idx_B, idx_AB, idx_BC, idx_ABC);
     auto idx_C_only = stl_ext::exclusion(idx_C, idx_AC, idx_BC, idx_ABC);
@@ -453,62 +554,97 @@ void mult(const communicator& comm,
     auto idx_C_BC = stl_ext::select_from(range_C, idx_C, idx_BC);
 
     for (auto i : range(idx_ABC.size()))
-    for (auto irrep : range(nirrep))
-    {
-        TBLIS_ASSERT(A.length(idx_A_ABC[i], irrep) ==
-                     B.length(idx_B_ABC[i], irrep));
-        TBLIS_ASSERT(A.length(idx_A_ABC[i], irrep) ==
-                     C.length(idx_C_ABC[i], irrep));
-    }
+        for (auto irrep : range(nirrep))
+        {
+            TBLIS_ASSERT(A.length(idx_A_ABC[i], irrep)
+                         == B.length(idx_B_ABC[i], irrep));
+            TBLIS_ASSERT(A.length(idx_A_ABC[i], irrep)
+                         == C.length(idx_C_ABC[i], irrep));
+        }
 
     for (auto i : range(idx_AB.size()))
-    for (auto irrep : range(nirrep))
-    {
-        TBLIS_ASSERT(A.length(idx_A_AB[i], irrep) ==
-                     B.length(idx_B_AB[i], irrep));
-    }
+        for (auto irrep : range(nirrep))
+        {
+            TBLIS_ASSERT(A.length(idx_A_AB[i], irrep)
+                         == B.length(idx_B_AB[i], irrep));
+        }
 
     for (auto i : range(idx_AC.size()))
-    for (auto irrep : range(nirrep))
-    {
-        TBLIS_ASSERT(A.length(idx_A_AC[i], irrep) ==
-                     C.length(idx_C_AC[i], irrep));
-    }
+        for (auto irrep : range(nirrep))
+        {
+            TBLIS_ASSERT(A.length(idx_A_AC[i], irrep)
+                         == C.length(idx_C_AC[i], irrep));
+        }
 
     for (auto i : range(idx_BC.size()))
-    for (auto irrep : range(nirrep))
-    {
-        TBLIS_ASSERT(B.length(idx_B_BC[i], irrep) ==
-                     C.length(idx_C_BC[i], irrep));
-    }
+        for (auto irrep : range(nirrep))
+        {
+            TBLIS_ASSERT(B.length(idx_B_BC[i], irrep)
+                         == C.length(idx_C_BC[i], irrep));
+        }
 
-    if (alpha == T(0) || (idx_ABC.empty() && ((A.irrep()^B.irrep()) != C.irrep())))
+    if (alpha
+        == T(0)
+        || (idx_ABC.empty() && ((A.irrep() ^ B.irrep()) != C.irrep())))
     {
         if (beta == T(0))
         {
-            internal::set(type_tag<T>::value, comm, get_default_config(),
-                          beta, reinterpret_cast<const indexed_dpd_marray_view<char>&>(C), range_C);
+            internal::set(
+                type_tag<T>::value,
+                comm,
+                get_default_config(),
+                beta,
+                reinterpret_cast<const indexed_dpd_marray_view<char>&>(C),
+                range_C);
         }
         else if (beta != T(1))
         {
-            internal::scale(type_tag<T>::value, comm, get_default_config(),
-                            beta, false, reinterpret_cast<const indexed_dpd_marray_view<char>&>(C), range_C);
+            internal::scale(
+                type_tag<T>::value,
+                comm,
+                get_default_config(),
+                beta,
+                false,
+                reinterpret_cast<const indexed_dpd_marray_view<char>&>(C),
+                range_C);
         }
     }
     else
     {
-        internal::mult(type_tag<T>::value, comm, get_default_config(),
-                       alpha, false, reinterpret_cast<const indexed_dpd_marray_view<char>&>(A), idx_A_AB, idx_A_AC, idx_A_ABC,
-                              false, reinterpret_cast<const indexed_dpd_marray_view<char>&>(B), idx_B_AB, idx_B_BC, idx_B_ABC,
-                        beta, false, reinterpret_cast<const indexed_dpd_marray_view<char>&>(C), idx_C_AC, idx_C_BC, idx_C_ABC);
+        internal::mult(
+            type_tag<T>::value,
+            comm,
+            get_default_config(),
+            alpha,
+            false,
+            reinterpret_cast<const indexed_dpd_marray_view<char>&>(A),
+            idx_A_AB,
+            idx_A_AC,
+            idx_A_ABC,
+            false,
+            reinterpret_cast<const indexed_dpd_marray_view<char>&>(B),
+            idx_B_AB,
+            idx_B_BC,
+            idx_B_ABC,
+            beta,
+            false,
+            reinterpret_cast<const indexed_dpd_marray_view<char>&>(C),
+            idx_C_AC,
+            idx_C_BC,
+            idx_C_ABC);
     }
 }
 
-#define FOREACH_TYPE(T) \
-template void mult(const communicator& comm, \
-                   T alpha, const indexed_dpd_marray_view<const T>& A, const label_vector& idx_A, \
-                            const indexed_dpd_marray_view<const T>& B, const label_vector& idx_B, \
-                   T  beta, const indexed_dpd_marray_view<      T>& C, const label_vector& idx_C);
+#define FOREACH_TYPE(T)                                           \
+    template void mult(const communicator& comm,                  \
+                       T alpha,                                   \
+                       const indexed_dpd_marray_view<const T>& A, \
+                       const label_vector& idx_A,                 \
+                       const indexed_dpd_marray_view<const T>& B, \
+                       const label_vector& idx_B,                 \
+                       T beta,                                    \
+                       const indexed_dpd_marray_view<T>& C,       \
+                       const label_vector& idx_C);
 #include "configs/foreach_type.h"
 
-}
+} // namespace tblis

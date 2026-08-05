@@ -52,8 +52,8 @@ TEST(unit_ptr_list, iterator)
     EXPECT_EQ(&x[1], i1.operator->());
     EXPECT_EQ(&x[1], *i1.base());
 
-    unique_list<int> ul{1,2,3};
-    EXPECT_EQ(1,*(ul.begin().operator->()));
+    unique_list<int> ul{1, 2, 3};
+    EXPECT_EQ(1, *(ul.begin().operator->()));
 }
 
 TEST(unit_ptr_list, constructor)
@@ -90,7 +90,7 @@ TEST(unit_ptr_list, constructor)
     EXPECT_EQ(1, pl7.front());
     EXPECT_EQ(4, pl7.back());
 
-    ptr_list<int> pl8{1,2,3,4};
+    ptr_list<int> pl8{1, 2, 3, 4};
     ptr_list<int> pl9(pl8.begin(), pl8.end());
     EXPECT_EQ(4, pl9.size());
     EXPECT_EQ(1, pl9.front());
@@ -134,7 +134,7 @@ TEST(unit_ptr_list, assign)
     EXPECT_EQ(1, pl7.front());
     EXPECT_EQ(4, pl7.back());
 
-    ptr_list<int> pl8{1,2,3,4};
+    ptr_list<int> pl8{1, 2, 3, 4};
     ptr_list<int> pl9;
     pl9.assign(pl8.begin(), pl8.end());
     EXPECT_EQ(4, pl9.size());
@@ -153,23 +153,23 @@ TEST(unit_ptr_list, begin_end)
     int x[] = {1, 2, 3, 4};
     ptr_list<int> pl = {&x[0], &x[1], &x[2], &x[3]};
 
-    EXPECT_EQ(x  , &*pl.begin());
-    EXPECT_EQ(x+3, &*prev(pl.end()));
-    EXPECT_EQ(x+3, &*pl.rbegin());
-    EXPECT_EQ(x  , &*prev(pl.rend()));
-    EXPECT_EQ(x  , &*pl.cbegin());
-    EXPECT_EQ(x+3, &*prev(pl.cend()));
-    EXPECT_EQ(x+3, &*pl.crbegin());
-    EXPECT_EQ(x  , &*prev(pl.crend()));
+    EXPECT_EQ(x, &*pl.begin());
+    EXPECT_EQ(x + 3, &*prev(pl.end()));
+    EXPECT_EQ(x + 3, &*pl.rbegin());
+    EXPECT_EQ(x, &*prev(pl.rend()));
+    EXPECT_EQ(x, &*pl.cbegin());
+    EXPECT_EQ(x + 3, &*prev(pl.cend()));
+    EXPECT_EQ(x + 3, &*pl.crbegin());
+    EXPECT_EQ(x, &*prev(pl.crend()));
 
-    EXPECT_EQ(x  , *pl.pbegin());
-    EXPECT_EQ(x+3, *prev(pl.pend()));
-    EXPECT_EQ(x+3, *pl.rpbegin());
-    EXPECT_EQ(x  , *prev(pl.rpend()));
-    EXPECT_EQ(x  , *pl.cpbegin());
-    EXPECT_EQ(x+3, *prev(pl.cpend()));
-    EXPECT_EQ(x+3, *pl.crpbegin());
-    EXPECT_EQ(x  , *prev(pl.crpend()));
+    EXPECT_EQ(x, *pl.pbegin());
+    EXPECT_EQ(x + 3, *prev(pl.pend()));
+    EXPECT_EQ(x + 3, *pl.rpbegin());
+    EXPECT_EQ(x, *prev(pl.rpend()));
+    EXPECT_EQ(x, *pl.cpbegin());
+    EXPECT_EQ(x + 3, *prev(pl.cpend()));
+    EXPECT_EQ(x + 3, *pl.crpbegin());
+    EXPECT_EQ(x, *prev(pl.crpend()));
 }
 
 TEST(unit_ptr_list, front_back)
@@ -180,8 +180,8 @@ TEST(unit_ptr_list, front_back)
     EXPECT_EQ(1, pl.front());
     EXPECT_EQ(4, pl.back());
 
-    EXPECT_EQ(x  , pl.pfront());
-    EXPECT_EQ(x+3, pl.pback());
+    EXPECT_EQ(x, pl.pfront());
+    EXPECT_EQ(x + 3, pl.pback());
 }
 
 TEST(unit_ptr_list, empty)
@@ -219,7 +219,7 @@ TEST(unit_ptr_list, push_pop)
     sl.push_back(1);
     EXPECT_EQ(4, sl.size());
     EXPECT_EQ(1, sl.back());
-    shared_ptr<int> sp2(new int (2));
+    shared_ptr<int> sp2(new int(2));
     sl.push_back(sp2);
     EXPECT_EQ(5, sl.size());
     EXPECT_EQ(2, sl.back());
@@ -276,7 +276,7 @@ TEST(unit_ptr_list, insert)
     EXPECT_EQ(2, sl.front());
     EXPECT_EQ(2, sl.back());
     EXPECT_EQ(sl.begin(), i);
-    i = sl.insert(sl.end(), {1,2,3});
+    i = sl.insert(sl.end(), {1, 2, 3});
     EXPECT_EQ(5, sl.size());
     EXPECT_EQ(1, *i);
     EXPECT_EQ(3, sl.back());
@@ -289,7 +289,7 @@ TEST(unit_ptr_list, insert)
 
 TEST(unit_ptr_list, erase)
 {
-    ptr_list<int> pl({0,1,2,3,4,5,6,7,8,9});
+    ptr_list<int> pl({0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
     EXPECT_EQ(10, pl.size());
     EXPECT_EQ(0, pl.front());
     EXPECT_EQ(9, pl.back());
@@ -313,8 +313,8 @@ TEST(unit_ptr_list, erase)
 
 TEST(unit_ptr_list, swap)
 {
-    ptr_list<int> pl1({0,2,4});
-    ptr_list<int> pl2({1,3,5});
+    ptr_list<int> pl1({0, 2, 4});
+    ptr_list<int> pl2({1, 3, 5});
     swap(pl1, pl2);
     EXPECT_EQ(1, pl1.front());
     EXPECT_EQ(5, pl1.back());
@@ -346,8 +346,8 @@ TEST(unit_ptr_list, emplace)
 
 TEST(unit_ptr_list, operators)
 {
-    ptr_list<int> pl1{1,2,3};
-    ptr_list<int> pl2{1,2,4};
+    ptr_list<int> pl1{1, 2, 3};
+    ptr_list<int> pl2{1, 2, 4};
     EXPECT_TRUE(pl1 == pl1);
     EXPECT_FALSE(pl1 != pl1);
     EXPECT_TRUE(pl1 != pl2);
@@ -362,8 +362,8 @@ TEST(unit_ptr_list, operators)
 
 TEST(unit_ptr_list, splice)
 {
-    ptr_list<int> pl1{1,2,3};
-    ptr_list<int> pl2{4,5};
+    ptr_list<int> pl1{1, 2, 3};
+    ptr_list<int> pl2{4, 5};
     pl1.splice(next(pl1.begin()), pl2);
     EXPECT_EQ(5, pl1.size());
     EXPECT_EQ(0, pl2.size());
@@ -372,14 +372,14 @@ TEST(unit_ptr_list, splice)
     pl1.splice(pl1.begin(), ptr_list<int>{-1});
     EXPECT_EQ(6, pl1.size());
     EXPECT_EQ(-1, pl1.front());
-    ptr_list<int> pl3{7,8,9};
+    ptr_list<int> pl3{7, 8, 9};
     pl1.splice(pl1.begin(), pl3, prev(pl3.end()));
     EXPECT_EQ(7, pl1.size());
     EXPECT_EQ(2, pl3.size());
     EXPECT_EQ(9, pl1.front());
     EXPECT_EQ(7, pl3.front());
     EXPECT_EQ(8, pl3.back());
-    ptr_list<int> pl4{6,9,1};
+    ptr_list<int> pl4{6, 9, 1};
     pl1.splice(pl1.begin(), pl4, pl4.begin(), prev(pl4.end()));
     EXPECT_EQ(9, pl1.size());
     EXPECT_EQ(1, pl4.size());
@@ -389,12 +389,12 @@ TEST(unit_ptr_list, splice)
 
 TEST(unit_ptr_list, remove)
 {
-    ptr_list<int> pl{0,1,2,3,4,5,6,7,8,9};
+    ptr_list<int> pl{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     pl.remove(9);
     EXPECT_EQ(9, pl.size());
     EXPECT_EQ(0, pl.front());
     EXPECT_EQ(8, pl.back());
-    pl.remove_if([](int x){return !(x%2);});
+    pl.remove_if([](int x) { return !(x % 2); });
     EXPECT_EQ(4, pl.size());
     EXPECT_EQ(1, pl.front());
     EXPECT_EQ(7, pl.back());
@@ -402,12 +402,12 @@ TEST(unit_ptr_list, remove)
 
 TEST(unit_ptr_list, unique)
 {
-    ptr_list<int> pl{0,0,0,0,1,1,3,3,3,3};
+    ptr_list<int> pl{0, 0, 0, 0, 1, 1, 3, 3, 3, 3};
     pl.unique();
     EXPECT_EQ(3, pl.size());
     EXPECT_EQ(0, pl.front());
     EXPECT_EQ(3, pl.back());
-    pl.unique([](int x, int y){return (x%2) == (y%2);});
+    pl.unique([](int x, int y) { return (x % 2) == (y % 2); });
     EXPECT_EQ(2, pl.size());
     EXPECT_EQ(0, pl.front());
     EXPECT_EQ(1, pl.back());
@@ -415,45 +415,45 @@ TEST(unit_ptr_list, unique)
 
 TEST(unit_ptr_list, merge)
 {
-    ptr_list<int> pl1{0,5,8};
-    ptr_list<int> pl2{1,9};
+    ptr_list<int> pl1{0, 5, 8};
+    ptr_list<int> pl2{1, 9};
     pl1.merge(pl2);
     EXPECT_EQ(5, pl1.size());
     EXPECT_EQ(0, pl2.size());
     EXPECT_EQ(0, pl1.front());
     EXPECT_EQ(9, pl1.back());
-    pl1.merge(ptr_list<int>{6,7});
+    pl1.merge(ptr_list<int>{6, 7});
     EXPECT_EQ(7, pl1.size());
-    EXPECT_EQ(7, *prev(pl1.end(),3));
+    EXPECT_EQ(7, *prev(pl1.end(), 3));
     pl1.reverse();
     ptr_list<int> pl3{2};
     pl1.merge(pl3, greater<int>());
     EXPECT_EQ(8, pl1.size());
     EXPECT_EQ(0, pl3.size());
-    EXPECT_EQ(2, *prev(pl1.end(),3));
-    pl1.merge(ptr_list<int>{4,3}, greater<int>());
+    EXPECT_EQ(2, *prev(pl1.end(), 3));
+    pl1.merge(ptr_list<int>{4, 3}, greater<int>());
     EXPECT_EQ(10, pl1.size());
-    EXPECT_EQ(3, *prev(pl1.end(),4));
+    EXPECT_EQ(3, *prev(pl1.end(), 4));
 }
 
 TEST(unit_ptr_list, sort)
 {
-    ptr_list<int> pl{0,5,9,7,3};
+    ptr_list<int> pl{0, 5, 9, 7, 3};
     pl.sort();
-    EXPECT_EQ(5,pl.size());
-    EXPECT_EQ(0,pl.front());
-    EXPECT_EQ(9,pl.back());
+    EXPECT_EQ(5, pl.size());
+    EXPECT_EQ(0, pl.front());
+    EXPECT_EQ(9, pl.back());
     pl.sort(greater<int>());
-    EXPECT_EQ(5,pl.size());
-    EXPECT_EQ(9,pl.front());
-    EXPECT_EQ(0,pl.back());
+    EXPECT_EQ(5, pl.size());
+    EXPECT_EQ(9, pl.front());
+    EXPECT_EQ(0, pl.back());
 }
 
 TEST(unit_ptr_list, reverse)
 {
-    ptr_list<int> pl{0,4,5,1};
+    ptr_list<int> pl{0, 4, 5, 1};
     pl.reverse();
-    EXPECT_EQ(4,pl.size());
-    EXPECT_EQ(1,pl.front());
-    EXPECT_EQ(0,pl.back());
+    EXPECT_EQ(4, pl.size());
+    EXPECT_EQ(1, pl.front());
+    EXPECT_EQ(0, pl.back());
 }

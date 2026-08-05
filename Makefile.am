@@ -147,7 +147,7 @@ stl_extinclude_HEADERS = \
     src/external/stl_ext/stl_ext/zip.hpp
 
 noinst_LTLIBRARIES =
-lib_libtblis_la_LIBADD = src/external/tci/lib/libtci.la
+lib_libtblis_la_LIBADD =
 
 if IS_CLANG
 CXXFLAGS += -Wno-pass-failed
@@ -468,14 +468,24 @@ bin_dpd_bench_SOURCES = test/dpd_bench.cxx
 
 VPATH += $(srcdir)
 
+TCI_LIBS = $(shell grep "Libs.private:" src/external/tci/tci.pc | sed 's/Libs.private://g')
+
 SUBDIRS = src/external/tci
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/util -I$(srcdir)/src/external/marray -I$(srcdir)/src/external/tci -Isrc/external/tci/tci
-AM_LDFLAGS = -pthread
+AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/src -I. -Isrc -Isrc/util -I$(srcdir)/src/external/marray -I$(srcdir)/src/external/tci/include -Isrc/external/tci/include
+AM_LDFLAGS = -pthread -Lsrc/external/tci/lib -ltci -Wl,-rpath -Wl,$(builddir)/src/external/tci/lib $(TCI_LIBS)
 bin_test_LDADD = lib/libtblis.la
 bin_skx_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 bin_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 bin_batched_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
 bin_dpd_bench_LDADD = lib/libtblis.la $(BLAS_LIBS)
+
+if IS_OSX
+all-local: bin/test$(EXEEXT)
+	@otool -l bin/.libs/test$(EXEEXT) | \
+        grep -q $(abs_builddir)/src/external/tci/lib || \
+        install_name_tool -add_rpath $(abs_builddir)/src/external/tci/lib bin/.libs/test$(EXEEXT)
+endif
+
 
 DISTCLEANFILES = src/tblis_config.h

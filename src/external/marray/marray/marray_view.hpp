@@ -70,22 +70,30 @@ class marray_view
     /* Inherit docs */
     template <typename U, int N, typename D, bool O>
     marray_view(const marray_base<U, N, D, O>& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     /* Inherit docs */
     template <typename U, int N, typename D, bool O>
     marray_view(marray_base<U, N, D, O>& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     /* Inherit docs */
     template <typename U, int N, typename D, bool O>
     marray_view(marray_base<U, N, D, O>&& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     /* Inherit docs */
     template <typename U, int N, int I, typename... D>
     marray_view(const marray_slice<U, N, I, D...>& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 #endif
 
     /**
@@ -106,7 +114,9 @@ class marray_view
 #else
     marray_view(const std::vector<T>& v)
 #endif
-    { reset(v); }
+    {
+        reset(v);
+    }
 
     /**
      * Construct a view that wraps a mutable std::vector of compatible type.
@@ -126,7 +136,9 @@ class marray_view
 #else
     marray_view(std::vector<T>& v)
 #endif
-    { reset(v); }
+    {
+        reset(v);
+    }
 
     /**
      * Construct a view that wraps a raw data pointer, using the provided shape,
@@ -161,7 +173,9 @@ class marray_view
     marray_view(const array_1d<len_type>& len,
                 pointer ptr,
                 const index_base& base)
-    { reset(len, ptr, base); }
+    {
+        reset(len, ptr, base);
+    }
 
     /**
      * Construct a view that wraps a raw data pointer, using the provided shape
@@ -191,7 +205,9 @@ class marray_view
     marray_view(const array_1d<len_type>& len,
                 pointer ptr,
                 const layout_like& stride)
-    { reset(len, ptr, stride); }
+    {
+        reset(len, ptr, stride);
+    }
 
     /**
      * Construct a view that wraps a raw data pointer, using the provided
@@ -231,7 +247,9 @@ class marray_view
                 pointer ptr,
                 const base_like& base,
                 const layout_like& stride)
-    { reset(len, ptr, base, stride); }
+    {
+        reset(len, ptr, base, stride);
+    }
 
     /**
      * Construct a view that wraps a raw data pointer, using the provided shape
@@ -253,7 +271,9 @@ class marray_view
 #else
     marray_view(const array_1d<len_type>& len, pointer ptr, fortran_t)
 #endif
-    { reset(len, ptr, FORTRAN); }
+    {
+        reset(len, ptr, FORTRAN);
+    }
 
     /**
      * Construct a view that wraps a raw data pointer, using the provided
@@ -284,7 +304,9 @@ class marray_view
     marray_view(const array_1d<len_type>& begin,
                 const array_1d<len_type>& end,
                 pointer ptr)
-    { reset(begin, end, ptr); }
+    {
+        reset(begin, end, ptr);
+    }
 
     /**
      * Construct a view that wraps a raw data pointer, using the provided
@@ -329,7 +351,9 @@ class marray_view
                 const array_1d<len_type>& end,
                 pointer ptr,
                 const layout_like& stride)
-    { reset(begin, end, ptr, stride); }
+    {
+        reset(begin, end, ptr, stride);
+    }
 
     /** @} */
     /***********************************************************************
@@ -361,7 +385,9 @@ class marray_view
     /** @{ */
 
     marray_view& operator=(const marray_view& other)
-    { return base_class::operator=(other); }
+    {
+        return base_class::operator=(other);
+    }
 
     using base_class::operator=;
     using base_class::operator+=;
@@ -627,7 +653,9 @@ class marray_view
      * @param len  The new length along the indicated dimension.
      */
     void next(int dim, len_type len)
-    { shift_and_resize(dim, length(dim), len); }
+    {
+        shift_and_resize(dim, length(dim), len);
+    }
 
     /**
      * Shift this view "up" along one dimension and resize.
@@ -727,7 +755,9 @@ class marray_view
               typename = std::enable_if_t<N == 2>>
 #endif
     void transpose()
-    { permute({1, 0}); }
+    {
+        permute({1, 0});
+    }
 
     /** @} */
     /***********************************************************************
@@ -770,14 +800,18 @@ class marray_view
               int N = NDim,
               typename = std::enable_if_t<N == DYNAMIC>>
     void lower(const array_1d<int>& split)
-    { reset(lowered(split)); }
+    {
+        reset(lowered(split));
+    }
 
     /* Inherit docs */
     template <typename... Splits>
     std::enable_if_t<
         detail::are_convertible<int, Splits...>::value && NDim == DYNAMIC>
     lower(const Splits... lengths)
-    { lower({(len_type)lengths...}); }
+    {
+        lower({(len_type)lengths...});
+    }
 #endif
 
     /** @} */
@@ -817,14 +851,18 @@ class marray_view
               int N = NDim,
               typename = std::enable_if_t<N == DYNAMIC>>
     void reshape(const array_1d<len_type>& lengths)
-    { reset(reshaped(lengths)); }
+    {
+        reset(reshaped(lengths));
+    }
 
     /* Inherit docs */
     template <typename... Lengths>
     std::enable_if_t<detail::are_convertible<len_type, Lengths...>::value
                      && (NDim == DYNAMIC || NDim == sizeof...(Lengths))>
     reshape(const Lengths... lengths)
-    { reset(reshaped(lengths...)); }
+    {
+        reset(reshaped(lengths...));
+    }
 #endif
 
     /** @} */
@@ -975,7 +1013,9 @@ class marray_view
  */
 template <typename Type, int NDim>
 void swap(marray_view<Type, NDim>& a, marray_view<Type, NDim>& b)
-{ a.swap(b); }
+{
+    a.swap(b);
+}
 
 MARRAY_END_NAMESPACE
 

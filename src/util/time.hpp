@@ -12,7 +12,7 @@ namespace tblis
 
 inline double tic()
 {
-    #ifdef __MACH__
+#ifdef __MACH__
     static double conv = -1.0;
     if (conv < 0)
     {
@@ -21,14 +21,14 @@ inline double tic()
         conv = (double)timebase.numer / (double)timebase.denom;
     }
     uint64_t nsec = mach_absolute_time();
-    return conv*(double)nsec/1e9;
-    #else
+    return conv * (double)nsec / 1e9;
+#else
     timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (double)ts.tv_sec+(double)ts.tv_nsec/1e9;
-    #endif
+    return (double)ts.tv_sec + (double)ts.tv_nsec / 1e9;
+#endif
 }
 
-}
+} // namespace tblis
 
 #endif

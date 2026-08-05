@@ -41,31 +41,43 @@ class indexed_marray_view
     indexed_marray_view(const indexed_marray_view& other) { reset(other); }
 
     indexed_marray_view(indexed_marray_view&& other)
-    { reset(std::move(other)); }
+    {
+        reset(std::move(other));
+    }
 
     template <typename U, bool O, typename D>
     indexed_marray_view(const indexed_marray_base<U, D, O>& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     template <typename U, bool O, typename D>
     indexed_marray_view(indexed_marray_base<U, D, O>&& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     template <typename U, bool O, typename D>
     indexed_marray_view(indexed_marray_base<U, D, O>& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     indexed_marray_view(const array_1d<len_type>& len,
                         const array_1d<pointer>& ptr,
                         const array_2d<len_type>& idx,
                         layout layout = DEFAULT_LAYOUT)
-    { reset(len, ptr, idx, layout); }
+    {
+        reset(len, ptr, idx, layout);
+    }
 
     indexed_marray_view(const array_1d<len_type>& len,
                         const array_1d<pointer>& ptr,
                         const array_2d<len_type>& idx,
                         const array_1d<stride_type>& stride)
-    { reset(len, ptr, idx, stride); }
+    {
+        reset(len, ptr, idx, stride);
+    }
 
     /***********************************************************************
      *
@@ -74,7 +86,9 @@ class indexed_marray_view
      **********************************************************************/
 
     indexed_marray_view& operator=(const indexed_marray_view& other)
-    { return base::operator=(other); }
+    {
+        return base::operator=(other);
+    }
 
     using base::operator=;
     using base::cview;
@@ -115,7 +129,9 @@ class indexed_marray_view
     void swap(indexed_marray_view& other) { base::swap(other); }
 
     friend void swap(indexed_marray_view& a, indexed_marray_view& b)
-    { a.swap(b); }
+    {
+        a.swap(b);
+    }
 };
 
 MARRAY_END_NAMESPACE

@@ -87,22 +87,34 @@ template <typename T> class range_t
         constexpr iterator(T val, T delta) : val_(val), delta_(delta) {}
 
         bool operator==(const iterator& other) const
-        { return val_ == other.val_ && delta_ == other.delta_; }
+        {
+            return val_ == other.val_ && delta_ == other.delta_;
+        }
 
         bool operator!=(const iterator& other) const
-        { return val_ != other.val_ || delta_ != other.delta_; }
+        {
+            return val_ != other.val_ || delta_ != other.delta_;
+        }
 
         auto operator<(const iterator& other) const
-        { return val_ < other.val_; }
+        {
+            return val_ < other.val_;
+        }
 
         auto operator>(const iterator& other) const
-        { return val_ > other.val_; }
+        {
+            return val_ > other.val_;
+        }
 
         auto operator<=(const iterator& other) const
-        { return val_ <= other.val_; }
+        {
+            return val_ <= other.val_;
+        }
 
         auto operator>=(const iterator& other) const
-        { return val_ >= other.val_; }
+        {
+            return val_ >= other.val_;
+        }
 
         value_type operator*() const { return val_; }
 
@@ -139,10 +151,14 @@ template <typename T> class range_t
         }
 
         iterator operator+(difference_type n) const
-        { return iterator(val_ + n * delta_, delta_); }
+        {
+            return iterator(val_ + n * delta_, delta_);
+        }
 
         friend iterator operator+(difference_type n, const iterator& i)
-        { return iterator(i.val_ + n * i.delta_, i.delta_); }
+        {
+            return iterator(i.val_ + n * i.delta_, i.delta_);
+        }
 
         iterator& operator-=(difference_type n)
         {
@@ -151,13 +167,19 @@ template <typename T> class range_t
         }
 
         iterator operator-(difference_type n) const
-        { return iterator(val_ - n * delta_, delta_); }
+        {
+            return iterator(val_ - n * delta_, delta_);
+        }
 
         difference_type operator-(const iterator& other) const
-        { return (val_ - other.val_) / delta_; }
+        {
+            return (val_ - other.val_) / delta_;
+        }
 
         value_type operator[](difference_type n) const
-        { return val_ + n * delta_; }
+        {
+            return val_ + n * delta_;
+        }
 
         friend void swap(iterator& a, iterator& b)
         {
@@ -233,7 +255,9 @@ template <typename T> class range_t
               typename =
                   typename std::enable_if<detail::is_container<U>::value>::type>
     operator U() const
-    { return U(begin(), end()); }
+    {
+        return U(begin(), end());
+    }
 
     range_t& operator+=(T shift)
     {
@@ -276,7 +300,9 @@ template <typename T> class range_t
      * @ingroup range
      */
     friend range_t operator+(T shift, const range_t& other)
-    { return other + shift; }
+    {
+        return other + shift;
+    }
 
     /**
      * Shift a range to the left.
@@ -291,7 +317,9 @@ template <typename T> class range_t
      * @ingroup range
      */
     friend range_t operator-(T shift, const range_t& other)
-    { return range_t(shift - other.from_, shift - other.to_, -other.delta_); }
+    {
+        return range_t(shift - other.from_, shift - other.to_, -other.delta_);
+    }
 
     /**
      * Concatenate two adjacent ranges.
@@ -512,7 +540,9 @@ auto rangeN(T from, U N, V delta)
  */
 template <typename T, typename = detail::enable_if_numeric<T>>
 auto reversed_range(T to)
-{ return range(to).reverse(); }
+{
+    return range(to).reverse();
+}
 
 /**
  * The range `[from,to)` in reverse order.
@@ -531,7 +561,9 @@ auto reversed_range(T to)
  */
 template <typename T, typename U, typename = detail::enable_if_numeric<T, U>>
 auto reversed_range(T from, U to)
-{ return range(from, to).reverse(); }
+{
+    return range(from, to).reverse();
+}
 
 /**
  * The range `[from,to)` with spacing `delta` in reverse order.
@@ -556,7 +588,9 @@ template <typename T,
           typename V,
           typename = detail::enable_if_numeric<T, U, V>>
 auto reversed_range(T from, U to, V delta)
-{ return range(from, to, delta).reverse(); }
+{
+    return range(from, to, delta).reverse();
+}
 
 /**
  * The range `[to-N,to)` in reverse order.
@@ -574,7 +608,9 @@ auto reversed_range(T from, U to, V delta)
  */
 template <typename T, typename U, typename = detail::enable_if_numeric<T, U>>
 auto reversed_rangeN(T to, U N)
-{ return range(to - 1, to - N - 1, -1); }
+{
+    return range(to - 1, to - N - 1, -1);
+}
 
 /**
  * The range `[to-N*delta,to)` with spacing `delta` in reverse order.
@@ -598,7 +634,9 @@ template <typename T,
           typename V,
           typename = detail::enable_if_numeric<T, U, V>>
 auto reversed_rangeN(T to, U N, V delta)
-{ return range(to - delta, to - (N + 1) * delta, -delta); }
+{
+    return range(to - delta, to - (N + 1) * delta, -delta);
+}
 
 MARRAY_END_NAMESPACE
 

@@ -7,8 +7,9 @@
 #endif
 #endif
 
-#include "tci.h"
 #include "basic_types.h"
+
+#include <tci.hpp>
 
 typedef tci_comm tblis_comm;
 extern const tblis_comm* const tblis_single;
@@ -28,11 +29,11 @@ void tblis_set_num_threads(unsigned num_threads);
 
 #if defined(__cplusplus) && !defined(TBLIS_DONT_USE_CXX11)
 
-#include <vector>
-#include <utility>
 #include <atomic>
 #include <iostream>
 #include <limits>
+#include <utility>
+#include <vector>
 
 namespace tblis
 {
@@ -54,20 +55,23 @@ struct atomic_accumulator
     std::atomic<float> cr, ci;
     std::atomic<double> zr, zi;
 
-    template <typename T>
-    static void accumulate(std::atomic<T>& value, T val)
+    template <typename T> static void accumulate(std::atomic<T>& value, T val)
     {
         T old = value.load();
-        while (!value.compare_exchange_weak(old, old+val)) continue;
+        while (!value.compare_exchange_weak(old, old + val)) continue;
     }
 
     atomic_accumulator() noexcept
-    : s(0.0f), d(0.0), cr(0.0f), ci(0.0f), zr(0.0), zi(0.0) {}
-
-    atomic_accumulator(const tblis_scalar& val) noexcept
+    : s(0.0f),
+      d(0.0),
+      cr(0.0f),
+      ci(0.0f),
+      zr(0.0),
+      zi(0.0)
     {
-        *this = val;
     }
+
+    atomic_accumulator(const tblis_scalar& val) noexcept { *this = val; }
 
     atomic_accumulator& operator=(const atomic_accumulator&) = delete;
 
@@ -75,12 +79,16 @@ struct atomic_accumulator
     {
         switch (val.type)
         {
-            case TYPE_FLOAT:    s  = val.data.s; break;
-            case TYPE_DOUBLE:   d  = val.data.d; break;
-            case TYPE_SCOMPLEX: cr = val.data.c.real();
-                                ci = val.data.c.imag(); break;
-            case TYPE_DCOMPLEX: zr = val.data.z.real();
-                                zi = val.data.z.imag(); break;
+            case TYPE_FLOAT:  s = val.data.s; break;
+            case TYPE_DOUBLE: d = val.data.d; break;
+            case TYPE_SCOMPLEX:
+                cr = val.data.c.real();
+                ci = val.data.c.imag();
+                break;
+            case TYPE_DCOMPLEX:
+                zr = val.data.z.real();
+                zi = val.data.z.imag();
+                break;
         }
 
         return *this;
@@ -90,13 +98,16 @@ struct atomic_accumulator
     {
         switch (val.type)
         {
-            case TYPE_FLOAT:    accumulate(s, val.data.s); break;
-            case TYPE_DOUBLE:   accumulate(d, val.data.d); break;
-            case TYPE_SCOMPLEX: accumulate(cr, val.data.c.real());
-                                accumulate(ci, val.data.c.imag()); break;
-            case TYPE_DCOMPLEX: accumulate(zr, val.data.z.real());
-                                accumulate(zi, val.data.z.imag()); break;
-
+            case TYPE_FLOAT:  accumulate(s, val.data.s); break;
+            case TYPE_DOUBLE: accumulate(d, val.data.d); break;
+            case TYPE_SCOMPLEX:
+                accumulate(cr, val.data.c.real());
+                accumulate(ci, val.data.c.imag());
+                break;
+            case TYPE_DCOMPLEX:
+                accumulate(zr, val.data.z.real());
+                accumulate(zi, val.data.z.imag());
+                break;
         }
         return *this;
     }
@@ -121,18 +132,19 @@ struct atomic_accumulator
     }
 };
 
-template <typename T>
-struct atomic_reducer_helper
+template <typename T> struct atomic_reducer_helper
 {
     T first;
     len_type second;
 
     constexpr atomic_reducer_helper(T first = T(), len_type second = 0) noexcept
-    : first(first), second(second) {}
+    : first(first),
+      second(second)
+    {
+    }
 };
 
-template <typename T>
-void reduce_init(reduce_t op, T& value, len_type& idx)
+template <typename T> void reduce_init(reduce_t op, T& value, len_type& idx)
 {
     typedef std::numeric_limits<real_type_t<T>> limits;
 
@@ -141,16 +153,10 @@ void reduce_init(reduce_t op, T& value, len_type& idx)
         case REDUCE_SUM:
         case REDUCE_SUM_ABS:
         case REDUCE_MAX_ABS:
-        case REDUCE_NORM_2:
-            value = T();
-            break;
-        case REDUCE_MAX:
-            value = limits::lowest();
-            break;
+        case REDUCE_NORM_2:  value = T(); break;
+        case REDUCE_MAX:     value = limits::lowest(); break;
         case REDUCE_MIN:
-        case REDUCE_MIN_ABS:
-            value = limits::max();
-            break;
+        case REDUCE_MIN_ABS: value = limits::max(); break;
     }
 
     idx = -1;
@@ -167,8 +173,7 @@ inline void reduce_init(reduce_t op, tblis_scalar& value, len_type& idx)
     }
 }
 
-template <typename T>
-atomic_reducer_helper<T> reduce_init(reduce_t op)
+template <typename T> atomic_reducer_helper<T> reduce_init(reduce_t op)
 {
     T tmp1;
     len_type tmp2;
@@ -187,7 +192,9 @@ struct atomic_reducer
     : s(reduce_init<float>(op)),
       d(reduce_init<double>(op)),
       c(reduce_init<scomplex>(op)),
-      z(reduce_init<dcomplex>(op)) {}
+      z(reduce_init<dcomplex>(op))
+    {
+    }
 
     void store(type_t type, char* val, len_type& idx)
     {
@@ -214,7 +221,10 @@ struct atomic_reducer
 };
 
 template <typename T>
-void atomic_reduce(reduce_t op, std::atomic<atomic_reducer_helper<T>>& x, T y_val, len_type y_idx)
+void atomic_reduce(reduce_t op,
+                   std::atomic<atomic_reducer_helper<T>>& x,
+                   T y_val,
+                   len_type y_idx)
 {
     auto old = x.load();
     auto update = old;
@@ -225,9 +235,7 @@ void atomic_reduce(reduce_t op, std::atomic<atomic_reducer_helper<T>>& x, T y_va
 
         switch (op)
         {
-            case REDUCE_SUM:
-                update.first = old.first + y_val;
-                break;
+            case REDUCE_SUM: update.first = old.first + y_val; break;
             case REDUCE_SUM_ABS:
                 update.first = old.first + std::abs(y_val);
                 break;
@@ -247,16 +255,15 @@ void atomic_reduce(reduce_t op, std::atomic<atomic_reducer_helper<T>>& x, T y_va
                 if (std::abs(y_val) < old.first)
                     update = {std::abs(y_val), y_idx};
                 break;
-            case REDUCE_NORM_2:
-                update.first = old.first + y_val;
-                break;
+            case REDUCE_NORM_2: update.first = old.first + y_val; break;
         }
-    }
-    while (!x.compare_exchange_weak(old, update));
+    } while (!x.compare_exchange_weak(old, update));
 }
 
-inline void atomic_reduce(reduce_t op, atomic_reducer& x,
-                          const tblis_scalar& y_val, len_type y_idx)
+inline void atomic_reduce(reduce_t op,
+                          atomic_reducer& x,
+                          const tblis_scalar& y_val,
+                          len_type y_idx)
 {
     switch (y_val.type)
     {
@@ -270,72 +277,77 @@ inline void atomic_reduce(reduce_t op, atomic_reducer& x,
 template <typename T>
 void reduce(const communicator& comm, reduce_t op, T& value, len_type& idx)
 {
-#if TCI_USE_OPENMP_THREADS || TCI_USE_PTHREADS_THREADS || TCI_USE_WINDOWS_THREADS
+#if TCI_USE_OPENMP_THREADS      \
+    || TCI_USE_PTHREADS_THREADS \
+    || TCI_USE_WINDOWS_THREADS
     if (comm.num_threads() == 1)
     {
 #endif
 
-        if (op == REDUCE_NORM_2) value = sqrt(value);
+        if (op == REDUCE_NORM_2)
+            value = sqrt(value);
         return;
 
-#if TCI_USE_OPENMP_THREADS || TCI_USE_PTHREADS_THREADS || TCI_USE_WINDOWS_THREADS
+#if TCI_USE_OPENMP_THREADS      \
+    || TCI_USE_PTHREADS_THREADS \
+    || TCI_USE_WINDOWS_THREADS
     }
 
-    std::vector<std::pair<T,len_type>> vals;
-    if (comm.master()) vals.resize(comm.num_threads());
+    std::vector<std::pair<T, len_type>> vals;
+    if (comm.master())
+        vals.resize(comm.num_threads());
 
-    comm.broadcast(
-    [&](std::vector<std::pair<T,len_type>>& vals)
-    {
-        vals[comm.thread_num()] = {value, idx};
-    },
-    vals);
+    comm.broadcast([&](std::vector<std::pair<T, len_type>>& vals)
+                   { vals[comm.thread_num()] = {value, idx}; },
+                   vals);
 
     if (comm.master())
     {
         switch (op)
         {
             case REDUCE_SUM:
-                for (unsigned i = 1;i < comm.num_threads();i++)
+                for (unsigned i = 1; i < comm.num_threads(); i++)
                 {
                     vals[0].first += vals[i].first;
                 }
                 break;
             case REDUCE_SUM_ABS:
                 vals[0].first = std::abs(vals[0].first);
-                for (unsigned i = 1;i < comm.num_threads();i++)
+                for (unsigned i = 1; i < comm.num_threads(); i++)
                 {
                     vals[0].first += std::abs(vals[i].first);
                 }
                 break;
             case REDUCE_MAX:
-                for (unsigned i = 1;i < comm.num_threads();i++)
+                for (unsigned i = 1; i < comm.num_threads(); i++)
                 {
-                    if (vals[i].first > vals[0].first) vals[0] = vals[i];
+                    if (vals[i].first > vals[0].first)
+                        vals[0] = vals[i];
                 }
                 break;
             case REDUCE_MAX_ABS:
-                for (unsigned i = 1;i < comm.num_threads();i++)
+                for (unsigned i = 1; i < comm.num_threads(); i++)
                 {
-                    if (std::abs(vals[i].first) >
-                        std::abs(vals[0].first)) vals[0] = vals[i];
+                    if (std::abs(vals[i].first) > std::abs(vals[0].first))
+                        vals[0] = vals[i];
                 }
                 break;
             case REDUCE_MIN:
-                for (unsigned i = 1;i < comm.num_threads();i++)
+                for (unsigned i = 1; i < comm.num_threads(); i++)
                 {
-                    if (vals[i].first < vals[0].first) vals[0] = vals[i];
+                    if (vals[i].first < vals[0].first)
+                        vals[0] = vals[i];
                 }
                 break;
             case REDUCE_MIN_ABS:
-                for (unsigned i = 1;i < comm.num_threads();i++)
+                for (unsigned i = 1; i < comm.num_threads(); i++)
                 {
-                    if (std::abs(vals[i].first) <
-                        std::abs(vals[0].first)) vals[0] = vals[i];
+                    if (std::abs(vals[i].first) < std::abs(vals[0].first))
+                        vals[0] = vals[i];
                 }
                 break;
             case REDUCE_NORM_2:
-                for (unsigned i = 1;i < comm.num_threads();i++)
+                for (unsigned i = 1; i < comm.num_threads(); i++)
                 {
                     vals[0].first += vals[i].first;
                 }
@@ -351,32 +363,33 @@ void reduce(const communicator& comm, reduce_t op, T& value, len_type& idx)
 #endif
 }
 
-template <typename T>
-void reduce(const communicator& comm, T& value)
+template <typename T> void reduce(const communicator& comm, T& value)
 {
-#if TCI_USE_OPENMP_THREADS || TCI_USE_PTHREADS_THREADS || TCI_USE_WINDOWS_THREADS
+#if TCI_USE_OPENMP_THREADS      \
+    || TCI_USE_PTHREADS_THREADS \
+    || TCI_USE_WINDOWS_THREADS
     if (comm.num_threads() == 1)
     {
 #endif
 
         return;
 
-#if TCI_USE_OPENMP_THREADS || TCI_USE_PTHREADS_THREADS || TCI_USE_WINDOWS_THREADS
+#if TCI_USE_OPENMP_THREADS      \
+    || TCI_USE_PTHREADS_THREADS \
+    || TCI_USE_WINDOWS_THREADS
     }
 
     std::vector<T> vals;
-    if (comm.master()) vals.resize(comm.num_threads());
+    if (comm.master())
+        vals.resize(comm.num_threads());
 
-    comm.broadcast(
-    [&](std::vector<T>& vals)
-    {
-        vals[comm.thread_num()] = value;
-    },
-    vals);
+    comm.broadcast([&](std::vector<T>& vals)
+                   { vals[comm.thread_num()] = value; },
+                   vals);
 
     if (comm.master())
     {
-        for (unsigned i = 1;i < comm.num_threads();i++)
+        for (unsigned i = 1; i < comm.num_threads(); i++)
         {
             vals[0] += vals[i];
         }
@@ -389,17 +402,20 @@ void reduce(const communicator& comm, T& value)
 }
 
 template <typename T>
-void reduce(const communicator& comm, reduce_t op, std::atomic<atomic_reducer_helper<T>>& pair)
+void reduce(const communicator& comm,
+            reduce_t op,
+            std::atomic<atomic_reducer_helper<T>>& pair)
 {
     T tmp1;
     len_type tmp2;
     tmp1 = pair.load().first;
     tmp2 = pair.load().second;
     reduce(comm, op, tmp1, tmp2);
-    pair = {tmp1,tmp2};
+    pair = {tmp1, tmp2};
 }
 
-inline void reduce(type_t type, const communicator& comm, reduce_t op, atomic_reducer& pair)
+inline void
+reduce(type_t type, const communicator& comm, reduce_t op, atomic_reducer& pair)
 {
     switch (type)
     {
@@ -410,40 +426,41 @@ inline void reduce(type_t type, const communicator& comm, reduce_t op, atomic_re
     }
 }
 
-inline void reduce(type_t type, const communicator& comm, atomic_accumulator& value)
+inline void
+reduce(type_t type, const communicator& comm, atomic_accumulator& value)
 {
     switch (type)
     {
         case TYPE_FLOAT:
-            {
-                float tmp = value.s.load();
-                reduce(comm, tmp);
-                value.s = tmp;
-            }
-            break;
+        {
+            float tmp = value.s.load();
+            reduce(comm, tmp);
+            value.s = tmp;
+        }
+        break;
         case TYPE_DOUBLE:
-            {
-                double tmp = value.d.load();
-                reduce(comm, tmp);
-                value.d = tmp;
-            }
-            break;
+        {
+            double tmp = value.d.load();
+            reduce(comm, tmp);
+            value.d = tmp;
+        }
+        break;
         case TYPE_SCOMPLEX:
-            {
-                scomplex tmp(value.cr.load(), value.ci.load());
-                reduce(comm, tmp);
-                value.cr = tmp.real();
-                value.ci = tmp.imag();
-            }
-            break;
+        {
+            scomplex tmp(value.cr.load(), value.ci.load());
+            reduce(comm, tmp);
+            value.cr = tmp.real();
+            value.ci = tmp.imag();
+        }
+        break;
         case TYPE_DCOMPLEX:
-            {
-                dcomplex tmp(value.zr.load(), value.zi.load());
-                reduce(comm, tmp);
-                value.zr = tmp.real();
-                value.zi = tmp.imag();
-            }
-            break;
+        {
+            dcomplex tmp(value.zr.load(), value.zi.load());
+            reduce(comm, tmp);
+            value.zr = tmp.real();
+            value.zi = tmp.imag();
+        }
+        break;
     }
 }
 
@@ -456,19 +473,17 @@ void parallelize_if(const Func& f, const tblis_comm* _comm, Args&&... args)
     }
     else
     {
-        parallelize
-        (
-            [&,f](const communicator& comm) mutable
+        parallelize(
+            [&, f](const communicator& comm) mutable
             {
                 f(comm, args...);
                 comm.barrier();
             },
-            tblis_get_num_threads()
-        );
+            tblis_get_num_threads());
     }
 }
 
-}
+} // namespace tblis
 
 #endif
 

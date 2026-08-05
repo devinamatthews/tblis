@@ -18,3 +18,4 @@ autom4te.cache/
 .project
 *~
 .settings
+compile_flags.txt

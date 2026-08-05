@@ -7,7 +7,8 @@
 #include "tci/slot.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 typedef void (*tci_task_func)(tci_comm*, unsigned, void*);
@@ -20,16 +21,20 @@ typedef struct tci_task_set
     unsigned ntask;
 } tci_task_set;
 
-void tci_task_set_init(tci_task_set* set, tci_comm* comm, unsigned ntask,
+void tci_task_set_init(tci_task_set* set,
+                       tci_comm* comm,
+                       unsigned ntask,
                        uint64_t work);
 
 void tci_task_set_destroy(tci_task_set* set);
 
-int tci_task_set_visit(tci_task_set* set, tci_task_func func, unsigned task,
+int tci_task_set_visit(tci_task_set* set,
+                       tci_task_func func,
+                       unsigned task,
                        void* payload);
 
-int tci_task_set_visit_all(tci_task_set* set, tci_task_func func,
-                           void* payload);
+int
+tci_task_set_visit_all(tci_task_set* set, tci_task_func func, void* payload);
 
 #ifdef __cplusplus
 }

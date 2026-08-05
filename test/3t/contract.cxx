@@ -6,34 +6,49 @@
  * uniformly.
  */
 template <typename T>
-void random_contract(stride_type N, T&& A, label_vector& idx_A,
-                                    T&& B, label_vector& idx_B,
-                                    T&& C, label_vector& idx_C)
+void random_contract(stride_type N,
+                     T&& A,
+                     label_vector& idx_A,
+                     T&& B,
+                     label_vector& idx_B,
+                     T&& C,
+                     label_vector& idx_C)
 {
     int ndim_A, ndim_B, ndim_C;
     int ndim_AB, ndim_AC, ndim_BC;
 
     do
     {
-        ndim_A = random_number(1,8);
-        ndim_B = random_number(1,8);
-        ndim_C = random_number(1,8);
-        ndim_AB = (ndim_A+ndim_B-ndim_C)/2;
-        ndim_AC = ndim_A-ndim_AB;
-        ndim_BC = ndim_B-ndim_AB;
-    }
-    while (ndim_AB < 0 ||
-           ndim_AC < 0 ||
-           ndim_BC < 0 ||
-           (ndim_A+ndim_B+ndim_C)%2 != 0);
+        ndim_A = random_number(1, 8);
+        ndim_B = random_number(1, 8);
+        ndim_C = random_number(1, 8);
+        ndim_AB = (ndim_A + ndim_B - ndim_C) / 2;
+        ndim_AC = ndim_A - ndim_AB;
+        ndim_BC = ndim_B - ndim_AB;
+    } while (ndim_AB
+             < 0
+             || ndim_AC
+             < 0
+             || ndim_BC
+             < 0
+             || (ndim_A + ndim_B + ndim_C)
+             % 2
+             != 0);
 
     random_tensors(N,
-                   0, 0, 0,
-                   ndim_AB, ndim_AC, ndim_BC,
                    0,
-                   A, idx_A,
-                   B, idx_B,
-                   C, idx_C);
+                   0,
+                   0,
+                   ndim_AB,
+                   ndim_AC,
+                   ndim_BC,
+                   0,
+                   A,
+                   idx_A,
+                   B,
+                   idx_B,
+                   C,
+                   idx_C);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(contract, R, T, all_types)
@@ -43,14 +58,15 @@ REPLICATED_TEMPLATED_TEST_CASE(contract, R, T, all_types)
 
     random_contract(N, A, idx_A, B, idx_B, C, idx_C);
 
-    T scale(10.0*random_unit<T>());
+    T scale(10.0 * random_unit<T>());
 
     TENSOR_INFO(A);
     TENSOR_INFO(B);
     TENSOR_INFO(C);
 
     auto idx_AB = intersection(idx_A, idx_B);
-    auto neps = (prod(select_from(A.lengths(), idx_A, idx_AB))+1)*prod(C.lengths());
+    auto neps =
+        (prod(select_from(A.lengths(), idx_A, idx_AB)) + 1) * prod(C.lengths());
 
     impl = BLAS_BASED;
     D.reset(C);
@@ -63,7 +79,7 @@ REPLICATED_TEMPLATED_TEST_CASE(contract, R, T, all_types)
     add(-1, D, 1, E);
     T error = reduce<T>(REDUCE_NORM_2, E);
 
-    check("BLAS", error, scale*neps);
+    check("BLAS", error, scale * neps);
 
     impl = BLIS_BASED;
     E.reset(C);
@@ -72,7 +88,7 @@ REPLICATED_TEMPLATED_TEST_CASE(contract, R, T, all_types)
     add(-1, D, 1, E);
     error = reduce<T>(REDUCE_NORM_2, E);
 
-    check("BLIS", error, scale*neps);
+    check("BLIS", error, scale * neps);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(dpd_contract, R, T, all_types)
@@ -80,7 +96,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_contract, R, T, all_types)
     dpd_marray<T> A, B, C, D, E;
     label_vector idx_A, idx_B, idx_C;
 
-    T scale(10.0*random_unit<T>());
+    T scale(10.0 * random_unit<T>());
 
     random_contract(N, A, idx_A, B, idx_B, C, idx_C);
 
@@ -100,12 +116,10 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_contract, R, T, all_types)
     stride_type neps = 0;
     for (auto irrep_AB : range(nirrep))
     {
-        auto irrep_AC = A.irrep()^irrep_AB;
-        auto irrep_BC = B.irrep()^irrep_AB;
+        auto irrep_AC = A.irrep() ^ irrep_AB;
+        auto irrep_BC = B.irrep() ^ irrep_AB;
 
-        neps += (size_AB[irrep_AB]+1)*
-                size_AC[irrep_AC]*
-                size_BC[irrep_BC];
+        neps += (size_AB[irrep_AB] + 1) * size_AC[irrep_AC] * size_BC[irrep_BC];
     }
 
     dpd_impl = dpd_impl_t::FULL;
@@ -119,7 +133,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_contract, R, T, all_types)
     add<T>(T(-1), D, idx_C, T(1), E, idx_C);
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C);
 
-    check("BLOCKED", error, scale*neps);
+    check("BLOCKED", error, scale * neps);
 
     dpd_impl = dpd_impl_t::BLIS;
     E.reset(C);
@@ -128,7 +142,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_contract, R, T, all_types)
     add<T>(T(-1), D, idx_C, T(1), E, idx_C);
     error = reduce<T>(REDUCE_NORM_2, E, idx_C);
 
-    check("BLIS", error, scale*neps);
+    check("BLIS", error, scale * neps);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_contract, R, T, all_types)
@@ -136,7 +150,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_contract, R, T, all_types)
     indexed_marray<T> A, B, C, D, E;
     label_vector idx_A, idx_B, idx_C;
 
-    T scale(10.0*random_unit<T>());
+    T scale(10.0 * random_unit<T>());
 
     random_contract(N, A, idx_A, B, idx_B, C, idx_C);
 
@@ -145,7 +159,8 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_contract, R, T, all_types)
     INDEXED_TENSOR_INFO(C);
 
     auto idx_AB = intersection(idx_A, idx_B);
-    auto neps = (prod(select_from(A.lengths(), idx_A, idx_AB))+1)*prod(C.lengths());
+    auto neps =
+        (prod(select_from(A.lengths(), idx_A, idx_AB)) + 1) * prod(C.lengths());
 
     dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
@@ -160,7 +175,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_contract, R, T, all_types)
     add<T>(T(-1), D, idx_C, T(1), E, idx_C);
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C);
 
-    check("BLOCKED", error, scale*neps);
+    check("BLOCKED", error, scale * neps);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_contract, R, T, all_types)
@@ -168,7 +183,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_contract, R, T, all_types)
     indexed_dpd_marray<T> A, B, C, D, E;
     label_vector idx_A, idx_B, idx_C;
 
-    T scale(10.0*random_unit<T>());
+    T scale(10.0 * random_unit<T>());
 
     random_contract(N, A, idx_A, B, idx_B, C, idx_C);
 
@@ -188,12 +203,10 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_contract, R, T, all_types)
     stride_type neps = 0;
     for (auto irrep_AB : range(nirrep))
     {
-        auto irrep_AC = A.irrep()^irrep_AB;
-        auto irrep_BC = B.irrep()^irrep_AB;
+        auto irrep_AC = A.irrep() ^ irrep_AB;
+        auto irrep_BC = B.irrep() ^ irrep_AB;
 
-        neps += (size_AB[irrep_AB]+1)*
-                size_AC[irrep_AC]*
-                size_BC[irrep_BC];
+        neps += (size_AB[irrep_AB] + 1) * size_AC[irrep_AC] * size_BC[irrep_BC];
     }
 
     dpd_impl = dpd_impl_t::BLOCKED;
@@ -209,5 +222,5 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_contract, R, T, all_types)
     add<T>(T(-1), D, idx_C, T(1), E, idx_C);
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C);
 
-    check("BLOCKED", error, scale*neps);
+    check("BLOCKED", error, scale * neps);
 }

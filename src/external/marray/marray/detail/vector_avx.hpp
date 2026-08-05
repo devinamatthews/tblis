@@ -19,12 +19,16 @@ template <> struct vector_traits<float>
     template <typename T>
     static std::enable_if_t<std::is_same<T, float>::value, __m256>
     convert(__m256 v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, double>::value, __m256d>
     convert(__m256 v)
-    { return _mm256_cvtps_pd(_mm256_castps256_ps128(v)); }
+    {
+        return _mm256_cvtps_pd(_mm256_castps256_ps128(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value, __m256>
@@ -119,7 +123,9 @@ template <> struct vector_traits<float>
     template <typename T>
     static std::enable_if_t<std::is_same<T, int32_t>::value, __m256i>
     convert(__m256 v)
-    { return _mm256_cvtps_epi32(v); }
+    {
+        return _mm256_cvtps_epi32(v);
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, uint32_t>::value, __m256i>
@@ -140,25 +146,35 @@ template <> struct vector_traits<float>
                                 || std::is_same<T, uint64_t>::value,
                             __m256i>
     convert(__m256 v)
-    { return _mm256_setr_epi64x((T)v[0], (T)v[1], (T)v[2], (T)v[3]); }
+    {
+        return _mm256_setr_epi64x((T)v[0], (T)v[1], (T)v[2], (T)v[3]);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned, __m256>
     load(const float* ptr)
-    { return _mm256_loadu_ps(ptr); }
+    {
+        return _mm256_loadu_ps(ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && Aligned, __m256>
     load(const float* ptr)
-    { return _mm256_load_ps(ptr); }
+    {
+        return _mm256_load_ps(ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4, __m256> load(const float* ptr)
-    { return _mm256_broadcast_ps((__m128*)ptr); }
+    {
+        return _mm256_broadcast_ps((__m128*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2, __m256> load(const float* ptr)
-    { return _mm256_castpd_ps(_mm256_broadcast_sd((double*)ptr)); }
+    {
+        return _mm256_castpd_ps(_mm256_broadcast_sd((double*)ptr));
+    }
 
     static __m256 load1(const float* ptr) { return _mm256_broadcast_ss(ptr); }
 
@@ -166,23 +182,33 @@ template <> struct vector_traits<float>
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned> store(__m256 v, float* ptr)
-    { _mm256_storeu_ps(ptr, v); }
+    {
+        _mm256_storeu_ps(ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && Aligned> store(__m256 v, float* ptr)
-    { _mm256_store_ps(ptr, v); }
+    {
+        _mm256_store_ps(ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned> store(__m256 v, float* ptr)
-    { _mm_storeu_ps(ptr, _mm256_castps256_ps128(v)); }
+    {
+        _mm_storeu_ps(ptr, _mm256_castps256_ps128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned> store(__m256 v, float* ptr)
-    { _mm_store_ps(ptr, _mm256_castps256_ps128(v)); }
+    {
+        _mm_store_ps(ptr, _mm256_castps256_ps128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2> store(__m256 v, float* ptr)
-    { _mm_store_sd((double*)ptr, _mm_castps_pd(_mm256_castps256_ps128(v))); }
+    {
+        _mm_store_sd((double*)ptr, _mm_castps_pd(_mm256_castps256_ps128(v)));
+    }
 
     static __m256 add(__m256 a, __m256 b) { return _mm256_add_ps(a, b); }
 
@@ -205,7 +231,9 @@ template <> struct vector_traits<float>
     }
 
     static __m256 negate(__m256 a)
-    { return _mm256_xor_ps(a, _mm256_set1_ps(-0.0f)); }
+    {
+        return _mm256_xor_ps(a, _mm256_set1_ps(-0.0f));
+    }
 
     static __m256 exp(__m256 a)
     {
@@ -258,7 +286,9 @@ template <> struct vector_traits<double>
     template <typename T>
     static std::enable_if_t<std::is_same<T, double>::value, __m256d>
     convert(__m256d v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value, __m256>
@@ -277,7 +307,9 @@ template <> struct vector_traits<double>
     static std::enable_if_t<std::is_same<T, std::complex<double>>::value,
                             __m256d>
     convert(__m256d v)
-    { return _mm256_shuffle_pd(v, _mm256_setzero_pd(), 0xc); }
+    {
+        return _mm256_shuffle_pd(v, _mm256_setzero_pd(), 0xc);
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int8_t>::value, __m256i>
@@ -320,7 +352,9 @@ template <> struct vector_traits<double>
     template <typename T>
     static std::enable_if_t<std::is_same<T, int32_t>::value, __m256i>
     convert(__m256d v)
-    { return _mm256_castsi128_si256(_mm256_cvtpd_epi32(v)); }
+    {
+        return _mm256_castsi128_si256(_mm256_cvtpd_epi32(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, uint32_t>::value, __m256i>
@@ -341,21 +375,29 @@ template <> struct vector_traits<double>
                                 || std::is_same<T, uint64_t>::value,
                             __m256i>
     convert(__m256d v)
-    { return _mm256_setr_epi64x((T)v[0], (T)v[1], (T)v[2], (T)v[3]); }
+    {
+        return _mm256_setr_epi64x((T)v[0], (T)v[1], (T)v[2], (T)v[3]);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned, __m256d>
     load(const double* ptr)
-    { return _mm256_loadu_pd(ptr); }
+    {
+        return _mm256_loadu_pd(ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned, __m256d>
     load(const double* ptr)
-    { return _mm256_load_pd(ptr); }
+    {
+        return _mm256_load_pd(ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2, __m256d> load(const double* ptr)
-    { return _mm256_broadcast_pd((__m128d*)ptr); }
+    {
+        return _mm256_broadcast_pd((__m128d*)ptr);
+    }
 
     static __m256d load1(const double* ptr) { return _mm256_broadcast_sd(ptr); }
 
@@ -364,20 +406,28 @@ template <> struct vector_traits<double>
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned> store(__m256d v,
                                                           double* ptr)
-    { _mm256_storeu_pd(ptr, v); }
+    {
+        _mm256_storeu_pd(ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned> store(__m256d v, double* ptr)
-    { _mm256_store_pd(ptr, v); }
+    {
+        _mm256_store_pd(ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && !Aligned> store(__m256d v,
                                                           double* ptr)
-    { _mm_storeu_pd(ptr, _mm256_castpd256_pd128(v)); }
+    {
+        _mm_storeu_pd(ptr, _mm256_castpd256_pd128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && Aligned> store(__m256d v, double* ptr)
-    { _mm_store_pd(ptr, _mm256_castpd256_pd128(v)); }
+    {
+        _mm_store_pd(ptr, _mm256_castpd256_pd128(v));
+    }
 
     static __m256d add(__m256d a, __m256d b) { return _mm256_add_pd(a, b); }
 
@@ -396,7 +446,9 @@ template <> struct vector_traits<double>
     }
 
     static __m256d negate(__m256d a)
-    { return _mm256_xor_pd(a, _mm256_set1_pd(-0.0)); }
+    {
+        return _mm256_xor_pd(a, _mm256_set1_pd(-0.0));
+    }
 
     static __m256d exp(__m256d a)
     {
@@ -448,18 +500,24 @@ template <> struct vector_traits<std::complex<float>>
     template <typename T>
     static std::enable_if_t<std::is_same<T, double>::value, __m256d>
     convert(__m256 v)
-    { return _mm256_cvtps_pd(_mm256_castps256_ps128(convert<float>(v))); }
+    {
+        return _mm256_cvtps_pd(_mm256_castps256_ps128(convert<float>(v)));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value, __m256>
     convert(__m256 v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<double>>::value,
                             __m256d>
     convert(__m256 v)
-    { return _mm256_cvtps_pd(_mm256_castps256_ps128(v)); }
+    {
+        return _mm256_cvtps_pd(_mm256_castps256_ps128(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int8_t>::value, __m256i>
@@ -506,7 +564,9 @@ template <> struct vector_traits<std::complex<float>>
     template <typename T>
     static std::enable_if_t<std::is_same<T, int32_t>::value, __m256i>
     convert(__m256 v)
-    { return _mm256_cvtps_epi32(convert<float>(v)); }
+    {
+        return _mm256_cvtps_epi32(convert<float>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, uint32_t>::value, __m256i>
@@ -527,22 +587,30 @@ template <> struct vector_traits<std::complex<float>>
                                 || std::is_same<T, uint64_t>::value,
                             __m256i>
     convert(__m256 v)
-    { return _mm256_setr_epi64x((T)v[0], (T)v[2], (T)v[4], (T)v[6]); }
+    {
+        return _mm256_setr_epi64x((T)v[0], (T)v[2], (T)v[4], (T)v[6]);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned, __m256>
     load(const std::complex<float>* ptr)
-    { return _mm256_loadu_ps((float*)ptr); }
+    {
+        return _mm256_loadu_ps((float*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned, __m256>
     load(const std::complex<float>* ptr)
-    { return _mm256_load_ps((float*)ptr); }
+    {
+        return _mm256_load_ps((float*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2, __m256>
     load(const std::complex<float>* ptr)
-    { return _mm256_broadcast_ps((__m128*)ptr); }
+    {
+        return _mm256_broadcast_ps((__m128*)ptr);
+    }
 
     static __m256 load1(const std::complex<float>* ptr) { return set1(*ptr); }
 
@@ -556,22 +624,30 @@ template <> struct vector_traits<std::complex<float>>
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned>
     store(__m256 v, std::complex<float>* ptr)
-    { _mm256_storeu_ps((float*)ptr, v); }
+    {
+        _mm256_storeu_ps((float*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned>
     store(__m256 v, std::complex<float>* ptr)
-    { _mm256_store_ps((float*)ptr, v); }
+    {
+        _mm256_store_ps((float*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && !Aligned>
     store(__m256 v, std::complex<float>* ptr)
-    { _mm_storeu_ps((float*)ptr, _mm256_castps256_ps128(v)); }
+    {
+        _mm_storeu_ps((float*)ptr, _mm256_castps256_ps128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && Aligned>
     store(__m256 v, std::complex<float>* ptr)
-    { _mm_store_ps((float*)ptr, _mm256_castps256_ps128(v)); }
+    {
+        _mm_store_ps((float*)ptr, _mm256_castps256_ps128(v));
+    }
 
     static __m256 add(__m256 a, __m256 b) { return _mm256_add_ps(a, b); }
 
@@ -640,7 +716,9 @@ template <> struct vector_traits<std::complex<float>>
     }
 
     static __m256 negate(__m256 a)
-    { return _mm256_xor_ps(a, _mm256_set1_ps(-0.0f)); }
+    {
+        return _mm256_xor_ps(a, _mm256_set1_ps(-0.0f));
+    }
 
     static __m256 exp(__m256 a)
     {
@@ -722,7 +800,9 @@ template <> struct vector_traits<std::complex<double>>
     static std::enable_if_t<std::is_same<T, std::complex<double>>::value,
                             __m256d>
     convert(__m256d v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int8_t>::value, __m256i>
@@ -790,33 +870,47 @@ template <> struct vector_traits<std::complex<double>>
                                 || std::is_same<T, uint64_t>::value,
                             __m256i>
     convert(__m256d v)
-    { return _mm256_setr_epi64x((T)v[0], (T)v[2], (T)v[0], (T)v[2]); }
+    {
+        return _mm256_setr_epi64x((T)v[0], (T)v[2], (T)v[0], (T)v[2]);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && !Aligned, __m256d>
     load(const std::complex<double>* ptr)
-    { return _mm256_loadu_pd((double*)ptr); }
+    {
+        return _mm256_loadu_pd((double*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && Aligned, __m256d>
     load(const std::complex<double>* ptr)
-    { return _mm256_load_pd((double*)ptr); }
+    {
+        return _mm256_load_pd((double*)ptr);
+    }
 
     static __m256d load1(const std::complex<double>* ptr)
-    { return _mm256_broadcast_pd((__m128d*)ptr); }
+    {
+        return _mm256_broadcast_pd((__m128d*)ptr);
+    }
 
     static __m256d set1(std::complex<double> val)
-    { return _mm256_setr_pd(val.real(), val.imag(), val.real(), val.imag()); }
+    {
+        return _mm256_setr_pd(val.real(), val.imag(), val.real(), val.imag());
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && !Aligned>
     store(__m256d v, std::complex<double>* ptr)
-    { _mm256_storeu_pd((double*)ptr, v); }
+    {
+        _mm256_storeu_pd((double*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && Aligned>
     store(__m256d v, std::complex<double>* ptr)
-    { _mm256_store_pd((double*)ptr, v); }
+    {
+        _mm256_store_pd((double*)ptr, v);
+    }
 
     static __m256d add(__m256d a, __m256d b) { return _mm256_add_pd(a, b); }
 
@@ -859,7 +953,9 @@ template <> struct vector_traits<std::complex<double>>
     }
 
     static __m256d negate(__m256d a)
-    { return _mm256_xor_pd(a, _mm256_set1_pd(-0.0)); }
+    {
+        return _mm256_xor_pd(a, _mm256_set1_pd(-0.0));
+    }
 
     static __m256d exp(__m256d a)
     {
@@ -892,12 +988,16 @@ struct vector_traits<U,
     template <typename T>
     static std::enable_if_t<std::is_same<T, float>::value, __m256>
     convert(__m256i v)
-    { return _mm256_cvtepi32_ps(convert<int32_t>(v)); }
+    {
+        return _mm256_cvtepi32_ps(convert<int32_t>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, double>::value, __m256d>
     convert(__m256i v)
-    { return _mm256_cvtepi32_pd(_mm256_castsi256_si128(convert<int32_t>(v))); }
+    {
+        return _mm256_cvtepi32_pd(_mm256_castsi256_si128(convert<int32_t>(v)));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value, __m256>
@@ -927,7 +1027,9 @@ struct vector_traits<U,
                                 || std::is_same<T, uint8_t>::value,
                             __m256i>
     convert(__m256i v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int16_t>::value
@@ -998,11 +1100,15 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 32 && !Aligned, __m256i> load(const U* ptr)
-    { return _mm256_loadu_si256((__m256i*)ptr); }
+    {
+        return _mm256_loadu_si256((__m256i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 32 && Aligned, __m256i> load(const U* ptr)
-    { return _mm256_load_si256((__m256i*)ptr); }
+    {
+        return _mm256_load_si256((__m256i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && !Aligned, __m256i> load(const U* ptr)
@@ -1026,15 +1132,21 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8, __m256i> load(const U* ptr)
-    { return _mm256_set1_epi64x(*(int64_t*)ptr); }
+    {
+        return _mm256_set1_epi64x(*(int64_t*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4, __m256i> load(const U* ptr)
-    { return _mm256_set1_epi32(*(int32_t*)ptr); }
+    {
+        return _mm256_set1_epi32(*(int32_t*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2, __m256i> load(const U* ptr)
-    { return _mm256_set1_epi16(*(int16_t*)ptr); }
+    {
+        return _mm256_set1_epi16(*(int16_t*)ptr);
+    }
 
     static __m256i load1(const U* ptr) { return _mm256_set1_epi8(*ptr); }
 
@@ -1042,31 +1154,45 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 32 && !Aligned> store(__m256i v, U* ptr)
-    { _mm256_storeu_si256((__m256i*)ptr, v); }
+    {
+        _mm256_storeu_si256((__m256i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 32 && Aligned> store(__m256i v, U* ptr)
-    { _mm256_store_si256((__m256i*)ptr, v); }
+    {
+        _mm256_store_si256((__m256i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && !Aligned> store(__m256i v, U* ptr)
-    { _mm_storeu_si128((__m128i*)ptr, _mm256_castsi256_si128(v)); }
+    {
+        _mm_storeu_si128((__m128i*)ptr, _mm256_castsi256_si128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && Aligned> store(__m256i v, U* ptr)
-    { _mm_store_si128((__m128i*)ptr, _mm256_castsi256_si128(v)); }
+    {
+        _mm_store_si128((__m128i*)ptr, _mm256_castsi256_si128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8> store(__m256i v, U* ptr)
-    { _mm_storel_epi64((__m128i*)ptr, _mm256_castsi256_si128(v)); }
+    {
+        _mm_storel_epi64((__m128i*)ptr, _mm256_castsi256_si128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4> store(__m256i v, U* ptr)
-    { *(int32_t*)ptr = _mm_extract_epi32(_mm256_castsi256_si128(v), 0); }
+    {
+        *(int32_t*)ptr = _mm_extract_epi32(_mm256_castsi256_si128(v), 0);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2> store(__m256i v, U* ptr)
-    { *(int16_t*)ptr = _mm_extract_epi16(_mm256_castsi256_si128(v), 0); }
+    {
+        *(int16_t*)ptr = _mm_extract_epi16(_mm256_castsi256_si128(v), 0);
+    }
 
     static __m256i add(__m256i a, __m256i b)
     {
@@ -1328,12 +1454,16 @@ struct vector_traits<U,
     template <typename T>
     static std::enable_if_t<std::is_same<T, float>::value, __m256>
     convert(__m256i v)
-    { return _mm256_cvtepi32_ps(convert<int32_t>(v)); }
+    {
+        return _mm256_cvtepi32_ps(convert<int32_t>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, double>::value, __m256d>
     convert(__m256i v)
-    { return _mm256_cvtepi32_pd(_mm256_castsi256_si128(convert<int32_t>(v))); }
+    {
+        return _mm256_cvtepi32_pd(_mm256_castsi256_si128(convert<int32_t>(v)));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value, __m256>
@@ -1385,7 +1515,9 @@ struct vector_traits<U,
                                 || std::is_same<T, uint16_t>::value,
                             __m256i>
     convert(__m256i v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int32_t>::value
@@ -1433,11 +1565,15 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && !Aligned, __m256i> load(const U* ptr)
-    { return _mm256_loadu_si256((__m256i*)ptr); }
+    {
+        return _mm256_loadu_si256((__m256i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && Aligned, __m256i> load(const U* ptr)
-    { return _mm256_load_si256((__m256i*)ptr); }
+    {
+        return _mm256_load_si256((__m256i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned, __m256i> load(const U* ptr)
@@ -1461,11 +1597,15 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4, __m256i> load(const U* ptr)
-    { return _mm256_set1_epi64x(*(int64_t*)ptr); }
+    {
+        return _mm256_set1_epi64x(*(int64_t*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2, __m256i> load(const U* ptr)
-    { return _mm256_set1_epi32(*(int32_t*)ptr); }
+    {
+        return _mm256_set1_epi32(*(int32_t*)ptr);
+    }
 
     static __m256i load1(const U* ptr) { return _mm256_set1_epi16(*ptr); }
 
@@ -1473,27 +1613,39 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && !Aligned> store(__m256i v, U* ptr)
-    { _mm256_storeu_si256((__m256i*)ptr, v); }
+    {
+        _mm256_storeu_si256((__m256i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && Aligned> store(__m256i v, U* ptr)
-    { _mm256_store_si256((__m256i*)ptr, v); }
+    {
+        _mm256_store_si256((__m256i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned> store(__m256i v, U* ptr)
-    { _mm_storeu_si128((__m128i*)ptr, _mm256_castsi256_si128(v)); }
+    {
+        _mm_storeu_si128((__m128i*)ptr, _mm256_castsi256_si128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && Aligned> store(__m256i v, U* ptr)
-    { _mm_store_si128((__m128i*)ptr, _mm256_castsi256_si128(v)); }
+    {
+        _mm_store_si128((__m128i*)ptr, _mm256_castsi256_si128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4> store(__m256i v, U* ptr)
-    { _mm_storel_epi64((__m128i*)ptr, _mm256_castsi256_si128(v)); }
+    {
+        _mm_storel_epi64((__m128i*)ptr, _mm256_castsi256_si128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2> store(__m256i v, U* ptr)
-    { *(int32_t*)ptr = _mm256_extract_epi32(v, 0); }
+    {
+        *(int32_t*)ptr = _mm256_extract_epi32(v, 0);
+    }
 
     static __m256i add(__m256i a, __m256i b)
     {
@@ -1663,12 +1815,16 @@ struct vector_traits<U,
     template <typename T>
     static std::enable_if_t<std::is_same<T, float>::value, __m256>
     convert(__m256i v)
-    { return _mm256_cvtepi32_ps(v); }
+    {
+        return _mm256_cvtepi32_ps(v);
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, double>::value, __m256d>
     convert(__m256i v)
-    { return _mm256_cvtepi32_pd(_mm256_castsi256_si128(v)); }
+    {
+        return _mm256_cvtepi32_pd(_mm256_castsi256_si128(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value, __m256>
@@ -1744,7 +1900,9 @@ struct vector_traits<U,
                                 || std::is_same<T, uint32_t>::value,
                             __m256i>
     convert(__m256i v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int64_t>::value
@@ -1769,11 +1927,15 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned, __m256i> load(const U* ptr)
-    { return _mm256_loadu_si256((__m256i*)ptr); }
+    {
+        return _mm256_loadu_si256((__m256i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && Aligned, __m256i> load(const U* ptr)
-    { return _mm256_load_si256((__m256i*)ptr); }
+    {
+        return _mm256_load_si256((__m256i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned, __m256i> load(const U* ptr)
@@ -1797,7 +1959,9 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2, __m256i> load(const U* ptr)
-    { return _mm256_set1_epi64x(*(int64_t*)ptr); }
+    {
+        return _mm256_set1_epi64x(*(int64_t*)ptr);
+    }
 
     static __m256i load1(const U* ptr) { return _mm256_set1_epi32(*ptr); }
 
@@ -1805,23 +1969,33 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned> store(__m256i v, U* ptr)
-    { _mm256_storeu_si256((__m256i*)ptr, v); }
+    {
+        _mm256_storeu_si256((__m256i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && Aligned> store(__m256i v, U* ptr)
-    { _mm256_store_si256((__m256i*)ptr, v); }
+    {
+        _mm256_store_si256((__m256i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned> store(__m256i v, U* ptr)
-    { _mm_storeu_si128((__m128i*)ptr, _mm256_castsi256_si128(v)); }
+    {
+        _mm_storeu_si128((__m128i*)ptr, _mm256_castsi256_si128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned> store(__m256i v, U* ptr)
-    { _mm_store_si128((__m128i*)ptr, _mm256_castsi256_si128(v)); }
+    {
+        _mm_store_si128((__m128i*)ptr, _mm256_castsi256_si128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2> store(__m256i v, U* ptr)
-    { _mm_storel_epi64((__m128i*)ptr, _mm256_castsi256_si128(v)); }
+    {
+        _mm_storel_epi64((__m128i*)ptr, _mm256_castsi256_si128(v));
+    }
 
     static __m256i add(__m256i a, __m256i b)
     {
@@ -2081,15 +2255,21 @@ struct vector_traits<U,
                                 || std::is_same<T, uint64_t>::value,
                             __m256i>
     convert(__m256i v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned, __m256i> load(const U* ptr)
-    { return _mm256_loadu_si256((__m256i*)ptr); }
+    {
+        return _mm256_loadu_si256((__m256i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned, __m256i> load(const U* ptr)
-    { return _mm256_load_si256((__m256i*)ptr); }
+    {
+        return _mm256_load_si256((__m256i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && !Aligned, __m256i> load(const U* ptr)
@@ -2117,19 +2297,27 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned> store(__m256i v, U* ptr)
-    { _mm256_storeu_si256((__m256i*)ptr, v); }
+    {
+        _mm256_storeu_si256((__m256i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned> store(__m256i v, U* ptr)
-    { _mm256_store_si256((__m256i*)ptr, v); }
+    {
+        _mm256_store_si256((__m256i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && !Aligned> store(__m256i v, U* ptr)
-    { _mm_storeu_si128((__m128i*)ptr, _mm256_castsi256_si128(v)); }
+    {
+        _mm_storeu_si128((__m128i*)ptr, _mm256_castsi256_si128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && Aligned> store(__m256i v, U* ptr)
-    { _mm_store_si128((__m128i*)ptr, _mm256_castsi256_si128(v)); }
+    {
+        _mm_store_si128((__m128i*)ptr, _mm256_castsi256_si128(v));
+    }
 
     static __m256i add(__m256i a, __m256i b)
     {

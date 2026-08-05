@@ -96,10 +96,10 @@ if test "x$LSCPU" != "x:"; then
 fi
 
 #
-# Check for sysctl
+# Check for sysctlbyname
 #
 
-AC_CHECK_FUNCS([sysctl sysctlbyname])
+AC_CHECK_FUNCS([sysctlbyname])
 
 #
 # Check for sysconf
@@ -275,7 +275,7 @@ fi
 # core2: any
 # sandybridge: any
 # haswell: any
-# knl: icc 14.1+, gcc 5.0+, clang 3.5+
+# knl: icc 14.1+, gcc 5-13, clang 3.5-18
 # skx[12]: icc 15.1+, gcc 6.0+, clang 3.9+
 #
 if test x"$cc_vendor" = xicc; then
@@ -306,6 +306,9 @@ elif test x"$cc_vendor" = xgcc; then
                                | sed 's/ *skx2 */ /' \
                                | sed 's/ *zen */ /'`
     fi
+    if test $cc_major -gt 13; then
+        configs=`echo $configs | sed 's/ *knl */ /'`
+    fi
 elif test x"$cc_vendor" = xclang; then
     if test $cc_major -lt 3; then
         AC_MSG_ERROR([Unsupported compiler version.])
@@ -325,6 +328,9 @@ elif test x"$cc_vendor" = xclang; then
     fi
     if test $cc_major -lt 4; then
         configs=`echo $configs | sed 's/ *zen */ /'`
+    fi
+    if test $cc_major -gt 18; then
+        configs=`echo $configs | sed 's/ *knl */ /'`
     fi
 fi
 

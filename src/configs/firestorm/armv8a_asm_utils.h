@@ -34,6 +34,8 @@
 
 */
 
+// clang-format off
+
 // Apple/Clang's local label requirements.
 #if defined(__APPLE__) || defined(__clang__)
 #define LABEL(str) "   L" #str"%=: \n\t"
@@ -156,4 +158,4 @@
 " st1   {v"#V".d}[0], ["#ADDR"], "#INC" \n\t" \
 " st1   {v"#V".d}[1], ["#ADDR"], "#INC" \n\t"
 
-
+// clang-format on

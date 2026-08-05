@@ -16,7 +16,8 @@
       documentation and/or other materials provided with the distribution.
     - Neither the name of The University of Texas at Austin nor the names
       of its contributors may be used to endorse or promote products
-      derived derived from this software without specific prior written permission.
+      derived derived from this software without specific prior written
+   permission.
 
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
    AS IS AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -36,6 +37,8 @@
 #include <assert.h>
 
 #include "../knl/bli_avx512_macros.h"
+
+// clang-format off
 
 #define A_L1_PREFETCH_DIST 4 //should be multiple of 4
 
@@ -184,21 +187,23 @@
     VMOVAPD(ZMM(2), MEM(RBX,(32*n+16)*8)) \
     VMOVAPD(ZMM(3), MEM(RBX,(32*n+24)*8))
 
-//This is an array used for the scatter/gather instructions.
-static int64_t offsets[32] __attribute__((aligned(64))) =
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
-     16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31};
+// clang-format on
 
-void bli_dgemm_opt_6x32_l1(
-                             dim_t            k_,
-                             double* restrict alpha,
-                             double* restrict a,
-                             double* restrict b,
-                             double* restrict beta,
-                             double* restrict c, inc_t rs_c_, inc_t cs_c_,
-                             auxinfo_t*       data,
-                             cntx_t* restrict cntx
-                           )
+// This is an array used for the scatter/gather instructions.
+static int64_t offsets[32] __attribute__((aligned(64))) = {
+    0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15,
+    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
+
+void bli_dgemm_opt_6x32_l1(dim_t k_,
+                           double* restrict alpha,
+                           double* restrict a,
+                           double* restrict b,
+                           double* restrict beta,
+                           double* restrict c,
+                           inc_t rs_c_,
+                           inc_t cs_c_,
+                           auxinfo_t* data,
+                           cntx_t* restrict cntx)
 {
     (void)data;
     (void)cntx;
@@ -208,6 +213,7 @@ void bli_dgemm_opt_6x32_l1(
     const int64_t rs_c = rs_c_;
     const int64_t cs_c = cs_c_;
 
+    // clang-format off
     __asm__ volatile
     (
 
@@ -373,4 +379,5 @@ void bli_dgemm_opt_6x32_l1(
       "zmm22", "zmm23", "zmm24", "zmm25", "zmm26", "zmm27", "zmm28", "zmm29",
       "zmm30", "zmm31", "memory"
     );
+    // clang-format on
 }

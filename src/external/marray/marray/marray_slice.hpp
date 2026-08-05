@@ -333,7 +333,9 @@ class marray_slice
 
     /* Inherit docs */
     marray_slice& operator=(const marray_slice& other)
-    { return operator= <>(other); }
+    {
+        return operator= <>(other);
+    }
 #endif
 
     /**
@@ -350,7 +352,9 @@ class marray_slice
                   is_expression_arg_or_scalar<Expression>::value>>
 #endif
     const marray_slice& operator+=(const Expression& other) const
-    { return *this = *this + other; }
+    {
+        return *this = *this + other;
+    }
 
     /**
      * Decrement the partially-indexed portion of a tensor or tensor view by the
@@ -366,7 +370,9 @@ class marray_slice
                   is_expression_arg_or_scalar<Expression>::value>>
 #endif
     const marray_slice& operator-=(const Expression& other) const
-    { return *this = *this - other; }
+    {
+        return *this = *this - other;
+    }
 
     /**
      * Multiply the partially-indexed portion of a tensor or tensor view by the
@@ -382,7 +388,9 @@ class marray_slice
                   is_expression_arg_or_scalar<Expression>::value>>
 #endif
     const marray_slice& operator*=(const Expression& other) const
-    { return *this = *this * other; }
+    {
+        return *this = *this * other;
+    }
 
     /**
      * Divide the partially-indexed portion of a tensor or tensor view by the
@@ -398,7 +406,9 @@ class marray_slice
                   is_expression_arg_or_scalar<Expression>::value>>
 #endif
     const marray_slice& operator/=(const Expression& other) const
-    { return *this = *this / other; }
+    {
+        return *this = *this / other;
+    }
 
     /**
      * Further index the tensor or tensor view.
@@ -483,7 +493,9 @@ class marray_slice
     /* Inherit docs */
     marray_slice<Type, NDim, NIndexed, Dims..., bcast_dim>
     operator[](bcast_t) const
-    { return {*this, slice::bcast}; }
+    {
+        return {*this, slice::bcast};
+    }
 
     /**
      * Further index the tensor or tensor view.
@@ -535,7 +547,9 @@ class marray_slice
     marray_view<const Type, N>
 #endif
     cview() const
-    { return view_<const Type, N>(std::make_index_sequence<NSliced>{}); }
+    {
+        return view_<const Type, N>(std::make_index_sequence<NSliced>{});
+    }
 
     /**
      * Return a view of the partially-indexed tensor or tensor view.
@@ -561,7 +575,9 @@ class marray_slice
     marray_view<Type, N>
 #endif
     view() const
-    { return view_<Type, N>(std::make_index_sequence<NSliced>{}); }
+    {
+        return view_<Type, N>(std::make_index_sequence<NSliced>{});
+    }
 
     /**
      * Return a transposed view.
@@ -581,10 +597,14 @@ class marray_slice
     marray_view<Type, 2>
 #endif
     T() const
-    { return view().T(); }
+    {
+        return view().T();
+    }
 
     template <int Dim> auto dim() const -> decltype((std::get<Dim>(dims_)))
-    { return std::get<Dim>(dims_); }
+    {
+        return std::get<Dim>(dims_);
+    }
 
     std::array<len_type, NewNDim> bases() const
     {

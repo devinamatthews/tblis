@@ -13,10 +13,10 @@ extern int firestorm_check();
 
 TBLIS_BEGIN_CONFIG(firestorm)
 
-TBLIS_CONFIG_GEMM_MR(  12,    8, _, _)
-TBLIS_CONFIG_GEMM_NR(   8,    6, _, _)
-TBLIS_CONFIG_GEMM_KR(   8,    4, _, _)
-TBLIS_CONFIG_GEMM_MC( 480,  256, _, _)
+TBLIS_CONFIG_GEMM_MR(12, 8, _, _)
+TBLIS_CONFIG_GEMM_NR(8, 6, _, _)
+TBLIS_CONFIG_GEMM_KR(8, 4, _, _)
+TBLIS_CONFIG_GEMM_MC(480, 256, _, _)
 TBLIS_CONFIG_GEMM_NC(9600, 8184, _, _)
 TBLIS_CONFIG_GEMM_KC(4096, 3072, _, _)
 
@@ -29,6 +29,6 @@ TBLIS_CONFIG_CHECK(firestorm_check)
 
 TBLIS_END_CONFIG
 
-}
+} // namespace tblis
 
 #endif

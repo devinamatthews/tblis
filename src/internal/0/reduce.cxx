@@ -6,8 +6,7 @@ namespace internal
 {
 
 template <typename T>
-void reduce(reduce_t op, T  A, len_type  idx_A,
-                         T& B, len_type& idx_B)
+void reduce(reduce_t op, T A, len_type idx_A, T& B, len_type& idx_B)
 {
     if (op == REDUCE_SUM)
     {
@@ -51,34 +50,49 @@ void reduce(reduce_t op, T  A, len_type  idx_A,
     }
     else if (op == REDUCE_NORM_2)
     {
-        B += A*A;
+        B += A * A;
     }
 }
 
-void reduce(type_t type, reduce_t op,
-            char* A, len_type  idx_A,
-            char* B, len_type& idx_B)
+void reduce(type_t type,
+            reduce_t op,
+            char* A,
+            len_type idx_A,
+            char* B,
+            len_type& idx_B)
 {
     switch (type)
     {
         case TYPE_FLOAT:
-            reduce(op, *reinterpret_cast<float*>(A), idx_A,
-                       *reinterpret_cast<float*>(B), idx_B);
+            reduce(op,
+                   *reinterpret_cast<float*>(A),
+                   idx_A,
+                   *reinterpret_cast<float*>(B),
+                   idx_B);
             break;
         case TYPE_DOUBLE:
-            reduce(op, *reinterpret_cast<double*>(A), idx_A,
-                       *reinterpret_cast<double*>(B), idx_B);
+            reduce(op,
+                   *reinterpret_cast<double*>(A),
+                   idx_A,
+                   *reinterpret_cast<double*>(B),
+                   idx_B);
             break;
         case TYPE_SCOMPLEX:
-            reduce(op, *reinterpret_cast<scomplex*>(A), idx_A,
-                       *reinterpret_cast<scomplex*>(B), idx_B);
+            reduce(op,
+                   *reinterpret_cast<scomplex*>(A),
+                   idx_A,
+                   *reinterpret_cast<scomplex*>(B),
+                   idx_B);
             break;
         case TYPE_DCOMPLEX:
-            reduce(op, *reinterpret_cast<dcomplex*>(A), idx_A,
-                       *reinterpret_cast<dcomplex*>(B), idx_B);
+            reduce(op,
+                   *reinterpret_cast<dcomplex*>(A),
+                   idx_A,
+                   *reinterpret_cast<dcomplex*>(B),
+                   idx_B);
             break;
     }
 }
 
-}
-}
+} // namespace internal
+} // namespace tblis

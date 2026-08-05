@@ -15,12 +15,12 @@ extern int piledriver_check();
 
 TBLIS_BEGIN_CONFIG(piledriver)
 
-TBLIS_CONFIG_GEMM_MR(  16,    8,    4,    2)
-TBLIS_CONFIG_GEMM_NR(   3,    3,    2,    2)
-TBLIS_CONFIG_GEMM_KR(   8,    4,    4,    4)
-TBLIS_CONFIG_GEMM_MC(2016, 1008,  512,  400)
+TBLIS_CONFIG_GEMM_MR(16, 8, 4, 2)
+TBLIS_CONFIG_GEMM_NR(3, 3, 2, 2)
+TBLIS_CONFIG_GEMM_KR(8, 4, 4, 4)
+TBLIS_CONFIG_GEMM_MC(2016, 1008, 512, 400)
 TBLIS_CONFIG_GEMM_NC(8400, 8400, 8400, 8400)
-TBLIS_CONFIG_GEMM_KC( 128,  128,  256,  160)
+TBLIS_CONFIG_GEMM_KC(128, 128, 256, 160)
 
 TBLIS_CONFIG_GEMM_WRAP_UKR(bli_sgemm_asm_16x3,
                            bli_dgemm_asm_8x3,
@@ -31,6 +31,6 @@ TBLIS_CONFIG_CHECK(piledriver_check)
 
 TBLIS_END_CONFIG
 
-}
+} // namespace tblis
 
 #endif

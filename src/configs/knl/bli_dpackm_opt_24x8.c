@@ -35,6 +35,8 @@
 #include "bli_avx512_macros.h"
 #include "blis.h"
 
+// clang-format off
+
 #define LOADMUL8x8(a,o,s1,s3,s5,s7, \
                    z0,z1,z2,z3,z4,z5,z6,z7) \
     \
@@ -99,23 +101,25 @@
     VSHUFF64X2(ZMM(b6), ZMM(a2), ZMM(a6), IMM(0xDD)) \
     VSHUFF64X2(ZMM(b7), ZMM(a3), ZMM(a7), IMM(0xDD))
 
-//This is an array used for the scatter/gather instructions.
-static int32_t offsets[32] __attribute__((aligned(64))) =
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
-     16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31};
+// clang-format on
 
-void bli_dpackm_8xk_opt
-     (
-       conj_t         conja,
-       dim_t          n_,
-       void* restrict kappa_,
-       void* restrict a_, inc_t inca_, inc_t lda_,
-       void* restrict p_,              inc_t ldp_
-     )
+// This is an array used for the scatter/gather instructions.
+static int32_t offsets[32] __attribute__((aligned(64))) = {
+    0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15,
+    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
+
+void bli_dpackm_8xk_opt(conj_t conja,
+                        dim_t n_,
+                        void* restrict kappa_,
+                        void* restrict a_,
+                        inc_t inca_,
+                        inc_t lda_,
+                        void* restrict p_,
+                        inc_t ldp_)
 {
     (void)conja;
 
-    const int32_t * offsetPtr = &offsets[0];
+    const int32_t* offsetPtr = &offsets[0];
     double* a = (double*)a_;
     double* p = (double*)p_;
     double* kappa = (double*)kappa_;
@@ -124,6 +128,7 @@ void bli_dpackm_8xk_opt
     const int64_t lda = lda_;
     const int64_t ldp = ldp_;
 
+    // clang-format off
     __asm__ volatile
     (
         MOV(RSI, VAR(n))
@@ -294,20 +299,21 @@ void bli_dpackm_8xk_opt
           "rax", "rbx", "rcx", "rdx", "rdi", "rsi",
           "r8", "r9", "r10", "r11", "r12", "r13", "r14", "memory"
     );
+    // clang-format on
 }
 
-void bli_dpackm_24xk_opt
-     (
-       conj_t         conja,
-       dim_t          n_,
-       void* restrict kappa_,
-       void* restrict a_, inc_t inca_, inc_t lda_,
-       void* restrict p_,              inc_t ldp_
-     )
+void bli_dpackm_24xk_opt(conj_t conja,
+                         dim_t n_,
+                         void* restrict kappa_,
+                         void* restrict a_,
+                         inc_t inca_,
+                         inc_t lda_,
+                         void* restrict p_,
+                         inc_t ldp_)
 {
     (void)conja;
 
-    const int32_t * offsetPtr = &offsets[0];
+    const int32_t* offsetPtr = &offsets[0];
     double* a = (double*)a_;
     double* p = (double*)p_;
     double* kappa = (double*)kappa_;
@@ -316,6 +322,7 @@ void bli_dpackm_24xk_opt
     const int64_t lda = lda_;
     const int64_t ldp = ldp_;
 
+    // clang-format off
     __asm__ volatile
     (
         MOV(RSI, VAR(n))
@@ -539,4 +546,5 @@ void bli_dpackm_24xk_opt
           "rax", "rbx", "rcx", "rdi", "rsi",
           "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15", "memory"
     );
+    // clang-format on
 }

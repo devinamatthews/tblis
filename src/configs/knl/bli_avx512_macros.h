@@ -5,6 +5,8 @@
 // Assembly macros to make AVX-512 with AT&T syntax somewhat less painful
 //
 
+// clang-format off
+
 #define COMMENT_BEGIN "#"
 #define COMMENT_END
 
@@ -169,5 +171,7 @@
 #define VGATHERPFDPD(LEVEL,ADDRESS) ASM(vgatherpf##LEVEL##dpd ADDRESS)
 #define VSCATTERPFDPD(LEVEL,ADDRESS) ASM(vscatterpf##LEVEL##dpd ADDRESS)
 #define VZEROUPPER() ASM(vzeroupper)
+
+// clang-format on
 
 #endif

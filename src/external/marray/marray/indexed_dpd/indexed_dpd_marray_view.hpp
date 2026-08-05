@@ -48,34 +48,50 @@ class indexed_dpd_marray_view
     indexed_dpd_marray_view() { reset(); }
 
     indexed_dpd_marray_view(const indexed_dpd_marray_view& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     indexed_dpd_marray_view(indexed_dpd_marray_view&& other)
-    { reset(std::move(other)); }
+    {
+        reset(std::move(other));
+    }
 
     template <typename U, bool O, typename D>
     indexed_dpd_marray_view(const indexed_dpd_marray_base<U, D, O>& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     template <typename U, bool O, typename D>
     indexed_dpd_marray_view(indexed_dpd_marray_base<U, D, O>&& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     template <typename U, bool O, typename D>
     indexed_dpd_marray_view(indexed_dpd_marray_base<U, D, O>& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     template <typename U, bool O, typename D>
     explicit indexed_dpd_marray_view(const dpd_marray_base<U, D, O>& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     template <typename U, bool O, typename D>
     explicit indexed_dpd_marray_view(dpd_marray_base<U, D, O>&& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     template <typename U, bool O, typename D>
     explicit indexed_dpd_marray_view(dpd_marray_base<U, D, O>& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     indexed_dpd_marray_view(int irrep,
                             int nirrep,
@@ -84,7 +100,9 @@ class indexed_dpd_marray_view
                             const array_1d<int>& idx_irrep,
                             const array_2d<len_type>& idx,
                             dpd_layout layout = DEFAULT_LAYOUT)
-    { reset(irrep, nirrep, len, ptr, idx_irrep, idx, layout); }
+    {
+        reset(irrep, nirrep, len, ptr, idx_irrep, idx, layout);
+    }
 
     indexed_dpd_marray_view(int irrep,
                             int nirrep,
@@ -94,7 +112,9 @@ class indexed_dpd_marray_view
                             const array_2d<len_type>& idx,
                             const array_1d<int>& depth,
                             layout layout = DEFAULT_LAYOUT)
-    { reset(irrep, nirrep, len, ptr, idx_irrep, idx, depth, layout); }
+    {
+        reset(irrep, nirrep, len, ptr, idx_irrep, idx, depth, layout);
+    }
 
     /***********************************************************************
      *
@@ -103,7 +123,9 @@ class indexed_dpd_marray_view
      **********************************************************************/
 
     indexed_dpd_marray_view& operator=(const indexed_dpd_marray_view& other)
-    { return base::operator=(other); }
+    {
+        return base::operator=(other);
+    }
 
     using base::operator=;
     using base::cview;
@@ -160,7 +182,9 @@ class indexed_dpd_marray_view
     void swap(indexed_dpd_marray_view& other) { base::swap(other); }
 
     friend void swap(indexed_dpd_marray_view& a, indexed_dpd_marray_view& b)
-    { a.swap(b); }
+    {
+        a.swap(b);
+    }
 };
 
 MARRAY_END_NAMESPACE

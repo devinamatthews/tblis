@@ -83,7 +83,9 @@ struct layout_like : protected array_1d<stride_type>
 
     template <typename Type_, int NDim_>
     operator layout_like<Type_, NDim_>&() const
-    { return reinterpret_cast<const layout_like<Type_, NDim_>&>(*this); }
+    {
+        return reinterpret_cast<const layout_like<Type_, NDim_>&>(*this);
+    }
 
     explicit operator bool() const { return layout_ == no_layout{}; }
 };
@@ -128,7 +130,9 @@ struct base_like : protected array_1d<len_type>
 
     template <typename Type_, int NDim_>
     operator base_like<Type_, NDim_>&() const
-    { return reinterpret_cast<const base_like<Type_, NDim_>&>(*this); }
+    {
+        return reinterpret_cast<const base_like<Type_, NDim_>&>(*this);
+    }
 
     explicit operator bool() const { return base_ == no_base{}; }
 };
@@ -292,7 +296,9 @@ class marray_base
     marray_view&
 #endif
     reset(const std::vector<T>& v)
-    { return reset({v.size()}, v.data(), {1}); }
+    {
+        return reset({v.size()}, v.data(), {1});
+    }
 
     /**
      * Reset to a view that wraps a mutable std::vector of compatible type.
@@ -314,7 +320,9 @@ class marray_base
     marray_view&
 #endif
     reset(std::vector<T>& v)
-    { return reset({v.size()}, v.data(), {1}); }
+    {
+        return reset({v.size()}, v.data(), {1});
+    }
 
 #endif
 
@@ -348,7 +356,9 @@ class marray_base
 
     template <typename U, int N, bool O, typename D>
     Derived& reset(marray_base<U, N, D, O>&& other)
-    { return reset(other); }
+    {
+        return reset(other);
+    }
 
     /* Inherit docs */
     template <typename U, int N, bool O, typename D>
@@ -367,7 +377,9 @@ class marray_base
     /* Inherit docs */
     template <typename U, int N, int I, typename... D>
     Derived& reset(const marray_slice<U, N, I, D...>& other)
-    { return reset(other.view()); }
+    {
+        return reset(other.view());
+    }
 #endif
 
     /**
@@ -434,17 +446,23 @@ class marray_base
     reset(shape len, pointer ptr, base_and_or_layout layout_and_indexing);
 #else
     Derived& reset(const array_1d<len_type>& len, pointer ptr)
-    { return reset(len, ptr, DEFAULT_BASE, DEFAULT_LAYOUT); }
+    {
+        return reset(len, ptr, DEFAULT_BASE, DEFAULT_LAYOUT);
+    }
 
     /* Inherit docs */
     Derived&
     reset(const array_1d<len_type>& len, pointer ptr, const index_base& base)
-    { return reset(len, ptr, base, DEFAULT_LAYOUT); }
+    {
+        return reset(len, ptr, base, DEFAULT_LAYOUT);
+    }
 
     /* Inherit docs */
     Derived&
     reset(const array_1d<len_type>& len, pointer ptr, const layout_like& stride)
-    { return reset(len, ptr, DEFAULT_BASE, stride); }
+    {
+        return reset(len, ptr, DEFAULT_BASE, stride);
+    }
 
     /* Inherit docs */
     Derived& reset(const array_1d<len_type>& len,
@@ -471,11 +489,15 @@ class marray_base
 
     /* Inherit docs */
     Derived& reset(const array_1d<len_type>& len, pointer ptr, c_cxx_t)
-    { return reset(len, ptr, CXX, CXX); }
+    {
+        return reset(len, ptr, CXX, CXX);
+    }
 
     /* Inherit docs */
     Derived& reset(const array_1d<len_type>& len, pointer ptr, fortran_t)
-    { return reset(len, ptr, FORTRAN, FORTRAN); }
+    {
+        return reset(len, ptr, FORTRAN, FORTRAN);
+    }
 #endif
 
     /**
@@ -522,7 +544,9 @@ class marray_base
     Derived& reset(const array_1d<len_type>& begin,
                    const array_1d<len_type>& end,
                    pointer ptr)
-    { return reset(begin, end, ptr, DEFAULT_LAYOUT); }
+    {
+        return reset(begin, end, ptr, DEFAULT_LAYOUT);
+    }
 
     /* Inherit docs */
     Derived& reset(const array_1d<len_type>& begin,
@@ -696,7 +720,9 @@ class marray_base
      */
     static stride_vector strides(const array_1d<len_type>& len,
                                  layout layout = DEFAULT_LAYOUT)
-    { return detail::strides(len, layout); }
+    {
+        return detail::strides(len, layout);
+    }
 
     /**
      * Return the number of elements in a hypothetical tensor with the given
@@ -904,7 +930,9 @@ class marray_base
         NDim == DYNAMIC || NDim == marray_slice<U, N, I, D...>::NewNDim,
         Derived&>
     operator=(const marray_slice<U, N, I, D...>& other)
-    { return *this = other.view(); }
+    {
+        return *this = other.view();
+    }
 
     /* Inherit docs */
     template <typename U, int N, int I, typename... D>
@@ -912,7 +940,9 @@ class marray_base
         NDim == DYNAMIC || NDim == marray_slice<U, N, I, D...>::NewNDim,
         const Derived&>
     operator=(const marray_slice<U, N, I, D...>& other) const
-    { return *this = other.view(); }
+    {
+        return *this = other.view();
+    }
 
     /* Inherit docs */
     Derived& operator=(const marray_base& other) { return operator= <>(other); }
@@ -939,14 +969,18 @@ class marray_base
     template <typename Expression>
     std::enable_if_t<is_expression_arg_or_scalar<Expression>::value, Derived&>
     operator+=(const Expression& other)
-    { return *this = *this + other; }
+    {
+        return *this = *this + other;
+    }
 
     /* Inherit docs */
     template <typename Expression>
     std::enable_if_t<is_expression_arg_or_scalar<Expression>::value,
                      const Derived&>
     operator+=(const Expression& other) const
-    { return *this = *this + other; }
+    {
+        return *this = *this + other;
+    }
 #endif
 
     /**
@@ -970,14 +1004,18 @@ class marray_base
     template <typename Expression>
     std::enable_if_t<is_expression_arg_or_scalar<Expression>::value, Derived&>
     operator-=(const Expression& other)
-    { return *this = *this - other; }
+    {
+        return *this = *this - other;
+    }
 
     /* Inherit docs */
     template <typename Expression>
     std::enable_if_t<is_expression_arg_or_scalar<Expression>::value,
                      const Derived&>
     operator-=(const Expression& other) const
-    { return *this = *this - other; }
+    {
+        return *this = *this - other;
+    }
 #endif
 
     /**
@@ -1002,14 +1040,18 @@ class marray_base
     template <typename Expression>
     std::enable_if_t<is_expression_arg_or_scalar<Expression>::value, Derived&>
     operator*=(const Expression& other)
-    { return *this = *this * other; }
+    {
+        return *this = *this * other;
+    }
 
     /* Inherit docs */
     template <typename Expression>
     std::enable_if_t<is_expression_arg_or_scalar<Expression>::value,
                      const Derived&>
     operator*=(const Expression& other) const
-    { return *this = *this * other; }
+    {
+        return *this = *this * other;
+    }
 #endif
 
     /**
@@ -1034,14 +1076,18 @@ class marray_base
     template <typename Expression>
     std::enable_if_t<is_expression_arg_or_scalar<Expression>::value, Derived&>
     operator/=(const Expression& other)
-    { return *this = *this / other; }
+    {
+        return *this = *this / other;
+    }
 
     /* Inherit docs */
     template <typename Expression>
     std::enable_if_t<is_expression_arg_or_scalar<Expression>::value,
                      const Derived&>
     operator/=(const Expression& other) const
-    { return *this = *this / other; }
+    {
+        return *this = *this / other;
+    }
 #endif
 
     /** @} */
@@ -1067,7 +1113,9 @@ class marray_base
     marray_view<const Type, N>
 #endif
     cview() const
-    { return *this; }
+    {
+        return *this;
+    }
 
     /**
      * Return a view of this tensor.
@@ -1087,7 +1135,9 @@ class marray_base
     possibly_mutable_view view();
 #else
     marray_view<ctype, N> view() const
-    { return *this; }
+    {
+        return *this;
+    }
 
     /* Inherit docs */
     template <int N = NDim> marray_view<Type, N> view() { return *this; }
@@ -1238,7 +1288,9 @@ class marray_base
      *          faces of the tensor.
      */
     const_reverse_iterator crbegin(int dim = 0) const
-    { return const_reverse_iterator{end(dim)}; }
+    {
+        return const_reverse_iterator{end(dim)};
+    }
 
     /**
      * Return a possibly-const-qualified reverse iterator to the last leading
@@ -1262,7 +1314,9 @@ class marray_base
     possibly_const_reverse_iterator rbegin(int dim = 0);
 #else
     const_reverse_iterator rbegin(int dim = 0) const
-    { return const_reverse_iterator{end(dim)}; }
+    {
+        return const_reverse_iterator{end(dim)};
+    }
 
     reverse_iterator rbegin(int dim = 0) { return reverse_iterator{end(dim)}; }
 #endif
@@ -1287,7 +1341,9 @@ class marray_base
      *          faces of the tensor.
      */
     const_reverse_iterator crend(int dim = 0) const
-    { return const_reverse_iterator{begin(dim)}; }
+    {
+        return const_reverse_iterator{begin(dim)};
+    }
 
     /**
      * Return a possibly-const-qualified reverse iterator to one before the
@@ -1313,7 +1369,9 @@ class marray_base
     possibly_const_reverse_iterator rend(int dim = 0);
 #else
     const_reverse_iterator rend(int dim = 0) const
-    { return const_reverse_iterator{begin(dim)}; }
+    {
+        return const_reverse_iterator{begin(dim)};
+    }
 
     reverse_iterator rend(int dim = 0) { return reverse_iterator{begin(dim)}; }
 #endif
@@ -1356,7 +1414,9 @@ class marray_base
 
     /* Inherit docs */
     marray_view<ctype, NDim> shifted(const array_1d<len_type>& n) const
-    { return const_cast<marray_base&>(*this).shifted(n); }
+    {
+        return const_cast<marray_base&>(*this).shifted(n);
+    }
 #endif
 
     /**
@@ -1389,7 +1449,9 @@ class marray_base
 
     /* Inherit docs */
     marray_view<ctype, NDim> shifted(int dim, len_type n) const
-    { return const_cast<marray_base&>(*this).shifted(dim, n); }
+    {
+        return const_cast<marray_base&>(*this).shifted(dim, n);
+    }
 #endif
 
     /**
@@ -1413,11 +1475,15 @@ class marray_base
     possibly_mutable_view shifted_down(int dim);
 #else
     marray_view<Type, NDim> shifted_down(int dim)
-    { return shifted(dim, length(dim)); }
+    {
+        return shifted(dim, length(dim));
+    }
 
     /* Inherit docs */
     marray_view<ctype, NDim> shifted_down(int dim) const
-    { return const_cast<marray_base&>(*this).shifted_down(dim); }
+    {
+        return const_cast<marray_base&>(*this).shifted_down(dim);
+    }
 #endif
 
     /**
@@ -1441,11 +1507,15 @@ class marray_base
     possibly_mutable_view shifted_up(int dim);
 #else
     marray_view<Type, NDim> shifted_up(int dim)
-    { return shifted(dim, -length(dim)); }
+    {
+        return shifted(dim, -length(dim));
+    }
 
     /* Inherit docs */
     marray_view<ctype, NDim> shifted_up(int dim) const
-    { return const_cast<marray_base&>(*this).shifted_up(dim); }
+    {
+        return const_cast<marray_base&>(*this).shifted_up(dim);
+    }
 #endif
 
     /**
@@ -1476,7 +1546,9 @@ class marray_base
 
     /* Inherit docs */
     marray_view<ctype, NDim> rebased(const base_like& new_base) const
-    { return const_cast<marray_base&>(*this).rebased(new_base); }
+    {
+        return const_cast<marray_base&>(*this).rebased(new_base);
+    }
 #endif
 
     /**
@@ -1506,7 +1578,9 @@ class marray_base
 
     /* Inherit docs */
     marray_view<ctype, NDim> rebased(int dim, len_type new_base) const
-    { return const_cast<marray_base&>(*this).rebased(dim, new_base); }
+    {
+        return const_cast<marray_base&>(*this).rebased(dim, new_base);
+    }
 #endif
 
     /**
@@ -1580,7 +1654,9 @@ class marray_base
 
     /* Inherit docs */
     marray_view<ctype, NDim> permuted(const array_1d<int>& perm) const
-    { return const_cast<marray_base&>(*this).permuted(perm); }
+    {
+        return const_cast<marray_base&>(*this).permuted(perm);
+    }
 #endif
 
     /**
@@ -1620,7 +1696,9 @@ class marray_base
     std::enable_if_t<detail::are_convertible<int, Perm...>::value,
                      marray_view<ctype, NDim>>
     permuted(const Perm&... perm) const
-    { return const_cast<marray_base&>(*this).permuted(perm...); }
+    {
+        return const_cast<marray_base&>(*this).permuted(perm...);
+    }
 #endif
 
     /**
@@ -1654,7 +1732,9 @@ class marray_base
 
     /* Inherit docs */
     marray_view<ctype, NDim> transposed() const
-    { return const_cast<marray_base&>(*this).transposed(); }
+    {
+        return const_cast<marray_base&>(*this).transposed();
+    }
 #endif
 
     /**
@@ -1675,7 +1755,9 @@ class marray_base
 
     /* Inherit docs */
     marray_view<ctype, NDim> T() const
-    { return const_cast<marray_base&>(*this).T(); }
+    {
+        return const_cast<marray_base&>(*this).T();
+    }
 #endif
 
     /** @} */
@@ -1794,21 +1876,27 @@ class marray_base
     /* Inherit docs */
     template <int NewNDim = DYNAMIC>
     auto lowered(const array_1d<int>& split) const
-    { return const_cast<marray_base&>(*this).lowered<NewNDim>(split); }
+    {
+        return const_cast<marray_base&>(*this).lowered<NewNDim>(split);
+    }
 
     /* Inherit docs */
     template <typename... Splits>
     std::enable_if_t<detail::are_convertible<int, Splits...>::value,
                      marray_view<Type, sizeof...(Splits) + 1>>
     lowered(const Splits... splits)
-    { return lowered<sizeof...(Splits) + 1>({(int)splits...}); }
+    {
+        return lowered<sizeof...(Splits) + 1>({(int)splits...});
+    }
 
     /* Inherit docs */
     template <typename... Splits>
     std::enable_if_t<detail::are_convertible<int, Splits...>::value,
                      marray_view<ctype, sizeof...(Splits) + 1>>
     lowered(const Splits... splits) const
-    { return lowered<sizeof...(Splits) + 1>({(int)splits...}); }
+    {
+        return lowered<sizeof...(Splits) + 1>({(int)splits...});
+    }
 #endif
 
     /** @} */
@@ -2000,21 +2088,27 @@ class marray_base
     /* Inherit docs */
     template <int NewNDim = DYNAMIC>
     auto reshaped(const array_1d<len_type>& lengths) const
-    { return const_cast<marray_base&>(*this).reshaped<NewNDim>(lengths); }
+    {
+        return const_cast<marray_base&>(*this).reshaped<NewNDim>(lengths);
+    }
 
     /* Inherit docs */
     template <typename... Lengths>
     std::enable_if_t<detail::are_convertible<len_type, Lengths...>::value,
                      marray_view<Type, sizeof...(Lengths)>>
     reshaped(const Lengths... lengths)
-    { return reshaped<sizeof...(Lengths)>({(len_type)lengths...}); }
+    {
+        return reshaped<sizeof...(Lengths)>({(len_type)lengths...});
+    }
 
     /* Inherit docs */
     template <typename... Lengths>
     std::enable_if_t<detail::are_convertible<len_type, Lengths...>::value,
                      marray_view<ctype, sizeof...(Lengths)>>
     reshaped(const Lengths... lengths) const
-    { return reshaped<sizeof...(Lengths)>({(len_type)lengths...}); }
+    {
+        return reshaped<sizeof...(Lengths)>({(len_type)lengths...});
+    }
 #endif
 
     /** @} */
@@ -2052,7 +2146,9 @@ class marray_base
 
     /* Inherit docs */
     marray_view<ctype, NDim> reversed() const
-    { return const_cast<marray_base&>(*this).reversed(); }
+    {
+        return const_cast<marray_base&>(*this).reversed();
+    }
 #endif
 
     /**
@@ -2084,7 +2180,9 @@ class marray_base
 
     /* Inherit docs */
     marray_view<ctype, NDim> reversed(int dim) const
-    { return const_cast<marray_base&>(*this).reversed(dim); }
+    {
+        return const_cast<marray_base&>(*this).reversed(dim);
+    }
 #endif
 
     /** @} */
@@ -2117,12 +2215,16 @@ class marray_base
         N != 1,
         marray_view<const Type, NDim == DYNAMIC ? DYNAMIC : NDim - 1>>
     cslice(int dim, len_type i) const
-    { return const_cast<marray_base&>(*this).slice(dim, i); }
+    {
+        return const_cast<marray_base&>(*this).slice(dim, i);
+    }
 
     /* Inherit docs */
     template <typename = void, int N = NDim>
     std::enable_if_t<N == 1, const_reference> cslice(int dim, len_type i) const
-    { return const_cast<marray_base&>(*this).slice(dim, i); }
+    {
+        return const_cast<marray_base&>(*this).slice(dim, i);
+    }
 #endif
 
     /**
@@ -2173,7 +2275,9 @@ class marray_base
     std::enable_if_t<N != 1,
                      marray_view<ctype, NDim == DYNAMIC ? DYNAMIC : NDim - 1>>
     slice(int dim, len_type i) const
-    { return const_cast<marray_base&>(*this).slice(dim, i); }
+    {
+        return const_cast<marray_base&>(*this).slice(dim, i);
+    }
 
     /* Inherit docs */
     template <typename = void, int N = NDim>
@@ -2187,7 +2291,9 @@ class marray_base
     /* Inherit docs */
     template <typename = void, int N = NDim>
     std::enable_if_t<N == 1, cref> slice(int dim, len_type i) const
-    { return const_cast<marray_base&>(*this).slice(dim, i); }
+    {
+        return const_cast<marray_base&>(*this).slice(dim, i);
+    }
 #endif
 
     /**
@@ -2210,12 +2316,16 @@ class marray_base
         N != 1,
         marray_view<const Type, NDim == DYNAMIC ? DYNAMIC : NDim - 1>>
     cfront(int dim = 0) const
-    { return const_cast<marray_base&>(*this).front(dim); }
+    {
+        return const_cast<marray_base&>(*this).front(dim);
+    }
 
     /* Inherit docs */
     template <typename = void, int N = NDim>
     std::enable_if_t<N == 1, const_reference> cfront(int dim = 0) const
-    { return const_cast<marray_base&>(*this).front(dim); }
+    {
+        return const_cast<marray_base&>(*this).front(dim);
+    }
 #endif
 
     /**
@@ -2248,7 +2358,9 @@ class marray_base
     std::enable_if_t<N != 1,
                      marray_view<ctype, NDim == DYNAMIC ? DYNAMIC : NDim - 1>>
     front(int dim = 0) const
-    { return const_cast<marray_base&>(*this).front(dim); }
+    {
+        return const_cast<marray_base&>(*this).front(dim);
+    }
 
     /* Inherit docs */
     template <typename = void, int N = NDim>
@@ -2262,7 +2374,9 @@ class marray_base
     /* Inherit docs */
     template <typename = void, int N = NDim>
     std::enable_if_t<N == 1, cref> front(int dim = 0) const
-    { return const_cast<marray_base&>(*this).front(dim); }
+    {
+        return const_cast<marray_base&>(*this).front(dim);
+    }
 #endif
 
     /**
@@ -2285,12 +2399,16 @@ class marray_base
         N != 1,
         marray_view<const Type, NDim == DYNAMIC ? DYNAMIC : NDim - 1>>
     cback(int dim = 0) const
-    { return const_cast<marray_base&>(*this).back(dim); }
+    {
+        return const_cast<marray_base&>(*this).back(dim);
+    }
 
     /* Inherit docs */
     template <typename = void, int N = NDim>
     std::enable_if_t<N == 1, const_reference> cback(int dim = 0) const
-    { return const_cast<marray_base&>(*this).back(dim); }
+    {
+        return const_cast<marray_base&>(*this).back(dim);
+    }
 #endif
 
     /**
@@ -2323,7 +2441,9 @@ class marray_base
     std::enable_if_t<N != 1,
                      marray_view<ctype, NDim == DYNAMIC ? DYNAMIC : NDim - 1>>
     back(int dim = 0) const
-    { return const_cast<marray_base&>(*this).back(dim); }
+    {
+        return const_cast<marray_base&>(*this).back(dim);
+    }
 
     /* Inherit docs */
     template <typename = void, int N = NDim>
@@ -2337,7 +2457,9 @@ class marray_base
     /* Inherit docs */
     template <typename = void, int N = NDim>
     std::enable_if_t<N == 1, cref> back(int dim = 0) const
-    { return const_cast<marray_base&>(*this).back(dim); }
+    {
+        return const_cast<marray_base&>(*this).back(dim);
+    }
 #endif
 
     /** @} */
@@ -2392,7 +2514,9 @@ class marray_base
     /* Inherit docs */
     template <typename = void, int N = NDim>
     std::enable_if_t<N == 1, cref> operator[](len_type i) const
-    { return const_cast<marray_base&>(*this)[i]; }
+    {
+        return const_cast<marray_base&>(*this)[i];
+    }
 
     /* Inherit docs */
     template <typename = void, int N = NDim>
@@ -2434,7 +2558,9 @@ class marray_base
     template <typename = void, int N = NDim>
     std::enable_if_t<N == DYNAMIC, marray_view<ctype, DYNAMIC>>
     operator[](len_type i) const
-    { return const_cast<marray_base&>(*this)[i]; }
+    {
+        return const_cast<marray_base&>(*this)[i];
+    }
 #endif
 
     /**
@@ -2489,13 +2615,17 @@ class marray_base
     template <typename = void, int N = NDim>
     std::enable_if_t<N != DYNAMIC, marray_slice<Type, NDim, 1, slice_dim>>
     operator[](all_t)
-    { return {*this, range(length(0))}; }
+    {
+        return {*this, range(length(0))};
+    }
 
     /* Inherit docs */
     template <typename = void, int N = NDim>
     std::enable_if_t<N != DYNAMIC, marray_slice<ctype, NDim, 1, slice_dim>>
     operator[](all_t) const
-    { return {*this, range(length(0))}; }
+    {
+        return {*this, range(length(0))};
+    }
 #endif
 
     /**
@@ -2522,7 +2652,9 @@ class marray_base
     indexing_object operator[](bcast_t bcast) const;
 #else
     marray_slice<const Type, NDim, 0, bcast_dim> operator[](bcast_t) const
-    { return {*this, slice::bcast}; }
+    {
+        return {*this, slice::bcast};
+    }
 #endif
 
     /**
@@ -2562,7 +2694,9 @@ class marray_base
 
     /* Inherit docs */
     cref operator()(const array_1d<len_type>& idx) const
-    { return const_cast<marray_base&>(*this)(idx); }
+    {
+        return const_cast<marray_base&>(*this)(idx);
+    }
 #endif
 
     /**
@@ -2717,7 +2851,9 @@ class marray_base
     const_pointer
 #endif
     corigin() const
-    { return const_cast<marray_base&>(*this).origin(); }
+    {
+        return const_cast<marray_base&>(*this).origin();
+    }
 
     /**
      * Return an immutable pointer to the tensor origin.
@@ -2757,7 +2893,9 @@ class marray_base
     const_pointer
 #endif
     cdata() const
-    { return const_cast<marray_base&>(*this).data(); }
+    {
+        return const_cast<marray_base&>(*this).data();
+    }
 
     /**
      * Return a pointer to the tensor data.
@@ -2903,7 +3041,9 @@ template <typename U1,
           typename... D2>
 bool operator==(const marray_base<U1, N1, D1, O1>& lhs,
                 const marray_slice<U2, N2, I2, D2...>& rhs)
-{ return lhs == rhs.view(); }
+{
+    return lhs == rhs.view();
+}
 #endif
 
 /**
@@ -2924,19 +3064,27 @@ template <int N> immutable_view cview(tensor_or_view x);
 #else
 template <typename Type, int NDim, typename Derived, bool Owner>
 auto cview(const marray_base<Type, NDim, Derived, Owner>& x)
-{ return x.cview(); }
+{
+    return x.cview();
+}
 
 template <typename Type, int NDim, int NIndexed, typename... Dims>
 auto cview(const marray_slice<Type, NDim, NIndexed, Dims...>& x)
-{ return x.cview(); }
+{
+    return x.cview();
+}
 
 template <int N, typename Type, int NDim, typename Derived, bool Owner>
 auto cview(const marray_base<Type, NDim, Derived, Owner>& x)
-{ return x.template cview<N>(); }
+{
+    return x.template cview<N>();
+}
 
 template <int N, typename Type, int NDim, int NIndexed, typename... Dims>
 auto cview(const marray_slice<Type, NDim, NIndexed, Dims...>& x)
-{ return x.template cview<N>(); }
+{
+    return x.template cview<N>();
+}
 #endif
 
 /**
@@ -2961,27 +3109,39 @@ template <int N> possibly_mutable_view view(tensor_or_view x);
 #else
 template <typename Type, int NDim, typename Derived, bool Owner>
 auto view(const marray_base<Type, NDim, Derived, Owner>& x)
-{ return x.view(); }
+{
+    return x.view();
+}
 
 template <typename Type, int NDim, typename Derived, bool Owner>
 auto view(marray_base<Type, NDim, Derived, Owner>& x)
-{ return x.view(); }
+{
+    return x.view();
+}
 
 template <typename Type, int NDim, int NIndexed, typename... Dims>
 auto view(const marray_slice<Type, NDim, NIndexed, Dims...>& x)
-{ return x.view(); }
+{
+    return x.view();
+}
 
 template <int N, typename Type, int NDim, typename Derived, bool Owner>
 auto view(const marray_base<Type, NDim, Derived, Owner>& x)
-{ return x.template view<N>(); }
+{
+    return x.template view<N>();
+}
 
 template <int N, typename Type, int NDim, typename Derived, bool Owner>
 auto view(marray_base<Type, NDim, Derived, Owner>& x)
-{ return x.template view<N>(); }
+{
+    return x.template view<N>();
+}
 
 template <int N, typename Type, int NDim, int NIndexed, typename... Dims>
 auto view(const marray_slice<Type, NDim, NIndexed, Dims...>& x)
-{ return x.template view<N>(); }
+{
+    return x.template view<N>();
+}
 #endif
 
 /**
@@ -3066,7 +3226,9 @@ std::ostream& operator<<(std::ostream& os,
 template <typename Type, int NDim, int NIndexed, typename... Dims>
 std::ostream& operator<<(std::ostream& os,
                          const marray_slice<Type, NDim, NIndexed, Dims...>& x)
-{ return os << x.view(); }
+{
+    return os << x.view();
+}
 
 MARRAY_END_NAMESPACE
 

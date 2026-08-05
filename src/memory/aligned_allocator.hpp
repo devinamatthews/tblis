@@ -11,7 +11,7 @@
 namespace tblis
 {
 
-template <typename T, size_t N=8> struct aligned_allocator
+template <typename T, size_t N = 8> struct aligned_allocator
 {
     typedef T value_type;
 
@@ -25,15 +25,17 @@ template <typename T, size_t N=8> struct aligned_allocator
 
     T* allocate(size_t n)
     {
-        if (n == 0) return nullptr;
+        if (n == 0)
+            return nullptr;
 
         void* ptr;
 #if TBLIS_HAVE_HBWMALLOC_H
-        int ret = hbw_posix_memalign(&ptr, N, n*sizeof(T));
+        int ret = hbw_posix_memalign(&ptr, N, n * sizeof(T));
 #else
-        int ret = posix_memalign(&ptr, N, n*sizeof(T));
+        int ret = posix_memalign(&ptr, N, n * sizeof(T));
 #endif
-        if (ret != 0) throw std::bad_alloc();
+        if (ret != 0)
+            throw std::bad_alloc();
         return static_cast<T*>(ptr);
     }
 
@@ -41,7 +43,8 @@ template <typename T, size_t N=8> struct aligned_allocator
     {
         (void)n;
 
-        if (!ptr) return;
+        if (!ptr)
+            return;
 
 #if TBLIS_HAVE_HBWMALLOC_H
         hbw_free(ptr);
@@ -50,16 +53,24 @@ template <typename T, size_t N=8> struct aligned_allocator
 #endif
     }
 
-    template<class U>
-    struct rebind { typedef aligned_allocator<U, N> other; };
+    template <class U> struct rebind
+    {
+        typedef aligned_allocator<U, N> other;
+    };
 };
 
 template <typename T, size_t N, typename U, size_t M>
-bool operator==(const aligned_allocator<T, N>&, const aligned_allocator<U, M>&) { return true; }
+bool operator==(const aligned_allocator<T, N>&, const aligned_allocator<U, M>&)
+{
+    return true;
+}
 
 template <typename T, size_t N, typename U, size_t M>
-bool operator!=(const aligned_allocator<T, N>&, const aligned_allocator<U, M>&) { return false; }
-
+bool operator!=(const aligned_allocator<T, N>&, const aligned_allocator<U, M>&)
+{
+    return false;
 }
+
+} // namespace tblis
 
 #endif

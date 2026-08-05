@@ -1,6 +1,6 @@
 /*
 
-   BLIS    
+   BLIS
    An object-based framework for developing high-performance BLAS-like
    libraries.
 
@@ -16,7 +16,8 @@
       documentation and/or other materials provided with the distribution.
     - Neither the name of The University of Texas at Austin nor the names
       of its contributors may be used to endorse or promote products
-      derived derived from this software without specific prior written permission.
+      derived derived from this software without specific prior written
+   permission.
 
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
    AS IS AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -36,6 +37,8 @@
 #include <assert.h>
 
 #include "bli_avx512_macros.h"
+
+// clang-format off
 
 #define A_L1_PREFETCH_DIST 4
 #define B_L1_PREFETCH_DIST 2
@@ -157,28 +160,30 @@
 #define MAIN_LOOP_PC_L1(COUNTER) MAIN_LOOP_(COUNTER,,,COMMENT_BEGIN,COMMENT_END)
 #define MAIN_LOOP_PC_L2(COUNTER) MAIN_LOOP_(COUNTER,COMMENT_BEGIN,COMMENT_END,,)
 
-//This is an array used for the scatter/gather instructions.
-static int32_t offsets[32] __attribute__((aligned(64))) =
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
-     16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31};
+// clang-format on
 
-//#define MONITORS
-//#define LOOPMON
-void bli_dgemm_opt_30x8_knc(
-                    dim_t            k,
-                    double* restrict alpha,
-                    double* restrict a,
-                    double* restrict b,
-                    double* restrict beta,
-                    double* restrict c, inc_t rs_c, inc_t cs_c,
-                    auxinfo_t*       data,
-                    cntx_t* restrict cntx
-                  )
+// This is an array used for the scatter/gather instructions.
+static int32_t offsets[32] __attribute__((aligned(64))) = {
+    0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15,
+    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
+
+// #define MONITORS
+// #define LOOPMON
+void bli_dgemm_opt_30x8_knc(dim_t k,
+                            double* restrict alpha,
+                            double* restrict a,
+                            double* restrict b,
+                            double* restrict beta,
+                            double* restrict c,
+                            inc_t rs_c,
+                            inc_t cs_c,
+                            auxinfo_t* data,
+                            cntx_t* restrict cntx)
 {
-    const double * a_next = bli_auxinfo_next_a( data );
-    const double * b_next = bli_auxinfo_next_b( data );
+    const double* a_next = bli_auxinfo_next_a(data);
+    const double* b_next = bli_auxinfo_next_b(data);
 
-    const int32_t * offsetPtr = &offsets[0];
+    const int32_t* offsetPtr = &offsets[0];
 
 #ifdef MONITORS
     int toph, topl, both, botl, midl, midh, mid2l, mid2h;
@@ -186,7 +191,8 @@ void bli_dgemm_opt_30x8_knc(
 #ifdef LOOPMON
     int tlooph, tloopl, blooph, bloopl;
 #endif
-    
+
+    // clang-format off
     __asm__ volatile
     (
 #ifdef MONITORS
@@ -445,6 +451,7 @@ void bli_dgemm_opt_30x8_knc(
       "zmm22", "zmm23", "zmm24", "zmm25", "zmm26", "zmm27", "zmm28", "zmm29",
       "zmm30", "zmm31", "memory"
     );
+    // clang-format on
 
 #ifdef LOOPMON
     printf("looptime = \t%d\n", bloopl - tloopl);
@@ -454,6 +461,10 @@ void bli_dgemm_opt_30x8_knc(
     dim_t mid = ((dim_t)midh << 32) | midl;
     dim_t mid2 = ((dim_t)mid2h << 32) | mid2l;
     dim_t bot = ((dim_t)both << 32) | botl;
-    printf("setup =\t%u\tmain loop =\t%u\tcleanup=\t%u\ttotal=\t%u\n", mid - top, mid2 - mid, bot - mid2, bot - top);
+    printf("setup =\t%u\tmain loop =\t%u\tcleanup=\t%u\ttotal=\t%u\n",
+           mid - top,
+           mid2 - mid,
+           bot - mid2,
+           bot - top);
 #endif
 }

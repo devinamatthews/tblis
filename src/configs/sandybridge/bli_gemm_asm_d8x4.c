@@ -37,24 +37,24 @@
 
 #include "blis.h"
 
-void bli_sgemm_asm_8x8
-     (
-       dim_t               k,
-       float*     restrict alpha,
-       float*     restrict a,
-       float*     restrict b,
-       float*     restrict beta,
-       float*     restrict c, inc_t rs_c, inc_t cs_c,
-       auxinfo_t* restrict data,
-       cntx_t*    restrict cntx
-     )
+void bli_sgemm_asm_8x8(dim_t k,
+                       float* restrict alpha,
+                       float* restrict a,
+                       float* restrict b,
+                       float* restrict beta,
+                       float* restrict c,
+                       inc_t rs_c,
+                       inc_t cs_c,
+                       auxinfo_t* restrict data,
+                       cntx_t* restrict cntx)
 {
-    //void*   a_next = bli_auxinfo_next_a( data );
-    //void*   b_next = bli_auxinfo_next_b( data );
+    // void*   a_next = bli_auxinfo_next_a( data );
+    // void*   b_next = bli_auxinfo_next_b( data );
 
-    uint64_t   k_iter = k / 4;
-    uint64_t   k_left = k % 4;
+    uint64_t k_iter = k / 4;
+    uint64_t k_left = k % 4;
 
+    // clang-format off
     __asm__ volatile
     (
     "                                            \n\t"
@@ -1035,26 +1035,27 @@ void bli_sgemm_asm_8x8
       "xmm12", "xmm13", "xmm14", "xmm15",
       "memory"
     );
+    // clang-format on
 }
 
-void bli_dgemm_asm_8x4
-     (
-       dim_t               k,
-       double*    restrict alpha,
-       double*    restrict a,
-       double*    restrict b,
-       double*    restrict beta,
-       double*    restrict c, inc_t rs_c, inc_t cs_c,
-       auxinfo_t* restrict data,
-       cntx_t*    restrict cntx
-     )
+void bli_dgemm_asm_8x4(dim_t k,
+                       double* restrict alpha,
+                       double* restrict a,
+                       double* restrict b,
+                       double* restrict beta,
+                       double* restrict c,
+                       inc_t rs_c,
+                       inc_t cs_c,
+                       auxinfo_t* restrict data,
+                       cntx_t* restrict cntx)
 {
-    //void*   a_next = bli_auxinfo_next_a( data );
-    void*   b_next = bli_auxinfo_next_b( data );
+    // void*   a_next = bli_auxinfo_next_a( data );
+    void* b_next = bli_auxinfo_next_b(data);
 
-    uint64_t   k_iter = k / 4;
-    uint64_t   k_left = k % 4;
+    uint64_t k_iter = k / 4;
+    uint64_t k_left = k % 4;
 
+    // clang-format off
     __asm__ volatile
     (
     "                                            \n\t"
@@ -1724,26 +1725,27 @@ void bli_dgemm_asm_8x4
       "xmm12", "xmm13", "xmm14", "xmm15",
       "memory"
     );
+    // clang-format on
 }
 
-void bli_cgemm_asm_8x4
-     (
-       dim_t               k,
-       scomplex*  restrict alpha,
-       scomplex*  restrict a,
-       scomplex*  restrict b,
-       scomplex*  restrict beta,
-       scomplex*  restrict c, inc_t rs_c, inc_t cs_c,
-       auxinfo_t* restrict data,
-       cntx_t*    restrict cntx
-     )
+void bli_cgemm_asm_8x4(dim_t k,
+                       scomplex* restrict alpha,
+                       scomplex* restrict a,
+                       scomplex* restrict b,
+                       scomplex* restrict beta,
+                       scomplex* restrict c,
+                       inc_t rs_c,
+                       inc_t cs_c,
+                       auxinfo_t* restrict data,
+                       cntx_t* restrict cntx)
 {
-    //void*   a_next = bli_auxinfo_next_a( data );
-    void*   b_next = bli_auxinfo_next_b( data );
+    // void*   a_next = bli_auxinfo_next_a( data );
+    void* b_next = bli_auxinfo_next_b(data);
 
-    uint64_t   k_iter = k / 4;
-    uint64_t   k_left = k % 4;
+    uint64_t k_iter = k / 4;
+    uint64_t k_left = k % 4;
 
+    // clang-format off
     __asm__ volatile
     (
     "                                            \n\t"
@@ -2698,28 +2700,27 @@ void bli_cgemm_asm_8x4
       "xmm12", "xmm13", "xmm14", "xmm15",
       "memory"
     );
+    // clang-format on
 }
 
-
-
-void bli_zgemm_asm_4x4
-     (
-       dim_t               k,
-       dcomplex*  restrict alpha,
-       dcomplex*  restrict a,
-       dcomplex*  restrict b,
-       dcomplex*  restrict beta,
-       dcomplex*  restrict c, inc_t rs_c, inc_t cs_c,
-       auxinfo_t* restrict data,
-       cntx_t*    restrict cntx
-     )
+void bli_zgemm_asm_4x4(dim_t k,
+                       dcomplex* restrict alpha,
+                       dcomplex* restrict a,
+                       dcomplex* restrict b,
+                       dcomplex* restrict beta,
+                       dcomplex* restrict c,
+                       inc_t rs_c,
+                       inc_t cs_c,
+                       auxinfo_t* restrict data,
+                       cntx_t* restrict cntx)
 {
-    //void*   a_next = bli_auxinfo_next_a( data );
-    //void*   b_next = bli_auxinfo_next_b( data );
+    // void*   a_next = bli_auxinfo_next_a( data );
+    // void*   b_next = bli_auxinfo_next_b( data );
 
-    uint64_t   k_iter = k / 4;
-    uint64_t   k_left = k % 4;
+    uint64_t k_iter = k / 4;
+    uint64_t k_left = k % 4;
 
+    // clang-format off
     __asm__ volatile
     (
     "                                            \n\t"
@@ -3564,5 +3565,5 @@ void bli_zgemm_asm_4x4
       "xmm12", "xmm13", "xmm14", "xmm15",
       "memory"
     );
+    // clang-format on
 }
-

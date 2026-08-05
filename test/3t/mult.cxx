@@ -6,9 +6,13 @@
  * uniformly.
  */
 template <typename T>
-void random_mult(stride_type N, T&& A, label_vector& idx_A,
-                                T&& B, label_vector& idx_B,
-                                T&& C, label_vector& idx_C)
+void random_mult(stride_type N,
+                 T&& A,
+                 label_vector& idx_A,
+                 T&& B,
+                 label_vector& idx_B,
+                 T&& C,
+                 label_vector& idx_C)
 {
     int ndim_A, ndim_B, ndim_C;
     int ndim_AB, ndim_AC, ndim_BC;
@@ -16,29 +20,46 @@ void random_mult(stride_type N, T&& A, label_vector& idx_A,
 
     do
     {
-        ndim_A = random_number(1,8);
-        ndim_B = random_number(1,8);
-        ndim_C = random_number(1,8);
+        ndim_A = random_number(1, 8);
+        ndim_B = random_number(1, 8);
+        ndim_C = random_number(1, 8);
         ndim_ABC = random_number(min({ndim_A, ndim_B, ndim_C}));
-        ndim_AB  = (ndim_A+ndim_B-ndim_C-ndim_ABC)/2;
-        ndim_AC = ndim_A-ndim_ABC-ndim_AB;
-        ndim_BC = ndim_B-ndim_ABC-ndim_AB;
-    }
-    while (ndim_AB < 0 ||
-           ndim_AC < 0 ||
-           ndim_BC < 0 ||
-           ndim_AB+ndim_AC <= 0 ||
-           ndim_AB+ndim_BC <= 0 ||
-           ndim_AC+ndim_BC <= 0 ||
-           (ndim_A+ndim_B-ndim_C-ndim_ABC)%2 != 0);
+        ndim_AB = (ndim_A + ndim_B - ndim_C - ndim_ABC) / 2;
+        ndim_AC = ndim_A - ndim_ABC - ndim_AB;
+        ndim_BC = ndim_B - ndim_ABC - ndim_AB;
+    } while (ndim_AB
+             < 0
+             || ndim_AC
+             < 0
+             || ndim_BC
+             < 0
+             || ndim_AB
+             + ndim_AC
+             <= 0
+             || ndim_AB
+             + ndim_BC
+             <= 0
+             || ndim_AC
+             + ndim_BC
+             <= 0
+             || (ndim_A + ndim_B - ndim_C - ndim_ABC)
+             % 2
+             != 0);
 
     random_tensors(N,
-                   0, 0, 0,
-                   ndim_AB, ndim_AC, ndim_BC,
+                   0,
+                   0,
+                   0,
+                   ndim_AB,
+                   ndim_AC,
+                   ndim_BC,
                    ndim_ABC,
-                   A, idx_A,
-                   B, idx_B,
-                   C, idx_C);
+                   A,
+                   idx_A,
+                   B,
+                   idx_B,
+                   C,
+                   idx_C);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(mult, R, T, all_types)
@@ -46,7 +67,7 @@ REPLICATED_TEMPLATED_TEST_CASE(mult, R, T, all_types)
     marray<T> A, B, C, D, E;
     label_vector idx_A, idx_B, idx_C;
 
-    T scale(10.0*random_unit<T>());
+    T scale(10.0 * random_unit<T>());
 
     random_mult(N, A, idx_A, B, idx_B, C, idx_C);
 
@@ -55,7 +76,8 @@ REPLICATED_TEMPLATED_TEST_CASE(mult, R, T, all_types)
     TENSOR_INFO(C);
 
     auto idx_AB = exclusion(intersection(idx_A, idx_B), idx_C);
-    auto neps = (prod(select_from(A.lengths(), idx_A, idx_AB))+1)*prod(C.lengths());
+    auto neps =
+        (prod(select_from(A.lengths(), idx_A, idx_AB)) + 1) * prod(C.lengths());
 
     impl = REFERENCE;
     D.reset(C);
@@ -68,7 +90,7 @@ REPLICATED_TEMPLATED_TEST_CASE(mult, R, T, all_types)
     add(-1, D, 1, E);
     T error = reduce<T>(REDUCE_NORM_2, E);
 
-    check("BLAS", error, scale*neps);
+    check("BLAS", error, scale * neps);
 
     impl = BLIS_BASED;
     E.reset(C);
@@ -77,7 +99,7 @@ REPLICATED_TEMPLATED_TEST_CASE(mult, R, T, all_types)
     add(-1, D, 1, E);
     error = reduce<T>(REDUCE_NORM_2, E);
 
-    check("BLIS", error, scale*neps);
+    check("BLIS", error, scale * neps);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(dpd_mult, R, T, all_types)
@@ -85,7 +107,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_mult, R, T, all_types)
     dpd_marray<T> A, B, C, D, E;
     label_vector idx_A, idx_B, idx_C;
 
-    T scale(10.0*random_unit<T>());
+    T scale(10.0 * random_unit<T>());
 
     random_mult(N, A, idx_A, B, idx_B, C, idx_C);
 
@@ -107,24 +129,22 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_mult, R, T, all_types)
     stride_type neps = 0;
     for (auto irrep_AB : range(nirrep))
     {
-        auto irrep_ABC = A.irrep()^B.irrep()^C.irrep();
-        auto irrep_AC = A.irrep()^irrep_AB^irrep_ABC;
-        auto irrep_BC = B.irrep()^irrep_AB^irrep_ABC;
+        auto irrep_ABC = A.irrep() ^ B.irrep() ^ C.irrep();
+        auto irrep_AC = A.irrep() ^ irrep_AB ^ irrep_ABC;
+        auto irrep_BC = B.irrep() ^ irrep_AB ^ irrep_ABC;
 
-        neps += size_ABC[irrep_ABC]*
-                size_AB[irrep_AB]*
-                size_AC[irrep_AC]*
-                size_BC[irrep_BC];
+        neps += size_ABC[irrep_ABC]
+              * size_AB[irrep_AB]
+              * size_AC[irrep_AC]
+              * size_BC[irrep_BC];
     }
-    for (unsigned irrep_AC = 0;irrep_AC < nirrep;irrep_AC++)
-    for (unsigned irrep_BC = 0;irrep_BC < nirrep;irrep_BC++)
-    {
-        unsigned irrep_ABC = irrep_AC^irrep_BC^C.irrep();
+    for (unsigned irrep_AC = 0; irrep_AC < nirrep; irrep_AC++)
+        for (unsigned irrep_BC = 0; irrep_BC < nirrep; irrep_BC++)
+        {
+            unsigned irrep_ABC = irrep_AC ^ irrep_BC ^ C.irrep();
 
-        neps += size_ABC[irrep_ABC]*
-                size_AC[irrep_AC]*
-                size_BC[irrep_BC];
-    }
+            neps += size_ABC[irrep_ABC] * size_AC[irrep_AC] * size_BC[irrep_BC];
+        }
 
     dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
@@ -137,7 +157,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_mult, R, T, all_types)
     add<T>(T(-1), D, idx_C, T(1), E, idx_C);
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C);
 
-    check("BLOCKED", error, scale*neps);
+    check("BLOCKED", error, scale * neps);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_mult, R, T, all_types)
@@ -145,7 +165,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_mult, R, T, all_types)
     indexed_marray<T> A, B, C, D, E;
     label_vector idx_A, idx_B, idx_C;
 
-    T scale(10.0*random_unit<T>());
+    T scale(10.0 * random_unit<T>());
     scale = 1;
 
     random_mult(N, A, idx_A, B, idx_B, C, idx_C);
@@ -157,7 +177,8 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_mult, R, T, all_types)
     INDEXED_TENSOR_INFO(C);
 
     auto idx_AB = exclusion(intersection(idx_A, idx_B), idx_C);
-    auto neps = (prod(select_from(A.lengths(), idx_A, idx_AB))+1)*prod(C.lengths());
+    auto neps =
+        (prod(select_from(A.lengths(), idx_A, idx_AB)) + 1) * prod(C.lengths());
 
     dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
@@ -172,7 +193,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_mult, R, T, all_types)
     add<T>(T(-1), D, idx_C, T(1), E, idx_C);
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C);
 
-    check("BLOCKED", error, scale*neps);
+    check("BLOCKED", error, scale * neps);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_mult, R, T, all_types)
@@ -180,7 +201,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_mult, R, T, all_types)
     indexed_dpd_marray<T> A, B, C, D, E;
     label_vector idx_A, idx_B, idx_C;
 
-    T scale(10.0*random_unit<T>());
+    T scale(10.0 * random_unit<T>());
     scale = 1;
 
     random_mult(N, A, idx_A, B, idx_B, C, idx_C);
@@ -204,24 +225,22 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_mult, R, T, all_types)
     stride_type neps = 0;
     for (auto irrep_AB : range(nirrep))
     {
-        auto irrep_ABC = A.irrep()^B.irrep()^C.irrep();
-        auto irrep_AC = A.irrep()^irrep_AB^irrep_ABC;
-        auto irrep_BC = B.irrep()^irrep_AB^irrep_ABC;
+        auto irrep_ABC = A.irrep() ^ B.irrep() ^ C.irrep();
+        auto irrep_AC = A.irrep() ^ irrep_AB ^ irrep_ABC;
+        auto irrep_BC = B.irrep() ^ irrep_AB ^ irrep_ABC;
 
-        neps += size_ABC[irrep_ABC]*
-                size_AB[irrep_AB]*
-                size_AC[irrep_AC]*
-                size_BC[irrep_BC];
+        neps += size_ABC[irrep_ABC]
+              * size_AB[irrep_AB]
+              * size_AC[irrep_AC]
+              * size_BC[irrep_BC];
     }
-    for (unsigned irrep_AC = 0;irrep_AC < nirrep;irrep_AC++)
-    for (unsigned irrep_BC = 0;irrep_BC < nirrep;irrep_BC++)
-    {
-        unsigned irrep_ABC = irrep_AC^irrep_BC^C.irrep();
+    for (unsigned irrep_AC = 0; irrep_AC < nirrep; irrep_AC++)
+        for (unsigned irrep_BC = 0; irrep_BC < nirrep; irrep_BC++)
+        {
+            unsigned irrep_ABC = irrep_AC ^ irrep_BC ^ C.irrep();
 
-        neps += size_ABC[irrep_ABC]*
-                size_AC[irrep_AC]*
-                size_BC[irrep_BC];
-    }
+            neps += size_ABC[irrep_ABC] * size_AC[irrep_AC] * size_BC[irrep_BC];
+        }
 
     dpd_impl = dpd_impl_t::BLOCKED;
     D.reset(C);
@@ -236,5 +255,5 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_mult, R, T, all_types)
     add<T>(T(-1), D, idx_C, T(1), E, idx_C);
     T error = reduce<T>(REDUCE_NORM_2, E, idx_C);
 
-    check("BLOCKED", error, scale*neps);
+    check("BLOCKED", error, scale * neps);
 }

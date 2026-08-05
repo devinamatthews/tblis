@@ -13,16 +13,18 @@ namespace tblis
 
 extern MemoryPool BuffersForC;
 
-template <MemoryPool& Pool=BuffersForC>
-struct gemm_kernel
+template <MemoryPool& Pool = BuffersForC> struct gemm_kernel
 {
-    void operator()(const communicator& comm, const config& cfg,
-                    abstract_matrix& A, abstract_matrix& B, abstract_matrix& C) const
+    void operator()(const communicator& comm,
+                    const config& cfg,
+                    abstract_matrix& A,
+                    abstract_matrix& B,
+                    abstract_matrix& C) const
     {
         C.gemm(comm, cfg, Pool, A, B);
     }
 };
 
-}
+} // namespace tblis
 
 #endif

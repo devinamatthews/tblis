@@ -6,16 +6,15 @@
  * uniformly.
  */
 template <typename T>
-void random_dot(stride_type N, T&& A, label_vector& idx_A,
-                               T&& B, label_vector& idx_B)
+void random_dot(stride_type N,
+                T&& A,
+                label_vector& idx_A,
+                T&& B,
+                label_vector& idx_B)
 {
-    auto ndim_A = random_number(1,8);
+    auto ndim_A = random_number(1, 8);
 
-    random_tensors(N,
-                   0, 0,
-                   ndim_A,
-                   A, idx_A,
-                   B, idx_B);
+    random_tensors(N, 0, 0, ndim_A, A, idx_A, B, idx_B);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(dot, R, T, all_types)
@@ -34,7 +33,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dot, R, T, all_types)
     B.for_each_element([](T& e) { e = tblis::conj(e); });
     T ref_val = reduce<T>(REDUCE_NORM_2, A, idx_A);
     T calc_val = dot<T>(A, idx_A, B, idx_B);
-    check("NRM2", ref_val*ref_val, calc_val, neps);
+    check("NRM2", ref_val * ref_val, calc_val, neps);
 
     B = T(1);
     ref_val = reduce<T>(REDUCE_SUM, A, idx_A);

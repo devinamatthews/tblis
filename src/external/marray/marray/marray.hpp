@@ -70,7 +70,9 @@ class marray
 #else
     marray(const std::vector<T>& v)
 #endif
-    { reset(v); }
+    {
+        reset(v);
+    }
 
 #endif // MARRAY_DISABLE_VECTOR_CONSTRUCTOR
 
@@ -87,17 +89,23 @@ class marray
 #else
     template <typename U, int N, int I, typename... D>
     marray(const marray_slice<U, N, I, D...>& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     /* Inherit docs */
     template <typename U, int N, typename D, bool O>
     marray(const marray_base<U, N, D, O>& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     /* Inherit docs */
     template <typename U, int N, typename A>
     marray(const marray<U, N, A>& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     /* Inherit docs */
     marray(const marray& other) { reset(other); }
@@ -118,17 +126,23 @@ class marray
 #else
     template <typename U, int N, int I, typename... D>
     marray(const marray_slice<U, N, I, D...>& other, layout layout)
-    { reset(other, layout); }
+    {
+        reset(other, layout);
+    }
 
     /* Inherit docs */
     template <typename U, int N, typename D, bool O>
     marray(const marray_base<U, N, D, O>& other, layout layout)
-    { reset(other, layout); }
+    {
+        reset(other, layout);
+    }
 
     /* Inherit docs */
     template <typename U, int N, typename A>
     marray(const marray<U, N, A>& other, layout layout)
-    { reset(other, layout); }
+    {
+        reset(other, layout);
+    }
 #endif
 
     /**
@@ -146,17 +160,23 @@ class marray
 #else
     template <typename U, int N, int I, typename... D>
     marray(const marray_slice<U, N, I, D...>& other, index_base base)
-    { reset(other, base); }
+    {
+        reset(other, base);
+    }
 
     /* Inherit docs */
     template <typename U, int N, typename D, bool O>
     marray(const marray_base<U, N, D, O>& other, index_base base)
-    { reset(other, base); }
+    {
+        reset(other, base);
+    }
 
     /* Inherit docs */
     template <typename U, int N, typename A>
     marray(const marray<U, N, A>& other, index_base base)
-    { reset(other, base); }
+    {
+        reset(other, base);
+    }
 #endif
 
     /**
@@ -175,12 +195,16 @@ class marray
     marray(const marray_slice<U, N, I, D...>& other,
            index_base base,
            layout layout)
-    { reset(other, base, layout); }
+    {
+        reset(other, base, layout);
+    }
 
     /* Inherit docs */
     template <typename U, int N, typename D, bool O>
     marray(const marray_base<U, N, D, O>& other, index_base base, layout layout)
-    { reset(other, base, layout); }
+    {
+        reset(other, base, layout);
+    }
 #endif
 
     /**
@@ -196,12 +220,16 @@ class marray
 #else
     template <typename U, int N, int I, typename... D>
     marray(const marray_slice<U, N, I, D...>& other, fortran_t)
-    { reset(other, FORTRAN); }
+    {
+        reset(other, FORTRAN);
+    }
 
     /* Inherit docs */
     template <typename U, int N, typename D, bool O>
     marray(const marray_base<U, N, D, O>& other, fortran_t)
-    { reset(other, FORTRAN); }
+    {
+        reset(other, FORTRAN);
+    }
 #endif
 
     /**
@@ -230,7 +258,9 @@ class marray
 #else
     template <typename Type_ = Type> explicit marray(detail::len_type_init len)
 #endif
-    { reset(len); }
+    {
+        reset(len);
+    }
 
     /**
      * Create a tensor of the specified shape and fill value.
@@ -245,7 +275,9 @@ class marray
      *                  use value-initialization.
      */
     explicit marray(const array_1d<len_type>& len, const Type& val = Type())
-    { reset(len, val); }
+    {
+        reset(len, val);
+    }
 
     /**
      * Create a tensor of the specified shape and fill value.
@@ -262,7 +294,9 @@ class marray
 #else
     explicit marray(const array_1d<len_type>& len, uninitialized_t)
 #endif
-    { reset(len, uninitialized); }
+    {
+        reset(len, uninitialized);
+    }
 
     /**
      * Create a tensor of the specified shape and with the given layout.
@@ -276,7 +310,9 @@ class marray
      *                  MArray::COLUMN_MAJOR).
      */
     explicit marray(const array_1d<len_type>& len, layout layout)
-    { reset(len, layout); }
+    {
+        reset(len, layout);
+    }
 
     /**
      * Create a tensor of the specified shape and with the given fill value and
@@ -295,7 +331,9 @@ class marray
     explicit marray(const array_1d<len_type>& len,
                     const Type& val,
                     layout layout)
-    { reset(len, val, layout); }
+    {
+        reset(len, val, layout);
+    }
 
     /**
      * Create a tensor of the specified shape and with the given layout and
@@ -320,7 +358,9 @@ class marray
                     uninitialized_t,
                     layout layout)
 #endif
-    { reset(len, uninitialized, layout); }
+    {
+        reset(len, uninitialized, layout);
+    }
 
     /**
      * Create a tensor of the specified shape and with the given base.
@@ -335,7 +375,9 @@ class marray
      *                MArray::MATLAB)).
      */
     explicit marray(const array_1d<len_type>& len, index_base base)
-    { reset(len, base); }
+    {
+        reset(len, base);
+    }
 
     /**
      * Create a tensor of the specified shape and with the given fill value and
@@ -355,7 +397,9 @@ class marray
     explicit marray(const array_1d<len_type>& len,
                     const Type& val,
                     index_base base)
-    { reset(len, val, base); }
+    {
+        reset(len, val, base);
+    }
 
     /**
      * Create a tensor of the specified shape and with the given base and
@@ -381,7 +425,9 @@ class marray
                     uninitialized_t,
                     index_base base)
 #endif
-    { reset(len, uninitialized, base); }
+    {
+        reset(len, uninitialized, base);
+    }
 
     /**
      * Create a tensor of the specified shape and with the given base and
@@ -403,7 +449,9 @@ class marray
     explicit marray(const array_1d<len_type>& len,
                     index_base base,
                     layout layout)
-    { reset(len, base, layout); }
+    {
+        reset(len, base, layout);
+    }
 
     /**
      * Create a tensor of the specified shape and with the given fill value,
@@ -428,7 +476,9 @@ class marray
                     const Type& val,
                     index_base base,
                     layout layout)
-    { reset(len, val, base, layout); }
+    {
+        reset(len, val, base, layout);
+    }
 
     /**
      * Create a tensor of the specified shape and with the given base and
@@ -460,7 +510,9 @@ class marray
                     index_base base,
                     layout layout)
 #endif
-    { reset(len, uninitialized, base, layout); }
+    {
+        reset(len, uninitialized, base, layout);
+    }
 
     /**
      * Create a tensor of the specified shape and FORTRAN/MATLAB layout.
@@ -476,7 +528,9 @@ class marray
 #else
     explicit marray(const array_1d<len_type>& len, fortran_t)
 #endif
-    { reset(len, FORTRAN); }
+    {
+        reset(len, FORTRAN);
+    }
 
     /**
      * Create a tensor of the specified shape in FORTRAN/MATLAB layout, with the
@@ -497,7 +551,9 @@ class marray
 #else
     explicit marray(const array_1d<len_type>& len, const Type& val, fortran_t)
 #endif
-    { reset(len, val, FORTRAN); }
+    {
+        reset(len, val, FORTRAN);
+    }
 
     /**
      * Create a tensor of the specified shape in FORTRAN/MATLAB layout,
@@ -518,7 +574,9 @@ class marray
 #else
     explicit marray(const array_1d<len_type>& len, uninitialized_t, fortran_t)
 #endif
-    { reset(len, uninitialized, FORTRAN); }
+    {
+        reset(len, uninitialized, FORTRAN);
+    }
 
     /**
      * Create a tensor with the specified data.
@@ -542,7 +600,9 @@ class marray
            layout layout = DEFAULT_LAYOUT,
            std::enable_if_t<(NDim_ > 1)>* = nullptr)
 #endif
-    { reset(data, layout); }
+    {
+        reset(data, layout);
+    }
 
     /**
      * Create a tensor from the given expression.
@@ -582,10 +642,14 @@ class marray
     /** @{ */
 
     marray& operator=(const marray& other)
-    { return base_class::operator=(other); }
+    {
+        return base_class::operator=(other);
+    }
 
     marray& operator=(initializer_type other)
-    { return base_class::operator=(other); }
+    {
+        return base_class::operator=(other);
+    }
 
     using base_class::operator=;
     using base_class::operator+=;
@@ -810,7 +874,9 @@ class marray
     marray&
 #endif
     reset(const std::vector<T>& v)
-    { return reset(marray_view<const T, 1>{v}); }
+    {
+        return reset(marray_view<const T, 1>{v});
+    }
 
 #endif // MARRAY_DISABLE_VECTOR_CONSTRUCTOR
 
@@ -829,17 +895,23 @@ class marray
 #else
     template <typename U, int N, int I, typename... D>
     marray& reset(const marray_slice<U, N, I, D...>& other)
-    { return reset(other.view(), DEFAULT_BASE, DEFAULT_LAYOUT); }
+    {
+        return reset(other.view(), DEFAULT_BASE, DEFAULT_LAYOUT);
+    }
 
     /* Inherit docs */
     template <typename U, int N, typename D, bool O>
     marray& reset(const marray_base<U, N, D, O>& other)
-    { return reset(other, DEFAULT_BASE, DEFAULT_LAYOUT); }
+    {
+        return reset(other, DEFAULT_BASE, DEFAULT_LAYOUT);
+    }
 
     /* Inherit docs */
     template <typename U, int N, typename A>
     marray& reset(const marray<U, N, A>& other)
-    { return reset(other, other.initial_base_, other.layout_); }
+    {
+        return reset(other, other.initial_base_, other.layout_);
+    }
 #endif
 
     /**
@@ -860,17 +932,23 @@ class marray
 #else
     template <typename U, int N, int I, typename... D>
     marray& reset(const marray_slice<U, N, I, D...>& other, layout layout)
-    { return reset(other.view(), DEFAULT_BASE, layout); }
+    {
+        return reset(other.view(), DEFAULT_BASE, layout);
+    }
 
     /* Inherit docs */
     template <typename U, int N, typename D, bool O>
     marray& reset(const marray_base<U, N, D, O>& other, layout layout)
-    { return reset(other, DEFAULT_BASE, layout); }
+    {
+        return reset(other, DEFAULT_BASE, layout);
+    }
 
     /* Inherit docs */
     template <typename U, int N, typename A>
     marray& reset(const marray<U, N, A>& other, layout layout)
-    { return reset(other, other.initial_base_, layout); }
+    {
+        return reset(other, other.initial_base_, layout);
+    }
 #endif
 
     /**
@@ -892,17 +970,23 @@ class marray
     template <typename U, int N, int I, typename... D>
     marray& reset(const marray_slice<U, N, I, D...>& other,
                   MArray::index_base base)
-    { return reset(other.view(), base, DEFAULT_LAYOUT); }
+    {
+        return reset(other.view(), base, DEFAULT_LAYOUT);
+    }
 
     /* Inherit docs */
     template <typename U, int N, typename D, bool O>
     marray& reset(const marray_base<U, N, D, O>& other, MArray::index_base base)
-    { return reset(other, base, DEFAULT_LAYOUT); }
+    {
+        return reset(other, base, DEFAULT_LAYOUT);
+    }
 
     /* Inherit docs */
     template <typename U, int N, typename A>
     marray& reset(const marray<U, N, A>& other, MArray::index_base base)
-    { return reset(other, base, other.layout_); }
+    {
+        return reset(other, base, other.layout_);
+    }
 #endif
 
     /**
@@ -924,7 +1008,9 @@ class marray
     marray& reset(const marray_slice<U, N, I, D...>& other,
                   MArray::index_base base,
                   layout layout)
-    { return reset(other.view(), base, layout); }
+    {
+        return reset(other.view(), base, layout);
+    }
 
     /* Inherit docs */
     template <typename U, int N, typename D, bool O>
@@ -966,12 +1052,16 @@ class marray
 #else
     template <typename U, int N, int I, typename... D>
     marray& reset(const marray_slice<U, N, I, D...>& other, fortran_t)
-    { return reset(other.view(), BASE_ONE, COLUMN_MAJOR); }
+    {
+        return reset(other.view(), BASE_ONE, COLUMN_MAJOR);
+    }
 
     /* Inherit docs */
     template <typename U, int N, typename D, bool O>
     marray& reset(const marray_base<U, N, D, O>& other, fortran_t)
-    { return reset(other, BASE_ONE, COLUMN_MAJOR); }
+    {
+        return reset(other, BASE_ONE, COLUMN_MAJOR);
+    }
 #endif
 
     /**
@@ -989,7 +1079,9 @@ class marray
      * @return    A reference to the marray.
      */
     marray& reset(const array_1d<len_type>& len, const Type& val = Type())
-    { return reset(len, val, DEFAULT_BASE, DEFAULT_LAYOUT); }
+    {
+        return reset(len, val, DEFAULT_BASE, DEFAULT_LAYOUT);
+    }
 
     /**
      * Re-initialize to a tensor of the specified shape and fill value.
@@ -1008,7 +1100,9 @@ class marray
 #else
     marray& reset(const array_1d<len_type>& len, uninitialized_t)
 #endif
-    { return reset(len, uninitialized, DEFAULT_BASE, DEFAULT_LAYOUT); }
+    {
+        return reset(len, uninitialized, DEFAULT_BASE, DEFAULT_LAYOUT);
+    }
 
     /**
      * Re-initialize to a tensor of the specified shape and with the given
@@ -1025,7 +1119,9 @@ class marray
      * @return       A reference to the marray.
      */
     marray& reset(const array_1d<len_type>& len, layout layout)
-    { return reset(len, Type(), DEFAULT_BASE, layout); }
+    {
+        return reset(len, Type(), DEFAULT_BASE, layout);
+    }
 
     /**
      * Re-initialize to a tensor of the specified shape and with the given fill
@@ -1044,7 +1140,9 @@ class marray
      * @return       A reference to the marray.
      */
     marray& reset(const array_1d<len_type>& len, const Type& val, layout layout)
-    { return reset(len, val, DEFAULT_BASE, layout); }
+    {
+        return reset(len, val, DEFAULT_BASE, layout);
+    }
 
     /**
      * Re-initialize to a tensor of the specified shape and with the given
@@ -1070,7 +1168,9 @@ class marray
 #else
     marray& reset(const array_1d<len_type>& len, uninitialized_t, layout layout)
 #endif
-    { return reset(len, uninitialized, DEFAULT_BASE, layout); }
+    {
+        return reset(len, uninitialized, DEFAULT_BASE, layout);
+    }
 
     /**
      * Re-initialize to a tensor of the specified shape and with the given base.
@@ -1086,7 +1186,9 @@ class marray
      * @return     A reference to the marray.
      */
     marray& reset(const array_1d<len_type>& len, MArray::index_base base)
-    { return reset(len, Type(), base, DEFAULT_LAYOUT); }
+    {
+        return reset(len, Type(), base, DEFAULT_LAYOUT);
+    }
 
     /**
      * Re-initialize to a tensor of the specified shape and with the given fill
@@ -1107,7 +1209,9 @@ class marray
     marray& reset(const array_1d<len_type>& len,
                   const Type& val,
                   MArray::index_base base)
-    { return reset(len, val, base, DEFAULT_LAYOUT); }
+    {
+        return reset(len, val, base, DEFAULT_LAYOUT);
+    }
 
     /**
      * Re-initialize to a tensor of the specified shape and with the given base
@@ -1133,7 +1237,9 @@ class marray
                   uninitialized_t,
                   MArray::index_base base)
 #endif
-    { return reset(len, uninitialized, base, DEFAULT_LAYOUT); }
+    {
+        return reset(len, uninitialized, base, DEFAULT_LAYOUT);
+    }
 
     /**
      * Re-initialize to a tensor of the specified shape and with the given base
@@ -1155,7 +1261,9 @@ class marray
      */
     marray&
     reset(const array_1d<len_type>& len, MArray::index_base base, layout layout)
-    { return reset(len, Type(), base, layout); }
+    {
+        return reset(len, Type(), base, layout);
+    }
 
     /**
      * Re-initialize to a tensor of the specified shape and with the given fill
@@ -1255,7 +1363,9 @@ class marray
      */
     marray&
     reset(const array_1d<len_type>& len, layout layout, MArray::index_base base)
-    { return reset(len, Type(), base, layout); }
+    {
+        return reset(len, Type(), base, layout);
+    }
 
     /**
      * Re-initialize to a tensor of the specified shape and with the given fill
@@ -1281,7 +1391,9 @@ class marray
                   const Type& val,
                   layout layout,
                   MArray::index_base base)
-    { return reset(len, val, base, layout); }
+    {
+        return reset(len, val, base, layout);
+    }
 
     /**
      * Re-initialize to a tensor of the specified shape and FORTRAN/MATLAB
@@ -1300,7 +1412,9 @@ class marray
 #else
     marray& reset(const array_1d<len_type>& len, fortran_t)
 #endif
-    { return reset(len, Type(), BASE_ONE, COLUMN_MAJOR); }
+    {
+        return reset(len, Type(), BASE_ONE, COLUMN_MAJOR);
+    }
 
     /**
      * Re-initialize to a tensor of the specified shape in FORTRAN/MATLAB
@@ -1322,7 +1436,9 @@ class marray
 #else
     marray& reset(const array_1d<len_type>& len, const Type& val, fortran_t)
 #endif
-    { return reset(len, val, BASE_ONE, COLUMN_MAJOR); }
+    {
+        return reset(len, val, BASE_ONE, COLUMN_MAJOR);
+    }
 
     /**
      * Re-initialize to a tensor of the specified shape in FORTRAN/MATLAB
@@ -1346,7 +1462,9 @@ class marray
 #else
     marray& reset(const array_1d<len_type>& len, uninitialized_t, fortran_t)
 #endif
-    { return reset(len, uninitialized, BASE_ONE, COLUMN_MAJOR); }
+    {
+        return reset(len, uninitialized, BASE_ONE, COLUMN_MAJOR);
+    }
 
     /**
      * Re-inititialize a tensor from the specified data.
@@ -1466,7 +1584,9 @@ class marray
               typename = std::enable_if_t<N == 1>>
 #endif
     void push_back(const Type& x)
-    { push_back(0, x); }
+    {
+        push_back(0, x);
+    }
 
     /**
      * Append a new element or face to the end of the specified dimension.
@@ -1526,7 +1646,9 @@ class marray
               typename = std::enable_if_t<N == 1>>
 #endif
     void pop_back()
-    { resize({length() - 1}); }
+    {
+        resize({length() - 1});
+    }
 
     /**
      * Remove the element or face at the end of the specified dimension.
@@ -1603,7 +1725,9 @@ class marray
  */
 template <typename Type, int NDim, typename Allocator>
 void swap(marray<Type, NDim, Allocator>& a, marray<Type, NDim, Allocator>& b)
-{ a.swap(b); }
+{
+    a.swap(b);
+}
 
 MARRAY_END_NAMESPACE
 

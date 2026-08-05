@@ -16,20 +16,17 @@ enum config_t
 
 using instance_fn_t = const config& (*)(void);
 
-const char* names[num_configs] =
-{
+const char* names[num_configs] = {
 #define FOREACH_CONFIG(config) config::name,
 #include "configs/foreach_config.h"
 };
 
-const check_fn_t check[num_configs] =
-{
+const check_fn_t check[num_configs] = {
 #define FOREACH_CONFIG(config) config::check,
 #include "configs/foreach_config.h"
 };
 
-const instance_fn_t instance[num_configs] =
-{
+const instance_fn_t instance[num_configs] = {
 #define FOREACH_CONFIG(config) &config::instance,
 #include "configs/foreach_config.h"
 };
@@ -43,7 +40,7 @@ struct default_config
     {
         int priority = -1;
 
-        for (int cfg = 0;cfg < num_configs;cfg++)
+        for (int cfg = 0; cfg < num_configs; cfg++)
         {
             TBLIS_ASSERT(check[cfg]);
             int cur_prio = check[cfg]();
@@ -56,7 +53,8 @@ struct default_config
             if (get_verbose() >= 1)
             {
                 printf("tblis: Configuration %s assigned priority %d.\n",
-                       names[cfg], cur_prio);
+                       names[cfg],
+                       cur_prio);
             }
         }
 
@@ -77,7 +75,7 @@ struct default_config
     }
 };
 
-}
+} // namespace
 
 const config& get_default_config()
 {
@@ -87,24 +85,24 @@ const config& get_default_config()
 
 const config& get_config(const tblis_config* cfg)
 {
-    return (cfg ? *reinterpret_cast<const config*>(cfg) : get_default_config());
+    return cfg ? *reinterpret_cast<const config*>(cfg) : get_default_config();
 }
 
 const config& get_config(const std::string& name)
 {
-    for (int cfg = 0;cfg < num_configs;cfg++)
+    for (int cfg = 0; cfg < num_configs; cfg++)
     {
         if (names[cfg] == name)
         {
             if (check[cfg]() == -1)
                 tblis_abort_with_message(
-                    "tblis: Configuration %s cannot be used!", name.c_str());
+                    "tblis: Configuration %s cannot be used!",
+                    name.c_str());
             return instance[cfg]();
         }
     }
 
-    tblis_abort_with_message(
-        "tblis: No configuration named %s!", name.c_str());
+    tblis_abort_with_message("tblis: No configuration named %s!", name.c_str());
 }
 
-}
+} // namespace tblis

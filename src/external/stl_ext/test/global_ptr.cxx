@@ -9,7 +9,7 @@ TEST(unit_global_ptr, constructor)
     global_ptr<int> gp1;
     EXPECT_EQ(nullptr, gp1.get());
 
-    int *p1 = new int();
+    int* p1 = new int();
     global_ptr<int> gp2(p1);
     EXPECT_EQ(p1, gp2.get());
 
@@ -20,7 +20,7 @@ TEST(unit_global_ptr, constructor)
     EXPECT_EQ(nullptr, gp3.get());
     EXPECT_EQ(p1, gp4.get());
 
-    int *p2 = new int();
+    int* p2 = new int();
     gp2.set(p2);
     EXPECT_EQ(p2, gp2.get());
     EXPECT_EQ(nullptr, gp3.get());
@@ -29,7 +29,7 @@ TEST(unit_global_ptr, constructor)
 
 TEST(unit_global_ptr, assignment)
 {
-    int *p1 = new int();
+    int* p1 = new int();
     global_ptr<int> gp2(p1);
     EXPECT_EQ(p1, gp2.get());
 
@@ -42,7 +42,7 @@ TEST(unit_global_ptr, assignment)
     EXPECT_EQ(nullptr, gp3.get());
     EXPECT_EQ(p1, gp4.get());
 
-    int *p2 = new int();
+    int* p2 = new int();
     gp2.set(p2);
     EXPECT_EQ(p2, gp2.get());
     EXPECT_EQ(nullptr, gp3.get());
@@ -51,11 +51,11 @@ TEST(unit_global_ptr, assignment)
 
 TEST(unit_global_ptr, swap)
 {
-    int *p1 = new int();
+    int* p1 = new int();
     global_ptr<int> gp1(p1);
     EXPECT_EQ(p1, gp1.get());
 
-    int *p2 = new int();
+    int* p2 = new int();
     global_ptr<int> gp2(p2);
     EXPECT_EQ(p2, gp2.get());
 
@@ -70,7 +70,7 @@ TEST(unit_global_ptr, swap)
 
 TEST(unit_global_ptr, use_count)
 {
-    int *p1 = new int();
+    int* p1 = new int();
     global_ptr<int> gp1(p1);
     global_ptr<int> gp2(gp1);
     global_ptr<int> gp3(gp1);
@@ -81,7 +81,7 @@ TEST(unit_global_ptr, use_count)
 
 TEST(unit_global_ptr, unique)
 {
-    int *p1 = new int();
+    int* p1 = new int();
     global_ptr<int> gp1(p1);
     EXPECT_TRUE(gp1.unique());
     global_ptr<int> gp2(gp1);
@@ -91,7 +91,7 @@ TEST(unit_global_ptr, unique)
 
 TEST(unit_global_ptr, reset)
 {
-    int *p1 = new int();
+    int* p1 = new int();
     global_ptr<int> gp1;
     EXPECT_EQ(nullptr, gp1.get());
     gp1.reset(p1);
@@ -105,12 +105,12 @@ TEST(unit_global_ptr, reset)
 
 TEST(unit_global_ptr, access)
 {
-    int *p1 = new int();
+    int* p1 = new int();
     global_ptr<int> gp1(p1);
     global_ptr<int> gp2(gp1);
     EXPECT_EQ(p1, gp1.get());
     EXPECT_EQ(p1, gp2.get());
-    int *p2 = new int();
+    int* p2 = new int();
     gp1.set(p2);
     EXPECT_EQ(p2, gp1.get());
     EXPECT_EQ(p2, gp2.get());
@@ -118,7 +118,7 @@ TEST(unit_global_ptr, access)
 
 TEST(unit_global_ptr, dereference)
 {
-    int *p1 = new int(42);
+    int* p1 = new int(42);
     global_ptr<int> gp1(p1);
     global_ptr<int> gp2(gp1);
     EXPECT_EQ(42, *gp1);
@@ -127,7 +127,7 @@ TEST(unit_global_ptr, dereference)
 
 TEST(unit_global_ptr, bool)
 {
-    int *p1 = new int(42);
+    int* p1 = new int(42);
     global_ptr<int> gp1;
     EXPECT_FALSE(gp1);
     gp1.set(p1);

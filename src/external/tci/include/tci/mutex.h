@@ -38,7 +38,8 @@ typedef TCI_ATOMIC_FLAG tci_mutex;
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 int tci_mutex_init(tci_mutex* mutex);

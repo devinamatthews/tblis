@@ -11,23 +11,21 @@ namespace stl_ext
 namespace detail
 {
 
-template <typename T, size_t N, size_t... M>
-struct array_helper
+template <typename T, size_t N, size_t... M> struct array_helper
 {
-    typedef std::array<typename array_helper<T,M...>::type,N> type;
+    typedef std::array<typename array_helper<T, M...>::type, N> type;
 };
 
-template <typename T, size_t N>
-struct array_helper<T,N>
+template <typename T, size_t N> struct array_helper<T, N>
 {
-    typedef std::array<T,N> type;
+    typedef std::array<T, N> type;
 };
 
-}
+} // namespace detail
 
 template <typename T, size_t... N>
-using array = typename detail::array_helper<T,N...>::type;
+using array = typename detail::array_helper<T, N...>::type;
 
-}
+} // namespace stl_ext
 
 #endif

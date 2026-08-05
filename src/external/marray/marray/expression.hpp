@@ -41,12 +41,16 @@ template <typename T, typename... Dims> struct array_expr
     template <int NDim, int Dim>
     std::enable_if_t<(Dim < NDim - sizeof...(Dims)), result_type>
     eval_at(len_type) const
-    { return *data; }
+    {
+        return *data;
+    }
 
     template <int NDim, int Dim>
     std::enable_if_t<(Dim >= NDim - sizeof...(Dims)), result_type>
     eval_at(len_type i) const
-    { return eval_at(i, std::get<Dim - (NDim - sizeof...(Dims))>(dims)); }
+    {
+        return eval_at(i, std::get<Dim - (NDim - sizeof...(Dims))>(dims));
+    }
 
     result_type eval_at(len_type i, const slice_dim&) const { return data[i]; }
 
@@ -55,7 +59,9 @@ template <typename T, typename... Dims> struct array_expr
     template <int NDim, int Dim, int Width, bool Aligned>
     std::enable_if_t<(Dim < NDim - sizeof...(Dims)), vector_type>
     eval_vec(len_type) const
-    { return vec_traits::load1(data); }
+    {
+        return vec_traits::load1(data);
+    }
 
     template <int NDim, int Dim, int Width, bool Aligned>
     std::enable_if_t<(Dim >= NDim - sizeof...(Dims)), vector_type>
@@ -68,15 +74,21 @@ template <typename T, typename... Dims> struct array_expr
 
     template <int Width, bool Aligned>
     vector_type eval_vec(len_type i, const slice_dim&) const
-    { return vec_traits::template load<Width, Aligned>(data + i); }
+    {
+        return vec_traits::template load<Width, Aligned>(data + i);
+    }
 
     template <int Width, bool Aligned>
     vector_type eval_vec(len_type, const bcast_dim&) const
-    { return vec_traits::load1(data); }
+    {
+        return vec_traits::load1(data);
+    }
 
     template <int NDim, int Dim, int Width, bool Aligned>
     void store_vec(len_type i, vector_type v) const
-    { vec_traits::template store<Width, Aligned>(v, data + i); }
+    {
+        vec_traits::template store<Width, Aligned>(v, data + i);
+    }
 };
 
 template <typename Expr>
@@ -98,34 +110,46 @@ template <typename Expr>
 std::enable_if_t<is_expression<std::decay_t<Expr>>::value,
                  expr_result_type_t<std::decay_t<Expr>>>
 eval(Expr&& expr)
-{ return expr.eval(); }
+{
+    return expr.eval();
+}
 
 template <typename Expr>
 std::enable_if_t<is_scalar<std::decay_t<Expr>>::value, Expr> eval(Expr&& expr)
-{ return expr; }
+{
+    return expr;
+}
 
 template <int NDim, int Dim, typename Expr>
 std::enable_if_t<is_expression<std::decay_t<Expr>>::value,
                  expr_result_type_t<std::decay_t<Expr>>>
 eval_at(Expr&& expr, len_type i)
-{ return expr.template eval_at<NDim, Dim>(i); }
+{
+    return expr.template eval_at<NDim, Dim>(i);
+}
 
 template <int NDim, int Dim, typename Expr>
 std::enable_if_t<is_scalar<std::decay_t<Expr>>::value, Expr>
 eval_at(Expr&& expr, len_type)
-{ return expr; }
+{
+    return expr;
+}
 
 template <int NDim, int Dim, int Width, bool Aligned, typename Expr>
 std::enable_if_t<is_expression<std::decay_t<Expr>>::value,
                  typename std::decay_t<Expr>::vector_type>
 eval_vec(Expr&& expr, len_type i)
-{ return expr.template eval_vec<NDim, Dim, Width, Aligned>(i); }
+{
+    return expr.template eval_vec<NDim, Dim, Width, Aligned>(i);
+}
 
 template <int NDim, int Dim, int Width, bool Aligned, typename Expr>
 std::enable_if_t<is_scalar<std::decay_t<Expr>>::value,
                  typename vector_traits<std::decay_t<Expr>>::vector_type>
 eval_vec(Expr&& expr, len_type)
-{ return vector_traits<std::decay_t<Expr>>::set1(expr); }
+{
+    return vector_traits<std::decay_t<Expr>>::set1(expr);
+}
 
 namespace operators
 {
@@ -234,11 +258,15 @@ struct plus
     auto operator()(const T& a, const U& b) const
         -> std::enable_if_t<!is_scalar<T>::value || !is_scalar<U>::value,
                             decltype(a + b)>
-    { return a + b; }
+    {
+        return a + b;
+    }
 
     template <typename T>
     vector_type<T> vec(vector_type<T> a, vector_type<T> b) const
-    { return vector_traits<T>::add(a, b); }
+    {
+        return vector_traits<T>::add(a, b);
+    }
 };
 
 struct minus
@@ -256,11 +284,15 @@ struct minus
     auto operator()(const T& a, const U& b) const
         -> std::enable_if_t<!is_scalar<T>::value || !is_scalar<U>::value,
                             decltype(a - b)>
-    { return a - b; }
+    {
+        return a - b;
+    }
 
     template <typename T>
     vector_type<T> vec(vector_type<T> a, vector_type<T> b) const
-    { return vector_traits<T>::sub(a, b); }
+    {
+        return vector_traits<T>::sub(a, b);
+    }
 };
 
 struct multiplies
@@ -278,11 +310,15 @@ struct multiplies
     auto operator()(const T& a, const U& b) const
         -> std::enable_if_t<!is_scalar<T>::value || !is_scalar<U>::value,
                             decltype(a * b)>
-    { return a * b; }
+    {
+        return a * b;
+    }
 
     template <typename T>
     vector_type<T> vec(vector_type<T> a, vector_type<T> b) const
-    { return vector_traits<T>::mul(a, b); }
+    {
+        return vector_traits<T>::mul(a, b);
+    }
 };
 
 struct divides
@@ -300,71 +336,99 @@ struct divides
     auto operator()(const T& a, const U& b) const
         -> std::enable_if_t<!is_scalar<T>::value || !is_scalar<U>::value,
                             decltype(a / b)>
-    { return a / b; }
+    {
+        return a / b;
+    }
 
     template <typename T>
     vector_type<T> vec(vector_type<T> a, vector_type<T> b) const
-    { return vector_traits<T>::div(a, b); }
+    {
+        return vector_traits<T>::div(a, b);
+    }
 };
 
 struct pow
 {
     template <typename T, typename U>
     auto operator()(const T& a, const U& b) const -> decltype(std::pow(a, b))
-    { return std::pow(a, b); }
+    {
+        return std::pow(a, b);
+    }
 
     template <typename T>
     vector_type<T> vec(vector_type<T> a, vector_type<T> b) const
-    { return vector_traits<T>::pow(a, b); }
+    {
+        return vector_traits<T>::pow(a, b);
+    }
 };
 
 struct negate
 {
     template <typename T> auto operator()(const T& a) const -> decltype(-a)
-    { return -a; }
+    {
+        return -a;
+    }
 
     template <typename T> vector_type<T> vec(vector_type<T> a) const
-    { return vector_traits<T>::negate(a); }
+    {
+        return vector_traits<T>::negate(a);
+    }
 };
 
 struct exp
 {
     template <typename T>
     auto operator()(const T& a) const -> decltype(std::exp(a))
-    { return std::exp(a); }
+    {
+        return std::exp(a);
+    }
 
     template <typename T> vector_type<T> vec(vector_type<T> a) const
-    { return vector_traits<T>::exp(a); }
+    {
+        return vector_traits<T>::exp(a);
+    }
 };
 
 struct log
 {
     template <typename T>
     auto operator()(const T& a) const -> decltype(std::log(a))
-    { return std::log(a); }
+    {
+        return std::log(a);
+    }
 
     template <typename T> vector_type<T> vec(vector_type<T> a) const
-    { return vector_traits<T>::log(a); }
+    {
+        return vector_traits<T>::log(a);
+    }
 };
 
 struct abs
 {
     template <typename T>
     auto operator()(const T& a) const -> decltype(std::abs(a))
-    { return std::abs(a); }
+    {
+        return std::abs(a);
+    }
 
     template <typename T> vector_type<T> vec(vector_type<T> a) const
-    { return vector_traits<T>::abs(a); }
+    {
+        return vector_traits<T>::abs(a);
+    }
 };
 
 struct sqrt
 {
     template <typename T>
     auto operator()(const T& a) const -> decltype(std::sqrt(a))
-    { return std::sqrt(a); }
+    {
+        return std::sqrt(a);
+    }
 
     template <typename T> vector_type<T> vec(vector_type<T> a) const
-    { return vector_traits<T>::sqrt(a); }
+    {
+        return vector_traits<T>::sqrt(a);
+    }
 };
 
 } // namespace operators
@@ -392,7 +456,9 @@ template <typename LHS, typename RHS, typename Op> struct binary_expr
     }
 
     result_type eval() const
-    { return op(MArray::eval(first), MArray::eval(second)); }
+    {
+        return op(MArray::eval(first), MArray::eval(second));
+    }
 
     template <int NDim, int Dim> result_type eval_at(len_type i) const
     {
@@ -442,7 +508,9 @@ template <typename Expr, typename Op> struct unary_expr
     result_type eval() const { return op(MArray::eval(expr)); }
 
     template <int NDim, int Dim> result_type eval_at(len_type i) const
-    { return op(MArray::eval_at<NDim, Dim>(expr, i)); }
+    {
+        return op(MArray::eval_at<NDim, Dim>(expr, i));
+    }
 
     template <int NDim, int Dim, int Width, bool Aligned>
     vector_type eval_vec(len_type i) const
@@ -620,13 +688,17 @@ template <typename T, int NDim, typename Derived, bool Owner, int... I>
 expression_type_t<const marray_base<T, NDim, Derived, Owner>>
 make_expression_helper(const marray_base<T, NDim, Derived, Owner>& x,
                        std::integer_sequence<int, I...>)
-{ return {x.data(), slice_dim(x.base(I), x.length(I), 0, x.stride(I))...}; }
+{
+    return {x.data(), slice_dim(x.base(I), x.length(I), 0, x.stride(I))...};
+}
 
 template <typename T, int NDim, typename Derived, bool Owner, int... I>
 expression_type_t<marray_base<T, NDim, Derived, Owner>>
 make_expression_helper(marray_base<T, NDim, Derived, Owner>& x,
                        std::integer_sequence<int, I...>)
-{ return {x.data(), slice_dim(x.base(I), x.length(I), 0, x.stride(I))...}; }
+{
+    return {x.data(), slice_dim(x.base(I), x.length(I), 0, x.stride(I))...};
+}
 
 template <typename T, int NDim, int NIndexed, typename... Dims>
 expression_type_t<marray_slice<T, NDim, NIndexed, Dims...>>
@@ -641,19 +713,25 @@ make_expression(const marray_slice<T, NDim, NIndexed, Dims...>& x)
 template <typename T, int NDim, typename Derived, bool Owner>
 expression_type_t<const marray_base<T, NDim, Derived, Owner>>
 make_expression(const marray_base<T, NDim, Derived, Owner>& x)
-{ return make_expression_helper(x, std::make_integer_sequence<int, NDim>()); }
+{
+    return make_expression_helper(x, std::make_integer_sequence<int, NDim>());
+}
 
 template <typename T, int NDim, typename Derived, bool Owner>
 expression_type_t<marray_base<T, NDim, Derived, Owner>>
 make_expression(marray_base<T, NDim, Derived, Owner>& x)
-{ return make_expression_helper(x, std::make_integer_sequence<int, NDim>()); }
+{
+    return make_expression_helper(x, std::make_integer_sequence<int, NDim>());
+}
 
 template <typename Expr>
 std::enable_if_t<is_expression<std::decay_t<Expr>>::value
                      || is_scalar<std::decay_t<Expr>>::value,
                  Expr&&>
 make_expression(Expr&& x)
-{ return std::forward<Expr>(x); }
+{
+    return std::forward<Expr>(x);
+}
 
 template <typename Expr>
 struct is_expression_arg
@@ -693,7 +771,9 @@ std::enable_if_t<
     is_expression_arg<LHS>::value && is_expression_arg<RHS>::value,
     add_expr<expression_type_t<const LHS>, expression_type_t<const RHS>>>
 operator+(const LHS& lhs, const RHS& rhs)
-{ return {make_expression(lhs), make_expression(rhs)}; }
+{
+    return {make_expression(lhs), make_expression(rhs)};
+}
 
 template <typename LHS, typename RHS>
 std::enable_if_t<
@@ -720,7 +800,9 @@ std::enable_if_t<
     is_expression_arg<LHS>::value && is_expression_arg<RHS>::value,
     sub_expr<expression_type_t<const LHS>, expression_type_t<const RHS>>>
 operator-(const LHS& lhs, const RHS& rhs)
-{ return {make_expression(lhs), make_expression(rhs)}; }
+{
+    return {make_expression(lhs), make_expression(rhs)};
+}
 
 template <typename LHS, typename RHS>
 std::enable_if_t<
@@ -747,7 +829,9 @@ std::enable_if_t<
     is_expression_arg<LHS>::value && is_expression_arg<RHS>::value,
     mul_expr<expression_type_t<const LHS>, expression_type_t<const RHS>>>
 operator*(const LHS& lhs, const RHS& rhs)
-{ return {make_expression(lhs), make_expression(rhs)}; }
+{
+    return {make_expression(lhs), make_expression(rhs)};
+}
 
 template <typename LHS, typename RHS>
 std::enable_if_t<
@@ -774,7 +858,9 @@ std::enable_if_t<
     is_expression_arg<LHS>::value && is_expression_arg<RHS>::value,
     div_expr<expression_type_t<const LHS>, expression_type_t<const RHS>>>
 operator/(const LHS& lhs, const RHS& rhs)
-{ return {make_expression(lhs), make_expression(rhs)}; }
+{
+    return {make_expression(lhs), make_expression(rhs)};
+}
 
 template <typename LHS, typename RHS>
 std::enable_if_t<
@@ -801,7 +887,9 @@ std::enable_if_t<
     is_expression_arg<LHS>::value && is_expression_arg<RHS>::value,
     pow_expr<expression_type_t<const LHS>, expression_type_t<const RHS>>>
 pow(const LHS& lhs, const RHS& rhs)
-{ return {make_expression(lhs), make_expression(rhs)}; }
+{
+    return {make_expression(lhs), make_expression(rhs)};
+}
 
 template <typename LHS, typename RHS>
 std::enable_if_t<
@@ -827,19 +915,25 @@ template <typename Expr>
 std::enable_if_t<is_expression_arg<Expr>::value,
                  negate_expr<expression_type_t<const Expr>>>
 operator-(const Expr& expr)
-{ return {make_expression(expr)}; }
+{
+    return {make_expression(expr)};
+}
 
 template <typename Expr>
 std::enable_if_t<is_expression_arg<Expr>::value,
                  exp_expr<expression_type_t<const Expr>>>
 exp(const Expr& expr)
-{ return {make_expression(expr)}; }
+{
+    return {make_expression(expr)};
+}
 
 template <typename Expr>
 std::enable_if_t<is_expression_arg<Expr>::value,
                  sqrt_expr<expression_type_t<const Expr>>>
 sqrt(const Expr& expr)
-{ return {make_expression(expr)}; }
+{
+    return {make_expression(expr)};
+}
 
 template <typename T, typename... Dims>
 struct expr_dimension<array_expr<T, Dims...>>
@@ -880,13 +974,17 @@ get_array_length(const Dim&)
 template <typename Dim>
 std::enable_if_t<std::is_same<Dim, slice_dim>::value, len_type>
 get_array_length(const Dim& dim)
-{ return dim.len; }
+{
+    return dim.len;
+}
 
 template <typename T, typename... Dims, int... I>
 std::array<len_type, sizeof...(I)>
 get_array_lengths_helper(const array_expr<T, Dims...>& array,
                          std::integer_sequence<int, I...>)
-{ return {get_array_length(std::get<I>(array.dims))...}; }
+{
+    return {get_array_length(std::get<I>(array.dims))...};
+}
 
 template <typename T, typename... Dims>
 std::array<len_type, sizeof...(Dims)>
@@ -898,10 +996,14 @@ get_array_lengths(const array_expr<T, Dims...>& array)
 }
 
 inline len_type get_expr_length(const bcast_dim&)
-{ return -1; }
+{
+    return -1;
+}
 
 inline len_type get_expr_length(const slice_dim& dim)
-{ return dim.len; }
+{
+    return dim.len;
+}
 
 template <int NDim, typename T, typename... Dims, int... I, int... J>
 std::array<len_type, NDim>
@@ -950,17 +1052,23 @@ get_expr_lengths(const Expr& expr)
 template <int NDim, typename Expr>
 std::enable_if_t<is_unary_expression<Expr>::value, std::array<len_type, NDim>>
 get_expr_lengths(const Expr& expr)
-{ return get_expr_lengths<NDim>(expr.expr); }
+{
+    return get_expr_lengths<NDim>(expr.expr);
+}
 
 /*
  * Return true if the dimension is vectorizable (stride-1).
  * Broadcast dimensions are trivially vectorizable.
  */
 inline bool is_contiguous(const bcast_dim&)
-{ return true; }
+{
+    return true;
+}
 
 inline bool is_contiguous(const slice_dim& dim)
-{ return dim.stride == 1; }
+{
+    return dim.stride == 1;
+}
 
 /*
  * Dim is one of the NDim dimensions of the array being assigned to. Since
@@ -971,7 +1079,9 @@ inline bool is_contiguous(const slice_dim& dim)
 template <int NDim, int Dim, typename T, typename... Dims>
 std::enable_if_t<(Dim < NDim - sizeof...(Dims)), bool>
 is_array_contiguous(const array_expr<T, Dims...>&)
-{ return true; }
+{
+    return true;
+}
 
 /*
  * For the remaining sizeof...(Dims) dimensions, subtract NDim-sizeof...(Dims)
@@ -980,15 +1090,21 @@ is_array_contiguous(const array_expr<T, Dims...>&)
 template <int NDim, int Dim, typename T, typename... Dims>
 std::enable_if_t<(Dim >= NDim - sizeof...(Dims)), bool>
 is_array_contiguous(const array_expr<T, Dims...>& expr)
-{ return is_contiguous(std::get<Dim - (NDim - sizeof...(Dims))>(expr.dims)); }
+{
+    return is_contiguous(std::get<Dim - (NDim - sizeof...(Dims))>(expr.dims));
+}
 
 template <int NDim, int Dim, typename T, typename... Dims>
 bool is_contiguous(const array_expr<T, Dims...>& expr)
-{ return is_array_contiguous<NDim, Dim, T, Dims...>(expr); }
+{
+    return is_array_contiguous<NDim, Dim, T, Dims...>(expr);
+}
 
 template <int NDim, int Dim, typename Expr>
 std::enable_if_t<is_scalar<Expr>::value, bool> is_contiguous(const Expr&)
-{ return true; }
+{
+    return true;
+}
 
 template <int NDim, int Dim, typename Expr>
 std::enable_if_t<is_binary_expression<Expr>::value, bool>
@@ -1001,7 +1117,9 @@ is_contiguous(const Expr& expr)
 template <int NDim, int Dim, typename Expr>
 std::enable_if_t<is_unary_expression<Expr>::value, bool>
 is_contiguous(const Expr& expr)
-{ return is_contiguous<NDim, Dim>(expr.expr); }
+{
+    return is_contiguous<NDim, Dim>(expr.expr);
+}
 
 template <typename Expr, typename = void> struct vector_width;
 
@@ -1054,7 +1172,9 @@ void increment(array_expr<T, Dims...>&, const bcast_dim&)
 
 template <typename T, typename... Dims>
 void increment(array_expr<T, Dims...>& expr, const slice_dim& dim)
-{ expr.data += dim.stride; }
+{
+    expr.data += dim.stride;
+}
 
 template <typename T, typename... Dims>
 void decrement(array_expr<T, Dims...>&, const bcast_dim&)
@@ -1063,7 +1183,9 @@ void decrement(array_expr<T, Dims...>&, const bcast_dim&)
 
 template <typename T, typename... Dims>
 void decrement(array_expr<T, Dims...>& expr, const slice_dim& dim)
-{ expr.data -= dim.len * dim.stride; }
+{
+    expr.data -= dim.len * dim.stride;
+}
 
 /*
  * Dim is one of the NDim dimensions of the array being assigned to. Since
@@ -1090,20 +1212,28 @@ decrement_array(array_expr<T, Dims...>&)
 template <int NDim, int Dim, typename T, typename... Dims>
 std::enable_if_t<(Dim >= NDim - sizeof...(Dims))>
 increment_array(array_expr<T, Dims...>& expr)
-{ increment(expr, std::get<Dim - (NDim - sizeof...(Dims))>(expr.dims)); }
+{
+    increment(expr, std::get<Dim - (NDim - sizeof...(Dims))>(expr.dims));
+}
 
 template <int NDim, int Dim, typename T, typename... Dims>
 std::enable_if_t<(Dim >= NDim - sizeof...(Dims))>
 decrement_array(array_expr<T, Dims...>& expr)
-{ decrement(expr, std::get<Dim - (NDim - sizeof...(Dims))>(expr.dims)); }
+{
+    decrement(expr, std::get<Dim - (NDim - sizeof...(Dims))>(expr.dims));
+}
 
 template <int NDim, int Dim, typename T, typename... Dims>
 void increment(array_expr<T, Dims...>& expr)
-{ increment_array<NDim, Dim, T, Dims...>(expr); }
+{
+    increment_array<NDim, Dim, T, Dims...>(expr);
+}
 
 template <int NDim, int Dim, typename T, typename... Dims>
 void decrement(array_expr<T, Dims...>& expr)
-{ decrement_array<NDim, Dim, T, Dims...>(expr); }
+{
+    decrement_array<NDim, Dim, T, Dims...>(expr);
+}
 
 /*
  * Lastly, for scalars do nothing since they are implicitly broadcast (this
@@ -1139,11 +1269,15 @@ std::enable_if_t<is_binary_expression<Expr>::value> decrement(Expr& expr)
 
 template <int NDim, int Dim, typename Expr>
 std::enable_if_t<is_unary_expression<Expr>::value> increment(Expr& expr)
-{ increment<NDim, Dim>(expr.expr); }
+{
+    increment<NDim, Dim>(expr.expr);
+}
 
 template <int NDim, int Dim, typename Expr>
 std::enable_if_t<is_unary_expression<Expr>::value> decrement(Expr& expr)
-{ decrement<NDim, Dim>(expr.expr); }
+{
+    decrement<NDim, Dim>(expr.expr);
+}
 
 template <typename T, typename U> struct assign_expr_value
 {
@@ -1153,7 +1287,9 @@ template <typename T, typename U> struct assign_expr_value
 template <typename T, typename U> struct assign_expr_value<T, std::complex<U>>
 {
     void operator()(T& lhs, const std::complex<U>& rhs) const
-    { lhs = rhs.real(); }
+    {
+        lhs = rhs.real();
+    }
 };
 
 template <typename T, typename U>

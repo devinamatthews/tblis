@@ -57,7 +57,9 @@ template <typename Type, typename Derived, bool Owner> class indexed_marray_base
 
     template <typename U, bool O, typename D>
     void reset(const indexed_marray_base<U, D, O>& other)
-    { reset(const_cast<indexed_marray_base<U, D, O>&>(other)); }
+    {
+        reset(const_cast<indexed_marray_base<U, D, O>&>(other));
+    }
 
     template <typename U, bool O, typename D>
     void reset(indexed_marray_base<U, D, O>& other)
@@ -306,7 +308,9 @@ template <typename Type, typename Derived, bool Owner> class indexed_marray_base
      **********************************************************************/
 
     Derived& operator=(const indexed_marray_base& other)
-    { return operator= <>(other); }
+    {
+        return operator= <>(other);
+    }
 
     template <
         typename U,
@@ -351,21 +355,31 @@ template <typename Type, typename Derived, bool Owner> class indexed_marray_base
      **********************************************************************/
 
     indexed_marray_view<const Type> cview() const
-    { return const_cast<indexed_marray_base&>(*this).view(); }
+    {
+        return const_cast<indexed_marray_base&>(*this).view();
+    }
 
     indexed_marray_view<ctype> view() const
-    { return const_cast<indexed_marray_base&>(*this).view(); }
+    {
+        return const_cast<indexed_marray_base&>(*this).view();
+    }
 
     indexed_marray_view<Type> view() { return *this; }
 
     friend indexed_marray_view<const Type> cview(const indexed_marray_base& x)
-    { return x.view(); }
+    {
+        return x.view();
+    }
 
     friend indexed_marray_view<ctype> view(const indexed_marray_base& x)
-    { return x.view(); }
+    {
+        return x.view();
+    }
 
     friend indexed_marray_view<Type> view(indexed_marray_base& x)
-    { return x.view(); }
+    {
+        return x.view();
+    }
 
     /***********************************************************************
      *
@@ -374,7 +388,9 @@ template <typename Type, typename Derived, bool Owner> class indexed_marray_base
      **********************************************************************/
 
     marray_view<ctype> operator[](len_type idx) const
-    { return const_cast<indexed_marray_base&>(*this)[idx]; }
+    {
+        return const_cast<indexed_marray_base&>(*this)[idx];
+    }
 
     marray_view<Type> operator[](len_type idx)
     {
@@ -389,10 +405,14 @@ template <typename Type, typename Derived, bool Owner> class indexed_marray_base
      **********************************************************************/
 
     template <typename Func> void for_each_index(Func&& f) const
-    { for_each_index_<marray_view<ctype>>(std::forward<Func>(f)); }
+    {
+        for_each_index_<marray_view<ctype>>(std::forward<Func>(f));
+    }
 
     template <typename Func> void for_each_index(Func&& f)
-    { for_each_index_<marray_view<Type>>(std::forward<Func>(f)); }
+    {
+        for_each_index_<marray_view<Type>>(std::forward<Func>(f));
+    }
 
     template <int DenseNDim, int IdxNDim, typename Func>
     void for_each_index(Func&& f) const
@@ -413,10 +433,14 @@ template <typename Type, typename Derived, bool Owner> class indexed_marray_base
     }
 
     template <typename Func> void for_each_element(Func&& f) const
-    { for_each_element_<ctype>(std::forward<Func>(f)); }
+    {
+        for_each_element_<ctype>(std::forward<Func>(f));
+    }
 
     template <typename Func> void for_each_element(Func&& f)
-    { for_each_element_<Type>(std::forward<Func>(f)); }
+    {
+        for_each_element_<Type>(std::forward<Func>(f));
+    }
 
     template <int DenseNDim, int IdxNDim, typename Func>
     void for_each_element(Func&& f) const
@@ -443,15 +467,21 @@ template <typename Type, typename Derived, bool Owner> class indexed_marray_base
     const std::vector<const_pointer>& cdata() const { return data(); }
 
     const std::vector<const_pointer>& data() const
-    { return reinterpret_cast<const std::vector<const_pointer>&>(data_); }
+    {
+        return reinterpret_cast<const std::vector<const_pointer>&>(data_);
+    }
 
     const std::vector<pointer>& data() { return data_; }
 
     const_pointer cdata(len_type idx) const
-    { return const_cast<indexed_marray_base&>(*this).data(idx); }
+    {
+        return const_cast<indexed_marray_base&>(*this).data(idx);
+    }
 
     cptr data(len_type idx) const
-    { return const_cast<indexed_marray_base&>(*this).data(idx); }
+    {
+        return const_cast<indexed_marray_base&>(*this).data(idx);
+    }
 
     pointer data(len_type idx)
     {
@@ -460,7 +490,9 @@ template <typename Type, typename Derived, bool Owner> class indexed_marray_base
     }
 
     const std::vector<typename std::remove_const<Type>::type>& factors() const
-    { return factor_; }
+    {
+        return factor_;
+    }
 
     row_view<Type> factors() { return {{factor_.size()}, factor_.data()}; }
 
@@ -525,7 +557,9 @@ template <typename Type, typename Derived, bool Owner> class indexed_marray_base
     }
 
     len_type num_indices() const
-    { return std::max<len_type>(1, idx_.length(0)); }
+    {
+        return std::max<len_type>(1, idx_.length(0));
+    }
 
     stride_type dense_stride(int dim) const
     {

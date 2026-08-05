@@ -45,12 +45,16 @@ class short_vector
                  const Allocator& alloc = Allocator())
     : _size(0),
       _alloc(alloc, _local_data())
-    { assign(count, value); }
+    {
+        assign(count, value);
+    }
 
     explicit short_vector(size_type count)
     : _size(0),
       _alloc(Allocator(), _local_data())
-    { assign(count, T()); }
+    {
+        assign(count, T());
+    }
 
     template <typename Iterator>
     short_vector(Iterator first,
@@ -58,18 +62,24 @@ class short_vector
                  const Allocator& alloc = Allocator())
     : _size(0),
       _alloc(alloc, _local_data())
-    { assign(first, last); }
+    {
+        assign(first, last);
+    }
 
     short_vector(const short_vector& other)
     : _size(0),
       _alloc(_alloc_traits::select_on_container_copy_construction(other._alloc),
              _local_data())
-    { assign(other.begin(), other.end()); }
+    {
+        assign(other.begin(), other.end());
+    }
 
     short_vector(const short_vector& other, const Allocator& alloc)
     : _size(0),
       _alloc(alloc, _local_data())
-    { assign(other.begin(), other.end()); }
+    {
+        assign(other.begin(), other.end());
+    }
 
     short_vector(short_vector&& other)
     : _size(other._size),
@@ -112,7 +122,9 @@ class short_vector
                  const Allocator& alloc = Allocator())
     : _size(0),
       _alloc(alloc, _local_data())
-    { assign(init.begin(), init.end()); }
+    {
+        assign(init.begin(), init.end());
+    }
 
     ~short_vector()
     {
@@ -199,7 +211,9 @@ class short_vector
     }
 
     void assign(std::initializer_list<T> ilist)
-    { assign(ilist.begin(), ilist.end()); }
+    {
+        assign(ilist.begin(), ilist.end());
+    }
 
     allocator_type get_allocator() const { return _alloc; }
 
@@ -256,18 +270,26 @@ class short_vector
     reverse_iterator rbegin() { return reverse_iterator(end()); }
 
     const_reverse_iterator rbegin() const
-    { return const_reverse_iterator(end()); }
+    {
+        return const_reverse_iterator(end());
+    }
 
     const_reverse_iterator crbegin() const
-    { return const_reverse_iterator(end()); }
+    {
+        return const_reverse_iterator(end());
+    }
 
     reverse_iterator rend() { return reverse_iterator(begin()); }
 
     const_reverse_iterator rend() const
-    { return const_reverse_iterator(begin()); }
+    {
+        return const_reverse_iterator(begin());
+    }
 
     const_reverse_iterator crend() const
-    { return const_reverse_iterator(begin()); }
+    {
+        return const_reverse_iterator(begin());
+    }
 
     bool empty() const { return size() == 0; }
 
@@ -288,13 +310,19 @@ class short_vector
     void clear() { erase(begin(), end()); }
 
     iterator insert(const_iterator pos, const T& value)
-    { return _emplace(pos, 1, value); }
+    {
+        return _emplace(pos, 1, value);
+    }
 
     iterator insert(const_iterator pos, T&& value)
-    { return _emplace(pos, 1, std::move(value)); }
+    {
+        return _emplace(pos, 1, std::move(value));
+    }
 
     iterator insert(const_iterator pos, size_type count, const T& value)
-    { return _emplace(pos, count, value); }
+    {
+        return _emplace(pos, count, value);
+    }
 
     template <typename Iterator>
     typename std::enable_if<
@@ -312,11 +340,15 @@ class short_vector
     }
 
     iterator insert(const_iterator pos, std::initializer_list<T> ilist)
-    { return insert(pos, ilist.begin(), ilist.end()); }
+    {
+        return insert(pos, ilist.begin(), ilist.end());
+    }
 
     template <typename... Args>
     iterator emplace(const_iterator pos, Args&&... args)
-    { return _emplace(pos, 1, std::forward<Args>(args)...); }
+    {
+        return _emplace(pos, 1, std::forward<Args>(args)...);
+    }
 
     iterator erase(const_iterator pos) { return erase(pos, pos + 1); }
 
@@ -335,7 +367,9 @@ class short_vector
     void push_back(T&& value) { _emplace(end(), 1, std::move(value)); }
 
     template <typename... Args> void emplace_back(Args&&... args)
-    { _emplace(end(), 1, std::forward<Args>(args)...); }
+    {
+        _emplace(end(), 1, std::forward<Args>(args)...);
+    }
 
     void pop_back() { erase(end() - 1); }
 
@@ -437,10 +471,14 @@ class short_vector
     auto operator>(const short_vector& other) const { return other < *this; }
 
     auto operator<=(const short_vector& other) const
-    { return !(other < *this); }
+    {
+        return !(other < *this);
+    }
 
     auto operator>=(const short_vector& other) const
-    { return !(*this < other); }
+    {
+        return !(*this < other);
+    }
 
   protected:
     void _set_capacity(size_type new_cap)
@@ -566,7 +604,9 @@ class short_vector
     typename std::enable_if<!std::is_nothrow_move_constructible<T_>::value,
                             iterator>::type
     _uninitialized_move_n_if(iterator first, size_type n, iterator result)
-    { return _construct(first, first + n, result); }
+    {
+        return _construct(first, first + n, result);
+    }
 
     template <typename... Args>
     iterator _emplace(const_iterator cpos, size_type n, Args&&... args)
@@ -665,7 +705,9 @@ class short_vector
     }
 
     static size_type _new_capacity(size_type capacity, size_type count)
-    { return std::max(2 * capacity, count); }
+    {
+        return std::max(2 * capacity, count);
+    }
 
     pointer _local_data() { return &_fixed[0]; }
 

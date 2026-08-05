@@ -6,16 +6,15 @@
  * uniformly.
  */
 template <typename T>
-void random_transpose(stride_type N, T&& A, label_vector& idx_A,
-                                     T&& B, label_vector& idx_B)
+void random_transpose(stride_type N,
+                      T&& A,
+                      label_vector& idx_A,
+                      T&& B,
+                      label_vector& idx_B)
 {
-    auto ndim_A = random_number(1,8);
+    auto ndim_A = random_number(1, 8);
 
-    random_tensors(N,
-                   0, 0,
-                   ndim_A,
-                   A, idx_A,
-                   B, idx_B);
+    random_tensors(N, 0, 0, ndim_A, A, idx_A, B, idx_B);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(transpose, R, T, all_types)
@@ -34,21 +33,24 @@ REPLICATED_TEMPLATED_TEST_CASE(transpose, R, T, all_types)
 
     auto neps = prod(A.lengths());
 
-    T scale(10.0*random_unit<T>());
+    T scale(10.0 * random_unit<T>());
 
     C.reset(A);
     add(scale, A, idx_A, 1, C, idx_A);
     T norm1 = reduce<T>(REDUCE_NORM_2, A, idx_A);
     T norm2 = reduce<T>(REDUCE_NORM_2, C, idx_A);
-    check("COPY", std::abs(1+scale)*norm1, norm2, std::abs(1+scale)*neps);
+    check("COPY",
+          std::abs(1 + scale) * norm1,
+          norm2,
+          std::abs(1 + scale) * neps);
 
     C.reset(A);
     add(A, idx_A, B, idx_B);
     add(scale, B, idx_B, scale, C, idx_A);
 
-    add(-2*scale, A, idx_A, 1, C, idx_A);
+    add(-2 * scale, A, idx_A, 1, C, idx_A);
     T error = reduce<T>(REDUCE_NORM_2, C, idx_A);
-    check("INVERSE", error, 2*scale*neps);
+    check("INVERSE", error, 2 * scale * neps);
 
     B.reset(A);
     idx_B = idx_A;
@@ -59,7 +61,8 @@ REPLICATED_TEMPLATED_TEST_CASE(transpose, R, T, all_types)
         for (auto i : range(ndim))
         {
             auto j = 0;
-            while (j < ndim && idx_A[j] != static_cast<label_type>(perm[i]+'a'))
+            while (
+                j < ndim && idx_A[j] != static_cast<label_type>(perm[i] + 'a'))
                 j++;
             idx_C[i] = idx_B[j];
             len_C[i] = B.length(j);
@@ -68,8 +71,7 @@ REPLICATED_TEMPLATED_TEST_CASE(transpose, R, T, all_types)
         add(B, idx_B, C, idx_C);
         B.reset(C);
         idx_B = idx_C;
-    }
-    while (idx_C != idx_A);
+    } while (idx_C != idx_A);
 
     add(-1, A, idx_A, 1, C, idx_A);
     error = reduce<T>(REDUCE_NORM_2, C, idx_A);
@@ -88,7 +90,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_transpose, R, T, all_types)
 
     auto neps = dpd_marray<T>::size(B.irrep(), B.lengths());
 
-    T scale(10.0*random_unit<T>());
+    T scale(10.0 * random_unit<T>());
 
     dpd_impl = dpd_impl_t::FULL;
     C.reset(B);
@@ -101,7 +103,7 @@ REPLICATED_TEMPLATED_TEST_CASE(dpd_transpose, R, T, all_types)
     add<T>(T(-1), C, idx_B, T(1), D, idx_B);
     T error = reduce<T>(REDUCE_NORM_2, D, idx_B);
 
-    check("BLOCKED", error, scale*neps);
+    check("BLOCKED", error, scale * neps);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_transpose, R, T, all_types)
@@ -116,7 +118,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_transpose, R, T, all_types)
 
     auto neps = prod(B.lengths());
 
-    T scale(10.0*random_unit<T>());
+    T scale(10.0 * random_unit<T>());
 
     dpd_impl = dpd_impl_t::FULL;
     C.reset(B);
@@ -131,7 +133,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_transpose, R, T, all_types)
     add<T>(T(-1), C, idx_B, T(1), D, idx_B);
     T error = reduce<T>(REDUCE_NORM_2, D, idx_B);
 
-    check("BLOCKED", error, scale*neps);
+    check("BLOCKED", error, scale * neps);
 }
 
 REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_transpose, R, T, all_types)
@@ -146,7 +148,7 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_transpose, R, T, all_types)
 
     auto neps = dpd_marray<T>::size(B.irrep(), B.lengths());
 
-    T scale(10.0*random_unit<T>());
+    T scale(10.0 * random_unit<T>());
 
     dpd_impl = dpd_impl_t::FULL;
     C.reset(B);
@@ -161,5 +163,5 @@ REPLICATED_TEMPLATED_TEST_CASE(indexed_dpd_transpose, R, T, all_types)
     add<T>(T(-1), C, idx_B, T(1), D, idx_B);
     T error = reduce<T>(REDUCE_NORM_2, D, idx_B);
 
-    check("BLOCKED", error, scale*neps);
+    check("BLOCKED", error, scale * neps);
 }

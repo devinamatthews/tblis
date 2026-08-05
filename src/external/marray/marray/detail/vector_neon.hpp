@@ -18,18 +18,24 @@ template <> struct vector_traits<float>
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, float>, float32x4_t>
     convert(float32x4_t v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, double>, float64x2_t>
     convert(float32x4_t v)
-    { return vcvt_f64_f32(vget_low_f32(v)); }
+    {
+        return vcvt_f64_f32(vget_low_f32(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value,
                             float32x4_t>
     convert(float32x4_t v)
-    { return vzip1q_f32(v, vdupq_n_f32(0.0)); }
+    {
+        return vzip1q_f32(v, vdupq_n_f32(0.0));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, int8_t>, int8x16_t>
@@ -66,26 +72,36 @@ template <> struct vector_traits<float>
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, int32_t>, int32x4_t>
     convert(float32x4_t v)
-    { return vcvtq_s32_f32(v); }
+    {
+        return vcvtq_s32_f32(v);
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, uint32_t>, uint32x4_t>
     convert(float32x4_t v)
-    { return vcvtq_u32_f32(v); }
+    {
+        return vcvtq_u32_f32(v);
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, int64_t>, int64x2_t>
     convert(float32x4_t v)
-    { return vcvtq_s64_f64(convert<double>(v)); }
+    {
+        return vcvtq_s64_f64(convert<double>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, uint64_t>, uint64x2_t>
     convert(float32x4_t v)
-    { return vcvtq_u64_f64(convert<double>(v)); }
+    {
+        return vcvtq_u64_f64(convert<double>(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4, float32x4_t> load(const float* ptr)
-    { return vld1q_f32(ptr); }
+    {
+        return vld1q_f32(ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2, float32x4_t> load(const float* ptr)
@@ -100,23 +116,35 @@ template <> struct vector_traits<float>
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4> store(float32x4_t v, float* ptr)
-    { vst1q_f32(ptr, v); }
+    {
+        vst1q_f32(ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2> store(float32x4_t v, float* ptr)
-    { vst1_f32(ptr, vget_low_f32(v)); }
+    {
+        vst1_f32(ptr, vget_low_f32(v));
+    }
 
     static float32x4_t add(float32x4_t a, float32x4_t b)
-    { return vaddq_f32(a, b); }
+    {
+        return vaddq_f32(a, b);
+    }
 
     static float32x4_t sub(float32x4_t a, float32x4_t b)
-    { return vsubq_f32(a, b); }
+    {
+        return vsubq_f32(a, b);
+    }
 
     static float32x4_t mul(float32x4_t a, float32x4_t b)
-    { return vmulq_f32(a, b); }
+    {
+        return vmulq_f32(a, b);
+    }
 
     static float32x4_t div(float32x4_t a, float32x4_t b)
-    { return vdivq_f32(a, b); }
+    {
+        return vdivq_f32(a, b);
+    }
 
     static float32x4_t pow(float32x4_t a, float32x4_t b)
     {
@@ -168,7 +196,9 @@ template <> struct vector_traits<double>
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, double>, float64x2_t>
     convert(float64x2_t v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value,
@@ -230,16 +260,22 @@ template <> struct vector_traits<double>
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, int64_t>, int64x2_t>
     convert(float64x2_t v)
-    { return vcvtq_s64_f64(v); }
+    {
+        return vcvtq_s64_f64(v);
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, uint64_t>, uint64x2_t>
     convert(float64x2_t v)
-    { return vcvtq_u64_f64(v); }
+    {
+        return vcvtq_u64_f64(v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2, float64x2_t> load(const double* ptr)
-    { return vld1q_f64(ptr); }
+    {
+        return vld1q_f64(ptr);
+    }
 
     static float64x2_t load1(const double* ptr) { return vld1q_dup_f64(ptr); }
 
@@ -247,7 +283,9 @@ template <> struct vector_traits<double>
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2> store(float64x2_t v, double* ptr)
-    { vst1q_f64(ptr, v); }
+    {
+        vst1q_f64(ptr, v);
+    }
 
     static float64x2_t add(float64x2_t a, float64x2_t b)
     {
@@ -256,13 +294,19 @@ template <> struct vector_traits<double>
     }
 
     static float64x2_t sub(float64x2_t a, float64x2_t b)
-    { return vsubq_f64(a, b); }
+    {
+        return vsubq_f64(a, b);
+    }
 
     static float64x2_t mul(float64x2_t a, float64x2_t b)
-    { return vmulq_f64(a, b); }
+    {
+        return vmulq_f64(a, b);
+    }
 
     static float64x2_t div(float64x2_t a, float64x2_t b)
-    { return vdivq_f64(a, b); }
+    {
+        return vdivq_f64(a, b);
+    }
 
     static float64x2_t pow(float64x2_t a, float64x2_t b)
     {
@@ -306,13 +350,17 @@ template <> struct vector_traits<std::complex<float>>
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, double>, float64x2_t>
     convert(float32x4_t v)
-    { return vcvt_f64_f32(vuzp1_f32(vget_low_f32(v), vget_high_f32(v))); }
+    {
+        return vcvt_f64_f32(vuzp1_f32(vget_low_f32(v), vget_high_f32(v)));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value,
                             float32x4_t>
     convert(float32x4_t v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, int8_t>, int8x16_t>
@@ -349,27 +397,37 @@ template <> struct vector_traits<std::complex<float>>
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, int32_t>, int32x4_t>
     convert(float32x4_t v)
-    { return vcvtq_s32_f32(convert<float>(v)); }
+    {
+        return vcvtq_s32_f32(convert<float>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, uint32_t>, uint32x4_t>
     convert(float32x4_t v)
-    { return vcvtq_u32_f32(convert<float>(v)); }
+    {
+        return vcvtq_u32_f32(convert<float>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, int64_t>, int64x2_t>
     convert(float32x4_t v)
-    { return vcvtq_s64_f64(convert<double>(v)); }
+    {
+        return vcvtq_s64_f64(convert<double>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, uint64_t>, uint64x2_t>
     convert(float32x4_t v)
-    { return vcvtq_u64_f64(convert<double>(v)); }
+    {
+        return vcvtq_u64_f64(convert<double>(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2, float32x4_t>
     load(const std::complex<float>* ptr)
-    { return vld1q_f32(reinterpret_cast<const float*>(ptr)); }
+    {
+        return vld1q_f32(reinterpret_cast<const float*>(ptr));
+    }
 
     static float32x4_t load1(const std::complex<float>* ptr)
     {
@@ -378,18 +436,26 @@ template <> struct vector_traits<std::complex<float>>
     }
 
     static float32x4_t set1(const std::complex<float>& val)
-    { return load1(&val); }
+    {
+        return load1(&val);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2> store(float32x4_t v,
                                               std::complex<float>* ptr)
-    { vst1q_f32((float*)ptr, v); }
+    {
+        vst1q_f32((float*)ptr, v);
+    }
 
     static float32x4_t add(float32x4_t a, float32x4_t b)
-    { return vaddq_f32(a, b); }
+    {
+        return vaddq_f32(a, b);
+    }
 
     static float32x4_t sub(float32x4_t a, float32x4_t b)
-    { return vsubq_f32(a, b); }
+    {
+        return vsubq_f32(a, b);
+    }
 
     static float32x4_t mul(float32x4_t a, float32x4_t b)
     {
@@ -481,18 +547,24 @@ struct vector_traits<
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, float>, float32x4_t>
     convert(vector_type v)
-    { return vcvtq_f32_s32(convert<int32_t>(v)); }
+    {
+        return vcvtq_f32_s32(convert<int32_t>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, double>, float64x2_t>
     convert(vector_type v)
-    { return vcvtq_f64_s64(convert<int64_t>(v)); }
+    {
+        return vcvtq_f64_s64(convert<int64_t>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value,
                             float32x4_t>
     convert(vector_type v)
-    { return vzip1q_f32(convert<float>(v), vdupq_n_f32(0.0)); }
+    {
+        return vzip1q_f32(convert<float>(v), vdupq_n_f32(0.0));
+    }
 
     template <typename T>
     static std::enable_if_t<
@@ -1018,18 +1090,24 @@ struct vector_traits<
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, float>, float32x4_t>
     convert(vector_type v)
-    { return vcvtq_f32_s32(convert<int32_t>(v)); }
+    {
+        return vcvtq_f32_s32(convert<int32_t>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, double>, float64x2_t>
     convert(vector_type v)
-    { return vcvtq_f64_s64(convert<int64_t>(v)); }
+    {
+        return vcvtq_f64_s64(convert<int64_t>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value,
                             float32x4_t>
     convert(vector_type v)
-    { return vzip1q_f32(convert<float>(v), vdupq_n_f32(0.0)); }
+    {
+        return vzip1q_f32(convert<float>(v), vdupq_n_f32(0.0));
+    }
 
     template <typename T>
     static std::enable_if_t<
@@ -1441,13 +1519,17 @@ struct vector_traits<
     template <typename T>
     static std::enable_if_t<std::is_same_v<T, double>, float64x2_t>
     convert(vector_type v)
-    { return vcvtq_f64_s64(convert<int64_t>(v)); }
+    {
+        return vcvtq_f64_s64(convert<int64_t>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value,
                             float32x4_t>
     convert(vector_type v)
-    { return vzip1q_f32(convert<float>(v), vdupq_n_f32(0.0)); }
+    {
+        return vzip1q_f32(convert<float>(v), vdupq_n_f32(0.0));
+    }
 
     template <typename T>
     static std::enable_if_t<
@@ -1770,7 +1852,9 @@ struct vector_traits<
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value,
                             float32x4_t>
     convert(vector_type v)
-    { return vzip1q_f32(convert<float>(v), vdupq_n_f32(0.0)); }
+    {
+        return vzip1q_f32(convert<float>(v), vdupq_n_f32(0.0));
+    }
 
     template <typename T>
     static std::enable_if_t<

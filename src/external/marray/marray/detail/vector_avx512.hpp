@@ -18,12 +18,16 @@ template <> struct vector_traits<float>
     template <typename T>
     static std::enable_if_t<std::is_same<T, float>::value, __m512>
     convert(__m512 v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, double>::value, __m512d>
     convert(__m512 v)
-    { return _mm512_cvtps_pd(_mm512_castps512_ps256(v)); }
+    {
+        return _mm512_cvtps_pd(_mm512_castps512_ps256(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value, __m512>
@@ -112,7 +116,9 @@ template <> struct vector_traits<float>
     template <typename T>
     static std::enable_if_t<std::is_same<T, int32_t>::value, __m512i>
     convert(__m512 v)
-    { return _mm512_cvtps_epi32(v); }
+    {
+        return _mm512_cvtps_epi32(v);
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, uint32_t>::value, __m512i>
@@ -155,12 +161,16 @@ template <> struct vector_traits<float>
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && !Aligned, __m512>
     load(const float* ptr)
-    { return _mm512_loadu_ps(ptr); }
+    {
+        return _mm512_loadu_ps(ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && Aligned, __m512>
     load(const float* ptr)
-    { return _mm512_load_ps(ptr); }
+    {
+        return _mm512_load_ps(ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned, __m512>
@@ -181,16 +191,22 @@ template <> struct vector_traits<float>
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned, __m512>
     load(const float* ptr)
-    { return _mm512_broadcast_f32x4(_mm_loadu_ps(ptr)); }
+    {
+        return _mm512_broadcast_f32x4(_mm_loadu_ps(ptr));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned, __m512>
     load(const float* ptr)
-    { return _mm512_broadcast_f32x4(_mm_load_ps(ptr)); }
+    {
+        return _mm512_broadcast_f32x4(_mm_load_ps(ptr));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2, __m512> load(const float* ptr)
-    { return _mm512_castpd_ps(_mm512_set1_pd(*(double*)ptr)); }
+    {
+        return _mm512_castpd_ps(_mm512_set1_pd(*(double*)ptr));
+    }
 
     static __m512 load1(const float* ptr) { return _mm512_set1_ps(*ptr); }
 
@@ -198,31 +214,45 @@ template <> struct vector_traits<float>
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && !Aligned> store(__m512 v, float* ptr)
-    { _mm512_storeu_ps(ptr, v); }
+    {
+        _mm512_storeu_ps(ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && Aligned> store(__m512 v, float* ptr)
-    { _mm512_store_ps(ptr, v); }
+    {
+        _mm512_store_ps(ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned> store(__m512 v, float* ptr)
-    { _mm256_storeu_ps(ptr, _mm512_castps512_ps256(v)); }
+    {
+        _mm256_storeu_ps(ptr, _mm512_castps512_ps256(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && Aligned> store(__m512 v, float* ptr)
-    { _mm256_store_ps(ptr, _mm512_castps512_ps256(v)); }
+    {
+        _mm256_store_ps(ptr, _mm512_castps512_ps256(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned> store(__m512 v, float* ptr)
-    { _mm_storeu_ps(ptr, _mm512_castps512_ps128(v)); }
+    {
+        _mm_storeu_ps(ptr, _mm512_castps512_ps128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned> store(__m512 v, float* ptr)
-    { _mm_store_ps(ptr, _mm512_castps512_ps128(v)); }
+    {
+        _mm_store_ps(ptr, _mm512_castps512_ps128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2> store(__m512 v, float* ptr)
-    { _mm_store_sd((double*)ptr, _mm_castps_pd(_mm512_castps512_ps128(v))); }
+    {
+        _mm_store_sd((double*)ptr, _mm_castps_pd(_mm512_castps512_ps128(v)));
+    }
 
     static __m512 add(__m512 a, __m512 b) { return _mm512_add_ps(a, b); }
 
@@ -333,7 +363,9 @@ template <> struct vector_traits<double>
     template <typename T>
     static std::enable_if_t<std::is_same<T, double>::value, __m512d>
     convert(__m512d v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value, __m512>
@@ -453,32 +485,44 @@ template <> struct vector_traits<double>
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned, __m512d>
     load(const double* ptr)
-    { return _mm512_loadu_pd(ptr); }
+    {
+        return _mm512_loadu_pd(ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && Aligned, __m512d>
     load(const double* ptr)
-    { return _mm512_load_pd(ptr); }
+    {
+        return _mm512_load_pd(ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned, __m512d>
     load(const double* ptr)
-    { return _mm512_broadcast_f64x4(_mm256_loadu_pd(ptr)); }
+    {
+        return _mm512_broadcast_f64x4(_mm256_loadu_pd(ptr));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned, __m512d>
     load(const double* ptr)
-    { return _mm512_broadcast_f64x4(_mm256_load_pd(ptr)); }
+    {
+        return _mm512_broadcast_f64x4(_mm256_load_pd(ptr));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && !Aligned, __m512d>
     load(const double* ptr)
-    { return _mm512_broadcast_f64x2(_mm_loadu_pd(ptr)); }
+    {
+        return _mm512_broadcast_f64x2(_mm_loadu_pd(ptr));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && Aligned, __m512d>
     load(const double* ptr)
-    { return _mm512_broadcast_f64x2(_mm_load_pd(ptr)); }
+    {
+        return _mm512_broadcast_f64x2(_mm_load_pd(ptr));
+    }
 
     static __m512d load1(const double* ptr) { return _mm512_set1_pd(*ptr); }
 
@@ -487,29 +531,41 @@ template <> struct vector_traits<double>
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned> store(__m512d v,
                                                           double* ptr)
-    { _mm512_storeu_pd(ptr, v); }
+    {
+        _mm512_storeu_pd(ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && Aligned> store(__m512d v, double* ptr)
-    { _mm512_store_pd(ptr, v); }
+    {
+        _mm512_store_pd(ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned> store(__m512d v,
                                                           double* ptr)
-    { _mm256_storeu_pd(ptr, _mm512_castpd512_pd256(v)); }
+    {
+        _mm256_storeu_pd(ptr, _mm512_castpd512_pd256(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned> store(__m512d v, double* ptr)
-    { _mm256_store_pd(ptr, _mm512_castpd512_pd256(v)); }
+    {
+        _mm256_store_pd(ptr, _mm512_castpd512_pd256(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && !Aligned> store(__m512d v,
                                                           double* ptr)
-    { _mm_storeu_pd(ptr, _mm512_castpd512_pd128(v)); }
+    {
+        _mm_storeu_pd(ptr, _mm512_castpd512_pd128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && Aligned> store(__m512d v, double* ptr)
-    { _mm_store_pd(ptr, _mm512_castpd512_pd128(v)); }
+    {
+        _mm_store_pd(ptr, _mm512_castpd512_pd128(v));
+    }
 
     static __m512d add(__m512d a, __m512d b) { return _mm512_add_pd(a, b); }
 
@@ -595,18 +651,24 @@ template <> struct vector_traits<std::complex<float>>
     template <typename T>
     static std::enable_if_t<std::is_same<T, double>::value, __m512d>
     convert(__m512 v)
-    { return _mm512_cvtps_pd(_mm512_castps512_ps256(convert<float>(v))); }
+    {
+        return _mm512_cvtps_pd(_mm512_castps512_ps256(convert<float>(v)));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value, __m512>
     convert(__m512 v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<double>>::value,
                             __m512d>
     convert(__m512 v)
-    { return _mm512_cvtps_pd(_mm512_castps512_ps256(v)); }
+    {
+        return _mm512_cvtps_pd(_mm512_castps512_ps256(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int8_t>::value, __m512i>
@@ -657,7 +719,9 @@ template <> struct vector_traits<std::complex<float>>
     template <typename T>
     static std::enable_if_t<std::is_same<T, int32_t>::value, __m512i>
     convert(__m512 v)
-    { return _mm512_cvtps_epi32(convert<float>(v)); }
+    {
+        return _mm512_cvtps_epi32(convert<float>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, uint32_t>::value, __m512i>
@@ -700,12 +764,16 @@ template <> struct vector_traits<std::complex<float>>
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned, __m512>
     load(const std::complex<float>* ptr)
-    { return _mm512_loadu_ps((float*)ptr); }
+    {
+        return _mm512_loadu_ps((float*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && Aligned, __m512>
     load(const std::complex<float>* ptr)
-    { return _mm512_load_ps((float*)ptr); }
+    {
+        return _mm512_load_ps((float*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned, __m512>
@@ -751,32 +819,44 @@ template <> struct vector_traits<std::complex<float>>
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned>
     store(__m512 v, std::complex<float>* ptr)
-    { _mm512_storeu_ps((float*)ptr, v); }
+    {
+        _mm512_storeu_ps((float*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && Aligned>
     store(__m512 v, std::complex<float>* ptr)
-    { _mm512_store_ps((float*)ptr, v); }
+    {
+        _mm512_store_ps((float*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned>
     store(__m512 v, std::complex<float>* ptr)
-    { _mm256_storeu_ps((float*)ptr, _mm512_castps512_ps256(v)); }
+    {
+        _mm256_storeu_ps((float*)ptr, _mm512_castps512_ps256(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned>
     store(__m512 v, std::complex<float>* ptr)
-    { _mm256_store_ps((float*)ptr, _mm512_castps512_ps256(v)); }
+    {
+        _mm256_store_ps((float*)ptr, _mm512_castps512_ps256(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && !Aligned>
     store(__m512 v, std::complex<float>* ptr)
-    { _mm_storeu_ps((float*)ptr, _mm512_castps512_ps128(v)); }
+    {
+        _mm_storeu_ps((float*)ptr, _mm512_castps512_ps128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && Aligned>
     store(__m512 v, std::complex<float>* ptr)
-    { _mm_store_ps((float*)ptr, _mm512_castps512_ps128(v)); }
+    {
+        _mm_store_ps((float*)ptr, _mm512_castps512_ps128(v));
+    }
 
     static __m512 add(__m512 a, __m512 b) { return _mm512_add_ps(a, b); }
 
@@ -1007,7 +1087,9 @@ template <> struct vector_traits<std::complex<double>>
     static std::enable_if_t<std::is_same<T, std::complex<double>>::value,
                             __m512d>
     convert(__m512d v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int8_t>::value, __m512i>
@@ -1101,25 +1183,35 @@ template <> struct vector_traits<std::complex<double>>
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned, __m512d>
     load(const std::complex<double>* ptr)
-    { return _mm512_loadu_pd((double*)ptr); }
+    {
+        return _mm512_loadu_pd((double*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned, __m512d>
     load(const std::complex<double>* ptr)
-    { return _mm512_load_pd((double*)ptr); }
+    {
+        return _mm512_load_pd((double*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && !Aligned, __m512d>
     load(const std::complex<double>* ptr)
-    { return _mm512_broadcast_f64x4(_mm256_loadu_pd((double*)ptr)); }
+    {
+        return _mm512_broadcast_f64x4(_mm256_loadu_pd((double*)ptr));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && Aligned, __m512d>
     load(const std::complex<double>* ptr)
-    { return _mm512_broadcast_f64x4(_mm256_load_pd((double*)ptr)); }
+    {
+        return _mm512_broadcast_f64x4(_mm256_load_pd((double*)ptr));
+    }
 
     static __m512d load1(const std::complex<double>* ptr)
-    { return _mm512_broadcast_f64x2(_mm_loadu_pd((double*)ptr)); }
+    {
+        return _mm512_broadcast_f64x2(_mm_loadu_pd((double*)ptr));
+    }
 
     static __m512d set1(std::complex<double> val)
     {
@@ -1136,22 +1228,30 @@ template <> struct vector_traits<std::complex<double>>
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned>
     store(__m512d v, std::complex<double>* ptr)
-    { _mm512_storeu_pd((double*)ptr, v); }
+    {
+        _mm512_storeu_pd((double*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned>
     store(__m512d v, std::complex<double>* ptr)
-    { _mm512_store_pd((double*)ptr, v); }
+    {
+        _mm512_store_pd((double*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && !Aligned>
     store(__m512d v, std::complex<double>* ptr)
-    { _mm256_storeu_pd((double*)ptr, _mm512_castpd512_pd256(v)); }
+    {
+        _mm256_storeu_pd((double*)ptr, _mm512_castpd512_pd256(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && Aligned>
     store(__m512d v, std::complex<double>* ptr)
-    { _mm256_store_pd((double*)ptr, _mm512_castpd512_pd256(v)); }
+    {
+        _mm256_store_pd((double*)ptr, _mm512_castpd512_pd256(v));
+    }
 
     static __m512d add(__m512d a, __m512d b) { return _mm512_add_pd(a, b); }
 
@@ -1279,12 +1379,16 @@ struct vector_traits<U,
     template <typename T>
     static std::enable_if_t<std::is_same<T, float>::value, __m512>
     convert(__m512i v)
-    { return _mm512_cvtepi32_ps(convert<int32_t>(v)); }
+    {
+        return _mm512_cvtepi32_ps(convert<int32_t>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, double>::value, __m512d>
     convert(__m512i v)
-    { return _mm512_cvtepi32_pd(_mm512_castsi512_si256(convert<int32_t>(v))); }
+    {
+        return _mm512_cvtepi32_pd(_mm512_castsi512_si256(convert<int32_t>(v)));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value, __m512>
@@ -1320,7 +1424,9 @@ struct vector_traits<U,
                                 || std::is_same<T, uint8_t>::value,
                             __m512i>
     convert(__m512i v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int16_t>::value
@@ -1361,19 +1467,27 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 64 && !Aligned, __m512i> load(const U* ptr)
-    { return _mm512_loadu_si512((__m512i*)ptr); }
+    {
+        return _mm512_loadu_si512((__m512i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 64 && Aligned, __m512i> load(const U* ptr)
-    { return _mm512_load_si512((__m512i*)ptr); }
+    {
+        return _mm512_load_si512((__m512i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 32 && !Aligned, __m512i> load(const U* ptr)
-    { return _mm512_broadcast_i64x4(_mm256_loadu_si256((__m256i*)ptr)); }
+    {
+        return _mm512_broadcast_i64x4(_mm256_loadu_si256((__m256i*)ptr));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 32 && Aligned, __m512i> load(const U* ptr)
-    { return _mm512_broadcast_i64x4(_mm256_load_si256((__m256i*)ptr)); }
+    {
+        return _mm512_broadcast_i64x4(_mm256_load_si256((__m256i*)ptr));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && !Aligned, __m512i> load(const U* ptr)
@@ -1391,15 +1505,21 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8, __m512i> load(const U* ptr)
-    { return _mm512_set1_epi64(*(int64_t*)ptr); }
+    {
+        return _mm512_set1_epi64(*(int64_t*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4, __m512i> load(const U* ptr)
-    { return _mm512_set1_epi32(*(int32_t*)ptr); }
+    {
+        return _mm512_set1_epi32(*(int32_t*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2, __m512i> load(const U* ptr)
-    { return _mm512_set1_epi16(*(int16_t*)ptr); }
+    {
+        return _mm512_set1_epi16(*(int16_t*)ptr);
+    }
 
     static __m512i load1(const U* ptr) { return _mm512_set1_epi8(*ptr); }
 
@@ -1407,39 +1527,57 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 64 && !Aligned> store(__m512i v, U* ptr)
-    { _mm512_storeu_si512((__m512i*)ptr, v); }
+    {
+        _mm512_storeu_si512((__m512i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 64 && Aligned> store(__m512i v, U* ptr)
-    { _mm512_store_si512((__m512i*)ptr, v); }
+    {
+        _mm512_store_si512((__m512i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 32 && !Aligned> store(__m512i v, U* ptr)
-    { _mm256_storeu_si256((__m256i*)ptr, _mm512_castsi512_si256(v)); }
+    {
+        _mm256_storeu_si256((__m256i*)ptr, _mm512_castsi512_si256(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 32 && Aligned> store(__m512i v, U* ptr)
-    { _mm256_store_si256((__m256i*)ptr, _mm512_castsi512_si256(v)); }
+    {
+        _mm256_store_si256((__m256i*)ptr, _mm512_castsi512_si256(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && !Aligned> store(__m512i v, U* ptr)
-    { _mm_storeu_si128((__m128i*)ptr, _mm512_castsi512_si128(v)); }
+    {
+        _mm_storeu_si128((__m128i*)ptr, _mm512_castsi512_si128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && Aligned> store(__m512i v, U* ptr)
-    { _mm_store_si128((__m128i*)ptr, _mm512_castsi512_si128(v)); }
+    {
+        _mm_store_si128((__m128i*)ptr, _mm512_castsi512_si128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8> store(__m512i v, U* ptr)
-    { *(int64_t*)ptr = _mm_extract_epi64(_mm512_castsi512_si128(v), 0); }
+    {
+        *(int64_t*)ptr = _mm_extract_epi64(_mm512_castsi512_si128(v), 0);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4> store(__m512i v, U* ptr)
-    { *(int32_t*)ptr = _mm_extract_epi32(_mm512_castsi512_si128(v), 0); }
+    {
+        *(int32_t*)ptr = _mm_extract_epi32(_mm512_castsi512_si128(v), 0);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2> store(__m512i v, U* ptr)
-    { *(int16_t*)ptr = _mm_extract_epi16(_mm512_castsi512_si128(v), 0); }
+    {
+        *(int16_t*)ptr = _mm_extract_epi16(_mm512_castsi512_si128(v), 0);
+    }
 
     static __m512i add(__m512i a, __m512i b)
     {
@@ -1864,12 +2002,16 @@ struct vector_traits<U,
     template <typename T>
     static std::enable_if_t<std::is_same<T, float>::value, __m512>
     convert(__m512i v)
-    { return _mm512_cvtepi32_ps(convert<int32_t>(v)); }
+    {
+        return _mm512_cvtepi32_ps(convert<int32_t>(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, double>::value, __m512d>
     convert(__m512i v)
-    { return _mm512_cvtepi32_pd(_mm512_castsi512_si256(convert<int32_t>(v))); }
+    {
+        return _mm512_cvtepi32_pd(_mm512_castsi512_si256(convert<int32_t>(v)));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value, __m512>
@@ -1924,7 +2066,9 @@ struct vector_traits<U,
                                 || std::is_same<T, uint16_t>::value,
                             __m512i>
     convert(__m512i v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int32_t>::value
@@ -1950,35 +2094,51 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 32 && !Aligned, __m512i> load(const U* ptr)
-    { return _mm512_loadu_si512((__m512i*)ptr); }
+    {
+        return _mm512_loadu_si512((__m512i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 32 && Aligned, __m512i> load(const U* ptr)
-    { return _mm512_load_si512((__m512i*)ptr); }
+    {
+        return _mm512_load_si512((__m512i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && !Aligned, __m512i> load(const U* ptr)
-    { return _mm512_broadcast_i64x4(_mm256_loadu_si256((__m256i*)ptr)); }
+    {
+        return _mm512_broadcast_i64x4(_mm256_loadu_si256((__m256i*)ptr));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && Aligned, __m512i> load(const U* ptr)
-    { return _mm512_broadcast_i64x4(_mm256_load_si256((__m256i*)ptr)); }
+    {
+        return _mm512_broadcast_i64x4(_mm256_load_si256((__m256i*)ptr));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned, __m512i> load(const U* ptr)
-    { return _mm512_broadcast_i32x4(_mm_loadu_si128((__m128i*)ptr)); }
+    {
+        return _mm512_broadcast_i32x4(_mm_loadu_si128((__m128i*)ptr));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && Aligned, __m512i> load(const U* ptr)
-    { return _mm512_broadcast_i32x4(_mm_load_si128((__m128i*)ptr)); }
+    {
+        return _mm512_broadcast_i32x4(_mm_load_si128((__m128i*)ptr));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4, __m512i> load(const U* ptr)
-    { return _mm512_set1_epi64(*(int64_t*)ptr); }
+    {
+        return _mm512_set1_epi64(*(int64_t*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2, __m512i> load(const U* ptr)
-    { return _mm512_set1_epi32(*(int32_t*)ptr); }
+    {
+        return _mm512_set1_epi32(*(int32_t*)ptr);
+    }
 
     static __m512i load1(const U* ptr) { return _mm512_set1_epi16(*ptr); }
 
@@ -1986,35 +2146,51 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 32 && !Aligned> store(__m512i v, U* ptr)
-    { _mm512_storeu_si512((__m512i*)ptr, v); }
+    {
+        _mm512_storeu_si512((__m512i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 32 && Aligned> store(__m512i v, U* ptr)
-    { _mm512_store_si512((__m512i*)ptr, v); }
+    {
+        _mm512_store_si512((__m512i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && !Aligned> store(__m512i v, U* ptr)
-    { _mm256_storeu_si256((__m256i*)ptr, _mm512_castsi512_si256(v)); }
+    {
+        _mm256_storeu_si256((__m256i*)ptr, _mm512_castsi512_si256(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && Aligned> store(__m512i v, U* ptr)
-    { _mm256_store_si256((__m256i*)ptr, _mm512_castsi512_si256(v)); }
+    {
+        _mm256_store_si256((__m256i*)ptr, _mm512_castsi512_si256(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned> store(__m512i v, U* ptr)
-    { _mm_storeu_si128((__m128i*)ptr, _mm512_castsi512_si128(v)); }
+    {
+        _mm_storeu_si128((__m128i*)ptr, _mm512_castsi512_si128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && Aligned> store(__m512i v, U* ptr)
-    { _mm_store_si128((__m128i*)ptr, _mm512_castsi512_si128(v)); }
+    {
+        _mm_store_si128((__m128i*)ptr, _mm512_castsi512_si128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4> store(__m512i v, U* ptr)
-    { *(int64_t*)ptr = _mm_extract_epi64(_mm512_castsi512_si128(v), 0); }
+    {
+        *(int64_t*)ptr = _mm_extract_epi64(_mm512_castsi512_si128(v), 0);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2> store(__m512i v, U* ptr)
-    { *(int32_t*)ptr = _mm_extract_epi32(_mm512_castsi512_si128(v), 0); }
+    {
+        *(int32_t*)ptr = _mm_extract_epi32(_mm512_castsi512_si128(v), 0);
+    }
 
     static __m512i add(__m512i a, __m512i b)
     {
@@ -2271,12 +2447,16 @@ struct vector_traits<U,
     template <typename T>
     static std::enable_if_t<std::is_same<T, float>::value, __m512>
     convert(__m512i v)
-    { return _mm512_cvtepi32_ps(v); }
+    {
+        return _mm512_cvtepi32_ps(v);
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, double>::value, __m512d>
     convert(__m512i v)
-    { return _mm512_cvtepi32_pd(_mm512_castsi512_si256(v)); }
+    {
+        return _mm512_cvtepi32_pd(_mm512_castsi512_si256(v));
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, std::complex<float>>::value, __m512>
@@ -2349,7 +2529,9 @@ struct vector_traits<U,
                                 || std::is_same<T, uint32_t>::value,
                             __m512i>
     convert(__m512i v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <typename T>
     static std::enable_if_t<std::is_same<T, int64_t>::value
@@ -2364,31 +2546,45 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && !Aligned, __m512i> load(const U* ptr)
-    { return _mm512_loadu_si512((__m512i*)ptr); }
+    {
+        return _mm512_loadu_si512((__m512i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && Aligned, __m512i> load(const U* ptr)
-    { return _mm512_load_si512((__m512i*)ptr); }
+    {
+        return _mm512_load_si512((__m512i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned, __m512i> load(const U* ptr)
-    { return _mm512_broadcast_i64x4(_mm256_loadu_si256((__m256i*)ptr)); }
+    {
+        return _mm512_broadcast_i64x4(_mm256_loadu_si256((__m256i*)ptr));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && Aligned, __m512i> load(const U* ptr)
-    { return _mm512_broadcast_i64x4(_mm256_load_si256((__m256i*)ptr)); }
+    {
+        return _mm512_broadcast_i64x4(_mm256_load_si256((__m256i*)ptr));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned, __m512i> load(const U* ptr)
-    { return _mm512_broadcast_i32x4(_mm_loadu_si128((__m128i*)ptr)); }
+    {
+        return _mm512_broadcast_i32x4(_mm_loadu_si128((__m128i*)ptr));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned, __m512i> load(const U* ptr)
-    { return _mm512_broadcast_i32x4(_mm_load_si128((__m128i*)ptr)); }
+    {
+        return _mm512_broadcast_i32x4(_mm_load_si128((__m128i*)ptr));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2, __m512i> load(const U* ptr)
-    { return _mm512_set1_epi64(*(int64_t*)ptr); }
+    {
+        return _mm512_set1_epi64(*(int64_t*)ptr);
+    }
 
     static __m512i load1(const U* ptr) { return _mm512_set1_epi32(*ptr); }
 
@@ -2396,38 +2592,54 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && !Aligned> store(__m512i v, U* ptr)
-    { _mm512_storeu_si512((__m512i*)ptr, v); }
+    {
+        _mm512_storeu_si512((__m512i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 16 && Aligned> store(__m512i v, U* ptr)
-    { _mm512_store_si512((__m512i*)ptr, v); }
+    {
+        _mm512_store_si512((__m512i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned> store(__m512i v, U* ptr)
-    { _mm256_storeu_si256((__m256i*)ptr, _mm512_castsi512_si256(v)); }
+    {
+        _mm256_storeu_si256((__m256i*)ptr, _mm512_castsi512_si256(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && Aligned> store(__m512i v, U* ptr)
-    { _mm256_store_si256((__m256i*)ptr, _mm512_castsi512_si256(v)); }
+    {
+        _mm256_store_si256((__m256i*)ptr, _mm512_castsi512_si256(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned> store(__m512i v, U* ptr)
-    { _mm_storeu_si128((__m128i*)ptr, _mm512_castsi512_si128(v)); }
+    {
+        _mm_storeu_si128((__m128i*)ptr, _mm512_castsi512_si128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned> store(__m512i v, U* ptr)
-    { _mm_store_si128((__m128i*)ptr, _mm512_castsi512_si128(v)); }
+    {
+        _mm_store_si128((__m128i*)ptr, _mm512_castsi512_si128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2> store(__m512i v, U* ptr)
-    { *(int64_t*)ptr = _mm_extract_epi64(_mm512_castsi512_si128(v), 0); }
+    {
+        *(int64_t*)ptr = _mm_extract_epi64(_mm512_castsi512_si128(v), 0);
+    }
 
     static __m512i add(__m512i a, __m512i b) { return _mm512_add_epi32(a, b); }
 
     static __m512i sub(__m512i a, __m512i b) { return _mm512_sub_epi32(a, b); }
 
     static __m512i mul(__m512i a, __m512i b)
-    { return _mm512_mullo_epi32(a, b); }
+    {
+        return _mm512_mullo_epi32(a, b);
+    }
 
     static __m512i div(__m512i a, __m512i b)
     {
@@ -2500,7 +2712,9 @@ struct vector_traits<U,
     }
 
     static __m512i negate(__m512i a)
-    { return _mm512_sub_epi32(_mm512_setzero_si512(), a); }
+    {
+        return _mm512_sub_epi32(_mm512_setzero_si512(), a);
+    }
 
     static __m512i exp(__m512i a)
     {
@@ -2723,31 +2937,45 @@ struct vector_traits<U,
                                 || std::is_same<T, uint64_t>::value,
                             __m512i>
     convert(__m512i v)
-    { return v; }
+    {
+        return v;
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned, __m512i> load(const U* ptr)
-    { return _mm512_loadu_si512((__m512i*)ptr); }
+    {
+        return _mm512_loadu_si512((__m512i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && Aligned, __m512i> load(const U* ptr)
-    { return _mm512_load_si512((__m512i*)ptr); }
+    {
+        return _mm512_load_si512((__m512i*)ptr);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned, __m512i> load(const U* ptr)
-    { return _mm512_broadcast_i64x4(_mm256_loadu_si256((__m256i*)ptr)); }
+    {
+        return _mm512_broadcast_i64x4(_mm256_loadu_si256((__m256i*)ptr));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned, __m512i> load(const U* ptr)
-    { return _mm512_broadcast_i64x4(_mm256_load_si256((__m256i*)ptr)); }
+    {
+        return _mm512_broadcast_i64x4(_mm256_load_si256((__m256i*)ptr));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && !Aligned, __m512i> load(const U* ptr)
-    { return _mm512_broadcast_i32x4(_mm_loadu_si128((__m128i*)ptr)); }
+    {
+        return _mm512_broadcast_i32x4(_mm_loadu_si128((__m128i*)ptr));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && Aligned, __m512i> load(const U* ptr)
-    { return _mm512_broadcast_i32x4(_mm_load_si128((__m128i*)ptr)); }
+    {
+        return _mm512_broadcast_i32x4(_mm_load_si128((__m128i*)ptr));
+    }
 
     static __m512i load1(const U* ptr) { return _mm512_set1_epi64(*ptr); }
 
@@ -2755,27 +2983,39 @@ struct vector_traits<U,
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && !Aligned> store(__m512i v, U* ptr)
-    { _mm512_storeu_si512((__m512i*)ptr, v); }
+    {
+        _mm512_storeu_si512((__m512i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 8 && Aligned> store(__m512i v, U* ptr)
-    { _mm512_store_si512((__m512i*)ptr, v); }
+    {
+        _mm512_store_si512((__m512i*)ptr, v);
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && !Aligned> store(__m512i v, U* ptr)
-    { _mm256_storeu_si256((__m256i*)ptr, _mm512_castsi512_si256(v)); }
+    {
+        _mm256_storeu_si256((__m256i*)ptr, _mm512_castsi512_si256(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 4 && Aligned> store(__m512i v, U* ptr)
-    { _mm256_store_si256((__m256i*)ptr, _mm512_castsi512_si256(v)); }
+    {
+        _mm256_store_si256((__m256i*)ptr, _mm512_castsi512_si256(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && !Aligned> store(__m512i v, U* ptr)
-    { _mm_storeu_si128((__m128i*)ptr, _mm512_castsi512_si128(v)); }
+    {
+        _mm_storeu_si128((__m128i*)ptr, _mm512_castsi512_si128(v));
+    }
 
     template <int Width, bool Aligned>
     static std::enable_if_t<Width == 2 && Aligned> store(__m512i v, U* ptr)
-    { _mm_store_si128((__m128i*)ptr, _mm512_castsi512_si128(v)); }
+    {
+        _mm_store_si128((__m128i*)ptr, _mm512_castsi512_si128(v));
+    }
 
     static __m512i add(__m512i a, __m512i b) { return _mm512_add_epi64(a, b); }
 
@@ -2847,7 +3087,9 @@ struct vector_traits<U,
     }
 
     static __m512i negate(__m512i a)
-    { return _mm512_sub_epi64(_mm512_setzero_si512(), a); }
+    {
+        return _mm512_sub_epi64(_mm512_setzero_si512(), a);
+    }
 
     static __m512i exp(__m512i a)
     {

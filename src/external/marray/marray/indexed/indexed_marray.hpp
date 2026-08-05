@@ -53,29 +53,39 @@ class indexed_marray
 
     template <typename U, typename A>
     indexed_marray(const indexed_marray<U, A>& other)
-    { reset(other); }
+    {
+        reset(other);
+    }
 
     template <typename U, bool O, typename D>
     indexed_marray(const indexed_marray_base<U, D, O>& other,
                    layout layout = DEFAULT_LAYOUT)
-    { reset(other, layout); }
+    {
+        reset(other, layout);
+    }
 
     indexed_marray(const array_1d<len_type>& len,
                    const array_2d<len_type>& idx,
                    const Type& value = Type(),
                    layout layout = DEFAULT_LAYOUT)
-    { reset(len, idx, value, layout); }
+    {
+        reset(len, idx, value, layout);
+    }
 
     indexed_marray(const array_1d<len_type>& len,
                    const array_2d<len_type>& idx,
                    layout layout)
-    { reset(len, idx, Type(), layout); }
+    {
+        reset(len, idx, Type(), layout);
+    }
 
     indexed_marray(const array_1d<len_type>& len,
                    const array_2d<len_type>& idx,
                    uninitialized_t,
                    layout layout = DEFAULT_LAYOUT)
-    { reset(len, idx, uninitialized, layout); }
+    {
+        reset(len, idx, uninitialized, layout);
+    }
 
     ~indexed_marray() { reset(); }
 
@@ -86,7 +96,9 @@ class indexed_marray
      **********************************************************************/
 
     indexed_marray& operator=(const indexed_marray& other)
-    { return base::operator=(other); }
+    {
+        return base::operator=(other);
+    }
 
     using base::operator=;
     using base::cview;
@@ -137,7 +149,9 @@ class indexed_marray
 
     template <typename U, typename A>
     void reset(const indexed_marray<U, A>& other)
-    { reset(other, other.layout_); }
+    {
+        reset(other, other.layout_);
+    }
 
     template <typename U, bool O, typename D>
     void reset(const indexed_marray_base<U, D, O>& other,
@@ -168,7 +182,9 @@ class indexed_marray
     void reset(const array_1d<len_type>& len,
                const array_2d<len_type>& idx,
                layout layout)
-    { reset(len, idx, Type(), layout); }
+    {
+        reset(len, idx, Type(), layout);
+    }
 
     void reset(const array_1d<len_type>& len,
                const array_2d<len_type>& idx,

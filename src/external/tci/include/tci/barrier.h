@@ -1,8 +1,8 @@
 #ifndef _TCI_BARRIER_H_
 #define _TCI_BARRIER_H_
 
-#include "tci/tci_config.h"
 #include "tci/mutex.h"
+#include "tci/tci_config.h"
 
 #if TCI_USE_PTHREAD_BARRIER
 
@@ -31,6 +31,7 @@ typedef struct tci_barrier
         tci_barrier_node* array;
         tci_barrier_node single;
     } barrier;
+
     unsigned nthread;
     unsigned group_size;
     int is_tree;
@@ -38,7 +39,8 @@ typedef struct tci_barrier
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 int tci_barrier_node_init(tci_barrier_node* barrier,
@@ -51,14 +53,12 @@ int tci_barrier_node_wait(tci_barrier_node* barrier);
 
 int tci_barrier_is_tree(tci_barrier* barrier);
 
-int tci_barrier_init(tci_barrier* barrier,
-                     unsigned nthread,
-                     unsigned group_size);
+int
+tci_barrier_init(tci_barrier* barrier, unsigned nthread, unsigned group_size);
 
 int tci_barrier_destroy(tci_barrier* barrier);
 
-int tci_barrier_wait(tci_barrier* barrier,
-                     unsigned tid);
+int tci_barrier_wait(tci_barrier* barrier, unsigned tid);
 
 #ifdef __cplusplus
 }

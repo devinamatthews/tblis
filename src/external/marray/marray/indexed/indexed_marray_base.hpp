@@ -292,6 +292,8 @@ template <typename Type, typename Derived, bool Owner> class indexed_marray_base
 
     void swap(indexed_marray_base& other)
     {
+        if (this == &other)
+            return;
         using std::swap;
         swap(data_, other.data_);
         swap(idx_, other.idx_);

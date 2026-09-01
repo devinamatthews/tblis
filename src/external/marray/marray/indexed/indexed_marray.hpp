@@ -226,6 +226,8 @@ class indexed_marray
 
     void swap(indexed_marray& other)
     {
+        if (this == &other)
+            return;
         using std::swap;
         swap(storage_, other.storage_);
         swap(layout_, other.layout_);

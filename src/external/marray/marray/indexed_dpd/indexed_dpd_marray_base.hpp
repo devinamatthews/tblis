@@ -311,6 +311,8 @@ class indexed_dpd_marray_base : detail::dpd_base
 
     void swap(indexed_dpd_marray_base& other)
     {
+        if (this == &other)
+            return;
         using std::swap;
         base::swap(other);
         swap(idx_irrep_, other.idx_irrep_);

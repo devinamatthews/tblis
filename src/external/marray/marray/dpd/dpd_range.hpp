@@ -18,6 +18,18 @@ class dpd_index
     int irrep() const { return irrep_; }
 
     len_type idx() const { return idx_; }
+
+    bool operator==(const dpd_index& other) const
+    {
+        return irrep_ == other.irrep_ && idx_ == other.idx_;
+    }
+
+    auto operator<=>(const dpd_index& other) const
+    {
+        if (irrep_ != other.irrep_)
+            return irrep_ <=> other.irrep_;
+        return idx_ <=> other.idx_;
+    }
 };
 
 class dpd_range : public std::array<range_t<len_type>, 8>
@@ -27,7 +39,7 @@ class dpd_range : public std::array<range_t<len_type>, 8>
 
     dpd_range(const array_1d<len_type>& to_)
     {
-        MARRAY_ASSERT(to_.size() < 8);
+        MARRAY_ASSERT(to_.size() <= 8);
 
         len_vector to;
         to_.slurp(to);
@@ -38,7 +50,7 @@ class dpd_range : public std::array<range_t<len_type>, 8>
     dpd_range(const array_1d<len_type>& from_, const array_1d<len_type>& to_)
     {
         MARRAY_ASSERT(from_.size() == to_.size());
-        MARRAY_ASSERT(from_.size() < 8);
+        MARRAY_ASSERT(from_.size() <= 8);
 
         len_vector from;
         from_.slurp(from);
@@ -54,7 +66,7 @@ class dpd_range : public std::array<range_t<len_type>, 8>
     {
         MARRAY_ASSERT(from_.size() == to_.size());
         MARRAY_ASSERT(from_.size() == delta_.size());
-        MARRAY_ASSERT(from_.size() < 8);
+        MARRAY_ASSERT(from_.size() <= 8);
 
         len_vector from;
         from_.slurp(from);
@@ -82,6 +94,40 @@ class dpd_range : public std::array<range_t<len_type>, 8>
         dpd_range ret(*this);
         ret[irrep] = x;
         return ret;
+    }
+
+    bool operator==(const dpd_range& other) const
+    {
+        return std::equal(begin(), end(), other.begin());
+    }
+
+    auto operator<=>(const dpd_range& other) const
+    {
+        auto is_empty = [](const auto& x) { return x.empty(); };
+
+        auto first = [&](const dpd_range& r)
+        {
+            auto it = std::find_if_not(r.begin(), r.end(), is_empty);
+            return dpd_index(it - r.begin(), it != r.end() ? it->front() : 0);
+        };
+
+        auto last = [&](const dpd_range& r)
+        {
+            auto it = std::find_if_not(r.rbegin(), r.rend(), is_empty);
+            return dpd_index(r.size() - (it - r.rbegin()) - 1,
+                             it != r.rend() ? it->back() : 0);
+        };
+
+        if (*this == other)
+            return std::partial_ordering::equivalent;
+
+        if (last(*this) < first(other))
+            return std::partial_ordering::less;
+
+        if (last(other) < first(*this))
+            return std::partial_ordering::greater;
+
+        return std::partial_ordering::unordered;
     }
 };
 

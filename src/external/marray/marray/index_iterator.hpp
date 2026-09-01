@@ -456,6 +456,8 @@ template <int NDim, int N> class index_iterator
      */
     void swap(index_iterator& other)
     {
+        if (this == &other)
+            return;
         using std::swap;
         swap(ndim_, other.ndim_);
         swap(pos_, other.pos_);

@@ -685,6 +685,8 @@ class marray_base
 
     void swap(marray_base& other)
     {
+        if (this == &other)
+            return;
         using std::swap;
 #if MARRAY_DEBUG
         swap(bbox_data_, other.bbox_data_);

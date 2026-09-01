@@ -642,6 +642,13 @@ class marray_view
     void shift_up(int dim) { shift(dim, -length(dim)); }
 
     /**
+     * Prepare the view for iteration "down" one dimension.
+     *
+     * @param dim   The dimension to be iterated over.
+     */
+    len_type first(int dim) { return length(dim, 0); }
+
+    /**
      * Shift this view "down" along one dimension and resize.
      *
      * The effect is the same as a combination of @ref shift_down(int)
@@ -658,18 +665,59 @@ class marray_view
     }
 
     /**
+     * Resets the view back to its original state after iteration "down" one
+     * dimension. Requires that @ref next(int, len_type) has been called with
+     * sizes totaling the original length (as returned by @ref first(int,
+     * len_type)), which must also be passed in as `len` here.
+     *
+     * @param dim  The dimension along which to shift the view.
+     *
+     * @param len  The original length along the indicated dimension, as
+     *             returned by @ref first(int, len_type).
+     */
+    void back_to_first(int dim, len_type len)
+    {
+        next(dim, 0);
+        prev(dim, len);
+    }
+
+    /**
+     * Prepare the view for iteration "up" one dimension.
+     *
+     * @param dim   The dimension to be iterated over.
+     */
+    len_type last(int dim)
+    {
+        auto len = length(dim);
+        next(dim, 0);
+        return len;
+    }
+
+    /**
      * Shift this view "up" along one dimension and resize.
      *
-     * The effect is the same as a combination of @ref shift(int, len_type)
-     * (by an amount equal to `-len`)
-     * and @ref length(int, len_type), but the view may take on an invalid
-     * intermediate state.
+     * The effect is the same as a combination of @ref shift(int, len_type) (by
+     * an amount equal to `-len`) and @ref length(int, len_type), but the view
+     * may take on an invalid intermediate state.
      *
      * @param dim  The dimension along which to shift the view.
      *
      * @param len  The new length along the indicated dimension.
      */
     void prev(int dim, len_type len) { shift_and_resize(dim, -len, len); }
+
+    /**
+     * Resets the view back to its original state after iteration "up" one
+     * dimension. Requires that @ref prev(int, len_type) has been called with
+     * sizes totaling the original length (as returned by
+     * @ref last(int, len_type)), which must also be passed in as `len` here.
+     *
+     * @param dim  The dimension along which to shift the view.
+     *
+     * @param len  The original length along the indicated dimension, as
+     *             returned by @ref last(int, len_type).
+     */
+    void back_to_last(int dim, len_type len) { length(dim, len); }
 
     /** @} */
     /***********************************************************************
@@ -945,20 +993,6 @@ class marray_view
 #endif
         return len;
     }
-
-    /**
-     * Prepare the view for iteration "down" one dimension.
-     *
-     * @param dim   The dimension to be iterated over.
-     */
-    void first(int dim) { length(dim, 0); }
-
-    /**
-     * Prepare the view for iteration "up" one dimension.
-     *
-     * @param dim   The dimension to be iterated over.
-     */
-    void last(int dim) { next(dim, 0); }
 
     /**
      * Set the tensor stride along the specified dimension.

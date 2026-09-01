@@ -241,6 +241,8 @@ struct dpd_base
 
     void swap(dpd_base& other)
     {
+        if (this == &other)
+            return;
         using std::swap;
         swap(size_, other.size_);
         swap(len_, other.len_);
@@ -613,6 +615,9 @@ class dpd_marray_base : protected detail::dpd_base
         typedef typename View::pointer Ptr;
 
         auto ndim = dimension();
+        if (ndim == 0)
+            return;
+
         const_pointer cptr;
         irrep_vector irreps(ndim);
         len_vector len(ndim);
@@ -647,6 +652,8 @@ class dpd_marray_base : protected detail::dpd_base
         typedef typename View::pointer Ptr;
 
         MARRAY_ASSERT(NDim == dimension());
+        if (NDim == 0)
+            return;
 
         const_pointer cptr;
         std::array<int, NDim> irreps;
@@ -680,6 +687,8 @@ class dpd_marray_base : protected detail::dpd_base
         typedef Tp* Ptr;
 
         auto ndim = dimension();
+        if (ndim == 0)
+            return;
 
         const_pointer cptr = data_;
         irrep_vector irreps(ndim);
@@ -719,6 +728,8 @@ class dpd_marray_base : protected detail::dpd_base
         typedef Tp* Ptr;
 
         MARRAY_ASSERT(NDim == dimension());
+        if (NDim == 0)
+            return;
 
         const_pointer cptr = data_;
         std::array<int, NDim> irreps;
@@ -753,6 +764,8 @@ class dpd_marray_base : protected detail::dpd_base
 
     void swap(dpd_marray_base& other)
     {
+        if (this == &other)
+            return;
         using std::swap;
         base::swap(other);
         swap(data_, other.data_);

@@ -118,6 +118,8 @@ template <typename Array> class marray_iterator
 
     friend void swap(marray_iterator& a, marray_iterator& b)
     {
+        if (&a == &b)
+            return;
         using std::swap;
         swap(a.array_, b.array_);
         swap(a.dim_, b.dim_);

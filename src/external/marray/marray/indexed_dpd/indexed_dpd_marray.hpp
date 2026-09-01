@@ -399,6 +399,8 @@ class indexed_dpd_marray
 
     void swap(indexed_dpd_marray& other)
     {
+        if (this == &other)
+            return;
         using std::swap;
         swap(storage_, other.storage_);
         base::swap(other);

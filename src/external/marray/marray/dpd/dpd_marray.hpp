@@ -311,6 +311,8 @@ class dpd_marray
 
     void swap(dpd_marray& other)
     {
+        if (this == &other)
+            return;
         using std::swap;
         swap(storage_, other.storage_);
         base::swap(other);

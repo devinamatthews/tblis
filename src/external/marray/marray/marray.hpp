@@ -1704,6 +1704,8 @@ class marray
      */
     void swap(marray& other)
     {
+        if (this == &other)
+            return;
         using std::swap;
         swap(storage_, other.storage_);
         swap(initial_base_, other.initial_base_);

@@ -387,6 +387,9 @@ class short_vector
 
     void swap(short_vector& other)
     {
+        if (this == &other)
+            return;
+
         using std::swap;
 
         if (_alloc_traits::propagate_on_container_swap::value)

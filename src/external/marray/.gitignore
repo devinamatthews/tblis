@@ -38,3 +38,4 @@ _deps/
 test.cxx
 cmake_install.cmake
 default.profraw
+__pycache__/

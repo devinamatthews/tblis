@@ -825,9 +825,9 @@ void mult_blis(type_t type,
         detail::sort_by_stride(stl_ext::select_from(stride[0], idx_A_AB),
                                stl_ext::select_from(stride[1], idx_B_AB));
     auto perm_ABC =
-        detail::sort_by_stride(stl_ext::select_from(stride[2], idx_A_ABC),
-                               stl_ext::select_from(stride[0], idx_B_ABC),
-                               stl_ext::select_from(stride[1], idx_C_ABC));
+        detail::sort_by_stride(stl_ext::select_from(stride[2], idx_C_ABC),
+                               stl_ext::select_from(stride[0], idx_A_ABC),
+                               stl_ext::select_from(stride[1], idx_B_ABC));
 
     stl_ext::permute(idx_A_AC, perm_AC);
     stl_ext::permute(idx_A_AB, perm_AB);
